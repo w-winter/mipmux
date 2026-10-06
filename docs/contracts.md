@@ -69,7 +69,7 @@ Structure results use Swift artifacts and projections. Root-local posting lists 
 
 ### Search and output budgets
 
-Search modes are `path`, `content`, and `both`. Literal/PCRE2 queries retain whitespace and require explicit case/whole-word flags. Path-only glob queries use case-sensitive `path.posix.matchesGlob` semantics and have neither flag. Root, directory-prefix, include/exclude-glob, and extension filters run over admitted inventory paths before acquisition.
+Search modes are `path`, `content`, and `both`. Literal/PCRE2 queries retain whitespace. MCP and Pi discovery-agent inputs default to literal content search with case-insensitive substring matching, empty filters, zero context, non-count-only output, and a null continuation. Glob queries default to path mode and use case-sensitive `path.posix.matchesGlob` semantics with neither text-query flag. Root, directory-prefix, include/exclude-glob, and extension filters run over admitted inventory paths before acquisition.
 
 The configured ripgrep executable must support PCRE2 and have an audited build record. Path matching streams NUL-terminated relative paths, so embedded newlines remain path data. Content matching uses private ordinal-named files containing previously authorized bytes. Only CRLF and CR become LF in this search view; the BOM is retained. Ripgrep receives `--no-config`, `--encoding none`, explicit PCRE2/literal/case/word flags, and deterministic ordering. It never traverses source roots. Inputs are removed only after child settlement. A terminal summary must agree with the streamed match counts before results become usable; missing, malformed, or inconsistent records fail the search.
 

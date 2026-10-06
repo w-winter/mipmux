@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { callValidator, toolSchemas } from '../contracts/discovery.js';
+import { toolDescription } from '../contracts/exploration.js';
 import { parentValidator, type ParentMessage } from './pi-protocol.js';
 import { receive, send } from './pi-channel.js';
 import { runPiSession } from './pi-session.js';
@@ -20,10 +21,10 @@ receive(process.stdin, value => {
     start = value;
     const scope = { generation: value.generation, job: value.job };
     const tools: ToolDefinition[] = Object.entries(toolSchemas).map(([name, parameters]) => ({
-      name, label: name, description: `Run the scoped ${name} operation.`, parameters,
+      name, label: name, description: toolDescription(name), parameters,
       execute: async (_id, input, signal) => {
         controller.signal.throwIfAborted(); signal?.throwIfAborted();
-        const call: unknown = { name, input };
+        const call = callValidator.Default({ name, input });
         if (!callValidator.Check(call)) throw new Error('invalidRequest');
         const id = randomUUID();
         const response = new Promise<Extract<ParentMessage, { kind: 'toolResult' }>>(resolve => pending.set(id, resolve));

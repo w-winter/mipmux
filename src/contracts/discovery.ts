@@ -1,17 +1,20 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { SafeCount, SHA256 } from './workspace.js';
-import { ReadRequest, StructureRequest, SearchRequest, Continuation } from './exploration.js';
+import { ReadRequest, StructureRequest, SearchRequest, ReadInput, StructureInput, SearchInput, Continuation } from './exploration.js';
 import { DraftInspection, DraftUpdate } from './context.js';
 
 const closed = { additionalProperties: false };
 export const Positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
-export const ScopedTree = Type.Object({ view: Type.Enum(['roots', 'files', 'folders', 'selected']),
-  depth: Type.Union([SafeCount, Type.Null()]), maxOutputBytes: Positive,
-  continuation: Type.Union([Continuation, Type.Null()]) }, closed);
+export const ScopedTree = Type.Object({ view: Type.Enum(['roots', 'files', 'folders', 'selected'], { default: 'files' }),
+  depth: Type.Union([SafeCount, Type.Null()], { default: null }), maxOutputBytes: Positive,
+  continuation: Type.Union([Continuation, Type.Null()], { default: null }) }, closed);
+export const TreeInput = Type.Partial(Type.Omit(ScopedTree, ['maxOutputBytes']), closed);
 export const ValidateRequest = Type.Object({ maxOutputBytes: Positive }, closed);
-export const toolSchemas = { get_file_tree: ScopedTree, get_code_structure: StructureRequest,
-  file_search: SearchRequest, read_file: ReadRequest, draft_inspect: DraftInspection,
+export const toolSchemas = { get_file_tree: Type.Object({ ...TreeInput.properties, maxOutputBytes: Positive }, closed),
+  get_code_structure: Type.Object({ ...StructureInput.properties, maxOutputBytes: Positive }, closed),
+  file_search: Type.Union(SearchInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))),
+  read_file: Type.Object({ ...ReadInput.properties, maxOutputBytes: Positive }, closed), draft_inspect: DraftInspection,
   draft_update: DraftUpdate, draft_validate: ValidateRequest };
 export const DiscoveryCall = Type.Union([
   Type.Object({ name: Type.Literal('get_file_tree'), input: ScopedTree }, closed),
