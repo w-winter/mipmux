@@ -1,5 +1,3 @@
-import { constants } from 'node:fs';
-import { open } from 'node:fs/promises';
 import { join } from 'node:path';
 import { type Manifest, manifestValidator } from '../contracts/context.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
@@ -7,6 +5,7 @@ import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js'
 import { inventoryDigest } from '../workspace/artifact-store.js';
 import { codemapRepresentation, identity, type Material, normalizeRanges, sourceId } from './material-store.js';
 import { renderBundle } from './render.js';
+import { readRegularFile } from '../runtime/host-files.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -51,17 +50,8 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   }, { bytes: manifest.accounting.bytes, units: manifest.accounting.units, allowance: manifest.accounting.allowance });
   return { verified: { kind: 'verified' as const, manifest }, materials };
 }
-async function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
-  signal?.throwIfAborted();
-  const file = await open(join(directory, filename), constants.O_RDONLY | constants.O_NONBLOCK);
-  try {
-    signal?.throwIfAborted();
-    if (!(await file.stat()).isFile()) throw new WorkspaceFailure('nonRegularBundleFile', { component: filename });
-    signal?.throwIfAborted();
-    const bytes = await file.readFile(signal ? { signal } : {});
-    signal?.throwIfAborted();
-    return bytes;
-  } finally { await file.close(); }
+function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
+  return readRegularFile(join(directory, filename), new WorkspaceFailure('nonRegularBundleFile', { component: filename }), signal);
 }
 function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
   const seen = new Set<string>();

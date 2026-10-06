@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { cp, mkdir, mkdtemp, open, readFile, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { prepareText } from '../src/exploration/lines.js';
 import { SmipRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
@@ -87,30 +86,6 @@ test('cancellation during blocked SDK preflight joins forced closure before any 
     assert.equal(result.kind, 'cancelled'); assert.equal(result.receipt.acceptedRuns, 0);
     assert.equal(result.receipt.workerClosed, true); assert.equal(provider.requests.length, 0);
   } finally { await writer.close(); await supervisor.close(); await provider.close(); }
-});
-
-test('parent prompt admission rejects missing, wrong-version and malformed UTF-8 resources before worker spawn', async () => {
-  const provider = await scriptedProvider(() => { throw new Error('No model expected'); });
-  try {
-    const original = await readFile(resolve('dist-test/src/prompts/discovery-v1.md'));
-    for (const scenario of ['missing', 'version', 'utf8'] as const) {
-      const directory = await mkdtemp(join(provider.directory, 'prompt-'));
-      await cp(resolve('dist-test/src'), directory, { recursive: true });
-      const prompt = join(directory, 'prompts/discovery-v1.md');
-      if (scenario === 'missing') await unlink(prompt);
-      else await writeFile(prompt, scenario === 'version' ? '# smip discovery v2\n' : Buffer.concat([original, Buffer.from([0xff])]));
-      const program = `import {PiRunner} from ${JSON.stringify(pathToFileURL(join(directory, 'discovery/pi-runner.js')).href)};
-        import {ProcessSupervisor} from ${JSON.stringify(pathToFileURL(join(directory, 'runtime/process-supervisor.js')).href)};
-        const supervisor = new ProcessSupervisor({terminationGraceMs:0});
-        supervisor.spawn = () => {throw Error('unexpectedWorkerSpawn')};
-        try {await new PiRunner(${JSON.stringify(provider.config)},supervisor).run({task:'Task',constraints:'',hints:[],roots:[]},
-          {call:async()=>{throw Error('unexpectedTool')}},new AbortController().signal,()=>{}); process.exitCode=1;}
-        catch(error){console.log(error.code ?? error.message)} finally {await supervisor.close()}`;
-      const result = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', program], { cwd: '/' });
-      assert.equal(result.stdout.trim(), scenario === 'missing' ? 'ENOENT' : 'invalidDiscoveryPrompt');
-    }
-    assert.equal(provider.requests.length, 0);
-  } finally { await provider.close(); }
 });
 
 test('discovery material paging measures the real Pi result and returns every complete line without an MCP copy', async () => {

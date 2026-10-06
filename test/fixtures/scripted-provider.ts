@@ -6,19 +6,19 @@ import { Compile } from 'typebox/compile';
 import type { PiConfig } from '../../src/discovery/pi-protocol.js';
 
 const requestValidator = Compile(Type.Object({ model: Type.String(), messages: Type.Array(Type.Unknown()),
-  tools: Type.Optional(Type.Array(Type.Object({ name: Type.String() }))) }));
+  tools: Type.Optional(Type.Array(Type.Object({ name: Type.String() }))), system: Type.Optional(Type.Unknown()) }));
 export type Reply = { kind: 'error' } | { kind: 'overflow' } | { kind: 'hold'; entered: () => void } |
   { kind: 'text'; text: string; stop: 'end_turn' | 'max_tokens'; tokens: number; reportedModel?: string } |
   { kind: 'tool'; name: string; input: unknown; stop: 'tool_use' | 'max_tokens'; tokens: number };
 
 export async function scriptedProvider(respond: (summary: boolean, index: number) => Reply) {
-  const requests: { model: string; tools: string[]; summary: boolean; messages: unknown[] }[] = [];
+  const requests: { model: string; tools: string[]; summary: boolean; messages: unknown[]; system: unknown }[] = [];
   const server = createServer(async (request, response) => {
     const bytes: Buffer[] = []; for await (const chunk of request) bytes.push(Buffer.from(chunk));
     const body: unknown = JSON.parse(Buffer.concat(bytes).toString());
     if (!requestValidator.Check(body)) { response.writeHead(400); response.end(); return; }
     const summary = !body.tools?.length;
-    requests.push({ model: body.model, tools: body.tools?.map(tool => tool.name) ?? [], summary, messages: body.messages });
+    requests.push({ model: body.model, tools: body.tools?.map(tool => tool.name) ?? [], summary, messages: body.messages, system: body.system });
     const reply = respond(summary, requests.length);
     if (reply.kind === 'hold') { reply.entered(); return; }
     if (reply.kind === 'error' || reply.kind === 'overflow') {
@@ -43,7 +43,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(resolve('test-output/scripted-pi-'));
   const config: PiConfig = { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off',
-    authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), environment: {},
+    authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), promptPath: resolve('prompts/discovery-v1.md'), environment: {},
     policy: { retry: { enabled: true, maxRetries: 1, baseDelayMs: 0, maxAgentDelayMs: 0,
       provider: { timeoutMs: 10000, maxRetries: 0, maxRetryDelayMs: 0 } },
       compaction: { enabled: true, reserveTokens: 1024, keepRecentTokens: 128 },

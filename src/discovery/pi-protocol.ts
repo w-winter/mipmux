@@ -6,7 +6,7 @@ const closed = { additionalProperties: false };
 const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
 export const PiConfig = Type.Object({ provider: Type.String({ minLength: 1 }), model: Type.String({ minLength: 1 }),
   thinking: Type.Enum(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']),
-  authPath: absolute, modelsPath: absolute, environment: Type.Record(Type.String(), Type.String()),
+  authPath: absolute, modelsPath: absolute, promptPath: absolute, environment: Type.Record(Type.String(), Type.String()),
   policy: RecoveryPolicy }, closed);
 export type PiConfig = Static<typeof PiConfig>;
 export const piConfigValidator = Compile(PiConfig);

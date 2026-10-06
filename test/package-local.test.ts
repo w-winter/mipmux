@@ -35,6 +35,10 @@ test('local package audits resources and executes relocated library, native, CLI
   writeFileSync(join(installed, 'import.mjs'), 'import {SmipRuntime, verifyBundle} from "smip"; if (typeof SmipRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
   execFileSync(process.execPath, [join(installed, 'import.mjs')], { cwd: '/' });
   const provider = await scriptedProvider(() => ({ kind: 'text', text: 'Complete diagnostic', stop: 'end_turn', tokens: 10 }));
+  const prompt = join(directory, 'editable-discovery.md');
+  const promptBytes = Buffer.concat([readFileSync(join(packageRoot, 'dist/prompts/discovery-v1.md')), Buffer.from('\nRELOCATED_EDITABLE_PROMPT\n')]);
+  writeFileSync(prompt, promptBytes);
+  provider.config.promptPath = prompt;
   const root = join(directory, 'source'), output = join(directory, 'out');
   mkdirSync(root); mkdirSync(output); writeFileSync(join(root, 'model.swift'), 'struct Relocated { let title: String }\n');
   const config = join(directory, 'config.json'), specPath = join(directory, 'spec.json'), requestPath = join(directory, 'request.json');
@@ -61,7 +65,8 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(terminal.state, 'blocked'); assert.equal(terminal.discovery.acceptedRuns, 1);
     assert.equal(terminal.discovery.workerClosed, true); assert.equal(terminal.discovery.prompt, 'resolved');
     assert.equal(terminal.discovery.buildLockSHA256, receipt.buildLockSHA256);
-    assert.equal(terminal.discovery.promptSHA256, createHash('sha256').update(readFileSync(join(packageRoot, 'dist/prompts/discovery-v1.md'))).digest('hex'));
+    assert.equal(terminal.discovery.promptSHA256, createHash('sha256').update(promptBytes).digest('hex'));
+    assert(JSON.stringify(provider.requests.at(-1)?.system).includes('RELOCATED_EDITABLE_PROMPT'));
     writeFileSync(join(directory, 'relocation-receipt.json'), JSON.stringify({ installed, packageSHA256: receipt.sha256, installLockSHA256, terminal }));
     mkdirSync(resolve('test-output'), { recursive: true });
     writeFileSync(resolve('test-output/group-e-relocation.json'), JSON.stringify({ directory, installed, receipt: join(directory, 'relocation-receipt.json') }));

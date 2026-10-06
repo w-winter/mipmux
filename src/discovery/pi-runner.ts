@@ -12,6 +12,7 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { SHA256 } from '../contracts/workspace.js';
 import { completeDiscovery } from './completion.js';
+import { readRegularFile } from '../runtime/host-files.js';
 
 const dependencyValidator = Compile(Type.Object({ buildLockSHA256: SHA256 }, { additionalProperties: false }));
 
@@ -27,7 +28,7 @@ export class PiRunner implements DiscoveryRunner {
   async run(input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal,
     progress: (event: DiscoveryEvent) => void): Promise<DiscoveryOutcome> {
     signal.throwIfAborted();
-    const prompt = await readFile(new URL('../prompts/discovery-v1.md', import.meta.url));
+    const prompt = await readRegularFile(this.config.promptPath, new WorkspaceFailure('nonRegularDiscoveryPrompt'), signal);
     let promptText: string;
     try { promptText = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(prompt); }
     catch { throw new WorkspaceFailure('invalidDiscoveryPrompt'); }
