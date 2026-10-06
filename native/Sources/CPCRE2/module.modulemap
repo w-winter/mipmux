@@ -1,0 +1,5 @@
+module CPCRE2 [system] {
+    header "shim.h"
+    link "pcre2-8"
+    export *
+}

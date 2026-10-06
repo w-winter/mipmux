@@ -1,0 +1,17 @@
+prompt-exports/
+.pi/
+node_modules/
+dist/
+dist-test/
+.smip-cache/
+.smip-work/
+native/.build/
+native/.swiftpm/
+native/.dependencies/
+test-output/
+local-packages/
+libexec/
+.DS_Store
+.env
+.env.*
+native/Sources/SmipBridge/EngineRecipe.swift

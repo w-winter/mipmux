@@ -1,0 +1,175 @@
+{
+  "release": "10.49",
+  "commit": "6f9d7c1373262c541324a16a358785b33ef116cf",
+  "archiveURL": "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.49/pcre2-10.49.tar.bz2",
+  "archiveSHA256": "53c156e1ba416a20da8e65395daa132da0d80e76910424caca3fcdae7831d384",
+  "sljitCommit": "de0259c7aaf36aa40cba8014f3fad3edde9307f9",
+  "sljitFiles": [
+    {
+      "path": "LICENSE",
+      "sha": "0aaecaaa28677aa1d3d69025ffab957131eca25d"
+    },
+    {
+      "path": "README.md",
+      "sha": "ef44763e3e9c56bd14312462edaf8af4fbcbe382"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitExecAllocatorApple.c",
+      "sha": "9bd2094f46b93a9627d4e5172f59acdf1015ec9e"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitExecAllocatorCore.c",
+      "sha": "314483c7ae7ee5733a723dc098a6d04da69546a6"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitExecAllocatorFreeBSD.c",
+      "sha": "3b93a4df76cbab45e49e90cb95aaab54cb201ffe"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitExecAllocatorPosix.c",
+      "sha": "a775f5629a5d440c7e459d13743852d1bbe15bd6"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitExecAllocatorWindows.c",
+      "sha": "f152a5a2cd43e260b110b1af2d7dcfc40dbb48f9"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitProtExecAllocatorNetBSD.c",
+      "sha": "0b7fd57787945d1c14a0715c038cec1fdfc9eaf3"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitProtExecAllocatorPosix.c",
+      "sha": "f7cb6c56705ebf6b6cc06b95619a6bba7c5f6a0c"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitWXExecAllocatorPosix.c",
+      "sha": "62f7371125b337db07c1ee3baaea4995bf9d7abc"
+    },
+    {
+      "path": "sljit_src/allocator_src/sljitWXExecAllocatorWindows.c",
+      "sha": "a9553bd7da4852f773e2326df2eec379128c8379"
+    },
+    {
+      "path": "sljit_src/sljitConfig.h",
+      "sha": "d43e8ae2aac3192421dab17416054acac066f5c9"
+    },
+    {
+      "path": "sljit_src/sljitConfigCPU.h",
+      "sha": "a0d8d44c93ffb61af56d75539c70cdc1be683939"
+    },
+    {
+      "path": "sljit_src/sljitConfigInternal.h",
+      "sha": "9c222349c539c4f73b0eebbb0822405c73581c43"
+    },
+    {
+      "path": "sljit_src/sljitLir.c",
+      "sha": "e8c77f8564b6be824e1b47c939422c41d3c7d2e9"
+    },
+    {
+      "path": "sljit_src/sljitLir.h",
+      "sha": "019ad60ea433f592a260082ee9ddb5bdb5a00bab"
+    },
+    {
+      "path": "sljit_src/sljitNativeARM_32.c",
+      "sha": "ef2762f398c28d59c58ff14308ea1cbe2552ed87"
+    },
+    {
+      "path": "sljit_src/sljitNativeARM_64.c",
+      "sha": "06d94a96aacf54fcc7f7aa8996c478e39f4a6c52"
+    },
+    {
+      "path": "sljit_src/sljitNativeARM_T2_32.c",
+      "sha": "66084571c6f9df259691a45798192ba25713afa1"
+    },
+    {
+      "path": "sljit_src/sljitNativeLOONGARCH_64.c",
+      "sha": "83e6e297c20a80649cb1489b935943b76de098bd"
+    },
+    {
+      "path": "sljit_src/sljitNativeMIPS_32.c",
+      "sha": "83979617d37b754f49e25a9334cb9332d5fb30fe"
+    },
+    {
+      "path": "sljit_src/sljitNativeMIPS_64.c",
+      "sha": "965931b8c9a9b786cd9cee20817d90ce000b5186"
+    },
+    {
+      "path": "sljit_src/sljitNativeMIPS_common.c",
+      "sha": "96fa342f94a015e3fac3af13f2949f394a14bedc"
+    },
+    {
+      "path": "sljit_src/sljitNativePPC_32.c",
+      "sha": "c07f4b48e04952096e11890be3f281db1f1b170a"
+    },
+    {
+      "path": "sljit_src/sljitNativePPC_64.c",
+      "sha": "2b07fcba47fe4c11f49acc94a051536b5f3a879e"
+    },
+    {
+      "path": "sljit_src/sljitNativePPC_common.c",
+      "sha": "ea0597b719d112d257a2045cce7b7895c4b45e35"
+    },
+    {
+      "path": "sljit_src/sljitNativeRISCV_32.c",
+      "sha": "e2dfb01cd0714ca26d22bfeaa08acbcb41e5df09"
+    },
+    {
+      "path": "sljit_src/sljitNativeRISCV_64.c",
+      "sha": "0b8ccab3eb95bcf94948e53429b75e647dc626af"
+    },
+    {
+      "path": "sljit_src/sljitNativeRISCV_common.c",
+      "sha": "1089bddb875202a6170a317d996ec0a69b362503"
+    },
+    {
+      "path": "sljit_src/sljitNativeS390X.c",
+      "sha": "1032ec0ba92a64538fb4c30329750bc0b21e677f"
+    },
+    {
+      "path": "sljit_src/sljitNativeX86_32.c",
+      "sha": "95faa74ffbfc0d40bc7b2d58a7365033b6d34ca2"
+    },
+    {
+      "path": "sljit_src/sljitNativeX86_64.c",
+      "sha": "0a2f59d295957705186657a507c29eff94eb23e1"
+    },
+    {
+      "path": "sljit_src/sljitNativeX86_common.c",
+      "sha": "840443fd8eef2f9d67b8daa050fa598e7a65d71f"
+    },
+    {
+      "path": "sljit_src/sljitSerialize.c",
+      "sha": "042cc18a89e3d92baaacedbb81b0ea3186ebae2c"
+    },
+    {
+      "path": "sljit_src/sljitUtils.c",
+      "sha": "967593b157844ad1669dfddaad752458dfef47db"
+    }
+  ],
+  "patches": [],
+  "unicodeVersion": "17.0.0",
+  "macOSDeploymentTarget": "14.0",
+  "cmake": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "BUILD_SHARED_LIBS": "OFF",
+    "BUILD_STATIC_LIBS": "ON",
+    "PCRE2_BUILD_PCRE2_8": "ON",
+    "PCRE2_BUILD_PCRE2_16": "OFF",
+    "PCRE2_BUILD_PCRE2_32": "OFF",
+    "PCRE2_SUPPORT_UNICODE": "ON",
+    "PCRE2_SUPPORT_JIT": "ON",
+    "PCRE2_BUILD_PCRE2GREP": "OFF",
+    "PCRE2_BUILD_TESTS": "ON",
+    "PCRE2_SUPPORT_LIBREADLINE": "OFF",
+    "PCRE2_SUPPORT_LIBEDIT": "OFF",
+    "PCRE2_SUPPORT_BSR_ANYCRLF": "OFF",
+    "PCRE2_NEWLINE": "LF",
+    "PCRE2_NEVER_BACKSLASH_C": "OFF",
+    "PCRE2_LINK_SIZE": "2",
+    "PCRE2_PARENS_NEST_LIMIT": "250",
+    "PCRE2_MAX_VARLOOKBEHIND": "255",
+    "PCRE2_MATCH_LIMIT": "10000000",
+    "PCRE2_MATCH_LIMIT_DEPTH": "10000000",
+    "PCRE2_HEAP_LIMIT": "20000000"
+  }
+}

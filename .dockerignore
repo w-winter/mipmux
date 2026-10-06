@@ -1,0 +1,17 @@
+.git
+.pi
+prompt-exports
+node_modules
+dist
+dist-test
+native/.build
+native/.swiftpm
+native/.dependencies
+.smip-cache
+.smip-work
+test-output
+local-packages
+libexec
+**/.env
+**/.env.*
+.DS_Store

@@ -1,0 +1,55 @@
+import Type, { type Static } from 'typebox';
+import { Compile } from 'typebox/compile';
+import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
+import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
+
+const closed = { additionalProperties: false };
+export const SourcePath = Type.Object({ root: RootName, path: RelativePath }, closed);
+export type SourcePath = Static<typeof SourcePath>;
+export { ArtifactKey, Projection } from './artifact.js';
+export const Exclusion = Type.Union([
+  Type.Object({ kind: Type.Literal('prefix'), root: RootName, path: RelativePath }, closed),
+  Type.Object({ kind: Type.Literal('glob'), root: RootName, pattern: Type.String({ minLength: 1 }) }, closed),
+]);
+export const WorkspaceSpec = Type.Object({
+  roots: Type.Array(Type.Object({ name: RootName, absolutePath: Type.String({ pattern: '^/[^\u0000]*$' }) }, closed), { minItems: 1 }),
+  exclusions: Type.Array(Exclusion), outputRoot: Type.String({ pattern: '^/[^\u0000]*$' }),
+}, closed);
+export type WorkspaceSpec = Static<typeof WorkspaceSpec>;
+export const workspaceSpecValidator = Compile(WorkspaceSpec);
+export const ArtifactRecord = Type.Object({ schemaVersion: Type.Literal(1), keyCanonicalBase64: Base64, keyDigest: SHA256,
+  outcome: SyntaxOutcome, projection: Type.Optional(Projection), recordSHA256: SHA256 }, closed);
+export type ArtifactRecord = Static<typeof ArtifactRecord>;
+export const artifactValidator = Compile(ArtifactRecord);
+export const PolicyInput = Type.Object({ root: RootName, path: RelativePath,
+  content: Type.Union([
+    Type.Object({ kind: Type.Literal('absent') }, closed),
+    Type.Object({ kind: Type.Literal('present'), identity: SourceIdentity, text: Type.String() }, closed),
+  ]),
+}, closed);
+export type PolicyInput = Static<typeof PolicyInput>;
+export const PolicySnapshot = Type.Object({ implementation: Type.Literal('ignore-7.0.12-v1'), inputs: Type.Array(PolicyInput), digest: SHA256 }, closed);
+export type PolicySnapshot = Static<typeof PolicySnapshot>;
+export const AdmittedRoot = Type.Object({ name: RootName, identity: RootIdentity }, closed);
+export type AdmittedRoot = Static<typeof AdmittedRoot>;
+const disposition = Type.Union([
+  Type.Object({ kind: Type.Literal('artifact'), key: ArtifactKey, record: ArtifactRecord }, closed),
+  Type.Object({ kind: Type.Literal('unsupported') }, closed),
+]);
+export const InventoryEntry = Type.Union([
+  Type.Object({ kind: Type.Literal('file'), root: RootName, path: RelativePath, identity: SourceIdentity, structural: disposition }, closed),
+  Type.Object({ kind: Type.Literal('directory'), root: RootName, path: RelativePath }, closed),
+  Type.Object({ kind: Type.Literal('acquisitionFailed'), root: RootName, path: RelativePath, code: Type.String() }, closed),
+  Type.Object({ kind: Type.Literal('skipped'), root: RootName, path: RelativePath,
+    reason: Type.Union([Type.Literal('policy'), Type.Literal('symlink'), Type.Literal('nonRegular')]) }, closed),
+]);
+export type InventoryEntry = Static<typeof InventoryEntry>;
+export const InventorySnapshot = Type.Object({ schemaVersion: Type.Literal(1), workspaceKey: SHA256, roots: Type.Array(AdmittedRoot), outputRoot: RootIdentity,
+  policy: PolicySnapshot, entries: Type.Array(InventoryEntry), generation: SafeCount, inventoryDigest: SHA256,
+  processing: Type.Literal('settled'), enumeration: Type.Union([
+    Type.Object({ kind: Type.Literal('complete') }, closed),
+    Type.Object({ kind: Type.Literal('incomplete'), failures: Type.Array(Type.Object({ root: RootName, directory: DirectoryRef, code: Type.String() }, closed)) }, closed),
+  ]),
+}, closed);
+export type InventorySnapshot = Static<typeof InventorySnapshot>;
+export const inventoryValidator = Compile(InventorySnapshot);

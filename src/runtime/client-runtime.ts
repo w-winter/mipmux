@@ -1,0 +1,129 @@
+import { randomUUID } from 'node:crypto';
+import type { SmipRuntime, WorkspaceHandle } from './smip-runtime.js';
+import type { WorkspaceSpec } from '../contracts/inventory.js';
+import type { ContextBuildRequest, DraftInspection, DraftUpdate } from '../contracts/context.js';
+import type { DiscoveryCall } from '../contracts/discovery.js';
+import type { DiscoveryRunner } from '../discovery/runner.js';
+import type { DraftRuntime } from '../context/draft-runtime.js';
+import type { JobSnapshot } from '../contracts/jobs.js';
+import { JobRegistry } from './job-registry.js';
+import { WorkspaceFailure } from '../workspace/values.js';
+import { scopedCall } from '../discovery/scoped-tools.js';
+import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
+
+type ExplorationCall = Exclude<DiscoveryCall, { name: 'draft_inspect' | 'draft_update' | 'draft_validate' }>;
+interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRuntime }
+
+/** A connected client's handles and drafts are capabilities only within this owner. */
+export class ClientRuntime {
+  readonly #workspaces = new Map<string, WorkspaceHandle>();
+  readonly #drafts = new Map<string, ManualDraft>();
+  readonly #jobs: JobRegistry;
+  readonly #abort = new AbortController();
+  readonly #pending = new Set<Promise<unknown>>();
+  #closing: Promise<void> | null = null;
+  constructor(private readonly runtime: SmipRuntime, runner: DiscoveryRunner | null, private readonly released: () => void) {
+    this.#jobs = new JobRegistry(runner);
+  }
+  #check(): void { if (this.#abort.signal.aborted) throw new WorkspaceFailure('clientClosed'); }
+  #workspace(id: string): WorkspaceHandle {
+    this.#check();
+    const workspace = this.#workspaces.get(id);
+    if (!workspace) throw new WorkspaceFailure('unknownWorkspace');
+    return workspace;
+  }
+  #manual(id: string): ManualDraft {
+    this.#check();
+    const draft = this.#drafts.get(id);
+    if (!draft) throw new WorkspaceFailure('unknownManualDraft');
+    return draft;
+  }
+  #track<T>(signal: AbortSignal, work: (signal: AbortSignal) => Promise<T>): Promise<T> {
+    this.#check();
+    const combined = AbortSignal.any([signal, this.#abort.signal]);
+    combined.throwIfAborted();
+    const promise = work(combined); this.#pending.add(promise);
+    void promise.then(() => this.#pending.delete(promise), () => this.#pending.delete(promise));
+    return promise;
+  }
+  declare(spec: WorkspaceSpec, signal: AbortSignal) {
+    return this.#track(signal, async combined => {
+      const workspace = await this.runtime.declare(spec, combined), id = randomUUID();
+      this.#workspaces.set(id, workspace); return { kind: 'workspace' as const, id };
+    });
+  }
+  refresh(id: string, signal: AbortSignal) {
+    const workspace = this.#workspace(id);
+    return this.#track(signal, combined => workspace.refresh(combined));
+  }
+  closeWorkspace(id: string) { return this.#workspace(id).close(); }
+  createDraft(id: string, request: ContextBuildRequest, signal: AbortSignal) {
+    const workspace = this.#workspace(id);
+    return this.#track(signal, async combined => {
+      const draft = await workspace.createDraft(request, combined);
+      this.#drafts.set(draft.id, { workspaceId: id, draft });
+      return { kind: 'draft' as const, id: draft.id, revision: draft.revision };
+    });
+  }
+  inspect(id: string, request: DraftInspection, encode: ResultEncoding = identityEncoding) {
+    this.#check();
+    return (this.#drafts.get(id)?.draft ?? this.#jobs.inspectDraft(id)).inspect(request, encode);
+  }
+  update(id: string, request: DraftUpdate, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    const { draft } = this.#manual(id);
+    return this.#track(signal, combined => draft.update(request, combined, encode));
+  }
+  validate(id: string, maxOutputBytes: number, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    const { draft } = this.#manual(id);
+    return this.#track(signal, combined => scopedCall({ name: 'draft_validate', input: { maxOutputBytes } }, draft, draft.operation, combined, encode));
+  }
+  /** Terminal outcomes release the draft's lease inside the draft owner; the draft remains inspectable. */
+  finalize(id: string, signal: AbortSignal) {
+    const { draft } = this.#manual(id);
+    return this.#track(signal, combined => draft.finalize(combined));
+  }
+  explore(id: string, call: ExplorationCall, signal: AbortSignal,
+    draftId: string | null = null, encode: ResultEncoding = identityEncoding) {
+    const workspace = this.#workspace(id);
+    const selected = draftId === null ? null : this.#manual(draftId);
+    if (selected && selected.workspaceId !== id) throw new WorkspaceFailure('draftWorkspaceMismatch');
+    return this.#track(signal, async combined => {
+      const operation = selected ? await selected.draft.operation.fork(combined) : await workspace.openOperation(combined);
+      try {
+        switch (call.name) {
+          case 'get_file_tree': {
+            if (call.input.view === 'selected') {
+              if (!selected) throw new WorkspaceFailure('draftRequired');
+              return operation.getFileTree({ ...call.input, view: 'selected', selection: selected.draft.selectionProjection() }, encode);
+            }
+            return operation.getFileTree({ ...call.input, view: call.input.view, selection: selected?.draft.selectionProjection() ?? null }, encode);
+          }
+          case 'get_code_structure': return operation.getCodeStructure(call.input, encode);
+          case 'read_file': return await operation.readFile(call.input, encode);
+          case 'file_search': return await operation.fileSearch(call.input, encode);
+        }
+      } finally { await operation.close(); }
+    });
+  }
+  build(workspaceId: string, requestId: string, request: ContextBuildRequest) {
+    return this.#jobs.start(this.#workspace(workspaceId), workspaceId, requestId, request);
+  }
+  result(id: string) { this.#check(); return this.#jobs.snapshot(id); }
+  wait(id: string, durationMs: number, signal: AbortSignal, progress: (snapshot: JobSnapshot) => void) {
+    return this.#track(signal, combined => this.#jobs.wait(id, durationMs, combined, progress));
+  }
+  cancel(id: string) { this.#check(); return this.#jobs.cancel(id); }
+  close(): Promise<void> {
+    this.#closing ??= (async () => {
+      this.#abort.abort();
+      const results = await Promise.allSettled([this.#jobs.close()]);
+      await Promise.allSettled([...this.#pending]);
+      results.push(...await Promise.allSettled([...this.#drafts.values()].map(({ draft }) => draft.close())));
+      results.push(...await Promise.allSettled([...this.#workspaces.values()].map(workspace => workspace.close())));
+      this.released();
+      const failure = results.find(result => result.status === 'rejected');
+      if (failure?.status === 'rejected') throw failure.reason;
+    })();
+    return this.#closing;
+  }
+}
