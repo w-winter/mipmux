@@ -33,10 +33,11 @@ receive(process.stdin, value => {
         return { ...piToolResult(result.value), details: undefined, isError: result.failed };
       },
     }));
-    void runPiSession(value.config, value.input, tools, value.prompt, controller.signal,
+    void runPiSession(value.config, value.input, tools, value.prompt, value.mcp, controller.signal,
       event => send(process.stdout, { ...scope, kind: 'progress', event }),
       fact => send(process.stdout, { ...scope, kind: 'evidence', fact })).then(result => {
-        send(process.stdout, { ...scope, kind: 'complete', ...result });
+        // Native background startup is unjoined; exiting releases local HTTP sockets after the terminal flush.
+        send(process.stdout, { ...scope, kind: 'complete', ...result }, value.mcp ? () => process.exit() : undefined);
         process.stdin.destroy();
       }, fail);
   } else {

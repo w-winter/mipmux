@@ -1,7 +1,8 @@
 import type { Readable, Writable } from 'node:stream';
+import type { ParentMessage, WorkerMessage } from './pi-protocol.js';
 
-export function send(output: Writable, value: unknown): void {
-  output.write(JSON.stringify(value) + '\n');
+export function send(output: Writable, value: ParentMessage | WorkerMessage, done?: () => void): void {
+  output.write(JSON.stringify(value) + '\n', done);
 }
 
 /** LF framing rejects malformed UTF-8 and incomplete records at stream closure. */

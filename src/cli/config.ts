@@ -6,6 +6,7 @@ import { PiConfig } from '../discovery/pi-protocol.js';
 import { SmipRuntime } from '../runtime/smip-runtime.js';
 import { PiRunner } from '../discovery/pi-runner.js';
 import { freeze, WorkspaceFailure } from '../workspace/values.js';
+import { mcpProtectedPaths } from '../discovery/mcp-config.js';
 
 const closed = { additionalProperties: false };
 const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
@@ -33,7 +34,8 @@ export function compose(config: HostConfig, configurationPath: string | null) {
   const runtime = new SmipRuntime({ cachePath: config.cachePath, nativeExecutable: config.nativeExecutable,
     nativeEnvironment: config.nativeEnvironment, terminationGraceMs: config.terminationGraceMs,
     credentialPaths: [...config.credentialPaths, ...(configurationPath === null ? [] : [configurationPath]),
-      ...(config.discovery ? [config.discovery.authPath, config.discovery.modelsPath] : [])],
+      ...(config.discovery ? [config.discovery.authPath, config.discovery.modelsPath,
+        ...(config.discovery.mcp ? mcpProtectedPaths(config.discovery.mcp) : [])] : [])],
     ...(config.search ? { search: config.search } : {}), ...(config.git ? { git: config.git } : {}) });
   const runner = config.discovery ? new PiRunner(config.discovery, runtime.supervisor) : null;
   return { runtime, client: runtime.createClient(runner) };

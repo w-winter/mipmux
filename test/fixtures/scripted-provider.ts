@@ -43,7 +43,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(resolve('test-output/scripted-pi-'));
   const config: PiConfig = { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off',
-    authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), promptPath: resolve('prompts/discovery-v1.md'), environment: {},
+    authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), promptPath: resolve('prompts/discovery-v1.md'), environment: {}, mcp: null,
     policy: { retry: { enabled: true, maxRetries: 1, baseDelayMs: 0, maxAgentDelayMs: 0,
       provider: { timeoutMs: 10000, maxRetries: 0, maxRetryDelayMs: 0 } },
       compaction: { enabled: true, reserveTokens: 1024, keepRecentTokens: 128 },

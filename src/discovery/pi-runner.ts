@@ -13,6 +13,7 @@ import { Compile } from 'typebox/compile';
 import { SHA256 } from '../contracts/workspace.js';
 import { completeDiscovery } from './completion.js';
 import { readRegularFile } from '../runtime/host-files.js';
+import { admitMcpConfiguration, type AdmittedMcp } from './mcp-config.js';
 
 const dependencyValidator = Compile(Type.Object({ buildLockSHA256: SHA256 }, { additionalProperties: false }));
 
@@ -33,6 +34,13 @@ export class PiRunner implements DiscoveryRunner {
     try { promptText = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(prompt); }
     catch { throw new WorkspaceFailure('invalidDiscoveryPrompt'); }
     if (!promptText.startsWith('# smip discovery v1\n')) throw new WorkspaceFailure('invalidDiscoveryPrompt');
+    let mcp: AdmittedMcp | null;
+    try { mcp = this.config.mcp ? await admitMcpConfiguration(this.config.mcp, signal) : null; }
+    catch (error) {
+      if (error instanceof WorkspaceFailure) process.stderr.write(JSON.stringify({ level: 'error', event: 'mcpConfigurationRejected',
+        code: error.code, ...error.details }) + '\n');
+      throw error;
+    }
     const dependency: unknown = JSON.parse(await readFile(new URL('../dependency-identity.json', import.meta.url), 'utf8'));
     if (!dependencyValidator.Check(dependency)) throw new WorkspaceFailure('invalidDependencyIdentity');
     const receipt: DiscoveryReceipt = {
@@ -43,13 +51,20 @@ export class PiRunner implements DiscoveryRunner {
       finalAssistant: null,
       acceptedRuns: 0, settled: false, idle: false, observationsSettled: false, disposed: false,
       workerClosed: false, parentToolsSettled: false,
+      mcp: mcp ? { configSHA256: mcp.configSHA256, servers: Object.entries(mcp.configuration.mcpServers).map(([name, server]) => ({
+        name, endpointSHA256: sha256(server.url), tools: Object.keys(server.toolExposure).sort(),
+      })), readiness: { state: 'notObserved' }, shutdown: 'notObserved' } : null,
       telemetryLimit: 'Local dispatch and SDK completion metadata only. Provider-internal attempts may be unobserved; Codex server model identity is unavailable. Local closure does not prove remote cancellation or billing cessation.',
     };
     signal.throwIfAborted();
     const scope = { generation: randomUUID(), job: randomUUID() };
+    const environment = { ...this.config.environment, PI_OFFLINE: '1' };
+    if (mcp) Object.assign(environment, {
+      HOME: mcp.reference.agentDirectory, TMPDIR: mcp.reference.agentDirectory, PI_CODING_AGENT_DIR: mcp.reference.agentDirectory,
+    });
     const child = this.supervisor.spawn({ executable: process.execPath,
       args: [fileURLToPath(new URL('./pi-worker.js', import.meta.url))], cwd: '/',
-      env: { ...this.config.environment, PI_OFFLINE: '1' } });
+      env: environment });
     const calls = new Set<string>(), pending = new Set<Promise<void>>();
     const cancel = new AbortController();
     const combined = AbortSignal.any([signal, cancel.signal]);
@@ -72,6 +87,11 @@ export class PiRunner implements DiscoveryRunner {
         else if (fact.kind === 'completion') receipt.completions.push(fact.value);
         else if (fact.kind === 'assistant') receipt.finalAssistant = fact.value;
         else if (fact.kind === 'prompt') receipt.prompt = fact.outcome;
+        else if (fact.kind === 'mcpReadiness' || fact.kind === 'mcpShutdown') {
+          if (!receipt.mcp) { retire(); return; }
+          if (fact.kind === 'mcpReadiness') receipt.mcp.readiness = fact.value;
+          else receipt.mcp.shutdown = fact.outcome;
+        }
         else if (fact.stage === 'accepted') receipt.acceptedRuns++;
         else receipt[fact.stage] = true;
         return;
@@ -98,7 +118,8 @@ export class PiRunner implements DiscoveryRunner {
     }, retire);
     signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) abort();
-    else send(child.child.stdin, { ...scope, kind: 'start', config: this.config, input, prompt: promptText });
+    else send(child.child.stdin, { ...scope, kind: 'start', config: this.config,
+      input: { ...input, hints: [...input.hints], roots: [...input.roots] }, prompt: promptText, mcp });
     const closed = await child.closed;
     admission = false; cancel.abort();
     await Promise.allSettled([...pending]);

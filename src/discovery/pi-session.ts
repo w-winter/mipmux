@@ -3,13 +3,15 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { createAgentSession, createExtensionRuntime, ModelRuntime, SessionManager, SettingsManager,
   type AgentSession, type ResourceLoader, type ToolDefinition } from '@earendil-works/pi-coding-agent';
-import { InMemoryModelsStore, type AssistantMessage } from '@earendil-works/pi-ai';
+import { InMemoryModelsStore, lazyStream, type AssistantMessage } from '@earendil-works/pi-ai';
 import type { ThinkingLevel } from '@earendil-works/pi-agent-core';
 import type { Completion, DiscoveryEvent, DiscoveryReceipt } from '../contracts/discovery.js';
 import type { DiscoveryInput } from './runner.js';
 import type { Evidence, PiConfig } from './pi-protocol.js';
 import { canonicalJSON, sha256, freeze, WorkspaceFailure } from '../workspace/values.js';
 import { createCredentials, rejectCommands } from './pi-credentials.js';
+import type { AdmittedMcp } from './mcp-config.js';
+import { loadDiscoveryMcp } from './mcp-extension.js';
 
 const closed = { additionalProperties: false };
 const modelsValidator = Compile(Type.Object({ providers: Type.Record(Type.String(), Type.Object({
@@ -23,7 +25,7 @@ const modelRecordValidator = Compile(Type.Record(Type.String(), Type.Unknown()))
 
 /** Reads authorized configuration only; SDK diagnostics are never forwarded to the caller. */
 export async function runPiSession(config: PiConfig, input: DiscoveryInput, tools: ToolDefinition[],
-  prompt: string, signal: AbortSignal, progress: (event: DiscoveryEvent) => void,
+  prompt: string, mcp: AdmittedMcp | null, signal: AbortSignal, progress: (event: DiscoveryEvent) => void,
   observe: (fact: Evidence) => void) {
   let session: AgentSession | null = null;
   const observations: Promise<void>[] = [];
@@ -31,6 +33,8 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
   let summarizing = false;
   let failure: string | null = null;
   let promptObserved = false;
+  let bound = false, readinessObserved = false;
+  const extensionErrors: string[] = [];
   const abort = () => { if (session) { observations.push(session.abort().catch(() => { observationFailed = true; })); } };
   signal.addEventListener('abort', abort, { once: true });
   try {
@@ -54,19 +58,20 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     if (!selected) throw new WorkspaceFailure('modelUnavailable');
     const model = freeze(structuredClone(selected));
     const identity = { provider: model.provider, model: model.id, api: model.api };
+    const settings = SettingsManager.inMemory(config.policy);
+    const extensions = mcp ? await loadDiscoveryMcp(mcp, settings) : null;
     const resources: ResourceLoader = {
-      getExtensions: () => ({ extensions: [], errors: [], runtime: createExtensionRuntime() }),
+      getExtensions: () => extensions ?? ({ extensions: [], errors: [], runtime: createExtensionRuntime() }),
       getSkills: () => ({ skills: [], diagnostics: [] }), getPrompts: () => ({ prompts: [], diagnostics: [] }),
       getThemes: () => ({ themes: [], diagnostics: [] }), getAgentsFiles: () => ({ agentsFiles: [] }),
       getSystemPrompt: () => prompt, getSystemPromptSource: () => undefined,
       getAppendSystemPrompt: () => [], getAppendSystemPromptSources: () => [],
       extendResources: () => {}, reload: async () => {},
     };
-    const settings = SettingsManager.inMemory(config.policy);
     const thinking: ThinkingLevel = config.thinking;
     const created = await createAgentSession({ cwd: '/', agentDir: '/', modelRuntime: runtime, model,
       thinkingLevel: thinking, sessionManager: SessionManager.inMemory('/'), settingsManager: settings,
-      resourceLoader: resources, tools: tools.map(tool => tool.name), customTools: tools });
+      resourceLoader: resources, ...(mcp ? { noTools: 'builtin' as const } : { tools: tools.map(tool => tool.name) }), customTools: tools });
     session = created.session;
     if (created.modelFallbackMessage || session.thinkingLevel !== thinking || JSON.stringify(session.model) !== JSON.stringify(model)) {
       throw new WorkspaceFailure('modelSelectionChanged');
@@ -90,9 +95,28 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
         textOnly: message.content.every(block => block.type === 'text' || block.type === 'thinking'),
         nonempty: text.trim().length > 0, diagnostics: message.diagnostics?.map(item => item.type) ?? [] };
     };
+    const activeSession = session;
     const stream = session.agent.streamFunction;
     session.agent.streamFunction = async (dispatched, context, options) => {
       if (JSON.stringify(dispatched) !== JSON.stringify(model)) throw new WorkspaceFailure('modelSelectionChanged');
+      if (mcp) {
+        const direct = activeSession.getAllTools().filter(tool => tool.name.startsWith('mcp__') && tool.exposure === 'direct');
+        const expected = [...tools.map(tool => tool.name), ...direct.map(tool => tool.name)].sort();
+        const selectedCount = Object.values(mcp.configuration.mcpServers).reduce((count, server) => count + Object.keys(server.toolExposure).length, 0);
+        if (failure || direct.length !== selectedCount || canonicalJSON(activeSession.getActiveToolNames().sort()) !== canonicalJSON(expected) ||
+            canonicalJSON(activeSession.getCallableToolNames().sort()) !== canonicalJSON(expected)) {
+          failure ??= 'mcpToolsUnavailable';
+          observe({ kind: 'mcpReadiness', value: { state: 'unavailable' } });
+          const code = failure;
+          return lazyStream(dispatched, async () => { throw new WorkspaceFailure(code); });
+        }
+        if (!readinessObserved) {
+          readinessObserved = true;
+          observe({ kind: 'mcpReadiness', value: { state: 'ready', tools: direct.map(tool => tool.name).sort(),
+            declarationSHA256: sha256(canonicalJSON(direct.map(tool => ({ name: tool.name, description: tool.description, parameters: tool.parameters }))
+              .sort((a, b) => a.name.localeCompare(b.name)))) } });
+        }
+      }
       const channel = summarizing ? 'summary' : 'ordinary';
       const result = await stream(dispatched, context, options);
       observations.push(result.result().then(message => {
@@ -117,13 +141,18 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
         }
       } catch { observationFailed = true; }
     });
+    if (mcp) {
+      bound = true;
+      await session.bindExtensions({ onError: error => { extensionErrors.push(error.event); } });
+      if (extensionErrors.length) throw new WorkspaceFailure('mcpStartupFailed');
+    }
     signal.throwIfAborted();
     try {
       await session.prompt(JSON.stringify(input), { expandPromptTemplates: false,
         preflightResult: result => { if (result === 'started') observe({ kind: 'lifecycle', stage: 'accepted' }); } });
       observe({ kind: 'prompt', outcome: 'resolved' }); promptObserved = true;
     }
-    catch { observe({ kind: 'prompt', outcome: 'rejected' }); promptObserved = true; failure = 'promptFailed'; }
+    catch { observe({ kind: 'prompt', outcome: 'rejected' }); promptObserved = true; failure ??= 'promptFailed'; }
     await session.waitForIdle();
     observe({ kind: 'lifecycle', stage: 'idle' });
   } catch (error) {
@@ -134,6 +163,15 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     await Promise.all(observations);
     observe({ kind: 'lifecycle', stage: 'observationsSettled' });
     if (session) {
+      if (bound) {
+        const before = extensionErrors.length;
+        try {
+          await session.extensionRunner.emit({ type: 'session_shutdown', reason: 'quit' });
+          const failed = extensionErrors.slice(before).includes('session_shutdown');
+          observe({ kind: 'mcpShutdown', outcome: failed ? 'handlerFailed' : 'dispatched' });
+          if (failed) failure ??= 'mcpShutdownFailed';
+        } catch { failure ??= 'mcpShutdownFailed'; }
+      }
       try { session.dispose(); observe({ kind: 'lifecycle', stage: 'disposed' }); } catch { failure = 'disposalFailed'; }
     }
   }

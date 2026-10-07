@@ -192,6 +192,7 @@ Host configuration uses this shape. The numbers are example host choices, not in
     "authPath": "/private/smip/auth.json",
     "modelsPath": "/private/smip/models.json",
     "promptPath": "/private/smip/discovery.md",
+    "mcp": null,
     "environment": {},
     "policy": {
       "retry": {
@@ -213,7 +214,35 @@ Host configuration uses this shape. The numbers are example host choices, not in
 
 Set `discovery.promptPath` to the absolute path of an editable Markdown file beginning with `# smip discovery v1` followed by LF. For a source checkout, select the absolute path to `prompts/discovery-v1.md`. For an installed package, copy `dist/prompts/discovery-v1.md` from the package to a file you own, such as `/private/smip/discovery.md`, and select that path. Each job reads the file once and records its raw-byte SHA-256 as `promptSHA256`. Edits apply to the next job on the running server; an admitted job keeps its original prompt. Missing, nonregular, invalid UTF-8, or wrong-version prompt files fail before worker startup. Prompt instructions guide curation; tool permissions and bundle publication are controlled by the server.
 
-The worker receives only the explicitly supplied environment entries and its offline-catalog setting. It reads the authorized authentication and model files; these paths and the host configuration file are excluded from source discovery. The model file accepts a `providers` object with optional `baseUrl` and per-model `modelOverrides` containing `contextWindow` and `maxTokens`. Use `{ "providers": {} }` to select the bundled catalog explicitly. Other model configuration fields and command-valued credentials are rejected. Supply the exact physical provider/model and supported thinking level; configuration errors require correction before another request.
+The worker reads the authorized authentication and model files; these paths and the host's configuration file are excluded from source discovery. The model file accepts a `providers` object with optional `baseUrl` and per-model `modelOverrides` containing `contextWindow` and `maxTokens`. Use `{ "providers": {} }` to select the bundled catalog explicitly. Other fields in model configuration and command-valued credentials are rejected. Supply the exact physical provider/model and supported thinking level; configuration errors require correction before another request.
+
+### Discovery MCP access
+
+Set `discovery.mcp` to `{ "agentDirectory": "/private/smip/scout-mcp" }` to let discovery use selected tools from HTTP MCP servers. Use a dedicated directory with permissions `0700` containing `mcp.json`; set `mcp` to `null` to use only smip tools. Replace the URL and tool name in this example with your server's values:
+
+```json
+{
+  "mcpServers": {
+    "tickets": {
+      "url": "https://tickets.example.com/mcp",
+      "exposure": "hidden",
+      "toolExposure": { "read_ticket": "direct" }
+    }
+  }
+}
+```
+
+For OAuth, sign in before starting discovery jobs using the Pi executable from smip's dependency installation. Run `mcp list` to check the connection and find exact tool names:
+
+```sh
+cd /private/smip/scout-mcp
+PI_CODING_AGENT_DIR="$PWD" /opt/smip/node_modules/.bin/pi mcp login tickets
+PI_CODING_AGENT_DIR="$PWD" /opt/smip/node_modules/.bin/pi mcp list
+```
+
+If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private directory to diagnose connection or sign-in problems. See the [discovery contract](docs/contracts.md#discovery-and-client-ownership) for configuration options and lifecycle details.
+
+### Caller MCP interface
 
 MCP clients launch the `mcp` command over stdio. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`; `draft_create`, `draft_inspect`, `draft_update`, `draft_validate`, `draft_finalize`; and `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`. `tools/list` supplies their schemas. Workspace, draft and job IDs belong to the connected client.
 

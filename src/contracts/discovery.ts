@@ -48,6 +48,15 @@ export const DiscoveryEvent = Type.Object({ kind: Type.String(),
   success: Type.Union([Type.Boolean(), Type.Null()]), reason: Type.Union([Type.String(), Type.Null()]),
 }, closed);
 export type DiscoveryEvent = Static<typeof DiscoveryEvent>;
+const McpReceipt = Type.Object({ configSHA256: SHA256,
+  servers: Type.Array(Type.Object({ name: Type.String(), endpointSHA256: SHA256, tools: Type.Array(Type.String()) }, closed)),
+  readiness: Type.Union([
+    Type.Object({ state: Type.Literal('notObserved') }, closed),
+    Type.Object({ state: Type.Literal('ready'), tools: Type.Array(Type.String()), declarationSHA256: SHA256 }, closed),
+    Type.Object({ state: Type.Literal('unavailable') }, closed),
+  ]),
+  shutdown: Type.Enum(['notObserved', 'dispatched', 'handlerFailed']),
+}, closed);
 export const DiscoveryReceipt = Type.Object({
   adapter: Type.String(), sdk: Type.String(), buildLockSHA256: SHA256,
   promptVersion: Type.String(), promptSHA256: SHA256,
@@ -61,6 +70,6 @@ export const DiscoveryReceipt = Type.Object({
   prompt: Type.Enum(['notStarted', 'resolved', 'rejected']), acceptedRuns: SafeCount, settled: Type.Boolean(),
   idle: Type.Boolean(), observationsSettled: Type.Boolean(), disposed: Type.Boolean(),
   workerClosed: Type.Boolean(), parentToolsSettled: Type.Boolean(),
-  telemetryLimit: Type.String(),
+  telemetryLimit: Type.String(), mcp: Type.Union([McpReceipt, Type.Null()]),
 }, closed);
 export type DiscoveryReceipt = Static<typeof DiscoveryReceipt>;
