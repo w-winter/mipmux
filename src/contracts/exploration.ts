@@ -56,6 +56,7 @@ export function toolDescription(name: string): string {
     case 'read_file': return 'Read a root-qualified file. Example input: {"root":"app","path":"src/main.ts"}. Defaults to the whole file, first page.';
     case 'get_code_structure': return 'Inspect structural maps for file/directory seeds. Defaults: no relationship expansion, depth 1, first page.';
     case 'file_search': return 'Search literal content with case-insensitive substring matching. Example input: {"query":{"text":"greet"}}. Explicit regex/glob kinds are supported; glob defaults to path search. Filters and context are optional.';
+    case 'draft_update': return 'Mutate a draft at expectedRevision: upsert/remove a source, commit a handoff, or addDocument with complete suppliedDocument text, a unique id, role and origin. Added documents are immutable.';
     default: return `smip ${name}`;
   }
 }

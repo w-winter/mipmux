@@ -19,7 +19,7 @@ async function configure(directory: string, url: string) {
   return { agentDirectory };
 }
 
-test('native HTTP reads inform a verified packet while forbidden mutation and indirect tools stay unreachable', async t => {
+test('native HTTP reads add complete fetched documents to a verified packet while forbidden tools stay unreachable', async t => {
   const server = await controlledHttpMcp();
   t.after(() => server.close());
   const provider = await scriptedProvider((_summary, index) => {
@@ -27,11 +27,15 @@ test('native HTTP reads inform a verified packet while forbidden mutation and in
     if (index <= names.length) return { kind: 'tool', name: names[index - 1]!, input: {}, stop: 'tool_use', tokens: 10 };
     if (index === 6) {
       assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('Ticket: repair the discovery worker'));
+      assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('FETCHED_DOCUMENT_END'));
       return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 0, maxOutputBytes: 10000,
+        mutation: { kind: 'addDocument', document: { kind: 'suppliedDocument', id: 'fetched-ticket', role: 'evidence',
+          origin: server.url, text: server.text } } }, stop: 'tool_use', tokens: 10 };
+    }
+    if (index === 7) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 1, maxOutputBytes: 10000,
         mutation: { kind: 'handoff', handoff: { clarifiedTask: 'Repair the discovery worker', architecture: 'Ticket: repair the discovery worker',
           relationships: [], ambiguities: [] } } }, stop: 'tool_use', tokens: 10 };
-    }
-    if (index === 7) return { kind: 'tool', name: 'draft_validate', input: { maxOutputBytes: 10000 }, stop: 'tool_use', tokens: 10 };
+    if (index === 8) return { kind: 'tool', name: 'draft_validate', input: { maxOutputBytes: 10000 }, stop: 'tool_use', tokens: 10 };
     return { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 };
   });
   t.after(() => provider.close());
@@ -57,8 +61,14 @@ test('native HTTP reads inform a verified packet while forbidden mutation and in
       allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true } });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});
     assert.equal(result.state, 'ready', JSON.stringify(result)); assert(result.state === 'ready');
-    await verifyBundle(result.bundle.directory);
-    assert((await readFile(join(result.bundle.directory, 'context.md'), 'utf8')).includes('Ticket: repair the discovery worker'));
+    const verified = await verifyBundle(result.bundle.directory), packet = await readFile(join(result.bundle.directory, 'context.md'));
+    assert.equal(verified.manifest.request.documents.length, 0);
+    const document = verified.manifest.materials.find(material => material.id === 'document:fetched-ticket');
+    assert(document?.kind === 'document');
+    assert.deepEqual(document.input, { kind: 'suppliedDocument', id: 'fetched-ticket', role: 'evidence', origin: server.url, text: server.text });
+    assert.equal(document.spans.length, 1);
+    const span = document.spans[0]; assert(span);
+    assert.deepEqual(packet.subarray(span.offset, span.offset + span.length), Buffer.from(server.text));
     assert.equal(result.discovery.mcp?.readiness.state, 'ready'); assert.equal(result.discovery.mcp?.shutdown, 'dispatched');
     assert.deepEqual(result.discovery.mcp?.servers.map(server => ({ name: server.name, tools: server.tools })), [{ name: 'controlled', tools: ['read_ticket'] }]);
     assert(workerEnvironment);

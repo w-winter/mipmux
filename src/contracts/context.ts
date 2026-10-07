@@ -19,6 +19,13 @@ export const SourceSelection = Type.Union([
   Type.Object({ kind: Type.Literal('codemap'), source: SourcePath }, closed),
 ]);
 export type SourceSelection = Static<typeof SourceSelection>;
+const SuppliedDocument = Type.Object({
+  kind: Type.Literal('suppliedDocument'),
+  id: Type.String({ minLength: 1 }),
+  role: Type.Enum(['plan', 'report', 'evidence']),
+  origin: Type.String({ minLength: 1 }),
+  text: Type.String(),
+}, closed);
 export const DocumentInput = Type.Union([
   Type.Object({
     kind: Type.Literal('localDocument'),
@@ -26,13 +33,7 @@ export const DocumentInput = Type.Union([
     role: Type.Enum(['plan', 'report', 'evidence']),
     source: SourcePath,
   }, closed),
-  Type.Object({
-    kind: Type.Literal('suppliedDocument'),
-    id: Type.String({ minLength: 1 }),
-    role: Type.Enum(['plan', 'report', 'evidence']),
-    origin: Type.String({ minLength: 1 }),
-    text: Type.String(),
-  }, closed),
+  SuppliedDocument,
 ]);
 export type DocumentInput = Static<typeof DocumentInput>;
 export const Allowance = Type.Union([
@@ -88,6 +89,7 @@ export const DraftUpdate = Type.Object({
     Type.Object({ kind: Type.Literal('upsert'), selection: SourceSelection }, closed),
     Type.Object({ kind: Type.Literal('remove'), source: SourcePath }, closed),
     Type.Object({ kind: Type.Literal('handoff'), handoff: Handoff }, closed),
+    Type.Object({ kind: Type.Literal('addDocument'), document: SuppliedDocument }, closed),
   ]),
 }, closed);
 export type DraftUpdate = Static<typeof DraftUpdate>;

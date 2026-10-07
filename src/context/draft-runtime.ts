@@ -110,7 +110,11 @@ export class DraftRuntime {
     const freezeGeneration = this.#freezeGeneration;
     const mutation = input.mutation;
     let prepared: Material | null = null, id: string | null = null;
-    if (mutation.kind !== 'handoff') {
+    if (mutation.kind === 'addDocument') {
+      id = 'document:' + mutation.document.id;
+      if (this.#materials.has(id)) throw new WorkspaceFailure('duplicateMaterial', { id });
+      prepared = await acquireDocument(this.operation, mutation.document);
+    } else if (mutation.kind !== 'handoff') {
       id = sourceId(mutation.kind === 'upsert' ? mutation.selection.source : mutation.source);
       const required = this.request.requiredSources.find((selection) => sourceId(selection.source) === id);
       if (required && (mutation.kind === 'remove' || canonicalJSON(required) !== canonicalJSON(mutation.selection))) {

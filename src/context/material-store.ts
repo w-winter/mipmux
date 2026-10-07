@@ -86,6 +86,7 @@ export async function acquireSource(
   return freeze({ record, bodies });
 }
 export async function acquireDocument(operation: WorkspaceOperation, input: DocumentInput): Promise<Material> {
+  if (input.kind === 'suppliedDocument') strictText(input.origin);
   const text = input.kind === 'suppliedDocument'
     ? strictText(input.text)
     : prepareText((await operation.readSource(input.source)).bytes).lines.map((line) => line.text).join('');

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import fc from 'fast-check';
@@ -55,6 +55,63 @@ function barrier() {
   });
   return { promise, release };
 }
+
+test('curated documents reject duplicates, invalid text, stale revisions and cancelled or oversized updates without partial commits', async () => {
+  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  try {
+    const workspace = await runtime.declare(f.spec, signal());
+    const original = { kind: 'suppliedDocument' as const, id: 'original', role: 'report' as const, origin: 'caller', text: 'Original document' };
+    const draft = await workspace.createDraft({ ...request, documents: [original] }, signal());
+    const document = { kind: 'suppliedDocument' as const, id: 'fetched', role: 'evidence' as const, origin: '/never/read', text: '\uFEFFNew evidence\r\nComplete 🙂' };
+    const mutation = { kind: 'addDocument' as const, document };
+    const input = { expectedRevision: 0, maxOutputBytes: 10000, mutation };
+    await assert.rejects(draft.update({ ...input, mutation: { ...mutation, document: { ...document, id: original.id } } }, signal()), /duplicateMaterial/);
+    for (const invalid of [{ ...document, text: '\ud800' }, { ...document, text: 'NUL\0text' }, { ...document, origin: '\ud800' }]) {
+      await assert.rejects(draft.update({ ...input, mutation: { ...mutation, document: invalid } }, signal()), /invalidEncoding/);
+    }
+    await assert.rejects(draft.update({ ...input, maxOutputBytes: 1 }, signal()), /outputBudgetTooSmall/);
+    const abort = new AbortController(), pending = draft.update(input, abort.signal);
+    abort.abort(); await assert.rejects(pending, /cancelled/);
+    assert.equal(draft.revision, 0);
+    const first = draft.update(input, signal());
+    const competing = draft.update({ ...input, mutation: { ...mutation, document: { ...document, id: 'competing' } } }, signal());
+    const results = await Promise.allSettled([first, competing]);
+    assert.equal(results[0]?.status, 'fulfilled'); assert.equal(results[1]?.status, 'rejected');
+    if (results[1]?.status === 'rejected') assert.match(String(results[1].reason), /revisionConflict/);
+    assert.equal(draft.revision, 1);
+    await assert.rejects(draft.update(input, signal()), /revisionConflict/);
+    await assert.rejects(draft.update({ ...input, expectedRevision: 1 }, signal()), /duplicateMaterial/);
+    assert.throws(() => draft.inspect({ view: 'material', materialId: 'document:competing', continuation: null, maxOutputBytes: 10000 }), /materialUnavailable/);
+    for (const expected of [original, document]) {
+      const page = draft.inspect({ view: 'material', materialId: 'document:' + expected.id, continuation: null, maxOutputBytes: 10000 });
+      assert(page.kind === 'material'); assert.equal(page.lines.map(line => line.text).join(''), expected.text);
+    }
+    assert.deepEqual(draft.request.documents, [original]);
+    await writeFile(join(f.base, 'curated-document-admission-proof.json'), JSON.stringify({ results, revision: draft.revision,
+      inspection: draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 10000 }) }, null, 2));
+    await draft.close(); await workspace.close();
+  } finally { await runtime.close(); }
+});
+
+test('complete documents added during curation count toward the recipient allowance and block oversized publication', async () => {
+  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  try {
+    const workspace = await runtime.declare(f.spec, signal());
+    const draft = await workspace.createDraft({ ...request, outputName: 'oversized-document',
+      allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1000, overheadReserved: true } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+    const text = 'Complete fetched document\r\n'.repeat(1000);
+    const update = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000,
+      mutation: { kind: 'addDocument', document: { kind: 'suppliedDocument', id: 'large', role: 'evidence', origin: 'fixture', text } } }, signal());
+    assert(update.diagnostics.some(diagnostic => diagnostic.code === 'overBudget')); assert.equal(update.revision, 2);
+    const validation = await draft.validate(signal());
+    assert(validation.costs.some(cost => cost.id === 'document:large' && cost.units > 1000));
+    const result = await draft.finalize(signal()); assert.equal(result.kind, 'blocked');
+    await assert.rejects(access(join(f.base, 'out/oversized-document')), { code: 'ENOENT' });
+    await writeFile(join(f.base, 'curated-document-budget-proof.json'), JSON.stringify({ update, validation, result }, null, 2));
+    await draft.close(); await workspace.close();
+  } finally { await runtime.close(); }
+});
 
 test('drafts isolate revisioned mutations, required contents, budgets, inspection, and deterministic representations', async () => {
   const f = await fixture(), runtime = new SmipRuntime(f.options);

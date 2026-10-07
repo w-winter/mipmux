@@ -137,6 +137,8 @@ try {
 
 `task`, `constraints`, and required inputs are immutable. The handoff is advisory discovery context. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an optional source. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
 
+Use `addDocument` with a `suppliedDocument` and a unique ID to retain complete text fetched during curation. Added documents are immutable and count toward the recipient allowance.
+
 `draft.inspect` provides `metadata`, `costs`, and `material` views with `maxOutputBytes` and `continuation`. Material inspection names a material ID from metadata, such as `document:prior-report`. It pages complete lines against a material digest. Updates return the committed revision, changed-item costs, total measurement, and unresolved diagnostics. If detail does not fit, the receipt identifies incomplete detail and the costs view supplies the complete breakdown.
 
 The allowance acknowledges `floor(21 × UTF-8 bytes / 80)`, an estimate rather than an exact tokenizer count or a provider acceptance guarantee. A net allowance reserves system, task, tools, history, output, and delivery overhead before submission. Alternatively, supply a verified model-settings record and explicit reserves through the exported `Allowance` schema. A null allowance supports inspection, but finalization requires a known allowance. Over-budget results identify the excess and retain all material for explicit correction.
