@@ -33,7 +33,7 @@ test('MCP configuration rejects unsafe input before worker startup and keeps dia
       const agentDirectory = join(provider.directory, String(index)); await mkdir(agentDirectory, { mode: 0o700 });
       await writeFile(join(agentDirectory, 'mcp.json'), JSON.stringify(value));
       await assert.rejects(new PiRunner({ ...provider.config, mcp: { agentDirectory } }, supervisor).run(
-        { task: 'Inspect', constraints: '', roots: [], hints: [] }, { call: async () => {} }, new AbortController().signal, () => {}), { code });
+        { task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: [], hints: [] }, { call: async () => {} }, new AbortController().signal, () => {}), { code });
     }
     const agentDirectory = join(provider.directory, 'private'); await mkdir(agentDirectory, { mode: 0o700 });
     await assert.rejects(admitMcpConfiguration({ agentDirectory }, new AbortController().signal), { code: 'unreadableMcpConfiguration' });
@@ -66,7 +66,7 @@ test('host composition excludes MCP state and symlink targets from source admiss
   await writeFile(join(root, 'configuration.txt'), JSON.stringify({ mcpServers: { ctrl: server } }));
   await symlink(join(root, 'configuration.txt'), join(agentDirectory, 'mcp.json'));
   await writeFile(join(root, 'tokens.txt'), 'synthetic'); await symlink(join(root, 'tokens.txt'), join(agentDirectory, 'mcp-auth.json'));
-  const { runtime } = compose({ cachePath: join(provider.directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
+  const { runtime } = compose({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     discovery: { ...provider.config, mcp: { agentDirectory } }, search: null, git: null, defaultMaxOutputBytes: 10000 }, null);
   try {

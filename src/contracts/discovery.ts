@@ -2,9 +2,14 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { SafeCount, SHA256 } from './workspace.js';
 import { ReadRequest, StructureRequest, SearchRequest, ReadInput, StructureInput, SearchInput, Continuation } from './exploration.js';
-import { DraftInspection, DraftUpdate } from './context.js';
+import { ContextBuildRequest, DraftInspection, DraftUpdate } from './context.js';
 
 const closed = { additionalProperties: false };
+export const DiscoveryInput = Type.Object({ purpose: ContextBuildRequest.properties.purpose,
+  task: Type.String(), constraints: Type.String(), hints: Type.Array(Type.String()), roots: Type.Array(Type.String()),
+  initialContext: Type.String({ minLength: 1 }) }, closed);
+type DiscoveryInputFields = Static<typeof DiscoveryInput>;
+export type DiscoveryInput = { readonly [K in keyof DiscoveryInputFields]: Readonly<DiscoveryInputFields[K]> };
 export const Positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
 export const ScopedTree = Type.Object({ view: Type.Enum(['roots', 'files', 'folders', 'selected'], { default: 'files' }),
   depth: Type.Union([SafeCount, Type.Null()], { default: null }), maxOutputBytes: Positive,

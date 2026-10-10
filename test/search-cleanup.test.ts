@@ -12,7 +12,7 @@ test('search scratch cleanup handles success, query failure, cancellation and pa
   const base = await fs.mkdtemp(resolve('test-output/search-cleanup-'));
   const root = join(base, 'root'), out = join(base, 'out'), cache = join(base, 'cache');
   await fs.mkdir(root); await fs.mkdir(out); await fs.writeFile(join(root, 'file.txt'), 'needle\n');
-  const runtime = new SmipRuntime({ cachePath: cache, terminationGraceMs: 100, credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: cache, terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') } });
   const work = join(cache, 'v1/work'), sibling = join(work, 'sibling');

@@ -15,6 +15,8 @@ import type { DiscoveryRunner } from '../discovery/runner.js';
 import { ClientRuntime } from './client-runtime.js';
 
 export interface RuntimeOptions {
+  /** User-owned maximum packet allowance in utf8-21-over-80-v1 units; larger request allowances are rejected. */
+  readonly contextBudgetUnits: number;
   readonly cachePath: string;
   readonly nativeExecutable: string;
   readonly nativeEnvironment: Readonly<Record<string, string>>;
@@ -36,6 +38,9 @@ export class SmipRuntime {
   #closing: Promise<void> | null = null;
   constructor(readonly options: RuntimeOptions) {
     this.options = freeze(structuredClone(options));
+    if (!Number.isSafeInteger(options.contextBudgetUnits) || options.contextBudgetUnits < 1) {
+      throw new WorkspaceFailure('invalidContextBudget');
+    }
     for (const path of [options.cachePath, options.nativeExecutable, ...options.credentialPaths, ...(options.search ? [options.search.executable] : []), ...(options.git ? [options.git.executable] : [])]) {
       if (!isAbsolute(path)) throw new WorkspaceFailure('absoluteConfigurationRequired');
     }

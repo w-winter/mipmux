@@ -1,6 +1,6 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { Completion, DiscoveryCall, DiscoveryEvent, DiscoveryReceipt, RecoveryPolicy } from '../contracts/discovery.js';
+import { Completion, DiscoveryCall, DiscoveryEvent, DiscoveryInput, DiscoveryReceipt, RecoveryPolicy } from '../contracts/discovery.js';
 import { AdmittedMcp, McpReference } from './mcp-config.js';
 
 const closed = { additionalProperties: false };
@@ -14,7 +14,7 @@ export const piConfigValidator = Compile(PiConfig);
 const scope = { generation: Type.String({ minLength: 1 }), job: Type.String({ minLength: 1 }) };
 export const ParentMessage = Type.Union([
   Type.Object({ ...scope, kind: Type.Literal('start'), config: PiConfig,
-    input: Type.Object({ task: Type.String(), constraints: Type.String(), hints: Type.Array(Type.String()), roots: Type.Array(Type.String()) }, closed),
+    input: DiscoveryInput,
     prompt: Type.String(), mcp: Type.Union([AdmittedMcp, Type.Null()]) }, closed),
   Type.Object({ ...scope, kind: Type.Literal('abort') }, closed),
   Type.Object({ ...scope, kind: Type.Literal('toolResult'), id: Type.String(), value: Type.Unknown(), failed: Type.Boolean() }, closed),

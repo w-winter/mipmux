@@ -16,7 +16,7 @@ async function fixture() {
   await mkdir(root); await mkdir(out);
   const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
   const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
+    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' } });
   return { directory, root, out, runtime, run, spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } };

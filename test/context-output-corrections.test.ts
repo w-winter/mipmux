@@ -24,7 +24,7 @@ async function fixture() {
   const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
-  const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, git: { executable: git } });
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output };
@@ -168,7 +168,7 @@ test('current verification rejects self-consistent forged slices against the exa
         material.record.normalized = [{ start: 1, end }];
         manifest.request.requiredSources = [material.record.selection];
       }
-      const rendered = renderBundle({ request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff, materials });
+      const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff, materials });
       manifest.requestDigest = sha256(canonicalJSON(manifest.request));
       manifest.materials = rendered.records;
       manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
@@ -217,7 +217,7 @@ test('integrity reestablishes supplied patch input and receipt agreement without
         const saved = await loadVerifiedBundle(ready.directory);
         const material = saved.materials.find(item => item.record.kind === 'patch'); assert(material);
         const materials = saved.materials.map(item => item === material ? { ...item, record: patch } : item);
-        const rendered = renderBundle({ request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff, materials });
+        const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff, materials });
         manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
         manifest.accounting.bytes = rendered.measurement.bytes; manifest.accounting.units = rendered.measurement.units;
         await writeFile(join(ready.directory, 'context.md'), rendered.context); await writeFile(join(ready.directory, 'handoff.md'), rendered.handoff);

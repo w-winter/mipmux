@@ -17,6 +17,7 @@ export const HostConfig = Type.Object({ cachePath: absolute, nativeExecutable: a
   credentialPaths: Type.Array(absolute), search: Type.Union([executable, Type.Null()]),
   git: Type.Union([executable, Type.Null()]), discovery: Type.Union([PiConfig, Type.Null()]),
   defaultMaxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+  contextBudgetUnits: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
 }, closed);
 export type HostConfig = Static<typeof HostConfig>;
 export const hostValidator = Compile(HostConfig);
@@ -32,6 +33,7 @@ export async function loadJSON<S extends TSchema>(path: string, schema: S): Prom
 }
 export function compose(config: HostConfig, configurationPath: string | null) {
   const runtime = new SmipRuntime({ cachePath: config.cachePath, nativeExecutable: config.nativeExecutable,
+    contextBudgetUnits: config.contextBudgetUnits,
     nativeEnvironment: config.nativeEnvironment, terminationGraceMs: config.terminationGraceMs,
     credentialPaths: [...config.credentialPaths, ...(configurationPath === null ? [] : [configurationPath]),
       ...(config.discovery ? [config.discovery.authPath, config.discovery.modelsPath,

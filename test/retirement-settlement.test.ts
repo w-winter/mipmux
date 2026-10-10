@@ -20,7 +20,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
   await mkdir(root); await mkdir(outputRoot); await writeFile(join(root, 'file.txt'), 'source\n');
   const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
   const rg = process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg');
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable, nativeEnvironment: {}, terminationGraceMs: 100, search: { executable: rg } });
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let armed = false;

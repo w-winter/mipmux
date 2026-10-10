@@ -20,7 +20,7 @@ test('required full source, complete report and patch reach verified output; sta
   const runtime = new SmipRuntime({
     cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
-    credentialPaths: [],
+    contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   });

@@ -28,7 +28,7 @@ async function fixture(prefix: string) {
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');
   await writeFile(join(root, 'other.txt'), 'independent sibling body\n');
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: native, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   const request: ContextBuildRequest = { task: 'Task', constraints: '', purpose: 'investigation',
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [], discoveryHints: [],

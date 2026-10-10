@@ -10,6 +10,9 @@ import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import type { ProcessSpec } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import Type from 'typebox';
+import { Compile } from 'typebox/compile';
+import type { DiscoveryInput } from '../src/discovery/runner.js';
 
 test('scripted real SDK builder publishes and verifies complete source/report/task and retains a receipt', async () => {
   let ordinary = 0;
@@ -31,10 +34,13 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
   const source = '\uFEFFsource\r\nlast line', report = 'START\n' + 'complete report evidence\n'.repeat(4000) + 'END';
   await writeFile(join(root, 'file.txt'), source);
   await writeFile(join(root, 'oversize.txt'), 'OPTIONAL'.repeat(100000));
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), credentialPaths: [provider.config.authPath, provider.config.modelsPath], terminationGraceMs: 100,
+  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [provider.config.authPath, provider.config.modelsPath], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
-    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
+    const runner = new PiRunner(provider.config, runtime.supervisor), inputs: DiscoveryInput[] = [];
+    const client = runtime.createClient({ run: (input, tools, signal, progress) => {
+      inputs.push(input); return runner.run(input, tools, signal, progress);
+    } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] }, new AbortController().signal);
     const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', constraints: 'Keep complete evidence', purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }],
@@ -45,6 +51,14 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});
     assert.equal(result.state, 'ready', JSON.stringify(result));
     if (result.state !== 'ready') assert.fail('Not ready');
+    const firstMessage = Compile(Type.Object({ content: Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() }), { minItems: 1 }) }))
+      .Parse(provider.requests[0]!.messages[0]);
+    const input = inputs[0]!;
+    const prefix = input.initialContext + '\n\n## Assignment\n\n';
+    assert(firstMessage.content[0]!.text.startsWith(prefix), 'Initial context must be raw text, not an escaped JSON value');
+    const scoutInput: unknown = JSON.parse(firstMessage.content[0]!.text.slice(prefix.length));
+    assert.deepEqual(scoutInput, { purpose: request.purpose, task: request.task, constraints: request.constraints,
+      hints: request.discoveryHints, roots: ['r'] });
     await verifyBundle(result.bundle.directory);
     const packet = await readFile(join(result.bundle.directory, 'context.md'), 'utf8');
     for (const text of [source, report, request.task, request.constraints]) assert(packet.includes(text));
@@ -76,7 +90,7 @@ test('cancellation during blocked SDK preflight joins forced closure before any 
   await promisify(execFile)('mkfifo', [fifo]);
   provider.config.authPath = fifo;
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 }), abort = new AbortController();
-  const work = new PiRunner(provider.config, supervisor).run({ task: 'Task', constraints: '', roots: [], hints: [] },
+  const work = new PiRunner(provider.config, supervisor).run({ task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: [], hints: [] },
     { call: async () => { throw new Error('No tool permitted'); } }, abort.signal, () => {});
   // Opening the writer proves that the child is blocked in the matching read, without a timing delay.
   const writer = await open(fifo, 'w');
@@ -101,7 +115,7 @@ test('discovery material paging measures the real Pi result and returns every co
     : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
   let continuation: { digest: string; offset: number } | null = null;
   const root = join(provider.directory, 'source'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
+  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
@@ -112,7 +126,7 @@ test('discovery material paging measures the real Pi result and returns every co
       outputName: 'packet', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 10000, overheadReserved: true } }, new AbortController().signal);
     const runner = new PiRunner(provider.config, runtime.supervisor);
     const returned: string[] = [];
-    const result = await runner.run({ task: 'Inspect', constraints: '', hints: [], roots: ['r'] }, {
+    const result = await runner.run({ task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] }, {
       call: async (call, _signal, encode) => {
         assert(call.name === 'draft_inspect');
         const page = originalCall(draft.id, call.input, encode);
@@ -152,7 +166,7 @@ test('forced worker closure preserves observed preflight and waits for parent-ow
   const supervisor = new Supervisor({ terminationGraceMs: 0 }), abort = new AbortController();
   try {
     let finished = false;
-    const work = new PiRunner(provider.config, supervisor).run({ task: 'Task', constraints: '', hints: [], roots: [] },
+    const work = new PiRunner(provider.config, supervisor).run({ task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] },
       { call: async () => { entered(); await released; return { kind: 'metadata' }; } }, abort.signal, () => {});
     void work.then(() => { finished = true; });
     await entering; abort.abort(); await closure;
@@ -195,7 +209,7 @@ test('summary retry uses the same SDK stream observer, while incomplete output a
     if (scenario === 'clamping') provider.config.thinking = 'max';
     const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), abort = new AbortController();
     try {
-      const work = new PiRunner(provider.config, supervisor).run({ task: 'Task '.repeat(1000), constraints: '', hints: [], roots: ['r'] },
+      const work = new PiRunner(provider.config, supervisor).run({ task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] },
         { call: async () => { toolCalls++; return { kind: 'metadata', body: 'data '.repeat(1000) }; } }, abort.signal, () => {});
       if (scenario === 'cancel' || scenario === 'compactionCancel') { await started; abort.abort(); }
       const result = await work;
@@ -223,7 +237,7 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'Completed handoff', stop: 'end_turn', tokens: 10 });
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
+  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor)), other = runtime.createClient(null);

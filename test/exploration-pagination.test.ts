@@ -11,7 +11,7 @@ test('real search modes and output continuations preserve complete counts and re
   const base = await mkdtemp(resolve('test-output/pages-'));
   const root = join(base, 'root'); await mkdir(root); await mkdir(join(base, 'out'));
   for (const name of ['a.txt', 'b.txt', 'c.txt']) await writeFile(join(root, name), '\uFEFFcafé\r\n ++ \rx café x\ncaféteria\nlast');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
     search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') } });
   try {

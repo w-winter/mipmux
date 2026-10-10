@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { ContextBuildRequest, Handoff, Manifest } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, Handoff, Manifest } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { identity, type Material } from './material-store.js';
@@ -25,6 +25,7 @@ export class FinalizationOperation {
   constructor(
     operation: WorkspaceOperation,
     request: ContextBuildRequest,
+    codemapMode: CodemapMode,
     handoff: Handoff | null,
     materials: readonly Material[],
     revision: number,
@@ -34,6 +35,7 @@ export class FinalizationOperation {
     this.result = this.#run(
       operation,
       request,
+      codemapMode,
       handoff,
       materials,
       revision,
@@ -48,6 +50,7 @@ export class FinalizationOperation {
   async #run(
     owner: WorkspaceOperation,
     request: ContextBuildRequest,
+    codemapMode: CodemapMode,
     handoff: Handoff | null,
     materials: readonly Material[],
     revision: number,
@@ -58,7 +61,7 @@ export class FinalizationOperation {
     const bridge = owner.runtime.makeBridge();
     try {
       await revalidateMaterials(operation, materials);
-      const rendered = renderBundle({ request, handoff, materials, inventory: owner.snapshot });
+      const rendered = renderBundle({ request, handoff, codemapMode, materials, inventory: owner.snapshot });
       if (rendered.diagnostics.length || handoff === null || rendered.measurement.allowance === null) {
         return {
           kind: 'blocked',
@@ -70,7 +73,8 @@ export class FinalizationOperation {
       }
       const { generation, ...inventory } = owner.snapshot;
       const manifest: Manifest = {
-        schemaVersion: 1,
+        schemaVersion: 2,
+        codemapMode,
         request,
         requestDigest: sha256(canonicalJSON(request)),
         inventory,

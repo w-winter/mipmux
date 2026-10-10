@@ -49,7 +49,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
   const options = {
     cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
-    credentialPaths: [],
+    contextBudgetUnits: 1000000, credentialPaths: [],
     git: { executable: git },
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },

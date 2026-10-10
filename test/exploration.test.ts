@@ -14,7 +14,7 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
   await writeFile(join(base, 'root/B.swift'), 'struct PeerRecord {\n let owner: OwnerRecord\n}\n');
   await writeFile(join(base, 'root/C.swift'), 'struct PeerRecord {\n let label: String\n}\n');
   const executable = process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
     search: { executable } });

@@ -64,7 +64,7 @@ test('two-phase finalization across many roots completes under a controlled desc
     await mkdir(absolutePath); await writeFile(join(absolutePath, 'file.txt'), 'body ' + name + '\n');
     roots.push({ name, absolutePath });
   }
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: limited, nativeEnvironment: environment(limit) });
   const request: ContextBuildRequest = { task: 'Task', constraints: '', purpose: 'investigation', documents: [], patches: [], discoveryHints: [],
     requiredSources: roots.map(root => ({ kind: 'full', source: { root: root.name, path: 'file.txt' } })), outputName: 'packet',

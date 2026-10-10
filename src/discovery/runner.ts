@@ -1,12 +1,6 @@
-import type { DiscoveryCall, DiscoveryEvent, DiscoveryReceipt } from '../contracts/discovery.js';
+import type { DiscoveryCall, DiscoveryEvent, DiscoveryInput, DiscoveryReceipt } from '../contracts/discovery.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
-
-export interface DiscoveryInput {
-  readonly task: string;
-  readonly constraints: string;
-  readonly hints: readonly string[];
-  readonly roots: readonly string[];
-}
+export type { DiscoveryInput } from '../contracts/discovery.js';
 export interface DiscoveryTools {
   /** Measures paged results through the runner's complete serialized tool-result encoding. */
   call(call: DiscoveryCall, signal: AbortSignal, encode: ResultEncoding): Promise<unknown>;

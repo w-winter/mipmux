@@ -6,6 +6,7 @@ import { inventoryDigest } from '../workspace/artifact-store.js';
 import { codemapRepresentation, identity, type Material, normalizeRanges, sourceId } from './material-store.js';
 import { renderBundle } from './render.js';
 import { readRegularFile } from '../runtime/host-files.js';
+import { StructureIndex } from '../workspace/structure-index.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -25,6 +26,12 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     throw new WorkspaceFailure('invalidManifest');
   }
   if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
+  const inventoryPaths = new Set<string>();
+  for (const entry of manifest.inventory.entries) {
+    const id = sourceId(entry);
+    if (inventoryPaths.has(id)) throw new WorkspaceFailure('bundleIntegrityFailed');
+    inventoryPaths.add(id);
+  }
   const context = await readBundleFile(directory, 'context.md', signal),
     handoff = await readBundleFile(directory, 'handoff.md', signal);
   requireEqual(identity(context), manifest.files.context);
@@ -33,6 +40,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   requireEqual(inventoryDigest(manifest.inventory), manifest.inventory.inventoryDigest);
   const materials = decodeMaterials(manifest, context);
   const rendered = renderBundle({
+    codemapMode: manifest.codemapMode,
     request: manifest.request,
     inventory: manifest.inventory,
     handoff: manifest.handoff,
@@ -109,7 +117,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
   });
   for (const selection of manifest.request.requiredSources) {
     const material = materials.find((material) => material.record.id === sourceId(selection.source));
-    if (material?.record.kind !== 'source' || !material.record.required) {
+    if (material?.record.kind !== 'source' || material.record.selectionOrigin !== 'explicit' || !material.record.required) {
       throw new WorkspaceFailure('bundleIntegrityFailed');
     }
     requireEqual(material.record.selection, selection);
@@ -123,6 +131,16 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
     const material = materials.find((material) => material.record.id === 'patch:' + input.id);
     if (material?.record.kind !== 'patch') throw new WorkspaceFailure('bundleIntegrityFailed');
     requireEqual(material.record.receipt.input, input);
+  }
+  const sources = materials.flatMap(material => material.record.kind === 'source' ? [material.record] : []);
+  const explicit = sources.filter(record => record.selectionOrigin === 'explicit');
+  const inferred = sources.filter(record => record.selectionOrigin === 'inferred').map(record => record.id).sort();
+  if (manifest.codemapMode === 'manual') requireEqual(inferred, []);
+  else {
+    if (explicit.some(record => record.selection.kind === 'codemap')) throw new WorkspaceFailure('bundleIntegrityFailed');
+    const seeds = explicit.map(record => record.selection.source);
+    const expected = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds).map(sourceId).sort() : [];
+    requireEqual(inferred, expected);
   }
   return materials;
 }

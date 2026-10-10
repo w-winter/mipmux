@@ -19,6 +19,9 @@ export const SourceSelection = Type.Union([
   Type.Object({ kind: Type.Literal('codemap'), source: SourcePath }, closed),
 ]);
 export type SourceSelection = Static<typeof SourceSelection>;
+/** Automatic mode derives one-hop related codemaps; manual mode retains explicit material only. */
+export const CodemapMode = Type.Enum(['automatic', 'manual']);
+export type CodemapMode = Static<typeof CodemapMode>;
 const SuppliedDocument = Type.Object({
   kind: Type.Literal('suppliedDocument'),
   id: Type.String({ minLength: 1 }),
@@ -88,6 +91,8 @@ export const DraftUpdate = Type.Object({
   mutation: Type.Union([
     Type.Object({ kind: Type.Literal('upsert'), selection: SourceSelection }, closed),
     Type.Object({ kind: Type.Literal('remove'), source: SourcePath }, closed),
+    Type.Object({ kind: Type.Literal('clearCodemaps') }, closed),
+    Type.Object({ kind: Type.Literal('clearSources') }, closed),
     Type.Object({ kind: Type.Literal('handoff'), handoff: Handoff }, closed),
     Type.Object({ kind: Type.Literal('addDocument'), document: SuppliedDocument }, closed),
   ]),
@@ -101,17 +106,21 @@ export const DraftInspection = Type.Union([
 export type DraftInspection = Static<typeof DraftInspection>;
 export const Span = Type.Object({ offset: SafeCount, length: SafeCount, sha256: SHA256 }, closed);
 export type Span = Static<typeof Span>;
+const sourceRecord = {
+  kind: Type.Literal('source'), id: Type.String(), identity: SourceIdentity,
+  mode: Type.Enum(['100644', '100755']), spans: Type.Array(Span),
+};
 export const MaterialRecord = Type.Union([
-  Type.Object({
-    kind: Type.Literal('source'),
-    id: Type.String(),
+  Type.Object({ ...sourceRecord,
+    selectionOrigin: Type.Literal('explicit'),
     required: Type.Boolean(),
     selection: SourceSelection,
-    identity: SourceIdentity,
-    mode: Type.Enum(['100644', '100755']),
     normalized: Type.Array(Type.Object({ start: positive, end: positive }, closed)),
     artifactKey: Type.Union([Type.Null(), ArtifactKey]),
-    spans: Type.Array(Span),
+  }, closed),
+  Type.Object({ ...sourceRecord,
+    selectionOrigin: Type.Literal('inferred'), required: Type.Literal(false),
+    selection: SourceSelection.anyOf[2], normalized: Type.Tuple([]), artifactKey: ArtifactKey,
   }, closed),
   Type.Object({
     kind: Type.Literal('document'),
@@ -127,7 +136,8 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(1),
+  schemaVersion: Type.Literal(2),
+  codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,
   inventory: Type.Omit(InventorySnapshot, ['generation']),

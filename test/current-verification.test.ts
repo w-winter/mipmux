@@ -28,7 +28,7 @@ test('current verification admits only recorded material, applies current denies
   const options = {
     cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
-    credentialPaths: [],
+    contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };
@@ -152,7 +152,7 @@ test('current verification cancellation and runtime shutdown join native work an
   const options = {
     cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
-    credentialPaths: [],
+    contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };

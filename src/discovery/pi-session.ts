@@ -148,7 +148,8 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     }
     signal.throwIfAborted();
     try {
-      await session.prompt(JSON.stringify(input), { expandPromptTemplates: false,
+      const { initialContext, ...assignment } = input;
+      await session.prompt(initialContext + '\n\n## Assignment\n\n' + JSON.stringify(assignment), { expandPromptTemplates: false,
         preflightResult: result => { if (result === 'started') observe({ kind: 'lifecycle', stage: 'accepted' }); } });
       observe({ kind: 'prompt', outcome: 'resolved' }); promptObserved = true;
     }

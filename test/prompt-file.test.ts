@@ -7,11 +7,12 @@ import { readFile, writeFile } from 'node:fs/promises';
 import fsPromises from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
 import { join } from 'node:path';
+import type { DiscoveryInput } from '../src/discovery/runner.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
-const input = { task: 'Inspect', constraints: '', roots: ['r'], hints: [] };
+const input: DiscoveryInput = { task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] };
 const digest = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 test('one runner snapshots configured prompt bytes per job and sees edits on the next job', async () => {
   let release!: () => void, entered!: () => void;

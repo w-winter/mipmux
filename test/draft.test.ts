@@ -38,7 +38,7 @@ async function fixture() {
   const options = {
     cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
-    credentialPaths: [],
+    contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };

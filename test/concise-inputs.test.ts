@@ -24,7 +24,7 @@ test('concise MCP exploration matches explicit options and preserves validation,
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    terminationGraceMs: 100, credentialPaths: [], search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') },
+    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') },
     git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
@@ -93,7 +93,7 @@ test('scout exploration normalizes concise inputs before crossing parent IPC', a
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   const calls: DiscoveryCall[] = [];
   try {
-    const result = await new PiRunner(provider.config, supervisor).run({ task: 'Inspect', constraints: '', roots: ['r'], hints: [] },
+    const result = await new PiRunner(provider.config, supervisor).run({ task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] },
       { call: async call => { calls.push(call); return { kind: 'observed' }; } }, new AbortController().signal, () => {});
     assert.equal(result.kind, 'complete'); assert.equal(calls.length, requests.length);
     assert.deepEqual(calls[0], { name: 'get_file_tree', input: { view: 'files', depth: null, continuation: null, maxOutputBytes: 3000 } });

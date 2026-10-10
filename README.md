@@ -57,6 +57,7 @@ Importing `smip` starts no processes and creates no storage. Construct `SmipRunt
 import { SmipRuntime } from 'smip';
 
 const runtime = new SmipRuntime({
+  contextBudgetUnits: 200000,
   cachePath: '/var/tmp/private-smip-cache',
   nativeExecutable: '/opt/smip/libexec/darwin-arm64/SmipBridge',
   nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'auto' },
@@ -135,13 +136,15 @@ try {
 }
 ```
 
-`task`, `constraints`, and required inputs are immutable. The handoff is advisory discovery context. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an optional source. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
+`task`, `constraints`, and required inputs are immutable. The handoff is advisory discovery context. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an explicit optional selection. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
+
+Drafts start in automatic mode unless a required source is a codemap. Automatic mode adds related codemaps for full and sliced sources. A codemap upsert or `clearCodemaps` enters manual mode; `clearSources` restores the required source baseline. Clear operations retain documents, patches and the handoff. [Selection contracts](docs/contracts.md#drafts-and-material-ownership) describe promotion, inferred-source removal and comparison recovery.
 
 Use `addDocument` with a `suppliedDocument` and a unique ID to retain complete text fetched during curation. Added documents are immutable and count toward the recipient allowance.
 
 `draft.inspect` provides `metadata`, `costs`, and `material` views with `maxOutputBytes` and `continuation`. Material inspection names a material ID from metadata, such as `document:prior-report`. It pages complete lines against a material digest. Updates return the committed revision, changed-item costs, total measurement, and unresolved diagnostics. If detail does not fit, the receipt identifies incomplete detail and the costs view supplies the complete breakdown.
 
-The allowance acknowledges `floor(21 × UTF-8 bytes / 80)`, an estimate rather than an exact tokenizer count or a provider acceptance guarantee. A net allowance reserves system, task, tools, history, output, and delivery overhead before submission. Alternatively, supply a verified model-settings record and explicit reserves through the exported `Allowance` schema. A null allowance supports inspection, but finalization requires a known allowance. Over-budget results identify the excess and retain all material for explicit correction.
+The allowance acknowledges `floor(21 × UTF-8 bytes / 80)`, an estimate rather than an exact tokenizer count or a provider acceptance guarantee. Set `contextBudgetUnits` in the host configuration to the maximum assembly allowance you want callers to use. Larger requested allowances fail with `assemblyBudgetExceeded`, including those derived from a recipient's larger context window. A net allowance reserves system, task, tools, history, output, and delivery overhead before submission. Alternatively, supply a verified model-settings record and explicit reserves through the exported `Allowance` schema. A null allowance supports inspection, but finalization requires a known allowance. Over-budget results identify the excess and retain all material for explicit correction.
 
 Ready output contains `context.md`, `handoff.md`, and `manifest.json` beneath the declared output directory. Send only `context.md` to the recipient. It presents the architectural handoff as Markdown paragraphs and lists. A tree identifies selected material, and each body has a heading with its path or supplied ID. All material bodies appear in fenced blocks, followed by the complete original task and constraints. Patch summaries identify the comparison meaning, scope, requested and resolved revisions, worktree paths, coverage and exclusions. The coordinator records retain byte spans, hashes, accounting and complete comparison receipts, including payload identities, per-path policies and target fingerprints. Output creation is exclusive. Readback and final source checks precede manifest publication.
 
@@ -187,6 +190,7 @@ Host configuration uses this shape. The numbers are example host choices, not in
   "search": null,
   "git": null,
   "defaultMaxOutputBytes": 12000,
+  "contextBudgetUnits": 200000,
   "discovery": {
     "provider": "openai-codex",
     "model": "gpt-6.1-sol",

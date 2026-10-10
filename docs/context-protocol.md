@@ -1,6 +1,8 @@
 # Deliver a context packet
 
-Declare named absolute source roots and an existing output directory. Supply the complete recipient assignment as `task`, complete constraints, required representations/documents/patches, and an allowance that reserves recipient conversation and delivery overhead. Use supplied documents for intentionally included prior reports outside source inventory; their origins are labels, not filesystem access grants.
+Declare named absolute source roots and an existing output directory. Supply the complete assignment as `task`, complete constraints, required representations/documents/patches, and a numeric assembly allowance. Use supplied documents for intentionally included prior reports outside source inventory; their origins are labels, not filesystem access grants.
+
+Read the operator's `contextBudgetUnits` from the host configuration and use it as the numeric assembly allowance. A smaller allowance requires the user's instruction. Context assembly needs the task, sources and budget; choosing a receiving model belongs to delivery. Pin source representations only when the assignment requires them. A changed file does not by itself require a full-file selection; discovery can choose appropriate implementation slices while retaining complete required patches.
 
 With MCP, call `workspace_declare` and save the returned ID. Call `context_builder` with that `workspaceId`, a caller-generated `requestId`, and the context request. Poll with `context_builder_wait` using the same job ID; a wait timeout is not a reason to submit another builder request. `context_builder_result` returns the current snapshot without consuming it. `context_builder_cancel` requests job cancellation; cancelling a wait affects only that observer.
 
@@ -20,7 +22,9 @@ For `ready`, inspect `handoff.md` and the receipt for clarification, ambiguities
 
 Verify saved bytes with `verify --bundle /absolute/bundle --mode integrity`. Before making an unchanged-source reuse claim, run `verify --bundle /absolute/bundle --mode current --config /absolute/config.json`. The current check covers delivered local material and relevant comparisons, not every unselected file in the original discovery inventory. Neither operation modifies the bundle.
 
-Send only the verified absolute path to `context.md` through the recipient integration's `inputFiles` argument. That file contains all selected material and the final original task and constraints. Keep `handoff.md`, `manifest.json` and the terminal receipt with the coordinator. Do not rewrite the packet in place or add a competing task attachment. Reserve any dispatch-message and attachment-wrapper overhead separately from smip's complete-file estimate.
+Before dispatch, check that the finished packet plus system instructions, conversation, tools, output reserve and delivery wrappers fits the chosen recipient. If it does not fit, report a delivery blocker and retain the packet. A different assembly budget requires a user decision and a new build.
+
+Send only the verified absolute path to `context.md` through the recipient integration's `inputFiles` argument. That file contains all selected material and the final original task and constraints. Keep `handoff.md`, `manifest.json` and the terminal receipt with the coordinator. Do not rewrite the packet in place or add a competing task attachment. Account for dispatch-message and attachment-wrapper overhead separately from smip's complete-file estimate.
 
 The existing Pi integration reads attachments through its file-argument path. A downstream answer or delivery acknowledgement is separate from smip readiness. The operator must establish complete attachment delivery and normal recipient completion for the chosen integration; the smip receipt certifies only its own recorded work and saved packet.
 

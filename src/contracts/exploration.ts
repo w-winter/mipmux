@@ -56,7 +56,7 @@ export function toolDescription(name: string): string {
     case 'read_file': return 'Read a root-qualified file. Example input: {"root":"app","path":"src/main.ts"}. Defaults to the whole file, first page.';
     case 'get_code_structure': return 'Inspect structural maps for file/directory seeds. Defaults: no relationship expansion, depth 1, first page.';
     case 'file_search': return 'Search literal content with case-insensitive substring matching. Example input: {"query":{"text":"greet"}}. Explicit regex/glob kinds are supported; glob defaults to path search. Filters and context are optional.';
-    case 'draft_update': return 'Mutate a draft at expectedRevision: upsert/remove a source, commit a handoff, or addDocument with complete suppliedDocument text, a unique id, role and origin. Added documents are immutable.';
+    case 'draft_update': return 'Mutate at expectedRevision: upsert/remove source, clearCodemaps, clearSources, handoff, or addDocument. Full/slices preserve mode; codemap upserts enter manual mode. Removing explicit source may leave an inferred codemap; inferred-only removal is a no-op. clearCodemaps enters manual mode and removes optional codemaps; clearSources restores required sources and their initial mode. Both retain documents, patches and handoff. For unavailable inferred targets or inferred comparison mismatches, use clearCodemaps and add admissible codemaps with target evidence. Added documents are complete immutable suppliedDocument text with unique id, role and origin.';
     default: return `smip ${name}`;
   }
 }

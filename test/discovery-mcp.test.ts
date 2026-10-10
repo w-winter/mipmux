@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { verifyBundle } from '../src/index.js';
 import { compose } from '../src/cli/config.js';
+import type { DiscoveryInput } from '../src/discovery/runner.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { toolSchemas } from '../src/contracts/discovery.js';
@@ -45,7 +46,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source evidence\n');
   const discovery = { ...provider.config, mcp };
-  const { runtime, client } = compose({ cachePath: join(provider.directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
+  const { runtime, client } = compose({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     discovery, search: null, git: null, defaultMaxOutputBytes: 10000 }, null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
@@ -92,7 +93,7 @@ test('missing selected tools, unavailable servers and authentication failure sto
     try {
       const mcp = await configure(provider.directory, server.url);
       const discovery = { ...provider.config, mcp };
-      const result = await new PiRunner(discovery, supervisor).run({ task: 'Inspect', constraints: '', hints: [], roots: [] },
+      const result = await new PiRunner(discovery, supervisor).run({ task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] },
         { call: async () => { throw new Error('No parent tool permitted'); } }, new AbortController().signal, () => {});
       assert.equal(result.kind, 'failed'); assert(result.kind === 'failed'); assert.equal(result.code, 'mcpToolsUnavailable');
       assert.equal(result.receipt.mcp?.readiness.state, 'unavailable'); assert.equal(result.receipt.mcp?.shutdown, 'dispatched');
@@ -112,7 +113,7 @@ test('cancellation during MCP startup or a held call closes the worker and permi
       const mcp = await configure(provider.directory, server.url), discovery = { ...provider.config, mcp };
       const runner = new PiRunner(discovery, supervisor);
       const tools = { call: async () => { throw new Error('No parent tool permitted'); } };
-      const input = { task: 'Inspect', constraints: '', hints: [], roots: [] };
+      const input: DiscoveryInput = { task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] };
       const work = runner.run(input, tools, abort.signal, () => {});
       await server.held; abort.abort();
       const cancelled = await work; assert.equal(cancelled.kind, 'cancelled');

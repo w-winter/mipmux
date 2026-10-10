@@ -19,7 +19,7 @@ test('warming satisfies a later barrier, cancelled observers release only their 
   await writeFile(join(root, 'model.swift'), 'struct First {\n let value: String\n}');
   const entered = barrier(), resume = barrier();
   let blocked = false, extractions = 0;
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends SmipRuntime {
     override makeBridge() {
@@ -79,7 +79,7 @@ test('different declarations share pending extraction while public and operation
   await writeFile(join(base, 'root/shared.swift'), 'struct SharedRecord {\n let value: String\n}');
   const extractionEntered = barrier(), releaseExtraction = barrier(), secondRead = barrier();
   let extractions = 0, reads = 0;
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends SmipRuntime {
     override makeBridge() {
@@ -121,7 +121,7 @@ test('settled inventory distinguishes unavailable acquisition, decoding, unsuppo
   await writeFile(join(base, 'root/cases/invalid.swift'), Buffer.from([255]));
   await writeFile(join(base, 'root/cases/empty.swift'), '');
   await writeFile(join(base, 'root/cases/note.txt'), 'unsupported');
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends SmipRuntime {
     override makeBridge() {
@@ -154,7 +154,7 @@ test('closing a held physical operation joins pending work and leaves a sibling 
   await writeFile(join(base, 'root/file.txt'), 'sibling body');
   const entered = barrier(), resume = barrier(), aborted = barrier();
   let hold = false;
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} };
   class Runtime extends SmipRuntime {
     override makeBridge() {

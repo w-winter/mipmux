@@ -47,15 +47,26 @@ export function codemapRepresentation(entry: InventoryEntry | undefined, source:
     ].join('\n') + entry.structural.record.projection.apiDescription,
   };
 }
-export async function acquireSource(
-  operation: WorkspaceOperation,
-  selection: SourceSelection,
-  required: boolean,
-): Promise<Material> {
-  const source = await operation.readSource(selection.source);
+type SourceAcquisition =
+  | { readonly selectionOrigin: 'explicit'; readonly selection: SourceSelection; readonly required: boolean }
+  | { readonly selectionOrigin: 'inferred'; readonly source: SourcePath };
+
+export async function acquireSource(operation: WorkspaceOperation, input: SourceAcquisition): Promise<Material> {
+  const path = input.selectionOrigin === 'explicit' ? input.selection.source : input.source;
+  const source = await operation.readSource(path);
   const text = prepareText(source.bytes);
-  const record: Extract<MaterialRecord, { kind: 'source' }> = {
+  if (input.selectionOrigin === 'inferred') {
+    const entry = operation.snapshot.entries.find(entry => entry.root === path.root && entry.path === path.path);
+    const representation = codemapRepresentation(entry, path);
+    if (!representation) throw new WorkspaceFailure('codemapUnavailable', path);
+    return freeze({ record: { kind: 'source', id: sourceId(path), selectionOrigin: 'inferred', required: false,
+      selection: { kind: 'codemap', source: path }, identity: source.identity, mode: descriptorGitMode(source.fingerprint.mode),
+      normalized: [], artifactKey: representation.key, spans: [] }, bodies: [representation.body] });
+  }
+  const { selection, required } = input;
+  const record: Extract<MaterialRecord, { kind: 'source'; selectionOrigin: 'explicit' }> = {
     kind: 'source',
+    selectionOrigin: 'explicit',
     id: sourceId(selection.source),
     required,
     selection,

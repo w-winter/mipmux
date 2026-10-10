@@ -39,7 +39,7 @@ fs.readFile = (path, ...args) => {
 syncBuiltinESMExports();
 const abort = new AbortController();
 const runtime = new SmipRuntime({ cachePath: join(directory, 'unused-cache'), nativeExecutable: '/unavailable-native',
-  nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 0 });
+  nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 0 });
 let closing = null;
 process.on('message', async message => {
   if (message === 'cancel') abort.abort();

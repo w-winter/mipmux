@@ -39,7 +39,7 @@ export async function prepareDeliveryFixture() {
     discoveryHints: ['All required material is fixed. Inspect the complete admitted materials and commit the architectural handoff before validating.'],
     allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true }, outputName: 'packet' };
   const input = { workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'public-delivery', request };
-  const options: RuntimeOptions = { cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
+  const options: RuntimeOptions = { cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`libexec/${process.platform}-${process.arch}/SmipBridge`), nativeEnvironment: {}, git: { executable: git } };
   const handoff: Handoff = { clarifiedTask: 'Inspect the complete public mixed-material packet.', architecture: 'Swift types and text evidence form a synthetic review packet.',
     relationships: ['Summary supplies retained syntactic structure; Delivery supplies complete source; the patch deletes old evidence and adds an untracked file.'], ambiguities: [] };

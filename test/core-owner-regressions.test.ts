@@ -20,7 +20,7 @@ async function fixture() {
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');
   return { base, root, spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot },
-    options: { cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+    options: { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
       nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } } };
 }

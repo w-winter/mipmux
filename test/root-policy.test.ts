@@ -17,7 +17,7 @@ test('ordered ignore negation, excluded parents, nested aliases and new control 
   await writeFile(join(root, 'denied/keep.txt'), 'denied');
   await writeFile(join(root, 'data.swift'), 'struct Record {\n let value: String\n}');
   await mkdir(join(root, 'fresh')); await writeFile(join(root, 'fresh/model.swift'), 'struct Model {\n let value: String\n}');
-  const runtime = new SmipRuntime({ cachePath: join(root, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: join(root, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   const spec = { roots: [{ name: 'outer', absolutePath: root }, { name: 'inner', absolutePath: join(root, 'denied') }], exclusions: [], outputRoot: join(root, 'out') };
   try {
@@ -52,7 +52,7 @@ test('credential denies through a containing root alias apply to ordinary declar
   await writeFile(join(root, 'nested/private.txt'), 'synthetic denied body');
   await writeFile(join(root, 'nested/public.txt'), 'admitted');
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100,
-    credentialPaths: [join(base, 'credential-link')],
+    contextBudgetUnits: 1000000, credentialPaths: [join(base, 'credential-link')],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   const signal = new AbortController().signal;
@@ -86,7 +86,7 @@ test('later control negation reopens a parent before admitting its children', as
     await writeFile(join(root, directory, 'cache/file.txt'), 'public');
     await writeFile(join(root, directory, 'cache/\t'), 'ignored tab name');
   }
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, credentialPaths: [],
+  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);

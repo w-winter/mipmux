@@ -20,7 +20,7 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
     const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
     await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'body');
     const options = { nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-      nativeEnvironment: {}, credentialPaths: [], cachePath: join(provider.directory, 'cache'), terminationGraceMs: 100 };
+      nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], cachePath: join(provider.directory, 'cache'), terminationGraceMs: 100 };
     let pause = true;
     class Runtime extends SmipRuntime {
       override makeBridge() {
