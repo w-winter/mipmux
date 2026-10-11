@@ -1,6 +1,7 @@
 import Type, { type Static } from 'typebox';
 
 const wireCodes = [
+  'ambiguousGitTopology', 'policyInputDenied', 'policyChanged', 'ignoreControlTooLarge', 'decodeFailed',
   'duplicateRoot', 'rootChanged', 'invalidFilenameEncoding', 'sourceChanged',
   'nonRegularFile', 'invalidOutputCapability', 'invalidRootHandle', 'invalidSourceCapability',
   'invalidExportHandle', 'outputChanged', 'invalidPath', 'publicationUncertain',

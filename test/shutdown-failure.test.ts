@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spawn } from 'node:child_process';
@@ -12,7 +13,7 @@ import { createMcpServer } from '../src/mcp/server.js';
 
 for (const trigger of ['EOF', 'SIGINT'] as const) test(`stdio ${trigger} propagates joined transport failure through the sanitized CLI outcome`, async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/shutdown-failure-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-failure-'));
   const config = join(directory, 'config.json'), proof = join(directory, 'proof.txt');
   await writeFile(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
@@ -41,7 +42,7 @@ for (const trigger of ['EOF', 'SIGINT'] as const) test(`stdio ${trigger} propaga
 
 test('MCP server-close rejects the exported closed outcome after joining application and client resources', async t => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/shutdown-application-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-application-'));
   const root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'source');
   const processes: Promise<unknown>[] = [];
@@ -75,7 +76,7 @@ test('MCP server-close rejects the exported closed outcome after joining applica
 
 test('a reported malformed MCP input does not turn later successful EOF cleanup into a shutdown failure', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/shutdown-protocol-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-protocol-'));
   const config = join(directory, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
@@ -100,7 +101,7 @@ test('a reported malformed MCP input does not turn later successful EOF cleanup 
 
 test('runtime joins all real child closures after a process cleanup failure', async t => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/shutdown-processes-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-processes-'));
   const root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'source');
   const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,

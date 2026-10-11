@@ -12,7 +12,7 @@ Swift Crypto 4.5.1 and its resolved Swift ASN.1 dependency have Apache-2.0 licen
 
 TypeBox 1.3.27 uses the MIT license, copied to `ThirdPartyLicenses/typebox/LICENSE`. `ThirdPartyLicenses/inventory.json` records the origin and SHA-256 of every copied license or notice. Operating-system and Swift runtime libraries remain separately installed runtime requirements.
 
-The `ignore` 7.0.12 dependency evaluates repository-local ignore rules under the MIT license, copied to `ThirdPartyLicenses/ignore/LICENSE-MIT`.
+Pi depends on `ignore` 7.0.8 under the MIT license, copied to `ThirdPartyLicenses/ignore/LICENSE-MIT`. Workspace ignore evaluation uses the retained native RPCE implementation.
 
 Pi coding-agent, AI and agent-core 1.0.2 run isolated discovery sessions under the MIT license. Their upstream license at revision `cd32f7725fdbddbaecdff5b1e68491563394e0ca` is copied to `ThirdPartyLicenses/pi/LICENSE`. Pi provides the session, model transport and same-model recovery APIs; the parent smip process retains filesystem and publication authority.
 

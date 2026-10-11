@@ -1,5 +1,6 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { Client } from '@modelcontextprotocol/client';
@@ -17,7 +18,7 @@ interface HeldStartupRender { signal: AbortSignal | null }
 
 test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap markers and selected descendants', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/file-tree-port-'));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-file-tree-port-')));
   const root = join(base, 'r'), other = join(base, 's'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(join(root, 'zone/child'), { recursive: true });
   await mkdir(join(other, 'zone'), { recursive: true }); await mkdir(output);
@@ -66,7 +67,7 @@ test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap ma
 
 for (const nativeKind of ['renderFileTree', 'queryStructure'] as const) test(`closing a workspace operation joins its admitted ${nativeKind} work and leaves a sibling usable`, async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/tree-close-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-tree-close-'));
   const root = join(base, 'source'), output = join(base, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source\n');
   let entered!: () => void, release!: () => void, hold = true;
@@ -114,7 +115,7 @@ for (const nativeKind of ['renderFileTree', 'queryStructure'] as const) test(`cl
 
 test('job cancellation reaches a held startup tree before scout dispatch and terminal settlement', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/startup-tree-cancel-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-startup-tree-cancel-'));
   const root = join(base, 'source'), output = join(base, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source\n');
   let entered!: () => void, release!: () => void, scoutCalls = 0;

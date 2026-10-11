@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -30,7 +31,7 @@ const handoff = { clarifiedTask: 'Inspect the graph', architecture: 'Seed refere
 
 async function fixture(beforeRead?: (path: string, pinned: boolean) => Promise<void>) {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/automatic-codemaps-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-automatic-codemaps-'));
   for (const name of ['r', 's', 'out']) await mkdir(join(directory, name));
   const files = {
     'Seed.swift': 'struct SeedRecord {\n let peer: PeerRecord\n let shared: SharedRecord\n let missing: MissingRecord\n}\n',
@@ -162,7 +163,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 4);
+    assert.equal(ready.manifest.schemaVersion, 5);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);

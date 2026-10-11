@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -8,7 +9,7 @@ import { SmipRuntime } from '../src/index.js';
 
 test('initial context supplies all roots, explicit inputs and budget facts without embedding document bodies', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/initial-context-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-initial-context-'));
   for (const name of ['r', 's', 'out']) await mkdir(join(directory, name));
   await writeFile(join(directory, 'r/notes.txt'), 'REQUIRED_DOCUMENT_BODY_NOT_STARTUP_METADATA');
   await writeFile(join(directory, 's/other.txt'), 'Other source');

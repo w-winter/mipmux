@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { access, mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -29,7 +30,7 @@ const request: ContextBuildRequest = {
 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/draft-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-draft-'));
   await mkdir(join(base, 'root'));
   await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/a.swift'), 'struct Alpha {\r\n let value: String\r}\n');

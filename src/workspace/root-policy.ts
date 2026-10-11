@@ -1,8 +1,8 @@
-import ignore from 'ignore';
 import { posix } from 'node:path';
-import type { WorkspaceSpec, PolicyInput, PolicySnapshot, SourcePath, AdmittedRoot } from '../contracts/inventory.js';
+import type { Static } from 'typebox';
+import type { WorkspaceSpec, PolicyInput, PolicySnapshot, SourcePath, AdmittedRoot, IgnoreSettings } from '../contracts/inventory.js';
+import type { NativeIgnoreInputs } from '../contracts/native.js';
 import type { RootIdentity } from '../contracts/workspace.js';
-import { NativeFailure } from '../native/bridge-client.js';
 import { NativeAccess } from './source-access.js';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from './values.js';
 
@@ -11,46 +11,22 @@ export interface PolicyDeclaration {
   readonly outputRoot: RootIdentity;
   readonly exclusions: WorkspaceSpec['exclusions'];
   readonly deniedAbsolutePaths: readonly string[];
+  readonly ignoreSettings: IgnoreSettings | null;
 }
 export function contains(parent: string, path: string): boolean { return path === parent || path.startsWith(parent === '/' ? '/' : parent + '/'); }
-function decodeIgnoreControl(bytes: Uint8Array): string {
-  let text: string;
-  try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
-  catch (cause) {
-    const failure = new WorkspaceFailure('decodeFailed');
-    failure.cause = cause;
-    throw failure;
-  }
-  if (text.includes('\0')) throw new WorkspaceFailure('binarySource');
-  return text;
-}
-
 function relative(root: string, path: string): string { return root === '/' ? path.slice(1) : path.slice(root.length + 1); }
-function policyPath(directory: string): string { return directory ? directory + '/.gitignore' : '.gitignore'; }
 function ancestors(path: string): string[] {
   const parts = path.split('/'); parts.pop();
   return ['', ...parts.map((_, index) => parts.slice(0, index + 1).join('/'))];
 }
-function inputKey(input: SourcePath): string { return canonicalJSON(input); }
+type CapturedIgnoreInputs = Static<typeof NativeIgnoreInputs>;
+function inputKey(input: PolicyInput): string { return canonicalJSON([input.root, input.path]); }
 
-function scopedRules(text: string, directory: string): string[] {
-  const lines = text.split(/\r\n|\r|\n/);
-  if (!directory) return lines;
-  const scope = '/' + directory.replace(/[\\*?\[\] ]/g, '\\$&') + '/';
-  return lines.map(raw => {
-    const line = raw.replace(/^\uFEFF/, '');
-    if (/^!? *$/.test(line) || line.startsWith('#')) return '';
-    const negative = line.startsWith('!');
-    const pattern = negative ? line.slice(1) : line;
-    const anchored = pattern.startsWith('/') || pattern.replace(/ +$/, '').replace(/\/$/, '').includes('/');
-    return (negative ? '!' : '') + scope + (anchored ? pattern.replace(/^\//, '') : '**/' + pattern);
-  });
-}
-
-/** Keeps ignore control inputs separate from the paths they permit or exclude. */
+/** Captures controlling files and applies the original ordinary-crawl policy at the native boundary. */
 export class RootPolicy {
   readonly #inputs = new Map<string, PolicyInput>();
-  readonly #matchers = new Map<string, ReturnType<typeof ignore>>();
+  readonly #roots = new Map<string, CapturedIgnoreInputs>();
+  readonly #directories = new Map<string, CapturedIgnoreInputs>();
   constructor(readonly declaration: PolicyDeclaration, readonly access: NativeAccess) {}
 
   #absolute(source: SourcePath): string { return posix.join(this.access.root(source.root).identity.canonicalPath, source.path); }
@@ -75,59 +51,86 @@ export class RootPolicy {
     return false;
   }
 
-  async #load(source: SourcePath): Promise<PolicyInput> {
-    const key = inputKey(source), cached = this.#inputs.get(key);
+
+  async #capture(root: string, directory: string): Promise<CapturedIgnoreInputs> {
+    const key = canonicalJSON([root, directory]);
+    const cached = directory ? this.#directories.get(key) : this.#roots.get(root);
     if (cached) return cached;
-    if (this.denied(source)) throw new WorkspaceFailure('policyInputDenied', source);
-    let input: PolicyInput;
-    try {
-      const read = await this.access.read(source, null);
-      const text = decodeIgnoreControl(read.bytes);
-      input = { ...source, content: { kind: 'present', identity: read.identity, text } };
-      const directory = source.path === '.gitignore' ? '' : posix.dirname(source.path);
-      this.#matchers.set(key, ignore({ ignorecase: false }).add(scopedRules(text, directory)));
-    } catch (error) {
-      if (!(error instanceof NativeFailure && error.code === 'notFound')) throw error;
-      input = { ...source, content: { kind: 'absent' } };
+    const reply = await this.access.bridge.request({
+      kind: 'captureIgnoreInputs', root: this.access.root(root).handle,
+      directory: directory ? { kind: 'descendant', path: directory } : { kind: 'root' },
+      settings: this.declaration.ignoreSettings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths],
+    }, this.access.signal);
+    const captured = freeze(structuredClone(reply.result));
+    if (directory) {
+      const base = await this.#capture(root, '');
+      if (canonicalJSON(captured.authority) !== canonicalJSON(base.authority)) throw new WorkspaceFailure('policyChanged', { root });
+      this.#directories.set(key, captured);
+    } else this.#roots.set(root, captured);
+    for (const control of captured.controls) {
+      const input = { root, ...control };
+      this.#inputs.set(inputKey(input), input);
     }
-    this.#inputs.set(key, input);
-    return input;
+    return captured;
   }
 
   async admitted(source: SourcePath, directory: boolean): Promise<boolean> {
     if (this.denied(source)) return false;
     for (const binding of this.#bindings(source)) {
-      if (!binding.path) continue;
-      const effective = ignore({ ignorecase: false });
-      const parts = binding.path.split('/');
-      for (const [index, ancestor] of ancestors(binding.path).entries()) {
-        const control = { root: binding.root, path: policyPath(ancestor) };
-        await this.#load(control);
-        const matcher = this.#matchers.get(inputKey(control));
-        if (matcher) effective.add(matcher);
-        const prefix = parts.slice(0, index + 1).join('/');
-        if (effective.ignores(prefix + (index < parts.length - 1 || directory ? '/' : ''))) return false;
+      const rootInputs = await this.#capture(binding.root, '');
+      const directories: { path: string; controls: CapturedIgnoreInputs['controls'] }[] = [];
+      if (rootInputs.settings.enableHierarchicalIgnores) for (const ancestor of ancestors(binding.path)) {
+        if (!ancestor) continue;
+        const captured = this.#directories.get(canonicalJSON([binding.root, ancestor]));
+        if (captured) directories.push({ path: ancestor, controls: captured.controls });
       }
+      const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs, directories,
+        capture: { kind: 'captureIgnoreInputs', root: this.access.root(binding.root).handle, directory: { kind: 'root' },
+          settings: rootInputs.settings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths] },
+        queries: [{ path: binding.path, isDirectory: directory }] }, this.access.signal);
+      for (const captured of result.result.directories) {
+        const value = { ...rootInputs, controls: captured.controls };
+        this.#directories.set(canonicalJSON([binding.root, captured.path]), value);
+        for (const control of captured.controls) {
+          const input = { root: binding.root, ...control };
+          this.#inputs.set(inputKey(input), input);
+        }
+      }
+      const verdict = result.result.paths[0]!;
+      if (verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored) return false;
     }
     return true;
   }
 
   async directory(root: string, directory: string): Promise<void> {
-    await this.#load({ root, path: policyPath(directory) });
+    const base = await this.#capture(root, '');
+    if (directory && base.settings.enableHierarchicalIgnores) await this.#capture(root, directory);
   }
 
   snapshot(): PolicySnapshot {
+    const roots = [...this.#roots.entries()].sort(([a], [b]) => compareBytes(a, b))
+      .map(([root, value]) => ({ root, authority: value.authority, settings: value.settings }));
     const inputs = [...this.#inputs.values()].sort((a, b) => compareBytes(inputKey(a), inputKey(b)));
-    return freeze({ implementation: 'ignore-7.0.12-v1', inputs, digest: sha256(canonicalJSON(inputs)) });
+    const body = { implementation: 'rpce-ignore-v1' as const, roots, inputs };
+    return freeze({ ...body, digest: sha256(canonicalJSON(body)) });
   }
 
   async revalidate(source: SourcePath, snapshot: PolicySnapshot): Promise<void> {
     for (const binding of this.#bindings(source)) {
-      for (const ancestor of ancestors(binding.path)) {
-        const control = { root: binding.root, path: policyPath(ancestor) };
-        const observed = await this.#load(control);
-        const previous = snapshot.inputs.find(input => input.root === control.root && input.path === control.path);
-        if (!previous || canonicalJSON(observed) !== canonicalJSON(previous)) throw new WorkspaceFailure('policyChanged', source);
+      const root = await this.#capture(binding.root, '');
+      const previousRoot = snapshot.roots.find(root => root.root === binding.root);
+      if (!previousRoot || canonicalJSON({ root: binding.root, authority: root.authority, settings: root.settings }) !== canonicalJSON(previousRoot)) {
+        throw new WorkspaceFailure('policyChanged', source);
+      }
+      const relevant = [...root.controls];
+      if (root.settings.enableHierarchicalIgnores) for (const ancestor of ancestors(binding.path)) {
+        if (ancestor) relevant.push(...(await this.#capture(binding.root, ancestor)).controls);
+      }
+      for (const control of relevant) {
+        const previous = snapshot.inputs.find(input => input.root === binding.root && input.path === control.path);
+        if (!previous || canonicalJSON({ root: binding.root, ...control }) !== canonicalJSON(previous)) {
+          throw new WorkspaceFailure('policyChanged', source);
+        }
       }
     }
     if (!await this.admitted(source, false)) throw new WorkspaceFailure('policyChanged', source);

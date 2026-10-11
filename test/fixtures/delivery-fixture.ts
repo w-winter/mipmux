@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, unlink, writeFile } from 'node:fs/promises';
@@ -7,7 +8,7 @@ import { identity } from '../../src/context/material-store.js';
 
 export async function prepareDeliveryFixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/delivery-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-delivery-'));
   const root = join(directory, 'source'), output = join(directory, 'out');
   await mkdir(root); await mkdir(output);
   const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');

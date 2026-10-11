@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync, fork } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rename, unlink, writeFile } from 'node:fs/promises';
@@ -29,7 +30,7 @@ async function probe(directory: string, mode: string, scenario: string, componen
 
 test('saved bundle reader rejects writerless FIFOs and settles cancellation with descriptor cleanup', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/bundle-reader-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'smip-bundle-reader-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'source.txt'), 'exact source\r\n');
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100 });

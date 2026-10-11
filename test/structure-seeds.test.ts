@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -13,7 +14,7 @@ const graph = Compile(StructureToolResult);
 
 test('public structural seeds use owned selection, whole roots, direct-file priority and source absence diagnostics', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/structure-seeds-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-structure-seeds-'));
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(join(root, 'src'), { recursive: true }); await mkdir(join(root, 'empty')); await mkdir(output);
   for (const name of ['A', 'B']) await writeFile(join(root, 'src', `${name}.swift`),

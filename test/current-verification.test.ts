@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { chmod, readFile, mkdir, mkdtemp, rename, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -17,7 +18,7 @@ function barrier() {
 
 test('current verification admits only recorded material, applies current denies, and checks fresh native keys and root aliases', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/current-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-current-'));
   const root = join(base, 'source'), out = join(base, 'out'), alias = join(base, 'alias');
   await mkdir(root);
   await mkdir(out);
@@ -141,7 +142,7 @@ test('current verification admits only recorded material, applies current denies
 
 test('current verification cancellation and runtime shutdown join native work and reject further admission', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/current-cancel-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-current-cancel-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root);
   await mkdir(out);

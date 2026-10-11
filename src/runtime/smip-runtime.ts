@@ -2,7 +2,7 @@ import { lstat, mkdir, realpath, stat } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { BridgeClient } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
-import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot } from '../contracts/inventory.js';
+import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
 import type { ContextBuildRequest } from '../contracts/context.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle } from '../context/verify.js';
@@ -22,6 +22,8 @@ export interface RuntimeOptions {
   readonly nativeEnvironment: Readonly<Record<string, string>>;
   readonly terminationGraceMs: number;
   readonly credentialPaths: readonly string[];
+  /** Omission selects the retained RPCE defaults; explicit values are captured per workspace. */
+  readonly ignoreSettings?: IgnoreSettings;
   readonly search?: { readonly executable: string };
   readonly git?: { readonly executable: string };
 }
@@ -77,8 +79,9 @@ export class SmipRuntime {
       if (!outputRoot) throw new WorkspaceFailure('nativeProtocolError');
       const roots = opened.result.roots.map(root => ({ name: root.name, identity: root.identity, handle: root.handle }));
       const declaration = freeze({ roots: roots.map(root => ({ name: root.name, identity: root.identity })), outputRoot: outputRoot.identity, exclusions: spec.exclusions,
+        ignoreSettings: this.options.ignoreSettings ?? null,
         deniedAbsolutePaths: [cache, outputRoot.identity.canonicalPath, ...await protectedPaths(this.options.credentialPaths)] });
-      const key = sha256(canonicalJSON({ ...declaration, inventorySchemaVersion: InventorySchema.properties.schemaVersion.const, policyImplementation: 'ignore-7.0.12-v1' }));
+      const key = sha256(canonicalJSON({ ...declaration, inventorySchemaVersion: InventorySchema.properties.schemaVersion.const, policyImplementation: 'rpce-ignore-v1' }));
       signal.throwIfAborted();
       let owner = this.#owners.get(key);
       if (!owner) {
@@ -139,6 +142,7 @@ export class SmipRuntime {
     const cache = await this.#admitCache();
     signal.throwIfAborted();
     const declaration = freeze({ roots:manifest.inventory.roots,outputRoot:manifest.inventory.outputRoot,exclusions:manifest.exclusions,
+      ignoreSettings:this.options.ignoreSettings ?? null,
       deniedAbsolutePaths:[...manifest.deniedAbsolutePaths.map(path=>resolve(path)),cache,manifest.inventory.outputRoot.canonicalPath,
         ...await protectedPaths(this.options.credentialPaths)] });
     // Zero has no discovery sequence meaning; this operation never publishes membership or pagination.

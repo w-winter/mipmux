@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -21,7 +22,7 @@ const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Typ
       new_start: Type.Integer(), patch: Type.String() }))) }))) })) }));
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/git-show-')), repo = join(base, 'repo'), root = join(repo, 'sub');
+  const base = await mkdtemp(join(tmpdir(), 'smip-git-show-')), repo = join(base, 'repo'), root = join(repo, 'sub');
   await mkdir(root, { recursive: true }); await mkdir(join(base, 'out'));
   const run = (args: string[]) => execFileSync(git, args, { cwd: repo, encoding: 'utf8', env: { PATH: '/usr/bin:/bin', HOME: base,
     GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_AUTHOR_DATE: '2026-10-11T10:00:00Z', GIT_COMMITTER_DATE: '2026-10-11T10:00:00Z' } });

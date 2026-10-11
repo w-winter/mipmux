@@ -147,6 +147,152 @@ final class ConfinedFiles {
                     "key": extraction.key(rawDigest, byteCount: count, extension: (path as NSString).pathExtension)]
     }
 
+    func captureIgnoreInputs(_ input: IgnoreCaptureInput) throws -> [String: Any] {
+        let root = try sourceRoot(input.root)
+        try validate(root)
+        let loaded = URL(fileURLWithPath: root.identity.canonicalPath)
+        let authority = try RPCEIgnoreAuthority.resolve(loaded)
+        let repository: URL
+        let repositoryPrefix: String
+        let isGit: Bool
+        switch authority {
+        case .nonGit:
+            repository = loaded
+            repositoryPrefix = ""
+            isGit = false
+        case let .git(rootPrefix, layout):
+            repository = layout.workTreeRoot
+            repositoryPrefix = rootPrefix.value
+            isGit = true
+        }
+        let authorityJSON = try describeIgnoreAuthority(authority)
+        let directories: [(url: URL, relative: String)]
+        if let relative = input.directory {
+            _ = try traverse(root.directory.value, components: components(relative))
+            let repositoryRelative = repositoryPrefix.isEmpty ? relative : repositoryPrefix + "/" + relative
+            directories = [(loaded.appendingPathComponent(relative), repositoryRelative)]
+        } else {
+            directories = try ignoreAncestorDirectories(
+                repository, prefix: repositoryPrefix, loaded: root.identity.canonicalPath
+            )
+        }
+        var controls: [[String: Any]] = []
+        for directory in directories {
+            for name in [".gitignore", ".repo_ignore", ".cursorignore"] {
+                if name == ".repo_ignore", !input.settings.respectRepoIgnore { continue }
+                if name == ".cursorignore", !input.settings.respectCursorignore { continue }
+                let path = directory.url.appendingPathComponent(name).path
+                let content = try captureIgnoreControl(path, mandatory: isGit && name == ".gitignore", input: input)
+                controls.append(["path": path, "directory": directory.relative, "name": name,
+                                 "authority": name == ".gitignore" ? "mandatoryGit" : "secondary", "content": content])
+            }
+        }
+        try validate(root)
+        let currentAuthority = try describeIgnoreAuthority(RPCEIgnoreAuthority.resolve(loaded))
+        guard NSDictionary(dictionary: currentAuthority).isEqual(to: authorityJSON) else {
+            throw BridgeFailure("policyChanged")
+        }
+        return ["kind": "ignoreInputs", "authority": authorityJSON,
+                "settings": input.settings.json, "controls": controls]
+    }
+
+    private func ignoreAncestorDirectories(
+        _ repository: URL, prefix: String, loaded: String
+    ) throws -> [(URL, String)] {
+        var chain: [(URL, String)] = [(repository, "")]
+        var current = repository
+        var relative = ""
+        for component in prefix.split(separator: "/") {
+            current.appendPathComponent(String(component), isDirectory: true)
+            relative = relative.isEmpty ? String(component) : relative + "/" + component
+            chain.append((current, relative))
+        }
+        guard try canonicalPath(current.path) == loaded else { throw BridgeFailure("ambiguousGitTopology") }
+        return chain
+    }
+
+    private func captureIgnoreControl(
+        _ path: String, mandatory: Bool, input: IgnoreCaptureInput
+    ) throws -> [String: Any] {
+        do {
+            return try readIgnoreControl(path, mandatory: mandatory, denied: input.deniedAbsolutePaths)
+        } catch {
+            let failure = error as? BridgeFailure
+            let optional = input.directory != nil && !mandatory
+                && failure != nil && failure?.code != "policyInputDenied"
+            let record: [String: Any] = [
+                "level": optional ? "warn" : "error", "event": "ignoreControlReadFailed",
+                "path": path, "code": failure?.code ?? "nativeOperationFailed"
+            ]
+            try FileHandle.standardError.write(JSONSerialization.data(withJSONObject: record))
+            FileHandle.standardError.write(Data([10]))
+            guard optional, let failure else { throw error }
+            return ["kind": "unavailable", "code": failure.code, "errno": failure.number ?? NSNull()]
+        }
+    }
+
+    private func describeIgnoreAuthority(_ authority: RPCEIgnoreAuthority) throws -> [String: Any] {
+        switch authority {
+        case .nonGit:
+            return ["kind": "nonGit"]
+        case let .git(prefix, layout):
+            return try [
+                "kind": "git", "prefix": prefix.value,
+                "repositoryRoot": directoryIdentity(layout.workTreeRoot.path).json,
+                "gitDirectory": directoryIdentity(layout.gitDir.path).json,
+                "commonDirectory": directoryIdentity(layout.commonDir.path).json
+            ]
+        }
+    }
+
+    private func directoryIdentity(_ path: String) throws -> RootIdentity {
+        let canonical = try canonicalPath(path)
+        let descriptor = try openAbsoluteDirectory(canonical)
+        let info = try status(descriptor.value)
+        return RootIdentity(declaredPath: path, canonicalPath: canonical,
+                            device: String(info.st_dev), inode: String(info.st_ino))
+    }
+
+    private func readIgnoreControl(_ path: String, mandatory: Bool, denied: [String]) throws -> [String: Any] {
+        func protected(_ value: String) -> Bool {
+            if value.split(separator: "/").contains(where: { $0 == ".env" || $0.hasPrefix(".env.") }) { return true }
+            return denied.contains { value == $0 || value.hasPrefix($0 == "/" ? "/" : $0 + "/") }
+        }
+        guard !protected(path) else { throw BridgeFailure("policyInputDenied") }
+        var named = stat()
+        if lstat(path, &named) != 0 {
+            guard errno == ENOENT else { throw ioFailure() }
+            return ["kind": "absent"]
+        }
+        let resolvedParent = try canonicalPath((path as NSString).deletingLastPathComponent)
+        let resolved = mandatory
+            ? (resolvedParent as NSString).appendingPathComponent((path as NSString).lastPathComponent)
+            : try canonicalPath(path)
+        guard !protected(resolved) else { throw BridgeFailure("policyInputDenied") }
+        let parent = try openAbsoluteDirectory((resolved as NSString).deletingLastPathComponent)
+        let descriptor = try Descriptor(openat(
+            parent.value, (resolved as NSString).lastPathComponent, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOFOLLOW
+        ))
+        let before = try fingerprint(descriptor.value)
+        guard try status(descriptor.value).st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else {
+            throw BridgeFailure("nonRegularFile")
+        }
+        let mandatoryMaximumBytes = 4 * 1024 * 1024
+        var data = Data()
+        try readChunks(descriptor.value) { bytes in
+            if mandatory, bytes.count > mandatoryMaximumBytes - data.count {
+                throw BridgeFailure("ignoreControlTooLarge")
+            }
+            data.append(bytes)
+        }
+        var rebound = stat()
+        guard try fingerprint(descriptor.value) == before,
+              lstat(resolved, &rebound) == 0, String(rebound.st_dev) == before.device,
+              String(rebound.st_ino) == before.inode else { throw BridgeFailure("sourceChanged") }
+        guard let text = String(data: data, encoding: .utf8) else { throw BridgeFailure("decodeFailed") }
+        return ["kind": "present", "resolvedPath": resolved, "identity": Extraction.identity(data).json, "text": text]
+    }
+
     func beginExport(_ handle: NativeHandle, name: String) throws -> [String: Any] {
         let root = try lookupRoot(handle)
         guard root.access == "output", try components(name).count == 1 else { throw BridgeFailure("invalidOutputCapability") }

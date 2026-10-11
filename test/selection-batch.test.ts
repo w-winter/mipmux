@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -19,7 +20,7 @@ interface HeldBatchRead { signal: AbortSignal | null; armed: boolean }
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/selection-batch-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-selection-batch-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'one.txt'), 'One\nTwo\nThree\n');
   await writeFile(join(root, 'two.txt'), 'Other\n');

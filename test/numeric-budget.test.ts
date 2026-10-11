@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -13,7 +14,7 @@ const scoutBudget = Compile(Type.Object({ tokenBudget: Type.Integer(), initialCo
 
 test('numeric assembly budget remains the packet limit while scout input receives the source reserve exactly once', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/numeric-budget-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-numeric-budget-'));
   const root = join(base, 'root'), output = join(base, 'out');
   await mkdir(root); await mkdir(output);
   const received: { tokenBudget: number; initialContext: string }[] = [];

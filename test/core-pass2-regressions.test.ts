@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -23,7 +24,7 @@ function settles(work: Promise<unknown>): Promise<'settled' | 'held'> {
 }
 async function fixture(prefix: string) {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/' + prefix));
+  const base = await mkdtemp(join(tmpdir(), 'smip-' + prefix));
   const root = join(base, 'root'), outputRoot = join(base, 'out');
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');
@@ -126,11 +127,17 @@ test('draft admission uses its qualifying refresh snapshot while a later scan is
         });
       }
       void admission.catch(() => {});
-      await secondEntered.promise;
+      await Promise.race([
+        secondEntered.promise,
+        admission.then(() => { throw new Error('Admission settled before its held refresh was reached'); }),
+      ]);
       const later = handle.refresh(signal());
       void later.catch(() => {});
       secondResume.release();
-      await thirdEntered.promise;
+      await Promise.race([
+        thirdEntered.promise,
+        later.then(() => { throw new Error('Later refresh settled before its directory-list barrier'); }),
+      ]);
       assert.equal(await settles(admission), 'settled', mode + ': admission waited for an unrelated later scan');
       if (mode === 'manual') {
         const draft = await (admission as Promise<DraftRuntime>);

@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -16,7 +17,7 @@ function barrier() { let release!: () => void; const promise = new Promise<void>
 const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
 for (const scenario of ['timeout', 'abort'] as const) {
   test(`production wait settles independently of held progress: ${scenario}`, async t => {
-    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/mcp-wait-pass3-'));
+    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'smip-mcp-wait-pass3-'));
     const root = join(directory, 'root'), out = join(directory, 'out'); await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'source');
     const running = barrier(), aborted = barrier(), releaseRunner = barrier(), waitEntered = barrier(), outputEntered = barrier();
     let progress!: (event: DiscoveryEvent) => void;

@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -12,7 +13,7 @@ const request: ContextBuildRequest = { task: 'Review', constraints: '', enhancem
   discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/context-pass2-')), root = join(directory, 'root'), out = join(directory, 'out');
+  const directory = await mkdtemp(join(tmpdir(), 'smip-context-pass2-')), root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out);
   const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
   const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

@@ -148,7 +148,7 @@ enum Operation {
     case selection(SelectionOperation)
     case renderDiscoveryPrompt(DiscoveryPromptInput)
     case git(GitOperation)
-    case ignoreRules(IgnoreRulesInput)
+    case ignore(IgnoreOperation)
     case sliceReadText(ReadTextInput)
     case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
@@ -168,6 +168,7 @@ enum Operation {
     init(_ value: Any) throws {
         guard let raw = value as? [String: Any],
               let kind = raw["kind"] as? String else { throw BridgeFailure("nativeProtocolError") }
+        if IgnoreOperation.recognizes(kind) { self = try .ignore(IgnoreOperation(value, kind: kind)); return }
         switch kind {
         case "describe":
             _ = try WireObject(value, keys: ["kind"]); self = .describe
@@ -232,7 +233,6 @@ enum Operation {
     private static func decodeProjection(_ kind: String, _ value: Any) throws -> Operation {
         switch kind {
         case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": return try .git(.show(GitShowInput(value)))
-        case "queryIgnoreRules": return try .ignoreRules(IgnoreRulesInput(value))
         case "parseGitComparison", "projectGitDiff": return try .git(.diff(GitDiffInput(value)))
         case "parseGitPatch": return try .git(.patch(GitPatchInput(value)))
         case "prepareGitRead", "projectGitRead": return try .git(.read(GitReadInput(value)))

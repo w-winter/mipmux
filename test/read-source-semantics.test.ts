@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -25,7 +26,7 @@ const reply = Compile(Type.Union([
 test('public MCP read_file executes source bounds and retains exact text and diagnostic messages', async () => {
   const cases = casesSchema.Parse(JSON.parse(await readFile(resolve('test/fixtures/rpce-read/cases.json'), 'utf8')));
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/read-source-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-read-source-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   for (const [index, entry] of cases.entries()) await writeFile(join(root, index + '.txt'), '\uFEFF' + entry.input.text);
   const config = join(base, 'config.json');

@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -20,7 +21,7 @@ type PromptToolInput = { op: 'get' } | { op: 'set' | 'append'; text: string; exp
 
 test('public MCP literal prompt operations publish Rewrite, Augment and unchanged Preserve without an advisory handoff', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/prompt-state-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-prompt-state-'));
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'source.txt'), 'EXACT SOURCE\n');

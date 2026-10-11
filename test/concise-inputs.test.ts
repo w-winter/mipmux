@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -17,7 +18,7 @@ type ToolArguments = NonNullable<Parameters<Client['callTool']>[0]['arguments']>
 
 test('concise MCP exploration matches explicit options and preserves validation, caps and selection authority', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/concise-inputs-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-concise-inputs-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'greet.ts'), 'export function greet(name: string) { return `Hello ${name}`; }\n');

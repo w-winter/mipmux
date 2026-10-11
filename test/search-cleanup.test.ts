@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import fs from 'node:fs/promises';
@@ -9,7 +10,7 @@ import type { ProcessSpec } from '../src/runtime/process-supervisor.js';
 
 test('search scratch cleanup handles success, query failure, cancellation and partial writes while preserving siblings', async t => {
   await fs.mkdir('test-output', { recursive: true });
-  const base = await fs.mkdtemp(resolve('test-output/search-cleanup-'));
+  const base = await fs.mkdtemp(join(tmpdir(), 'smip-search-cleanup-'));
   const root = join(base, 'root'), out = join(base, 'out'), cache = join(base, 'cache');
   await fs.mkdir(root); await fs.mkdir(out); await fs.writeFile(join(root, 'file.txt'), 'needle\n');
   const runtime = new SmipRuntime({ cachePath: cache, terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],

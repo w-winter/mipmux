@@ -1,4 +1,4 @@
-import { DecoderPolicy } from './inventory.js';
+import { DecoderPolicy, IgnoreAuthority, IgnoreControl, IgnoreSettings } from './inventory.js';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
@@ -157,7 +157,19 @@ const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
     hunks: Type.Array(Type.Object({ header: Type.String(), oldStart: Type.Integer(), oldLines: Type.Integer(),
       newStart: Type.Integer(), newLines: Type.Integer(), content: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false })),
   changedLinesTsv: Type.String() }, { additionalProperties: false });
+export const NativeIgnoreInputs = Type.Object({
+  kind: Type.Literal('ignoreInputs'), authority: IgnoreAuthority, settings: IgnoreSettings, controls: Type.Array(IgnoreControl),
+}, { additionalProperties: false });
+const IgnoreCapture = Type.Object({ kind: Type.Literal('captureIgnoreInputs'), root: handle, directory: DirectoryRef,
+  settings: Type.Union([IgnoreSettings, Type.Null()]), deniedAbsolutePaths: Type.Array(canonicalSelectionPath),
+}, { additionalProperties: false });
+const IgnoreHierarchy = Type.Object({ kind: Type.Literal('queryIgnoreHierarchy'), capture: IgnoreCapture, rootInputs: NativeIgnoreInputs,
+  directories: Type.Array(Type.Object({ path: RelativePath, controls: Type.Array(IgnoreControl) }, { additionalProperties: false })),
+  queries: Type.Array(Type.Object({ path: Type.String(), isDirectory: Type.Boolean() }, { additionalProperties: false })),
+}, { additionalProperties: false });
+
 export const NativeOperation = Type.Union([
+  IgnoreCapture, IgnoreHierarchy,
   IgnoreQueryInput,
   NativeGitPatchInput,
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
@@ -214,6 +226,12 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  NativeIgnoreInputs,
+  Type.Object({ kind: Type.Literal('ignoreHierarchy'), paths: Type.Array(Type.Union([
+    Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean() }, { additionalProperties: false }),
+    Type.Object({ path: Type.String(), isDirectory: Type.Literal(true), ignored: Type.Boolean(),
+      requiresTraversal: Type.Boolean(), directoryIncluded: Type.Boolean() }, { additionalProperties: false }),
+  ])), directories: IgnoreHierarchy.properties.directories }, { additionalProperties: false }),
   IgnoreQueryResult,
   NativeGitPatchResult,
   Type.Object({ kind: Type.Literal('gitComparison'), comparison: NativeGitComparison, rawKey: Type.String(), display: Type.String() }, { additionalProperties: false }),

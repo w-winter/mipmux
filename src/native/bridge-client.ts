@@ -6,6 +6,7 @@ import type { NativeFailureCode } from '../contracts/errors.js';
 
 type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
+  captureIgnoreInputs: ['ignoreInputs'], queryIgnoreHierarchy: ['ignoreHierarchy'],
   queryIgnoreRules: ['ignoreRules'],
   parseGitPatch: ['gitPatch'], parseGitComparison: ['gitComparison'], projectGitDiff: ['gitDiff'],
   prepareGitShow: ['gitShowArguments', 'gitShowError'], parseGitShowMetadata: ['gitShowMetadata', 'gitShowError'], projectGitShow: ['gitShow'],

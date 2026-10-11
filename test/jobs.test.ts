@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -9,7 +10,7 @@ import { compose } from '../src/cli/config.js';
 
 test('the user assembly ceiling rejects caller overrides before discovery and permits allowances at the ceiling', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/assembly-budget-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-assembly-budget-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out'));
   const contextBudgetUnits = 10000;
   const options = { cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
@@ -45,7 +46,7 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
 
 test('client jobs deduplicate admission, isolate ids, release cancelled work', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/jobs-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-jobs-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out'));
   await writeFile(join(directory, 'root/file.txt'), 'source');
   let entered!: () => void;

@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -16,7 +17,7 @@ const signal = () => new AbortController().signal;
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/source-decoding-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-source-decoding-'));
   const root = join(directory, 'source'), outputRoot = join(directory, 'out');
   await mkdir(root); await mkdir(outputRoot);
   const runtime = new SmipRuntime({

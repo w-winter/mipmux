@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -18,7 +19,7 @@ const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Advisory', architecture: 'Files', relationships: [], ambiguities: [] };
 async function setup() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/finalization-boundary-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-finalization-boundary-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root);
   await mkdir(out);

@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -21,7 +22,7 @@ const request = { task: 'Inspect selected source', constraints: '', enhancementM
 
 async function hostFixture(prefix: string) {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/' + prefix));
+  const base = await mkdtemp(join(tmpdir(), 'smip-' + prefix));
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   const body = Array.from({ length: 10 }, (_, index) => `Line ${index + 1}\n`).join('');
   await writeFile(join(root, 'file.txt'), body);

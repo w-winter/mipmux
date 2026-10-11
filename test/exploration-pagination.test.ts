@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
@@ -8,7 +9,7 @@ import { serializedBytes } from '../src/exploration/output-budget.js';
 
 test('real search modes and output continuations preserve complete counts and reject stale inputs', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/pages-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-pages-'));
   const root = join(base, 'root'); await mkdir(root); await mkdir(join(base, 'out'));
   for (const name of ['a.txt', 'b.txt', 'c.txt']) await writeFile(join(root, name), '\uFEFFcafé\r\n ++ \rx café x\ncaféteria\nlast');
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],

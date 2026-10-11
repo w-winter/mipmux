@@ -11,7 +11,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     switch request.operation {
     case .describe: try extraction.describe()
     case let .git(input): try input.render()
-    case let .ignoreRules(input): input.render()
+    case let .ignore(input): try await input.render(files: files)
     case let .sliceReadText(input): input.render()
     case let .selection(input): await input.render()
     case let .renderDiscoveryPrompt(input): input.render()

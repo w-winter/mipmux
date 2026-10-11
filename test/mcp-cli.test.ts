@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFile, spawn } from 'node:child_process';
@@ -12,7 +13,7 @@ import { SmipRuntime } from '../src/runtime/smip-runtime.js';
 const command = resolve('dist/cli/main.js');
 test('MCP exposes nonsecret artifact and membership targets usable by explicit CLI recovery', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/mcp-cache-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-mcp-cache-'));
   const root = join(base, 'root'), outputRoot = join(base, 'out'), config = join(base, 'config.json');
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let title: String\n}');
@@ -55,7 +56,7 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
 });
 test('official MCP negotiation and EOF create no workspace during probes; CLI inputs are explicit', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/mcp-cli-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-mcp-cli-'));
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: null, defaultMaxOutputBytes: 12000 }));

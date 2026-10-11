@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -6,7 +7,7 @@ import { SmipRuntime } from '../src/runtime/smip-runtime.js';
 
 test('dense overlapping context emits each source line once with linear selection work', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/search-context-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-search-context-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},

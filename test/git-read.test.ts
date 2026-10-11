@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -29,7 +30,7 @@ const result = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Ty
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/git-read-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-git-read-'));
   const repo = join(base, 'repo'), root = join(repo, 'sub'), outputRoot = join(base, 'out');
   await mkdir(root, { recursive: true }); await mkdir(outputRoot);
   const run = (args: string[]) => execFileSync(git, args, { cwd: repo, encoding: 'utf8',

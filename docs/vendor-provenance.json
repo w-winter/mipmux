@@ -4616,6 +4616,77 @@
           51
         ]
       ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "947658dcf11429e27c412fb23576f9fe6b2528a344eb868e44193d80a8d0e86a",
+      "destination": "native/Sources/SmipBridge/RPCEGitRepositoryLayout.swift",
+      "changes": [
+        "Retain Foundation layout resolution and its source gitfile/commondir behavior; no Git executable or desktop service is required."
+      ],
+      "sha256": "58610f4468c8751aab2d187552d944c1f0475bb353ddb9beb0a1d872df42f22d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          9,
+          215
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/FileSystem/IgnoreRulesAppIntegration.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "cab123543888b60183d4b66c2d6abf6311b175d58f6bece377f10f3c3feef4e1",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreAuthority.swift",
+      "changes": [
+        "Extract the loaded-root authority resolver; return the validated layout alongside its prefix.",
+        "Bind Darwin/Glibc stat calls and native failure codes; metadata access remains restricted to an admitted source-root capability."
+      ],
+      "sha256": "c698e1d00d11fc09f64d6927fc353228e7ca66f3dc70747ff953bdfbb550c3b8",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          61,
+          117
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptSettingsCore/IgnoreSettingsDefaults.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "79e269af9ca5232504b7981fd4da0c5bc4f3c4761f10de3f4cc30c09bc2448fc",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreSettings.swift",
+      "changes": [
+        "Retain global default text/version; explicit host settings replace desktop preferences and migration storage.",
+        "Capture source-default repo/cursor/hierarchy booleans from IgnoreRulesAppIntegration canonicalDefaults."
+      ],
+      "sha256": "8ab8a321e4e2ace5bbb627089e142ac3dd3535de1d29b52a5e049ea2ada9dcfd",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          7,
+          48
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/HierarchicalIgnoreEvaluator.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "793db2fc70e4e9ab15e82e5498b04739fc6bd51649aca1c7e419d6ba370015cf",
+      "destination": "native/Sources/SmipBridge/RPCEHierarchicalIgnoreEvaluator.swift",
+      "changes": [
+        "Retain the prefix walk, locking and unlocking, with a capability-bound captured/native rules provider.",
+        "Omit DEBUG-only metrics and the unused CachedRulesProvider fallback adapter."
+      ],
+      "sha256": "3f0194084f531438af2f54bcb9ec399799a2a686259168cc16141d4d7c6e0df2",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          96
+        ]
+      ]
     }
   ],
   "dependencies": [
@@ -9736,6 +9807,96 @@
       "destination": "native/Sources/SmipBridge/RPCEIgnoreRootRules.swift",
       "name": "makeRootRules",
       "line": 346
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitRepositoryLayout.swift",
+      "name": "GitRepositoryLayout",
+      "line": 15
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitRepositoryLayout.swift",
+      "name": "GitRepositoryLayoutResolver",
+      "line": 87
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitRepositoryLayout.swift",
+      "name": "resolve",
+      "line": 92
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitRepositoryLayout.swift",
+      "name": "parseGitFile",
+      "line": 133
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitRepositoryLayout.swift",
+      "name": "resolveCommonDir",
+      "line": 177
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/FileSystem/IgnoreRulesAppIntegration.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreAuthority.swift",
+      "name": "RPCEIgnoreAuthority",
+      "line": 61
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/FileSystem/IgnoreRulesAppIntegration.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreAuthority.swift",
+      "name": "resolve",
+      "line": 62
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/FileSystem/IgnoreRulesAppIntegration.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreAuthority.swift",
+      "name": "validatedContainingGitLayout",
+      "line": 102
+    },
+    {
+      "source": "Sources/RepoPromptSettingsCore/IgnoreSettingsDefaults.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreSettings.swift",
+      "name": "RPCEIgnoreSettingsDefaults",
+      "line": 7
+    },
+    {
+      "source": "Sources/RepoPromptSettingsCore/IgnoreSettingsDefaults.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreSettings.swift",
+      "name": "currentGlobalIgnoreDefaultsVersion",
+      "line": 8
+    },
+    {
+      "source": "Sources/RepoPromptSettingsCore/IgnoreSettingsDefaults.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreSettings.swift",
+      "name": "canonicalGlobalIgnoreDefaults",
+      "line": 12
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/HierarchicalIgnoreEvaluator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEHierarchicalIgnoreEvaluator.swift",
+      "name": "RPCEHierarchicalIgnoreEvaluator",
+      "line": 5
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/HierarchicalIgnoreEvaluator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEHierarchicalIgnoreEvaluator.swift",
+      "name": "RulesProvider",
+      "line": 7
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/HierarchicalIgnoreEvaluator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEHierarchicalIgnoreEvaluator.swift",
+      "name": "isIgnored",
+      "line": 26
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/HierarchicalIgnoreEvaluator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEHierarchicalIgnoreEvaluator.swift",
+      "name": "isIgnored",
+      "line": 36
     }
   ],
   "sourceCoverage": [

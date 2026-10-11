@@ -26,14 +26,31 @@ export const ArtifactRecord = Type.Object({ schemaVersion: Type.Literal(1), keyC
   outcome: SyntaxOutcome, projection: Type.Optional(Projection), recordSHA256: SHA256 }, closed);
 export type ArtifactRecord = Static<typeof ArtifactRecord>;
 export const artifactValidator = Compile(ArtifactRecord);
-export const PolicyInput = Type.Object({ root: RootName, path: RelativePath,
+export const IgnoreSettings = Type.Object({
+  global: Type.String(), respectRepoIgnore: Type.Boolean(), respectCursorignore: Type.Boolean(),
+  enableHierarchicalIgnores: Type.Boolean(),
+}, closed);
+export type IgnoreSettings = Static<typeof IgnoreSettings>;
+export const IgnoreAuthority = Type.Union([
+  Type.Object({ kind: Type.Literal('nonGit') }, closed),
+  Type.Object({ kind: Type.Literal('git'), prefix: Type.String(),
+    repositoryRoot: RootIdentity, gitDirectory: RootIdentity, commonDirectory: RootIdentity }, closed),
+]);
+export const IgnoreControl = Type.Object({
+  path: Type.String({ pattern: '^/[^\\u0000]*$' }), directory: Type.String(),
+  name: Type.Enum(['.gitignore', '.repo_ignore', '.cursorignore']), authority: Type.Enum(['mandatoryGit', 'secondary']),
   content: Type.Union([
     Type.Object({ kind: Type.Literal('absent') }, closed),
-    Type.Object({ kind: Type.Literal('present'), identity: SourceIdentity, text: Type.String() }, closed),
+    Type.Object({ kind: Type.Literal('present'), resolvedPath: Type.String({ pattern: '^/[^\\u0000]*$' }),
+      identity: SourceIdentity, text: Type.String() }, closed),
+    Type.Object({ kind: Type.Literal('unavailable'), code: Type.String(), errno: Type.Union([Type.Integer(), Type.Null()]) }, closed),
   ]),
 }, closed);
+export const PolicyInput = Type.Object({ root: RootName, ...IgnoreControl.properties }, closed);
 export type PolicyInput = Static<typeof PolicyInput>;
-export const PolicySnapshot = Type.Object({ implementation: Type.Literal('ignore-7.0.12-v1'), inputs: Type.Array(PolicyInput), digest: SHA256 }, closed);
+export const PolicyRoot = Type.Object({ root: RootName, authority: IgnoreAuthority, settings: IgnoreSettings }, closed);
+export const PolicySnapshot = Type.Object({ implementation: Type.Literal('rpce-ignore-v1'),
+  roots: Type.Array(PolicyRoot), inputs: Type.Array(PolicyInput), digest: SHA256 }, closed);
 export type PolicySnapshot = Static<typeof PolicySnapshot>;
 export const AdmittedRoot = Type.Object({ name: RootName, identity: RootIdentity }, closed);
 export type AdmittedRoot = Static<typeof AdmittedRoot>;
@@ -53,7 +70,7 @@ export const InventoryEntry = Type.Union([
     reason: Type.Union([Type.Literal('policy'), Type.Literal('symlink'), Type.Literal('nonRegular')]) }, closed),
 ]);
 export type InventoryEntry = Static<typeof InventoryEntry>;
-export const InventorySnapshot = Type.Object({ schemaVersion: Type.Literal(3), decoderPolicy: DecoderPolicy, workspaceKey: SHA256, roots: Type.Array(AdmittedRoot), outputRoot: RootIdentity,
+export const InventorySnapshot = Type.Object({ schemaVersion: Type.Literal(4), decoderPolicy: DecoderPolicy, workspaceKey: SHA256, roots: Type.Array(AdmittedRoot), outputRoot: RootIdentity,
   policy: PolicySnapshot, entries: Type.Array(InventoryEntry), generation: SafeCount, inventoryDigest: SHA256,
   processing: Type.Literal('settled'), enumeration: Type.Union([
     Type.Object({ kind: Type.Literal('complete') }, closed),

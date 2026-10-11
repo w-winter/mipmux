@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -6,7 +7,7 @@ import { SmipRuntime } from '../src/runtime/smip-runtime.js';
 
 test('real exploration preserves queries, Unicode paths, counts, context and digest-bound pages', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/exploration-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-exploration-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
   const name = 'line\né.txt';
   await writeFile(join(base, 'root', name), '\uFEFFstart\r\né café\rneedle needle\nneedle\nlast');

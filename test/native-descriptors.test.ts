@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
 import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
@@ -55,7 +56,7 @@ test('repeated root revalidation keeps descriptor use bounded and preserves iden
 
 test('two-phase finalization across many roots completes under a controlled descriptor budget', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/many-roots-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-many-roots-'));
   const count = 24, limit = 64, outputRoot = join(base, 'out');
   await mkdir(outputRoot);
   const roots: { name: string; absolutePath: string }[] = [];

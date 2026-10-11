@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -13,7 +14,7 @@ const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/
 const signal = () => new AbortController().signal;
 test('local exact-byte patches apply forward/reverse, remain read-only and enforce staged/commit source coherence', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/git-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-git-'));
   const root = join(base, 'repo');
   await mkdir(root);
   await mkdir(join(base, 'out'));
@@ -277,7 +278,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
 
 test('Git exit one with missing input has diagnostics and no applicable patch', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/missing-diff-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-missing-diff-'));
   await writeFile(join(base, 'present'), 'body');
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   try {
@@ -299,7 +300,7 @@ test('Git exit one with missing input has diagnostics and no applicable patch', 
 
 test('byte-pair cleanup removes only its nested scratch after process closure on success, failure and cancellation', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/diff-cleanup-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-diff-cleanup-'));
   const workRoot = join(base, 'work');
   const sibling = join(workRoot, 'retained', 'evidence');
   await mkdir(join(workRoot, 'retained'), { recursive: true });

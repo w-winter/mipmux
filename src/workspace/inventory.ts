@@ -51,6 +51,7 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   async function walk(root: string, path: string): Promise<void> {
     const directory: DirectoryRef = path ? { kind: 'descendant', path } : { kind: 'root' };
     try {
+      if (!path && !await policy.admitted({ root, path: '' }, true)) return;
       await policy.directory(root, path);
       const children = await access.list(root, directory);
       for (const child of children) {
@@ -76,11 +77,9 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
       failures.push({ root, directory, code: error.code });
     }
   }
-  for (const root of declaration.roots) {
-    if (await policy.admitted({ root: root.name, path: '' }, true)) await walk(root.name, '');
-  }
+  for (const root of declaration.roots) await walk(root.name, '');
   entries.sort((a, b) => compareBytes(a.root, b.root) || compareBytes(a.path, b.path));
-  const body = { schemaVersion: 3 as const, decoderPolicy: description.decoderPolicy, workspaceKey, roots: [...declaration.roots], outputRoot: declaration.outputRoot, policy: policy.snapshot(), entries,
+  const body = { schemaVersion: 4 as const, decoderPolicy: description.decoderPolicy, workspaceKey, roots: [...declaration.roots], outputRoot: declaration.outputRoot, policy: policy.snapshot(), entries,
     generation, processing: 'settled' as const,
     enumeration: failures.length ? { kind: 'incomplete' as const, failures } : { kind: 'complete' as const } };
   const snapshot = freeze({ ...body, inventoryDigest: inventoryDigest(body) });

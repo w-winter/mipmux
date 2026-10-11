@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -15,7 +16,7 @@ function barrier() {
 const signal = () => new AbortController().signal;
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/core-owner-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-core-owner-'));
   const root = join(base, 'root'), outputRoot = join(base, 'out');
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');

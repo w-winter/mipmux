@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -14,7 +15,7 @@ function barrier() {
 
 test('warming satisfies a later barrier, cancelled observers release only their interest, and caches survive restart', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/barrier-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-barrier-'));
   const root = join(base, 'root'); await mkdir(root); await mkdir(join(base, 'out'));
   await writeFile(join(root, 'model.swift'), 'struct First {\n let value: String\n}');
   const entered = barrier(), resume = barrier();
@@ -74,7 +75,7 @@ test('warming satisfies a later barrier, cancelled observers release only their 
 
 test('different declarations share pending extraction while public and operation leases close independently', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/shared-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-shared-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'outA')); await mkdir(join(base, 'outB'));
   await writeFile(join(base, 'root/shared.swift'), 'struct SharedRecord {\n let value: String\n}');
   const extractionEntered = barrier(), releaseExtraction = barrier(), secondRead = barrier();
@@ -115,7 +116,7 @@ test('different declarations share pending extraction while public and operation
 
 test('settled inventory distinguishes unavailable acquisition, decoding, unsupported and no-symbol outcomes', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/coverage-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-coverage-'));
   await mkdir(join(base, 'root/cases'), { recursive: true }); await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/cases/victim.swift'), 'struct Victim {\n let value: String\n}');
   await writeFile(join(base, 'root/cases/invalid.swift'), Buffer.from([0xff, 0xfe, 0x00, 0xd8]));
@@ -152,7 +153,7 @@ test('settled inventory distinguishes unavailable acquisition, decoding, unsuppo
 
 test('closing a held physical operation joins pending work and leaves a sibling usable', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/operation-close-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-operation-close-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/file.txt'), 'sibling body');
   const entered = barrier(), resume = barrier(), aborted = barrier();
@@ -192,7 +193,7 @@ test('closing a held physical operation joins pending work and leaves a sibling 
 
 test('incomplete enumeration permits known-source exploration but refuses draft admission', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/partial-inventory-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-partial-inventory-'));
   const root = join(base, 'root'), output = join(base, 'out');
   await mkdir(join(root, 'blocked'), { recursive: true }); await mkdir(output);
   await writeFile(join(root, 'known.swift'), 'struct KnownRecord {\n let absent: AbsentRecord\n}\n');

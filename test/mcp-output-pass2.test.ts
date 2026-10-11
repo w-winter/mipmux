@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
@@ -84,14 +85,14 @@ for (const scenario of ['subscription', 'existing', 'progress', 'outputError', '
     await new Promise<void>(resolve => originalWrite('shared stdout remains usable\n', () => resolve()));
     // Callback completion after cancellation cannot resurrect a cancelled protocol write.
     callbacks.forEach(callback => callback());
-    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/mcp-output-pass2-'));
+    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'smip-mcp-output-pass2-'));
     await writeFile(join(directory, 'proof.json'), JSON.stringify({ scenario, applicationJoined, progressSettled, pendingSettled, sharedStdoutOpen: !process.stdout.destroyed,
       subscriptionAcknowledged: true, acceptedRecords: accepted.length }) + '\n');
   });
 }
 
 test('production stdio shutdown waits for real claimed publication before closing output', async t => {
-  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/mcp-publication-pass2-'));
+  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'smip-mcp-publication-pass2-'));
   const root = join(directory, 'root'), out = join(directory, 'out'); await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'body');
   const published = barrier(), resume = barrier();
   const originalRequest = BridgeClient.prototype.request;

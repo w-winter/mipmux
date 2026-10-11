@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -20,7 +21,7 @@ const graphReply = Compile(Type.Object({ status: Type.String(), size: Type.Strin
 
 test('public structural query exposes source graph evidence with signatures disabled and the requested output size', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/structure-query-port-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-structure-query-port-'));
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(root); await mkdir(output);
   for (const name of ['A', 'B']) await writeFile(join(root, `${name}.swift`),

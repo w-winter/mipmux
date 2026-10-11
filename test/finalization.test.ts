@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -7,7 +8,7 @@ import { sha256 } from '../src/workspace/values.js';
 
 test('required full source, complete report and patch reach verified output; stale and absent material cannot be ready', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(resolve('test-output/fidelity-'));
+  const base = await mkdtemp(join(tmpdir(), 'smip-fidelity-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root);
   await mkdir(out);

@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -13,7 +14,7 @@ const structureReply = Compile(Type.Object({ kind: Type.Literal('structure'), ro
 
 test('structural exploration preserves each source relationship when seeds share defined and unresolved names', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(resolve('test-output/structure-relationships-'));
+  const directory = await mkdtemp(join(tmpdir(), 'smip-structure-relationships-'));
   const root = join(directory, 'source'), output = join(directory, 'out');
   await mkdir(root); await mkdir(output);
   for (const name of ['A', 'B']) await writeFile(join(root, `${name}.swift`),
