@@ -1,0 +1,534 @@
+[
+  {
+    "name": "summary",
+    "input": {
+      "ref": "  HEAD  ",
+      "detail": "summary",
+      "contextLines": 3,
+      "detectRenames": false
+    },
+    "metadata": "0123456789012345678901234567890123456789\t0123456\tAuthor é\t2026-10-11T10:00:00Z\tTitle\n\nBody\twith tab\n",
+    "numstat": "1\t1\ta.txt\n",
+    "nameStatus": "M\ta.txt\n",
+    "patch": "diff --git a/a.txt b/a.txt\nindex 1234567..7654321 100644\n--- a/a.txt\n+++ b/a.txt\n@@ -1,2 +1,2 @@ label\n one\n-two\n+three\n",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "HEAD"
+      ],
+      [
+        "diff",
+        "--numstat",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--name-status",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShow",
+      "show": {
+        "author": "Author é",
+        "date": "2026-10-11T10:00:00Z",
+        "message": "Title\n\nBody\twith tab",
+        "sha": "0123456789012345678901234567890123456789",
+        "short_sha": "0123456",
+        "totals": {
+          "deletions": 1,
+          "files": 1,
+          "insertions": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "files",
+    "input": {
+      "ref": "  HEAD  ",
+      "detail": "files",
+      "contextLines": 3,
+      "detectRenames": false
+    },
+    "metadata": "0123456789012345678901234567890123456789\t0123456\tAuthor é\t2026-10-11T10:00:00Z\tTitle\n\nBody\twith tab\n",
+    "numstat": "1\t1\ta.txt\n",
+    "nameStatus": "M\ta.txt\n",
+    "patch": "diff --git a/a.txt b/a.txt\nindex 1234567..7654321 100644\n--- a/a.txt\n+++ b/a.txt\n@@ -1,2 +1,2 @@ label\n one\n-two\n+three\n",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "HEAD"
+      ],
+      [
+        "diff",
+        "--numstat",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--name-status",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShow",
+      "show": {
+        "author": "Author é",
+        "date": "2026-10-11T10:00:00Z",
+        "files": [
+          {
+            "deletions": 1,
+            "insertions": 1,
+            "path": "a.txt",
+            "status": "M"
+          }
+        ],
+        "message": "Title\n\nBody\twith tab",
+        "sha": "0123456789012345678901234567890123456789",
+        "short_sha": "0123456",
+        "totals": {
+          "deletions": 1,
+          "files": 1,
+          "insertions": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "full",
+    "input": {
+      "ref": "  HEAD  ",
+      "detail": "FULL",
+      "contextLines": 3,
+      "detectRenames": false
+    },
+    "metadata": "0123456789012345678901234567890123456789\t0123456\tAuthor é\t2026-10-11T10:00:00Z\tTitle\n\nBody\twith tab\n",
+    "numstat": "1\t1\ta.txt\n",
+    "nameStatus": "M\ta.txt\n",
+    "patch": "diff --git a/a.txt b/a.txt\nindex 1234567..7654321 100644\n--- a/a.txt\n+++ b/a.txt\n@@ -1,2 +1,2 @@ label\n one\n-two\n+three\n",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "HEAD"
+      ],
+      [
+        "diff",
+        "--numstat",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--name-status",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--unified=3",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShow",
+      "show": {
+        "author": "Author é",
+        "date": "2026-10-11T10:00:00Z",
+        "files": [
+          {
+            "deletions": 1,
+            "hunks": [
+              {
+                "header": "@@ -1,2 +1,2 @@ label",
+                "new_start": 1,
+                "old_start": 1,
+                "patch": " one\n-two\n+three\n"
+              }
+            ],
+            "insertions": 1,
+            "path": "a.txt",
+            "status": "M"
+          }
+        ],
+        "message": "Title\n\nBody\twith tab",
+        "sha": "0123456789012345678901234567890123456789",
+        "short_sha": "0123456",
+        "totals": {
+          "deletions": 1,
+          "files": 1,
+          "insertions": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "patches-is-full",
+    "input": {
+      "ref": "  HEAD  ",
+      "detail": "patches",
+      "contextLines": 3,
+      "detectRenames": false
+    },
+    "metadata": "0123456789012345678901234567890123456789\t0123456\tAuthor é\t2026-10-11T10:00:00Z\tTitle\n\nBody\twith tab\n",
+    "numstat": "1\t1\ta.txt\n",
+    "nameStatus": "M\ta.txt\n",
+    "patch": "diff --git a/a.txt b/a.txt\nindex 1234567..7654321 100644\n--- a/a.txt\n+++ b/a.txt\n@@ -1,2 +1,2 @@ label\n one\n-two\n+three\n",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "HEAD"
+      ],
+      [
+        "diff",
+        "--numstat",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--name-status",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--unified=3",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShow",
+      "show": {
+        "author": "Author é",
+        "date": "2026-10-11T10:00:00Z",
+        "files": [
+          {
+            "deletions": 1,
+            "hunks": [
+              {
+                "header": "@@ -1,2 +1,2 @@ label",
+                "new_start": 1,
+                "old_start": 1,
+                "patch": " one\n-two\n+three\n"
+              }
+            ],
+            "insertions": 1,
+            "path": "a.txt",
+            "status": "M"
+          }
+        ],
+        "message": "Title\n\nBody\twith tab",
+        "sha": "0123456789012345678901234567890123456789",
+        "short_sha": "0123456",
+        "totals": {
+          "deletions": 1,
+          "files": 1,
+          "insertions": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown-detail",
+    "input": {
+      "ref": "  HEAD  ",
+      "detail": "other",
+      "contextLines": 3,
+      "detectRenames": false
+    },
+    "metadata": "0123456789012345678901234567890123456789\t0123456\tAuthor é\t2026-10-11T10:00:00Z\tTitle\n\nBody\twith tab\n",
+    "numstat": "1\t1\ta.txt\n",
+    "nameStatus": "M\ta.txt\n",
+    "patch": "diff --git a/a.txt b/a.txt\nindex 1234567..7654321 100644\n--- a/a.txt\n+++ b/a.txt\n@@ -1,2 +1,2 @@ label\n one\n-two\n+three\n",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "HEAD"
+      ],
+      [
+        "diff",
+        "--numstat",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--name-status",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShow",
+      "show": {
+        "author": "Author é",
+        "date": "2026-10-11T10:00:00Z",
+        "message": "Title\n\nBody\twith tab",
+        "sha": "0123456789012345678901234567890123456789",
+        "short_sha": "0123456",
+        "totals": {
+          "deletions": 1,
+          "files": 1,
+          "insertions": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "renames-binary-and-order",
+    "input": {
+      "ref": "tag",
+      "detail": "full",
+      "contextLines": 0,
+      "detectRenames": true
+    },
+    "metadata": "0123456789012345678901234567890123456789\t0123456\tAuthor é\t2026-10-11T10:00:00Z\tTitle\n\nBody\twith tab\n",
+    "numstat": "0\t0\tdir/{old => New}/file.txt\n-\t-\tZ.bin\n2\t0\tb.txt\n1\t0\tB.txt\n",
+    "nameStatus": "R100\tdir/old/file.txt\tdir/New/file.txt\nM\tZ.bin\nA\tb.txt\nA\tB.txt\n",
+    "patch": "diff --git a/Z.bin b/Z.bin\nBinary files a/Z.bin and b/Z.bin differ\n",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "tag"
+      ],
+      [
+        "diff",
+        "--numstat",
+        "-M",
+        "--no-ext-diff",
+        "--color=never",
+        "tag^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--name-status",
+        "-M",
+        "--no-ext-diff",
+        "--color=never",
+        "tag^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--unified=0",
+        "-M",
+        "--no-ext-diff",
+        "--color=never",
+        "tag^!",
+        "--"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShow",
+      "show": {
+        "author": "Author é",
+        "date": "2026-10-11T10:00:00Z",
+        "files": [
+          {
+            "deletions": 0,
+            "insertions": 1,
+            "path": "B.txt",
+            "status": "A"
+          },
+          {
+            "deletions": 0,
+            "insertions": 2,
+            "path": "b.txt",
+            "status": "A"
+          },
+          {
+            "deletions": 0,
+            "insertions": 0,
+            "path": "dir/New/file.txt",
+            "status": "R"
+          },
+          {
+            "path": "Z.bin",
+            "status": "M"
+          }
+        ],
+        "message": "Title\n\nBody\twith tab",
+        "sha": "0123456789012345678901234567890123456789",
+        "short_sha": "0123456",
+        "totals": {
+          "deletions": 0,
+          "files": 4,
+          "insertions": 3
+        }
+      }
+    }
+  },
+  {
+    "name": "stats-union-and-empty-hunks",
+    "input": {
+      "ref": "  HEAD  ",
+      "detail": "full",
+      "contextLines": 3,
+      "detectRenames": false
+    },
+    "metadata": "0123456789012345678901234567890123456789\t0123456\tAuthor é\t2026-10-11T10:00:00Z\tTitle\n\nBody\twith tab\n",
+    "numstat": "2\t3\tonly-stat.txt\n",
+    "nameStatus": "D\tonly-status.txt\n",
+    "patch": "",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "HEAD"
+      ],
+      [
+        "diff",
+        "--numstat",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--name-status",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ],
+      [
+        "diff",
+        "--unified=3",
+        "--no-ext-diff",
+        "--color=never",
+        "HEAD^!",
+        "--"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShow",
+      "show": {
+        "author": "Author é",
+        "date": "2026-10-11T10:00:00Z",
+        "files": [
+          {
+            "deletions": 3,
+            "insertions": 2,
+            "path": "only-stat.txt",
+            "status": "M"
+          },
+          {
+            "path": "only-status.txt",
+            "status": "D"
+          }
+        ],
+        "message": "Title\n\nBody\twith tab",
+        "sha": "0123456789012345678901234567890123456789",
+        "short_sha": "0123456",
+        "totals": {
+          "deletions": 3,
+          "files": 2,
+          "insertions": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "malformed-metadata",
+    "input": {
+      "ref": "  HEAD  ",
+      "detail": "summary",
+      "contextLines": 3,
+      "detectRenames": false
+    },
+    "metadata": "invalid\n",
+    "numstat": "1\t1\ta.txt\n",
+    "nameStatus": "M\ta.txt\n",
+    "patch": "diff --git a/a.txt b/a.txt\nindex 1234567..7654321 100644\n--- a/a.txt\n+++ b/a.txt\n@@ -1,2 +1,2 @@ label\n one\n-two\n+three\n",
+    "expectedCommands": [
+      [
+        "show",
+        "-s",
+        "--date=iso-strict",
+        "--format=%H%x09%h%x09%an%x09%ad%x09%B",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--color=never",
+        "HEAD"
+      ]
+    ],
+    "expected": {
+      "kind": "gitShowError",
+      "message": "Unexpected git show output format"
+    }
+  }
+]

@@ -23,6 +23,11 @@ function strict(bytes: Buffer): string {
     throw new WorkspaceFailure('invalidEncoding');
   }
 }
+export async function resolveGitCommit(ref: string, line: (args: readonly string[]) => Promise<string>): Promise<string> {
+  const oid = await line(['rev-parse', '--verify', '--end-of-options', ref + '^{commit}']);
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(oid)) throw new WorkspaceFailure('gitProtocolError');
+  return oid;
+}
 export async function directoryIdentity(path: string): Promise<RootIdentity> {
   const canonicalPath = await realpath(path), info = await stat(canonicalPath, { bigint: true });
   if (!info.isDirectory()) throw new WorkspaceFailure('gitRepositoryChanged');
@@ -68,11 +73,7 @@ export async function acquireLocalPatch(
     : (() => {
       throw new WorkspaceFailure('gitAcquisitionFailed');
     })();
-  const resolveCommit = async (ref: string) => {
-    const oid = await line(['rev-parse', '--verify', '--end-of-options', ref + '^{commit}']);
-    if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(oid)) throw new WorkspaceFailure('gitProtocolError');
-    return oid;
-  };
+  const resolveCommit = (ref: string) => resolveGitCommit(ref, line);
   const base = previous?.repository
     ? previous.repository.base
     : input.comparison.base.kind === 'empty'

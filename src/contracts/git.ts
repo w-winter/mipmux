@@ -10,6 +10,9 @@ export const GitRequest = Type.Union([
   Type.Object({ op: Type.Literal('blame'), root: RootName, path: RelativePath,
     lines: Type.Union([Type.String(), Type.Null()], { default: null }), maxOutputBytes: output }, closed),
   Type.Object({ op: Type.Literal('status'), root: RootName, maxOutputBytes: output }, closed),
+  Type.Object({ op: Type.Literal('show'), root: RootName, ref: Type.String({ pattern: '^[^\\u0000]*$' }),
+    detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
+    detectRenames: Type.Boolean({ default: false }), maxOutputBytes: output }, closed),
 ]);
 export type GitRequest = Static<typeof GitRequest>;
 export const GitInput = Type.Union([
@@ -18,6 +21,9 @@ export const GitInput = Type.Union([
   Type.Object({ op: Type.Literal('blame'), root: RootName, path: RelativePath,
     lines: Type.Optional(GitRequest.anyOf[1].properties.lines) }, closed),
   Type.Object({ op: Type.Literal('status'), root: RootName }, closed),
+  Type.Object({ op: Type.Literal('show'), root: RootName, ref: GitRequest.anyOf[3].properties.ref,
+    detail: Type.Optional(GitRequest.anyOf[3].properties.detail), contextLines: Type.Optional(GitRequest.anyOf[3].properties.contextLines),
+    detectRenames: Type.Optional(GitRequest.anyOf[3].properties.detectRenames) }, closed),
 ]);
 export const gitValidator = Compile(GitRequest);
 export const NativeGitReadQuery = Type.Union([
@@ -38,8 +44,16 @@ export const NativeGitReadResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitStatus'), status }, closed),
   Type.Object({ kind: Type.Literal('gitStatusError'), message: Type.String() }, closed),
 ]);
+const hunk = Type.Object({ header: Type.String(), old_start: Type.Integer(), new_start: Type.Integer(), patch: Type.String() }, closed);
+const show = Type.Object({ sha: Type.String(), short_sha: Type.String(), author: Type.String(), date: Type.String(), message: Type.String(),
+  totals: Type.Object({ files: Type.Integer(), insertions: Type.Integer(), deletions: Type.Integer() }, closed),
+  files: Type.Optional(Type.Array(Type.Object({ path: Type.String(), status: Type.String(), insertions: Type.Optional(Type.Integer()),
+    deletions: Type.Optional(Type.Integer()), hunks: Type.Optional(Type.Array(hunk)) }, closed))),
+  hunks: Type.Optional(Type.Array(hunk)) }, closed);
+export const NativeGitShowResult = Type.Object({ kind: Type.Literal('gitShow'), show }, closed);
 const authority = { kind: Type.Literal('git'), root: RootName, repository: Type.Object({ worktree: RootIdentity, gitDirectory: RootIdentity }, closed) };
 export const GitResult = Type.Union([
+  Type.Object({ ...authority, op: Type.Literal('show'), show }, closed),
   Type.Object({ ...authority, op: Type.Literal('status'), status }, closed),
   Type.Object({ ...authority, op: Type.Literal('log'), log: Type.Object({ commits: Type.Array(commit) }, closed) }, closed),
   Type.Object({ ...authority, op: Type.Literal('blame'), blame: Type.Object({ path: RelativePath, lines: Type.Array(blame) }, closed) }, closed),

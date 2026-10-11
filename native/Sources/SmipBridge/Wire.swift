@@ -148,6 +148,7 @@ enum Operation {
     case selection(SelectionOperation)
     case renderDiscoveryPrompt(DiscoveryPromptInput)
     case gitRead(GitReadInput)
+    case gitShow(GitShowInput)
     case gitPatch(GitPatchInput)
     case sliceReadText(ReadTextInput)
     case renderDiscoveryMessage(DiscoveryMessageInput)
@@ -231,6 +232,7 @@ enum Operation {
     // swiftlint:disable:next cyclomatic_complexity
     private static func decodeProjection(_ kind: String, _ value: Any) throws -> Operation {
         switch kind {
+        case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": return try .gitShow(GitShowInput(value))
         case "parseGitPatch": return try .gitPatch(GitPatchInput(value))
         case "prepareGitRead", "projectGitRead": return try .gitRead(GitReadInput(value))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))

@@ -117,6 +117,26 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  prepareGitShow(input: Extract<NativeOperation, { kind: 'prepareGitShow' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  parseGitShowMetadata(input: Extract<NativeOperation, { kind: 'parseGitShowMetadata' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  projectGitShow(input: Extract<NativeOperation, { kind: 'projectGitShow' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      await access.bridge.request({ kind: 'openRoots', roots: this.snapshot.roots.map(root => ({ name: root.name,
+        absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity })) }, this.signal);
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   readFile(request: ReadRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
     return this.#track(() => readFile(this, captured, encode));

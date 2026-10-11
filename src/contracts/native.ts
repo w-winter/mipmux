@@ -2,7 +2,7 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
-import { NativeGitReadQuery, NativeGitReadResult } from './git.js';
+import { NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult } from './git.js';
 import { NativeWireFailureCode } from './errors.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -116,6 +116,8 @@ export const NativeReadTextResult = Type.Union([
     lines: Type.Array(Type.Object({ number: SafeCount, offset: SafeCount, length: SafeCount, text: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readTextRangeError'), code: Type.Enum(['limitWithNegativeStart', 'zeroStart']), message: Type.String() }, { additionalProperties: false }),
 ]);
+const NativeGitCommitInfo = Type.Object({ id: Type.String(), shortID: Type.String(), author: Type.String(),
+  dateISO: Type.String(), message: Type.String() }, { additionalProperties: false });
 const NativeGitPatchInput = Type.Object({ kind: Type.Literal('parseGitPatch'), text: Type.String() }, { additionalProperties: false });
 const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
   files: Type.Array(Type.Object({ path: Type.String(), patch: Type.String(), insertions: Type.Integer(), deletions: Type.Integer(),
@@ -124,6 +126,11 @@ const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
   changedLinesTsv: Type.String() }, { additionalProperties: false });
 export const NativeOperation = Type.Union([
   NativeGitPatchInput,
+  Type.Object({ kind: Type.Literal('prepareGitShow'), ref: Type.String(), detail: Type.String(), contextLines: Type.Integer(),
+    detectRenames: Type.Boolean() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('parseGitShowMetadata'), bytes: base64 }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('projectGitShow'), detail: Type.String(), metadata: NativeGitCommitInfo, numstat: base64, nameStatus: base64,
+    patch: Type.Union([base64, Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('prepareGitRead'), query: NativeGitReadQuery }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('projectGitRead'), query: NativeGitReadQuery, bytes: base64 }, { additionalProperties: false }),
   NativeReadTextInput,
@@ -171,6 +178,12 @@ export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 export const NativeResult = Type.Union([
   NativeGitPatchResult,
   ...NativeGitReadResult.anyOf,
+  Type.Object({ kind: Type.Literal('gitShowArguments'), ref: Type.String(), metadata: Type.Array(Type.String()),
+    numstat: Type.Array(Type.String()), nameStatus: Type.Array(Type.String()),
+    patch: Type.Union([Type.Array(Type.String()), Type.Null()]) }, { additionalProperties: false }),
+  NativeGitShowResult,
+  Type.Object({ kind: Type.Literal('gitShowMetadata'), commit: NativeGitCommitInfo }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitShowError'), message: Type.String() }, { additionalProperties: false }),
   ...NativeReadTextResult.anyOf,
   NativeSelectionInputParsingResult,
   ...NativeSelectionPreparationResult.anyOf,

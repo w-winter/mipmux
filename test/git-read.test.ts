@@ -103,6 +103,7 @@ test('real scripted SDK scout can inspect Git through the allowed tool boundary 
     ? { kind: 'tool', name: 'git', input: { op: 'status', root: 'r', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 2 ? { kind: 'tool', name: 'git', input: { op: 'log', root: 'r', count: 1, maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 3 ? { kind: 'tool', name: 'git', input: { op: 'blame', root: 'r', path: 'file.txt', lines: '1-2', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
+    : index === 4 ? { kind: 'tool', name: 'git', input: { op: 'show', root: 'r', ref: 'HEAD', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
   const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
   try {
