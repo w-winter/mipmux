@@ -40,7 +40,7 @@ export function cacheRecoveryTarget(error: unknown): CacheRecoveryTarget | null 
 export function failureResult(error: unknown) {
   const code = failureCode(error);
   const target = cacheRecoveryTarget(error);
-  if (error instanceof WorkspaceFailure && ['limitWithNegativeStart', 'zeroStart'].includes(code)) {
+  if (error instanceof WorkspaceFailure && ['limitWithNegativeStart', 'zeroStart', 'gitStatusMalformed', 'gitShowMalformed'].includes(code)) {
     return { kind: 'error', code, message: error.details.message };
   }
   if (target) return { kind: 'error', code, target };

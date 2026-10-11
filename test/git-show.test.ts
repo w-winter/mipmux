@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile, chmod } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { Client } from '@modelcontextprotocol/client';
@@ -13,7 +13,7 @@ import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-superviso
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
-const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()), show: Type.Optional(Type.Object({
+const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()), message: Type.Optional(Type.String()), show: Type.Optional(Type.Object({
   sha: Type.String(), short_sha: Type.String(), author: Type.String(), date: Type.String(), message: Type.String(),
   totals: Type.Object({ files: Type.Integer(), insertions: Type.Integer(), deletions: Type.Integer() }),
   files: Type.Optional(Type.Array(Type.Object({ path: Type.String(), status: Type.String(), insertions: Type.Optional(Type.Integer()),
@@ -119,4 +119,33 @@ test('malformed show metadata stops before subsequent diff commands', async t =>
     assert.equal(diffCommands, 0);
     await writeFile(join(f.base, 'malformed-receipt.json'), JSON.stringify({ diffCommands }) + '\n');
   } finally { await runtime.close(); }
+});
+
+test('public MCP retains source diagnostics for malformed Git show and status outputs', async () => {
+  const f = await fixture(), executable = join(f.base, 'malformed-git');
+  await writeFile(executable, '#!' + process.execPath + '\n' +
+    'import {spawnSync} from "node:child_process"; const args=process.argv.slice(2); ' +
+    'if(args.includes("show")) process.stdout.write("malformed commit metadata\\n"); ' +
+    'else if(args.includes("status")) process.stdout.write("invalid record\\0"); ' +
+    'else { const child=spawnSync(' + JSON.stringify(git) + ', args, {stdio:"inherit"}); process.exit(child.status ?? 1); }\n');
+  await chmod(executable, 0o700);
+  const config = join(f.base, 'config.json');
+  await writeFile(config, JSON.stringify({ ...f.options, git: { executable }, search: null, discovery: null, defaultMaxOutputBytes: 24000 }));
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  transport.stderr?.on('data', () => {});
+  const client = new Client({ name: 'git-diagnostics-source', version: '1' }), proof: unknown[] = [];
+  try {
+    await client.connect(transport);
+    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
+    for (const input of [{ op: 'show', root: 'r', ref: 'HEAD' }, { op: 'status', root: 'r' }]) {
+      const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input } });
+      assert.equal(result.isError, true);
+      const value = reply.Parse(result.structuredContent);
+      assert.equal(value.code, input.op === 'show' ? 'gitShowMalformed' : 'gitStatusMalformed');
+      if (input.op === 'show') assert.equal(value.message, 'Unexpected git show output format');
+      else assert.equal(value.message, 'Failed to parse VCS output: unsupported porcelain-v2 record type: i');
+      proof.push(result);
+    }
+    await writeFile(join(f.base, 'diagnostics-mcp-receipt.json'), JSON.stringify(proof, null, 2) + '\n');
+  } finally { await client.close(); }
 });
