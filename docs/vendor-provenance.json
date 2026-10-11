@@ -1893,11 +1893,11 @@
         "Extract makeUserMessage as a static function with captured text parameters; omit app session/tab lookup and recovery branches.",
         "Supply the already rendered selected meta-prompt text instead of reading the desktop singleton.",
         "Remove print(metaPromptText) so stdout contains native protocol frames only.",
-        "Retain all source text, order, trimming gates and interpolations, including the documented automatic-compression prose conflict.",
+        "Retain source text, order, trimming gates and interpolations except the user-approved correction of the false automatic-compression sentence; describe full, slice and codemap selection instead.",
         "Scope SwiftLint line/body length exceptions to copied source text and layout.",
-        "Apply SwiftFormat declaration/brace layout; rendered strings remain byte-identical to the source-generated outputs."
+        "Apply SwiftFormat declaration/brace layout; reference comparisons permit only the approved representation-guidance sentence correction."
       ],
-      "sha256": "6003c7371b43ac39822862895f93642cae10b14eb768e61dbaf72f111ecbff5b",
+      "sha256": "b86be83d2a183a3b25f50edc9b4ddda6ff29cd0ffcb53a65340a351fbf7e67b3",
       "classification": "handwritten",
       "ranges": [
         [

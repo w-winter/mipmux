@@ -9,7 +9,7 @@ enum RPCEContextBuilderMessage {
         userPrompt: String,
         discoverInstructions: String,
         adjustedBudget: Int,
-        metaPromptText: String?,
+        metaPromptText: String?
     ) -> String {
         var message = ""
 
@@ -57,7 +57,7 @@ enum RPCEContextBuilderMessage {
         Make a best effort to ensure the complete prompt (including all selected files and context) fits within the prescribed token budget of \(adjustedBudget) tokens.
 
         Context Optimization Strategy:
-        - For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage
+        - Selected files use full content, slices, or codemaps (API signatures), according to their selected representation
         - Codemaps provide type definitions, function signatures, and structure without full implementation details
         - Additional codemaps may be automatically included for types referenced by selected files (in 'auto' mode)
         - Use the MCP tools to check current token counts and adjust selection as needed to stay within budget

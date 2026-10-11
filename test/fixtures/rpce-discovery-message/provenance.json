@@ -19,11 +19,12 @@
   "bindings": [
     "Captured selected meta prompts are supplied in source storage order; GUI prompt IDs/storage are not recreated.",
     "The original makeUserMessage and promptText bodies render all channel text and whitespace without normalization.",
-    "The diagnostic print(metaPromptText) is removed from protocol stdout."
+    "The diagnostic print(metaPromptText) is removed from protocol stdout.",
+    "The test applies the user-approved automatic-compression sentence correction to the original reference output; all remaining bytes must match."
   ],
   "limits": [
     "This fixture tests source message construction, not workspace tree acquisition or active Pi dispatch.",
-    "The original automatic-compression prose is retained; activation requires the source-conflict decision recorded by the coordinator."
+    "Original reference output retains the source automatic-compression claim. The native renderer uses the approved full/slice/codemap representation guidance correction."
   ],
   "generatorSHA256": "50846024cac827c38ff87ba6466d8b163d424f8571ff3cce4c957cf271afd24f"
 }
