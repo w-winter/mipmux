@@ -1,0 +1,2464 @@
+[
+  {
+    "name": "git-builtins",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "non-git-builtins",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "nonGit"
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "git-mandatory-floor",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": "private/\n",
+        "global": "!private/**\n*.tmp\n!keep.tmp\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 1,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 1,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "non-git-secondary-overrides",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "nonGit"
+      },
+      "controls": {
+        "gitignore": "private/\n",
+        "global": "!private/**\n*.tmp\n!keep.tmp\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 1,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 1,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "repo-cursor-precedence",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "*.swift\n",
+        "repoIgnore": "!src/file.swift\n",
+        "cursorignore": "src/file.swift\n",
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 1,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "repo-disabled",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "*.tmp\n",
+        "repoIgnore": "!a.tmp\n",
+        "cursorignore": null,
+        "respectRepoIgnore": false,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "cursor-disabled",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "*.tmp\n",
+        "repoIgnore": "!a.tmp\n",
+        "cursorignore": "a.tmp\n",
+        "respectRepoIgnore": true,
+        "respectCursorignore": false
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 1,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "nested-layer-mandatory",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [
+        {
+          "content": "*.tmp\n!keep.tmp\n",
+          "directory": "src",
+          "authority": "mandatoryGit"
+        }
+      ],
+      "queries": [
+        {
+          "path": "src/a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "src/keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "src/a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "src/keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 1,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "directory-scope-slash",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [
+        {
+          "content": "file.swift\n/anchored.txt\nchild/file.swift\n",
+          "directory": "src",
+          "authority": "secondary"
+        }
+      ],
+      "queries": [
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/anchored.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "anchored.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "src/child/file.swift",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "src/anchored.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "anchored.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "src/child/file.swift",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "git-loaded-subroot-prefix",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": "src"
+      },
+      "controls": {
+        "gitignore": "src/private/\n",
+        "global": "",
+        "repoIgnore": "!src/private/**\n",
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "other/x",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/x",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 2,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "negation-traversal-literal",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "build/\n!build/keep.txt\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "other",
+          "isDirectory": true
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": true,
+          "match": "ignore",
+          "path": "build",
+          "requiresTraversal": true
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "other",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 1,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "git-floor-traversal",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": "private/\n",
+        "global": "!private/keep.swift\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "private",
+          "isDirectory": true
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": true,
+          "match": "ignore",
+          "path": "private",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 1,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "negation-wildcard-traversal",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "!**/keep.swift\n!src/[aA]/keep.txt\n!src/*/keep.md\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "src",
+          "isDirectory": true
+        },
+        {
+          "path": "src/a",
+          "isDirectory": true
+        },
+        {
+          "path": "other",
+          "isDirectory": true
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "src",
+          "requiresTraversal": true
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "src/a",
+          "requiresTraversal": true
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "other",
+          "requiresTraversal": true
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 1,
+        "exactPrefixCount": 3,
+        "patternHintCount": 2
+      }
+    }
+  },
+  {
+    "name": "escaped-comment-negation-whitespace",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": " # comment\n\\#literal\n\\!name\nfile\\ space\ntrailing\\ \n!\\#literal\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "#literal",
+          "isDirectory": false
+        },
+        {
+          "path": "!name",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "trailing ",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "#literal",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "!name",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "trailing ",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 1,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "directory-only-and-double-star",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "build/\nsrc/**\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "build",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/file",
+          "isDirectory": false
+        },
+        {
+          "path": "src",
+          "isDirectory": true
+        },
+        {
+          "path": "src/file",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": true,
+          "match": "ignore",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "build/file",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": true,
+          "match": "ignore",
+          "path": "src",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "src/file",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "case-unicode-literals",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "é.txt\nNAME\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "é.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "é.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "NAME",
+          "isDirectory": false
+        },
+        {
+          "path": "name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "é.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "é.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "NAME",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "crlf-rules",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "*.tmp\r\n!keep.tmp\r\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 1,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "bracket-and-globstar",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "[a-c].txt\n**/hidden\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "b.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "d.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "dir/hidden",
+          "isDirectory": false
+        },
+        {
+          "path": "hidden",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "b.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "d.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "dir/hidden",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "hidden",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "ordered-layer-negation",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "nonGit"
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [
+        {
+          "content": "*.tmp\n",
+          "directory": "",
+          "authority": "secondary"
+        },
+        {
+          "content": "!keep.tmp\n",
+          "directory": "",
+          "authority": "secondary"
+        }
+      ],
+      "queries": [
+        {
+          "path": ".git/config",
+          "isDirectory": false
+        },
+        {
+          "path": ".svn/index",
+          "isDirectory": false
+        },
+        {
+          "path": ".jj/store",
+          "isDirectory": false
+        },
+        {
+          "path": ".DS_Store",
+          "isDirectory": false
+        },
+        {
+          "path": "a.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "keep.tmp",
+          "isDirectory": false
+        },
+        {
+          "path": "private/x",
+          "isDirectory": false
+        },
+        {
+          "path": "private/keep.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "src/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "other/file.swift",
+          "isDirectory": false
+        },
+        {
+          "path": "build",
+          "isDirectory": true
+        },
+        {
+          "path": "build/keep.txt",
+          "isDirectory": false
+        },
+        {
+          "path": "file space",
+          "isDirectory": false
+        },
+        {
+          "path": "literal#name",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": true,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".git/config",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".svn/index",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".jj/store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": ".DS_Store",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "a.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "allow",
+          "path": "keep.tmp",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/x",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "private/keep.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "src/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "other/file.swift",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": true,
+          "match": "none",
+          "path": "build",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "build/keep.txt",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "file space",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": false,
+          "isDirectory": false,
+          "match": "none",
+          "path": "literal#name",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 1,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  },
+  {
+    "name": "empty-root-and-broad-rule",
+    "input": {
+      "kind": "queryIgnoreRules",
+      "policy": {
+        "kind": "git",
+        "prefix": ""
+      },
+      "controls": {
+        "gitignore": null,
+        "global": "**\n",
+        "repoIgnore": null,
+        "cursorignore": null,
+        "respectRepoIgnore": true,
+        "respectCursorignore": true
+      },
+      "layers": [],
+      "queries": [
+        {
+          "path": "",
+          "isDirectory": true
+        },
+        {
+          "path": "file",
+          "isDirectory": false
+        }
+      ]
+    },
+    "expected": {
+      "hasNegative": false,
+      "kind": "ignoreRules",
+      "paths": [
+        {
+          "ignored": true,
+          "isDirectory": true,
+          "match": "ignore",
+          "path": "",
+          "requiresTraversal": false
+        },
+        {
+          "ignored": true,
+          "isDirectory": false,
+          "match": "ignore",
+          "path": "file",
+          "requiresTraversal": false
+        }
+      ],
+      "traversal": {
+        "basenameOnlyNegationCount": 0,
+        "broadPatternHintCount": 0,
+        "exactPrefixCount": 0,
+        "patternHintCount": 0
+      }
+    }
+  }
+]

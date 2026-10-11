@@ -251,5 +251,23 @@
       "path": "LICENSE"
     },
     "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
+  },
+  {
+    "path": "ThirdPartyLicenses/wildmatch/HEADER-NOTICE",
+    "origin": {
+      "repository": "https://github.com/repoprompt/repoprompt-ce",
+      "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "path": "Sources/RepoPromptC/include/wildmatch.h"
+    },
+    "sha256": "98e356fb353931114c2177dcceae9d74ebeb3bccff7077c16e7fb4ac3d7be0dd"
+  },
+  {
+    "path": "ThirdPartyLicenses/wildmatch/IMPLEMENTATION-NOTICE",
+    "origin": {
+      "repository": "https://github.com/repoprompt/repoprompt-ce",
+      "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "path": "Sources/RepoPromptC/src/wildmatch/wildmatch.c"
+    },
+    "sha256": "f10b60b93e4d7a4bf879df6f1f1e806b2f537b79cb6ffdb23ba4aa58e03beace"
   }
 ]

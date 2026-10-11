@@ -116,6 +116,21 @@ export const NativeReadTextResult = Type.Union([
     lines: Type.Array(Type.Object({ number: SafeCount, offset: SafeCount, length: SafeCount, text: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readTextRangeError'), code: Type.Enum(['limitWithNegativeStart', 'zeroStart']), message: Type.String() }, { additionalProperties: false }),
 ]);
+const IgnorePolicy = Type.Union([
+  Type.Object({ kind: Type.Literal('git'), prefix: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('nonGit') }, { additionalProperties: false }),
+]);
+const IgnoreControlText = Type.Union([Type.String(), Type.Null()]);
+const IgnoreQueryInput = Type.Object({ kind: Type.Literal('queryIgnoreRules'), policy: IgnorePolicy,
+  controls: Type.Object({ gitignore: IgnoreControlText, global: Type.String(), repoIgnore: IgnoreControlText,
+    cursorignore: IgnoreControlText, respectRepoIgnore: Type.Boolean(), respectCursorignore: Type.Boolean() }, { additionalProperties: false }),
+  layers: Type.Array(Type.Object({ content: Type.String(), directory: Type.String(), authority: Type.Enum(['mandatoryGit', 'secondary']) }, { additionalProperties: false })),
+  queries: Type.Array(Type.Object({ path: Type.String(), isDirectory: Type.Boolean() }, { additionalProperties: false })) }, { additionalProperties: false });
+const IgnoreQueryResult = Type.Object({ kind: Type.Literal('ignoreRules'), hasNegative: Type.Boolean(),
+  paths: Type.Array(Type.Object({ path: Type.String(), isDirectory: Type.Boolean(), ignored: Type.Boolean(),
+    match: Type.Enum(['ignore', 'allow', 'none']), requiresTraversal: Type.Boolean() }, { additionalProperties: false })),
+  traversal: Type.Object({ exactPrefixCount: SafeCount, patternHintCount: SafeCount, broadPatternHintCount: SafeCount,
+    basenameOnlyNegationCount: SafeCount }, { additionalProperties: false }) }, { additionalProperties: false });
 const NativeGitCommitInfo = Type.Object({ id: Type.String(), shortID: Type.String(), author: Type.String(),
   dateISO: Type.String(), message: Type.String() }, { additionalProperties: false });
 const NativeGitComparison = Type.Union([
@@ -142,6 +157,7 @@ const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
       newStart: Type.Integer(), newLines: Type.Integer(), content: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false })),
   changedLinesTsv: Type.String() }, { additionalProperties: false });
 export const NativeOperation = Type.Union([
+  IgnoreQueryInput,
   NativeGitPatchInput,
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('projectGitDiff'), compare: Type.String(), detail: Type.String(), pathspecCount: SafeCount,
@@ -197,6 +213,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  IgnoreQueryResult,
   NativeGitPatchResult,
   Type.Object({ kind: Type.Literal('gitComparison'), comparison: NativeGitComparison, rawKey: Type.String(), display: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitDiff'), diff: NativeGitDiff }, { additionalProperties: false }),

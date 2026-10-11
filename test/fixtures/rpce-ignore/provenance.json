@@ -1,0 +1,49 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "sha256": "8bc79701a33742d005062a56461d6e64373dc3d8bbda1c0f11941aec792b6d93"
+    },
+    {
+      "path": "Sources/RepoPromptFileSystem/IgnoreRules.swift",
+      "sha256": "3316cb5437da4b590c0793b370d6b121e09223a1a8d6ed037fc1a9198c1e0df0"
+    },
+    {
+      "path": "Sources/RepoPromptFileSystem/PatternPool.swift",
+      "sha256": "ca771acc6e8ee7844b5a6bea3eb2a3964e905df89c283a8f356b792d29aaa3a0"
+    },
+    {
+      "path": "Sources/RepoPromptFileSystem/FileSystemContracts.swift",
+      "sha256": "f4a520dea83eea101fa54038742cd95efa99f46ab19363ff3a9a662263fa2825"
+    },
+    {
+      "path": "Sources/RepoPromptFileSystem/IgnoreRulesManager.swift",
+      "sha256": "2e4f59b03d7de37eadf8b3c358a3af70962d7cc9b2c77c843389535f4626d284"
+    },
+    {
+      "path": "Sources/RepoPromptC/include/wildmatch.h",
+      "sha256": "68cb711360558617125e1cac2f4303c3210ba8eaa1ea4c4e9a123b6152ec530f"
+    },
+    {
+      "path": "Sources/RepoPromptC/include/repo_gitignore.h",
+      "sha256": "d174291b3003765b3e5e35265f49b0bd1827f1bf5bb12fb93a717f3dffd3342a"
+    },
+    {
+      "path": "Sources/RepoPromptC/src/wildmatch/wildmatch.c",
+      "sha256": "4e95d82efd3729b4f77aca02dbb33ba13478814070f10040374f3980973a94fa"
+    },
+    {
+      "path": "Sources/RepoPromptC/src/wildmatch/repo_wildmatch_wrapper.c",
+      "sha256": "782b9cabbac07b5316fcfe039d1d4fb3aca00b20840efff8a9381d27c4fd0dc4"
+    }
+  ],
+  "bindings": [
+    "Compile original wildcard C and Swift ignore compiler, pattern pool and layered snapshot implementation.",
+    "Use original root-authority construction over supplied control-file contents; filesystem acquisition, root ownership and revalidation are separate dependencies.",
+    "Only package/public visibility and unused package imports are removed for the isolated reference executable. Production DEBUG metrics are not policy and are omitted from the port.",
+    "Each query is evaluated against the original immutable snapshot. Git floor, precedence, directory scope, negation traversal and repository-relative prefixes are retained without path/body normalization."
+  ],
+  "cases": 20,
+  "generatorSHA256": "d9b608fbe0ae14459f20f0cce598fc5782f760a55d693be71e4222bf785c1f93"
+}

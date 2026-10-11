@@ -25,7 +25,12 @@ let package = Package(name: "SmipNative", platforms: [.macOS(.v14)], products: [
     .package(url: "https://github.com/alex-pinkus/tree-sitter-swift", exact: "0.7.3-with-generated-files"),
     .package(url: "https://github.com/tree-sitter/tree-sitter-typescript", exact: "0.23.2"),
 ], targets: [
-    .executableTarget(name: "SmipBridge", dependencies: ["RepoPromptCodeMapCore", "RepoPromptRegexCore", "CPCRE2", .product(name: "Crypto", package: "swift-crypto")], swiftSettings: swift6LanguageMode),
+    .executableTarget(
+        name: "SmipBridge",
+        dependencies: ["RepoPromptCodeMapCore", "RepoPromptRegexCore", "RepoPromptC", "CPCRE2",
+                       .product(name: "Crypto", package: "swift-crypto")],
+        swiftSettings: swift6LanguageMode
+    ),
     .target(
         name: "RepoPromptRegexCore",
         dependencies: ["CSwiftPCRE2"],
@@ -57,6 +62,7 @@ let package = Package(name: "SmipNative", platforms: [.macOS(.v14)], products: [
             .define("DEBUG", .when(configuration: .debug)),
         ],
     ),
+    .target(name: "RepoPromptC", path: "Sources/RepoPromptC", publicHeadersPath: "include"),
     .systemLibrary(name: "CPCRE2", pkgConfig: "libpcre2-8"),
     .target(name: "CSwiftPCRE2", dependencies: ["CPCRE2"], publicHeadersPath: "include"),
     .target(name: "TreeSitterScannerSupport", path: "Sources/TreeSitterScannerSupport", sources: ["src/javascript/scanner.c", "src/python/scanner.c"], publicHeadersPath: "include"),

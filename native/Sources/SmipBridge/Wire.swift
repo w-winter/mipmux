@@ -148,6 +148,7 @@ enum Operation {
     case selection(SelectionOperation)
     case renderDiscoveryPrompt(DiscoveryPromptInput)
     case git(GitOperation)
+    case ignoreRules(IgnoreRulesInput)
     case sliceReadText(ReadTextInput)
     case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
@@ -231,6 +232,7 @@ enum Operation {
     private static func decodeProjection(_ kind: String, _ value: Any) throws -> Operation {
         switch kind {
         case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": return try .git(.show(GitShowInput(value)))
+        case "queryIgnoreRules": return try .ignoreRules(IgnoreRulesInput(value))
         case "parseGitComparison", "projectGitDiff": return try .git(.diff(GitDiffInput(value)))
         case "parseGitPatch": return try .git(.patch(GitPatchInput(value)))
         case "prepareGitRead", "projectGitRead": return try .git(.read(GitReadInput(value)))

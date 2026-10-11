@@ -101,3 +101,9 @@ Literal LF splitting in `GitDiffPatchParsing` calls `NSString` on both platforms
 `projectGitDiff` consumes captured changed-file records and per-file patches. It uses the source diff DTO, status totals, summary text and hunk-aware truncation. Summary detail upgrades to patches for one path in one repository. Patches use the source 300-line allowance; full detail retains complete hunks. Binary counts, empty patch dictionaries and omitted hunks follow the source projection. Git projections use the closed `GitOperation` enum in the native dispatcher, matching the existing selection-operation grouping.
 
 `test/fixtures/rpce-git-diff/` contains 32 outputs generated from the original comparison, provider-policy and projection functions. `scripts/generate-git-diff-fixtures.mjs` regenerates them. These fixtures supply captured inputs to the native policy; repository resolution, acquisition and selected-artifact behavior require their own integration evidence.
+
+## Native ignore-policy snapshots
+
+`queryIgnoreRules` compiles captured Git, global, repository and cursor ignore controls into the original RPCE rule snapshot. Git-root policy retains the mandatory Git floor; secondary negations can override secondary rules. Non-Git roots use the source ordered layers. Repository-relative prefixes and scoped child layers use the original matching rules, including their negation traversal hints.
+
+The native implementation retains the original C wildcard matcher, Swift compiler, immutable rule nodes and bounded pattern-string pool. `test/fixtures/rpce-ignore/` contains 20 outputs produced by compiling the original source. `scripts/generate-ignore-fixtures.mjs` regenerates them. These fixtures exercise supplied control text and query paths. Physical control-file acquisition, repository authority, workspace enumeration and current-source verification require separate integration evidence.

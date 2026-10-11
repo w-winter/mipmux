@@ -3126,6 +3126,169 @@
         "Bind captured VCS files and per-file patches to the existing native projection; parse raw comparison input through the original source parser.",
         "This is a data-only dependency. Repository/snapshot resolution, pathspec acquisition, artifacts and public diff admission are not implemented by this boundary."
       ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "8bc79701a33742d005062a56461d6e64373dc3d8bbda1c0f11941aec792b6d93",
+      "destination": "native/Sources/SmipBridge/RPCEGitignoreCompiler.swift",
+      "sha256": "da46f012a1ef1e026172cf5edc0e232836848d2938d0d5f8bf1af7b1a33443ac",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          637
+        ]
+      ],
+      "changes": [
+        "Use native module visibility; omit the unused RepoPromptFoundation import and DEBUG-only metrics, retaining all production matching and traversal semantics.",
+        "Retain the original C matcher calls and compiler/prefilter/traversal-hint algorithms.",
+        "Scoped source-shape SwiftLint exceptions retain original identifiers and parsing layout; configured CCCC thresholds remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRules.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3316cb5437da4b590c0793b370d6b121e09223a1a8d6ed037fc1a9198c1e0df0",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRules.swift",
+      "sha256": "d0a63840023306b8fc2d129cce7514af4105b3c1fe448602b5e1c7e18356c52d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          436
+        ]
+      ],
+      "changes": [
+        "Use native module visibility; omit the unused RepoPromptFoundation import and DEBUG-only metrics, retaining all production matching and traversal semantics.",
+        "Immutable linked RulesNode fields are Sendable for shared default nodes. Extract the unchanged mandatory-Git traversal hint union into a private constructor phase to satisfy the configured cyclomatic20 limit.",
+        "Scoped source-shape SwiftLint exceptions retain original identifiers and parsing layout; configured CCCC thresholds remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/PatternPool.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ca771acc6e8ee7844b5a6bea3eb2a3964e905df89c283a8f356b792d29aaa3a0",
+      "destination": "native/Sources/SmipBridge/RPCEPatternPool.swift",
+      "sha256": "9cdc1421169e14571ccce8244140488aecc793c325965b1695b165c372e10abd",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          61
+        ]
+      ],
+      "changes": [
+        "Use native module visibility; omit the unused RepoPromptFoundation import and DEBUG-only metrics, retaining all production matching and traversal semantics.",
+        "Keep source interning and its16384-entry bound. The shared final class is @unchecked Sendable because every read and mutation of private pool storage is protected by its source NSLock.",
+        "Scoped source-shape SwiftLint exceptions retain original identifiers and parsing layout; configured CCCC thresholds remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/FileSystemContracts.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "f4a520dea83eea101fa54038742cd95efa99f46ab19363ff3a9a662263fa2825",
+      "destination": "native/Sources/SmipBridge/RPCEIgnorePrefix.swift",
+      "sha256": "c83540a1ce961b0be3bc7f27ce41ee1a645da8d9caa9f8a6e2035b4120ff18ce",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          16,
+          29
+        ]
+      ],
+      "changes": [
+        "Retain caller-validated prefix and pure root authority construction; filesystem acquisition and cache/lifecycle management are not copied into this data-only dependency."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRulesManager.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "2e4f59b03d7de37eadf8b3c358a3af70962d7cc9b2c77c843389535f4626d284",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRootRules.swift",
+      "sha256": "07e4d200159083a312e9faaf6dfc9019e60e70719e237bf3f7b0587c8f8d5ec3",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          24,
+          29
+        ],
+        [
+          328,
+          364
+        ]
+      ],
+      "changes": [
+        "Retain caller-validated prefix and pure root authority construction; filesystem acquisition and cache/lifecycle management are not copied into this data-only dependency."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptC/include/wildmatch.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "68cb711360558617125e1cac2f4303c3210ba8eaa1ea4c4e9a123b6152ec530f",
+      "destination": "native/Sources/RepoPromptC/include/wildmatch.h",
+      "sha256": "68cb711360558617125e1cac2f4303c3210ba8eaa1ea4c4e9a123b6152ec530f",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "changes": [
+        "Retain complete original matcher/header/parser code and copyright notices; remove trailing whitespace and add a terminal newline for repository whitespace checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptC/include/repo_gitignore.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "d174291b3003765b3e5e35265f49b0bd1827f1bf5bb12fb93a717f3dffd3342a",
+      "destination": "native/Sources/RepoPromptC/include/repo_gitignore.h",
+      "sha256": "d174291b3003765b3e5e35265f49b0bd1827f1bf5bb12fb93a717f3dffd3342a",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "changes": [
+        "Retain complete original matcher/header/parser code and copyright notices; remove trailing whitespace and add a terminal newline for repository whitespace checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptC/src/wildmatch/wildmatch.c",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4e95d82efd3729b4f77aca02dbb33ba13478814070f10040374f3980973a94fa",
+      "destination": "native/Sources/RepoPromptC/wildmatch.c",
+      "sha256": "ed5e70b5ac1a6dee56492244349ede65cb9fcec0731293d6740976f6b39a08df",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          314
+        ]
+      ],
+      "changes": [
+        "Retain complete original matcher/header/parser code and copyright notices; remove trailing whitespace and add a terminal newline for repository whitespace checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptC/src/wildmatch/repo_wildmatch_wrapper.c",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "782b9cabbac07b5316fcfe039d1d4fb3aca00b20840efff8a9381d27c4fd0dc4",
+      "destination": "native/Sources/RepoPromptC/repo_wildmatch_wrapper.c",
+      "sha256": "5d75935a2981a50b01a73fa23cf49edd1baa0323f6d877bb7d881cce1a58a907",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          290
+        ]
+      ],
+      "changes": [
+        "Retain complete original matcher/header/parser code and copyright notices; remove trailing whitespace and add a terminal newline for repository whitespace checks."
+      ]
     }
   ],
   "dependencies": [
@@ -8150,6 +8313,102 @@
       "line": 440,
       "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
       "destination": "native/Sources/SmipBridge/RPCEGitProjection.swift"
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitignoreCompiler.swift",
+      "name": "GitPattern",
+      "line": 26
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitignoreCompiler.swift",
+      "name": "GitPatternPrefilter",
+      "line": 45
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitignoreCompiler.swift",
+      "name": "NegationTraversalDiagnostics",
+      "line": 61
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitignoreCompiler.swift",
+      "name": "NegationTraversalPattern",
+      "line": 84
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitignoreCompiler.swift",
+      "name": "CompiledIgnoreRules",
+      "line": 118
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/GitignoreCompiler.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitignoreCompiler.swift",
+      "name": "GitignoreCompiler",
+      "line": 374
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRules.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRules.swift",
+      "name": "IgnoreRuleAuthority",
+      "line": 6
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRules.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRules.swift",
+      "name": "IgnoreRulePolicy",
+      "line": 11
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRules.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRules.swift",
+      "name": "IgnoreRules",
+      "line": 34
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRules.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRules.swift",
+      "name": "IgnoreRulesSnapshot",
+      "line": 313
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/PatternPool.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPatternPool.swift",
+      "name": "PatternPool",
+      "line": 11
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/FileSystemContracts.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnorePrefix.swift",
+      "name": "IgnoreRepositoryRootPrefix",
+      "line": 18
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/FileSystemContracts.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnorePrefix.swift",
+      "name": "IgnoreRootPrefix",
+      "line": 22
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRulesManager.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRootRules.swift",
+      "name": "CompiledRootAuthority",
+      "line": 24
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRulesManager.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRootRules.swift",
+      "name": "compileRootAuthority",
+      "line": 328
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/IgnoreRulesManager.swift",
+      "destination": "native/Sources/SmipBridge/RPCEIgnoreRootRules.swift",
+      "name": "makeRootRules",
+      "line": 346
     }
   ],
   "sourceCoverage": [
