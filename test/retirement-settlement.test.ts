@@ -13,7 +13,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0,
     countOnly: false, maxOutputBytes: 2000, continuation: null };
   const provider = await scriptedProvider(() => boundary === 'search' ? { kind: 'tool', name: 'file_search', input: search, stop: 'tool_use', tokens: 10 } : ({ kind: 'tool', name: 'read_file', input: {
-    root: 'r', path: 'file.txt', shape: { kind: 'whole' }, maxOutputBytes: 2000, continuation: null,
+    root: 'r', path: 'file.txt', start_line: null, offset: null, limit: null, maxOutputBytes: 2000, continuation: null,
   }, stop: 'tool_use', tokens: 10 }));
   provider.config.policy.compaction.enabled = false;
   const root = join(provider.directory, 'root'), outputRoot = join(provider.directory, 'out');
@@ -50,7 +50,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     await client.refresh(workspace.id, new AbortController().signal);
     armed = true;
     const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
-      discoveryHints: [], allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true }, outputName: 'packet' };
+      discoveryHints: [], budgetUnits: 10000, outputName: 'packet' };
     const job = client.build(workspace.id, 'held-read', request);
     await holding;
     assert(state.worker);
@@ -67,7 +67,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     const joins = await Promise.all(held.map(process => process.closed));
     assert(joins.length > 0);
     armed = false;
-    const read = await client.explore(workspace.id, { name: 'read_file', input: { root: 'r', path: 'file.txt', shape: { kind: 'whole' }, maxOutputBytes: 2000, continuation: null } }, new AbortController().signal);
+    const read = await client.explore(workspace.id, { name: 'read_file', input: { root: 'r', path: 'file.txt', start_line: null, offset: null, limit: null, maxOutputBytes: 2000, continuation: null } }, new AbortController().signal);
     assert.equal(read.kind, 'read');
     const searched = await client.explore(workspace.id, { name: 'file_search', input: search }, new AbortController().signal);
     assert.equal(searched.kind, 'search');

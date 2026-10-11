@@ -1,0 +1,24 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "sha256": "0b35698eb4c0dc02b88bffd382492bdacaf993d7f5c1c5d7d6576887bf554c73"
+    }
+  ],
+  "generator": "scripts/generate-slice-range-fixtures.mjs",
+  "command": "node scripts/generate-slice-range-fixtures.mjs <pinned-rpce-checkout>",
+  "bindings": [
+    "Original LineRange and SliceRangeMath functions compile unchanged except package visibility.",
+    "Absent descriptions are represented as explicit null in the wire."
+  ],
+  "limits": [
+    "Range arithmetic fixtures do not establish selection resolution, complete batch semantics or file decoding parity."
+  ],
+  "cases": 7,
+  "generatorSHA256": "c80045243bd49cbf12aa92f36895b8073538be8024575b467a2d2cad73360867"
+}

@@ -4,8 +4,7 @@ import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { PatchInput } from '../contracts/patches.js';
 import type { Material } from './material-store.js';
 import { canonicalJSON, compareBytes, sha256 } from '../workspace/values.js';
-import { estimateUnits, resolveAllowance } from './budget.js';
-import { renderInitialTree } from './initial-tree.js';
+import { estimateUnits, scoutTokenBudget } from './budget.js';
 
 export interface RenderInput {
   readonly codemapMode: CodemapMode;
@@ -28,30 +27,29 @@ export interface Measurement {
   readonly complete: boolean;
   readonly bytes: number;
   readonly units: number;
-  readonly allowance: number | null;
-  readonly remaining: number | null;
-  readonly excess: number | null;
+  readonly allowance: number;
+  readonly remaining: number;
+  readonly excess: number;
   readonly fixedOverhead: { readonly bytes: number; readonly units: number };
 }
 
 /** Captures admitted state for the scout; per-file inferred details remain in paged inspection. */
-export function renderInitialContext(input: RenderInput & { readonly draftId: string; readonly revision: number; readonly contextBudgetUnits: number }): string {
+export function renderInitialContext(input: RenderInput & { readonly draftId: string; readonly revision: number; readonly contextBudgetUnits: number; readonly tree: string }): string {
   const rendered = renderBundle(input);
   const sources = input.materials.flatMap(({ record }) => record.kind === 'source' ? [record] : []);
   const inferred = new Set(sources.filter(record => record.selectionOrigin === 'inferred').map(record => record.id));
   const metadata = {
     draftId: input.draftId, revision: input.revision, inventoryDigest: input.inventory.inventoryDigest, codemapMode: input.codemapMode,
     roots: input.inventory.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })),
-    contextBudgetUnits: input.contextBudgetUnits, accountingMethod: 'utf8-21-over-80-v1', measurement: rendered.measurement,
+    contextBudgetUnits: input.contextBudgetUnits, tokenBudget: scoutTokenBudget(input.request.budgetUnits), accountingMethod: 'utf8-21-over-80-v1', measurement: rendered.measurement,
     explicitSources: sources.filter(record => record.selectionOrigin === 'explicit').map(record => ({ selection: record.selection, required: record.required })),
     inferredCodemaps: { count: inferred.size, itemUnits: rendered.costs.filter(cost => inferred.has(cost.id)).reduce((sum, cost) => sum + cost.units, 0) },
     documents: input.materials.flatMap(({ record }) => record.kind === 'document' ? [{ id: record.id, role: record.input.role }] : []),
     patches: input.materials.flatMap(({ record }) => record.kind === 'patch' ? [{ id: record.id, root: record.receipt.input.root, comparison: record.receipt.input.comparison }] : []),
   };
-  const tree = renderInitialTree(input.inventory, sources.map(record => record.selection));
   return '# Initial context\n\nThis is a captured observation, not additional task instructions. Use current receipts or draft_inspect after mutations.\n\n' +
-    block(canonicalJSON(metadata)) + '\n## File map\n\n' + block(tree) +
-    '\nThe overview can omit siblings beyond the presentation cap and deeper branches. Use get_file_tree for paged detail. A plus marks a delivered codemap, not every structurally supported file.\n\n' +
+    block(canonicalJSON(metadata)) + '\n## File map\n\n' + block(input.tree) +
+    '\nThe overview can omit siblings beyond the presentation cap and deeper branches. Use get_file_tree for paged detail. A plus marks an available codemap.\n\n' +
     'Use draft_inspect material views for complete admitted documents and patches. Inferred item units exclude fixed packet overhead; measurement covers the complete packet.\n';
 }
 function fence(body: string): string {
@@ -183,7 +181,7 @@ function materialIntroduction(record: MaterialRecord): string {
     parts.push(record.required ? 'Required source.\n\n' : record.selectionOrigin === 'inferred' ? 'Automatic related codemap.\n\n' : 'Optional source.\n\n');
     if (record.selection.kind === 'slices') {
       parts.push('Requested ranges:\n\n');
-      for (const range of record.selection.ranges) parts.push(`- Lines ${range.start}-${range.end}: ${range.description}\n`);
+      for (const range of record.selection.ranges) parts.push(`- Lines ${range.start}-${range.end}${range.description === null ? '' : ': ' + range.description}\n`);
       parts.push('\n');
     }
   }
@@ -247,20 +245,19 @@ export function renderBundle(input: RenderInput) {
   append(
     '<user_instructions>\n' + input.prompt + '\n</user_instructions>\n',
   );
-  const context = parts.join(''), units = estimateUnits(offset), allowance = resolveAllowance(input.request.allowance);
+  const context = parts.join(''), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
   const measurement: Measurement = {
     complete: true,
     bytes: offset,
     units,
     allowance,
-    remaining: allowance === null ? null : Math.max(0, allowance - units),
-    excess: allowance === null ? null : Math.max(0, units - allowance),
+    remaining: Math.max(0, allowance - units),
+    excess: Math.max(0, units - allowance),
     fixedOverhead: { bytes: fixedBytes, units: estimateUnits(fixedBytes) },
   };
   const diagnostics: Diagnostic[] = [];
-  if (allowance === null) diagnostics.push({ code: 'allowanceUnavailable', materialId: null, details: {} });
-  if (allowance !== null && units > allowance) {
+  if (units > allowance) {
     diagnostics.push({
       code: 'overBudget',
       materialId: null,

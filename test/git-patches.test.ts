@@ -93,7 +93,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
         comparison: { kind: 'worktree', base: { kind: 'commit', ref: commit }, includeUntracked: true },
         scope: { kind: 'all' },
       }],
-      allowance: { kind: 'net', method: 'utf8-21-over-80-v1', overheadReserved: true, units: 100000 },
+      budgetUnits: 100000,
       discoveryHints: [],
       outputName: 'worktree',
     };

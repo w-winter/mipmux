@@ -1,0 +1,74 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sha256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c"
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "sha256": "d4e47d333b7cc91391f01c0388cc6547a92c787b5b7b3e0e1ed3d16a156a890c"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sha256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "sha256": "7b58ca86cd2135d3b342c736cdd50dee6ba7ebce1d28d2b201ee3ca175dfd28d"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "sha256": "b3cd31fc9b386773b039f95f7494f3a1840528b2499e15663849e688a66f4cbd"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "sha256": "022910fe6523811ff4da0d1ab3fc866926b6c4b91404910b1ba50f24b805019a"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "sha256": "51af27066c1a29b10fc706337f36f2411871623e32a45e7f4a15053b6ce83553"
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Utilities/RelativePath.swift",
+      "sha256": "f9274c193b88ee5d8f0e5a7006549077854c899d1297f8a0df50dfb93d308f26"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sha256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e"
+    },
+    {
+      "path": "Sources/RepoPromptCodeMapCore/CodeMapSyntaxEngine.swift",
+      "sha256": "fe0641d9da1f10e4c5c3ecb129a4cb2309724c2bbfec3d1194f90b9580d44392"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Utilities/WorkspacePathNormalizations.swift",
+      "sha256": "d77d7af8e1d933df0530b8bea19b603581889c98b217b8213564f5635a9ce3a1"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "sha256": "0b35698eb4c0dc02b88bffd382492bdacaf993d7f5c1c5d7d6576887bf554c73"
+    }
+  ],
+  "generator": "scripts/generate-selection-candidate-fixtures.mjs",
+  "command": "node scripts/generate-selection-candidate-fixtures.mjs <pinned-rpce-checkout>",
+  "bindings": [
+    "The original candidate resolver bodies execute against an immutable captured catalog boundary.",
+    "Root identities and materialization outcomes are supplied inputs."
+  ],
+  "limits": [
+    "Catalog lookup adapters are shared by reference and port; these cases do not independently prove filesystem acquisition or complete catalog policy.",
+    "Absent absolute paths require an explicit materialization outcome; the resolver cannot infer an acquisition result.",
+    "Public selection-tool strict policy and complete mutation integration remain separate acceptance checks."
+  ],
+  "cases": 20,
+  "generatorSHA256": "de9fc8d30316ea9ad37e09c18aa1cf375e03fa52c3816b8c3fa8eabefa21898f"
+}

@@ -68,7 +68,7 @@ test('two-phase finalization across many roots completes under a controlled desc
     nativeExecutable: limited, nativeEnvironment: environment(limit) });
   const request: ContextBuildRequest = { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', documents: [], patches: [], discoveryHints: [],
     requiredSources: roots.map(root => ({ kind: 'full', source: { root: root.name, path: 'file.txt' } })), outputName: 'packet',
-    allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true } };
+    budgetUnits: 100000 };
   try {
     const workspace = await runtime.declare({ roots, exclusions: [], outputRoot }, signal());
     const operation = await workspace.openOperation(signal());

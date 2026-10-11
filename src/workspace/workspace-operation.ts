@@ -10,6 +10,7 @@ import { getFileTree } from '../exploration/tree.js';
 import { getCodeStructure } from '../exploration/structure.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
+import type { NativeOperation } from '../contracts/native.js';
 
 /** Pins one inventory and owns a separate bridge until close joins admitted operations. */
 export class WorkspaceOperation {
@@ -104,8 +105,38 @@ export class WorkspaceOperation {
     const captured = structuredClone(request);
     return this.#track(() => fileSearch(this, captured, encode));
   }
-  getFileTree(request: TreeRequest, encode?: ResultEncoding) { this.#check(); return getFileTree(this.snapshot, request, encode); }
-  getCodeStructure(request: StructureRequest, encode?: ResultEncoding) { this.#check(); return getCodeStructure(this.snapshot, request, encode); }
+  getFileTree(request: TreeRequest, encode?: ResultEncoding) {
+    const captured = structuredClone(request);
+    return this.#track(() => getFileTree(this, captured, encode));
+  }
+  renderFileTree(input: Extract<NativeOperation, { kind: 'renderFileTree' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  getCodeStructure(request: StructureRequest, encode?: ResultEncoding) {
+    const captured = structuredClone(request);
+    return this.#track(() => getCodeStructure(this, captured, encode));
+  }
+  sliceReadText(input: Extract<NativeOperation, { kind: 'sliceReadText' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  calculateSliceRanges(input: Extract<NativeOperation, { kind: 'calculateSliceRanges' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  queryStructure(input: Extract<NativeOperation, { kind: 'queryStructure' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   cancel(): void { this.#controller.abort(); }
   close(): Promise<void> {
     this.#closing ??= (async () => {

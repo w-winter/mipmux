@@ -37,9 +37,9 @@ test('concise MCP exploration matches explicit options and preserves validation,
     const call = (name: string, args: ToolArguments) => client.callTool({ name, arguments: { workspaceId, ...args } });
     const filters = { roots: [], directories: [], include: [], exclude: [], extensions: [] };
     const pairs: [string, ToolArguments, ToolArguments][] = [
-      ['get_file_tree', {}, { input: { view: 'files', depth: null, continuation: null }, draftId: null }],
-      ['read_file', { input: { root: 'r', path: 'greet.ts' } }, { input: { root: 'r', path: 'greet.ts', 'shape': { kind: 'whole' }, continuation: null } }],
-      ['get_code_structure', { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }] } }, { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }], expand: 'none', depth: 1, continuation: null } }],
+      ['get_file_tree', {}, { input: { type: 'files', mode: 'auto', scope: null, maxDepth: null, continuation: null }, draftId: null }],
+      ['read_file', { input: { root: 'r', path: 'greet.ts' } }, { input: { root: 'r', path: 'greet.ts', start_line: null, offset: null, limit: null, continuation: null } }],
+      ['get_code_structure', { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }] } }, { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }], expand: 'none', depth: 1, signatures: true, size: 'medium' } }],
       ['file_search', { input: { query: { text: 'GREET' } } }, { input: { query: { kind: 'literal', text: 'GREET', caseSensitive: false, wholeWord: false }, mode: 'content', filters, before: 0, after: 0, countOnly: false, continuation: null } }],
       ['file_search', { input: { query: { kind: 'glob', text: '*.ts' } } }, { input: { query: { kind: 'glob', text: '*.ts' }, mode: 'path', filters, before: 0, after: 0, countOnly: false, continuation: null } }],
     ];
@@ -58,8 +58,8 @@ test('concise MCP exploration matches explicit options and preserves validation,
     const cap = await call('read_file', { input: { root: 'r', path: 'greet.ts' }, maxOutputBytes: 1 });
     assert.equal(record.Parse(cap.structuredContent).kind, 'outputBudgetTooSmall');
     for (const [name, args] of [
-      ['get_file_tree', { input: { view: 'selected' } }],
-      ['get_file_tree', { input: { view: 'selected' }, draftId: 'foreign' }],
+      ['get_file_tree', { input: { type: 'files', mode: 'selected' } }],
+      ['get_file_tree', { input: { type: 'files', mode: 'selected' }, draftId: 'foreign' }],
       ['read_file', { input: { path: 'greet.ts' } }],
       ['get_code_structure', { input: { seeds: [], depth: 0 } }],
       ['file_search', { input: { query: { kind: 'glob', text: '*.ts' }, mode: 'content' } }],
@@ -93,11 +93,11 @@ test('scout exploration normalizes concise inputs before crossing parent IPC', a
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   const calls: DiscoveryCall[] = [];
   try {
-    const result = await new PiRunner(provider.config, supervisor).run({ enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] },
+    const result = await new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] },
       { call: async call => { calls.push(call); return { kind: 'observed' }; } }, new AbortController().signal, () => {});
     assert.equal(result.kind, 'complete'); assert.equal(calls.length, requests.length);
-    assert.deepEqual(calls[0], { name: 'get_file_tree', input: { view: 'files', depth: null, continuation: null, maxOutputBytes: 3000 } });
-    assert(calls[1]?.name === 'read_file'); assert.deepEqual(calls[1].input['shape'], { kind: 'whole' });
+    assert.deepEqual(calls[0], { name: 'get_file_tree', input: { type: 'files', mode: 'auto', scope: null, maxDepth: null, continuation: null, maxOutputBytes: 3000 } });
+    assert(calls[1]?.name === 'read_file'); assert.deepEqual(calls[1].input['start_line'], null);
     assert(calls[2]?.name === 'get_code_structure'); assert.equal(calls[2].input.depth, 1); assert.equal(calls[2].input.expand, 'none');
     assert(calls[3]?.name === 'file_search'); assert.deepEqual(calls[3].input.query, { kind: 'literal', text: 'needle', caseSensitive: false, wholeWord: false });
     assert(calls[4]?.name === 'file_search'); assert.equal(calls[4].input.mode, 'path');

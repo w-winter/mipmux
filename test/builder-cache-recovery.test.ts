@@ -23,7 +23,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
   const request: ContextBuildRequest = { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
-    discoveryHints: [], outputName: 'packet', allowance: { kind: 'net', units: 100000, method: 'utf8-21-over-80-v1', overheadReserved: true } };
+    discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
   await writeFile(config, JSON.stringify({ ...options, search: null, git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   try { await exercise(); } finally { await provider.close(); }
 

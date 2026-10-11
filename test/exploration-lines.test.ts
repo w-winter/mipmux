@@ -1,27 +1,21 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import fc from 'fast-check';
-import { prepareText, selectLines } from '../src/exploration/lines.js';
+import { prepareText } from '../src/exploration/lines.js';
 import { pageResult, serializedBytes } from '../src/exploration/output-budget.js';
 
-test('line spans preserve UTF-8 bytes, terminators and strict range semantics', () => {
+test('line spans preserve UTF-8 bytes and terminators', () => {
   const bytes = Buffer.from('\uFEFFé🙂\r\ne\u0301\rfinal\n');
   const prepared = prepareText(bytes);
   assert.equal(prepared.lines.length, 3);
   assert.equal(prepared.searchText, '\uFEFFé🙂\ne\u0301\nfinal\n');
-  assert.equal(selectLines(prepared, { kind: 'range', start: 2, end: 2 }).text, 'e\u0301\r');
-  assert.equal(selectLines(prepared, { kind: 'tail', count: 9 }).text, bytes.toString());
   assert.equal(prepareText(Buffer.alloc(0)).lines.length, 0);
-  for (const range of [{ start: 0, end: 1 }, { start: 2, end: 1 }, { start: 1, end: 4 }]) {
-    assert.throws(() => selectLines(prepared, { kind: 'range', ...range }), /invalidRange/);
-  }
   assert.throws(() => prepareText(Buffer.from([255])), /decodeFailed/);
   assert.throws(() => prepareText(Buffer.from('a\0b')), /binarySource/);
   fc.assert(fc.property(fc.string(), value => {
     const bytes = Buffer.from(value.replaceAll('\0', ''));
     const prepared = prepareText(bytes);
     assert.equal(prepared.lines.map(line => line.text).join(''), bytes.toString());
-    assert.equal(selectLines(prepared, { kind: 'whole' }).text, bytes.toString());
   }));
 });
 

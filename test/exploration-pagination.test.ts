@@ -59,10 +59,11 @@ test('real search modes and output continuations preserve complete counts and re
     await assert.rejects(operation.fileSearch({ ...query, query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);
     await assert.rejects(operation.fileSearch({ ...query, filters: { ...query.filters, include: ['absent.*'] },
       query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);
-    const readQuery = { root: 'r', path: 'a.txt', shape: { kind: 'whole' as const }, maxOutputBytes: 10000, continuation: null };
+    const readQuery = { root: 'r', path: 'a.txt', start_line: null, offset: null, limit: null, maxOutputBytes: 10000, continuation: null };
     const read = await operation.readFile(readQuery);
     if (read.kind !== 'read') assert.fail('Missing read');
-    const readCap = serializedBytes({ ...read, lines: read.lines.slice(0, 1), returnedRange: { start: 1, end: 1 },
+    const readCap = serializedBytes({ ...read, lines: read.lines.slice(0, 1), content: read.lines[0]!.text, returnedRange: { start: 1, end: 1 },
+      firstLine: 1, lastLine: 1, returnedLineCount: 1,
       truncated: true, continuation: { digest: '0'.repeat(64), offset: 1 } });
     const readPage = await operation.readFile({ ...readQuery, maxOutputBytes: readCap });
     if (readPage.kind !== 'read' || !readPage.continuation) assert.fail('Missing read page');

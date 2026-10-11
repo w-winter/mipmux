@@ -75,7 +75,7 @@ try {
   const operation = await workspace.openOperation(signal);
   try {
     const result = await operation.readFile({
-      root: 'repo', path: 'README.md', shape: { kind: 'whole' },
+      root: 'repo', path: 'README.md', start_line: null, offset: null, limit: null,
       maxOutputBytes: 12000, continuation: null,
     });
     console.log(result);
@@ -90,7 +90,7 @@ try {
 
 Declaration starts warming. `refresh` registers a freshness barrier and joins shared work; a scan that started earlier is followed by a coalesced reconciliation. `openOperation` pins the current settled inventory. Closing one handle leaves other handles and admitted operations usable. Every operation must be closed, and runtime closure cancels and joins its owned work.
 
-An operation provides `readFile`, `getFileTree`, `getCodeStructure`, and `fileSearch`. Their exported schemas define closed request objects. Reads/searches verify source and controlling-policy identities; changed inputs require a new reconciled request. Tree/structure queries use the pinned inventory. Results report complete counts separately from presentation truncation. Continue with the returned token and the same request settings, or increase `maxOutputBytes` when a complete record cannot fit.
+An operation provides `readFile`, `getFileTree`, `getCodeStructure`, and `fileSearch`. Their exported schemas define closed request objects. Reads/searches verify source and controlling-policy identities; changed inputs require a new reconciled request. Tree and structural queries use the pinned inventory. Read, tree and search pages return continuations; keep the same request settings when following them. Structural queries return a complete size-bounded graph reply. Increase `maxOutputBytes` or narrow the query when that reply cannot fit.
 
 Repository-local `.gitignore` files and explicit exclusions govern every root, including overlapping roots. Git administration paths, `.env` files, configured credential paths (including ones that do not exist yet), the cache, and the admitted output directory are excluded. Absolute denies also apply through declared root aliases, including aliases of containing roots. Descendant symlinks are skipped. This protects excluded material; it cannot identify arbitrary secrets renamed into permitted files.
 
@@ -114,10 +114,7 @@ const draft = await workspace.createDraft({
   patches: [],
   discoveryHints: [],
   outputName: 'review-001',
-  allowance: {
-    kind: 'net', method: 'utf8-21-over-80-v1', units: 100000,
-    overheadReserved: true,
-  },
+  budgetUnits: 100000,
 }, signal);
 try {
   await draft.prompt({
@@ -138,11 +135,11 @@ try {
 
 Drafts start in automatic mode unless a required source is a codemap. Automatic mode adds related codemaps for full and sliced sources. A codemap upsert or `clearCodemaps` enters manual mode; `clearSources` restores the required source baseline. Clear operations retain documents, patches and the current prompt. [Selection contracts](docs/contracts.md#drafts-and-material-ownership) describe promotion, inferred-source removal and comparison recovery.
 
-Use `addDocument` with a `suppliedDocument` and a unique ID to retain complete text fetched during curation. Added documents are immutable and count toward the recipient allowance.
+Use `addDocument` with a `suppliedDocument` and a unique ID to retain complete text fetched during curation. Added documents are immutable and count toward the assembly budget.
 
 `draft.inspect` provides `metadata`, `costs`, and `material` views with `maxOutputBytes` and `continuation`. Material inspection names a material ID from metadata, such as `document:prior-report`. It pages complete lines against a material digest. Updates return the committed revision, changed-item costs, total measurement, and unresolved diagnostics. If detail does not fit, the receipt identifies incomplete detail and the costs view supplies the complete breakdown.
 
-The allowance acknowledges `floor(21 × UTF-8 bytes / 80)`, an estimate rather than an exact tokenizer count or a provider acceptance guarantee. Set `contextBudgetUnits` in the host configuration to the maximum assembly allowance you want callers to use. Larger requested allowances fail with `assemblyBudgetExceeded`, including those derived from a recipient's larger context window. A net allowance reserves system, task, tools, history, output, and delivery overhead before submission. Alternatively, supply a verified model-settings record and explicit reserves through the exported `Allowance` schema. A null allowance supports inspection, but finalization requires a known allowance. Over-budget results identify the excess and retain all material for explicit correction.
+Set `contextBudgetUnits` in the host configuration to the maximum assembly budget. Each request supplies numeric `budgetUnits`; larger values fail with `assemblyBudgetExceeded`. The scout receives `max(0, budgetUnits - 1500)`, following RPCE's reserve. Complete-packet measurement and publication use the requested `budgetUnits`. The estimate is `floor(21 × UTF-8 bytes / 80)`, rather than an exact tokenizer count. Over-budget results report the excess and retain all material for explicit correction.
 
 Ready output contains `context.md`, `handoff.md`, and `manifest.json` beneath the declared output directory. Send only `context.md` to the recipient. A tree identifies selected material, and each body has a heading with its path or supplied ID. Material bodies appear in fenced blocks, followed by caller constraints and a final `user_instructions` section containing the current literal prompt. Patch summaries identify the comparison meaning, scope, requested and resolved revisions, worktree paths, coverage and exclusions. The coordinator records retain the original request, current prompt, byte spans, hashes, accounting and complete comparison receipts, including payload identities, per-path policies and target fingerprints. Output creation is exclusive. Readback and final source checks precede manifest publication.
 
@@ -176,7 +173,7 @@ The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; membership targets name workspace inventory records. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateMembership(key)` for membership. Each method removes only its named record.
 
-Host configuration uses this shape. The numbers are example host choices, not inferred recipient allowances. `search` and `git` can each be null or `{ "executable": "/absolute/path" }`. Set `discovery` to null for model-free use.
+Host configuration uses this shape. The numbers are example host choices, not model-derived limits. `search` and `git` can each be null or `{ "executable": "/absolute/path" }`. Set `discovery` to null for model-free use.
 
 ```json
 {
@@ -248,11 +245,15 @@ If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private direct
 
 ### Caller MCP interface
 
-MCP clients launch the `mcp` command over stdio. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`; `draft_create`, `draft_inspect`, `draft_update`, `draft_validate`, `draft_finalize`; and `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`. `tools/list` supplies their schemas. Workspace, draft and job IDs belong to the connected client.
+MCP clients launch the `mcp` command over stdio. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`; `prompt`, `draft_create`, `draft_inspect`, `draft_update`, `draft_preview`, `draft_validate`, `draft_finalize`; and `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`. `tools/list` supplies their schemas. Workspace, draft and job IDs belong to the connected client.
 
 Exploration calls use `workspaceId` and a tool-specific `input`. Request a file tree with only `{ "workspaceId": "..." }`, read with `{ "workspaceId": "...", "input": { "root": "app", "path": "src/main.ts" } }`, or search with `{ "workspaceId": "...", "input": { "query": { "text": "greet" } } }`. These tools are available independently of context-builder jobs.
 
-Trees default to the files view and unlimited depth; reads default to the whole file. Structure requires `seeds` and defaults to `expand: "none"` and depth 1. Search defaults to literal content, case-insensitive substring matching, no filters, zero surrounding context, and snippets rather than count-only output. Use `query.kind: "regex"` for PCRE2 or `query.kind: "glob"` for path globs; glob searches default to path mode. Omit `continuation` for the first page. Selected trees require `input.view: "selected"` and an owned manual `draftId`.
+File trees use RPCE's renderer. `type: "roots"` lists physical roots; `type: "files"` supports `mode: "auto"`, `"full"`, `"folders"` or `"selected"`. The default is files in automatic mode. To inspect a directory, supply `scope: { root: "repo", directory: { kind: "descendant", path: "src" } }`; use `{ kind: "root" }` for a whole named root. `maxDepth` starts at folder depth zero and retains selected descendants beyond the cutoff. A star marks selected implementation and a plus marks available code-map structure. Selected mode requires an owned manual `draftId`. Tree pages contain complete rendered lines; follow `continuation` to obtain the rest.
+
+Reads default to the whole file. Structure requires `seeds` and defaults to `expand: "none"` and depth 1. Search defaults to literal content, case-insensitive substring matching, no filters, zero surrounding context, and snippets rather than count-only output. Use `query.kind: "regex"` for PCRE2 or `query.kind: "glob"` for path globs; glob searches default to path mode. Omit `continuation` for the first page.
+
+Structural queries use the owned draft's full/sliced selection when `seeds` is omitted; supply `draftId` beside `input` in MCP. Explicit `seeds` accepts up to 256 file or directory selectors. Files use `{ kind: "file", root: "repo", path: "src/main.ts" }`; directories use `{ kind: "directory", root: "repo", directory: { kind: "root" } }` or a descendant directory reference. Queries accept optional `expand: "uses"`, `"used_by"` or `"both"`, and `depth` from 1 to 4. `signatures` defaults to `true`; `size` defaults to `"medium"` and also accepts `"small"` or `"large"`. Results include root-local graph evidence, unresolved references, seed/index states and admitted signatures. Text responses use RPCE's graph/signature presentation; structured MCP results retain all returned evidence. `summary.tokens` counts admitted signatures and separators.
 
 MCP puts optional `maxOutputBytes` beside `input`; omitted caps use the host default. Draft inspection/update calls use `draftId` and `input` with the same outer cap. The byte limit includes the serialized text and structured result together. The small `outputBudgetTooSmall` control diagnostic is the documented cap exception. Pi discovery-agent exploration uses the same input defaults and requires an explicit `maxOutputBytes` inside its input.
 

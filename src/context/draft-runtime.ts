@@ -5,6 +5,8 @@ import {
   contextRequestValidator,
   type DraftInspection,
   type DraftUpdate,
+  type SourceEdit,
+  DraftPreview,
   type PromptRequest,
   inspectionValidator,
   updateValidator,
@@ -26,17 +28,17 @@ import {
 import { acquirePatch } from '../patches/patch-input.js';
 import { type ItemCost, materialMetadata, renderBundle, renderInitialContext } from './render.js';
 import { revalidateMaterials } from './revalidate.js';
-import { resolveAllowance } from './budget.js';
 import { FinalizationOperation, type FinalizationResult } from './finalize.js';
 import { StructureIndex } from '../workspace/structure-index.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { Compile } from 'typebox/compile';
+import { initialFileTree } from '../exploration/tree.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
 
-const promptValidator = Compile(PromptRequestSchema);
-type SourceMutation = Exclude<DraftUpdate['mutation'], { kind: 'prompt' | 'addDocument' }>;
+const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
+type SourceMutation = Exclude<SourceEdit, { kind: 'slices' }>;
 
 export class DraftRuntime {
   readonly id = randomUUID();
@@ -70,13 +72,14 @@ export class DraftRuntime {
     signal: AbortSignal,
     onClosed: () => void,
   ): Promise<DraftRuntime> {
+    if (operation.snapshot.enumeration.kind !== 'complete') throw new WorkspaceFailure('enumerationIncomplete');
     if (!contextRequestValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
     const request = freeze(structuredClone(input));
     strictText(request.task);
     strictText(request.constraints);
     request.discoveryHints.forEach(strictText);
-    const allowance = resolveAllowance(request.allowance);
-    if (allowance !== null && allowance > operation.runtime.options.contextBudgetUnits) {
+    const allowance = request.budgetUnits;
+    if (allowance > operation.runtime.options.contextBudgetUnits) {
       throw new WorkspaceFailure('assemblyBudgetExceeded', { allowance, maximum: operation.runtime.options.contextBudgetUnits });
     }
     if (
@@ -122,6 +125,25 @@ export class DraftRuntime {
   update(input: DraftUpdate, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!updateValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
     return this.#track(this.#update(structuredClone(input), signal, encode));
+  }
+  preview(input: DraftPreview, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    if (!previewValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
+    const request = structuredClone(input);
+    return this.#track((async () => {
+      this.#check(signal, request.expectedRevision);
+      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt;
+      const { next, mode } = await this.#prepareSourceEdits(request.edits, current, request.expectedRevision, signal);
+      this.#check(signal, request.expectedRevision);
+      if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+      const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot, prompt,
+        codemapMode: mode, materials: [...next.values()] });
+      const result = { kind: 'preview' as const, draftId: this.id, revision: this.#revision, codemapMode: mode,
+        items: [...next.values()].map(material => materialMetadata(material.record)),
+        measurement: rendered.measurement, costs: rendered.costs, diagnostics: rendered.diagnostics };
+      const requiredBytes = serializedBytes(encode(result));
+      if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
+      return freeze(result);
+    })());
   }
   /** Literal prompt operations share revision and receipt admission with material mutations. */
   async prompt(input: PromptRequest, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
@@ -185,7 +207,8 @@ export class DraftRuntime {
       if (mutation.op !== 'clear') strictText(mutation.text);
       prompt = mutation.op === 'clear' ? '' : mutation.op === 'append' ? prompt + mutation.text : mutation.text;
     } else {
-      ({ next, mode } = await this.#prepareSources(mutation, current, input.expectedRevision, signal));
+      const edits = mutation.kind === 'batch' ? mutation.edits : [mutation];
+      ({ next, mode } = await this.#prepareSourceEdits(edits, current, input.expectedRevision, signal));
     }
     this.#check(signal, input.expectedRevision);
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
@@ -221,31 +244,52 @@ export class DraftRuntime {
     const result = serializedBytes(encode(complete)) <= maxOutputBytes ? complete : minimum;
     return { changed, revision, result };
   }
-  async #prepareSources(mutation: SourceMutation, current: ReadonlyMap<string, Material>, revision: number, signal: AbortSignal) {
+  async #prepareSourceEdits(edits: readonly SourceEdit[], current: ReadonlyMap<string, Material>, revision: number, signal: AbortSignal) {
     const explicit = new Map([...current].filter(([, material]) =>
       material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
-    let required = false, mode: CodemapMode;
-    if (mutation.kind === 'upsert' || mutation.kind === 'remove') {
-      ({ required, mode } = this.#changeSourceIntent(mutation, explicit));
-    } else mode = this.#clearSourceIntent(mutation.kind, explicit);
+    let mode = this.#codemapMode;
     const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
     try {
-      if (mutation.kind === 'upsert') {
-        const prepared = await acquireSource(operation, { selectionOrigin: 'explicit', selection: mutation.selection, required });
-        explicit.set(prepared.record.id, prepared);
+      for (const edit of edits) {
+        operation.signal.throwIfAborted();
+        if (edit.kind === 'slices') {
+          await this.#prepareSliceSource(edit, explicit, mode, operation);
+        } else if (edit.kind === 'upsert' || edit.kind === 'remove') {
+          let required: boolean;
+          ({ required, mode } = this.#changeSourceIntent(edit, explicit, mode));
+          if (edit.kind === 'upsert') {
+            const prepared = await acquireSource(operation, { selectionOrigin: 'explicit', selection: edit.selection, required });
+            explicit.set(prepared.record.id, prepared);
+          }
+        } else mode = this.#clearSourceIntent(edit.kind, explicit);
       }
       const next = await this.#derive(operation, explicit, mode, current, revision);
       return { next, mode };
     } finally { await operation.close(); }
   }
-  #changeSourceIntent(mutation: Extract<SourceMutation, { kind: 'upsert' | 'remove' }>, explicit: Map<string, Material>) {
+  async #prepareSliceSource(mutation: Extract<SourceEdit, { kind: 'slices' }>,
+    explicit: Map<string, Material>, mode: CodemapMode, operation: WorkspaceOperation): Promise<void> {
+    const id = sourceId(mutation.source);
+    const entry = operation.snapshot.entries.find(item => item.root === mutation.source.root && item.path === mutation.source.path);
+    if (entry?.kind !== 'file') throw new WorkspaceFailure('unavailableSource', mutation.source);
+    const selected = explicit.get(id);
+    const base = selected?.record.kind === 'source' && selected.record.selection.kind === 'slices' ? selected.record.selection.ranges : [];
+    const op = mutation.op === 'add' ? 'coalesce' : mutation.op === 'remove' && mutation.ranges.length ? 'subtract' : 'normalize';
+    const result = await operation.calculateSliceRanges({ kind: 'calculateSliceRanges', op, base, ranges: mutation.ranges });
+    if (!result.ranges.length && (selected?.record.kind !== 'source' || selected.record.selection.kind !== 'slices')) return;
+    const selection = result.ranges.length ? { kind: 'slices' as const, source: mutation.source, ranges: result.ranges }
+      : { kind: 'full' as const, source: mutation.source };
+    const { required } = this.#changeSourceIntent({ kind: 'upsert', selection }, explicit, mode);
+    const prepared = await acquireSource(operation, { selectionOrigin: 'explicit', selection, required });
+    explicit.set(id, prepared);
+  }
+  #changeSourceIntent(mutation: Extract<SourceMutation, { kind: 'upsert' | 'remove' }>, explicit: Map<string, Material>, mode: CodemapMode) {
     const id = sourceId(mutation.kind === 'upsert' ? mutation.selection.source : mutation.source);
     const selection = this.request.requiredSources.find(selection => sourceId(selection.source) === id);
     const required = selection !== undefined;
     if (selection && (mutation.kind === 'remove' || canonicalJSON(selection) !== canonicalJSON(mutation.selection))) {
       throw new WorkspaceFailure('requiredMaterialMutation', { id });
     }
-    let mode = this.#codemapMode;
     if (mutation.kind === 'remove') explicit.delete(id);
     else if (!required && mutation.selection.kind === 'codemap') mode = 'manual';
     return { required, mode };
@@ -319,15 +363,24 @@ export class DraftRuntime {
       draftId: this.id,
       revision: this.#revision,
       sources: [...this.#materials.values()].flatMap((material) =>
-        material.record.kind === 'source' ? [material.record.selection.source] : []
+        material.record.kind === 'source' && material.record.selection.kind !== 'codemap' ? [material.record.selection.source] : []
       ),
     });
   }
   /** Read-only observation at invocation; JobRegistry captures it after admission and before dispatch. */
-  initialContext(): string {
-    return renderInitialContext({ request: this.request, inventory: this.operation.snapshot, materials: [...this.#materials.values()],
-      prompt: this.#prompt, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision,
-      contextBudgetUnits: this.operation.runtime.options.contextBudgetUnits });
+  initialContext(signal: AbortSignal): Promise<string> {
+    return this.#track((async () => {
+      this.#check(signal, this.#revision);
+      const input = { request: this.request, inventory: this.operation.snapshot, materials: [...this.#materials.values()],
+        prompt: this.#prompt, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision,
+        contextBudgetUnits: this.operation.runtime.options.contextBudgetUnits };
+      const selection = this.selectionProjection();
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      try {
+        const tree = await initialFileTree(operation, selection);
+        return renderInitialContext({ ...input, tree });
+      } finally { await operation.close(); }
+    })());
   }
   validate(signal: AbortSignal) {
     return this.#track((async () => {

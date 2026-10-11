@@ -226,12 +226,30 @@
   },
   {
     "path": "ThirdPartyLicenses/pi/LICENSE",
-    "origin": { "repository": "https://github.com/earendil-works/pi", "revision": "cd32f7725fdbddbaecdff5b1e68491563394e0ca", "path": "LICENSE", "version": "1.0.2" },
+    "origin": {
+      "repository": "https://github.com/earendil-works/pi",
+      "revision": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "path": "LICENSE",
+      "version": "1.0.2"
+    },
     "sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
   },
   {
     "path": "ThirdPartyLicenses/mcp/LICENSE",
-    "origin": { "package": "@modelcontextprotocol/server", "version": "2.3.0", "path": "LICENSE" },
+    "origin": {
+      "package": "@modelcontextprotocol/server",
+      "version": "2.3.0",
+      "path": "LICENSE"
+    },
+    "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
+  },
+  {
+    "path": "ThirdPartyLicenses/swift-mcp/LICENSE",
+    "origin": {
+      "repository": "https://github.com/repoprompt/swift-sdk.git",
+      "revision": "5716de85a976a8f70dedc9cb000e50aaa0d8cc5b",
+      "path": "LICENSE"
+    },
     "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
   }
 ]

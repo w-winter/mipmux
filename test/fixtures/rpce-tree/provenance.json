@@ -1,0 +1,42 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/CodeMap/CodeMapExtractor+Snapshots.swift",
+      "start": 9,
+      "end": 604,
+      "sha256": "486e17eae1729f7a313461dc1e6ce60cae7f6fc15b39c4a31525eea3d351db94"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileTreePresentationModels.swift",
+      "start": 4,
+      "end": 69,
+      "sha256": "264ce767124a80cb71340213478b3079bf86fe542ec8ae754152d8d1062c031f"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
+      "start": 131,
+      "end": 143,
+      "sha256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b"
+    },
+    {
+      "path": "Sources/RepoPrompt/Features/CodeMap/FileTreeSelectionSnapshot.swift",
+      "start": 1,
+      "end": 4,
+      "sha256": "6f28d636ec3f1c35e373961a9c30d7f5574960ab1a4f6e99dd0541d06fef586d"
+    }
+  ],
+  "generator": "scripts/generate-tree-fixtures.mjs",
+  "command": "node scripts/generate-tree-fixtures.mjs <pinned-rpce-checkout>",
+  "bindings": [
+    "Original renderer, snapshot models and token estimator are compiled from pinned RPCE source.",
+    "The immutable root/entry adapter and native field parser are shared with smip; these fixtures do not independently verify adapter parity.",
+    "Logical root labels are supplied as data. Empty selection uses the MCP provider message."
+  ],
+  "limits": [
+    "Public MCP and admitted startup tests cover selection and available-codemap projection separately.",
+    "No desktop watcher, ignore-policy or codemap demand coordination is exercised by the synthetic snapshots."
+  ],
+  "cases": 19,
+  "generatorSHA256": "51f694d001979b9ee1657634a63178b085a85ec6f89814f2c6391bda49a4045e"
+}

@@ -21,7 +21,7 @@ const maxOutputBytes = 100000;
 const request: ContextBuildRequest = {
   task: 'Inspect the selected implementation and its dependencies', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
-  allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true },
+  budgetUnits: 100000,
 };
 const seed = { root: 'r', path: 'Seed.swift' };
 const fullSeed = { kind: 'full' as const, source: seed };
@@ -79,7 +79,7 @@ test('required admission and full upsert include one-hop root-local related code
         ['r/Peer.swift', 'r/Seed.swift', 'r/SharedA.swift', 'r/SharedB.swift']);
       for (const item of selected) assert.equal(item.selection.kind, item.selection.source.path === seed.path ? 'full' : 'codemap');
       assert.equal(draft.revision, admission ? 0 : 1);
-      const initial = draft.initialContext(), block = initial.match(/^(`{3,})\n([\s\S]*?)\n\1\n/m); assert(block);
+      const initial = await draft.initialContext(signal()), block = initial.match(/^(`{3,})\n([\s\S]*?)\n\1\n/m); assert(block);
       const metadata: unknown = JSON.parse(block[2]!);
       assert(Compile(Type.Object({ inferredCodemaps: Type.Object({ count: Type.Literal(3), itemUnits: Type.Number({ minimum: 1 }) }),
         explicitSources: Type.Array(Type.Unknown(), { minItems: 1, maxItems: 1 }) })).Check(metadata));
@@ -278,7 +278,7 @@ test('held inferred acquisition cannot commit across cancellation, close, compet
     const entering = new Promise<void>(resolve => { entered = resolve; }), held = new Promise<void>(resolve => { release = resolve; });
     const f = await fixture(async path => { if (armed && path === 'SharedA.swift') { armed = false; entered(); await held; } });
     try {
-      const draft = await f.workspace.createDraft({ ...request, allowance: scenario === 'freeze' ? null : request.allowance }, signal()), abort = new AbortController(); armed = true;
+      const draft = await f.workspace.createDraft({ ...request, budgetUnits: scenario === 'freeze' ? 1 : request.budgetUnits }, signal()), abort = new AbortController(); armed = true;
       const pending = draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'upsert', selection: fullSeed } }, abort.signal);
       const rejected = assert.rejects(pending, scenario === 'revision' ? /revisionConflict/ : scenario === 'freeze' ? /draftFrozen/ : /cancelled|aborted/i);
       await Promise.race([entering, pending.then(() => { throw new Error('Inferred read was not reached'); })]);
@@ -326,7 +326,7 @@ test('complete inferred cost changes respect encoded receipt admission and packe
     assert.equal(changed.incompleteDetails, true); assert.equal(sources(draft).length, 4);
     const costs = draft.inspect({ view: 'costs', maxOutputBytes, continuation: null });
     assert(costs.kind === 'costs'); assert.equal(costs.items.length, 4);
-    const small = await f.workspace.createDraft({ ...request, allowance: { kind: 'net', method: 'utf8-21-over-80-v1', overheadReserved: true, units: 1 } }, signal());
+    const small = await f.workspace.createDraft({ ...request, budgetUnits: 1 }, signal());
     const over = await small.update({ expectedRevision: 0, maxOutputBytes, mutation }, signal());
     assert.equal(sources(small).length, 4); assert(over.diagnostics.some(item => item.code === 'overBudget'));
     assert.equal((await small.finalize(signal())).kind, 'blocked');

@@ -1,0 +1,5 @@
+// Derived from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3 under Apache-2.0.
+typealias FileTreeSelectionSnapshot = WorkspaceFileTreePresentationSnapshot
+typealias FileTreeFolderSnapshot = WorkspaceFileTreeFolderPresentation
+typealias FileTreeFileSnapshot = WorkspaceFileTreeFilePresentation
+typealias FileTreeNodeSnapshot = WorkspaceFileTreeNodePresentation

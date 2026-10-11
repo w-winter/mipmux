@@ -15,7 +15,7 @@ const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Inspect exact evidence', architecture: 'Synthetic files', relationships: [], ambiguities: [] };
 const request: ContextBuildRequest = { task: 'Complete task', constraints: 'Complete evidence', enhancementMode: 'augment' as const, purpose: 'review',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
-  allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1000000, overheadReserved: true } };
+  budgetUnits: 1000000 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(resolve('test-output/context-corrections-'));

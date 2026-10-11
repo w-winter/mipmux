@@ -41,7 +41,7 @@ test('current verification admits only recorded material, applies current denies
     patches: [],
     discoveryHints: [],
     outputName: 'packet',
-    allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true },
+    budgetUnits: 100000,
   };
   const writer = new SmipRuntime(options);
   try {
@@ -163,7 +163,7 @@ test('current verification cancellation and runtime shutdown join native work an
     patches: [],
     discoveryHints: [],
     outputName: 'packet',
-    allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true },
+    budgetUnits: 100000,
   };
   try {
     const workspace = await writer.declare({

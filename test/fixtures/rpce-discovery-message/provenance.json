@@ -1,0 +1,29 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/ContextBuilder/ViewModels/ContextBuilderAgentViewModel.swift",
+      "start": 4079,
+      "end": 4149,
+      "sha256": "2cc2c8c86a4776c8ca84c2bedaf4471051ea4815181fe12c6c3dd05916f92cee"
+    },
+    {
+      "path": "Sources/RepoPrompt/Features/ContextBuilder/Views/ContextBuilderPromptsOverlay.swift",
+      "start": 154,
+      "end": 161,
+      "sha256": "96f08f8f97b09c5b35a19465f7fc316a59ea5378de84349b41ae098862fe0b00"
+    }
+  ],
+  "generator": "scripts/generate-discovery-message-fixtures.mjs",
+  "command": "node scripts/generate-discovery-message-fixtures.mjs <pinned-rpce-checkout>",
+  "bindings": [
+    "Captured selected meta prompts are supplied in source storage order; GUI prompt IDs/storage are not recreated.",
+    "The original makeUserMessage and promptText bodies render all channel text and whitespace without normalization.",
+    "The diagnostic print(metaPromptText) is removed from protocol stdout."
+  ],
+  "limits": [
+    "This fixture tests source message construction, not workspace tree acquisition or active Pi dispatch.",
+    "The original automatic-compression prose is retained; activation requires the source-conflict decision recorded by the coordinator."
+  ],
+  "generatorSHA256": "50846024cac827c38ff87ba6466d8b163d424f8571ff3cce4c957cf271afd24f"
+}

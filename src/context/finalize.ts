@@ -62,7 +62,7 @@ export class FinalizationOperation {
     try {
       await revalidateMaterials(operation, materials);
       const rendered = renderBundle({ request, prompt, codemapMode, materials, inventory: owner.snapshot });
-      if (rendered.diagnostics.length || rendered.measurement.allowance === null) {
+      if (rendered.diagnostics.length) {
         return {
           kind: 'blocked',
           revision,

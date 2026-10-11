@@ -11,7 +11,7 @@ import { WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall } from '../discovery/scoped-tools.js';
 import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
 
-type ExplorationCall = Exclude<DiscoveryCall, { name: 'draft_inspect' | 'draft_update' | 'draft_validate' | 'prompt' }>;
+type ExplorationCall = Exclude<DiscoveryCall, { name: 'draft_inspect' | 'draft_update' | 'draft_validate' | 'draft_preview' | 'prompt' }>;
 interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRuntime }
 
 /** A connected client's handles and drafts are capabilities only within this owner. */
@@ -73,6 +73,10 @@ export class ClientRuntime {
     const { draft } = this.#manual(id);
     return this.#track(signal, combined => draft.update(request, combined, encode));
   }
+  preview(id: string, request: Parameters<DraftRuntime['preview']>[0], signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    const { draft } = this.#manual(id);
+    return this.#track(signal, combined => draft.preview(request, combined, encode));
+  }
   prompt(id: string, request: Parameters<DraftRuntime['prompt']>[0], signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     const { draft } = this.#manual(id);
     return this.#track(signal, combined => draft.prompt(request, combined, encode));
@@ -96,13 +100,11 @@ export class ClientRuntime {
       try {
         switch (call.name) {
           case 'get_file_tree': {
-            if (call.input.view === 'selected') {
-              if (!selected) throw new WorkspaceFailure('draftRequired');
-              return operation.getFileTree({ ...call.input, view: 'selected', selection: selected.draft.selectionProjection() }, encode);
-            }
-            return operation.getFileTree({ ...call.input, view: call.input.view, selection: selected?.draft.selectionProjection() ?? null }, encode);
+            if (call.input.type === 'roots') return await operation.getFileTree({ ...call.input, selection: null }, encode);
+            if (call.input.mode === 'selected' && !selected) throw new WorkspaceFailure('draftRequired');
+            return await operation.getFileTree({ ...call.input, selection: selected?.draft.selectionProjection() ?? null }, encode);
           }
-          case 'get_code_structure': return operation.getCodeStructure(call.input, encode);
+          case 'get_code_structure': return await operation.getCodeStructure({ ...call.input, selection: selected?.draft.selectionProjection() ?? null }, encode);
           case 'read_file': return await operation.readFile(call.input, encode);
           case 'file_search': return await operation.fileSearch(call.input, encode);
         }

@@ -38,7 +38,9 @@ test('ordered ignore negation, excluded parents, nested aliases and new control 
     await mkdir(join(base, 'symlink-policy')); await symlink(join(root, '.gitignore'), join(base, 'symlink-policy/.gitignore'));
     const bad = await runtime.declare({ ...spec, roots: [{ name: 'bad', absolutePath: join(base, 'symlink-policy') }] }, new AbortController().signal);
     assert.equal((await bad.refresh(new AbortController().signal)).enumeration.kind, 'incomplete');
-    await assert.rejects(bad.openOperation(new AbortController().signal), /enumerationIncomplete/);
+    const partial = await bad.openOperation(new AbortController().signal);
+    assert.equal(partial.snapshot.enumeration.kind, 'incomplete');
+    await partial.close();
     await bad.close();
   } finally { await runtime.close(); }
 });

@@ -1,0 +1,28 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "source": {
+    "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionParsing.swift",
+    "sha256": "8c72d7fb5d18824521147b25b2c644382bb73d4fdfd3975f815d4d0a68ab2c80"
+  },
+  "sdkRevision": "5716de85a976a8f70dedc9cb000e50aaa0d8cc5b",
+  "sdkSources": [
+    {
+      "path": "Sources/MCP/Base/Value.swift",
+      "sha256": "6a8399cb11db842faac9f549143058e24d15763705be65701ffba714111aabeb"
+    },
+    {
+      "path": "Sources/MCP/Extensions/Data+Extensions.swift",
+      "sha256": "4694218cc05959b1103ab90bcfa9c4f5178688074ae2a2070868c786e8587782"
+    }
+  ],
+  "generator": "scripts/generate-selection-candidate-fixtures.mjs",
+  "bindings": [
+    "Original RPCE parser and pinned SDK Value/data-URL decoding execute independently of the port.",
+    "Native outputs make absent descriptions explicit as null."
+  ],
+  "limits": [
+    "These parse raw inputs, not file authorization, catalog acquisition or tool strict policy."
+  ],
+  "cases": 14,
+  "generatorSHA256": "de9fc8d30316ea9ad37e09c18aa1cf375e03fa52c3816b8c3fa8eabefa21898f"
+}

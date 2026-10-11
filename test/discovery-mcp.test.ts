@@ -59,7 +59,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
     const job = client.build(workspace.id, 'mcp', { task: 'Inspect the ticket', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
-      allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true } });
+      budgetUnits: 10000 });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});
     assert.equal(result.state, 'ready', JSON.stringify(result)); assert(result.state === 'ready');
     const verified = await verifyBundle(result.bundle.directory), packet = await readFile(join(result.bundle.directory, 'context.md'));
@@ -93,7 +93,7 @@ test('missing selected tools, unavailable servers and authentication failure sto
     try {
       const mcp = await configure(provider.directory, server.url);
       const discovery = { ...provider.config, mcp };
-      const result = await new PiRunner(discovery, supervisor).run({ enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] },
+      const result = await new PiRunner(discovery, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] },
         { call: async () => { throw new Error('No parent tool permitted'); } }, new AbortController().signal, () => {});
       assert.equal(result.kind, 'failed'); assert(result.kind === 'failed'); assert.equal(result.code, 'mcpToolsUnavailable');
       assert.equal(result.receipt.mcp?.readiness.state, 'unavailable'); assert.equal(result.receipt.mcp?.shutdown, 'dispatched');
@@ -113,7 +113,7 @@ test('cancellation during MCP startup or a held call closes the worker and permi
       const mcp = await configure(provider.directory, server.url), discovery = { ...provider.config, mcp };
       const runner = new PiRunner(discovery, supervisor);
       const tools = { call: async () => { throw new Error('No parent tool permitted'); } };
-      const input: DiscoveryInput = { enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] };
+      const input: DiscoveryInput = { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] };
       const work = runner.run(input, tools, abort.signal, () => {});
       await server.held; abort.abort();
       const cancelled = await work; assert.equal(cancelled.kind, 'cancelled');

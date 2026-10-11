@@ -52,7 +52,7 @@ test('required full source, complete report and patch reach verified output; sta
       }],
       discoveryHints: [],
       outputName: 'complete',
-      allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1000000, overheadReserved: true },
+      budgetUnits: 1000000,
     };
     const draft = await workspace.createDraft(request, signal);
     await draft.update({

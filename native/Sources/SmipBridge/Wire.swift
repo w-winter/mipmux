@@ -45,6 +45,13 @@ struct WireObject {
         return value.intValue
     }
 
+    func integer(_ name: String) throws -> Int {
+        guard let value = fields[name] as? NSNumber, CFGetTypeID(value) != CFBooleanGetTypeID(),
+              abs(value.doubleValue) <= 9_007_199_254_740_991, value.doubleValue == Double(value.intValue)
+        else { throw BridgeFailure("nativeProtocolError") }
+        return value.intValue
+    }
+
     func bytes(_ name: String) throws -> Data {
         let encoded = try string(name)
         guard let bytes = Data(base64Encoded: encoded), bytes.base64EncodedString() == encoded else {
@@ -138,7 +145,13 @@ struct RootDeclaration {
 
 enum Operation {
     case describe
+    case selection(SelectionOperation)
     case renderDiscoveryPrompt(DiscoveryPromptInput)
+    case sliceReadText(ReadTextInput)
+    case renderDiscoveryMessage(DiscoveryMessageInput)
+    case renderFileTree(FileTreeInput)
+    case queryStructure(StructureInput)
+    case matchSelectionPath(PathMatchInput)
     case openRoots([RootDeclaration])
     case listDirectory(NativeHandle, String?)
     case readSource(NativeHandle, String, SourceIdentity?)
@@ -151,7 +164,18 @@ enum Operation {
     init(_ value: Any) throws {
         guard let raw = value as? [String: Any], let kind = raw["kind"] as? String else { throw BridgeFailure("nativeProtocolError") }
         switch kind {
+        case "sliceReadText": self = try .sliceReadText(ReadTextInput(value))
+        case "renderDiscoveryMessage": self = try .renderDiscoveryMessage(DiscoveryMessageInput(value))
         case "renderDiscoveryPrompt": self = try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
+        case "parseSelectionInputs": self = try .selection(.parse(SelectionInputParsing(value)))
+        case "prepareSelection": self = try .selection(.preparation(SelectionPreparationInput(value)))
+        case "mutateSelectionPaths": self = try .selection(.paths(SelectionPathMutationInput(value)))
+        case "resolveSelectionCandidates": self = try .selection(.candidates(SelectionCandidatesInput(value)))
+        case "matchSelectionPath": self = try .matchSelectionPath(PathMatchInput(value))
+        case "calculateSliceRanges": self = try .selection(.sliceRanges(SliceRangesInput(value)))
+        case "transitionSelection": self = try .selection(.transition(SelectionTransitionInput(value)))
+        case "queryStructure": self = .queryStructure(try StructureInput(value))
+        case "renderFileTree": self = try .renderFileTree(FileTreeInput(value))
         case "describe":
             _ = try WireObject(value, keys: ["kind"]); self = .describe
         case "openRoots":
@@ -200,7 +224,10 @@ struct Request {
     let operation: Operation
     init(_ bytes: Data, generation: String) throws {
         guard let string = String(data: bytes, encoding: .utf8), Data(string.utf8) == bytes else { throw BridgeFailure("nativeProtocolError") }
-        let object = try WireObject(JSONSerialization.jsonObject(with: bytes), keys: ["wireVersion", "requestId", "generation", "operation"])
+        let object = try WireObject(
+            decodeWireJSON(bytes),
+            keys: ["wireVersion", "requestId", "generation", "operation"]
+        )
         id = try object.string("requestId")
         self.generation = try object.string("generation")
         guard try object.count("wireVersion") == 1, self.generation == generation, !id.isEmpty else { throw BridgeFailure("nativeProtocolError") }

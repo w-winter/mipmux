@@ -1,7 +1,8 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { SourcePath } from './inventory.js';
-import { RelativePath, RootName, SafeCount, SHA256 } from './workspace.js';
+import { NativeReadArgument } from './native.js';
+import { DirectoryRef, RelativePath, RootName, SafeCount, SHA256 } from './workspace.js';
 
 const closed = { additionalProperties: false };
 const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
@@ -9,22 +10,30 @@ export const Continuation = Type.Object({ digest: SHA256, offset: SafeCount }, c
 export type Continuation = Static<typeof Continuation>;
 const page = { maxOutputBytes: positive, continuation: Type.Union([Continuation, Type.Null()], { default: null }) };
 export const ReadRequest = Type.Object({ root: RootName, path: RelativePath, ...page,
-  shape: Type.Union([Type.Object({ kind: Type.Literal('whole') }, closed),
-    Type.Object({ kind: Type.Literal('range'), start: positive, end: positive }, closed),
-    Type.Object({ kind: Type.Literal('tail'), count: positive }, closed)], { default: { kind: 'whole' } }),
+  start_line: Type.Union(NativeReadArgument.anyOf, { default: null }),
+  offset: Type.Union(NativeReadArgument.anyOf, { default: null }),
+  limit: Type.Union(NativeReadArgument.anyOf, { default: null }),
 }, closed);
 export type ReadRequest = Static<typeof ReadRequest>;
 const selection = Type.Object({ draftId: Type.String({ minLength: 1 }), revision: SafeCount, sources: Type.Array(SourcePath) }, closed);
-const tree = { ...page, depth: Type.Union([SafeCount, Type.Null()]) };
+const treeScope = Type.Union([Type.Object({ root: RootName, directory: DirectoryRef }, closed), Type.Null()], { default: null });
+const tree = { ...page, type: Type.Literal('files', { default: 'files' }),
+  mode: Type.Enum(['auto', 'full', 'folders', 'selected'], { default: 'auto' }), scope: treeScope,
+  maxDepth: Type.Union([Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }), Type.Null()], { default: null }) };
 export const TreeRequest = Type.Union([
-  Type.Object({ ...tree, view: Type.Literal('selected'), selection }, closed),
-  Type.Object({ ...tree, view: Type.Enum(['roots', 'files', 'folders']), selection: Type.Union([selection, Type.Null()]) }, closed),
+  Type.Object({ ...page, type: Type.Literal('roots'), selection: Type.Null() }, closed),
+  Type.Object({ ...tree, selection: Type.Union([selection, Type.Null()]) }, closed),
 ]);
 export type TreeRequest = Static<typeof TreeRequest>;
-export const StructureRequest = Type.Object({ ...page,
-  seeds: Type.Array(Type.Object({ root: RootName, path: RelativePath, kind: Type.Union([Type.Literal('file'), Type.Literal('directory')]) }, closed), { minItems: 1 }),
+export const StructureRequest = Type.Object({ maxOutputBytes: positive,
+  seeds: Type.Union([Type.Array(Type.Union([
+    Type.Object({ root: RootName, path: RelativePath, kind: Type.Literal('file') }, closed),
+    Type.Object({ root: RootName, directory: DirectoryRef, kind: Type.Literal('directory') }, closed),
+  ]), { minItems: 1, maxItems: 256 }), Type.Null()], { default: null }),
+  selection: Type.Union([selection, Type.Null()], { default: null }),
   expand: Type.Union([Type.Literal('none'), Type.Literal('uses'), Type.Literal('used_by'), Type.Literal('both')], { default: 'none' }),
   depth: Type.Integer({ minimum: 1, maximum: 4, default: 1 }),
+  signatures: Type.Boolean({ default: true }), size: Type.Enum(['small', 'medium', 'large'], { default: 'medium' }),
 }, closed);
 export type StructureRequest = Static<typeof StructureRequest>;
 const textQuery = Type.Object({ kind: Type.Union([Type.Literal('literal'), Type.Literal('regex')], { default: 'literal' }), text: Type.String({ minLength: 1 }),
@@ -41,8 +50,9 @@ export const readValidator = Compile(ReadRequest), treeValidator = Compile(TreeR
 
 export const ReadInput = Type.Object({ ...Type.Partial(Type.Omit(ReadRequest, ['root', 'path', 'maxOutputBytes'])).properties,
   root: RootName, path: RelativePath }, closed);
-export const StructureInput = Type.Object({ ...Type.Partial(Type.Omit(StructureRequest, ['seeds', 'maxOutputBytes'])).properties,
-  seeds: StructureRequest.properties.seeds }, closed);
+export const ScopedStructure = Type.Omit(StructureRequest, ['selection']);
+export const StructureInput = Type.Object({ ...Type.Partial(Type.Omit(ScopedStructure, ['maxOutputBytes', 'seeds'])).properties,
+  seeds: Type.Optional(StructureRequest.properties.seeds.anyOf[0]) }, closed);
 export const SearchInput = Type.Union([
   Type.Object({ ...Type.Partial(Type.Omit(SearchRequest.anyOf[0], ['query', 'maxOutputBytes'])).properties,
     filters: Type.Optional(Type.Partial(filters, closed)),
@@ -52,12 +62,13 @@ export const SearchInput = Type.Union([
 ]);
 export function toolDescription(name: string): string {
   switch (name) {
-    case 'get_file_tree': return 'List workspace files. Defaults: files view, unlimited depth, first page. Use selected with an owned draft.';
-    case 'read_file': return 'Read a root-qualified file. Example input: {"root":"app","path":"src/main.ts"}. Defaults to the whole file, first page.';
-    case 'get_code_structure': return 'Inspect structural maps for file/directory seeds. Defaults: no relationship expansion, depth 1, first page.';
+    case 'get_file_tree': return 'Render the RPCE file tree. type=roots lists physical roots; type=files uses mode=auto, full, folders or selected. Defaults: files, auto mode, whole workspace, unlimited requested depth, first page. scope identifies a root and a root/descendant directory. maxDepth uses folder depth starting at zero and retains selected descendants. Selected mode requires an owned draft. Output pages preserve complete rendered lines; follow continuation for the remaining tree.';
+    case 'read_file': return 'Read a root-qualified file. Defaults to the whole file, first page. start_line is one-based; a negative start reads the last N lines and cannot be combined with limit. limit=0 returns no lines; a negative limit reads the remainder. Starts beyond EOF return empty content with a message. offset is the current start_line alias. Numeric strings are accepted; an integer offset takes priority over a string start_line. Complete line records retain CRLF, CR and LF; continuations never split a line.';
+    case 'get_code_structure': return 'Inspect source-backed graph evidence and signatures. Omit seeds to inspect current selected full/sliced sources; MCP callers supply an owned draftId for that selection. Explicit seeds accept up to 256 file or directory selectors. Directory selectors use directory={kind:root} or {kind:descendant,path}. Defaults: no expansion, depth 1, signatures=true, size=medium. expand=uses, used_by or both traverses root-local relationships at depths 1-4. size=small, medium or large controls graph and signature limits; signatures=false returns graph evidence alone. Results include seed/index states, canonical edges, unresolved names and partial-output diagnostics. maxOutputBytes admits the complete reply; use a narrower query or larger cap when it cannot fit.';
     case 'file_search': return 'Search literal content with case-insensitive substring matching. Example input: {"query":{"text":"greet"}}. Explicit regex/glob kinds are supported; glob defaults to path search. Filters and context are optional.';
     case 'prompt': return 'Get the current literal prompt, replace it with op=set and text, append exact text with op=append, or clear with op=clear. Mutations require expectedRevision; get does not. Augment preserves original text at the start; Preserve leaves it unchanged. The resulting prompt is delivered verbatim in user_instructions.';
-    case 'draft_update': return 'Mutate at expectedRevision: upsert/remove source, clearCodemaps, clearSources, prompt, or addDocument. Full/slices preserve mode; codemap upserts enter manual mode. Removing explicit source may leave an inferred codemap; inferred-only removal is a no-op. clearCodemaps enters manual mode and removes optional codemaps; clearSources restores required sources and their initial mode. Both retain documents, patches and prompt. For unavailable inferred targets or inferred comparison mismatches, use clearCodemaps and add admissible codemaps with target evidence. Added documents are complete immutable suppliedDocument text with unique id, role and origin.';
+    case 'draft_preview': return 'Prepare an ordered source edit batch at expectedRevision without committing it. Returns candidate metadata, costs, diagnostics and complete-packet measurement at the unchanged revision. Required source constraints, cancellation and response caps apply.';
+    case 'draft_update': return 'Mutate at expectedRevision: upsert/remove source, slice add/setPaths/remove, clearCodemaps, clearSources, prompt, addDocument, or an atomic source edit batch. A batch applies edits in order, derives inferred codemaps from the final state and commits one revision; failed preparation or receipt admission commits nothing. Full/slices preserve mode; codemap upserts enter manual mode. Removing explicit source may leave an inferred codemap; inferred-only removal is a no-op. clearCodemaps enters manual mode and removes optional codemaps; clearSources restores required sources and their initial mode. Both retain documents, patches and prompt. For unavailable inferred targets or inferred comparison mismatches, use clearCodemaps and add admissible codemaps with target evidence. Added documents are complete immutable suppliedDocument text with unique id, role and origin.';
     default: return `smip ${name}`;
   }
 }

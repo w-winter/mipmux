@@ -1,0 +1,96 @@
+[
+  {
+    "expected" : "<file_map>\nr\n└── Main.swift * +\n\n(* denotes selected files)\n(+ denotes code maps available)\n</file_map>\n<current_prompt_content>\nOriginal <task>\nKeep 🙂 and é exactly\r\n\n</current_prompt_content>\n<discover_instructions>\nDiscover callers; do not implement.\n<literal> & \"quoted\"\n</discover_instructions>\n<metadata>\n<token_budget>198500</token_budget>\n<token_budget_guidance>\nMake a best effort to ensure the complete prompt (including all selected files and context) fits within the prescribed token budget of 198500 tokens.\n\nContext Optimization Strategy:\n- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage\n- Codemaps provide type definitions, function signatures, and structure without full implementation details\n- Additional codemaps may be automatically included for types referenced by selected files (in 'auto' mode)\n- Use the MCP tools to check current token counts and adjust selection as needed to stay within budget\n\nPrioritize including files most relevant to the user's task while staying within the token budget.\nFor additional files that may not fit, but are important, mention them in the prompt, with a short description for what they contain that may be relevant to the task.\n</token_budget_guidance>\n<output_format>\nThe final prompt should be written with clear formatting, isolating important concepts in xml tags, and making use of clean markdown where possible.\nDo not add any outer wrapping for the complete prompt, as it will already be wrapped in <user_instructions>.\n</output_format>\n</metadata>",
+    "input" : {
+      "contextBuilderPrompts" : [
+
+      ],
+      "currentPrompt" : "Original <task>\nKeep 🙂 and é exactly\r\n",
+      "discoveryInstructions" : "Discover callers; do not implement.\n<literal> & \"quoted\"",
+      "fileTree" : "r\n└── Main.swift * +\n\n(* denotes selected files)\n(+ denotes code maps available)",
+      "kind" : "renderDiscoveryMessage",
+      "tokenBudget" : 198500
+    },
+    "name" : "separate-channels"
+  },
+  {
+    "expected" : "<file_map>\nr\n└── Main.swift * +\n\n(* denotes selected files)\n(+ denotes code maps available)\n</file_map>\n<current_prompt_content>\nOriginal <task>\nKeep 🙂 and é exactly\r\n\n</current_prompt_content>\n<meta prompt=\"Second \"quoted\"\">\nB\n<literal>\n</meta prompt>\n\n<meta prompt=\"First\">\nA\r\n\n</meta prompt>\n<discover_instructions>\nDiscover callers; do not implement.\n<literal> & \"quoted\"\n</discover_instructions>\n<metadata>\n<token_budget>198500</token_budget>\n<token_budget_guidance>\nMake a best effort to ensure the complete prompt (including all selected files and context) fits within the prescribed token budget of 198500 tokens.\n\nContext Optimization Strategy:\n- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage\n- Codemaps provide type definitions, function signatures, and structure without full implementation details\n- Additional codemaps may be automatically included for types referenced by selected files (in 'auto' mode)\n- Use the MCP tools to check current token counts and adjust selection as needed to stay within budget\n\nPrioritize including files most relevant to the user's task while staying within the token budget.\nFor additional files that may not fit, but are important, mention them in the prompt, with a short description for what they contain that may be relevant to the task.\n</token_budget_guidance>\n<output_format>\nThe final prompt should be written with clear formatting, isolating important concepts in xml tags, and making use of clean markdown where possible.\nDo not add any outer wrapping for the complete prompt, as it will already be wrapped in <user_instructions>.\n</output_format>\n</metadata>",
+    "input" : {
+      "contextBuilderPrompts" : [
+        {
+          "content" : "B\n<literal>",
+          "title" : "Second \"quoted\""
+        },
+        {
+          "content" : "A\r\n",
+          "title" : "First"
+        }
+      ],
+      "currentPrompt" : "Original <task>\nKeep 🙂 and é exactly\r\n",
+      "discoveryInstructions" : "Discover callers; do not implement.\n<literal> & \"quoted\"",
+      "fileTree" : "r\n└── Main.swift * +\n\n(* denotes selected files)\n(+ denotes code maps available)",
+      "kind" : "renderDiscoveryMessage",
+      "tokenBudget" : 198500
+    },
+    "name" : "ordered-meta-prompts"
+  },
+  {
+    "expected" : "<metadata>\n<token_budget>0</token_budget>\n<token_budget_guidance>\nMake a best effort to ensure the complete prompt (including all selected files and context) fits within the prescribed token budget of 0 tokens.\n\nContext Optimization Strategy:\n- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage\n- Codemaps provide type definitions, function signatures, and structure without full implementation details\n- Additional codemaps may be automatically included for types referenced by selected files (in 'auto' mode)\n- Use the MCP tools to check current token counts and adjust selection as needed to stay within budget\n\nPrioritize including files most relevant to the user's task while staying within the token budget.\nFor additional files that may not fit, but are important, mention them in the prompt, with a short description for what they contain that may be relevant to the task.\n</token_budget_guidance>\n<output_format>\nThe final prompt should be written with clear formatting, isolating important concepts in xml tags, and making use of clean markdown where possible.\nDo not add any outer wrapping for the complete prompt, as it will already be wrapped in <user_instructions>.\n</output_format>\n</metadata>",
+    "input" : {
+      "contextBuilderPrompts" : [
+
+      ],
+      "currentPrompt" : "",
+      "discoveryInstructions" : "",
+      "fileTree" : "",
+      "kind" : "renderDiscoveryMessage",
+      "tokenBudget" : 0
+    },
+    "name" : "empty"
+  },
+  {
+    "expected" : "<metadata>\n<token_budget>198500</token_budget>\n<token_budget_guidance>\nMake a best effort to ensure the complete prompt (including all selected files and context) fits within the prescribed token budget of 198500 tokens.\n\nContext Optimization Strategy:\n- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage\n- Codemaps provide type definitions, function signatures, and structure without full implementation details\n- Additional codemaps may be automatically included for types referenced by selected files (in 'auto' mode)\n- Use the MCP tools to check current token counts and adjust selection as needed to stay within budget\n\nPrioritize including files most relevant to the user's task while staying within the token budget.\nFor additional files that may not fit, but are important, mention them in the prompt, with a short description for what they contain that may be relevant to the task.\n</token_budget_guidance>\n<output_format>\nThe final prompt should be written with clear formatting, isolating important concepts in xml tags, and making use of clean markdown where possible.\nDo not add any outer wrapping for the complete prompt, as it will already be wrapped in <user_instructions>.\n</output_format>\n</metadata>",
+    "input" : {
+      "contextBuilderPrompts" : [
+
+      ],
+      "currentPrompt" : " \n ",
+      "discoveryInstructions" : "\n\t ",
+      "fileTree" : " \r\n\t",
+      "kind" : "renderDiscoveryMessage",
+      "tokenBudget" : 198500
+    },
+    "name" : "whitespace-only"
+  },
+  {
+    "expected" : "<meta prompt=\"\">\n\n</meta prompt>\n<metadata>\n<token_budget>8500</token_budget>\n<token_budget_guidance>\nMake a best effort to ensure the complete prompt (including all selected files and context) fits within the prescribed token budget of 8500 tokens.\n\nContext Optimization Strategy:\n- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage\n- Codemaps provide type definitions, function signatures, and structure without full implementation details\n- Additional codemaps may be automatically included for types referenced by selected files (in 'auto' mode)\n- Use the MCP tools to check current token counts and adjust selection as needed to stay within budget\n\nPrioritize including files most relevant to the user's task while staying within the token budget.\nFor additional files that may not fit, but are important, mention them in the prompt, with a short description for what they contain that may be relevant to the task.\n</token_budget_guidance>\n<output_format>\nThe final prompt should be written with clear formatting, isolating important concepts in xml tags, and making use of clean markdown where possible.\nDo not add any outer wrapping for the complete prompt, as it will already be wrapped in <user_instructions>.\n</output_format>\n</metadata>",
+    "input" : {
+      "contextBuilderPrompts" : [
+        {
+          "content" : "",
+          "title" : ""
+        }
+      ],
+      "currentPrompt" : "",
+      "discoveryInstructions" : "",
+      "fileTree" : "",
+      "kind" : "renderDiscoveryMessage",
+      "tokenBudget" : 8500
+    },
+    "name" : "meta-only"
+  },
+  {
+    "expected" : "<discover_instructions>\nDiscover callers; do not implement.\n<literal> & \"quoted\"\n</discover_instructions>\n<metadata>\n<token_budget>500</token_budget>\n<token_budget_guidance>\nMake a best effort to ensure the complete prompt (including all selected files and context) fits within the prescribed token budget of 500 tokens.\n\nContext Optimization Strategy:\n- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage\n- Codemaps provide type definitions, function signatures, and structure without full implementation details\n- Additional codemaps may be automatically included for types referenced by selected files (in 'auto' mode)\n- Use the MCP tools to check current token counts and adjust selection as needed to stay within budget\n\nPrioritize including files most relevant to the user's task while staying within the token budget.\nFor additional files that may not fit, but are important, mention them in the prompt, with a short description for what they contain that may be relevant to the task.\n</token_budget_guidance>\n<output_format>\nThe final prompt should be written with clear formatting, isolating important concepts in xml tags, and making use of clean markdown where possible.\nDo not add any outer wrapping for the complete prompt, as it will already be wrapped in <user_instructions>.\n</output_format>\n</metadata>",
+    "input" : {
+      "contextBuilderPrompts" : [
+
+      ],
+      "currentPrompt" : "",
+      "discoveryInstructions" : "Discover callers; do not implement.\n<literal> & \"quoted\"",
+      "fileTree" : "",
+      "kind" : "renderDiscoveryMessage",
+      "tokenBudget" : 500
+    },
+    "name" : "discovery-only"
+  }
+]

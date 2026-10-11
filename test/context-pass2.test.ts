@@ -9,7 +9,7 @@ import { WorkspaceOperation } from '../src/workspace/workspace-operation.js';
 const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] };
 const request: ContextBuildRequest = { task: 'Review', constraints: '', enhancementMode: 'augment' as const, purpose: 'review', requiredSources: [], documents: [], patches: [],
-  discoveryHints: [], outputName: 'packet', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true } };
+  discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(resolve('test-output/context-pass2-')), root = join(directory, 'root'), out = join(directory, 'out');

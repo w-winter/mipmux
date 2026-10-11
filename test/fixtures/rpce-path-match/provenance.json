@@ -1,0 +1,43 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "sha256": "b3cd31fc9b386773b039f95f7494f3a1840528b2499e15663849e688a66f4cbd"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "sha256": "022910fe6523811ff4da0d1ab3fc866926b6c4b91404910b1ba50f24b805019a"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "sha256": "51af27066c1a29b10fc706337f36f2411871623e32a45e7f4a15053b6ce83553"
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Utilities/RelativePath.swift",
+      "sha256": "f9274c193b88ee5d8f0e5a7006549077854c899d1297f8a0df50dfb93d308f26"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sha256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e"
+    }
+  ],
+  "generator": "scripts/generate-path-match-fixtures.mjs",
+  "command": "node scripts/generate-path-match-fixtures.mjs <pinned-rpce-checkout>",
+  "bindings": [
+    "Original matcher, profiles, character policy and indexes execute over captured frozen records.",
+    "mcpSelection uses an empty selected set, matching the source worker profile.",
+    "Root labels and paths are fixture inputs; the source algorithms are not replaced."
+  ],
+  "limits": [
+    "This is the matcher kernel, not ordinary selection preflight, folder expansion or explicit ignored-file materialization.",
+    "Fuzzy tie cases without a stable source ordering are not assigned an invented lexical winner.",
+    "Foundation symlink-path behavior requires platform execution; source kernel alone is not filesystem authorization."
+  ],
+  "cases": 20,
+  "generatorSHA256": "fa039cedd73ceb10f69af6ab2c36086dfb140c5c81d4f6bc5999c07bb87406dd"
+}

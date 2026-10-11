@@ -69,7 +69,7 @@ for (const scenario of ['timeout', 'abort'] as const) {
       assert(workspace && typeof workspace === 'object' && 'id' in workspace);
       const job = await call('context_builder', { workspaceId: workspace.id, requestId: 'one', request: { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
         requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
-        allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true } } });
+        budgetUnits: 10000 } });
       assert(job && typeof job === 'object' && 'jobId' in job && typeof job.jobId === 'string'); await running.promise;
       hold = true; const waitId = ++id;
       wire.onmessage?.({ jsonrpc: '2.0', id: waitId, method: 'tools/call', params: { _meta: { ...meta, progressToken: 'p'.repeat(getDefaultHighWaterMark(false)) },

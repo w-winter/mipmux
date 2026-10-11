@@ -2,8 +2,8 @@ import Type, { type Static, type TSchema } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { fromJsonSchema, type McpServer, type ServerContext } from '@modelcontextprotocol/server';
 import { WorkspaceSpec } from '../contracts/inventory.js';
-import { ContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from '../contracts/context.js';
-import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, structureValidator, toolDescription } from '../contracts/exploration.js';
+import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from '../contracts/context.js';
+import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, ScopedStructure, toolDescription } from '../contracts/exploration.js';
 import { Positive, TreeInput, ScopedTree } from '../contracts/discovery.js';
 import type { ClientRuntime } from '../runtime/client-runtime.js';
 import { toolResult, failureResult } from '../runtime/tool-result.js';
@@ -33,10 +33,12 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
       const request = scopedTreeValidator.Parse(scopedTreeValidator.Default({ ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }));
       return client().explore(input.workspaceId, { name: 'get_file_tree', input: request }, ctx.mcpReq.signal, input.draftId ?? null, toolResult);
     });
-  register('get_code_structure', Type.Object({ workspaceId: id, input: StructureInput, ...budget }, closed),
+  const scopedStructureValidator = Compile(ScopedStructure);
+  register('get_code_structure', Type.Object({ workspaceId: id, input: Type.Optional(StructureInput),
+    draftId: Type.Optional(Type.Union([id, Type.Null()])), ...budget }, closed),
     (input, ctx) => {
-      const request = structureValidator.Parse(structureValidator.Default({ ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }));
-      return client().explore(input.workspaceId, { name: 'get_code_structure', input: request }, ctx.mcpReq.signal, null, toolResult);
+      const request = scopedStructureValidator.Parse(scopedStructureValidator.Default({ ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }));
+      return client().explore(input.workspaceId, { name: 'get_code_structure', input: request }, ctx.mcpReq.signal, input.draftId ?? null, toolResult);
     });
   register('read_file', Type.Object({ workspaceId: id, input: ReadInput, ...budget }, closed),
     (input, ctx) => {
@@ -56,6 +58,8 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     input => client().inspect(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, toolResult));
   register('draft_update', Type.Object({ draftId: id, input: Type.Omit(DraftUpdate, ['maxOutputBytes']), ...budget }, closed),
     (input, ctx) => client().update(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
+  register('draft_preview', Type.Object({ draftId: id, input: Type.Omit(DraftPreview, ['maxOutputBytes']), ...budget }, closed),
+    (input, ctx) => client().preview(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('prompt', Type.Object({ draftId: id, input: Type.Union([
     Type.Omit(PromptRequest.anyOf[0], ['maxOutputBytes']), Type.Omit(PromptRequest.anyOf[1], ['maxOutputBytes']),
     Type.Omit(PromptRequest.anyOf[2], ['maxOutputBytes']), Type.Omit(PromptRequest.anyOf[3], ['maxOutputBytes']),

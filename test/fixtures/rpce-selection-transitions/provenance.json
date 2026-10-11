@@ -1,0 +1,37 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sha256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496"
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Utilities/WorkspacePathNormalizations.swift",
+      "sha256": "d77d7af8e1d933df0530b8bea19b603581889c98b217b8213564f5635a9ce3a1"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "sha256": "0b35698eb4c0dc02b88bffd382492bdacaf993d7f5c1c5d7d6576887bf554c73"
+    }
+  ],
+  "generator": "scripts/generate-selection-transition-fixtures.mjs",
+  "command": "node scripts/generate-selection-transition-fixtures.mjs <pinned-rpce-checkout>",
+  "bindings": [
+    "Original pre-resolved mutation functions execute over captured state with no filesystem lookup or GUI owner.",
+    "Fixture output makes absent optional descriptions explicit as null."
+  ],
+  "limits": [
+    "This covers pre-resolved full-file and exclusive-representation transitions, not ordinary add, path resolution, directory expansion, strict diagnostics or active scout selection calls.",
+    "These outputs are not completion evidence for all P2 selection operations."
+  ],
+  "cases": 13,
+  "generatorSHA256": "1fba01b0b95275248d4f27f3c2e552a8906576987019f33e3f7f6847f36ba8ac"
+}

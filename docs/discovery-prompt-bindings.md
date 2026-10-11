@@ -6,7 +6,7 @@
 
 The reference was rendered from `Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift` at RPCE commit `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3`, Git blob `4943690a86bf880ce9f5cb085e2e4f57211175e5`. The renderer executed the source's `discoverPrompt`, `mcpDiscoverPrompt` and supporting review-guidance functions with these inputs:
 
-- `tokenBudget: 200000`, an illustrative rendering parameter; smip jobs obtain their budget from `initialContext.measurement.allowance`.
+- `tokenBudget: 200000`, an illustrative rendering parameter; smip jobs supply `Assignment.tokenBudget` after the 1500-unit startup reserve.
 - `agentKind: .codexExec`, for the restricted-tool workflow.
 - `enhancementMode: .fullRewrite`, the default mode for composing the MCP handoff.
 - `allowClarifyingQuestions: false`, the MCP default.
@@ -17,7 +17,9 @@ Only external type/default/catalog definitions were supplied by the rendering ha
 
 The native `renderDiscoveryPrompt` operation executes the extracted RPCE factory in `native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift`. It takes an explicit budget, runtime, enhancement mode, review inputs and clarification settings, and returns the complete reference prompt. The language catalog comes from the retained native syntax engine. `test/fixtures/rpce-discovery/` contains source-rendered outputs for Rewrite, Augment and Preserve with an explicit catalog placeholder; the test normalizes only that catalog line.
 
-RPCE supplies the configured budget after its host-side 1500-unit reserve. Smip's initial context supplies the already admitted complete-packet allowance. The prompt reads that number rather than deriving a budget from a receiving model.
+The native `renderDiscoveryMessage` operation uses `ContextBuilderAgentViewModel.makeUserMessage` and the selected-meta-prompt formatting from `ContextBuilderPromptsOverlay.swift` at the same reference revision. Its inputs are the file tree, current prompt, discovery instructions, ordered selected meta prompts and adjusted budget. The renderer includes these sections in the source order and retains their literal text. `test/fixtures/rpce-discovery-message/` contains six outputs generated from the original Swift functions; `scripts/generate-discovery-message-fixtures.mjs` regenerates them from a checked reference checkout. This operation is a source-rendering boundary; the current Pi dispatch still uses the captured context and Assignment JSON.
+
+RPCE supplies the configured budget after its host-side 1500-unit reserve. Smip supplies `max(0, request.budgetUnits - 1500)` as `DiscoveryInput.tokenBudget`; complete-packet measurement uses `request.budgetUnits`. The prompt reads the scout budget rather than deriving a budget from a receiving model.
 
 ## Native bindings
 
@@ -27,10 +29,12 @@ Every substantive difference belongs to one of these interface bindings. Discove
 | --- | --- | --- |
 | Version and attribution | `# smip discovery v1` and the RPCE revision/license footer | `PiRunner` requires the version marker; attribution identifies the source. |
 | Captured state and assignment | `initialContext`, `Assignment.task`, `Assignment.constraints`, `Assignment.enhancementMode` and `Assignment.hints` | These are the actual scout inputs. The original request is retained as provenance; the resulting literal prompt is mutable. |
-| Numeric budget | “The supplied token budget,” bound to `initialContext.measurement.allowance` | A static editable prompt serves jobs with different admitted budgets. |
-| Tools and paths | The seven smip tools, explicitly configured HTTP MCP tools, and separate `root`/`path` fields | Built-in shell and filesystem tools are unavailable. Smip workspace tools enforce root policy; HTTP MCP tools have separately authorized capabilities. |
-| Selection and cost inspection | `draft_inspect` metadata/costs with response caps and continuations | These views provide current representations and complete-packet measurements. |
-| Source selection | One `draft_update` upsert/remove per file; `clearSources` restores the required baseline | Smip has no directory selection or multi-file mutation. Required inputs remain fixed. |
+| Numeric budget | “The supplied token budget,” bound to `Assignment.tokenBudget` | A static editable prompt serves jobs with different admitted budgets. |
+| Tools and paths | Smip's exposed context tools, explicitly configured HTTP MCP tools, and separate `root`/`path` fields | Built-in shell and filesystem tools are unavailable. Smip workspace tools enforce root policy; HTTP MCP tools have separately authorized capabilities. |
+| File trees | Startup and tool trees share the native RPCE snapshot renderer; `scope` for root/directory selection and `maxDepth` for folder depth | The renderer retains mode, ordering, depth, selected-descendant, automatic-budget and marker behavior. Startup trees include the source legends; tool output paging preserves complete rendered lines. A plus marks an available codemap. |
+| Structural queries | Native RPCE traversal, semantic size limits, signature admission, DTO and text formatter; root-qualified file/directory seeds or captured full/sliced selection | Captured inventory supplies immutable adjacency and classified outcomes. Headless roots/files use stable UUID identities; desktop graph demand coordination is replaced by retained artifacts. Seed resolution retains source direct-file priority, physical-path deduplication and its 8192-plus-sentinel bound. |
+| Selection and cost inspection | `draft_inspect` metadata/costs with response caps and continuations; `draft_preview` for a prepared candidate | Inspection describes committed state. Preview returns candidate metadata, costs and diagnostics at the unchanged revision. |
+| Source selection | `draft_update` source edits or an ordered atomic `batch`; `clearSources` restores the required baseline | One draft transaction owns preparation, inference from the final candidate and receipt admission. Required inputs remain fixed. |
 | Codemap operations | `clearCodemaps`, codemap upserts and full/slice promotion | Codemap upserts enter manual mode; full/slice upserts preserve mode. RP's prompt says promotion disables automation, but neither implementation does. |
 | Prompt operations | `prompt` with get, set, append and clear; revision and response-cap fields for mutations | Literal prompt state supports Rewrite, Augment and Preserve; the resulting text is delivered in `user_instructions`. |
 | Tab naming | Task-name metadata is omitted | Smip has no compose tab to rename. |
@@ -42,6 +46,16 @@ Every substantive difference belongs to one of these interface bindings. Discove
 
 The reference's approximate auto-codemap overhead guidance remains guidance followed by actual cost inspection. Its strict "must exceed" wording and non-strict `>=` checklist are both retained; neither introduces a runtime representation-ratio check.
 
+## Selection transition reference
+
+The native `transitionSelection` operation runs RPCE's `mutatePreResolvedFullFilePaths` and `setPreResolvedFilePaths` over captured canonical selection state. The first operation is the authorized full-file path used for Git artifacts; it is distinct from ordinary file addition. The second selects one exclusive representation and retains the source's automatic-mode effects. `test/fixtures/rpce-selection-transitions/` contains 13 outputs generated from the original methods, and `scripts/generate-selection-transition-fixtures.mjs` regenerates them from a checked reference checkout. Path resolution, folder expansion, ordinary add and scout-facing batch calls are separate integration responsibilities.
+
+The native `calculateSliceRanges` operation executes RPCE's `SliceRangeMath` functions. `draft_update` uses them for file-scoped slice addition, replacement and subtraction. The draft retains full selection when its last slice is removed, matching `WorkspaceSelectionMutationService.mutateSlices`. `test/fixtures/rpce-slice-ranges/` contains seven original-source outputs; `scripts/generate-slice-range-fixtures.mjs` regenerates them. Public MCP tests cover merged descriptions, subtraction fragments, full-content restoration, failed range/receipt admission and cancellation.
+
+## Path matching reference
+
+The native `matchSelectionPath` operation executes RPCE's ordinary `PathMatcher.locate` kernel with the `mcpSelection` profile, frozen file/folder records, source character folding and source indexes. The profile excludes selected-file/root bias. `test/fixtures/rpce-path-match/` contains 20 outputs generated by compiling the original source; `scripts/generate-path-match-fixtures.mjs` regenerates them from a checked reference checkout. The kernel returns a root path and stored relative path or absence. Selection authorization, exact-root ambiguity checks, directory expansion and explicit file acquisition belong to their caller boundaries.
+
 ## Checking edits
 
 Compare the complete files, rather than checking whether a summary mentions the same concepts:
@@ -51,3 +65,13 @@ git diff --no-index -- prompts/reference/rpce-discovery.md prompts/discovery-v1.
 ```
 
 Each changed span should correspond to a binding above. A policy change needs a source-backed reason and an explicit decision. Rephrasing, shortening or reorganizing the reference requires that same decision. The reference is a comparison artifact, while `scripts/build-resources.mjs` packages the native prompt used by discovery jobs.
+
+## Captured selection candidates
+
+The native `resolveSelectionCandidates` operation runs RPCE's ordinary full and codemap candidate rules against a caller-scoped catalog. It preserves input order, standardized absolute-path deduplication, recursively sorted directory members, empty-folder removal, root-alias ambiguity and source diagnostic text. Codemap eligibility uses the retained extension catalog rather than artifact readiness.
+
+Exact lookup includes managed-only records. Fuzzy lookup and directory expansion use discoverable records. A missing absolute catalog path requires a captured explicit-acquisition outcome; the native operation does not infer filesystem access from the matching result. The source fixtures execute the original resolver, alias, diagnostic and lookup bodies with the shared captured-catalog adapter. Their scope and remaining filesystem/tool-boundary checks are recorded in `test/fixtures/rpce-selection-candidates/provenance.json`.
+
+The native `mutateSelectionPaths` operation applies the ordinary add, remove, promote and demote methods to canonical captured selection and catalog state. Full add retains slices; promotion removes them. Full removal retains manual codemaps, and codemap-only removal retains full/sliced selection. Codemap add and demotion disable automatic mode only when supported candidates exist. Results retain the source diagnostics, mutation flag and operation-specific resolution/count fields. `test/fixtures/rpce-selection-path-mutations/` contains the source-derived transitions. The candidate-fixture generator regenerates both ordinary candidate and mutation cases.
+
+`prepareSelection` retains RPCE's whole-selection replacement and file-scoped slice replacement, including the full-file artifact flag that selects replacement scope. Batch slice add/set/setPaths/remove uses the source normalization, coalescing and subtraction rules. `parseSelectionInputs` retains terminal `#L` recognition, numeric/string range aliases, description precedence and parser diagnostics through the pinned SDK JSON decoder. Source-generated cases are in `test/fixtures/rpce-selection-preparation/` and `test/fixtures/rpce-selection-input-parsing/`. These native operations do not implement the public selection tool's strict/error/receipt boundary or positive file acquisition.

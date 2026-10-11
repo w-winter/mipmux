@@ -36,29 +36,24 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
     const empty = await op.fileSearch({ ...query, query: { ...query.query, text: ' needle ' } });
     if (empty.kind !== 'search') assert.fail('Missing search');
     assert.equal(empty.counts.occurrences, 0);
-    const tree = op.getFileTree({ view: 'files', depth: null, selection: null, maxOutputBytes: 10000, continuation: null });
+    const tree = await op.getFileTree({ type: 'files', mode: 'full', scope: null, maxDepth: null, selection: null, maxOutputBytes: 10000, continuation: null });
     assert.equal(tree.kind, 'tree');
-    const structure = op.getCodeStructure({ seeds: [{ root: 'r', path: 'A.swift', kind: 'file' }], expand: 'both', depth: 4,
-      maxOutputBytes: 10000, continuation: null });
-    assert.equal(structure.kind, 'structure');
-    if (structure.kind === 'structure') {
-      assert.equal(structure.approximate, true); assert.equal(structure.files.length, 3);
-      for (const file of structure.files) for (const relationship of file.relationships) {
-        assert.equal(relationship.root, file.root); assert.equal(relationship.from, file.path);
-      }
-      const evidence = structure.files.flatMap(file => file.relationships);
-      assert(evidence.some(item => item.type === 'PeerRecord' && item.candidates.length === 2));
-      assert(evidence.some(item => item.type === 'MissingRecord' && item.candidates.length === 0));
-    }
-    const unsupported = op.getCodeStructure({ seeds: [{ root: 'r', path: name, kind: 'file' }], expand: 'none', depth: 1,
-      maxOutputBytes: 10000, continuation: null });
+    const structure = await op.getCodeStructure({ seeds: [{ root: 'r', path: 'A.swift', kind: 'file' }], expand: 'both', depth: 4,
+      signatures: true, size: 'medium', maxOutputBytes: 10000, selection: null });
+    if (structure.kind !== 'structure') assert.fail('Missing structure');
+    assert.equal(structure.files.length, 3);
+    assert(structure.roots[0]?.edges.some(edge => edge.symbols.includes('PeerRecord') && edge.ambiguous));
+    assert(structure.roots[0]?.unresolved.some(item => item.name === 'MissingRecord' && item.reason === 'missing'));
+    const unsupported = await op.getCodeStructure({ seeds: [{ root: 'r', path: name, kind: 'file' }], expand: 'none', depth: 1,
+      signatures: true, size: 'medium', maxOutputBytes: 10000, selection: null });
     if (unsupported.kind !== 'structure') assert.fail('Missing unsupported structure');
-    assert.equal(unsupported.files[0]?.outcome.kind, 'unsupported');
-    const selected = op.getFileTree({ view: 'selected', depth: null,
+    assert.equal(unsupported.status, 'unavailable');
+    assert.equal(unsupported.roots[0]?.seeds[0]?.state, 'not_indexed');
+    const selected = await op.getFileTree({ type: 'files', mode: 'selected', scope: null, maxDepth: null,
       selection: { draftId: 'caller-owned-selection', revision: 1, sources: [{ root: 'r', path: name }] },
       maxOutputBytes: 10000, continuation: null });
     if (selected.kind !== 'tree') assert.fail('Missing selected tree');
-    assert.deepEqual(selected.entries.map(entry => entry.path), [name]);
+    assert.equal(selected.tree, 'r\n└── ' + name + ' *\n');
     await op.close(); await handle.close();
   } finally { await runtime.close(); }
 });

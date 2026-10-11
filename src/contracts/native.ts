@@ -4,6 +4,9 @@ import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, 
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
 import { NativeWireFailureCode } from './errors.js';
 
+import { NativeStructureInput, NativeStructureResult } from './structure.js';
+export { NativeStructureInput, NativeStructureResult } from './structure.js';
+
 const handle = Type.Object({ generation: Type.String({ minLength: 1 }), id: Type.String({ minLength: 1 }) }, { additionalProperties: false });
 export type NativeHandle = Static<typeof handle>;
 const base64 = Base64;
@@ -13,7 +16,115 @@ const declaration = Type.Object({
   name: RootName, absolutePath: Type.String({ pattern: '^/[^\\u0000]*$' }), access,
   expected: Type.Union([RootIdentity, Type.Null()]),
 }, { additionalProperties: false });
+export const NativeFileTreeInput = Type.Object({ kind: Type.Literal('renderFileTree'),
+  roots: Type.Array(Type.Object({ name: RootName, path: Type.String() }, { additionalProperties: false })),
+  entries: Type.Array(Type.Union([
+    Type.Object({ kind: Type.Literal('directory'), root: RootName, path: RelativePath }, { additionalProperties: false }),
+    Type.Object({ kind: Type.Literal('file'), root: RootName, path: RelativePath, selected: Type.Boolean(), hasCodeMap: Type.Boolean() }, { additionalProperties: false }),
+  ])),
+  scope: Type.Union([Type.Object({ root: RootName, path: Type.String() }, { additionalProperties: false }), Type.Null()]),
+  mode: Type.Enum(['auto', 'full', 'folders', 'selected']),
+  maxDepth: Type.Union([Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }), Type.Null()]),
+  includeLegend: Type.Boolean(), showFullPaths: Type.Boolean(),
+}, { additionalProperties: false });
+export const NativeFileTreeResult = Type.Object({ kind: Type.Literal('fileTree'), tree: Type.String(), rootsCount: SafeCount,
+  note: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false });
+export type NativeFileTreeResult = Static<typeof NativeFileTreeResult>;
+export const NativeDiscoveryMessageInput = Type.Object({ kind: Type.Literal('renderDiscoveryMessage'), tokenBudget: SafeCount,
+  fileTree: Type.String(), currentPrompt: Type.String(), discoveryInstructions: Type.String(),
+  contextBuilderPrompts: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
+}, { additionalProperties: false });
+export const NativeSliceRange = Type.Object({ start: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+  end: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }), description: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false });
+const canonicalSelectionPath = Type.String({ pattern: '^/[^\\u0000]*$' });
+export const NativeSelectionState = Type.Object({ selectedPaths: Type.Array(canonicalSelectionPath),
+  manualCodemapPaths: Type.Array(canonicalSelectionPath), slices: Type.Record(Type.String(), Type.Array(NativeSliceRange)),
+  codemapAutoEnabled: Type.Boolean() }, { additionalProperties: false });
+export const NativeSelectionTransitionInput = Type.Object({ kind: Type.Literal('transitionSelection'), selection: NativeSelectionState,
+  mutation: Type.Union([
+    Type.Object({ kind: Type.Literal('fullFiles'), op: Type.Enum(['add', 'remove']), paths: Type.Array(canonicalSelectionPath) }, { additionalProperties: false }),
+    Type.Object({ kind: Type.Literal('representation'), target: Type.Enum(['full', 'codemapOnly', 'unselected']),
+      paths: Type.Array(canonicalSelectionPath) }, { additionalProperties: false }),
+  ]) }, { additionalProperties: false });
+export const NativeSliceRangesInput = Type.Object({ kind: Type.Literal('calculateSliceRanges'),
+  op: Type.Enum(['normalize', 'coalesce', 'subtract']), base: Type.Array(NativeSliceRange), ranges: Type.Array(NativeSliceRange),
+}, { additionalProperties: false });
+export const NativePathMatchInput = Type.Object({ kind: Type.Literal('matchSelectionPath'), query: Type.String(),
+  roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String(), files: Type.Array(RelativePath),
+    directories: Type.Array(RelativePath) }, { additionalProperties: false })) }, { additionalProperties: false });
+const NativeSelectionCatalogMember = Type.Object({ path: RelativePath, discoverable: Type.Boolean() }, { additionalProperties: false });
+export const NativeSelectionCandidatesInput = Type.Object({ kind: Type.Literal('resolveSelectionCandidates'),
+  paths: Type.Array(Type.String()), rawPaths: Type.Array(Type.String()), expandFolders: Type.Boolean(),
+  allowEmptyFolderExpansion: Type.Boolean(), mode: Type.Enum(['full', 'codemapOnly']),
+  roots: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), name: Type.String(), path: Type.String({ pattern: '^/[^\\u0000]*$' }),
+    files: Type.Array(NativeSelectionCatalogMember), directories: Type.Array(NativeSelectionCatalogMember) }, { additionalProperties: false })),
+  materialization: Type.Array(Type.Object({ path: Type.String(), outcome: Type.Enum(['noCandidate', 'ambiguous', 'blocked', 'unavailable', 'failed']) }, { additionalProperties: false })),
+}, { additionalProperties: false });
+export const NativeSelectionCandidatesResult = Type.Object({ kind: Type.Literal('selectionCandidates'),
+  candidates: Type.Array(Type.Object({ rootId: Type.String({ format: 'uuid' }), path: RelativePath }, { additionalProperties: false })),
+  resolvedMap: Type.Record(Type.String(), Type.String()), invalidPaths: Type.Array(Type.String()), codemapUnavailable: Type.Array(Type.String()),
+}, { additionalProperties: false });
+export const NativeSelectionPathMutationInput = Type.Object({ kind: Type.Literal('mutateSelectionPaths'),
+  selection: NativeSelectionState,
+  catalog: Type.Object({ roots: NativeSelectionCandidatesInput.properties.roots,
+    materialization: NativeSelectionCandidatesInput.properties.materialization }, { additionalProperties: false }),
+  mutation: Type.Union([
+    Type.Object({ op: Type.Enum(['add', 'remove']), mode: Type.Enum(['full', 'codemap_only']),
+      paths: Type.Array(Type.String()), rawPaths: Type.Array(Type.String()) }, { additionalProperties: false }),
+    Type.Object({ op: Type.Enum(['promote', 'demote']), paths: Type.Array(Type.String()),
+      rawPaths: Type.Array(Type.String()) }, { additionalProperties: false }),
+  ]),
+}, { additionalProperties: false });
+const selectionPathResult = { kind: Type.Literal('selectionPathMutation'), selection: NativeSelectionState,
+  invalidPaths: Type.Array(Type.String()), mutated: Type.Boolean() };
+const selectionPathResolved = Type.Record(Type.String(), Type.String());
+export const NativeSelectionPathMutationResult = Type.Union([
+  Type.Object({ ...selectionPathResult, op: Type.Literal('add'), resolvedMap: selectionPathResolved,
+    codemapUnavailable: Type.Array(Type.String()) }, { additionalProperties: false }),
+  Type.Object({ ...selectionPathResult, op: Type.Literal('remove'), resolvedMap: selectionPathResolved }, { additionalProperties: false }),
+  Type.Object({ ...selectionPathResult, op: Type.Literal('promote'), validCandidateCount: SafeCount }, { additionalProperties: false }),
+  Type.Object({ ...selectionPathResult, op: Type.Literal('demote'), validCandidateCount: SafeCount,
+    codemapUnavailable: Type.Array(Type.String()) }, { additionalProperties: false }),
+]);
+const NativeSelectionSliceInput = Type.Object({ path: Type.String(), ranges: Type.Array(NativeSliceRange) }, { additionalProperties: false });
+export const NativeSelectionPreparationInput = Type.Object({ kind: Type.Literal('prepareSelection'), selection: NativeSelectionState,
+  catalog: NativeSelectionPathMutationInput.properties.catalog,
+  mutation: Type.Union([
+    Type.Object({ kind: Type.Literal('set'), mode: Type.Enum(['full', 'slices', 'codemap_only']), paths: Type.Array(Type.String()),
+      slices: Type.Array(NativeSelectionSliceInput), sliceErrors: Type.Array(Type.String()), hasFullFileArtifactInputs: Type.Boolean() }, { additionalProperties: false }),
+    Type.Object({ kind: Type.Literal('slices'), op: Type.Enum(['add', 'remove', 'set', 'setPaths']),
+      entries: Type.Array(NativeSelectionSliceInput) }, { additionalProperties: false }),
+  ]),
+}, { additionalProperties: false });
+export const NativeSelectionPreparationResult = Type.Union([
+  Type.Object({ kind: Type.Literal('selectionBuilt'), selection: NativeSelectionState,
+    invalidPaths: Type.Array(Type.String()), codemapUnavailable: Type.Array(Type.String()) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('selectionSlicesChanged'), selection: NativeSelectionState,
+    invalidPaths: Type.Array(Type.String()), resolvedMap: selectionPathResolved, mutated: Type.Boolean() }, { additionalProperties: false }),
+]);
+export const NativeSelectionInputParsingRequest = Type.Object({ kind: Type.Literal('parseSelectionInputs'),
+  paths: Type.Array(Type.String()), slices: Type.Unknown() }, { additionalProperties: false });
+export const NativeSelectionInputParsingResult = Type.Object({ kind: Type.Literal('selectionInputs'), paths: Type.Array(Type.String()),
+  slices: Type.Array(NativeSelectionSliceInput), sliceErrors: Type.Array(Type.String()), hadExplicitSliceSpec: Type.Boolean() }, { additionalProperties: false });
+export const NativeReadArgument = Type.Union([Type.Integer(), Type.String(), Type.Null()]);
+export const NativeReadTextInput = Type.Object({ kind: Type.Literal('sliceReadText'), text: Type.String(),
+  start_line: NativeReadArgument, offset: NativeReadArgument, limit: NativeReadArgument }, { additionalProperties: false });
+export const NativeReadTextResult = Type.Union([
+  Type.Object({ kind: Type.Literal('readTextSlice'), content: Type.String(), totalLines: SafeCount,
+    firstLine: Type.Integer({ minimum: 0 }), lastLine: SafeCount, returnedLineCount: SafeCount, message: Type.Union([Type.String(), Type.Null()]),
+    lines: Type.Array(Type.Object({ number: SafeCount, offset: SafeCount, length: SafeCount, text: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('readTextRangeError'), code: Type.Enum(['limitWithNegativeStart', 'zeroStart']), message: Type.String() }, { additionalProperties: false }),
+]);
 export const NativeOperation = Type.Union([
+  NativeReadTextInput,
+  NativeSelectionInputParsingRequest,
+  NativeSelectionPreparationInput,
+  NativeSelectionPathMutationInput,
+  NativeSelectionCandidatesInput,
+  NativePathMatchInput,
+  NativeSliceRangesInput,
+  NativeSelectionTransitionInput,
+  NativeDiscoveryMessageInput,
   Type.Object({ kind: Type.Literal('describe') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('openRoots'), roots: Type.Array(declaration, { minItems: 1 }) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('listDirectory'), root: handle, directory: DirectoryRef }, { additionalProperties: false }),
@@ -29,6 +140,8 @@ export const NativeOperation = Type.Union([
     instructions: Type.Union([Type.String(), Type.Null()]), questionTimeoutSeconds: SafeCount,
     restrictsReviewGitToExplicitReadOnly: Type.Boolean(), reviewRootNames: Type.Array(Type.String()),
   }, { additionalProperties: false }),
+  NativeFileTreeInput,
+  NativeStructureInput,
 ]);
 export type NativeOperation = Static<typeof NativeOperation>;
 export const NativeRequest = Type.Object({
@@ -46,7 +159,18 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  ...NativeReadTextResult.anyOf,
+  NativeSelectionInputParsingResult,
+  ...NativeSelectionPreparationResult.anyOf,
+  ...NativeSelectionPathMutationResult.anyOf,
+  NativeSelectionCandidatesResult,
+  Type.Object({ kind: Type.Literal('pathMatch'), match: Type.Union([Type.Object({ rootPath: Type.String(), correctedPath: Type.String() }, { additionalProperties: false }), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('sliceRanges'), ranges: Type.Array(NativeSliceRange) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('selectionTransition'), selection: NativeSelectionState }, { additionalProperties: false }),
+  NativeFileTreeResult,
+  NativeStructureResult,
   Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('discoveryMessage'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('description'), decoderPolicy: Type.Literal('smip-strict-utf8-v1'),
     regexEngineFingerprint: SHA256,
     engine: Type.Object({ version: Type.String(), unicode: Type.String(), jitPolicy: Type.Union([Type.Literal('disabled'), Type.Literal('auto'), Type.Literal('required')]), jitCapability: Type.Boolean(), jitExecution: Type.Union([Type.Literal('disabled'), Type.Literal('compiled'), Type.Literal('unavailable')]) }, { additionalProperties: false }),

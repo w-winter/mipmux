@@ -1,0 +1,57 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "cases": 25,
+  "generatorSHA256": "e01f83287f06349015f85e51d2897a5d8cd9cf5f76aeaddaedcf8844dce61137",
+  "generator": "Swift execution of RPCE traversal, ordering, query policy, issue/path mapping, DTO and reply assembly extracted directly from the pinned reference source.",
+  "bindings": [
+    "Immutable input snapshot/adjacency and root aggregation adapter shared with the bridge; this fixture establishes the retained algorithm/output bodies, not independent equivalence of the adapter.",
+    "App receipt/fence/identity types supplied by immutable data declarations; explicit headless UUIDs supplied in fixtures.",
+    "Signature presentation supplies already-rendered entries and factual issues instead of app demand coordination.",
+    "Darwin import is conditional for Linux.",
+    "Bounded folder traversal and explicit resolver bodies are extracted independently from the pinned source; immutable path/catalog setup and selected-path binding are shared. Public MCP checks independently exercise selected full/sliced sources."
+  ],
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sha256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapGraphPolicy.swift",
+      "sha256": "fbad33fb254512a32a28c8665fb4b7d8fa0d9669361cd6bbc3bb376efd0175a5"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapGraphStructureModels.swift",
+      "sha256": "4c6e7694352080eaefe22e1b18835f993e41d2f1ea4477da1174d4e7d561dded"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sha256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "sha256": "a4e6c2d540cc80b7b3977ae5716cc91ba4fd726ace775a7b7117bafa2d6df3d5"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sha256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolOutputFormatter.swift",
+      "sha256": "2e932f448bb0ed67b5689796e75728939225388e68c49a9bd9e69c1ba66fcf50"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapSelectionGraphModels.swift",
+      "sha256": "9c961777b0c2d371461d45d61a66dbdc03cc61380f12a2733ecd1fa187a580d0"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapGraphOrdering.swift",
+      "sha256": "b0713cc8464c3b75aef17acc0b61166ff51520c0b88618c264e095eba2718594"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
+      "sha256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b"
+    }
+  ],
+  "generatorScript": "scripts/generate-structure-fixtures.mjs",
+  "command": "node scripts/generate-structure-fixtures.mjs <RPCE-checkout-at-43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3>"
+}

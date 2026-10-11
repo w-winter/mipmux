@@ -8,7 +8,7 @@ import { Continuation } from './exploration.js';
 
 const closed = { additionalProperties: false };
 const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
-export const LineRange = Type.Object({ start: positive, end: positive, description: Type.String() }, closed);
+export const LineRange = Type.Object({ start: positive, end: positive, description: Type.Union([Type.String(), Type.Null()]) }, closed);
 export type LineRange = Static<typeof LineRange>;
 export const SourceSelection = Type.Union([
   Type.Object({ kind: Type.Literal('full'), source: SourcePath }, closed),
@@ -39,33 +39,6 @@ export const DocumentInput = Type.Union([
   SuppliedDocument,
 ]);
 export type DocumentInput = Static<typeof DocumentInput>;
-export const Allowance = Type.Union([
-  Type.Object({
-    kind: Type.Literal('net'),
-    method: Type.Literal('utf8-21-over-80-v1'),
-    units: SafeCount,
-    overheadReserved: Type.Literal(true),
-  }, closed),
-  Type.Object({
-    kind: Type.Literal('settings'),
-    method: Type.Literal('utf8-21-over-80-v1'),
-    settings: Type.Object({
-      model: Type.String({ minLength: 1 }),
-      contextWindow: positive,
-      evidence: Type.String({ minLength: 1 }),
-      verified: Type.Literal(true),
-    }, closed),
-    reserves: Type.Object({
-      system: SafeCount,
-      task: SafeCount,
-      tools: SafeCount,
-      history: SafeCount,
-      output: SafeCount,
-      delivery: SafeCount,
-    }, closed),
-  }, closed),
-]);
-export type Allowance = Static<typeof Allowance>;
 /** Captured discovery instructions: replacement, original plus additions, or unchanged original. */
 export const PromptEnhancementMode = Type.Enum(['fullRewrite', 'augment', 'preserve']);
 export type PromptEnhancementMode = Static<typeof PromptEnhancementMode>;
@@ -77,7 +50,7 @@ export const ContextBuildRequest = Type.Object({
   requiredSources: Type.Array(SourceSelection),
   documents: Type.Array(DocumentInput),
   patches: Type.Array(PatchInput),
-  allowance: Type.Union([Allowance, Type.Null()]),
+  budgetUnits: SafeCount,
   discoveryHints: Type.Array(Type.String()),
   outputName: Type.String({ pattern: '^(?!\\.{1,2}$)[^/\\u0000]+$' }),
 }, closed);
@@ -94,14 +67,23 @@ export const PromptRequest = Type.Union([
   Type.Object({ ...promptOperations[2].properties, expectedRevision: SafeCount, maxOutputBytes: positive }, closed),
 ]);
 export type PromptRequest = Static<typeof PromptRequest>;
+export const SourceEdit = Type.Union([
+  Type.Object({ kind: Type.Literal('upsert'), selection: SourceSelection }, closed),
+  Type.Object({ kind: Type.Literal('remove'), source: SourcePath }, closed),
+  Type.Object({ kind: Type.Literal('slices'), source: SourcePath, op: Type.Enum(['add', 'setPaths', 'remove']), ranges: Type.Array(LineRange) }, closed),
+  Type.Object({ kind: Type.Literal('clearCodemaps') }, closed),
+  Type.Object({ kind: Type.Literal('clearSources') }, closed),
+]);
+export type SourceEdit = Static<typeof SourceEdit>;
+export const DraftPreview = Type.Object({ expectedRevision: SafeCount, maxOutputBytes: positive,
+  edits: Type.Array(SourceEdit, { minItems: 1 }) }, closed);
+export type DraftPreview = Static<typeof DraftPreview>;
 export const DraftUpdate = Type.Object({
   expectedRevision: SafeCount,
   maxOutputBytes: positive,
   mutation: Type.Union([
-    Type.Object({ kind: Type.Literal('upsert'), selection: SourceSelection }, closed),
-    Type.Object({ kind: Type.Literal('remove'), source: SourcePath }, closed),
-    Type.Object({ kind: Type.Literal('clearCodemaps') }, closed),
-    Type.Object({ kind: Type.Literal('clearSources') }, closed),
+    ...SourceEdit.anyOf,
+    Type.Object({ kind: Type.Literal('batch'), edits: Type.Array(SourceEdit, { minItems: 1 }) }, closed),
     Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[0].properties }, closed),
     Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[1].properties }, closed),
     Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[2].properties }, closed),

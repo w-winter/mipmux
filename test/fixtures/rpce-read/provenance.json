@@ -1,0 +1,77 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceInteractiveReadCache.swift",
+      "sha256": "e7f9c7232bcce9aa88c332f9771feace7e799a619a592267dde85d23b84fda49",
+      "ranges": [
+        [
+          19,
+          24
+        ],
+        [
+          32,
+          134
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptDomainRuntime/StringExtensions.swift",
+      "sha256": "72c0578d3cf8ed69954c3e0900bf1702d9acc13c6ae2bcb9d1e6cbc5770422c3",
+      "ranges": [
+        [
+          345,
+          386
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "sha256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
+      "ranges": [
+        [
+          544,
+          550
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "sha256": "a4e6c2d540cc80b7b3977ae5716cc91ba4fd726ace775a7b7117bafa2d6df3d5",
+      "ranges": [
+        [
+          6775,
+          6778
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPReadFileToolProjection.swift",
+      "sha256": "5d6ba43cb6b1efeafc659a9e733f00204a04669f3ea5bd21283c562d28cbe16d",
+      "ranges": [
+        [
+          31,
+          34
+        ]
+      ]
+    }
+  ],
+  "sdkRevision": "5716de85a976a8f70dedc9cb000e50aaa0d8cc5b",
+  "sdkSources": [
+    {
+      "path": "Sources/MCP/Base/Value.swift",
+      "sha256": "6a8399cb11db842faac9f549143058e24d15763705be65701ffba714111aabeb"
+    },
+    {
+      "path": "Sources/MCP/Extensions/Data+Extensions.swift",
+      "sha256": "4694218cc05959b1103ab90bcfa9c4f5178688074ae2a2070868c786e8587782"
+    }
+  ],
+  "generator": "scripts/generate-read-fixtures.mjs",
+  "bindings": [
+    "Execute original scalar line splitting, read slicing and provider argument priority; omit app cache/scheduling and bind fixed diagnostic strings to the native result.",
+    "Returned line records add decoded UTF-8 offsets for smip continuation transport. No decoding or physical source-access equivalence follows from text fixtures."
+  ],
+  "cases": 25,
+  "generatorSHA256": "bc199768f470a822194dd9685b41abf4c981ba9a3547d5559e9647e7f0351d3f"
+}

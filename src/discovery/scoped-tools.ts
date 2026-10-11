@@ -7,10 +7,13 @@ export async function scopedCall(call: DiscoveryCall, draft: DraftRuntime, opera
   signal: AbortSignal, encode: ResultEncoding): Promise<unknown> {
   signal.throwIfAborted();
   switch (call.name) {
-    case 'get_file_tree': return operation.getFileTree({ ...call.input, selection: draft.selectionProjection() }, encode);
-    case 'get_code_structure': return operation.getCodeStructure(call.input, encode);
+    case 'get_file_tree': return call.input.type === 'roots'
+      ? operation.getFileTree({ ...call.input, selection: null }, encode)
+      : operation.getFileTree({ ...call.input, selection: draft.selectionProjection() }, encode);
+    case 'get_code_structure': return operation.getCodeStructure({ ...call.input, selection: draft.selectionProjection() }, encode);
     case 'file_search': return operation.fileSearch(call.input, encode);
     case 'read_file': return operation.readFile(call.input, encode);
+    case 'draft_preview': return draft.preview(call.input, signal, encode);
     case 'draft_update': return draft.update(call.input, signal, encode);
     case 'draft_inspect': return draft.inspect(call.input, encode);
     case 'prompt': return draft.prompt(call.input, signal, encode);

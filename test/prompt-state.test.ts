@@ -43,7 +43,7 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
         task: original, constraints: '', purpose: 'investigation', enhancementMode: mode,
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }],
         documents: [], patches: [], discoveryHints: [], outputName: mode,
-        allowance: { kind: 'net', units: 100000, method: 'utf8-21-over-80-v1', overheadReserved: true } } } });
+        budgetUnits: 100000 } } });
       assert.equal(created.isError, false, JSON.stringify(created));
       const draft = draftReply.Parse(created.structuredContent);
       const get = () => client.callTool({ name: 'prompt', arguments: { draftId: draft.id, input: { op: 'get' } } });
@@ -72,7 +72,7 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
     const created = await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
       task: original, constraints: '', purpose: 'investigation', enhancementMode: 'augment', requiredSources: [],
       documents: [], patches: [], discoveryHints: [], outputName: 'operations',
-      allowance: { kind: 'net', units: 100000, method: 'utf8-21-over-80-v1', overheadReserved: true } } } });
+      budgetUnits: 100000 } } });
     const draft = draftReply.Parse(created.structuredContent);
     const invoke = (input: PromptToolInput, maxOutputBytes = 10000) => client.callTool({ name: 'prompt',
       arguments: { draftId: draft.id, input, maxOutputBytes } });

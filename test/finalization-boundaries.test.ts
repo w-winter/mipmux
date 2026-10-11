@@ -40,7 +40,7 @@ async function setup() {
     patches: [],
     discoveryHints: [],
     outputName: 'packet',
-    allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true },
+    budgetUnits: 100000,
   };
   return {
     base,

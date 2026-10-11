@@ -7,10 +7,21 @@ import type { NativeFailureCode } from '../contracts/errors.js';
 type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
   describe: ['description'], openRoots: ['rootsOpened'], listDirectory: ['directoryComplete'],
+  sliceReadText: ['readTextSlice', 'readTextRangeError'],
   readSource: ['sourceComplete'], extract: ['extracted', 'unsupportedExtension'],
   beginExport: ['exportOpened'], writeExport: ['exportWritten'], readExport: ['exportRead'],
   publishManifest: ['manifestPublished'],
   renderDiscoveryPrompt: ['discoveryPrompt'],
+  renderDiscoveryMessage: ['discoveryMessage'],
+  renderFileTree: ['fileTree'],
+  queryStructure: ['structure'],
+  transitionSelection: ['selectionTransition'],
+  calculateSliceRanges: ['sliceRanges'],
+  matchSelectionPath: ['pathMatch'],
+  resolveSelectionCandidates: ['selectionCandidates'],
+  mutateSelectionPaths: ['selectionPathMutation'],
+  prepareSelection: ['selectionBuilt', 'selectionSlicesChanged'],
+  parseSelectionInputs: ['selectionInputs'],
 } as const satisfies Record<NativeOperation['kind'], readonly NativeResult['kind'][]>;
 type ResultByOperation = { [K in NativeOperation['kind']]: Extract<NativeResult, { kind: typeof resultKinds[K][number] }> };
 export interface NativeReply<K extends NativeOperation['kind'] = NativeOperation['kind']> {

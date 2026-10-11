@@ -6,7 +6,7 @@ import { contextRequestValidator } from '../contracts/context.js';
 import type { DiscoveryReceipt, DiscoveryEvent } from '../contracts/discovery.js';
 import type { JobPhase, JobSnapshot, JobTerminal } from '../contracts/jobs.js';
 import type { DiscoveryRunner } from '../discovery/runner.js';
-import { resolveAllowance } from '../context/budget.js';
+import { scoutTokenBudget } from '../context/budget.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall } from '../discovery/scoped-tools.js';
 import { cacheRecoveryTarget, failureCode } from './tool-result.js';
@@ -33,7 +33,6 @@ export class JobRegistry {
     if (this.#closing) throw new WorkspaceFailure('clientClosed');
     if (!requestId || !contextRequestValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
     const request = freeze(structuredClone(input));
-    if (resolveAllowance(request.allowance) === null) throw new WorkspaceFailure('allowanceUnavailable');
     if (!this.runner) throw new WorkspaceFailure('discoveryNotConfigured');
     const digest = sha256(canonicalJSON({ workspaceId, request })), previous = this.#requests.get(requestId);
     if (previous) {
@@ -82,9 +81,9 @@ export class JobRegistry {
       let admitted = true;
       const pending = new Set<Promise<unknown>>();
       try {
-        const outcome = await runner.run({ purpose: request.purpose, task: request.task, constraints: request.constraints,
+        const outcome = await runner.run({ tokenBudget: scoutTokenBudget(request.budgetUnits), purpose: request.purpose, task: request.task, constraints: request.constraints,
           enhancementMode: request.enhancementMode,
-          initialContext: draft.initialContext(),
+          initialContext: await draft.initialContext(job.abort.signal),
           hints: request.discoveryHints, roots: operation.snapshot.roots.map(root => root.name) }, {
           call: (call, signal, encode) => {
             if (!admitted || job.abort.signal.aborted) return Promise.reject(new WorkspaceFailure('cancelled'));

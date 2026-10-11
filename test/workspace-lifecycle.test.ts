@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, writeFile, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { SmipRuntime, type RuntimeOptions } from '../src/runtime/smip-runtime.js';
-import { BridgeClient } from '../src/native/bridge-client.js';
+import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
 function barrier() {
@@ -139,10 +139,13 @@ test('settled inventory distinguishes unavailable acquisition, decoding, unsuppo
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);
     const operation = await handle.openOperation(new AbortController().signal);
     assert.equal(operation.snapshot.enumeration.kind, 'complete'); assert.equal(operation.snapshot.processing, 'settled');
-    const result = operation.getCodeStructure({ seeds: [{ kind: 'directory', root: 'r', path: 'cases' }], expand: 'none', depth: 1,
-      maxOutputBytes: 10000, continuation: null });
+    const result = await operation.getCodeStructure({ seeds: [{ kind: 'directory', root: 'r', directory: { kind: 'descendant', path: 'cases' } }], expand: 'none', depth: 1,
+      signatures: false, size: 'medium', maxOutputBytes: 10000, selection: null });
     if (result.kind !== 'structure') assert.fail('Missing structures');
-    assert.deepEqual(result.files.map(file => file.outcome.kind).sort(), ['acquisitionFailed', 'decodeFailed', 'readyNoSymbols', 'unsupported'].sort());
+    assert.deepEqual(result.roots[0]?.seeds.map(seed => seed.state).sort(), ['pending', 'not_indexed', 'covered', 'not_indexed'].sort());
+    assert.equal(result.roots[0]?.index.total, 3);
+    assert.equal(result.roots[0]?.index.indexed, 2);
+    assert.equal(result.roots[0]?.index.state, 'indexing');
     await operation.close(); await handle.close();
   } finally { await runtime.close(); }
 });
@@ -185,4 +188,44 @@ test('closing a held physical operation joins pending work and leaves a sibling 
     resume.release(); await rejected; await closing;
     await b.close(); await handle.close();
   } finally { resume.release(); await runtime.close(); }
+});
+
+test('incomplete enumeration permits known-source exploration but refuses draft admission', async () => {
+  await mkdir('test-output', { recursive: true });
+  const base = await mkdtemp(resolve('test-output/partial-inventory-'));
+  const root = join(base, 'root'), output = join(base, 'out');
+  await mkdir(join(root, 'blocked'), { recursive: true }); await mkdir(output);
+  await writeFile(join(root, 'known.swift'), 'struct KnownRecord {\n let absent: AbsentRecord\n}\n');
+  class PartialRuntime extends SmipRuntime {
+    override makeBridge() {
+      class Bridge extends BridgeClient {
+        override request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
+          if (operation.kind === 'listDirectory' && operation.directory.kind === 'descendant' && operation.directory.path === 'blocked') {
+            return Promise.reject(new NativeFailure('permissionDenied', null));
+          }
+          return super.request(operation, signal);
+        }
+      }
+      return new Bridge({ executable: this.options.nativeExecutable, env: {}, supervisor: this.supervisor });
+    }
+  }
+  const runtime = new PartialRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    terminationGraceMs: 100, credentialPaths: [] });
+  const signal = new AbortController().signal;
+  try {
+    const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
+    const operation = await workspace.openOperation(signal);
+    try {
+      const result = await operation.getCodeStructure({ seeds: [{ kind: 'file', root: 'r', path: 'known.swift' }],
+        expand: 'uses', depth: 1, signatures: false, size: 'small', maxOutputBytes: 20000, selection: null });
+      assert(result.kind === 'structure'); assert.equal(result.status, 'partial');
+      assert.equal(result.roots[0]?.index.state, 'indexing');
+      assert.equal(result.roots[0]?.unresolved[0]?.reason, 'not_indexed_yet');
+      await assert.rejects(workspace.createDraft({ task: 'Inspect known source.', constraints: '', enhancementMode: 'preserve',
+        purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'partial',
+        budgetUnits: 100000 }, signal), /enumerationIncomplete/);
+      await writeFile(join(base, 'partial-inventory-proof.json'), JSON.stringify(result, null, 2) + '\n');
+    } finally { await operation.close(); await workspace.close(); }
+  } finally { await runtime.close(); }
 });

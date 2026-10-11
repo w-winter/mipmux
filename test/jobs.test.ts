@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { SmipRuntime, type ContextBuildRequest } from '../src/index.js';
+import type { JobSnapshot } from '../src/contracts/jobs.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import { compose } from '../src/cli/config.js';
 
@@ -19,25 +20,19 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
   let calls = 0;
   const runner: DiscoveryRunner = { run: async () => { calls++; throw new Error('Unexpected discovery dispatch'); } };
   const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
-    documents: [], patches: [], allowance: { kind: 'net', units: contextBudgetUnits, method: 'utf8-21-over-80-v1', overheadReserved: true },
+    documents: [], patches: [], budgetUnits: contextBudgetUnits,
     discoveryHints: [], outputName: 'packet' };
   try {
     const client = runtime.createClient(runner);
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'root') }], exclusions: [], outputRoot: join(directory, 'out') }, signal);
-    const oversized: NonNullable<ContextBuildRequest['allowance']>[] = [
-      { kind: 'net', units: contextBudgetUnits + 1, method: 'utf8-21-over-80-v1', overheadReserved: true },
-      { kind: 'settings', method: 'utf8-21-over-80-v1', settings: { model: 'fixture', contextWindow: 1000000, evidence: 'Synthetic large recipient', verified: true },
-        reserves: { system: 1000, task: 1000, tools: 1000, history: 0, output: 10000, delivery: 1000 } },
-    ];
-    const terminals = [];
-    for (const allowance of oversized) {
-      await assert.rejects(client.createDraft(workspace.id, { ...request, allowance }, signal), /assemblyBudgetExceeded/);
-      const job = client.build(workspace.id, allowance.kind, { ...request, allowance });
+    const terminals: JobSnapshot[] = [];
+    for (const budgetUnits of [contextBudgetUnits + 1]) {
+      await assert.rejects(client.createDraft(workspace.id, { ...request, budgetUnits }, signal), /assemblyBudgetExceeded/);
+      const job = client.build(workspace.id, 'oversized', { ...request, budgetUnits });
       const terminal = await client.wait(job.jobId, 10000, signal, () => {});
       assert.equal(terminal.state, 'failed');
-      if (terminal.state !== 'failed') assert.fail('Oversized discovery was not rejected');
+      if (terminal.state !== 'failed') assert.fail('Not failed');
       assert.equal(terminal.code, 'assemblyBudgetExceeded');
-      assert.equal(terminal.localSettled, true);
       terminals.push(terminal);
     }
     assert.equal(calls, 0);
@@ -48,7 +43,7 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
   } finally { await runtime.close(); }
 });
 
-test('client jobs deduplicate admission, isolate ids, reject unknown budgets and release cancelled work', async () => {
+test('client jobs deduplicate admission, isolate ids, release cancelled work', async () => {
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(resolve('test-output/jobs-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out'));
@@ -65,12 +60,11 @@ test('client jobs deduplicate admission, isolate ids, reject unknown budgets and
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
   const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
-    documents: [], patches: [], allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true },
+    documents: [], patches: [], budgetUnits: 10000,
     discoveryHints: [], outputName: 'packet' };
   try {
     const a = runtime.createClient(runner), b = runtime.createClient(runner);
     const workspace = await a.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'root') }], exclusions: [], outputRoot: join(directory, 'out') }, signal);
-    assert.throws(() => a.build(workspace.id, 'unknown', { ...request, allowance: null }), /allowanceUnavailable/);
     const first = a.build(workspace.id, 'one', request);
     assert.equal(a.build(workspace.id, 'one', request).jobId, first.jobId);
     assert.throws(() => a.build(workspace.id, 'one', { ...request, task: 'different' }), /requestIdConflict/);
@@ -94,7 +88,7 @@ test('client jobs deduplicate admission, isolate ids, reject unknown budgets and
     assert.equal((await a.finalize(manual.id, signal)).kind, 'ready');
     assert.equal(a.inspect(manual.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }).kind, 'metadata');
     await assert.rejects(a.explore(nextWorkspace.id, { name: 'read_file', input: { root: 'r', path: 'file.txt',
-      shape: { kind: 'whole' }, continuation: null, maxOutputBytes: 10000 } }, signal, manual.id), /operationClosed|workspaceClosed/);
+      start_line: null, offset: null, limit: null, continuation: null, maxOutputBytes: 10000 } }, signal, manual.id), /operationClosed|workspaceClosed/);
     await a.close(); await b.close();
   } finally { await runtime.close(); }
 });

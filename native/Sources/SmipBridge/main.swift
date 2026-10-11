@@ -5,8 +5,48 @@ import Foundation
     import Glibc
 #endif
 
-func serve() throws {
-    guard CommandLine.arguments.count == 2, !CommandLine.arguments[1].isEmpty else { throw BridgeFailure("missingGeneration") }
+// Each wire variant has one dispatch branch; CCCC enforces the configured complexity limits.
+// swiftlint:disable:next cyclomatic_complexity
+private func execute(_ request: Request, files: ConfinedFiles, extraction: Extraction) async throws -> [String: Any] {
+    switch request.operation {
+    case .describe: try extraction.describe()
+    case let .sliceReadText(input): input.render()
+    case let .selection(input): await input.render()
+    case let .renderDiscoveryPrompt(input): input.render()
+    case let .renderDiscoveryMessage(input): input.render()
+    case let .renderFileTree(input): input.render()
+    case let .queryStructure(input): try input.render()
+    case let .matchSelectionPath(input): input.render()
+    case let .openRoots(roots): try files.openRoots(roots)
+    case let .listDirectory(root, path): try files.list(root, path: path, request: request)
+    case let .readSource(root, path, expected): try files.readSource(
+            root,
+            path: path,
+            expected: expected,
+            request: request,
+            extraction: extraction
+        )
+    case let .extract(ext, bytes, expected): try extraction.extract(extension: ext, bytes: bytes, expected: expected)
+    case let .beginExport(root, name): try files.beginExport(root, name: name)
+    case let .writeExport(run, filename, bytes): try files.writeExport(
+            run,
+            filename: filename,
+            bytes: bytes,
+            publish: false
+        )
+    case let .readExport(run, filename): try files.readExport(run, filename: filename)
+    case let .publishManifest(run, bytes): try files.writeExport(
+            run,
+            filename: "manifest.json",
+            bytes: bytes,
+            publish: true
+        )
+    }
+}
+
+func serve() async throws {
+    guard CommandLine.arguments.count == 2,
+          !CommandLine.arguments[1].isEmpty else { throw BridgeFailure("missingGeneration") }
     let generation = CommandLine.arguments[1]
     let extraction = try Extraction()
     let files = ConfinedFiles(generation: generation)
@@ -24,21 +64,14 @@ func serve() throws {
             pending.removeSubrange(...newline)
             let request = try Request(bytes, generation: generation)
             do {
-                let result: [String: Any] = switch request.operation {
-                case .describe: try extraction.describe()
-                case let .renderDiscoveryPrompt(input): input.render()
-                case let .openRoots(roots): try files.openRoots(roots)
-                case let .listDirectory(root, path): try files.list(root, path: path, request: request)
-                case let .readSource(root, path, expected): try files.readSource(root, path: path, expected: expected, request: request, extraction: extraction)
-                case let .extract(ext, bytes, expected): try extraction.extract(extension: ext, bytes: bytes, expected: expected)
-                case let .beginExport(root, name): try files.beginExport(root, name: name)
-                case let .writeExport(run, filename, bytes): try files.writeExport(run, filename: filename, bytes: bytes, publish: false)
-                case let .readExport(run, filename): try files.readExport(run, filename: filename)
-                case let .publishManifest(run, bytes): try files.writeExport(run, filename: "manifest.json", bytes: bytes, publish: true)
-                }
+                let result = try await execute(request, files: files, extraction: extraction)
                 try request.terminal(result)
             } catch let failure as BridgeFailure {
-                try request.terminal(["kind": "failure", "code": failure.code, "errno": failure.number.map { $0 as Any } ?? NSNull()])
+                try request.terminal([
+                    "kind": "failure",
+                    "code": failure.code,
+                    "errno": failure.number.map { $0 as Any } ?? NSNull()
+                ])
             } catch {
                 try request.terminal(["kind": "failure", "code": "nativeOperationFailed", "errno": NSNull()])
             }
@@ -47,7 +80,7 @@ func serve() throws {
     guard pending.isEmpty else { throw BridgeFailure("truncatedFrame") }
 }
 
-do { try serve() } catch {
+do { try await serve() } catch {
     let code = (error as? BridgeFailure)?.code ?? "nativeWorkerFailed"
     let diagnostic = try? JSONSerialization.data(withJSONObject: ["level": "error", "code": code])
     if var diagnostic {

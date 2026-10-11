@@ -51,10 +51,10 @@ test('local package audits resources and executes relocated library, native, CLI
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'relocation-test', version: '1' });
   try {
-    await client.connect(transport); assert.equal((await client.listTools()).tools.length, 17);
+    await client.connect(transport); assert.equal((await client.listTools()).tools.length, 18);
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'relocation', request: {
       task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
-      discoveryHints: [], outputName: 'packet', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 10000, overheadReserved: true } } }));
+      discoveryHints: [], outputName: 'packet', budgetUnits: 10000 } }));
     const result = await new Promise<string>((resolveResult, reject) => {
       execFile(process.execPath,
         [command, 'build', '--request', requestPath, '--config', config], { cwd: '/' }, (error, stdout) => {

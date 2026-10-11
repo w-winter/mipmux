@@ -40,7 +40,7 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
       const job = client.build(workspace.id, 'one', { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [],
-        allowance: { kind: 'net', method: 'utf8-21-over-80-v1', overheadReserved: true, units: 10000 }, outputName: 'packet' });
+        budgetUnits: 10000, outputName: 'packet' });
       await paused;
       const cancellation = client.cancel(job.jobId);
       if (afterClaim) assert('kind' in cancellation && cancellation.kind === 'publicationInProgress');

@@ -40,7 +40,7 @@ test('workspace policy, reconciliation, operations and persistent content reuse'
     for (const denied of ['.env', 'junk.tmp', 'nested/no.secret']) assert(!paths.includes(denied));
     const operation = await handle.openOperation(signal());
     await handle.close();
-    const read = await operation.readFile({ root: 'root', path: 'note.txt', shape: { kind: 'range', start: 2, end: 3 }, maxOutputBytes: 4000, continuation: null });
+    const read = await operation.readFile({ root: 'root', path: 'note.txt', start_line: 2, offset: null, limit: 2, maxOutputBytes: 4000, continuation: null });
     assert.equal(read.kind, 'read');
     if (read.kind !== 'read') assert.fail('Missing read');
     assert.equal(read.lines.map(line => line.text).join(''), 'second\rthird');

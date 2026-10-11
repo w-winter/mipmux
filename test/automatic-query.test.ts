@@ -4,13 +4,12 @@ import fc from 'fast-check';
 import { StructureIndex } from '../src/workspace/structure-index.js';
 import { structuralFile } from './fixtures/structural-inventory.js';
 
-test('automatic query applies the RP candidate threshold before seed exclusion without narrowing explicit exploration', () => {
+test('automatic query applies the RP candidate threshold before seed exclusion', () => {
   for (const count of [4096, 4097]) {
     const seed = structuralFile('r', 'seed.swift', ['Shared'], ['Shared']);
     const candidates = Array.from({ length: count - 1 }, (_, index) => structuralFile('r', `${index}.swift`, ['Shared'], []));
     const index = new StructureIndex({ entries: [seed, ...candidates] });
     assert.equal(index.resolveAutomaticCodemapTargets([seed]).length, count === 4096 ? count - 1 : 0);
-    assert.equal(index.expand([seed], 'uses', 1).files.length, count);
   }
 });
 

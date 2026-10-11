@@ -25,7 +25,7 @@ const request: ContextBuildRequest = {
   patches: [],
   discoveryHints: [],
   outputName: 'packet',
-  allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1000000, overheadReserved: true },
+  budgetUnits: 1000000,
 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
@@ -98,7 +98,7 @@ test('complete documents added during curation count toward the recipient allowa
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const draft = await workspace.createDraft({ ...request, outputName: 'oversized-document',
-      allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1000, overheadReserved: true } }, signal());
+      budgetUnits: 1000 }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const text = 'Complete fetched document\r\n'.repeat(1000);
     const update = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000,
@@ -185,7 +185,7 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
     const limited = await workspace.createDraft({
       ...request,
       outputName: 'limited',
-      allowance: { ...request.allowance!, kind: 'net', method: 'utf8-21-over-80-v1', units: 1, overheadReserved: true },
+      budgetUnits: 1,
     }, signal());
     await limited.update(
       { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
@@ -411,7 +411,7 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
     const runtime = new Runtime(f.options);
     try {
       const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft({
-        ...request, allowance: scenario === 'freeze' ? null : request.allowance,
+        ...request, budgetUnits: scenario === 'freeze' ? 1 : request.budgetUnits,
       }, signal());
       pause = true;
       const pending = draft.update({

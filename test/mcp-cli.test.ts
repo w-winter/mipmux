@@ -64,7 +64,7 @@ test('official MCP negotiation and EOF create no workspace during probes; CLI in
   try {
     await client.connect(transport);
     const tools = await client.listTools();
-    assert.equal(tools.tools.length, 17);
+    assert.equal(tools.tools.length, 18);
     const result = await client.callTool({ name: 'context_builder_result', arguments: { jobId: 'foreign' } });
     assert.equal(result.isError, true);
     assert.match(JSON.stringify(result.structuredContent), /unknownJob/);
@@ -78,7 +78,7 @@ test('official MCP negotiation and EOF create no workspace during probes; CLI in
   const result = await promisify(execFile)(process.execPath, [command, 'verify', '--bundle', base, '--mode', 'integrity'], { cwd: '/' }).catch(error => error);
   assert.equal(result.code, 1); assert.equal(JSON.parse(result.stdout).kind, 'failed');
   assert(!result.stderr.includes('processSpawned'));
-  await writeFile(join(base, 'receipt.json'), JSON.stringify({ listedTools: 17, eofCode: 0, integrityCode: result.code }));
+  await writeFile(join(base, 'receipt.json'), JSON.stringify({ listedTools: 18, eofCode: 0, integrityCode: result.code }));
 });
 
 test('MCP applies the host output allowance and EOF settles an active isolated discovery', async () => {
@@ -103,12 +103,12 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
       roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } });
     const workspaceId = JSON.parse(JSON.stringify(declaration.structuredContent)).id;
     const read = await client.callTool({ name: 'read_file', arguments: { workspaceId,
-      input: { root: 'r', path: 'file.txt', shape: { kind: 'whole' }, continuation: null } } });
+      input: { root: 'r', path: 'file.txt', start_line: null, offset: null, limit: null, continuation: null } } });
     assert.equal(read.isError, false, JSON.stringify(read));
     assert(Buffer.byteLength(JSON.stringify(read)) <= 2000);
     const request = {
       task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
-      allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true }, outputName: 'packet' };
+      budgetUnits: 10000, outputName: 'packet' };
     const first = await client.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'one', request } });
     const firstId = JSON.parse(JSON.stringify(first.structuredContent)).jobId;
     await started;

@@ -32,7 +32,7 @@ async function fixture(prefix: string) {
     nativeExecutable: native, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   const request: ContextBuildRequest = { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [], discoveryHints: [],
-    outputName: 'packet', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true } };
+    outputName: 'packet', budgetUnits: 100000 };
   return { base, root, options, request, spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot } };
 }
 
@@ -185,7 +185,7 @@ test('terminal manual finalization releases the workspace lease while blocked dr
       await client.closeWorkspace(siblingWorkspace.id);
       const draft = await client.createDraft(workspace.id, { ...f.request,
         task: 'x'.repeat(5000),
-        allowance: { kind: 'net', units: 1000, method: 'utf8-21-over-80-v1', overheadReserved: true },
+        budgetUnits: 1000,
       }, signal());
       assert.equal((await client.finalize(draft.id, signal())).kind, 'blocked');
       const edited = await client.update(draft.id, { expectedRevision: 0, maxOutputBytes: 10000,

@@ -1538,6 +1538,1116 @@
           1287
         ]
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/CodeMap/CodeMapExtractor+Snapshots.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "486e17eae1729f7a313461dc1e6ce60cae7f6fc15b39c4a31525eea3d351db94",
+      "destination": "native/Sources/SmipBridge/RPCEFileTree.swift",
+      "changes": [
+        "Omit the app CodeMapExtractor entry method; retain the complete renderer and private helpers.",
+        "Extract adaptive attempts, file visibility and depth/file emission into named private phases for the staging complexity gate; preserve original conditions and rendered output.",
+        "Scope SwiftLint layout exceptions to retained source signatures, state tuples and emission loops; native adapter remains normally linted."
+      ],
+      "sha256": "45ab758135853ed19187f2d9ee4d7aa5351c28f5bf5357315beb3007debe1071",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          9,
+          604
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileTreePresentationModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "264ce767124a80cb71340213478b3079bf86fe542ec8ae754152d8d1062c031f",
+      "destination": "native/Sources/SmipBridge/RPCEFileTreeModels.swift",
+      "changes": [
+        "Retain snapshot data models; omit app lookup and coverage projection."
+      ],
+      "sha256": "e9b0c9d28ecf0f579e1eb1802ac47c32967fdaf8f3623bc3af79be89cb81af5e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          4,
+          69
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b",
+      "destination": "native/Sources/SmipBridge/TreeTokenAccounting.swift",
+      "changes": [
+        "Retain both tree-estimation methods in an enum without the app calculation actor state."
+      ],
+      "sha256": "34ee45dcc76f244032c24b9d9892672097bd87b043bfa888d9240fb0511c07c2",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          131,
+          143
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/CodeMap/FileTreeSelectionSnapshot.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "6f28d636ec3f1c35e373961a9c30d7f5574960ab1a4f6e99dd0541d06fef586d",
+      "destination": "native/Sources/SmipBridge/RPCEFileTreeAliases.swift",
+      "changes": [
+        "Keep the alias declarations in their own source-mapped file."
+      ],
+      "sha256": "481ddba77faff10bc898c36b84a7369607ae3df12387c551ac13004c35759685",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          4
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapGraphStructureModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4c6e7694352080eaefe22e1b18835f993e41d2f1ea4477da1174d4e7d561dded",
+      "destination": "native/Sources/SmipBridge/RPCEGraphStructureModels.swift",
+      "changes": [
+        "Retain graph/query/result declarations; graphRevoked drops its unused desktop revocation payload. Receipts and coverage bind to operation-owned immutable inventory.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "f01176416a8c0f3a37bf797c6ec2f27d644140a9d8d669ad42cb2be0f1bab20b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          170
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapGraphPolicy.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "fbad33fb254512a32a28c8665fb4b7d8fa0d9669361cd6bbc3bb376efd0175a5",
+      "destination": "native/Sources/SmipBridge/RPCEGraphPolicy.swift",
+      "changes": [
+        "Retain policy values, validation and query-budget functions.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "d61674bf5e37eef22c3a6516deefa9f77e5e278e429625886c831b3da29f2754",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          170
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapSelectionGraphModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9c961777b0c2d371461d45d61a66dbdc03cc61380f12a2733ecd1fa187a580d0",
+      "destination": "native/Sources/SmipBridge/RPCEGraphSizePolicy.swift",
+      "changes": [
+        "Retain the graph-size policy used by the query policy declaration.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "4df9b3fe554f70a95723d9507e96e3c64142352e40783930c1d542a7c0b0a1fe",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          11,
+          25
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapGraphOrdering.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b0713cc8464c3b75aef17acc0b61166ff51520c0b88618c264e095eba2718594",
+      "destination": "native/Sources/SmipBridge/RPCEGraphOrdering.swift",
+      "changes": [
+        "Make Darwin/Glibc imports conditional; retain byte/UUID ordering.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "3fae8e334d3bb18d8b608b1e91faf6699d7870c194ef251858936adf9624c262",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          42
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "native/Sources/SmipBridge/RPCEGraphTraversal.swift",
+      "changes": [
+        "Retain traversal and ordering bodies in a value owner; immutable dictionaries replace persistent maps.",
+        "Extract classification, neighbor visitation, walking and unresolved collection into private phases for strict staging complexity limits; source-derived DTO/text comparisons preserve output.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "a9dc5d3fc061c15e62afa8122f661783a6d9de71b0ac22a0a36625e020125708",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          599,
+          873
+        ],
+        [
+          1752,
+          1783
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "native/Sources/SmipBridge/RPCEGraphMapping.swift",
+      "changes": [
+        "Retain root/path/issue mapping and epoch ordering without app store state.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "0980766fa51895749c79a460bbce9a692a8c3d3bbcbda2ba5cd55e0402ab992e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          14827,
+          14898
+        ],
+        [
+          14962,
+          15002
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "destination": "native/Sources/SmipBridge/RPCEStructureDTO.swift",
+      "changes": [
+        "Retain structural DTO and worktree metadata fields; omit desktop session-bound metadata construction.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "9ae0098bed00893007c3e704e6579ed067f6658f3496cdd0e2749e375830969d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          11,
+          38
+        ],
+        [
+          305,
+          476
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a4e6c2d540cc80b7b3977ae5716cc91ba4fd726ace775a7b7117bafa2d6df3d5",
+      "destination": "native/Sources/SmipBridge/RPCEStructureReply.swift",
+      "changes": [
+        "Retain signature admission, statuses, graph DTO and accounting.",
+        "Bind signature presentation to captured entries and already classified issues/coverage rather than app demand tickets; remove unused app-issue path lookup.",
+        "Extract admission/root/issue/status phases for strict staging complexity limits, retaining observable output.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally.",
+        "Retain the source unavailable-reply factory for empty or missing seed resolution."
+      ],
+      "sha256": "cdc95fbca064198ac47adb1c5eba3874f011c56f9caa70f111a929000f2c6ee5",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          6146,
+          6361
+        ],
+        [
+          6363,
+          6396
+        ],
+        [
+          6476,
+          6506
+        ],
+        [
+          6522,
+          6529
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolOutputFormatter.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "2e932f448bb0ed67b5689796e75728939225388e68c49a9bd9e69c1ba66fcf50",
+      "destination": "native/Sources/SmipBridge/RPCEStructureFormatter.swift",
+      "changes": [
+        "Replace MCP Value/content entry/exit with typed DTO input and String output; omit generic malformed-value fallback.",
+        "Extract early-result and root formatting phases without changing text or suppression conditions.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "d4f33f69a3b6204fd3e671e92c6fcc5bf2a13ef92110a4a393190782e61b2a8c",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          81,
+          85
+        ],
+        [
+          3055,
+          3428
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "native/Sources/SmipBridge/StructureAdjacency.swift",
+      "changes": [
+        "Retain per-source reference matching, target grouping and last matching candidate-count ambiguity policy.",
+        "Operation-local immutable input replaces incremental changed sets; omit persistent copy counters and delta/resident bookkeeping; canonical traversal applies evidence ordering.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally."
+      ],
+      "sha256": "071fdefc99d3444c96de72becc06ebb2f2e7b6daa4eef3ea6ef4c9e4720b05ca",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1411,
+          1486
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "native/Sources/SmipBridge/StructureRootQueries.swift",
+      "changes": [
+        "Retain UUID root order, shared query budgets, exhaustion results and logical-path byte deductions.",
+        "Replace app session/watcher receipt coordination with settled immutable input snapshots; receipts identify the pinned inventory digest; no mutable desktop session/fence coordinator is included.",
+        "Scope SwiftLint identifier, nesting and layout exceptions to copied declarations and algorithm phases; format adapters normally.",
+        "Map absent unsupported-extension slots separately from supported pending/terminal slots; coverage counts every classified supported slot, including terminal exclusions."
+      ],
+      "sha256": "5e9c7e1e615b6a7ffd5c550c2479622ad3f9210fe69d524d2baa6e4acedaf5d6",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          14588,
+          14766
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "native/Sources/SmipBridge/StructureSeedCatalog.swift",
+      "changes": [
+        "Retain boundedDescendantFiles over a captured folder/file catalog.",
+        "Root-qualified typed selectors replace desktop path alias lookup. Captured directory/file order supplies child adjacency; physical paths supply deduplication."
+      ],
+      "sha256": "ca13953421bac7dafa5f95f7c2044c537c190264f4cb03e77ccc071a9401dad9",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          21774,
+          21806
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a4e6c2d540cc80b7b3977ae5716cc91ba4fd726ace775a7b7117bafa2d6df3d5",
+      "destination": "native/Sources/SmipBridge/RPCEStructureSeedResolver.swift",
+      "changes": [
+        "Retain source explicit-file priority, deduplication, folder handling and maximumCodeStructureSeedCount.",
+        "Immutable synchronous lookups replace app async scope/metadata and debug counters. Selected resolution uses the source store loop with captured full/sliced paths.",
+        "Selected resolution logic derives from Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift at revision 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3, lines 21661\u201321729; captured typed root-qualified selectors make desktop alias ambiguity and blocked-catalog branches unreachable."
+      ],
+      "sha256": "53992dcacbaecd7844d75ceaa9022697057d87f5be0b5f42cd3f8ca5150f40a9",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          364,
+          368
+        ],
+        [
+          5932,
+          5985
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/ContextBuilder/ViewModels/ContextBuilderAgentViewModel.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "2cc2c8c86a4776c8ca84c2bedaf4471051ea4815181fe12c6c3dd05916f92cee",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderMessage.swift",
+      "changes": [
+        "Extract makeUserMessage as a static function with captured text parameters; omit app session/tab lookup and recovery branches.",
+        "Supply the already rendered selected meta-prompt text instead of reading the desktop singleton.",
+        "Remove print(metaPromptText) so stdout contains native protocol frames only.",
+        "Retain all source text, order, trimming gates and interpolations, including the documented automatic-compression prose conflict.",
+        "Scope SwiftLint line/body length exceptions to copied source text and layout.",
+        "Apply SwiftFormat declaration/brace layout; rendered strings remain byte-identical to the source-generated outputs."
+      ],
+      "sha256": "6003c7371b43ac39822862895f93642cae10b14eb768e61dbaf72f111ecbff5b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          4079,
+          4149
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/ContextBuilder/Views/ContextBuilderPromptsOverlay.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "96f08f8f97b09c5b35a19465f7fc316a59ea5378de84349b41ae098862fe0b00",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderMetaPrompts.swift",
+      "changes": [
+        "Supply the selected prompt records in source storage order instead of accessing desktop prompt IDs and preferences.",
+        "Retain original empty-selection absence, title/content interpolation and separators.",
+        "Apply SwiftFormat declaration/brace layout; rendered strings remain byte-identical to the source-generated outputs."
+      ],
+      "sha256": "0442e96a6df5adb7906cf35d5486f9d4e657afaabf8150a99b0d27377e4a33a6",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          154,
+          161
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionModels.swift",
+      "changes": [
+        "Retain selection fields, constructor, emptiness observation and pre-resolved mutation variants.",
+        "Omit the desktop Codable compatibility reader/writer; the native protocol parses one explicit current-state shape.",
+        "Apply SwiftFormat layout."
+      ],
+      "sha256": "9b3cd4341ac275fd5b3368080cd7c10e4d3d261db69e3ef4350d6c864f28f3e8",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          5,
+          26
+        ],
+        [
+          96,
+          105
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionTransitions.swift",
+      "changes": [
+        "Extract the two pre-resolved mutation methods into an operation-local value owner.",
+        "Wire input validates canonical absolute keys once; normalization helpers deduplicate ordered paths and filter empty slices without desktop raw/legacy-key recovery.",
+        "Retain all exclusive-representation transitions and automatic-mode effects.",
+        "Apply SwiftFormat layout."
+      ],
+      "sha256": "f0ac657c382cb6da7aa15c2e7c26ef1d198bcb7a492b9d5f953eed5d2cc1809b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          385,
+          460
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496",
+      "destination": "native/Sources/SmipBridge/RPCESelectionLineRange.swift",
+      "changes": [
+        "Retain the source line-range value, description and constructor; native captured-state parsing requires positive inclusive bounds.",
+        "Apply SwiftFormat layout."
+      ],
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          17
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0b35698eb4c0dc02b88bffd382492bdacaf993d7f5c1c5d7d6576887bf554c73",
+      "destination": "native/Sources/SmipBridge/RPCESliceRangeMath.swift",
+      "sha256": "c5928f7035bcef961c6c041bd72b17fa693a0b3a76b8f13878d94fc11864a233",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "changes": [
+        "Change package visibility to the existing native executable module.",
+        "Apply SwiftFormat layout; source normalization, coalescing, subtraction and description rules remain unchanged."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b3cd31fc9b386773b039f95f7494f3a1840528b2499e15663849e688a66f4cbd",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchingInterfaces.swift",
+      "sha256": "b3cd31fc9b386773b039f95f7494f3a1840528b2499e15663849e688a66f4cbd",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "022910fe6523811ff4da0d1ab3fc866926b6c4b91404910b1ba50f24b805019a",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "sha256": "7cf8c062152d5a6be8b6fe665508c8f152acaf5a993cff3ea82fffab8a11fdbf",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          117
+        ],
+        [
+          218,
+          244
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "022910fe6523811ff4da0d1ab3fc866926b6c4b91404910b1ba50f24b805019a",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchIndexes.swift",
+      "sha256": "42f2857fc156eb87cebd920ba1bc4a9149a86749cb9ab36476d3ccb60db4b8e8",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          245,
+          401
+        ],
+        [
+          432,
+          457
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "51af27066c1a29b10fc706337f36f2411871623e32a45e7f4a15053b6ce83553",
+      "destination": "native/Sources/SmipBridge/RPCEPathCharPolicy.swift",
+      "sha256": "bf1d8b4be7ee720ddcd0aee1630065383c4f7386f4ca681d0af5e3424931280c",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          174
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "sha256": "49fcaa9334880e29f279c85b750b3d079bf65fe4cb36e8beef7b674b5eaaff3b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatcher.swift",
+      "sha256": "2d7b9c1dbcdca986695322998808a41756331e21e251018f0e4b39cc4e582f24",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          321,
+          649
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "sha256": "9a56177eaf6cd8bf34d7a616abddf4596212f8993da144c008924587c741c5bb",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          9,
+          269
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "sha256": "7f35f61a90d7c6e3af66a66022bfb31db90feb74102414ecb5ad8da5a115cc72",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          270,
+          301
+        ],
+        [
+          1430,
+          1667
+        ],
+        [
+          1675,
+          1692
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e",
+      "destination": "native/Sources/SmipBridge/RPCEPathSingleMatch.swift",
+      "sha256": "03c9c0eb17e17b3806c864d22fb95e39b479caf366a587c17c70a5e9bf620983",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1693,
+          1900
+        ],
+        [
+          2005,
+          2088
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "sha256": "8a0462552e4b9f480762620f35e3b5279f7d19028115dae0fa39f5f303e6667d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1901,
+          2004
+        ],
+        [
+          2193,
+          2431
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3a1890cb0fac82edca0e6e56ef7c45a565cd6d2491d27225903fdcbff263fd9e",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchSnapshot.swift",
+      "sha256": "05e04b734c73bb1744e89ccc2852322a75804551a3d3597e33283bf81ffff05a",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2436,
+          2444
+        ]
+      ],
+      "changes": [
+        "Retain the ordinary lookup kernel and its frozen-record, profile, index and character-policy dependencies; omit app imports and creation-only/legacy snapshot constructors.",
+        "Change cross-file helper access to executable-module scope; no public package API is added.",
+        "Use named phases for lookup, candidate collection, comparison and scalar folding to satisfy the existing configured complexity gate without changing source conditions/results.",
+        "Omit source diagnostic branches controlled by the always-false logging constant and their trace-only counter so stdout contains native protocol frames only.",
+        "Apply SwiftFormat layout; copied identifiers and layout receive scoped SwiftLint exceptions while CCCC retains configured complexity checks."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "d4e47d333b7cc91391f01c0388cc6547a92c787b5b7b3e0e1ed3d16a156a890c",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "sha256": "72ac4db0421af9483f4d6b59366ef87c24d6bd2e835e607d13a7a7e5166447e4",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          164
+        ],
+        [
+          237,
+          369
+        ]
+      ],
+      "changes": [
+        "Omit the exact-file input parser because ordinary selection calls the alias resolver, not that parser.",
+        "Apply targeted SwiftFormat layout and scoped source-layout SwiftLint exceptions; CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "7b58ca86cd2135d3b342c736cdd50dee6ba7ebce1d28d2b201ee3ca175dfd28d",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidateModels.swift",
+      "sha256": "1e51cbef34bb286846f33c71b8541bb830bf44d2ae2a320d54d024ef9bb581e9",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          92,
+          104
+        ],
+        [
+          430,
+          441
+        ],
+        [
+          481,
+          544
+        ]
+      ],
+      "changes": [
+        "Retain the consumed file/folder and candidate records; add executable-module lookup enums and captured request/result records.",
+        "Apply targeted SwiftFormat layout and scoped source-layout SwiftLint exceptions; CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "sha256": "c225c3d39d7e1da0e041457b9dacc10bc8171efd11032b46b1489b48b69d8179",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          788,
+          924
+        ],
+        [
+          1278,
+          1348
+        ],
+        [
+          1377,
+          1400
+        ]
+      ],
+      "changes": [
+        "Split source preflight, full/codemap file and folder collection into private phases; preserve candidate identity, first occurrence, diagnostics and empty-folder behavior.",
+        "Use the already-retained CodeMapSyntaxEngine extension catalog instead of the app SyntaxManager forwarding method.",
+        "Captured catalog access is synchronous; remove actor-only awaits at the immutable boundary.",
+        "Apply targeted SwiftFormat layout and scoped source-layout SwiftLint exceptions; CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogLookup.swift",
+      "sha256": "35644a9e0e59315496614d43b7a9f2d3db2f7134d8da796623e49dfb6b8047b6",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          18389,
+          18500
+        ],
+        [
+          21428,
+          21537
+        ],
+        [
+          21809,
+          21819
+        ]
+      ],
+      "changes": [
+        "Remove performance-only conditional declarations and instrumentation.",
+        "Bind root-scope lookup to the caller-scoped immutable catalog; physical acquisition outcomes are explicit inputs, not inferred from a fuzzy match.",
+        "Name the awaited materialization outcome before its switch so the configured parser can analyze the source body.",
+        "Apply targeted SwiftFormat layout and scoped source-layout SwiftLint exceptions; CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogFolders.swift",
+      "sha256": "52e64d83f4f48ceeeb5864d69a819dbc86eea180bde6e1a0fb982fe9ffe66e3c",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          10708,
+          10714
+        ],
+        [
+          21539,
+          21659
+        ],
+        [
+          21821,
+          21834
+        ]
+      ],
+      "changes": [
+        "Remove app performance instrumentation.",
+        "Extract the source absolute/pseudo-alias branch into a private phase while retaining ordinary resolver ordering.",
+        "Use captured parent-linked discoverable catalog records for recursive unbounded folder expansion.",
+        "Apply targeted SwiftFormat layout and scoped source-layout SwiftLint exceptions; CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutations.swift",
+      "sha256": "c4b0ffbac763580d1499dd93b4d9243fb6a96d7751767036b9ecbffb8f4ec2cd",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          568,
+          787
+        ],
+        [
+          1358,
+          1375
+        ]
+      ],
+      "changes": [
+        "Retain ordinary full/codemap add/remove and file-only promotion/demotion with source result, ordering and automatic-mode behavior.",
+        "Remove app performance instrumentation and the test-only remove-existing capture hook.",
+        "Captured StoredSelection requires canonical absolute keys. Slice removal uses that established key instead of desktop raw/relative-key recovery.",
+        "Apply source-layout SwiftLint exceptions; configured CCCC limits remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutationModels.swift",
+      "sha256": "93c745065ed0743fdfbf7829c37271ed97f8be87d257c5ee15e6d8c6e2d72000",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          66,
+          87
+        ]
+      ],
+      "changes": [
+        "Retain the consumed ordinary add, remove and demote result records."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparation.swift",
+      "sha256": "71f72afdf23c13474332566157130a4be59bff4d5bc284405aeaca81b8fec593",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          238,
+          381
+        ],
+        [
+          1349,
+          1356
+        ]
+      ],
+      "changes": [
+        "Retain buildSelection/buildManageSelectionSet whole replacement, slice-local replacement and diagnostics over canonical captured state.",
+        "Apply scoped source-layout SwiftLint exceptions; configured CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionSliceMutation.swift",
+      "sha256": "6fe32ab07b10997520e003b25113416ed542af8868ed7402ec15a4c9313e4fd0",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          461,
+          567
+        ]
+      ],
+      "changes": [
+        "Extract source aggregation, coalescing and subtraction into private phases; preserve slice-entry resolution and membership/manual-mode behavior.",
+        "Apply scoped source-layout SwiftLint exceptions; configured CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparationModels.swift",
+      "sha256": "d8ea003b216bda5d3c82692f3d434ce405eb17afc5cb1efadca7a7da81e4d29b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          55,
+          64
+        ],
+        [
+          89,
+          94
+        ]
+      ],
+      "changes": [
+        "Retain parsed slice input and build/slice-mutation result records.",
+        "Apply scoped source-layout SwiftLint exceptions; configured CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionParsing.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "8c72d7fb5d18824521147b25b2c644382bb73d4fdfd3975f815d4d0a68ab2c80",
+      "destination": "native/Sources/SmipBridge/RPCESelectionInputParser.swift",
+      "sha256": "a51ef95a3e9407227e145e2b0d94cf2f5ac6d7b097c80cc3e79b92f9f462e04c",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          177
+        ]
+      ],
+      "changes": [
+        "Replace the app type/imports with an executable-local parser and the retained SDK JSON value type.",
+        "Extract path/range/object parsing phases while preserving #L recognition, aliases, coercion precedence, clamping and source diagnostics.",
+        "Apply scoped source-layout SwiftLint exceptions; configured CCCC complexity checks remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/MCP/Base/Value.swift",
+      "sourceRepository": "https://github.com/repoprompt/swift-sdk.git",
+      "sourceRevision": "5716de85a976a8f70dedc9cb000e50aaa0d8cc5b",
+      "sourceSHA256": "6a8399cb11db842faac9f549143058e24d15763705be65701ffba714111aabeb",
+      "destination": "native/Sources/SmipBridge/RPCEMCPSelectionJSONValue.swift",
+      "sha256": "28e7608bf5107b420995431662eeee235e2f6aca470309348380a7c542ad8705",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          14
+        ],
+        [
+          40,
+          45
+        ],
+        [
+          54,
+          59
+        ],
+        [
+          68,
+          81
+        ],
+        [
+          85,
+          113
+        ]
+      ],
+      "changes": [
+        "Retain only selection-parser JSON decoding/read access and data-URL decoding; omit unconsumed SDK encoders, conversion and transport APIs.",
+        "Rename Value to SelectionJSONValue in the executable module; preserve decoding order and typed accessors.",
+        "Record the SDK pin resolved by the reference RPCE checkout; no package pin or runtime transport dependency is added."
+      ]
+    },
+    {
+      "source": "Sources/MCP/Extensions/Data+Extensions.swift",
+      "sourceRepository": "https://github.com/repoprompt/swift-sdk.git",
+      "sourceRevision": "5716de85a976a8f70dedc9cb000e50aaa0d8cc5b",
+      "sourceSHA256": "4694218cc05959b1103ab90bcfa9c4f5178688074ae2a2070868c786e8587782",
+      "destination": "native/Sources/SmipBridge/RPCEMCPDataURL.swift",
+      "sha256": "eb969e7d9d4bc2c293c87a3c411682960321bf4848ee26a55379ad3678a750e1",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "changes": [
+        "Retain only selection-parser JSON decoding/read access and data-URL decoding; omit unconsumed SDK encoders, conversion and transport APIs.",
+        "Rename Value to SelectionJSONValue in the executable module; preserve decoding order and typed accessors.",
+        "Record the SDK pin resolved by the reference RPCE checkout; no package pin or runtime transport dependency is added."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/PartitionStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1d885dd517477d1056c63b82ddbc53c66f303f937efc0c5fe71a203518215d33",
+      "destination": "native/Sources/SmipBridge/RPCESelectionSliceMode.swift",
+      "sha256": "e41d07d8f2846d1aae59bcc30df8e547ade5f511c557fbe9241d203803dc1f8a",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          14,
+          19
+        ]
+      ],
+      "changes": [
+        "Retain only the slice mutation enum; omit app partition storage and platform imports."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceInteractiveReadCache.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e7f9c7232bcce9aa88c332f9771feace7e799a619a592267dde85d23b84fda49",
+      "destination": "native/Sources/SmipBridge/RPCEInteractiveRead.swift",
+      "sha256": "12c2cb057a2722d857fea9d506649436fb1109103e9ebbffcd8e9609cca90a4c",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          19,
+          24
+        ],
+        [
+          32,
+          46
+        ],
+        [
+          66,
+          134
+        ]
+      ],
+      "changes": [
+        "Retain synchronous preparation, slice values and range errors; omit cost estimate, desktop cache and detached task scheduling.",
+        "Scoped source-body/diagnostic SwiftLint exceptions retain original source text; configured CCCC limits remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptDomainRuntime/StringExtensions.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "72c0578d3cf8ed69954c3e0900bf1702d9acc13c6ae2bcb9d1e6cbc5770422c3",
+      "destination": "native/Sources/SmipBridge/RPCELineEndings.swift",
+      "sha256": "25a365ddd302fd57ea02e29df5a6f8a227c5c974c29bdd6ef112d432e620b189",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          345,
+          386
+        ]
+      ],
+      "changes": [
+        "Executable-local visibility; retain scalar line splitting and exact endings."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
+      "destination": "native/Sources/SmipBridge/ReadTextInput.swift",
+      "sha256": "8aed7d37ace566f9f28b5c4d3be812fc7879cfa326d0a58aa9d6d48cd82b0cc9",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          544,
+          549
+        ]
+      ],
+      "changes": [
+        "Retain integer/string start_line/offset/limit priority using the previously mapped SDK decoding/read accessors.",
+        "Bind slice replies to native JSON and add decoded UTF-8 line offsets for continuation transport.",
+        "Retain fixed range diagnostics from MCPServerViewModel.swift:6775-6778 and MCPReadFileToolProjection.swift:32-34 at the same pinned revision; exact source hashes/ranges and outputs are recorded in test/fixtures/rpce-read/provenance.json.",
+        "Scoped source-body/diagnostic SwiftLint exceptions retain original source text; configured CCCC limits remain enabled."
+      ]
     }
   ],
   "dependencies": [
@@ -5242,6 +6352,906 @@
       "destination": "native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift",
       "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
       "line": 1279
+    },
+    {
+      "name": "static func makeUserMessage",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderMessage.swift",
+      "source": "Sources/RepoPrompt/Features/ContextBuilder/ViewModels/ContextBuilderAgentViewModel.swift",
+      "line": 4079
+    },
+    {
+      "name": "static func promptText",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderMetaPrompts.swift",
+      "source": "Sources/RepoPrompt/Features/ContextBuilder/Views/ContextBuilderPromptsOverlay.swift",
+      "line": 154
+    },
+    {
+      "name": "struct StoredSelection",
+      "destination": "native/Sources/SmipBridge/RPCESelectionModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 5
+    },
+    {
+      "name": "enum WorkspacePreResolvedFullFileMutationMode",
+      "destination": "native/Sources/SmipBridge/RPCESelectionModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 96
+    },
+    {
+      "name": "enum WorkspacePreResolvedSelectionTargetState",
+      "destination": "native/Sources/SmipBridge/RPCESelectionModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 101
+    },
+    {
+      "name": "func mutatePreResolvedFullFilePaths",
+      "destination": "native/Sources/SmipBridge/RPCESelectionTransitions.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 385
+    },
+    {
+      "name": "func setPreResolvedFilePaths",
+      "destination": "native/Sources/SmipBridge/RPCESelectionTransitions.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 419
+    },
+    {
+      "name": "struct LineRange",
+      "destination": "native/Sources/SmipBridge/RPCESelectionLineRange.swift",
+      "source": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "line": 4
+    },
+    {
+      "name": "enum SliceRangeMath",
+      "destination": "native/Sources/SmipBridge/RPCESliceRangeMath.swift",
+      "source": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "line": 3
+    },
+    {
+      "name": "static func normalize",
+      "destination": "native/Sources/SmipBridge/RPCESliceRangeMath.swift",
+      "source": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "line": 4
+    },
+    {
+      "name": "static func coalesce",
+      "destination": "native/Sources/SmipBridge/RPCESliceRangeMath.swift",
+      "source": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "line": 37
+    },
+    {
+      "name": "static func subtract",
+      "destination": "native/Sources/SmipBridge/RPCESliceRangeMath.swift",
+      "source": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "line": 41
+    },
+    {
+      "name": "FileRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchingInterfaces.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "line": 6
+    },
+    {
+      "name": "FolderRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchingInterfaces.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "line": 16
+    },
+    {
+      "name": "FileHierarchyReadable",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchingInterfaces.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "line": 25
+    },
+    {
+      "name": "FrozenFileRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchingInterfaces.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "line": 36
+    },
+    {
+      "name": "FrozenFolderRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchingInterfaces.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchingInterfaces.swift",
+      "line": 50
+    },
+    {
+      "name": "PathMatchLocation",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 9
+    },
+    {
+      "name": "PathMatchCacheIdentity",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 16
+    },
+    {
+      "name": "StaticPathMatchData",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 24
+    },
+    {
+      "name": "PathMatchSnapshot",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 81
+    },
+    {
+      "name": "fileRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 220
+    },
+    {
+      "name": "fileRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 225
+    },
+    {
+      "name": "folderRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 229
+    },
+    {
+      "name": "folderRecord",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 234
+    },
+    {
+      "name": "canonical",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 240
+    },
+    {
+      "name": "PathMatchIndexes",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchIndexes.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 245
+    },
+    {
+      "name": "canonical",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchIndexes.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 251
+    },
+    {
+      "name": "build",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchIndexes.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 297
+    },
+    {
+      "name": "PathLocateProfile",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchIndexes.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 340
+    },
+    {
+      "name": "PathLocateOptions",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchIndexes.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 395
+    },
+    {
+      "name": "AnyItem",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchIndexes.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatchTypes.swift",
+      "line": 433
+    },
+    {
+      "name": "PathCharPolicy",
+      "destination": "native/Sources/SmipBridge/RPCEPathCharPolicy.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "line": 10
+    },
+    {
+      "name": "isAllowedASCIIByte",
+      "destination": "native/Sources/SmipBridge/RPCEPathCharPolicy.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "line": 12
+    },
+    {
+      "name": "toLowerASCII",
+      "destination": "native/Sources/SmipBridge/RPCEPathCharPolicy.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "line": 36
+    },
+    {
+      "name": "isZeroWidthOrFormat",
+      "destination": "native/Sources/SmipBridge/RPCEPathCharPolicy.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "line": 43
+    },
+    {
+      "name": "emitFolded",
+      "destination": "native/Sources/SmipBridge/RPCEPathCharPolicy.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "line": 61
+    },
+    {
+      "name": "foldHomoglyphsIfNeeded",
+      "destination": "native/Sources/SmipBridge/RPCEPathCharPolicy.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathCharPolicy.swift",
+      "line": 155
+    },
+    {
+      "name": "StandardizedPath",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "line": 5
+    },
+    {
+      "name": "absolute",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "line": 10
+    },
+    {
+      "name": "relative",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "line": 17
+    },
+    {
+      "name": "join",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "line": 41
+    },
+    {
+      "name": "containsNUL",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "line": 49
+    },
+    {
+      "name": "diagnosticEscaped",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "line": 53
+    },
+    {
+      "name": "isDescendant",
+      "destination": "native/Sources/SmipBridge/RPCEStandardizedPath.swift",
+      "source": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "line": 84
+    },
+    {
+      "name": "locate",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatcher.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 321
+    },
+    {
+      "name": "firstAlnumLowercasedByte",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 12
+    },
+    {
+      "name": "appendStandardizedRelativePath",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 40
+    },
+    {
+      "name": "containsParentTraversal",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 46
+    },
+    {
+      "name": "standardizedLookupPath",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 54
+    },
+    {
+      "name": "similarityScoreMax",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 64
+    },
+    {
+      "name": "similarityScore",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 77
+    },
+    {
+      "name": "unicodeSimilarityScore",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 144
+    },
+    {
+      "name": "levenshteinDistanceCapped",
+      "destination": "native/Sources/SmipBridge/RPCEPathSimilarity.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 186
+    },
+    {
+      "name": "rootsWithSelection",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 274
+    },
+    {
+      "name": "aliasRootCandidates",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 285
+    },
+    {
+      "name": "candidatesFor",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1430
+    },
+    {
+      "name": "addFiles",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1439
+    },
+    {
+      "name": "isUnder",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1494
+    },
+    {
+      "name": "standardizePathFast",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1515
+    },
+    {
+      "name": "normalizeUserInputPath",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1547
+    },
+    {
+      "name": "getCandidateRoots",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1576
+    },
+    {
+      "name": "buildHeadTrimVariants",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1597
+    },
+    {
+      "name": "makeLocation",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchLookup.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1675
+    },
+    {
+      "name": "findSingleComponentMatch",
+      "destination": "native/Sources/SmipBridge/RPCEPathSingleMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1693
+    },
+    {
+      "name": "findBestMultiComponentMatch",
+      "destination": "native/Sources/SmipBridge/RPCEPathSingleMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1797
+    },
+    {
+      "name": "findStrictSuffixMatch",
+      "destination": "native/Sources/SmipBridge/RPCEPathSingleMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2005
+    },
+    {
+      "name": "lastComponentExists",
+      "destination": "native/Sources/SmipBridge/RPCEPathSingleMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2068
+    },
+    {
+      "name": "findAbsoluteParentQualifiedTail",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1901
+    },
+    {
+      "name": "Cand",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1910
+    },
+    {
+      "name": "cleaned",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 1965
+    },
+    {
+      "name": "fuzzyMatchWithSuffixLimit",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2193
+    },
+    {
+      "name": "computeWeightedMatchScorePrecleaned",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2291
+    },
+    {
+      "name": "computeWeightedMatchScore",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2357
+    },
+    {
+      "name": "findBestMatchWithOneMissingComponent",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2371
+    },
+    {
+      "name": "gatherAllFolderAndFileItems",
+      "destination": "native/Sources/SmipBridge/RPCEPathWeightedMatch.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2417
+    },
+    {
+      "name": "file",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchSnapshot.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2437
+    },
+    {
+      "name": "folder",
+      "destination": "native/Sources/SmipBridge/RPCEPathMatchSnapshot.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/PathLookup/PathMatcher.swift",
+      "line": 2441
+    },
+    {
+      "name": "WorkspaceRootRef",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 3
+    },
+    {
+      "name": "RootAliasResolution",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 25
+    },
+    {
+      "name": "RootAliasOptions",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 32
+    },
+    {
+      "name": "WorkspaceAliasResolver",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 53
+    },
+    {
+      "name": "resolve",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 54
+    },
+    {
+      "name": "resolveNonAbsoluteGeneratedAlias",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 126
+    },
+    {
+      "name": "PathResolutionIssue",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 155
+    },
+    {
+      "name": "PathResolutionIssueRenderer",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 237
+    },
+    {
+      "name": "message",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 238
+    },
+    {
+      "name": "ClientPathFormatter",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 269
+    },
+    {
+      "name": "nonAbsoluteDisplayPath",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 270
+    },
+    {
+      "name": "nonAbsoluteRootAlias",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 283
+    },
+    {
+      "name": "exactRootAliases",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 305
+    },
+    {
+      "name": "explicitWorkspaceFilePath",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 312
+    },
+    {
+      "name": "pathComponents",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 323
+    },
+    {
+      "name": "displayPath",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 329
+    },
+    {
+      "name": "displayAbsolutePath",
+      "source": "Sources/RepoPromptWorkspaceCore/WorkspacePathPolicy.swift",
+      "destination": "native/Sources/SmipBridge/RPCEWorkspacePathPolicy.swift",
+      "line": 353
+    },
+    {
+      "name": "WorkspaceExactPathLookupKind",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidateModels.swift",
+      "line": 93
+    },
+    {
+      "name": "WorkspaceFolderExpansionResult",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidateModels.swift",
+      "line": 99
+    },
+    {
+      "name": "WorkspaceResolvedCandidates",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidateModels.swift",
+      "line": 430
+    },
+    {
+      "name": "WorkspaceCodemapOnlyCandidates",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidateModels.swift",
+      "line": 436
+    },
+    {
+      "name": "WorkspaceFolderRecord",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidateModels.swift",
+      "line": 481
+    },
+    {
+      "name": "WorkspaceFileRecord",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceFileContextModels.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidateModels.swift",
+      "line": 513
+    },
+    {
+      "name": "resolveSelectionCandidates",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 788
+    },
+    {
+      "name": "resolveCodemapOnlyCandidates",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 851
+    },
+    {
+      "name": "orderedInputs",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 1278
+    },
+    {
+      "name": "rawLookup",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 1289
+    },
+    {
+      "name": "isAbsolutePathOutsideRoots",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 1310
+    },
+    {
+      "name": "pathResolutionMessage",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 1325
+    },
+    {
+      "name": "supportsCodemap",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 1377
+    },
+    {
+      "name": "displayPath",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCandidates.swift",
+      "line": 1383
+    },
+    {
+      "name": "lookupCatalogFileForExplicitRequest",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogLookup.swift",
+      "line": 18389
+    },
+    {
+      "name": "exactPathResolutionIssue",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogLookup.swift",
+      "line": 21428
+    },
+    {
+      "name": "lookupFiles",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogLookup.swift",
+      "line": 21496
+    },
+    {
+      "name": "exactRecordExists",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogLookup.swift",
+      "line": 21809
+    },
+    {
+      "name": "descendantFileIDs",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogFolders.swift",
+      "line": 10708
+    },
+    {
+      "name": "resolveFolderInput",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogFolders.swift",
+      "line": 21539
+    },
+    {
+      "name": "expandFolderInputToFiles",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogFolders.swift",
+      "line": 21641
+    },
+    {
+      "name": "rootFolderRecord",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogFolders.swift",
+      "line": 21821
+    },
+    {
+      "name": "descendantFiles",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionCatalogFolders.swift",
+      "line": 21828
+    },
+    {
+      "name": "addPaths",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutations.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 568
+    },
+    {
+      "name": "removePaths",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutations.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 647
+    },
+    {
+      "name": "promotePaths",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutations.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 704
+    },
+    {
+      "name": "demotePaths",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutations.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 742
+    },
+    {
+      "name": "removeSliceEntries",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutations.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 1358
+    },
+    {
+      "name": "WorkspaceAddSelectionResult",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutationModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 66
+    },
+    {
+      "name": "WorkspaceRemoveSelectionResult",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutationModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 74
+    },
+    {
+      "name": "WorkspaceDemoteSelectionResult",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPathMutationModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 81
+    },
+    {
+      "name": "buildSelection",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparation.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 238
+    },
+    {
+      "name": "buildManageSelectionSet",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparation.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 307
+    },
+    {
+      "name": "normalizeSlices",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparation.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 1349
+    },
+    {
+      "name": "mutateSlices",
+      "destination": "native/Sources/SmipBridge/RPCESelectionSliceMutation.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 461
+    },
+    {
+      "name": "displayPath",
+      "destination": "native/Sources/SmipBridge/RPCESelectionSliceMutation.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 480
+    },
+    {
+      "name": "resolveEntry",
+      "destination": "native/Sources/SmipBridge/RPCESelectionSliceMutation.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 492
+    },
+    {
+      "name": "WorkspaceSelectionSliceInput",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparationModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 55
+    },
+    {
+      "name": "WorkspaceBuildSelectionResult",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparationModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 60
+    },
+    {
+      "name": "WorkspaceSliceSelectionMutationResult",
+      "destination": "native/Sources/SmipBridge/RPCESelectionPreparationModels.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "line": 89
+    },
+    {
+      "name": "ManageSelectionInputs",
+      "destination": "native/Sources/SmipBridge/RPCESelectionInputParser.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionParsing.swift",
+      "line": 6
+    },
+    {
+      "name": "isLineRangeSuffix",
+      "destination": "native/Sources/SmipBridge/RPCESelectionInputParser.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionParsing.swift",
+      "line": 13
+    },
+    {
+      "name": "parseManageSelectionInputs",
+      "destination": "native/Sources/SmipBridge/RPCESelectionInputParser.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionParsing.swift",
+      "line": 26
+    },
+    {
+      "name": "parseLineRangeTokens",
+      "destination": "native/Sources/SmipBridge/RPCESelectionInputParser.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionParsing.swift",
+      "line": 136
+    },
+    {
+      "name": "SliceMutationMode",
+      "destination": "native/Sources/SmipBridge/RPCESelectionSliceMode.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/PartitionStore.swift",
+      "line": 14
+    },
+    {
+      "name": "WorkspaceInteractiveReadPreparedContent",
+      "destination": "native/Sources/SmipBridge/RPCEInteractiveRead.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceInteractiveReadCache.swift",
+      "line": 19
+    },
+    {
+      "name": "WorkspaceInteractiveReadSlice",
+      "destination": "native/Sources/SmipBridge/RPCEInteractiveRead.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceInteractiveReadCache.swift",
+      "line": 32
+    },
+    {
+      "name": "WorkspaceInteractiveReadRangeError",
+      "destination": "native/Sources/SmipBridge/RPCEInteractiveRead.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceInteractiveReadCache.swift",
+      "line": 41
+    },
+    {
+      "name": "prepare",
+      "destination": "native/Sources/SmipBridge/RPCEInteractiveRead.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceInteractiveReadCache.swift",
+      "line": 66
+    },
+    {
+      "name": "slice",
+      "destination": "native/Sources/SmipBridge/RPCEInteractiveRead.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceInteractiveReadCache.swift",
+      "line": 74
+    },
+    {
+      "name": "splitContentPreservingAllLineEndings",
+      "destination": "native/Sources/SmipBridge/RPCELineEndings.swift",
+      "source": "Sources/RepoPromptDomainRuntime/StringExtensions.swift",
+      "line": 345
+    },
+    {
+      "name": "startLineFromInteger",
+      "destination": "native/Sources/SmipBridge/ReadTextInput.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "line": 544
+    },
+    {
+      "name": "offsetFromInteger",
+      "destination": "native/Sources/SmipBridge/ReadTextInput.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "line": 545
+    },
+    {
+      "name": "startLineFromString",
+      "destination": "native/Sources/SmipBridge/ReadTextInput.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "line": 546
+    },
+    {
+      "name": "offsetFromString",
+      "destination": "native/Sources/SmipBridge/ReadTextInput.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "line": 547
     }
   ],
   "sourceCoverage": [

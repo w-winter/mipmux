@@ -1,9 +1,16 @@
+import Type from 'typebox';
+import { Compile } from 'typebox/compile';
+import { StructureToolResult } from '../contracts/structure.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
 import type { CacheRecoveryTarget } from '../contracts/errors.js';
 
+const structureKind = Compile(Type.Pick(StructureToolResult, ['kind']));
+const structureResult = Compile(StructureToolResult);
+
 export function toolResult(value: unknown) {
-  return { content: [{ type: 'text' as const, text: JSON.stringify(value) }], structuredContent: value, isError: false };
+  const text = structureKind.Check(value) ? structureResult.Parse(value).text : JSON.stringify(value);
+  return { content: [{ type: 'text' as const, text }], structuredContent: value, isError: false };
 }
 
 export function piToolResult(value: unknown) {
@@ -33,6 +40,9 @@ export function cacheRecoveryTarget(error: unknown): CacheRecoveryTarget | null 
 export function failureResult(error: unknown) {
   const code = failureCode(error);
   const target = cacheRecoveryTarget(error);
+  if (error instanceof WorkspaceFailure && ['limitWithNegativeStart', 'zeroStart'].includes(code)) {
+    return { kind: 'error', code, message: error.details.message };
+  }
   if (target) return { kind: 'error', code, target };
   if (error instanceof WorkspaceFailure && code === 'outputBudgetTooSmall') {
     return { kind: 'outputBudgetTooSmall', requiredBytes: error.details.requiredBytes };

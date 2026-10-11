@@ -37,7 +37,7 @@ export async function prepareDeliveryFixture() {
       { kind: 'suppliedDocument', id: 'evidence', role: 'evidence', origin: 'Public synthetic prior evidence', text: evidence }],
     patches: [{ kind: 'localPatch', id: 'changes', root: 'r', comparison: { kind: 'worktree', base: { kind: 'commit', ref: base }, includeUntracked: true }, scope: { kind: 'all' } }],
     discoveryHints: ['All required material is fixed. Inspect the complete admitted materials and commit the architectural handoff before validating.'],
-    allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true }, outputName: 'packet' };
+    budgetUnits: 100000, outputName: 'packet' };
   const input = { workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'public-delivery', request };
   const options: RuntimeOptions = { cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`libexec/${process.platform}-${process.arch}/SmipBridge`), nativeEnvironment: {}, git: { executable: git } };

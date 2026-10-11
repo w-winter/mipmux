@@ -22,25 +22,25 @@ test('built CLI warms, explores, renders, verifies, invalidates and emits failed
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'model.swift'), 'struct Example {\n let name: String\n}\n');
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };
   const request = { task: 'Caller task', constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }],
-    documents: [], patches: [], discoveryHints: [], outputName: 'packet', allowance: { kind: 'net', units: 100000, method: 'utf8-21-over-80-v1', overheadReserved: true } };
+    documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
   const config = { cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, search: null, git: null, discovery: provider.config };
   const files = { config: join(directory, 'config.json'), spec: join(directory, 'spec.json'), input: join(directory, 'input.json'),
     request: join(directory, 'request.json'), draft: join(directory, 'draft.json'), build: join(directory, 'build.json') };
   await writeFile(files.config, JSON.stringify(config)); await writeFile(files.spec, JSON.stringify(spec));
-  await writeFile(files.input, JSON.stringify({ root: 'r', path: 'model.swift', shape: { kind: 'whole' }, continuation: null, maxOutputBytes: 10000 }));
+  await writeFile(files.input, JSON.stringify({ root: 'r', path: 'model.swift', start_line: null, offset: null, limit: null, continuation: null, maxOutputBytes: 10000 }));
   await writeFile(files.request, JSON.stringify({ workspace: spec, request }));
   await writeFile(files.draft, JSON.stringify({ selections: [], prompt: JSON.stringify({ clarifiedTask: 'Task', architecture: 'Model', relationships: [], ambiguities: [] }) }));
   await writeFile(files.build, JSON.stringify({ workspace: spec, request: { ...request, outputName: 'builder',
-    allowance: { ...request.allowance, units: 1 } }, requestId: 'one' }));
+    budgetUnits: 1 }, requestId: 'one' }));
   try {
     const warm = await cli(['workspace', '--spec', files.spec, '--config', files.config]);
     assert.equal(warm.code, 0, warm.out);
     const inventory = JSON.parse(warm.out), key = inventory.entries.find((entry: { kind: string }) => entry.kind === 'file').structural.key.digest;
     assert.equal((await cli(['tool', 'read_file', '--workspace', files.spec, '--input', files.input, '--config', files.config])).code, 0);
-    await writeFile(files.input, JSON.stringify({ view: 'files', selection: null, depth: null, continuation: null, maxOutputBytes: 10000 }));
+    await writeFile(files.input, JSON.stringify({ type: 'files', mode: 'auto', scope: null, selection: null, maxDepth: null, continuation: null, maxOutputBytes: 10000 }));
     assert.equal((await cli(['tool', 'get_file_tree', '--workspace', files.spec, '--input', files.input, '--config', files.config])).code, 0);
-    await writeFile(files.input, JSON.stringify({ view: 'files', selection: null, depth: null, continuation: null, maxOutputBytes: 1 }));
+    await writeFile(files.input, JSON.stringify({ type: 'files', mode: 'auto', scope: null, selection: null, maxDepth: null, continuation: null, maxOutputBytes: 1 }));
     assert.equal((await cli(['tool', 'get_file_tree', '--workspace', files.spec, '--input', files.input, '--config', files.config])).code, 1);
     const rendered = await cli(['render', '--request', files.request, '--draft', files.draft, '--config', files.config]);
     assert.equal(rendered.code, 0, rendered.out);
@@ -90,7 +90,7 @@ test('CLI build interruption returns a settled cancelled receipt and exit 130', 
     nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, search: null, git: null, discovery: provider.config }));
   await writeFile(request, JSON.stringify({ workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'one',
     request: { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
-      outputName: 'packet', allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true } } }));
+      outputName: 'packet', budgetUnits: 10000 } }));
   const child = spawn(process.execPath, [resolveCommand, 'build', '--request', request, '--config', config], { cwd: '/', stdio: 'pipe' });
   const stdout: Buffer[] = []; child.stdout.on('data', chunk => stdout.push(chunk)); child.stderr.resume();
   const closed = new Promise<number | null>(resolve => child.once('close', resolve));
