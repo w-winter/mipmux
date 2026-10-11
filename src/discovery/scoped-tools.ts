@@ -12,6 +12,7 @@ export async function scopedCall(call: DiscoveryCall, draft: DraftRuntime, opera
       : operation.getFileTree({ ...call.input, selection: draft.selectionProjection() }, encode);
     case 'get_code_structure': return operation.getCodeStructure({ ...call.input, selection: draft.selectionProjection() }, encode);
     case 'file_search': return operation.fileSearch(call.input, encode);
+    case 'git': return operation.readGit(call.input, encode);
     case 'read_file': return operation.readFile(call.input, encode);
     case 'draft_preview': return draft.preview(call.input, signal, encode);
     case 'draft_update': return draft.update(call.input, signal, encode);

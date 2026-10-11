@@ -1,0 +1,66 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "ranges": [
+        [
+          7152,
+          7246
+        ],
+        [
+          7288,
+          7374
+        ]
+      ],
+      "sha256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "ranges": [
+        [
+          1068,
+          1074
+        ]
+      ],
+      "sha256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "ranges": [
+        [
+          25,
+          39
+        ],
+        [
+          76,
+          94
+        ]
+      ],
+      "sha256": "432c96e3b7ca569dcea3ee999103e57f19edaed2b8f45c6097f26fdf091ac661"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "ranges": [
+        [
+          2371,
+          2388
+        ],
+        [
+          2409,
+          2415
+        ]
+      ],
+      "sha256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559"
+    }
+  ],
+  "generator": "scripts/generate-git-read-fixtures.mjs",
+  "bindings": [
+    "Compile original GitService log/blame argument construction and parsing with a captured subprocess-output adapter.",
+    "Public DTO field names are the source projection names; workspace/root capability routing and real process ownership are tested separately.",
+    "These fixtures establish UTF-8 query behavior, not source decoding fallback or complete Git tool/packaging parity.",
+    "Headless blame adds --no-textconv. The fixture keeps the original arguments; the comparison applies this one explicit security binding."
+  ],
+  "cases": 9,
+  "generatorSHA256": "57e35f391c2b5bc73fe2c4c9d8dd26d7395c6e32f93f68c1e5c11c1280aa10dc"
+}

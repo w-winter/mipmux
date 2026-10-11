@@ -147,6 +147,8 @@ enum Operation {
     case describe
     case selection(SelectionOperation)
     case renderDiscoveryPrompt(DiscoveryPromptInput)
+    case gitRead(GitReadInput)
+    case gitPatch(GitPatchInput)
     case sliceReadText(ReadTextInput)
     case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
@@ -161,58 +163,88 @@ enum Operation {
     case readExport(NativeHandle, String)
     case publishManifest(NativeHandle, Data)
 
+    // Each wire variant has one branch; CCCC enforces the configured complexity limits.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     init(_ value: Any) throws {
-        guard let raw = value as? [String: Any], let kind = raw["kind"] as? String else { throw BridgeFailure("nativeProtocolError") }
+        guard let raw = value as? [String: Any],
+              let kind = raw["kind"] as? String else { throw BridgeFailure("nativeProtocolError") }
         switch kind {
-        case "sliceReadText": self = try .sliceReadText(ReadTextInput(value))
-        case "renderDiscoveryMessage": self = try .renderDiscoveryMessage(DiscoveryMessageInput(value))
-        case "renderDiscoveryPrompt": self = try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
-        case "parseSelectionInputs": self = try .selection(.parse(SelectionInputParsing(value)))
-        case "prepareSelection": self = try .selection(.preparation(SelectionPreparationInput(value)))
-        case "mutateSelectionPaths": self = try .selection(.paths(SelectionPathMutationInput(value)))
-        case "resolveSelectionCandidates": self = try .selection(.candidates(SelectionCandidatesInput(value)))
-        case "matchSelectionPath": self = try .matchSelectionPath(PathMatchInput(value))
-        case "calculateSliceRanges": self = try .selection(.sliceRanges(SliceRangesInput(value)))
-        case "transitionSelection": self = try .selection(.transition(SelectionTransitionInput(value)))
-        case "queryStructure": self = .queryStructure(try StructureInput(value))
-        case "renderFileTree": self = try .renderFileTree(FileTreeInput(value))
         case "describe":
             _ = try WireObject(value, keys: ["kind"]); self = .describe
         case "openRoots":
-            let o = try WireObject(value, keys: ["kind", "roots"])
-            guard let roots = o.fields["roots"] as? [Any], !roots.isEmpty else { throw BridgeFailure("nativeProtocolError") }
+            let fields = try WireObject(value, keys: ["kind", "roots"])
+            guard let roots = fields.fields["roots"] as? [Any],
+                  !roots.isEmpty else { throw BridgeFailure("nativeProtocolError") }
             self = try .openRoots(roots.map(RootDeclaration.init))
         case "listDirectory":
-            let o = try WireObject(value, keys: ["kind", "root", "directory"])
-            guard let directory = o.fields["directory"] as? [String: Any] else { throw BridgeFailure("nativeProtocolError") }
+            let fields = try WireObject(value, keys: ["kind", "root", "directory"])
+            guard let directory = fields.fields["directory"] as? [String: Any]
+            else { throw BridgeFailure("nativeProtocolError") }
             let path: String?
             if directory["kind"] as? String == "root" {
                 _ = try WireObject(directory, keys: ["kind"]); path = nil
             } else {
-                let d = try WireObject(directory, keys: ["kind", "path"])
-                guard try d.string("kind") == "descendant" else { throw BridgeFailure("nativeProtocolError") }
-                path = try d.string("path")
+                let descendant = try WireObject(directory, keys: ["kind", "path"])
+                guard try descendant.string("kind") == "descendant" else { throw BridgeFailure("nativeProtocolError") }
+                path = try descendant.string("path")
             }
-            self = try .listDirectory(NativeHandle(o.value("root")), path)
+            self = try .listDirectory(NativeHandle(fields.value("root")), path)
         case "readSource":
-            let o = try WireObject(value, keys: ["kind", "root", "path", "expected"])
-            self = try .readSource(NativeHandle(o.value("root")), o.string("path"), o.fields["expected"] is NSNull ? nil : SourceIdentity(o.value("expected")))
+            let fields = try WireObject(value, keys: ["kind", "root", "path", "expected"])
+            self = try .readSource(
+                NativeHandle(fields.value("root")),
+                fields.string("path"),
+                fields.fields["expected"] is NSNull ? nil : SourceIdentity(fields.value("expected"))
+            )
         case "extract":
-            let o = try WireObject(value, keys: ["kind", "extension", "bytes", "expected"])
-            self = try .extract(o.string("extension"), o.bytes("bytes"), SourceIdentity(o.value("expected")))
+            let fields = try WireObject(value, keys: ["kind", "extension", "bytes", "expected"])
+            self = try .extract(
+                fields.string("extension"),
+                fields.bytes("bytes"),
+                SourceIdentity(fields.value("expected"))
+            )
         case "beginExport":
-            let o = try WireObject(value, keys: ["kind", "root", "name"])
-            self = try .beginExport(NativeHandle(o.value("root")), o.string("name"))
+            let fields = try WireObject(value, keys: ["kind", "root", "name"])
+            self = try .beginExport(NativeHandle(fields.value("root")), fields.string("name"))
         case "writeExport", "readExport":
-            let keys: Set<String> = kind == "writeExport" ? ["kind", "run", "filename", "bytes"] : ["kind", "run", "filename"]
-            let o = try WireObject(value, keys: keys)
-            let filename = try o.string("filename")
+            let keys: Set<String> = kind == "writeExport" ? ["kind", "run", "filename", "bytes"] : [
+                "kind",
+                "run",
+                "filename"
+            ]
+            let fields = try WireObject(value, keys: keys)
+            let filename = try fields.string("filename")
             guard ["context.md", "handoff.md"].contains(filename) else { throw BridgeFailure("nativeProtocolError") }
-            let handle = try NativeHandle(o.value("run"))
-            self = try kind == "writeExport" ? .writeExport(handle, filename, o.bytes("bytes")) : .readExport(handle, filename)
+            let handle = try NativeHandle(fields.value("run"))
+            self = try kind == "writeExport" ? .writeExport(handle, filename, fields.bytes("bytes")) : .readExport(
+                handle,
+                filename
+            )
         case "publishManifest":
-            let o = try WireObject(value, keys: ["kind", "run", "bytes"])
-            self = try .publishManifest(NativeHandle(o.value("run")), o.bytes("bytes"))
+            let fields = try WireObject(value, keys: ["kind", "run", "bytes"])
+            self = try .publishManifest(NativeHandle(fields.value("run")), fields.bytes("bytes"))
+        default: self = try Self.decodeProjection(kind, value)
+        }
+    }
+
+    // Each wire variant has one branch; CCCC enforces the configured complexity limits.
+    // swiftlint:disable:next cyclomatic_complexity
+    private static func decodeProjection(_ kind: String, _ value: Any) throws -> Operation {
+        switch kind {
+        case "parseGitPatch": return try .gitPatch(GitPatchInput(value))
+        case "prepareGitRead", "projectGitRead": return try .gitRead(GitReadInput(value))
+        case "sliceReadText": return try .sliceReadText(ReadTextInput(value))
+        case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))
+        case "renderDiscoveryPrompt": return try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
+        case "parseSelectionInputs": return try .selection(.parse(SelectionInputParsing(value)))
+        case "prepareSelection": return try .selection(.preparation(SelectionPreparationInput(value)))
+        case "mutateSelectionPaths": return try .selection(.paths(SelectionPathMutationInput(value)))
+        case "resolveSelectionCandidates": return try .selection(.candidates(SelectionCandidatesInput(value)))
+        case "matchSelectionPath": return try .matchSelectionPath(PathMatchInput(value))
+        case "calculateSliceRanges": return try .selection(.sliceRanges(SliceRangesInput(value)))
+        case "transitionSelection": return try .selection(.transition(SelectionTransitionInput(value)))
+        case "queryStructure": return try .queryStructure(StructureInput(value))
+        case "renderFileTree": return try .renderFileTree(FileTreeInput(value))
         default: throw BridgeFailure("nativeProtocolError")
         }
     }

@@ -2,6 +2,7 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
+import { NativeGitReadQuery, NativeGitReadResult } from './git.js';
 import { NativeWireFailureCode } from './errors.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -115,7 +116,16 @@ export const NativeReadTextResult = Type.Union([
     lines: Type.Array(Type.Object({ number: SafeCount, offset: SafeCount, length: SafeCount, text: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readTextRangeError'), code: Type.Enum(['limitWithNegativeStart', 'zeroStart']), message: Type.String() }, { additionalProperties: false }),
 ]);
+const NativeGitPatchInput = Type.Object({ kind: Type.Literal('parseGitPatch'), text: Type.String() }, { additionalProperties: false });
+const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
+  files: Type.Array(Type.Object({ path: Type.String(), patch: Type.String(), insertions: Type.Integer(), deletions: Type.Integer(),
+    hunks: Type.Array(Type.Object({ header: Type.String(), oldStart: Type.Integer(), oldLines: Type.Integer(),
+      newStart: Type.Integer(), newLines: Type.Integer(), content: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false })),
+  changedLinesTsv: Type.String() }, { additionalProperties: false });
 export const NativeOperation = Type.Union([
+  NativeGitPatchInput,
+  Type.Object({ kind: Type.Literal('prepareGitRead'), query: NativeGitReadQuery }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('projectGitRead'), query: NativeGitReadQuery, bytes: base64 }, { additionalProperties: false }),
   NativeReadTextInput,
   NativeSelectionInputParsingRequest,
   NativeSelectionPreparationInput,
@@ -159,6 +169,8 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  NativeGitPatchResult,
+  ...NativeGitReadResult.anyOf,
   ...NativeReadTextResult.anyOf,
   NativeSelectionInputParsingResult,
   ...NativeSelectionPreparationResult.anyOf,

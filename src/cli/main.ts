@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util';
 import Type from 'typebox';
 import { ContextBuildRequest, SourceSelection } from '../contracts/context.js';
 import { WorkspaceSpec } from '../contracts/inventory.js';
+import { gitValidator } from '../contracts/git.js';
 import { readValidator, treeValidator, searchValidator, structureValidator } from '../contracts/exploration.js';
 import { verifyBundle, verifyCurrentBundle } from '../context/verify.js';
 import { WorkspaceFailure } from '../workspace/values.js';
@@ -65,7 +66,12 @@ async function main(): Promise<void> {
           if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) throw new WorkspaceFailure('invalidRequest');
           const input = { maxOutputBytes: config.defaultMaxOutputBytes, ...raw };
           let execute: (operation: WorkspaceOperation) => unknown | Promise<unknown>;
-          if (subcommand === 'read_file' && readValidator.Check(input)) execute = operation => operation.readFile(input);
+          if (subcommand === 'git') {
+            const request = gitValidator.Default(input);
+            if (!gitValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
+            execute = operation => operation.readGit(request);
+          }
+          else if (subcommand === 'read_file' && readValidator.Check(input)) execute = operation => operation.readFile(input);
           else if (subcommand === 'get_file_tree' && treeValidator.Check(input)) execute = operation => operation.getFileTree(input);
           else if (subcommand === 'get_code_structure' && structureValidator.Check(input)) execute = operation => operation.getCodeStructure(input);
           else if (subcommand === 'file_search' && searchValidator.Check(input)) execute = operation => operation.fileSearch(input);

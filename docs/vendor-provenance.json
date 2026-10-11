@@ -1869,7 +1869,7 @@
       "changes": [
         "Retain source explicit-file priority, deduplication, folder handling and maximumCodeStructureSeedCount.",
         "Immutable synchronous lookups replace app async scope/metadata and debug counters. Selected resolution uses the source store loop with captured full/sliced paths.",
-        "Selected resolution logic derives from Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift at revision 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3, lines 21661\u201321729; captured typed root-qualified selectors make desktop alias ambiguity and blocked-catalog branches unreachable."
+        "Selected resolution logic derives from Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift at revision 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3, lines 21661–21729; captured typed root-qualified selectors make desktop alias ambiguity and blocked-catalog branches unreachable."
       ],
       "sha256": "53992dcacbaecd7844d75ceaa9022697057d87f5be0b5f42cd3f8ca5150f40a9",
       "classification": "handwritten",
@@ -2647,6 +2647,217 @@
         "Bind slice replies to native JSON and add decoded UTF-8 line offsets for continuation transport.",
         "Retain fixed range diagnostics from MCPServerViewModel.swift:6775-6778 and MCPReadFileToolProjection.swift:32-34 at the same pinned revision; exact source hashes/ranges and outputs are recorded in test/fixtures/rpce-read/provenance.json.",
         "Scoped source-body/diagnostic SwiftLint exceptions retain original source text; configured CCCC limits remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+      "destination": "native/Sources/SmipBridge/RPCEGitLog.swift",
+      "sha256": "ca40592615def07697f6110851dc2ca1fcdef9f0ef171ad165dd0dd070dc3f65",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          7152,
+          7187
+        ],
+        [
+          7196,
+          7246
+        ]
+      ],
+      "changes": [
+        "Retain commit-summary records, command argument construction and log parsing; keep process execution in the existing TypeScript supervisor.",
+        "Apply the scoped identifier-name exception to unchanged source parser variables; CCCC limits remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+      "destination": "native/Sources/SmipBridge/RPCEGitBlame.swift",
+      "sha256": "08f89792218ac7ad2434cddc511e4cd2b4f236c655fb92033a1e9233d224a682",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          7288,
+          7313
+        ],
+        [
+          7322,
+          7374
+        ]
+      ],
+      "changes": [
+        "Retain line-attribution records, command arguments and blame parsing.",
+        "Add --no-textconv as the explicit headless read-only security binding after a public runtime query executed a configured converter.",
+        "Apply scoped identifier/layout exceptions to the source parser; CCCC limits remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/GitReadInput.swift",
+      "sha256": "b2338ddfae030dd4c599d0e6dd0b5aba10cdba230ba0b65229d8c3d888bb9e3a",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          984,
+          984
+        ],
+        [
+          1068,
+          1074
+        ]
+      ],
+      "changes": [
+        "Retain source log default and blame range parsing through the existing SDK value decoder.",
+        "Bind command/result phases to the closed native protocol and DTO field names recorded in test/fixtures/rpce-git-read/provenance.json.",
+        "Preserve the existing headless fail-fast byte policy for undecodable Git output; the reference empty-output recovery is not treated as equivalent.",
+        "Bind source status arguments from GitService.swift:4067 to the existing command/projection phases; preserve the original source parser and provider DTO through RPCEGitStatus."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "cc62ac331691601b95fcc00d2b7813dddf9b2c8dc36221d2dcb782d7867612c7",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "sha256": "a6e8b8ba552f203409f3896f5b5a566e948edf15a635d46e41011e1e11e560da",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          327
+        ]
+      ],
+      "changes": [
+        "Retain the complete original snapshot, parser, record validation, header interpretation and ordered status sets.",
+        "Use internal declarations in the headless target. Scoped SwiftLint source-shape exceptions retain identifiers and function structure; configured CCCC thresholds remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitBlobIdentityModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "c275e0d0bc9f4952cc510bae937def39b0ae1dc31396d25c5c60d2bf20b6d067",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusRecords.swift",
+      "sha256": "15865147c3bab17f393308f7c2f3d47e1b566aee910ad248fabcdb8eefdb9227",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          130,
+          201
+        ]
+      ],
+      "changes": [
+        "Retain the record variants and fields used by the original status parser; use internal declarations."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusDTO.swift",
+      "sha256": "184efe952a49a7f9e6df9c36e210f39fe546e3411a5c9a16f794b48da76814ce",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2304,
+          2317
+        ]
+      ],
+      "changes": [
+        "Retain original status DTO fields and Codable omission of absent branch/tracking metadata.",
+        "Scope the DTO under RPCEGitStatus with a source-nesting SwiftLint exception."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatus.swift",
+      "sha256": "a9078745c048586f441e477e1c456ecafa62bfa8686f48c612bea702dad4e29d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          329,
+          356
+        ]
+      ],
+      "changes": [
+        "Retain original makeStatusDTO formatting; consume the coherent parser snapshot directly instead of copying it into the app VCS facade.",
+        "Encode the original DTO and decode it through the existing BOM-preserving native wire adapter. Return the original parse-error diagnostic as a typed projection result."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/VCSModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "c9a2fb82b5071647a580ffc333672e09784cde7b1ae80d0549b73ea6b501fe37",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusError.swift",
+      "sha256": "d31a4f8c3937d9b6b12346a47be8a52d6f0737a05dda36b24dd4c5c2bd466788",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          394,
+          394
+        ],
+        [
+          398,
+          398
+        ],
+        [
+          401,
+          402
+        ],
+        [
+          409,
+          410
+        ],
+        [
+          413,
+          415
+        ]
+      ],
+      "changes": [
+        "Retain only the parser-consumed VCSError.parseError variant and its original localized diagnostic."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "cbebe00125f866136b8ef60aad2fa9372b320d7e41bec783b50e4cc68f5edd95",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "sha256": "62e23545697227120a6e9026aafc857fd24e2ed92c3a62a938aaf8555153c103",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          384
+        ]
+      ],
+      "changes": [
+        "Retain the source patch/hunk/count/changed-line and truncation algorithms unchanged.",
+        "Use internal declarations and remove the unused RepoPromptFileSystem import. Scoped source-shape lint exceptions retain tuples, identifiers and the fixed regex; configured CCCC limits stay enabled.",
+        "The current native parsing boundary exercises splitting, hunk parsing, counts and changed-line TSV. Truncation is retained for the planned diff projection, not advertised as integrated or verified here.",
+        "Use explicit NSString.components(separatedBy: LF) at all six hunk/count/truncation/changed-line consumers. Swift corelibs String.components does not split LF inside CRLF on Linux; NSString matches the original Darwin behavior without normalizing text."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "sha256": "249c98a51e1f283fac7a917f1e0c451e97ec82a4df1f0567572056119b7caeb8",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2845,
+          3078
+        ]
+      ],
+      "changes": [
+        "Retain complete original block splitting, prefix/path recovery, quoted token parsing and octal escape interpretation.",
+        "Replace the outer GitService actor owner with a native static helper owner; no subprocess or filesystem behavior is copied."
       ]
     }
   ],
@@ -7252,6 +7463,252 @@
       "destination": "native/Sources/SmipBridge/ReadTextInput.swift",
       "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
       "line": 547
+    },
+    {
+      "name": "CommitSummary",
+      "destination": "native/Sources/SmipBridge/RPCEGitLog.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 7153
+    },
+    {
+      "name": "parseLogSummaries",
+      "destination": "native/Sources/SmipBridge/RPCEGitLog.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 7196
+    },
+    {
+      "name": "BlameLine",
+      "destination": "native/Sources/SmipBridge/RPCEGitBlame.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 7289
+    },
+    {
+      "name": "parseBlameOutput",
+      "destination": "native/Sources/SmipBridge/RPCEGitBlame.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 7322
+    },
+    {
+      "name": "GitStatusPorcelainV2Snapshot",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 3
+    },
+    {
+      "name": "GitStatusPorcelainV2Parser",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 37
+    },
+    {
+      "name": "parse",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 38
+    },
+    {
+      "name": "makeTrackedRecord",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 187
+    },
+    {
+      "name": "makeUntrackedRecord",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 219
+    },
+    {
+      "name": "statusCharacters",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 243
+    },
+    {
+      "name": "validateXY",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 247
+    },
+    {
+      "name": "validateRenameOrCopyScore",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 273
+    },
+    {
+      "name": "parseHeader",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 282
+    },
+    {
+      "name": "appendPathStatus",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusParser.swift",
+      "source": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "line": 312
+    },
+    {
+      "name": "GitPorcelainV2RecordKind",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusRecords.swift",
+      "source": "Sources/RepoPromptVCS/GitBlobIdentityModels.swift",
+      "line": 130
+    },
+    {
+      "name": "GitPorcelainV2PathRecord",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusRecords.swift",
+      "source": "Sources/RepoPromptVCS/GitBlobIdentityModels.swift",
+      "line": 138
+    },
+    {
+      "name": "StatusDTO",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusDTO.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "line": 2304
+    },
+    {
+      "name": "makeStatusDTO",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatus.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "line": 329
+    },
+    {
+      "name": "VCSError",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusError.swift",
+      "source": "Sources/RepoPromptVCS/VCSModels.swift",
+      "line": 394
+    },
+    {
+      "name": "parseError",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusError.swift",
+      "source": "Sources/RepoPromptVCS/VCSModels.swift",
+      "line": 398
+    },
+    {
+      "name": "errorDescription",
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusError.swift",
+      "source": "Sources/RepoPromptVCS/VCSModels.swift",
+      "line": 401
+    },
+    {
+      "name": "GitDiffPatchParsing",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 5
+    },
+    {
+      "name": "ParsedHunk",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 9
+    },
+    {
+      "name": "parseHunks",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 88
+    },
+    {
+      "name": "parseHunkHeader",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 136
+    },
+    {
+      "name": "truncatePatches",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 170
+    },
+    {
+      "name": "truncateFileHunks",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 222
+    },
+    {
+      "name": "countChanges",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 264
+    },
+    {
+      "name": "ChangedLine",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 282
+    },
+    {
+      "name": "extractChangedLines",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 304
+    },
+    {
+      "name": "buildChangedLinesTsv",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPatchParsing.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "line": 371
+    },
+    {
+      "name": "splitUnifiedDiffByFile",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2846
+    },
+    {
+      "name": "finalizeUnifiedDiffBlock",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2867
+    },
+    {
+      "name": "PatchHeaderPaths",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2880
+    },
+    {
+      "name": "canonicalPath",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2886
+    },
+    {
+      "name": "parseDiffGitHeaderPaths",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2922
+    },
+    {
+      "name": "parseGitPathRemainder",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2938
+    },
+    {
+      "name": "normalizePatchHeaderPath",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2947
+    },
+    {
+      "name": "patchHeaderPrefixes",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2973
+    },
+    {
+      "name": "parseDiffGitTokens",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 2996
+    },
+    {
+      "name": "parseOctalEscape",
+      "destination": "native/Sources/SmipBridge/RPCEGitPatchSplitter.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "line": 3061
     }
   ],
   "sourceCoverage": [

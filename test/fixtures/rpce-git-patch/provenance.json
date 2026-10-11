@@ -1,0 +1,21 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sha256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1"
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "sha256": "cbebe00125f866136b8ef60aad2fa9372b320d7e41bec783b50e4cc68f5edd95"
+    }
+  ],
+  "bindings": [
+    "Compile original splitting, hunk parsing, change counts and changed-line TSV against supplied patch text.",
+    "Remove only the unused RepoPromptFileSystem import and package visibility for isolated execution.",
+    "Wire field projection and deterministic file ordering are shared transport bindings; no source body, path or hunk is normalized.",
+    "The port explicitly bridges literal-LF component splitting to NSString on both platforms; the reference expected output is unchanged. Original String.split Character behavior in the file splitter remains intact."
+  ],
+  "cases": 11,
+  "generatorSHA256": "0f2da6ee1bcac7e8f33949ed8f3eb5f3ff759db0c885490963d02883385afc9d"
+}

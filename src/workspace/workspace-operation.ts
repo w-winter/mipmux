@@ -8,6 +8,8 @@ import { WorkspaceFailure } from './values.js';
 import { readFile } from '../exploration/read.js';
 import { getFileTree } from '../exploration/tree.js';
 import { getCodeStructure } from '../exploration/structure.js';
+import { readGit } from '../exploration/git.js';
+import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
 import type { NativeOperation } from '../contracts/native.js';
@@ -95,6 +97,24 @@ export class WorkspaceOperation {
       const policy = new RootPolicy(this.declaration, access);
       await policy.revalidate(source, this.snapshot.policy);
       return access.read(source, entry.identity);
+    });
+  }
+  readGit(request: GitRequest, encode?: ResultEncoding) {
+    const captured = structuredClone(request);
+    return this.#track(() => readGit(this, captured, encode));
+  }
+  prepareGitRead(input: Extract<NativeOperation, { kind: 'prepareGitRead' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  projectGitRead(input: Extract<NativeOperation, { kind: 'projectGitRead' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      await access.bridge.request({ kind: 'openRoots', roots: this.snapshot.roots.map(root => ({ name: root.name,
+        absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity })) }, this.signal);
+      return (await access.bridge.request(input, this.signal)).result;
     });
   }
   readFile(request: ReadRequest, encode?: ResultEncoding) {

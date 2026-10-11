@@ -2,6 +2,7 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { SafeCount, SHA256 } from './workspace.js';
 import { ReadRequest, TreeRequest, ScopedStructure, SearchRequest, ReadInput, StructureInput, SearchInput, Continuation } from './exploration.js';
+import { GitRequest, GitInput } from './git.js';
 import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from './context.js';
 
 const closed = { additionalProperties: false };
@@ -21,7 +22,7 @@ export const TreeInput = Type.Union([
   Type.Partial(Type.Omit(ScopedTree.anyOf[1], ['maxOutputBytes']), closed),
 ]);
 export const ValidateRequest = Type.Object({ maxOutputBytes: Positive }, closed);
-export const toolSchemas = { get_file_tree: Type.Union([
+export const toolSchemas = { git: Type.Union(GitInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))), get_file_tree: Type.Union([
   Type.Object({ ...TreeInput.anyOf[0].properties, maxOutputBytes: Positive }, closed),
   Type.Object({ ...TreeInput.anyOf[1].properties, maxOutputBytes: Positive }, closed),
 ]),
@@ -30,6 +31,7 @@ export const toolSchemas = { get_file_tree: Type.Union([
   read_file: Type.Object({ ...ReadInput.properties, maxOutputBytes: Positive }, closed), draft_inspect: DraftInspection,
   draft_update: DraftUpdate, draft_preview: DraftPreview, draft_validate: ValidateRequest, prompt: PromptRequest };
 export const DiscoveryCall = Type.Union([
+  Type.Object({ name: Type.Literal('git'), input: GitRequest }, closed),
   Type.Object({ name: Type.Literal('get_file_tree'), input: ScopedTree }, closed),
   Type.Object({ name: Type.Literal('get_code_structure'), input: ScopedStructure }, closed),
   Type.Object({ name: Type.Literal('file_search'), input: SearchRequest }, closed),

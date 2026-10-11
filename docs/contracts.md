@@ -75,6 +75,12 @@ A ready-no-symbols artifact contributes a covered node with no definitions. Unsu
 
 The complete encoded reply, including native text and structured data, must fit `maxOutputBytes`; otherwise the result is `outputBudgetTooSmall` with its required size. Structure replies have no continuation.
 
+### Git history reads
+
+`git` accepts `op: status`, `op: log` or `op: blame` with a declared root name. Status returns branch/upstream and ahead/behind metadata when present, sorted staged/modified/untracked path sets, and a summary from one coherent porcelain-v2 observation. Status paths are relative to the owning checkout, including when the declared root is a subdirectory. Log defaults to ten commits and no path restriction; `path` is relative to the declared root. Blame requires a file path and accepts `lines` in `start-end` form. A valid ordered pair restricts the range; absent, malformed or reversed text selects the whole file, matching RPCE's argument handling. Log replies retain commit IDs, authors, ISO dates, subjects and file/insertion/deletion totals. Blame replies retain line numbers, abbreviated IDs, authors, ISO dates and content.
+
+Queries resolve the owning checkout and retain worktree/Git-directory identities before and after execution. Path-bearing requests pass workspace policy checks. The existing process supervisor owns execution, cancellation and child settlement. Git hooks, filesystem monitors and Git network-fetch paths are disabled. Log and blame disable Git's textconv path. Status applies repository-local clean/process filters, which can execute configured programs; repository Git configuration must be trusted. Invalid UTF-8 output fails with `gitOutputUndecodable`; failed commands return `gitQueryFailed`. For malformed status records, `gitStatusMalformed` includes RPCE's diagnostic. The complete encoded result must fit `maxOutputBytes`, otherwise it returns `outputBudgetTooSmall` and the required byte count.
+
 ### Search and output budgets
 
 Search modes are `path`, `content`, and `both`. Literal/PCRE2 queries retain whitespace. MCP and Pi discovery-agent inputs default to literal content search with case-insensitive substring matching, empty filters, zero context, non-count-only output, and a null continuation. Glob queries default to path mode and use case-sensitive `path.posix.matchesGlob` semantics with neither text-query flag. Root, directory-prefix, include/exclude-glob, and extension filters run over admitted inventory paths before acquisition.
@@ -179,7 +185,7 @@ The `mcpServers` object requires at least one server. Server names start with an
 
 MCP OAuth state is stored in `mcp-auth.json` and server logging notifications in `mcp.log` under the private directory. CLI/MCP hosts exclude that directory and the declared/physical targets of `mcp.json` and `mcp-auth.json` from source access. Library hosts must include those paths in `credentialPaths`.
 
-Configured discovery can call the selected MCP tools and the seven smip tools. A failed tool-availability check prevents the next model request and fails discovery with `mcpToolsUnavailable`. Interactive sign-in must precede jobs; the worker never opens a login browser. Source access, draft mutation, budget enforcement and publication remain subject to smip's workspace and draft contracts.
+Configured discovery can call the selected MCP tools and the exposed smip context tools. A failed tool-availability check prevents the next model request and fails discovery with `mcpToolsUnavailable`. Interactive sign-in must precede jobs; the worker never opens a login browser. Source access, draft mutation, budget enforcement and publication remain subject to smip's workspace and draft contracts.
 
 `DiscoveryReceipt.mcp` is `null` when MCP is disabled. Otherwise it records the admitted file's raw-byte `configSHA256`, authorized server/tool names and hashed endpoint URLs. Readiness `ready` records the first successful availability check, registered tool names in `tools` and a digest of their declarations in `declarationSHA256`; `unavailable` records a failed check. Shutdown `dispatched` means the shutdown event returned with no observed handler failure; `handlerFailed` records an observed handler failure. `notObserved` in either field means no corresponding observation was received.
 

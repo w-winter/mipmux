@@ -1,0 +1,317 @@
+[
+  {
+    "name": "empty",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": ""
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent",
+      "files": [],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "modified-rename-delete",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "warning: ignored preamble\ndiff --git a/Sources/One.swift b/Sources/One.swift\nindex 1111111..2222222 100644\n--- a/Sources/One.swift\n+++ b/Sources/One.swift\n@@ -1 +1 @@\n-old\n+new\ndiff --git \"a/Docs/Old Name.md\" \"b/Docs/New Name.md\"\nsimilarity index 100%\nrename from \"Docs/Old Name.md\"\nrename to \"Docs/New Name.md\"\ndiff --git a/Docs/Removed.md b/Docs/Removed.md\ndeleted file mode 100644\nindex 3333333..0000000\n--- a/Docs/Removed.md\n+++ /dev/null\n@@ -1 +0,0 @@\n-deleted"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\nDocs/Removed.md\t1\t-\tdeleted\nSources/One.swift\t1\t-\told\nSources/One.swift\t1\t+\tnew",
+      "files": [
+        {
+          "deletions": 0,
+          "hunks": [],
+          "insertions": 0,
+          "patch": "diff --git \"a/Docs/Old Name.md\" \"b/Docs/New Name.md\"\nsimilarity index 100%\nrename from \"Docs/Old Name.md\"\nrename to \"Docs/New Name.md\"",
+          "path": "Docs/New Name.md"
+        },
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-deleted",
+              "header": "@@ -1 +0,0 @@",
+              "newLines": 0,
+              "newStart": 0,
+              "oldLines": 1,
+              "oldStart": 1
+            }
+          ],
+          "insertions": 0,
+          "patch": "diff --git a/Docs/Removed.md b/Docs/Removed.md\ndeleted file mode 100644\nindex 3333333..0000000\n--- a/Docs/Removed.md\n+++ /dev/null\n@@ -1 +0,0 @@\n-deleted",
+          "path": "Docs/Removed.md"
+        },
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-old\n+new",
+              "header": "@@ -1 +1 @@",
+              "newLines": 1,
+              "newStart": 1,
+              "oldLines": 1,
+              "oldStart": 1
+            }
+          ],
+          "insertions": 1,
+          "patch": "diff --git a/Sources/One.swift b/Sources/One.swift\nindex 1111111..2222222 100644\n--- a/Sources/One.swift\n+++ b/Sources/One.swift\n@@ -1 +1 @@\n-old\n+new",
+          "path": "Sources/One.swift"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "mnemonic-prefix",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git i/Sources/One.swift w/Sources/One.swift\n--- i/Sources/One.swift\n+++ w/Sources/One.swift\n@@ -1 +1 @@\n-old\n+new\n"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\nSources/One.swift\t1\t-\told\nSources/One.swift\t1\t+\tnew",
+      "files": [
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-old\n+new\n",
+              "header": "@@ -1 +1 @@",
+              "newLines": 1,
+              "newStart": 1,
+              "oldLines": 1,
+              "oldStart": 1
+            }
+          ],
+          "insertions": 1,
+          "patch": "diff --git i/Sources/One.swift w/Sources/One.swift\n--- i/Sources/One.swift\n+++ w/Sources/One.swift\n@@ -1 +1 @@\n-old\n+new\n",
+          "path": "Sources/One.swift"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "unpaired-mnemonic",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git w/Sources/One.swift w/Sources/One.swift\n--- w/Sources/One.swift\n+++ w/Sources/One.swift\n@@ -1 +1 @@\n-old\n+new"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\nw/Sources/One.swift\t1\t-\told\nw/Sources/One.swift\t1\t+\tnew",
+      "files": [
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-old\n+new",
+              "header": "@@ -1 +1 @@",
+              "newLines": 1,
+              "newStart": 1,
+              "oldLines": 1,
+              "oldStart": 1
+            }
+          ],
+          "insertions": 1,
+          "patch": "diff --git w/Sources/One.swift w/Sources/One.swift\n--- w/Sources/One.swift\n+++ w/Sources/One.swift\n@@ -1 +1 @@\n-old\n+new",
+          "path": "w/Sources/One.swift"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "numbered-binary",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git 1/./Artifacts/Output.bin 2/./Artifacts/Output.bin\nindex 1111111..2222222 100644\nBinary files 1/./Artifacts/Output.bin and 2/./Artifacts/Output.bin differ"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent",
+      "files": [
+        {
+          "deletions": 0,
+          "hunks": [],
+          "insertions": 0,
+          "patch": "diff --git 1/./Artifacts/Output.bin 2/./Artifacts/Output.bin\nindex 1111111..2222222 100644\nBinary files 1/./Artifacts/Output.bin and 2/./Artifacts/Output.bin differ",
+          "path": "Artifacts/Output.bin"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "quoted-control-path",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git \"a/line\\tname.txt\" \"b/line\\tname.txt\"\n--- \"a/line\\tname.txt\"\n+++ \"b/line\\tname.txt\"\n@@ -1 +1 @@\n-a\n+b"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\nline\tname.txt\t1\t-\ta\nline\tname.txt\t1\t+\tb",
+      "files": [
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-a\n+b",
+              "header": "@@ -1 +1 @@",
+              "newLines": 1,
+              "newStart": 1,
+              "oldLines": 1,
+              "oldStart": 1
+            }
+          ],
+          "insertions": 1,
+          "patch": "diff --git \"a/line\\tname.txt\" \"b/line\\tname.txt\"\n--- \"a/line\\tname.txt\"\n+++ \"b/line\\tname.txt\"\n@@ -1 +1 @@\n-a\n+b",
+          "path": "line\tname.txt"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "octal-path",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git \"a/caf\\303\\251.txt\" \"b/caf\\303\\251.txt\"\n--- \"a/caf\\303\\251.txt\"\n+++ \"b/caf\\303\\251.txt\"\n@@ -1 +1 @@\n-old\n+new"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\ncafÃ©.txt\t1\t-\told\ncafÃ©.txt\t1\t+\tnew",
+      "files": [
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-old\n+new",
+              "header": "@@ -1 +1 @@",
+              "newLines": 1,
+              "newStart": 1,
+              "oldLines": 1,
+              "oldStart": 1
+            }
+          ],
+          "insertions": 1,
+          "patch": "diff --git \"a/caf\\303\\251.txt\" \"b/caf\\303\\251.txt\"\n--- \"a/caf\\303\\251.txt\"\n+++ \"b/caf\\303\\251.txt\"\n@@ -1 +1 @@\n-old\n+new",
+          "path": "cafÃ©.txt"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "multiple-hunks-and-no-newline",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git a/one.txt b/one.txt\n--- a/one.txt\n+++ b/one.txt\n@@ -3 +3 @@\n-old title\n\\ No newline at end of file\n+new title\n\\ No newline at end of file\n@@ -8,0 +9,2 @@\n+α\n+β\n"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\none.txt\t3\t-\told title\none.txt\t3\t+\tnew title\none.txt\t9\t+\tα\none.txt\t10\t+\tβ",
+      "files": [
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-old title\n\\ No newline at end of file\n+new title\n\\ No newline at end of file",
+              "header": "@@ -3 +3 @@",
+              "newLines": 1,
+              "newStart": 3,
+              "oldLines": 1,
+              "oldStart": 3
+            },
+            {
+              "content": "+α\n+β\n",
+              "header": "@@ -8,0 +9,2 @@",
+              "newLines": 2,
+              "newStart": 9,
+              "oldLines": 0,
+              "oldStart": 8
+            }
+          ],
+          "insertions": 3,
+          "patch": "diff --git a/one.txt b/one.txt\n--- a/one.txt\n+++ b/one.txt\n@@ -3 +3 @@\n-old title\n\\ No newline at end of file\n+new title\n\\ No newline at end of file\n@@ -8,0 +9,2 @@\n+α\n+β\n",
+          "path": "one.txt"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "malformed-header",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git a/one.txt b/one.txt\n--- a/one.txt\n+++ b/one.txt\n@@ malformed @@\n-dropped hunk\n+still counted\n@@ -2 +2 @@\n-good\n+better"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\none.txt\t0\t-\tdropped hunk\none.txt\t0\t+\tstill counted\none.txt\t2\t-\tgood\none.txt\t2\t+\tbetter",
+      "files": [
+        {
+          "deletions": 2,
+          "hunks": [
+            {
+              "content": "-good\n+better",
+              "header": "@@ -2 +2 @@",
+              "newLines": 1,
+              "newStart": 2,
+              "oldLines": 1,
+              "oldStart": 2
+            }
+          ],
+          "insertions": 2,
+          "patch": "diff --git a/one.txt b/one.txt\n--- a/one.txt\n+++ b/one.txt\n@@ malformed @@\n-dropped hunk\n+still counted\n@@ -2 +2 @@\n-good\n+better",
+          "path": "one.txt"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "carriage-return-content",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git a/one.txt b/one.txt\r\n--- a/one.txt\r\n+++ b/one.txt\r\n@@ -1 +1 @@\r\n-old\r\n+new\r\n"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent\none.txt\r\n---\t1\t-\told\r\none.txt\r\n---\t1\t+\tnew\r",
+      "files": [
+        {
+          "deletions": 1,
+          "hunks": [
+            {
+              "content": "-old\r\n+new\r\n",
+              "header": "@@ -1 +1 @@\r",
+              "newLines": 1,
+              "newStart": 1,
+              "oldLines": 1,
+              "oldStart": 1
+            }
+          ],
+          "insertions": 1,
+          "patch": "diff --git a/one.txt b/one.txt\r\n--- a/one.txt\r\n+++ b/one.txt\r\n@@ -1 +1 @@\r\n-old\r\n+new\r\n",
+          "path": "one.txt\r\n---"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  },
+  {
+    "name": "copy-only",
+    "input": {
+      "kind": "parseGitPatch",
+      "text": "diff --git a/old.txt b/new.txt\nsimilarity index 100%\ncopy from old.txt\ncopy to new.txt\n"
+    },
+    "expected": {
+      "changedLinesTsv": "path\tline_number\tchange_type\tcontent",
+      "files": [
+        {
+          "deletions": 0,
+          "hunks": [],
+          "insertions": 0,
+          "patch": "diff --git a/old.txt b/new.txt\nsimilarity index 100%\ncopy from old.txt\ncopy to new.txt\n",
+          "path": "new.txt"
+        }
+      ],
+      "kind": "gitPatch"
+    }
+  }
+]

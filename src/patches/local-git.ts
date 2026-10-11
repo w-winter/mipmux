@@ -23,7 +23,7 @@ function strict(bytes: Buffer): string {
     throw new WorkspaceFailure('invalidEncoding');
   }
 }
-async function directoryIdentity(path: string): Promise<RootIdentity> {
+export async function directoryIdentity(path: string): Promise<RootIdentity> {
   const canonicalPath = await realpath(path), info = await stat(canonicalPath, { bigint: true });
   if (!info.isDirectory()) throw new WorkspaceFailure('gitRepositoryChanged');
   return { declaredPath: path, canonicalPath, device: String(info.dev), inode: String(info.ino) };

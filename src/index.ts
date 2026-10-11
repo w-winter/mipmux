@@ -13,3 +13,5 @@ export { verifyBundle, verifyCurrentBundle } from './context/verify.js';
 export type { DiscoveryInput, DiscoveryOutcome, DiscoveryRunner, DiscoveryTools } from './discovery/runner.js';
 export type { ClientRuntime } from './runtime/client-runtime.js';
 export type { JobSnapshot } from './contracts/jobs.js';
+
+export { GitRequest, GitResult } from './contracts/git.js';

@@ -40,7 +40,7 @@ test('real isolated SDK has only scoped tools, observes same-model recovery and 
     assert.equal(provider.requests.length, 2);
     for (const recorded of provider.requests) {
       assert.equal(recorded.model, provider.config.model);
-      assert.deepEqual(recorded.tools.sort(), ['draft_inspect', 'draft_preview', 'draft_update', 'draft_validate', 'file_search', 'get_code_structure', 'get_file_tree', 'prompt', 'read_file'].sort());
+      assert.deepEqual(recorded.tools.sort(), ['draft_inspect', 'draft_preview', 'draft_update', 'draft_validate', 'file_search', 'git', 'get_code_structure', 'get_file_tree', 'prompt', 'read_file'].sort());
     }
     await writeFile(join(provider.directory, 'receipt.json'), JSON.stringify(result, null, 2));
   } finally { await supervisor.close(); await provider.close(); }

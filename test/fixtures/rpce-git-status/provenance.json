@@ -1,0 +1,36 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPromptVCS/GitStatusPorcelainV2Parser.swift",
+      "sha256": "cc62ac331691601b95fcc00d2b7813dddf9b2c8dc36221d2dcb782d7867612c7"
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitBlobIdentityModels.swift",
+      "sha256": "c275e0d0bc9f4952cc510bae937def39b0ae1dc31396d25c5c60d2bf20b6d067"
+    },
+    {
+      "path": "Sources/RepoPromptVCS/VCSModels.swift",
+      "sha256": "c9a2fb82b5071647a580ffc333672e09784cde7b1ae80d0549b73ea6b501fe37"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sha256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sha256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sha256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559"
+    }
+  ],
+  "bindings": [
+    "Execute the original status command/parser and provider formatter against captured process output.",
+    "Compile the original pure parser and status types outside app actor isolation; the work-count timing wrapper executes its supplied closure.",
+    "Worktree metadata, repository selection and multi-repository presentation remain separate source contracts."
+  ],
+  "cases": 14,
+  "generatorSHA256": "f9bdc301d2b718094ab0f6df67d0332f374a81591eb773b54e8be43db31970da"
+}

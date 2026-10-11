@@ -105,6 +105,7 @@ export class ClientRuntime {
             return await operation.getFileTree({ ...call.input, selection: selected?.draft.selectionProjection() ?? null }, encode);
           }
           case 'get_code_structure': return await operation.getCodeStructure({ ...call.input, selection: selected?.draft.selectionProjection() ?? null }, encode);
+          case 'git': return await operation.readGit(call.input, encode);
           case 'read_file': return await operation.readFile(call.input, encode);
           case 'file_search': return await operation.fileSearch(call.input, encode);
         }

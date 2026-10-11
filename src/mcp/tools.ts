@@ -4,6 +4,7 @@ import { fromJsonSchema, type McpServer, type ServerContext } from '@modelcontex
 import { WorkspaceSpec } from '../contracts/inventory.js';
 import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from '../contracts/context.js';
 import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, ScopedStructure, toolDescription } from '../contracts/exploration.js';
+import { GitInput, gitValidator } from '../contracts/git.js';
 import { Positive, TreeInput, ScopedTree } from '../contracts/discovery.js';
 import type { ClientRuntime } from '../runtime/client-runtime.js';
 import { toolResult, failureResult } from '../runtime/tool-result.js';
@@ -39,6 +40,11 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     (input, ctx) => {
       const request = scopedStructureValidator.Parse(scopedStructureValidator.Default({ ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }));
       return client().explore(input.workspaceId, { name: 'get_code_structure', input: request }, ctx.mcpReq.signal, input.draftId ?? null, toolResult);
+    });
+  register('git', Type.Object({ workspaceId: id, input: GitInput, ...budget }, closed),
+    (input, ctx) => {
+      const request = gitValidator.Parse(gitValidator.Default({ ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }));
+      return client().explore(input.workspaceId, { name: 'git', input: request }, ctx.mcpReq.signal, null, toolResult);
     });
   register('read_file', Type.Object({ workspaceId: id, input: ReadInput, ...budget }, closed),
     (input, ctx) => {

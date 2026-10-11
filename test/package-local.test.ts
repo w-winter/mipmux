@@ -51,7 +51,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'relocation-test', version: '1' });
   try {
-    await client.connect(transport); assert.equal((await client.listTools()).tools.length, 18);
+    await client.connect(transport); assert.equal((await client.listTools()).tools.length, 19);
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'relocation', request: {
       task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'packet', budgetUnits: 10000 } }));

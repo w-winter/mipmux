@@ -1,0 +1,297 @@
+[
+  {
+    "name": "tracking-and-rename",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "# branch.oid 0123456789012345678901234567890123456789\u0000# branch.head feature/status-v2\u0000# branch.upstream origin/feature/status-v2\u0000# branch.ab +3 -2\u00001 M. N... 100644 100644 100644 aaaaaaa bbbbbbb Staged.txt\u00001 .M S.M. 160000 160000 160000 ccccccc ddddddd Submodule\u00002 R. N... 100644 100644 100644 eeeeeee fffffff R100 New Name.txt\u0000Old Name.txt\u0000? Untracked File.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatus",
+      "status": {
+        "ahead": 3,
+        "behind": 2,
+        "branch": "feature/status-v2",
+        "modified": [
+          "Submodule"
+        ],
+        "staged": [
+          "New Name.txt",
+          "Staged.txt"
+        ],
+        "summary": "feature/status-v2 | +3 -2 | 2 staged, 1 modified, 1 untracked",
+        "untracked": [
+          "Untracked File.txt"
+        ],
+        "upstream": "origin/feature/status-v2"
+      }
+    }
+  },
+  {
+    "name": "unstaged-rename-and-copy",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "2 .R N... 100644 100644 100644 aaaaaaa bbbbbbb R100 Renamed.txt\u0000Original.txt\u00002 .C N... 100644 100644 100644 ccccccc ddddddd C100 Copied.txt\u0000Source.txt\u00002 C. N... 100644 100644 100644 eeeeeee fffffff C87 Staged Copy.txt\u0000Staged Source.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatus",
+      "status": {
+        "modified": [
+          "Copied.txt",
+          "Renamed.txt"
+        ],
+        "staged": [
+          "Staged Copy.txt"
+        ],
+        "summary": "1 staged, 2 modified",
+        "untracked": []
+      }
+    }
+  },
+  {
+    "name": "detached-and-unmerged",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "# branch.oid fedcba9876543210fedcba9876543210fedcba98\u0000# branch.head (detached)\u0000u UU N... 100644 100644 100644 100644 aaaaaaa bbbbbbb ccccccc Conflict.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatus",
+      "status": {
+        "modified": [
+          "Conflict.txt"
+        ],
+        "staged": [
+          "Conflict.txt"
+        ],
+        "summary": "1 staged, 1 modified",
+        "untracked": []
+      }
+    }
+  },
+  {
+    "name": "unborn-and-unusual-path",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "# branch.oid (initial)\u0000# branch.head main\u0000? é\tline\n.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatus",
+      "status": {
+        "branch": "main",
+        "modified": [],
+        "staged": [],
+        "summary": "main | 1 untracked",
+        "untracked": [
+          "é\tline\n.txt"
+        ]
+      }
+    }
+  },
+  {
+    "name": "malformed-tracked",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "1 M. incomplete\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 ordinary record"
+    }
+  },
+  {
+    "name": "ordinary-xy",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "1 MX N... 100644 100644 100644 aaaaaaa bbbbbbb File.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 tracked XY value"
+    }
+  },
+  {
+    "name": "overlong-xy",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "1 M.. N... 100644 100644 100644 aaaaaaa bbbbbbb File.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 XY length"
+    }
+  },
+  {
+    "name": "rename-xy",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "2 Z. N... 100644 100644 100644 aaaaaaa bbbbbbb R100 New.txt\u0000Old.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 tracked XY value"
+    }
+  },
+  {
+    "name": "modified-index-rename",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "2 M. N... 100644 100644 100644 aaaaaaa bbbbbbb R100 New.txt\u0000Old.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 tracked XY value"
+    }
+  },
+  {
+    "name": "modified-worktree-copy",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "2 .M N... 100644 100644 100644 aaaaaaa bbbbbbb C100 New.txt\u0000Old.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 tracked XY value"
+    }
+  },
+  {
+    "name": "invalid-score-prefix",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "2 R. N... 100644 100644 100644 aaaaaaa bbbbbbb M100 New.txt\u0000Old.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 rename/copy score"
+    }
+  },
+  {
+    "name": "mismatched-score-prefix",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "2 C. N... 100644 100644 100644 aaaaaaa bbbbbbb R100 New.txt\u0000Old.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 rename/copy score"
+    }
+  },
+  {
+    "name": "unmerged-xy",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "u M. N... 100644 100644 100644 100644 aaaaaaa bbbbbbb ccccccc Conflict.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: invalid porcelain-v2 unmerged XY value"
+    }
+  },
+  {
+    "name": "missing-rename-source",
+    "query": {
+      "op": "status"
+    },
+    "stdout": "2 R. N... 100644 100644 100644 aaaaaaa bbbbbbb R100 New.txt\u0000",
+    "expectedArguments": [
+      "status",
+      "--porcelain=v2",
+      "-z",
+      "--branch",
+      "--untracked-files=all"
+    ],
+    "expected": {
+      "kind": "gitStatusError",
+      "message": "Failed to parse VCS output: missing porcelain-v2 rename source path"
+    }
+  }
+]
