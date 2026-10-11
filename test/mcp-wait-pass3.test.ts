@@ -67,7 +67,7 @@ for (const scenario of ['timeout', 'abort'] as const) {
     try {
       const workspace = await call('workspace_declare', { spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } });
       assert(workspace && typeof workspace === 'object' && 'id' in workspace);
-      const job = await call('context_builder', { workspaceId: workspace.id, requestId: 'one', request: { task: 'Inspect', constraints: '', purpose: 'investigation',
+      const job = await call('context_builder', { workspaceId: workspace.id, requestId: 'one', request: { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
         requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
         allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true } } });
       assert(job && typeof job === 'object' && 'jobId' in job && typeof job.jobId === 'string'); await running.promise;

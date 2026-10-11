@@ -18,7 +18,7 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
   const signal = new AbortController().signal;
   let calls = 0;
   const runner: DiscoveryRunner = { run: async () => { calls++; throw new Error('Unexpected discovery dispatch'); } };
-  const request: ContextBuildRequest = { task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [],
+  const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
     documents: [], patches: [], allowance: { kind: 'net', units: contextBudgetUnits, method: 'utf8-21-over-80-v1', overheadReserved: true },
     discoveryHints: [], outputName: 'packet' };
   try {
@@ -64,7 +64,7 @@ test('client jobs deduplicate admission, isolate ids, reject unknown budgets and
   const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
-  const request: ContextBuildRequest = { task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [],
+  const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
     documents: [], patches: [], allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true },
     discoveryHints: [], outputName: 'packet' };
   try {
@@ -89,8 +89,7 @@ test('client jobs deduplicate admission, isolate ids, reject unknown budgets and
     assert.deepEqual(a.result(first.jobId), cancelled);
     const nextWorkspace = await a.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'root') }], exclusions: [], outputRoot: join(directory, 'out') }, signal);
     const manual = await a.createDraft(nextWorkspace.id, request, signal);
-    await a.update(manual.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff',
-      handoff: { clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] } } }, signal);
+    await a.update(manual.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] }) } }, signal);
     await a.closeWorkspace(nextWorkspace.id);
     assert.equal((await a.finalize(manual.id, signal)).kind, 'ready');
     assert.equal(a.inspect(manual.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }).kind, 'metadata');

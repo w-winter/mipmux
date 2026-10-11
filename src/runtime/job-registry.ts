@@ -83,6 +83,7 @@ export class JobRegistry {
       const pending = new Set<Promise<unknown>>();
       try {
         const outcome = await runner.run({ purpose: request.purpose, task: request.task, constraints: request.constraints,
+          enhancementMode: request.enhancementMode,
           initialContext: draft.initialContext(),
           hints: request.discoveryHints, roots: operation.snapshot.roots.map(root => root.name) }, {
           call: (call, signal, encode) => {

@@ -93,7 +93,7 @@ test('scout exploration normalizes concise inputs before crossing parent IPC', a
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   const calls: DiscoveryCall[] = [];
   try {
-    const result = await new PiRunner(provider.config, supervisor).run({ task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] },
+    const result = await new PiRunner(provider.config, supervisor).run({ enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] },
       { call: async call => { calls.push(call); return { kind: 'observed' }; } }, new AbortController().signal, () => {});
     assert.equal(result.kind, 'complete'); assert.equal(calls.length, requests.length);
     assert.deepEqual(calls[0], { name: 'get_file_tree', input: { view: 'files', depth: null, continuation: null, maxOutputBytes: 3000 } });

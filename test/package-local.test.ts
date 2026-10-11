@@ -51,9 +51,9 @@ test('local package audits resources and executes relocated library, native, CLI
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'relocation-test', version: '1' });
   try {
-    await client.connect(transport); assert.equal((await client.listTools()).tools.length, 16);
+    await client.connect(transport); assert.equal((await client.listTools()).tools.length, 17);
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'relocation', request: {
-      task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [],
+      task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'packet', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 10000, overheadReserved: true } } }));
     const result = await new Promise<string>((resolveResult, reject) => {
       execFile(process.execPath,
@@ -62,7 +62,7 @@ test('local package audits resources and executes relocated library, native, CLI
         });
     });
     const terminal = JSON.parse(result);
-    assert.equal(terminal.state, 'blocked'); assert.equal(terminal.discovery.acceptedRuns, 1);
+    assert.equal(terminal.state, 'ready'); assert.equal(terminal.discovery.acceptedRuns, 1);
     assert.equal(terminal.discovery.workerClosed, true); assert.equal(terminal.discovery.prompt, 'resolved');
     assert.equal(terminal.discovery.buildLockSHA256, receipt.buildLockSHA256);
     assert.equal(terminal.discovery.promptSHA256, createHash('sha256').update(promptBytes).digest('hex'));

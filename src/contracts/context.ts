@@ -66,9 +66,13 @@ export const Allowance = Type.Union([
   }, closed),
 ]);
 export type Allowance = Static<typeof Allowance>;
+/** Captured discovery instructions: replacement, original plus additions, or unchanged original. */
+export const PromptEnhancementMode = Type.Enum(['fullRewrite', 'augment', 'preserve']);
+export type PromptEnhancementMode = Static<typeof PromptEnhancementMode>;
 export const ContextBuildRequest = Type.Object({
   task: Type.String(),
   constraints: Type.String(),
+  enhancementMode: PromptEnhancementMode,
   purpose: Type.Enum(['planning', 'review', 'investigation']),
   requiredSources: Type.Array(SourceSelection),
   documents: Type.Array(DocumentInput),
@@ -78,13 +82,18 @@ export const ContextBuildRequest = Type.Object({
   outputName: Type.String({ pattern: '^(?!\\.{1,2}$)[^/\\u0000]+$' }),
 }, closed);
 export type ContextBuildRequest = Static<typeof ContextBuildRequest>;
-export const Handoff = Type.Object({
-  clarifiedTask: Type.String({ minLength: 1 }),
-  architecture: Type.String({ minLength: 1 }),
-  relationships: Type.Array(Type.String()),
-  ambiguities: Type.Array(Type.String()),
-}, closed);
-export type Handoff = Static<typeof Handoff>;
+const promptOperations = [
+  Type.Object({ op: Type.Literal('set'), text: Type.String() }, closed),
+  Type.Object({ op: Type.Literal('append'), text: Type.String() }, closed),
+  Type.Object({ op: Type.Literal('clear') }, closed),
+] as const;
+export const PromptRequest = Type.Union([
+  Type.Object({ op: Type.Literal('get'), maxOutputBytes: positive }, closed),
+  Type.Object({ ...promptOperations[0].properties, expectedRevision: SafeCount, maxOutputBytes: positive }, closed),
+  Type.Object({ ...promptOperations[1].properties, expectedRevision: SafeCount, maxOutputBytes: positive }, closed),
+  Type.Object({ ...promptOperations[2].properties, expectedRevision: SafeCount, maxOutputBytes: positive }, closed),
+]);
+export type PromptRequest = Static<typeof PromptRequest>;
 export const DraftUpdate = Type.Object({
   expectedRevision: SafeCount,
   maxOutputBytes: positive,
@@ -93,7 +102,9 @@ export const DraftUpdate = Type.Object({
     Type.Object({ kind: Type.Literal('remove'), source: SourcePath }, closed),
     Type.Object({ kind: Type.Literal('clearCodemaps') }, closed),
     Type.Object({ kind: Type.Literal('clearSources') }, closed),
-    Type.Object({ kind: Type.Literal('handoff'), handoff: Handoff }, closed),
+    Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[0].properties }, closed),
+    Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[1].properties }, closed),
+    Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[2].properties }, closed),
     Type.Object({ kind: Type.Literal('addDocument'), document: SuppliedDocument }, closed),
   ]),
 }, closed);
@@ -136,14 +147,14 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(2),
+  schemaVersion: Type.Literal(3),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,
   inventory: Type.Omit(InventorySnapshot, ['generation']),
   exclusions: Type.Array(Exclusion),
   deniedAbsolutePaths: Type.Array(Type.String({ pattern: '^/[^\\u0000]*$' })),
-  handoff: Handoff,
+  prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
   files: Type.Object({ context: SourceIdentity, handoff: SourceIdentity }, closed),
   accounting: Type.Object({

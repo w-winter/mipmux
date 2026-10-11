@@ -12,7 +12,7 @@ import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
-const input: DiscoveryInput = { task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] };
+const input: DiscoveryInput = { enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] };
 const digest = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 test('one runner snapshots configured prompt bytes per job and sees edits on the next job', async () => {
   let release!: () => void, entered!: () => void;

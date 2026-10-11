@@ -37,11 +37,11 @@ test('saved bundle reader rejects writerless FIFOs and settles cancellation with
   const proofs: unknown[] = [];
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
-    const draft = await workspace.createDraft({ task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }],
+    const draft = await workspace.createDraft({ task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }],
       documents: [], patches: [], discoveryHints: [], outputName: 'packet', allowance: { kind: 'net', units: 100000, method: 'utf8-21-over-80-v1', overheadReserved: true } }, signal);
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff: {
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({
       clarifiedTask: 'Inspect', architecture: 'Files', relationships: [], ambiguities: [],
-    } } }, signal);
+    }) } }, signal);
     const bundle = await draft.finalize(signal); assert(bundle.kind === 'ready');
     await draft.close(); await workspace.close();
     const directory = bundle.directory;

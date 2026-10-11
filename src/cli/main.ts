@@ -2,7 +2,7 @@
 import { isAbsolute } from 'node:path';
 import { parseArgs } from 'node:util';
 import Type from 'typebox';
-import { ContextBuildRequest, Handoff, SourceSelection } from '../contracts/context.js';
+import { ContextBuildRequest, SourceSelection } from '../contracts/context.js';
 import { WorkspaceSpec } from '../contracts/inventory.js';
 import { readValidator, treeValidator, searchValidator, structureValidator } from '../contracts/exploration.js';
 import { verifyBundle, verifyCurrentBundle } from '../context/verify.js';
@@ -14,7 +14,7 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 const closed = { additionalProperties: false };
 const RenderInput = Type.Object({ workspace: WorkspaceSpec, request: ContextBuildRequest }, closed);
 const BuildInput = Type.Object({ workspace: WorkspaceSpec, request: ContextBuildRequest, requestId: Type.String({ minLength: 1 }) }, closed);
-const DraftInput = Type.Object({ selections: Type.Array(SourceSelection), handoff: Handoff }, closed);
+const DraftInput = Type.Object({ selections: Type.Array(SourceSelection), prompt: Type.String() }, closed);
 const maximumNodeTimerDelayMs = 2147483647;
 
 async function main(): Promise<void> {
@@ -108,7 +108,7 @@ async function main(): Promise<void> {
               mutation: { kind: 'upsert', selection: item } }, abort.signal)).revision;
           }
           await client.update(draft.id, { expectedRevision: revision, maxOutputBytes: config.defaultMaxOutputBytes,
-            mutation: { kind: 'handoff', handoff: selection.handoff } }, abort.signal);
+            mutation: { kind: 'prompt', op: 'set', text: selection.prompt } }, abort.signal);
           const finalized = await client.finalize(draft.id, abort.signal); result = finalized;
           if (finalized.kind !== 'ready') process.exitCode = 2;
           break;

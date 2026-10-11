@@ -49,7 +49,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot }, new AbortController().signal);
     await client.refresh(workspace.id, new AbortController().signal);
     armed = true;
-    const request: ContextBuildRequest = { task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [],
+    const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], allowance: { kind: 'net', units: 10000, method: 'utf8-21-over-80-v1', overheadReserved: true }, outputName: 'packet' };
     const job = client.build(workspace.id, 'held-read', request);
     await holding;

@@ -1508,6 +1508,36 @@
         "qualification of CodeMapGenerator helpers"
       ],
       "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift",
+      "changes": [
+        "Retain discovery factory, review detection and timeout formatter; omit unrelated app/agent methods.",
+        "Bind SyntaxManager language catalog to the retained CodeMapSyntaxEngine catalog.",
+        "Remove app diagnostic print so native JSON Lines stdout contains protocol frames only.",
+        "Scope SwiftLint length exceptions to copied prompt literals and reference branch layout; do not reflow policy text.",
+        "Extract the unchanged ordered-workflow guidance block to a private function to satisfy the staging complexity rule; preserve all literal text and branches.",
+        "Encode five literal tabs as Swift tab escapes to satisfy Git whitespace checks without changing rendered text."
+      ],
+      "sha256": "2abc61492830f00daf39f5b292eea560bcce00d0e3d28ed2d3843a1747cec203",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          7,
+          607
+        ],
+        [
+          1091,
+          1137
+        ],
+        [
+          1277,
+          1287
+        ]
+      ]
     }
   ],
   "dependencies": [
@@ -5188,6 +5218,30 @@
       "line": 2701,
       "name": "containsWhitespace",
       "destination": "native/Sources/RepoPromptCodeMapCore/Extraction/CodeMapGenerator+Support.swift"
+    },
+    {
+      "name": "static func discoverPrompt",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
+      "line": 15
+    },
+    {
+      "name": "private static func mcpDiscoverPrompt",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
+      "line": 30
+    },
+    {
+      "name": "private static func shouldUseReviewModeGuidance",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
+      "line": 1091
+    },
+    {
+      "name": "static func formatTimeout",
+      "destination": "native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
+      "line": 1279
     }
   ],
   "sourceCoverage": [

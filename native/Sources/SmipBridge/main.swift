@@ -26,6 +26,7 @@ func serve() throws {
             do {
                 let result: [String: Any] = switch request.operation {
                 case .describe: try extraction.describe()
+                case let .renderDiscoveryPrompt(input): input.render()
                 case let .openRoots(roots): try files.openRoots(roots)
                 case let .listDirectory(root, path): try files.list(root, path: path, request: request)
                 case let .readSource(root, path, expected): try files.readSource(root, path: path, expected: expected, request: request, extraction: extraction)

@@ -1,0 +1,20 @@
+{
+  "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
+  "factory": "SystemPromptService.discoverPrompt",
+  "inputs": {
+    "tokenBudget": 198500,
+    "runtime": "codexExec",
+    "allowClarifyingQuestions": false,
+    "responseType": "review",
+    "instructions": null
+  },
+  "catalog": "__SUPPORTED_LANGUAGES__",
+  "origin": "Unmodified source rendering from the successful macOS/Linux portability probe, not smip output.",
+  "modes": [
+    "fullRewrite",
+    "augment",
+    "preserve"
+  ]
+}

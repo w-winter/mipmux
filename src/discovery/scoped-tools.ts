@@ -13,6 +13,7 @@ export async function scopedCall(call: DiscoveryCall, draft: DraftRuntime, opera
     case 'read_file': return operation.readFile(call.input, encode);
     case 'draft_update': return draft.update(call.input, signal, encode);
     case 'draft_inspect': return draft.inspect(call.input, encode);
+    case 'prompt': return draft.prompt(call.input, signal, encode);
     case 'draft_validate': {
       const result = await draft.validate(signal);
       return pageResult(result.costs, 0, call.input.maxOutputBytes, (costs, next) => ({ ...result, costs,

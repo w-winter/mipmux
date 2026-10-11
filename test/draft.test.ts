@@ -19,7 +19,7 @@ const handoff = {
 const request: ContextBuildRequest = {
   task: 'Original task',
   constraints: '',
-  purpose: 'planning',
+  enhancementMode: 'augment' as const, purpose: 'planning',
   requiredSources: [],
   documents: [],
   patches: [],
@@ -99,7 +99,7 @@ test('complete documents added during curation count toward the recipient allowa
     const workspace = await runtime.declare(f.spec, signal());
     const draft = await workspace.createDraft({ ...request, outputName: 'oversized-document',
       allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1000, overheadReserved: true } }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const text = 'Complete fetched document\r\n'.repeat(1000);
     const update = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000,
       mutation: { kind: 'addDocument', document: { kind: 'suppliedDocument', id: 'large', role: 'evidence', origin: 'fixture', text } } }, signal());
@@ -129,7 +129,7 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
     const changes = [{ kind: 'upsert' as const, selection: slices }, {
       kind: 'upsert' as const,
       selection: { kind: 'codemap' as const, source: { root: 'r', path: 'a.swift' } },
-    }, { kind: 'handoff' as const, handoff }];
+    }, { kind: 'prompt' as const, op: 'append' as const, text: '\n\n' + JSON.stringify(handoff) }];
     for (const [index, mutation] of changes.entries()) {
       await a.update({ expectedRevision: index, maxOutputBytes: 10000, mutation }, signal());
     }
@@ -149,7 +149,7 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
       a.update({
         expectedRevision: 3,
         maxOutputBytes: 1,
-        mutation: { kind: 'handoff', handoff: { ...handoff, architecture: 'changed' } },
+        mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, architecture: 'changed' }) },
       }, signal()),
       /outputBudgetTooSmall/,
     );
@@ -188,14 +188,14 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
       allowance: { ...request.allowance!, kind: 'net', method: 'utf8-21-over-80-v1', units: 1, overheadReserved: true },
     }, signal());
     await limited.update(
-      { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } },
+      { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
       signal(),
     );
     assert.equal((await limited.finalize(signal())).kind, 'blocked');
     await limited.update({
       expectedRevision: 1,
       maxOutputBytes: 10000,
-      mutation: { kind: 'handoff', handoff: { ...handoff, clarifiedTask: 'short' } },
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, clarifiedTask: 'short' }) },
     }, signal());
     await limited.close();
     const required = await workspace.createDraft({
@@ -318,7 +318,7 @@ test('cancellation and revision changes during preparation prevent late commits;
     await refused;
     assert.equal(draft.revision, 0);
     await draft.update(
-      { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } },
+      { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
       signal(),
     );
     const before = new AbortController();
@@ -377,7 +377,7 @@ test('minimum mutation receipts commit omitted item costs but reject before comm
     assert.deepEqual(result.costInspection, { draftId: draft.id, revision: 1 });
     const costs = draft.inspect({ view: 'costs', continuation: null, maxOutputBytes: 10000 });
     assert(costs.kind === 'costs'); assert.equal(costs.items.length, 1);
-    const handoffResult = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+    const handoffResult = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     assert.equal(handoffResult.incompleteDetails, false);
     assert.deepEqual(handoffResult.changedCosts, []);
     assert.throws(() => draft.inspect({ view: 'material', materialId: 'missing', continuation: null, maxOutputBytes: 10000 }), /materialUnavailable/);
@@ -410,7 +410,9 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
     }
     const runtime = new Runtime(f.options);
     try {
-      const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft(request, signal());
+      const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft({
+        ...request, allowance: scenario === 'freeze' ? null : request.allowance,
+      }, signal());
       pause = true;
       const pending = draft.update({
         expectedRevision: 0,
@@ -421,7 +423,7 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
       await entered.promise;
       if (scenario === 'freeze') assert.equal((await draft.finalize(signal())).kind, 'blocked');
       else {await draft.update(
-          { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } },
+          { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
           signal(),
         );}
       resume.release();
@@ -436,7 +438,7 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
   }
 });
 
-test('bounded metadata inspection exposes unset or complete committed handoff and invalidates old pages', async () => {
+test('bounded metadata inspection exposes the current literal prompt and invalidates old pages', async () => {
   const f = await fixture(), runtime = new SmipRuntime(f.options);
   try {
     const client = runtime.createClient(null), other = runtime.createClient(null);
@@ -445,21 +447,20 @@ test('bounded metadata inspection exposes unset or complete committed handoff an
     const inspect = (maxOutputBytes: number, continuation: { digest: string; offset: number } | null = null) =>
       client.inspect(draft.id, { view: 'metadata', maxOutputBytes, continuation });
     const unset = inspect(10000); assert(unset.kind === 'metadata');
-    assert.deepEqual(unset.items.at(-1), { kind: 'handoff', state: 'unset' }); assert.equal(unset.revision, 0);
-    await client.update(draft.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff',
-      handoff: { ...handoff, architecture: 'old'.repeat(500) } } }, signal());
+    assert.deepEqual(unset.items.at(-1), { kind: 'prompt', prompt: request.task }); assert.equal(unset.revision, 0);
+    await client.update(draft.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, architecture: 'old'.repeat(500) }) } }, signal());
     const committed = inspect(10000); assert(committed.kind === 'metadata');
     const cap = Buffer.byteLength(JSON.stringify({ ...committed, items: committed.items.slice(0, 1), truncated: true,
       continuation: { digest: '0'.repeat(64), offset: 1 } }));
     const page = inspect(cap); assert(page.kind === 'metadata' && page.continuation);
     const value = { clarifiedTask: 'complete clarification', architecture: 'architecture'.repeat(200), relationships: ['A uses B', 'C owns D'], ambiguities: ['one', 'two'] };
-    await client.update(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff: value } }, signal());
+    await client.update(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'set', text: JSON.stringify(value) } }, signal());
     assert.throws(() => inspect(10000, page.continuation), /staleContinuation/);
     assert.equal(inspect(cap).kind, 'metadata');
     const first = inspect(cap); assert(first.kind === 'metadata' && first.continuation);
     const oversized = inspect(cap, first.continuation); assert.equal(oversized.kind, 'recordTooLarge');
     const recovered = inspect(10000, first.continuation); assert(recovered.kind === 'metadata');
-    assert.equal(recovered.revision, 2); assert.deepEqual(recovered.items, [{ kind: 'handoff', state: 'set', handoff: value }]);
+    assert.equal(recovered.revision, 2); assert.deepEqual(recovered.items, [{ kind: 'prompt', prompt: JSON.stringify(value) }]);
     assert.throws(() => other.inspect(draft.id, { view: 'metadata', maxOutputBytes: 10000, continuation: null }), /unknownDraft/);
     await writeFile(join(f.base, 'handoff-inspection-proof.json'), JSON.stringify({ unset, oversized, recovered }) + '\n');
     await client.close(); await other.close();

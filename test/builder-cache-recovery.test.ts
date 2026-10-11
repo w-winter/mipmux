@@ -22,7 +22,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   const options = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [config], nativeEnvironment: {},
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
-  const request: ContextBuildRequest = { task: 'Task', constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [],
+  const request: ContextBuildRequest = { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
     discoveryHints: [], outputName: 'packet', allowance: { kind: 'net', units: 100000, method: 'utf8-21-over-80-v1', overheadReserved: true } };
   await writeFile(config, JSON.stringify({ ...options, search: null, git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   try { await exercise(); } finally { await provider.close(); }
@@ -68,7 +68,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
     assert.deepEqual(client.result(job.jobId), failed);
     await invalidate(() => runtime.artifacts.invalidate(key));
     const reconciled = await client.wait(client.build(workspace.id, 'two', { ...request, outputName: 'two' }).jobId, 20000, signal(), () => {});
-    assert.equal(reconciled.state, 'blocked');
+    assert.equal(reconciled.state, 'ready');
     proof.library = failed;
     await client.close();
   } finally { await runtime.close(); }
@@ -92,7 +92,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
     await invalidate(() => promisify(execFile)(process.execPath, [command, 'cache', 'invalidate', '--kind', 'artifact', '--key', key, '--config', config], { cwd: '/' }));
     const second = JSON.parse(JSON.stringify((await mcp.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'two', request: { ...request, outputName: 'mcp-two' } } })).structuredContent));
     const reconciled = JSON.parse(JSON.stringify((await mcp.callTool({ name: 'context_builder_wait', arguments: { jobId: second.jobId, durationMs: 20000 } })).structuredContent));
-    assert.equal(reconciled.state, 'blocked');
+    assert.equal(reconciled.state, 'ready');
     proof.mcp = waited;
   } finally { await mcp.close(); }
 
@@ -112,8 +112,8 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   await invalidate(async () => assert.equal((await cli(['cache', 'invalidate', '--kind', 'artifact', '--key', key, '--config', config])).code, 0));
   await writeFile(build, JSON.stringify({ workspace: spec, request: { ...request, outputName: 'cli-two' }, requestId: 'two' }));
   const reconciled = await cli(['build', '--request', build, '--config', config]);
-  assert.equal(reconciled.code, 2, reconciled.out);
-  assert.equal(JSON.parse(reconciled.out).state, 'blocked');
+  assert.equal(reconciled.code, 0, reconciled.out);
+  assert.equal(JSON.parse(reconciled.out).state, 'ready');
   proof.cli = receipt;
   await writeFile(join(base, 'cache-recovery-proof.json'), JSON.stringify(proof) + '\n');
   }

@@ -64,7 +64,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
     const request: ContextBuildRequest = {
       task: 'Review patch',
       constraints: '',
-      purpose: 'review',
+      enhancementMode: 'augment' as const, purpose: 'review',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'text.txt' } }, {
         kind: 'codemap',
         source: { root: 'r', path: 'model.swift' },
@@ -101,10 +101,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
     await draft.update({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: {
-        kind: 'handoff',
-        handoff: { clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] },
-      },
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) },
     }, signal());
     const result = await draft.finalize(signal());
     if (result.kind !== 'ready') assert.fail(JSON.stringify(result));
@@ -208,10 +205,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
     await matching.update({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: {
-        kind: 'handoff',
-        handoff: { clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] },
-      },
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) },
     }, signal());
     assert.equal((await matching.finalize(signal())).kind, 'ready');
     await matching.close();

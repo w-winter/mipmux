@@ -10,6 +10,7 @@ const resultKinds = {
   readSource: ['sourceComplete'], extract: ['extracted', 'unsupportedExtension'],
   beginExport: ['exportOpened'], writeExport: ['exportWritten'], readExport: ['exportRead'],
   publishManifest: ['manifestPublished'],
+  renderDiscoveryPrompt: ['discoveryPrompt'],
 } as const satisfies Record<NativeOperation['kind'], readonly NativeResult['kind'][]>;
 type ResultByOperation = { [K in NativeOperation['kind']]: Extract<NativeResult, { kind: typeof resultKinds[K][number] }> };
 export interface NativeReply<K extends NativeOperation['kind'] = NativeOperation['kind']> {

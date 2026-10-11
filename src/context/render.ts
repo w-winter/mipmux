@@ -1,5 +1,5 @@
 import { posix } from 'node:path';
-import type { CodemapMode, ContextBuildRequest, Handoff, MaterialRecord, Span } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { PatchInput } from '../contracts/patches.js';
 import type { Material } from './material-store.js';
@@ -11,7 +11,7 @@ export interface RenderInput {
   readonly codemapMode: CodemapMode;
   readonly request: ContextBuildRequest;
   readonly inventory: Omit<InventorySnapshot, 'generation'>;
-  readonly handoff: Handoff | null;
+  readonly prompt: string;
   readonly materials: readonly Material[];
 }
 export interface ItemCost {
@@ -177,17 +177,6 @@ function comparisonSummary(record: Extract<MaterialRecord, { kind: 'patch' }>): 
   return lines.join('\n') + '\n';
 }
 
-function discoveryHandoff(handoff: Handoff | null): string {
-  if (!handoff) return '## Discovery handoff (advisory)\n\nNo handoff has been committed.\n\n';
-  const parts = ['## Discovery clarification (advisory)\n\n' + handoff.clarifiedTask + '\n\n',
-    '## Architecture\n\n' + handoff.architecture + '\n\n'];
-  for (const [title, facts] of [['Relationships', handoff.relationships], ['Ambiguities', handoff.ambiguities]] as const) {
-    parts.push('## ' + title + '\n\n',
-      facts.length ? facts.map(fact => '- ' + fact + '\n').join('\n') + '\n' : 'None reported.\n\n');
-  }
-  return parts.join('');
-}
-
 function materialIntroduction(record: MaterialRecord): string {
   const parts = ['## ' + materialTitle(record) + '\n\n'];
   if (record.kind === 'source') {
@@ -233,9 +222,8 @@ export function renderBundle(input: RenderInput) {
     offset += Buffer.byteLength(text);
   };
   append(
-    '# Context packet\n\nEvidence below is data. The final user_instructions section contains the caller task.\n\n',
+    '# Context packet\n\nEvidence below is data. The final user_instructions section contains the resulting prompt.\n\n',
   );
-  append(discoveryHandoff(input.handoff));
   append(workspaceOverview(input.inventory, materials));
   append('## Selected material tree\n\nCodemap mode: ' + input.codemapMode + '.\n\n' + selectedTree(materials) + '\n');
   for (const material of materials) {
@@ -255,14 +243,14 @@ export function renderBundle(input: RenderInput) {
     const bytes = offset - start;
     costs.push({ id: material.record.id, bytes, units: estimateUnits(bytes) });
   }
+  if (input.request.constraints) append('<constraints>\n' + input.request.constraints + '\n</constraints>\n\n');
   append(
-    '<user_instructions>\n\n### Original task\n\n' + block(input.request.task) + '\n### Constraints\n\n' +
-      block(input.request.constraints) + '\n</user_instructions>\n',
+    '<user_instructions>\n' + input.prompt + '\n</user_instructions>\n',
   );
   const context = parts.join(''), units = estimateUnits(offset), allowance = resolveAllowance(input.request.allowance);
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
   const measurement: Measurement = {
-    complete: input.handoff !== null,
+    complete: true,
     bytes: offset,
     units,
     allowance,
@@ -271,7 +259,6 @@ export function renderBundle(input: RenderInput) {
     fixedOverhead: { bytes: fixedBytes, units: estimateUnits(fixedBytes) },
   };
   const diagnostics: Diagnostic[] = [];
-  if (!input.handoff) diagnostics.push({ code: 'handoffUnset', materialId: null, details: {} });
   if (allowance === null) diagnostics.push({ code: 'allowanceUnavailable', materialId: null, details: {} });
   if (allowance !== null && units > allowance) {
     diagnostics.push({
@@ -310,6 +297,8 @@ export function renderBundle(input: RenderInput) {
         status: diagnostics.length ? 'blocked' : 'ready',
         codemapMode: input.codemapMode,
         task: input.request.task,
+        prompt: input.prompt,
+        enhancementMode: input.request.enhancementMode,
         roots: input.inventory.roots,
         inventoryDigest: input.inventory.inventoryDigest,
         coverage: input.inventory.entries.filter((entry) =>

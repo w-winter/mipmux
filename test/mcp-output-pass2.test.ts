@@ -126,12 +126,11 @@ test('production stdio shutdown waits for real claimed publication before closin
   try {
     const workspace = await call('workspace_declare', { spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } });
     assert(workspace && typeof workspace === 'object' && 'id' in workspace);
-    const draft = await call('draft_create', { workspaceId: workspace.id, request: { task: 'Task', constraints: '', purpose: 'review',
+    const draft = await call('draft_create', { workspaceId: workspace.id, request: { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'review',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
       allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 10000, overheadReserved: true } } });
     assert(draft && typeof draft === 'object' && 'id' in draft);
-    await call('draft_update', { draftId: draft.id, input: { expectedRevision: 0, mutation: { kind: 'handoff',
-      handoff: { clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] } } } });
+    await call('draft_update', { draftId: draft.id, input: { expectedRevision: 0, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] }) } } });
     wire.onmessage?.({ jsonrpc: '2.0', id: ++id, method: 'tools/call', params: { _meta: meta, name: 'draft_finalize', arguments: { draftId: draft.id } } });
     await published.promise;
     let closed = false; const closing = host.close().then(() => { closed = true; });

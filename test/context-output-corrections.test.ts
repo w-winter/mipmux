@@ -13,7 +13,7 @@ import { canonicalJSON, sha256 } from '../src/workspace/values.js';
 
 const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Inspect exact evidence', architecture: 'Synthetic files', relationships: [], ambiguities: [] };
-const request: ContextBuildRequest = { task: 'Complete task', constraints: 'Complete evidence', purpose: 'review',
+const request: ContextBuildRequest = { task: 'Complete task', constraints: 'Complete evidence', enhancementMode: 'augment' as const, purpose: 'review',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
   allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1000000, overheadReserved: true } };
 async function fixture() {
@@ -40,7 +40,7 @@ test('integrity rejects tampered spans and malformed text even when outer file i
       source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: 'middle' }] }],
       documents: [{ kind: 'suppliedDocument', id: 'a', role: 'plan', origin: 'fixture', text: 'PLAN\n' },
         { kind: 'suppliedDocument', id: 'b', role: 'report', origin: 'fixture', text: 'REPORT\n' }] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const result = await draft.finalize(signal()); assert(result.kind === 'ready');
     const manifestPath = join(result.directory, 'manifest.json'), contextPath = join(result.directory, 'context.md');
     const saved = await readFile(manifestPath), context = await readFile(contextPath);
@@ -114,7 +114,7 @@ test('large local comparison exports compact review metadata with complete patch
     const workspace = await f.runtime.declare(f.spec, signal());
     const draft = await workspace.createDraft({ ...request, patches: [{ kind: 'localPatch', id: 'change', root: 'r',
       comparison: { kind: 'worktree', base: { kind: 'commit', ref: base }, includeUntracked: true }, scope: { kind: 'all' } }] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const result = await draft.finalize(signal()); assert(result.kind === 'ready');
     await verifyBundle(result.directory); await verifyCurrentBundle(result.directory, f.runtime, signal());
     const context = await readFile(join(result.directory, 'context.md'));
@@ -143,7 +143,7 @@ test('current verification rejects self-consistent forged slices against the exa
       source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 3, description: 'middle' },
         { start: 1, end: 2, description: 'overlapping BOM' }, { start: 4, end: 4, description: 'adjacent' }] },
       { kind: 'full', source: { root: 'r', path: 'empty.txt' } }] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -168,7 +168,7 @@ test('current verification rejects self-consistent forged slices against the exa
         material.record.normalized = [{ start: 1, end }];
         manifest.request.requiredSources = [material.record.selection];
       }
-      const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff, materials });
+      const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials });
       manifest.requestDigest = sha256(canonicalJSON(manifest.request));
       manifest.materials = rendered.records;
       manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
@@ -194,7 +194,7 @@ test('integrity reestablishes supplied patch input and receipt agreement without
       patches: [{ kind: 'suppliedPatch', id: 'external', root: 'r', text: 'opaque complete patch\n', origin: 'fixture',
         comparison: { kind: 'supplied', base: 'before', target: 'after' }, coverage: ['source.txt'],
         targets: [{ path: 'source.txt', identity: identity('SOURCE\n'), mode: '100644' }] }] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     const originalContext = await readFile(join(ready.directory, 'context.md'));
     for (const scenario of ['targets', 'coverage', 'repository'] as const) {
@@ -217,7 +217,7 @@ test('integrity reestablishes supplied patch input and receipt agreement without
         const saved = await loadVerifiedBundle(ready.directory);
         const material = saved.materials.find(item => item.record.kind === 'patch'); assert(material);
         const materials = saved.materials.map(item => item === material ? { ...item, record: patch } : item);
-        const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff, materials });
+        const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials });
         manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
         manifest.accounting.bytes = rendered.measurement.bytes; manifest.accounting.units = rendered.measurement.units;
         await writeFile(join(ready.directory, 'context.md'), rendered.context); await writeFile(join(ready.directory, 'handoff.md'), rendered.handoff);
@@ -277,7 +277,7 @@ test('scoped and excluded Git comparisons ignore unrelated nonregular entries bu
         if (comparison.kind !== 'worktree') {
           const draft = await workspace.createDraft({ ...request, outputName: patch.id, patches: [patch],
             requiredSources: [{ kind: 'full', source: { root: 'r', path: 'support.txt' } }] }, signal());
-          await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, signal());
+          await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
           const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
           await verifyCurrentBundle(ready.directory, f.runtime, signal()); await draft.close();
           await writeFile(join(f.root, 'support.txt'), 'mismatch\n');

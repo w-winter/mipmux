@@ -12,7 +12,7 @@ test('public mixed packet preserves every original body and final task above ord
     const workspace = await runtime.declare(fixture.input.workspace, signal);
     const draft = await workspace.createDraft(fixture.input.request, signal);
     await draft.update({ expectedRevision: 0, maxOutputBytes: 12000,
-      mutation: { kind: 'handoff', handoff: fixture.handoff } }, signal);
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(fixture.handoff) } }, signal);
     const admittedPatch = draft.inspect({ view: 'material', materialId: 'patch:changes', maxOutputBytes: 12000, continuation: null });
     assert.equal(admittedPatch.kind, 'material');
     if (admittedPatch.kind !== 'material') assert.fail('Missing complete admitted patch');

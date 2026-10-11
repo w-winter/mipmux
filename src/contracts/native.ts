@@ -23,6 +23,12 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('writeExport'), run: handle, filename, bytes: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readExport'), run: handle, filename }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('publishManifest'), run: handle, bytes: base64 }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('renderDiscoveryPrompt'), tokenBudget: SafeCount,
+    runtime: Type.Enum(['codexExec', 'generic']), enhancementMode: Type.Enum(['fullRewrite', 'augment', 'preserve']),
+    allowClarifyingQuestions: Type.Boolean(), responseType: Type.Union([Type.String(), Type.Null()]),
+    instructions: Type.Union([Type.String(), Type.Null()]), questionTimeoutSeconds: SafeCount,
+    restrictsReviewGitToExplicitReadOnly: Type.Boolean(), reviewRootNames: Type.Array(Type.String()),
+  }, { additionalProperties: false }),
 ]);
 export type NativeOperation = Static<typeof NativeOperation>;
 export const NativeRequest = Type.Object({
@@ -40,6 +46,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('description'), decoderPolicy: Type.Literal('smip-strict-utf8-v1'),
     regexEngineFingerprint: SHA256,
     engine: Type.Object({ version: Type.String(), unicode: Type.String(), jitPolicy: Type.Union([Type.Literal('disabled'), Type.Literal('auto'), Type.Literal('required')]), jitCapability: Type.Boolean(), jitExecution: Type.Union([Type.Literal('disabled'), Type.Literal('compiled'), Type.Literal('unavailable')]) }, { additionalProperties: false }),

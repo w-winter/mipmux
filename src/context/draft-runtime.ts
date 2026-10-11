@@ -5,9 +5,10 @@ import {
   contextRequestValidator,
   type DraftInspection,
   type DraftUpdate,
-  type Handoff,
+  type PromptRequest,
   inspectionValidator,
   updateValidator,
+  PromptRequest as PromptRequestSchema,
 } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { SourcePath } from '../contracts/inventory.js';
@@ -29,13 +30,13 @@ import { resolveAllowance } from './budget.js';
 import { FinalizationOperation, type FinalizationResult } from './finalize.js';
 import { StructureIndex } from '../workspace/structure-index.js';
 import { failureCode } from '../runtime/tool-result.js';
+import { Compile } from 'typebox/compile';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
 
-type HandoffInspection =
-  | { readonly kind: 'handoff'; readonly state: 'unset' }
-  | { readonly kind: 'handoff'; readonly state: 'set'; readonly handoff: Handoff };
+const promptValidator = Compile(PromptRequestSchema);
+type SourceMutation = Exclude<DraftUpdate['mutation'], { kind: 'prompt' | 'addDocument' }>;
 
 export class DraftRuntime {
   readonly id = randomUUID();
@@ -46,7 +47,7 @@ export class DraftRuntime {
   readonly #cancel = new AbortController();
   #revision = 0;
   #freezeGeneration = 0;
-  #handoff: Handoff | null = null;
+  #prompt: string;
   #state: 'editable' | 'frozen' | 'terminal' = 'editable';
   #finalization: FinalizationOperation | null = null;
   #finalized: Promise<FinalizationResult> | null = null;
@@ -57,6 +58,7 @@ export class DraftRuntime {
     private readonly onClosed: () => void,
   ) {
     this.#codemapMode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : 'automatic';
+    this.#prompt = request.task;
   }
   get revision(): number {
     return this.#revision;
@@ -121,6 +123,23 @@ export class DraftRuntime {
     if (!updateValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
     return this.#track(this.#update(structuredClone(input), signal, encode));
   }
+  /** Literal prompt operations share revision and receipt admission with material mutations. */
+  async prompt(input: PromptRequest, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    if (!promptValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
+    const request = structuredClone(input);
+    this.#check(signal, request.op === 'get' ? this.#revision : request.expectedRevision);
+    if (request.op === 'get') {
+      const result = { kind: 'prompt' as const, op: request.op, revision: this.#revision, prompt: this.#prompt };
+      const requiredBytes = serializedBytes(encode(result));
+      if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
+      return freeze(result);
+    }
+    const { expectedRevision, maxOutputBytes, ...mutation } = request;
+    const update = { expectedRevision, maxOutputBytes, mutation: { kind: 'prompt' as const, ...mutation } };
+    const prompt = request.op === 'clear' ? '' : request.op === 'append' ? this.#prompt + request.text : request.text;
+    const result = await this.#track(this.#update(update, signal, encode, { op: request.op, prompt }));
+    return freeze({ kind: 'prompt' as const, op: request.op, revision: result.revision, prompt });
+  }
   async #derive(operation: WorkspaceOperation, explicit: Map<string, Material>, mode: CodemapMode,
     previous: ReadonlyMap<string, Material>, revision: number): Promise<ReadonlyMap<string, Material>> {
     if (mode === 'manual') return explicit;
@@ -151,59 +170,39 @@ export class DraftRuntime {
       throw error;
     }
   }
-  async #update(input: DraftUpdate, signal: AbortSignal, encode: ResultEncoding) {
+  async #update(input: DraftUpdate, signal: AbortSignal, encode: ResultEncoding,
+    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null = null) {
     this.#check(signal, input.expectedRevision);
     const freezeGeneration = this.#freezeGeneration, current = this.#materials;
     const mutation = input.mutation;
-    let next: ReadonlyMap<string, Material> = current, mode = this.#codemapMode, handoff = this.#handoff;
+    let next: ReadonlyMap<string, Material> = current, mode = this.#codemapMode, prompt = this.#prompt;
     if (mutation.kind === 'addDocument') {
       const id = 'document:' + mutation.document.id;
       if (current.has(id)) throw new WorkspaceFailure('duplicateMaterial', { id });
       const prepared = await acquireDocument(this.operation, mutation.document);
       next = new Map(current).set(id, prepared);
-    } else if (mutation.kind === 'handoff') {
-      strictText(mutation.handoff.clarifiedTask);
-      strictText(mutation.handoff.architecture);
-      mutation.handoff.relationships.forEach(strictText);
-      mutation.handoff.ambiguities.forEach(strictText);
-      handoff = freeze(mutation.handoff);
+    } else if (mutation.kind === 'prompt') {
+      if (mutation.op !== 'clear') strictText(mutation.text);
+      prompt = mutation.op === 'clear' ? '' : mutation.op === 'append' ? prompt + mutation.text : mutation.text;
     } else {
-      const explicit = new Map([...current].filter(([, material]) =>
-        material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
-      let required = false;
-      if (mutation.kind === 'upsert' || mutation.kind === 'remove') {
-        const id = sourceId(mutation.kind === 'upsert' ? mutation.selection.source : mutation.source);
-        const selection = this.request.requiredSources.find(selection => sourceId(selection.source) === id);
-        required = selection !== undefined;
-        if (selection && (mutation.kind === 'remove' || canonicalJSON(selection) !== canonicalJSON(mutation.selection))) {
-          throw new WorkspaceFailure('requiredMaterialMutation', { id });
-        }
-        if (mutation.kind === 'remove') explicit.delete(id);
-        else if (!required && mutation.selection.kind === 'codemap') mode = 'manual';
-      } else {
-        for (const [id, { record }] of explicit) {
-          if (record.kind === 'source' && !record.required &&
-              (mutation.kind === 'clearSources' || record.selection.kind === 'codemap')) explicit.delete(id);
-        }
-        mode = mutation.kind === 'clearCodemaps' || this.request.requiredSources.some(selection => selection.kind === 'codemap')
-          ? 'manual' : 'automatic';
-      }
-      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
-      try {
-        if (mutation.kind === 'upsert') {
-          const prepared = await acquireSource(operation, { selectionOrigin: 'explicit', selection: mutation.selection, required });
-          explicit.set(prepared.record.id, prepared);
-        }
-        next = await this.#derive(operation, explicit, mode, current, input.expectedRevision);
-      } finally { await operation.close(); }
+      ({ next, mode } = await this.#prepareSources(mutation, current, input.expectedRevision, signal));
     }
     this.#check(signal, input.expectedRevision);
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+    const { changed, revision, result } = this.#mutationReceipt(current, next, mode, prompt, input.maxOutputBytes, encode, promptResponse);
+    if (changed) {
+      this.#materials = next; this.#codemapMode = mode; this.#prompt = prompt; this.#revision = revision;
+    }
+    return freeze(result);
+  }
+  #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode,
+    prompt: string, maxOutputBytes: number, encode: ResultEncoding,
+    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null) {
     const changedIds = [...new Set([...current.keys(), ...next.keys()])].filter(id =>
       current.get(id) !== next.get(id) && canonicalJSON(current.get(id) ?? null) !== canonicalJSON(next.get(id) ?? null)).sort(compareBytes);
-    const changed = changedIds.length > 0 || mode !== this.#codemapMode || canonicalJSON(handoff) !== canonicalJSON(this.#handoff);
+    const changed = changedIds.length > 0 || mode !== this.#codemapMode || prompt !== this.#prompt;
     const revision = this.#revision + (changed ? 1 : 0);
-    const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot, handoff,
+    const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot, prompt,
       codemapMode: mode, materials: [...next.values()] });
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
@@ -215,14 +214,49 @@ export class DraftRuntime {
       costInspection: { draftId: this.id, revision },
     });
     const minimum = receipt([], changedCosts.length > 0);
-    const minimumBytes = serializedBytes(encode(minimum));
-    if (minimumBytes > input.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes: minimumBytes });
+    const promptReceipt = promptResponse === null ? null : { kind: 'prompt' as const, revision, ...promptResponse };
+    const minimumBytes = serializedBytes(encode(promptReceipt ?? minimum));
+    if (minimumBytes > maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes: minimumBytes });
     const complete = receipt(changedCosts, false);
-    const result = serializedBytes(encode(complete)) <= input.maxOutputBytes ? complete : minimum;
-    if (changed) {
-      this.#materials = next; this.#codemapMode = mode; this.#handoff = handoff; this.#revision = revision;
+    const result = serializedBytes(encode(complete)) <= maxOutputBytes ? complete : minimum;
+    return { changed, revision, result };
+  }
+  async #prepareSources(mutation: SourceMutation, current: ReadonlyMap<string, Material>, revision: number, signal: AbortSignal) {
+    const explicit = new Map([...current].filter(([, material]) =>
+      material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
+    let required = false, mode: CodemapMode;
+    if (mutation.kind === 'upsert' || mutation.kind === 'remove') {
+      ({ required, mode } = this.#changeSourceIntent(mutation, explicit));
+    } else mode = this.#clearSourceIntent(mutation.kind, explicit);
+    const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+    try {
+      if (mutation.kind === 'upsert') {
+        const prepared = await acquireSource(operation, { selectionOrigin: 'explicit', selection: mutation.selection, required });
+        explicit.set(prepared.record.id, prepared);
+      }
+      const next = await this.#derive(operation, explicit, mode, current, revision);
+      return { next, mode };
+    } finally { await operation.close(); }
+  }
+  #changeSourceIntent(mutation: Extract<SourceMutation, { kind: 'upsert' | 'remove' }>, explicit: Map<string, Material>) {
+    const id = sourceId(mutation.kind === 'upsert' ? mutation.selection.source : mutation.source);
+    const selection = this.request.requiredSources.find(selection => sourceId(selection.source) === id);
+    const required = selection !== undefined;
+    if (selection && (mutation.kind === 'remove' || canonicalJSON(selection) !== canonicalJSON(mutation.selection))) {
+      throw new WorkspaceFailure('requiredMaterialMutation', { id });
     }
-    return freeze(result);
+    let mode = this.#codemapMode;
+    if (mutation.kind === 'remove') explicit.delete(id);
+    else if (!required && mutation.selection.kind === 'codemap') mode = 'manual';
+    return { required, mode };
+  }
+  #clearSourceIntent(kind: 'clearSources' | 'clearCodemaps', explicit: Map<string, Material>): CodemapMode {
+    for (const [id, { record }] of explicit) {
+      if (record.kind === 'source' && !record.required &&
+          (kind === 'clearSources' || record.selection.kind === 'codemap')) explicit.delete(id);
+    }
+    return kind === 'clearCodemaps' || this.request.requiredSources.some(selection => selection.kind === 'codemap')
+      ? 'manual' : 'automatic';
   }
   inspect(input: DraftInspection, encode: ResultEncoding = identityEncoding) {
     if (!inspectionValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
@@ -253,16 +287,14 @@ export class DraftRuntime {
         codemapMode: this.#codemapMode,
         request: this.request,
         inventory: this.operation.snapshot,
-        handoff: this.#handoff,
+        prompt: this.#prompt,
         materials,
       });
     const digest = sha256(canonicalJSON({ id: this.id, revision: this.#revision, view: request.view }));
-    const handoff: HandoffInspection = this.#handoff === null
-      ? { kind: 'handoff', state: 'unset' }
-      : { kind: 'handoff', state: 'set', handoff: this.#handoff };
-    const records: (ItemCost | ReturnType<typeof materialMetadata> | HandoffInspection)[] = request.view === 'costs'
+    const prompt = { kind: 'prompt' as const, prompt: this.#prompt };
+    const records: (ItemCost | ReturnType<typeof materialMetadata> | typeof prompt)[] = request.view === 'costs'
       ? rendered.costs
-      : [...materials.map((material) => materialMetadata(material.record)), handoff];
+      : [...materials.map((material) => materialMetadata(material.record)), prompt];
     return pageResult(
       records,
       pageOffset(continuation, digest),
@@ -294,13 +326,13 @@ export class DraftRuntime {
   /** Read-only observation at invocation; JobRegistry captures it after admission and before dispatch. */
   initialContext(): string {
     return renderInitialContext({ request: this.request, inventory: this.operation.snapshot, materials: [...this.#materials.values()],
-      handoff: this.#handoff, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision,
+      prompt: this.#prompt, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision,
       contextBudgetUnits: this.operation.runtime.options.contextBudgetUnits });
   }
   validate(signal: AbortSignal) {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
-      const revision = this.#revision, materials = [...this.#materials.values()], handoff = this.#handoff, codemapMode = this.#codemapMode;
+      const revision = this.#revision, materials = [...this.#materials.values()], prompt = this.#prompt, codemapMode = this.#codemapMode;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         await revalidateMaterials(operation, materials);
@@ -308,7 +340,7 @@ export class DraftRuntime {
           codemapMode,
           request: this.request,
           inventory: this.operation.snapshot,
-          handoff,
+          prompt,
           materials,
         });
         return freeze({
@@ -334,7 +366,7 @@ export class DraftRuntime {
       this.operation,
       this.request,
       this.#codemapMode,
-      this.#handoff,
+      this.#prompt,
       [...this.#materials.values()],
       this.#revision,
       signal,

@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { CodemapMode, ContextBuildRequest, Handoff, Manifest } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, Manifest } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { identity, type Material } from './material-store.js';
@@ -26,7 +26,7 @@ export class FinalizationOperation {
     operation: WorkspaceOperation,
     request: ContextBuildRequest,
     codemapMode: CodemapMode,
-    handoff: Handoff | null,
+    prompt: string,
     materials: readonly Material[],
     revision: number,
     signal: AbortSignal,
@@ -36,7 +36,7 @@ export class FinalizationOperation {
       operation,
       request,
       codemapMode,
-      handoff,
+      prompt,
       materials,
       revision,
       AbortSignal.any([signal, this.#cancel.signal, operation.signal]),
@@ -51,7 +51,7 @@ export class FinalizationOperation {
     owner: WorkspaceOperation,
     request: ContextBuildRequest,
     codemapMode: CodemapMode,
-    handoff: Handoff | null,
+    prompt: string,
     materials: readonly Material[],
     revision: number,
     signal: AbortSignal,
@@ -61,8 +61,8 @@ export class FinalizationOperation {
     const bridge = owner.runtime.makeBridge();
     try {
       await revalidateMaterials(operation, materials);
-      const rendered = renderBundle({ request, handoff, codemapMode, materials, inventory: owner.snapshot });
-      if (rendered.diagnostics.length || handoff === null || rendered.measurement.allowance === null) {
+      const rendered = renderBundle({ request, prompt, codemapMode, materials, inventory: owner.snapshot });
+      if (rendered.diagnostics.length || rendered.measurement.allowance === null) {
         return {
           kind: 'blocked',
           revision,
@@ -73,14 +73,14 @@ export class FinalizationOperation {
       }
       const { generation, ...inventory } = owner.snapshot;
       const manifest: Manifest = {
-        schemaVersion: 2,
+        schemaVersion: 3,
         codemapMode,
         request,
         requestDigest: sha256(canonicalJSON(request)),
         inventory,
         exclusions: [...owner.declaration.exclusions],
         deniedAbsolutePaths: [...owner.declaration.deniedAbsolutePaths],
-        handoff,
+        prompt,
         materials: rendered.records,
         files: { context: identity(rendered.context), handoff: identity(rendered.handoff) },
         accounting: {

@@ -15,6 +15,8 @@ The reference was rendered from `Sources/RepoPrompt/Infrastructure/AI/SystemProm
 
 Only external type/default/catalog definitions were supplied by the rendering harness; the prompt factory's policy text and branching were executed unchanged. The reference file retains the rendered punctuation and whitespace. The smip prompt uses spaced hyphens for em-dash punctuation.
 
+The native `renderDiscoveryPrompt` operation executes the extracted RPCE factory in `native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift`. It takes an explicit budget, runtime, enhancement mode, review inputs and clarification settings, and returns the complete reference prompt. The language catalog comes from the retained native syntax engine. `test/fixtures/rpce-discovery/` contains source-rendered outputs for Rewrite, Augment and Preserve with an explicit catalog placeholder; the test normalizes only that catalog line.
+
 RPCE supplies the configured budget after its host-side 1500-unit reserve. Smip's initial context supplies the already admitted complete-packet allowance. The prompt reads that number rather than deriving a budget from a receiving model.
 
 ## Native bindings
@@ -24,13 +26,13 @@ Every substantive difference belongs to one of these interface bindings. Discove
 | Binding | Native representation | Reason |
 | --- | --- | --- |
 | Version and attribution | `# smip discovery v1` and the RPCE revision/license footer | `PiRunner` requires the version marker; attribution identifies the source. |
-| Captured state and assignment | `initialContext`, `Assignment.task`, `Assignment.constraints` and `Assignment.hints` | These are the actual scout inputs. The original request is immutable; the handoff is separate. |
+| Captured state and assignment | `initialContext`, `Assignment.task`, `Assignment.constraints`, `Assignment.enhancementMode` and `Assignment.hints` | These are the actual scout inputs. The original request is retained as provenance; the resulting literal prompt is mutable. |
 | Numeric budget | “The supplied token budget,” bound to `initialContext.measurement.allowance` | A static editable prompt serves jobs with different admitted budgets. |
 | Tools and paths | The seven smip tools, explicitly configured HTTP MCP tools, and separate `root`/`path` fields | Built-in shell and filesystem tools are unavailable. Smip workspace tools enforce root policy; HTTP MCP tools have separately authorized capabilities. |
 | Selection and cost inspection | `draft_inspect` metadata/costs with response caps and continuations | These views provide current representations and complete-packet measurements. |
 | Source selection | One `draft_update` upsert/remove per file; `clearSources` restores the required baseline | Smip has no directory selection or multi-file mutation. Required inputs remain fixed. |
 | Codemap operations | `clearCodemaps`, codemap upserts and full/slice promotion | Codemap upserts enter manual mode; full/slice upserts preserve mode. RP's prompt says promotion disables automation, but neither implementation does. |
-| Handoff | A `handoff` mutation with clarification, architecture/selected-context text, relationships and ambiguities | These fields replace `prompt.set` and its XML envelope while retaining the requested information. |
+| Prompt operations | `prompt` with get, set, append and clear; revision and response-cap fields for mutations | Literal prompt state supports Rewrite, Augment and Preserve; the resulting text is delivered in `user_instructions`. |
 | Tab naming | Task-name metadata is omitted | Smip has no compose tab to rename. |
 | Review evidence | Inspect the admitted patches and select supporting source | Git comparison acquisition belongs to the caller. Admitted patches are immutable and cannot be sliced. |
 | Slice preview | `read_file` before a slice upsert | There is no `manage_selection.preview` operation. |

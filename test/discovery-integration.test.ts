@@ -26,7 +26,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     if (ordinary === 4) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 1, maxOutputBytes: 10000,
       mutation: { kind: 'remove', source: { root: 'r', path: 'oversize.txt' } } }, stop: 'tool_use', tokens: 10 };
     if (ordinary === 5) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 2, maxOutputBytes: 10000,
-      mutation: { kind: 'handoff', handoff: { clarifiedTask: 'Inspect the example', architecture: 'One complete source', relationships: [], ambiguities: [] } } }, stop: 'tool_use', tokens: 10 };
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Inspect the example', architecture: 'One complete source', relationships: [], ambiguities: [] }) } }, stop: 'tool_use', tokens: 10 };
     if (ordinary === 6) return { kind: 'tool', name: 'draft_validate', input: { maxOutputBytes: 10000 }, stop: 'tool_use', tokens: 10 };
     return { kind: 'text', text: 'Diagnostic acknowledgement only', stop: 'end_turn', tokens: 10 };
   });
@@ -42,7 +42,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
       inputs.push(input); return runner.run(input, tools, signal, progress);
     } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] }, new AbortController().signal);
-    const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', constraints: 'Keep complete evidence', purpose: 'investigation',
+    const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', constraints: 'Keep complete evidence', enhancementMode: 'augment' as const, purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'synthetic', text: report }], patches: [],
       allowance: { kind: 'net', method: 'utf8-21-over-80-v1', overheadReserved: true, units: 100000 }, discoveryHints: [], outputName: 'packet' };
@@ -58,6 +58,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     assert(firstMessage.content[0]!.text.startsWith(prefix), 'Initial context must be raw text, not an escaped JSON value');
     const scoutInput: unknown = JSON.parse(firstMessage.content[0]!.text.slice(prefix.length));
     assert.deepEqual(scoutInput, { purpose: request.purpose, task: request.task, constraints: request.constraints,
+      enhancementMode: request.enhancementMode,
       hints: request.discoveryHints, roots: ['r'] });
     await verifyBundle(result.bundle.directory);
     const packet = await readFile(join(result.bundle.directory, 'context.md'), 'utf8');
@@ -90,7 +91,7 @@ test('cancellation during blocked SDK preflight joins forced closure before any 
   await promisify(execFile)('mkfifo', [fifo]);
   provider.config.authPath = fifo;
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 }), abort = new AbortController();
-  const work = new PiRunner(provider.config, supervisor).run({ task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: [], hints: [] },
+  const work = new PiRunner(provider.config, supervisor).run({ enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: [], hints: [] },
     { call: async () => { throw new Error('No tool permitted'); } }, abort.signal, () => {});
   // Opening the writer proves that the child is blocked in the matching read, without a timing delay.
   const writer = await open(fifo, 'w');
@@ -121,12 +122,12 @@ test('discovery material paging measures the real Pi result and returns every co
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
     const originalCall = client.inspect.bind(client);
-    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [],
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'fixture', text }], patches: [], discoveryHints: [],
       outputName: 'packet', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 10000, overheadReserved: true } }, new AbortController().signal);
     const runner = new PiRunner(provider.config, runtime.supervisor);
     const returned: string[] = [];
-    const result = await runner.run({ task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] }, {
+    const result = await runner.run({ enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] }, {
       call: async (call, _signal, encode) => {
         assert(call.name === 'draft_inspect');
         const page = originalCall(draft.id, call.input, encode);
@@ -140,11 +141,11 @@ test('discovery material paging measures the real Pi result and returns every co
     }, new AbortController().signal, () => {});
     assert.equal(result.kind, 'complete'); assert.equal(returned.join(''), text); assert.equal(continuation, null);
     calls = 1;
-    const job = client.build(workspace.id, 'paging', { task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [],
+    const job = client.build(workspace.id, 'paging', { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'fixture', text }], patches: [], discoveryHints: [],
       outputName: 'builder', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 10000, overheadReserved: true } });
     const built = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});
-    assert.equal(built.state, 'blocked');
+    assert.equal(built.state, 'ready');
     const messages = JSON.stringify(provider.requests.at(-1)!.messages);
     assert(messages.includes('\\"kind\\":\\"material\\"'), messages);
     assert(messages.includes('\\"truncated\\":true'), messages);
@@ -166,7 +167,7 @@ test('forced worker closure preserves observed preflight and waits for parent-ow
   const supervisor = new Supervisor({ terminationGraceMs: 0 }), abort = new AbortController();
   try {
     let finished = false;
-    const work = new PiRunner(provider.config, supervisor).run({ task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] },
+    const work = new PiRunner(provider.config, supervisor).run({ enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] },
       { call: async () => { entered(); await released; return { kind: 'metadata' }; } }, abort.signal, () => {});
     void work.then(() => { finished = true; });
     await entering; abort.abort(); await closure;
@@ -209,7 +210,7 @@ test('summary retry uses the same SDK stream observer, while incomplete output a
     if (scenario === 'clamping') provider.config.thinking = 'max';
     const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), abort = new AbortController();
     try {
-      const work = new PiRunner(provider.config, supervisor).run({ task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] },
+      const work = new PiRunner(provider.config, supervisor).run({ enhancementMode: 'fullRewrite' as const, task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] },
         { call: async () => { toolCalls++; return { kind: 'metadata', body: 'data '.repeat(1000) }; } }, abort.signal, () => {});
       if (scenario === 'cancel' || scenario === 'compactionCancel') { await started; abort.abort(); }
       const result = await work;
@@ -234,7 +235,7 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     relationships: ['one uses two', 'three owns four'], ambiguities: ['first ambiguity', 'second ambiguity'] };
   let calls = 0;
   const provider = await scriptedProvider(() => ++calls === 1 ? { kind: 'tool', name: 'draft_update', input: {
-    expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff', handoff } }, stop: 'tool_use', tokens: 10 }
+    expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'Completed handoff', stop: 'end_turn', tokens: 10 });
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
   const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
@@ -242,14 +243,14 @@ test('normally completed budget-blocked SDK builder retains every committed hand
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor)), other = runtime.createClient(null);
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
-    const job = client.build(workspace.id, 'handoff', { task: 'Inspect', constraints: '', purpose: 'planning', requiredSources: [], documents: [], patches: [],
+    const job = client.build(workspace.id, 'handoff', { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'blocked', allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 1, overheadReserved: true } });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {}); assert(result.state === 'blocked');
     const small = client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 2000 });
     assert.equal(small.kind, 'recordTooLarge');
     const recovered = client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 });
     assert(recovered.kind === 'metadata'); assert.equal(recovered.revision, 1);
-    assert.deepEqual(recovered.items, [{ kind: 'handoff', state: 'set', handoff }]);
+    assert.deepEqual(recovered.items, [{ kind: 'prompt', prompt: 'Inspect\n\n' + JSON.stringify(handoff) }]);
     assert.throws(() => other.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }), /unknownDraft/);
     assert.equal(calls, 2); assert.equal(result.discovery.acceptedRuns, 1);
     await writeFile(join(provider.directory, 'blocked-handoff-proof.json'), JSON.stringify({ result, small, recovered, calls }) + '\n');

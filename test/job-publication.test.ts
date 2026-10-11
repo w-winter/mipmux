@@ -14,8 +14,7 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
     const paused = new Promise<void>(resolve => { entered = resolve; });
     const resume = new Promise<void>(resolve => { release = resolve; });
     const provider = await scriptedProvider(() => ++turn === 1 ? { kind: 'tool', name: 'draft_update',
-      input: { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff',
-        handoff: { clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] } } }, stop: 'tool_use', tokens: 10 }
+      input: { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] }) } }, stop: 'tool_use', tokens: 10 }
       : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
     const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
     await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'body');
@@ -39,7 +38,7 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
     try {
       const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
-      const job = client.build(workspace.id, 'one', { task: 'Task', constraints: '', purpose: 'investigation',
+      const job = client.build(workspace.id, 'one', { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [],
         allowance: { kind: 'net', method: 'utf8-21-over-80-v1', overheadReserved: true, units: 10000 }, outputName: 'packet' });
       await paused;

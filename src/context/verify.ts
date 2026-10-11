@@ -43,7 +43,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     codemapMode: manifest.codemapMode,
     request: manifest.request,
     inventory: manifest.inventory,
-    handoff: manifest.handoff,
+    prompt: manifest.prompt,
     materials,
   });
   if (

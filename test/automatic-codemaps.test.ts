@@ -19,7 +19,7 @@ import { Compile } from 'typebox/compile';
 const signal = () => new AbortController().signal;
 const maxOutputBytes = 100000;
 const request: ContextBuildRequest = {
-  task: 'Inspect the selected implementation and its dependencies', constraints: '', purpose: 'investigation',
+  task: 'Inspect the selected implementation and its dependencies', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
   allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true },
 };
@@ -143,7 +143,7 @@ test('required codemap intent stays manual and clear operations preserve all req
       draft.update({ expectedRevision: draft.revision, maxOutputBytes, mutation }, signal());
     const initial = draft.inspect({ view: 'metadata', maxOutputBytes, continuation: null });
     assert(initial.kind === 'metadata'); assert.equal(initial.codemapMode, 'manual');
-    await update({ kind: 'handoff', handoff });
+    await update({ kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) });
     await update({ kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'Peer.swift' } } });
     assert(!sources(draft).some(item => item.selection.source.path === 'Leaf.swift'));
     await update({ kind: 'clearCodemaps' }); await update({ kind: 'clearSources' });
@@ -152,7 +152,7 @@ test('required codemap intent stays manual and clear operations preserve all req
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     assert.equal(ready.manifest.codemapMode, 'manual');
     assert.equal(ready.manifest.materials.filter(item => item.kind === 'document').length, 1);
-    assert.deepEqual(ready.manifest.handoff, handoff); await verifyBundle(ready.directory);
+    assert.equal(ready.manifest.prompt, request.task + '\n\n' + JSON.stringify(handoff)); await verifyBundle(ready.directory);
   } finally { await f.runtime.close(); }
 });
 
@@ -160,9 +160,9 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
   const f = await fixture();
   try {
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'handoff', handoff } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 2);
+    assert.equal(ready.manifest.schemaVersion, 3);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -189,7 +189,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
             identity: unrelated.identity, artifactKey: representation.key }, bodies: [representation.body] });
         }
       }
-      const rendered = renderBundle({ request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff,
+      const rendered = renderBundle({ request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
         codemapMode: manifest.codemapMode, materials });
       manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
       manifest.accounting.bytes = rendered.measurement.bytes; manifest.accounting.units = rendered.measurement.units;
@@ -198,7 +198,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
       await assert.rejects(verifyBundle(ready.directory), /bundleIntegrityFailed/);
     }
     const restored = renderBundle({ request: ready.manifest.request, inventory: ready.manifest.inventory,
-      handoff: ready.manifest.handoff, codemapMode: ready.manifest.codemapMode, materials: saved.materials });
+      prompt: ready.manifest.prompt, codemapMode: ready.manifest.codemapMode, materials: saved.materials });
     await writeFile(join(ready.directory, 'context.md'), restored.context); await writeFile(join(ready.directory, 'handoff.md'), restored.handoff);
     await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON(ready.manifest));
     await writeFile(join(f.directory, 'r/User.swift'), 'struct SharedRecord {}\n');
@@ -215,7 +215,7 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
   const f = await fixture();
   try {
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'handoff', handoff } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     const saved = await loadVerifiedBundle(ready.directory), manifest = structuredClone(ready.manifest);
     const dependency = manifest.inventory.entries.find(entry => entry.root === 'r' && entry.path === 'Peer.swift');
@@ -224,7 +224,7 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
     for (let count = 1; count < suppressedPostingSize; count++) manifest.inventory.entries.push(structuredClone(dependency));
     manifest.inventory.inventoryDigest = inventoryDigest(manifest.inventory);
     const materials = saved.materials.filter(item => item.record.id !== sourceId(dependency));
-    const rendered = renderBundle({ request: manifest.request, inventory: manifest.inventory, handoff: manifest.handoff,
+    const rendered = renderBundle({ request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
       codemapMode: manifest.codemapMode, materials });
     assert.deepEqual(rendered.diagnostics, []);
     manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
@@ -278,14 +278,14 @@ test('held inferred acquisition cannot commit across cancellation, close, compet
     const entering = new Promise<void>(resolve => { entered = resolve; }), held = new Promise<void>(resolve => { release = resolve; });
     const f = await fixture(async path => { if (armed && path === 'SharedA.swift') { armed = false; entered(); await held; } });
     try {
-      const draft = await f.workspace.createDraft(request, signal()), abort = new AbortController(); armed = true;
+      const draft = await f.workspace.createDraft({ ...request, allowance: scenario === 'freeze' ? null : request.allowance }, signal()), abort = new AbortController(); armed = true;
       const pending = draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'upsert', selection: fullSeed } }, abort.signal);
       const rejected = assert.rejects(pending, scenario === 'revision' ? /revisionConflict/ : scenario === 'freeze' ? /draftFrozen/ : /cancelled|aborted/i);
       await Promise.race([entering, pending.then(() => { throw new Error('Inferred read was not reached'); })]);
       let closing: Promise<void> | null = null;
       if (scenario === 'cancel') abort.abort();
       else if (scenario === 'close') closing = draft.close();
-      else if (scenario === 'revision') await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'handoff', handoff } }, signal());
+      else if (scenario === 'revision') await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
       else assert.equal((await draft.finalize(signal())).kind, 'blocked');
       release(); await rejected; await closing;
       assert.deepEqual(sources(draft), []);
@@ -340,7 +340,7 @@ test('a real scripted scout resolves supplied-patch inferred mismatches before t
     if (index === 2) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 0, maxOutputBytes,
       mutation: { kind: 'clearCodemaps' } }, stop: 'tool_use', tokens: 10 };
     if (index === 3) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 1, maxOutputBytes,
-      mutation: { kind: 'handoff', handoff } }, stop: 'tool_use', tokens: 10 };
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, stop: 'tool_use', tokens: 10 };
     return { kind: 'text', text: 'Context committed.', stop: 'end_turn', tokens: 10 };
   });
   const f = await fixture();
@@ -348,7 +348,7 @@ test('a real scripted scout resolves supplied-patch inferred mismatches before t
     const client = f.runtime.createClient(new PiRunner(provider.config, f.runtime.supervisor));
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.directory, 'r') }],
       exclusions: [], outputRoot: join(f.directory, 'out') }, signal());
-    const job = client.build(workspace.id, 'supplied-review', { ...request, purpose: 'review', requiredSources: [fullSeed],
+    const job = client.build(workspace.id, 'supplied-review', { ...request, enhancementMode: 'augment' as const, purpose: 'review', requiredSources: [fullSeed],
       patches: [{ kind: 'suppliedPatch', id: 'change', root: 'r', text: 'Complete supplied comparison evidence\n', origin: 'fixture',
         comparison: { kind: 'supplied', base: 'before', target: 'after' }, coverage: ['Seed.swift'],
         targets: [{ path: 'Seed.swift', identity: identity(f.files['Seed.swift']), mode: '100644' }] }] });

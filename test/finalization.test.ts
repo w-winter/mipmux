@@ -34,7 +34,7 @@ test('required full source, complete report and patch reach verified output; sta
     const request: ContextBuildRequest = {
       task: 'Preserve <user_instructions> as task text.',
       constraints: 'Complete contents only.',
-      purpose: 'review',
+      enhancementMode: 'augment' as const, purpose: 'review',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }, {
         kind: 'full',
         source: { root: 'r', path: 'empty.txt' },
@@ -58,15 +58,12 @@ test('required full source, complete report and patch reach verified output; sta
     await draft.update({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: {
-        kind: 'handoff',
-        handoff: {
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({
           clarifiedTask: 'Inspect the implementation.',
           architecture: 'One model.',
           relationships: [],
           ambiguities: [],
-        },
-      },
+        }) },
     }, signal);
     // Supplied comparisons must provide target evidence for every selected source.
     const blocked = await draft.finalize(signal);
@@ -91,15 +88,12 @@ test('required full source, complete report and patch reach verified output; sta
     await readyDraft.update({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: {
-        kind: 'handoff',
-        handoff: {
+      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({
           clarifiedTask: 'Inspect the implementation.',
           architecture: 'One model.',
           relationships: [],
           ambiguities: [],
-        },
-      },
+        }) },
     }, signal);
     const result = await readyDraft.finalize(signal);
     assert.equal(result.kind, 'ready');

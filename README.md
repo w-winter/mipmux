@@ -104,6 +104,7 @@ Create a draft from a workspace handle after declaring its roots and output dire
 const draft = await workspace.createDraft({
   task: 'Review the implementation and identify correctness risks.',
   constraints: 'Keep every required document complete.',
+  enhancementMode: 'augment',
   purpose: 'review',
   requiredSources: [{ kind: 'full', source: { root: 'repo', path: 'src/index.ts' } }],
   documents: [{
@@ -119,14 +120,11 @@ const draft = await workspace.createDraft({
   },
 }, signal);
 try {
-  await draft.update({
+  await draft.prompt({
     expectedRevision: draft.revision,
     maxOutputBytes: 12000,
-    mutation: { kind: 'handoff', handoff: {
-      clarifiedTask: 'Inspect ownership and error handling.',
-      architecture: 'Describe the relevant components here.',
-      relationships: [], ambiguities: [],
-    } },
+    op: 'append',
+    text: '\n\n<discovered_architecture>Describe ownership and error handling here.</discovered_architecture>',
   }, signal);
   const validation = await draft.validate(signal);
   const result = await draft.finalize(signal);
@@ -136,9 +134,9 @@ try {
 }
 ```
 
-`task`, `constraints`, and required inputs are immutable. The handoff is advisory discovery context. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an explicit optional selection. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
+`task` records the original prompt; `enhancementMode` is `fullRewrite`, `augment` or `preserve`. Discovery uses literal prompt operations: `set` replaces the current text, `append` adds text exactly, `clear` empties it and `get` returns it. Rewrite delivers the replacement; Augment preserves the original at the beginning and adds discoveries; Preserve leaves the original unchanged. These modes guide discovery rather than restricting the caller's explicit prompt operations. Caller constraints and required inputs remain fixed. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an explicit optional selection. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
 
-Drafts start in automatic mode unless a required source is a codemap. Automatic mode adds related codemaps for full and sliced sources. A codemap upsert or `clearCodemaps` enters manual mode; `clearSources` restores the required source baseline. Clear operations retain documents, patches and the handoff. [Selection contracts](docs/contracts.md#drafts-and-material-ownership) describe promotion, inferred-source removal and comparison recovery.
+Drafts start in automatic mode unless a required source is a codemap. Automatic mode adds related codemaps for full and sliced sources. A codemap upsert or `clearCodemaps` enters manual mode; `clearSources` restores the required source baseline. Clear operations retain documents, patches and the current prompt. [Selection contracts](docs/contracts.md#drafts-and-material-ownership) describe promotion, inferred-source removal and comparison recovery.
 
 Use `addDocument` with a `suppliedDocument` and a unique ID to retain complete text fetched during curation. Added documents are immutable and count toward the recipient allowance.
 
@@ -146,7 +144,7 @@ Use `addDocument` with a `suppliedDocument` and a unique ID to retain complete t
 
 The allowance acknowledges `floor(21 × UTF-8 bytes / 80)`, an estimate rather than an exact tokenizer count or a provider acceptance guarantee. Set `contextBudgetUnits` in the host configuration to the maximum assembly allowance you want callers to use. Larger requested allowances fail with `assemblyBudgetExceeded`, including those derived from a recipient's larger context window. A net allowance reserves system, task, tools, history, output, and delivery overhead before submission. Alternatively, supply a verified model-settings record and explicit reserves through the exported `Allowance` schema. A null allowance supports inspection, but finalization requires a known allowance. Over-budget results identify the excess and retain all material for explicit correction.
 
-Ready output contains `context.md`, `handoff.md`, and `manifest.json` beneath the declared output directory. Send only `context.md` to the recipient. It presents the architectural handoff as Markdown paragraphs and lists. A tree identifies selected material, and each body has a heading with its path or supplied ID. All material bodies appear in fenced blocks, followed by the complete original task and constraints. Patch summaries identify the comparison meaning, scope, requested and resolved revisions, worktree paths, coverage and exclusions. The coordinator records retain byte spans, hashes, accounting and complete comparison receipts, including payload identities, per-path policies and target fingerprints. Output creation is exclusive. Readback and final source checks precede manifest publication.
+Ready output contains `context.md`, `handoff.md`, and `manifest.json` beneath the declared output directory. Send only `context.md` to the recipient. A tree identifies selected material, and each body has a heading with its path or supplied ID. Material bodies appear in fenced blocks, followed by caller constraints and a final `user_instructions` section containing the current literal prompt. Patch summaries identify the comparison meaning, scope, requested and resolved revisions, worktree paths, coverage and exclusions. The coordinator records retain the original request, current prompt, byte spans, hashes, accounting and complete comparison receipts, including payload identities, per-path policies and target fingerprints. Output creation is exclusive. Readback and final source checks precede manifest publication.
 
 Import `verifyBundle` to verify saved bytes without source access. `verifyCurrentBundle(directory, runtime, signal)` additionally reopens recorded roots and checks delivered local material, controlling ignore files, current configured denies, native codemap keys, and relevant comparisons. Unselected files are examined only when a requested live comparison needs them. Keep the saved packet unchanged after verification.
 
@@ -174,7 +172,7 @@ node dist/cli/main.js cache invalidate --kind artifact --key <sha256> --config /
 node dist/cli/main.js cache invalidate --kind membership --key <sha256> --config /etc/smip/config.json
 ```
 
-The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "handoff": <Handoff> }`. Input files for `smip tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
+The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Every context request includes `enhancementMode`. Input files for `smip tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; membership targets name workspace inventory records. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateMembership(key)` for membership. Each method removes only its named record.
 

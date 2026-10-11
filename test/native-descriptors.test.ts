@@ -66,7 +66,7 @@ test('two-phase finalization across many roots completes under a controlled desc
   }
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: limited, nativeEnvironment: environment(limit) });
-  const request: ContextBuildRequest = { task: 'Task', constraints: '', purpose: 'investigation', documents: [], patches: [], discoveryHints: [],
+  const request: ContextBuildRequest = { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', documents: [], patches: [], discoveryHints: [],
     requiredSources: roots.map(root => ({ kind: 'full', source: { root: root.name, path: 'file.txt' } })), outputName: 'packet',
     allowance: { kind: 'net', method: 'utf8-21-over-80-v1', units: 100000, overheadReserved: true } };
   try {
@@ -77,8 +77,7 @@ test('two-phase finalization across many roots completes under a controlled desc
     assert.equal((await operation.readSource({ root: 'r00', path: 'file.txt' })).bytes.toString(), 'body r00\n');
     await operation.close();
     const draft = await workspace.createDraft(request, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'handoff',
-      handoff: { clarifiedTask: 'Task', architecture: 'Many roots', relationships: [], ambiguities: [] } } }, signal());
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Many roots', relationships: [], ambiguities: [] }) } }, signal());
     const result = await draft.finalize(signal());
     assert.equal(result.kind, 'ready');
     if (result.kind !== 'ready') assert.fail('unreachable');

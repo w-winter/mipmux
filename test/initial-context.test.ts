@@ -89,7 +89,7 @@ test('initial context supplies all roots, explicit inputs and budget facts witho
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
       { name: 's', absolutePath: join(directory, 's') }], outputRoot: join(directory, 'out'), exclusions: [] }, new AbortController().signal);
-    const draft = await workspace.createDraft({ task: 'Inspect', constraints: '', purpose: 'investigation', requiredSources: [],
+    const draft = await workspace.createDraft({ task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'localDocument', id: 'notes', role: 'evidence', source: { root: 'r', path: 'notes.txt' } }],
       patches: [], discoveryHints: [], outputName: 'packet',
       allowance: { kind: 'net', units: 100000, method: 'utf8-21-over-80-v1', overheadReserved: true } }, new AbortController().signal);
@@ -100,7 +100,7 @@ test('initial context supplies all roots, explicit inputs and budget facts witho
       contextBudgetUnits: Type.Literal(200000), accountingMethod: Type.Literal('utf8-21-over-80-v1'),
       roots: Type.Array(Type.Object({ name: Type.String() }), { minItems: 2, maxItems: 2 }),
       explicitSources: Type.Array(Type.Unknown(), { maxItems: 0 }), inferredCodemaps: Type.Object({ count: Type.Literal(0), itemUnits: Type.Literal(0) }),
-      measurement: Type.Object({ allowance: Type.Literal(100000), complete: Type.Literal(false) }),
+      measurement: Type.Object({ allowance: Type.Literal(100000), complete: Type.Literal(true) }),
       documents: Type.Array(Type.Object({ id: Type.Literal('document:notes') }), { minItems: 1, maxItems: 1 }),
     })).Check(metadata));
     assert(text.includes('notes.txt')); assert(text.includes('other.txt'));

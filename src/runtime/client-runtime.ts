@@ -11,7 +11,7 @@ import { WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall } from '../discovery/scoped-tools.js';
 import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
 
-type ExplorationCall = Exclude<DiscoveryCall, { name: 'draft_inspect' | 'draft_update' | 'draft_validate' }>;
+type ExplorationCall = Exclude<DiscoveryCall, { name: 'draft_inspect' | 'draft_update' | 'draft_validate' | 'prompt' }>;
 interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRuntime }
 
 /** A connected client's handles and drafts are capabilities only within this owner. */
@@ -72,6 +72,10 @@ export class ClientRuntime {
   update(id: string, request: DraftUpdate, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     const { draft } = this.#manual(id);
     return this.#track(signal, combined => draft.update(request, combined, encode));
+  }
+  prompt(id: string, request: Parameters<DraftRuntime['prompt']>[0], signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    const { draft } = this.#manual(id);
+    return this.#track(signal, combined => draft.prompt(request, combined, encode));
   }
   validate(id: string, maxOutputBytes: number, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     const { draft } = this.#manual(id);

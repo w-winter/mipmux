@@ -2,10 +2,11 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { SafeCount, SHA256 } from './workspace.js';
 import { ReadRequest, StructureRequest, SearchRequest, ReadInput, StructureInput, SearchInput, Continuation } from './exploration.js';
-import { ContextBuildRequest, DraftInspection, DraftUpdate } from './context.js';
+import { ContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from './context.js';
 
 const closed = { additionalProperties: false };
 export const DiscoveryInput = Type.Object({ purpose: ContextBuildRequest.properties.purpose,
+  enhancementMode: ContextBuildRequest.properties.enhancementMode,
   task: Type.String(), constraints: Type.String(), hints: Type.Array(Type.String()), roots: Type.Array(Type.String()),
   initialContext: Type.String({ minLength: 1 }) }, closed);
 type DiscoveryInputFields = Static<typeof DiscoveryInput>;
@@ -20,7 +21,7 @@ export const toolSchemas = { get_file_tree: Type.Object({ ...TreeInput.propertie
   get_code_structure: Type.Object({ ...StructureInput.properties, maxOutputBytes: Positive }, closed),
   file_search: Type.Union(SearchInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))),
   read_file: Type.Object({ ...ReadInput.properties, maxOutputBytes: Positive }, closed), draft_inspect: DraftInspection,
-  draft_update: DraftUpdate, draft_validate: ValidateRequest };
+  draft_update: DraftUpdate, draft_validate: ValidateRequest, prompt: PromptRequest };
 export const DiscoveryCall = Type.Union([
   Type.Object({ name: Type.Literal('get_file_tree'), input: ScopedTree }, closed),
   Type.Object({ name: Type.Literal('get_code_structure'), input: StructureRequest }, closed),
@@ -29,6 +30,7 @@ export const DiscoveryCall = Type.Union([
   Type.Object({ name: Type.Literal('draft_inspect'), input: DraftInspection }, closed),
   Type.Object({ name: Type.Literal('draft_update'), input: DraftUpdate }, closed),
   Type.Object({ name: Type.Literal('draft_validate'), input: ValidateRequest }, closed),
+  Type.Object({ name: Type.Literal('prompt'), input: PromptRequest }, closed),
 ]);
 export type DiscoveryCall = Static<typeof DiscoveryCall>;
 export const callValidator = Compile(DiscoveryCall);

@@ -30,6 +30,12 @@ struct WireObject {
         return value
     }
 
+    func boolean(_ name: String) throws -> Bool {
+        guard let value = fields[name] as? NSNumber, CFGetTypeID(value) == CFBooleanGetTypeID()
+        else { throw BridgeFailure("nativeProtocolError") }
+        return value.boolValue
+    }
+
     func count(_ name: String) throws -> Int {
         guard let value = fields[name] as? NSNumber,
               CFGetTypeID(value) != CFBooleanGetTypeID(),
@@ -132,6 +138,7 @@ struct RootDeclaration {
 
 enum Operation {
     case describe
+    case renderDiscoveryPrompt(DiscoveryPromptInput)
     case openRoots([RootDeclaration])
     case listDirectory(NativeHandle, String?)
     case readSource(NativeHandle, String, SourceIdentity?)
@@ -144,6 +151,7 @@ enum Operation {
     init(_ value: Any) throws {
         guard let raw = value as? [String: Any], let kind = raw["kind"] as? String else { throw BridgeFailure("nativeProtocolError") }
         switch kind {
+        case "renderDiscoveryPrompt": self = try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
         case "describe":
             _ = try WireObject(value, keys: ["kind"]); self = .describe
         case "openRoots":
