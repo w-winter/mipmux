@@ -403,8 +403,8 @@ private extension CodeMapSourceDecoderPolicy {
         switch self {
         case .workspaceAutomaticV1:
             "workspace-automatic-v1"
-        case .smipStrictUTF8V1:
-            "smip-strict-utf8-v1"
+        case .workspaceAutomaticLinuxV1:
+            "workspace-automatic-linux-v1"
         #if DEBUG
             case .testOnlyMismatch:
                 "test-only-mismatch"
@@ -416,8 +416,8 @@ private extension CodeMapSourceDecoderPolicy {
         switch canonicalID {
         case "workspace-automatic-v1":
             self = .workspaceAutomaticV1
-        case "smip-strict-utf8-v1":
-            self = .smipStrictUTF8V1
+        case "workspace-automatic-linux-v1":
+            self = .workspaceAutomaticLinuxV1
         #if DEBUG
             case "test-only-mismatch":
                 self = .testOnlyMismatch

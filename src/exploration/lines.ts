@@ -1,18 +1,8 @@
-import { WorkspaceFailure } from '../workspace/values.js';
-
 export interface SourceLine { readonly number: number; readonly offset: number; readonly length: number; readonly text: string }
 export interface PreparedText { readonly lines: readonly SourceLine[]; readonly searchText: string }
 
-export function decodeText(bytes: Uint8Array): string {
-  let text: string;
-  try { text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes); }
-  catch { throw new WorkspaceFailure('decodeFailed'); }
-  if (text.includes('\0')) throw new WorkspaceFailure('binarySource');
-  return text;
-}
-
-export function prepareText(bytes: Uint8Array): PreparedText {
-  const text = decodeText(bytes);
+export function prepareText(text: string): PreparedText {
+  const bytes = Buffer.from(text);
   const lines: SourceLine[] = [];
   let start = 0;
   for (let index = 0; index < bytes.length; index++) {

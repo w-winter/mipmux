@@ -5,7 +5,6 @@ import type { RootIdentity } from '../contracts/workspace.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { NativeAccess } from './source-access.js';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from './values.js';
-import { prepareText } from '../exploration/lines.js';
 
 export interface PolicyDeclaration {
   readonly roots: readonly AdmittedRoot[];
@@ -14,6 +13,18 @@ export interface PolicyDeclaration {
   readonly deniedAbsolutePaths: readonly string[];
 }
 export function contains(parent: string, path: string): boolean { return path === parent || path.startsWith(parent === '/' ? '/' : parent + '/'); }
+function decodeIgnoreControl(bytes: Uint8Array): string {
+  let text: string;
+  try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+  catch (cause) {
+    const failure = new WorkspaceFailure('decodeFailed');
+    failure.cause = cause;
+    throw failure;
+  }
+  if (text.includes('\0')) throw new WorkspaceFailure('binarySource');
+  return text;
+}
+
 function relative(root: string, path: string): string { return root === '/' ? path.slice(1) : path.slice(root.length + 1); }
 function policyPath(directory: string): string { return directory ? directory + '/.gitignore' : '.gitignore'; }
 function ancestors(path: string): string[] {
@@ -71,7 +82,7 @@ export class RootPolicy {
     let input: PolicyInput;
     try {
       const read = await this.access.read(source, null);
-      const text = prepareText(read.bytes).lines.map(line => line.text).join('');
+      const text = decodeIgnoreControl(read.bytes);
       input = { ...source, content: { kind: 'present', identity: read.identity, text } };
       const directory = source.path === '.gitignore' ? '' : posix.dirname(source.path);
       this.#matchers.set(key, ignore({ ignorecase: false }).add(scopedRules(text, directory)));

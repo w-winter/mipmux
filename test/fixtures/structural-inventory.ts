@@ -5,7 +5,7 @@ import { sha256 } from '../../src/workspace/values.js';
 /** Synthetic retained syntax for pure queries/presentation; no acquisition or integrity claim. */
 export function structuralFile(root: string, path: string, definitions: string[], references: string[]): StructureFile {
   const digest = sha256('');
-  return { kind: 'file', root, path, identity: { sha256: digest, byteCount: 0 }, structural: {
+  return { kind: 'file', root, path, identity: { sha256: digest, byteCount: 0 }, decoding: { kind: 'decoded', identity: { sha256: digest, byteCount: 0 }, encoding: 4 }, structural: {
     kind: 'artifact', key: { canonicalBase64: '', digest }, record: {
       schemaVersion: 1, keyCanonicalBase64: '', keyDigest: digest, recordSHA256: digest,
       outcome: { kind: 'ready', artifact: { imports: [], exports: [], classes: [], interfaces: [], aliases: [], literalUnions: [],

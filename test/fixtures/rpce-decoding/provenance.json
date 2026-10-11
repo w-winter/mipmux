@@ -1,0 +1,13 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "source": "Sources/RepoPromptFileSystem/FileSystemService+ContentLoading.swift:1-51",
+  "sourceSHA256": "21dbd91451a0e9831894b5563008016b79c71e59ccdae70a1b7945f857b3cecc",
+  "capturedOutputSHA256": "1841ee77138071fd7bd3ace814b415a9ce4e7902a9eca55c3aa36cd1fb5d5cc3",
+  "method": "Original automatic decoder executed on macOS with original UniversalCharsetDetection sources. Linux expected output applies the approved detector-failure diagnostic; other outputs remain the source result.",
+  "limits": [
+    "The output corpus establishes decoder behavior, not source relevance or visibility."
+  ],
+  "generator": "scripts/generate-decoding-fixtures.mjs",
+  "command": "node scripts/generate-decoding-fixtures.mjs <pinned-rpce-checkout>",
+  "generatorSHA256": "f8cc4591802f112c53e6043d836b190208755e2b875100eb383c99da62e8921f"
+}

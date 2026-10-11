@@ -49,7 +49,7 @@ test('native exact-byte acquisition, extraction, confined reads and exclusive ex
     if (extracted.result.kind !== 'extracted') assert.fail('Missing extraction');
     assert.equal(extracted.result.outcome.kind, 'ready');
     assert.deepEqual(extracted.result.key, read.result.key);
-    const invalid = Buffer.from([0xff]);
+    const invalid = Buffer.from([0xff, 0xfe, 0x00, 0xd8]);
     const failedDecode = await bridge.request({ kind: 'extract', extension: 'swift', bytes: invalid.toString('base64'), expected: identity(invalid) }, signal());
     if (failedDecode.result.kind !== 'extracted') assert.fail('Missing decode outcome');
     assert.equal(failedDecode.result.outcome.kind, 'decodeFailed');

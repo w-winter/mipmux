@@ -118,7 +118,7 @@ test('settled inventory distinguishes unavailable acquisition, decoding, unsuppo
   const base = await mkdtemp(resolve('test-output/coverage-'));
   await mkdir(join(base, 'root/cases'), { recursive: true }); await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/cases/victim.swift'), 'struct Victim {\n let value: String\n}');
-  await writeFile(join(base, 'root/cases/invalid.swift'), Buffer.from([255]));
+  await writeFile(join(base, 'root/cases/invalid.swift'), Buffer.from([0xff, 0xfe, 0x00, 0xd8]));
   await writeFile(join(base, 'root/cases/empty.swift'), '');
   await writeFile(join(base, 'root/cases/note.txt'), 'unsupported');
   const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],

@@ -54,13 +54,13 @@ type SourceAcquisition =
 export async function acquireSource(operation: WorkspaceOperation, input: SourceAcquisition): Promise<Material> {
   const path = input.selectionOrigin === 'explicit' ? input.selection.source : input.source;
   const source = await operation.readSource(path);
-  const text = prepareText(source.bytes);
+  const text = prepareText(source.text);
   if (input.selectionOrigin === 'inferred') {
     const entry = operation.snapshot.entries.find(entry => entry.root === path.root && entry.path === path.path);
     const representation = codemapRepresentation(entry, path);
     if (!representation) throw new WorkspaceFailure('codemapUnavailable', path);
     return freeze({ record: { kind: 'source', id: sourceId(path), selectionOrigin: 'inferred', required: false,
-      selection: { kind: 'codemap', source: path }, identity: source.identity, mode: descriptorGitMode(source.fingerprint.mode),
+      selection: { kind: 'codemap', source: path }, identity: source.identity, decodedIdentity: identity(source.text), mode: descriptorGitMode(source.fingerprint.mode),
       normalized: [], artifactKey: representation.key, spans: [] }, bodies: [representation.body] });
   }
   const { selection, required } = input;
@@ -71,6 +71,7 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
     required,
     selection,
     identity: source.identity,
+    decodedIdentity: identity(source.text),
     mode: descriptorGitMode(source.fingerprint.mode),
     normalized: [],
     artifactKey: null,
@@ -86,7 +87,7 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
     record.artifactKey = representation.key;
     bodies = [representation.body];
   } else {
-    if (selection.kind === 'full') bodies = [source.bytes.toString('utf8')];
+    if (selection.kind === 'full') bodies = [source.text];
     else {
       record.normalized = normalizeRanges(selection.ranges, text.lines.length);
       bodies = record.normalized.map((range) =>
@@ -97,13 +98,18 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
   return freeze({ record, bodies });
 }
 export async function acquireDocument(operation: WorkspaceOperation, input: DocumentInput): Promise<Material> {
-  if (input.kind === 'suppliedDocument') strictText(input.origin);
-  const text = input.kind === 'suppliedDocument'
-    ? strictText(input.text)
-    : prepareText((await operation.readSource(input.source)).bytes).lines.map((line) => line.text).join('');
+  if (input.kind === 'suppliedDocument') {
+    strictText(input.origin);
+    const text = strictText(input.text);
+    return freeze({
+      record: { kind: 'document', id: 'document:' + input.id, input, identity: identity(text), spans: [] },
+      bodies: [text],
+    });
+  }
+  const source = await operation.readSource(input.source);
   return freeze({
-    record: { kind: 'document', id: 'document:' + input.id, input, identity: identity(text), spans: [] },
-    bodies: [text],
+    record: { kind: 'document', id: 'document:' + input.id, input, identity: identity(source.text),
+      sourceIdentity: source.identity, spans: [] },
+    bodies: [source.text],
   });
 }
-

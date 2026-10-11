@@ -1,3 +1,4 @@
+import { DecoderPolicy } from './inventory.js';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
@@ -236,7 +237,7 @@ export const NativeResult = Type.Union([
   NativeStructureResult,
   Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('discoveryMessage'), text: Type.String() }, { additionalProperties: false }),
-  Type.Object({ kind: Type.Literal('description'), decoderPolicy: Type.Literal('smip-strict-utf8-v1'),
+  Type.Object({ kind: Type.Literal('description'), decoderPolicy: DecoderPolicy,
     regexEngineFingerprint: SHA256,
     engine: Type.Object({ version: Type.String(), unicode: Type.String(), jitPolicy: Type.Union([Type.Literal('disabled'), Type.Literal('auto'), Type.Literal('required')]), jitCapability: Type.Boolean(), jitExecution: Type.Union([Type.Literal('disabled'), Type.Literal('compiled'), Type.Literal('unavailable')]) }, { additionalProperties: false }),
     extensions: Type.Array(Type.Object({ extension: Type.String(), pipelineCanonicalBase64: base64 }, { additionalProperties: false })),
@@ -248,6 +249,10 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('directoryComplete'), count: SafeCount, sha256: SHA256 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('sourceComplete'), identity: SourceIdentity,
     fingerprint: DescriptorFingerprint, key: Type.Union([ArtifactKey, Type.Null()]),
+    decoding: Type.Union([
+      Type.Object({ kind: Type.Literal('decoded'), text: Type.String(), identity: SourceIdentity, encoding: SafeCount }, { additionalProperties: false }),
+      Type.Object({ kind: Type.Literal('undecodable') }, { additionalProperties: false }),
+    ]),
   }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('extracted'), key: ArtifactKey,
     outcome: SyntaxOutcome, projection: Type.Union([Projection, Type.Null()]),

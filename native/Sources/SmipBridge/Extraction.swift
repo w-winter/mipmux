@@ -59,7 +59,7 @@ struct Extraction {
         let extensions = try CodeMapSyntaxEngine.extensionToLanguage.sorted { $0.key < $1.key }.map { ext, language -> [String: Any] in
             return try ["extension": ext, "pipelineCanonicalBase64": pipeline(language).canonicalBytes.base64EncodedString()]
         }
-        return ["kind": "description", "decoderPolicy": "smip-strict-utf8-v1",
+        return ["kind": "description", "decoderPolicy": RPCESourceDecoder.identifier,
                 "regexEngineFingerprint": fingerprint.lowercaseHex, "engine": engine, "extensions": extensions,
                 "limits": ["lines": CodeMapSyntaxEngine.parseLineLimit, "utf16Units": CodeMapSyntaxEngine.parseUTF16Limit, "utf8Bytes": CodeMapSyntaxEngine.parseUTF8Limit]]
     }
@@ -69,17 +69,10 @@ struct Extraction {
         let identity = SourceIdentity(sha256: digest.lowercaseHex, byteCount: bytes.count)
         guard identity == expected else { throw BridgeFailure("sourceChanged") }
         guard let language = CodeMapSyntaxEngine.shared.language(forFileExtension: ext) else { return ["kind": "unsupportedExtension"] }
-        let decoded: CodeMapSourceDecodeResult
-        let text = String(decoding: bytes, as: UTF8.self)
-        // Reject repaired sequences; the standard decoder retains a leading BOM.
-        if Data(text.utf8) == bytes {
-            decoded = .decoded(CodeMapDecodedSource(text: text, detectedEncodingRawValue: String.Encoding.utf8.rawValue))
-        } else {
-            decoded = .failed(.undecodable)
-        }
+        let decoded = RPCESourceDecoder.decode(bytes)
         let source = CodeMapCoreSourceSnapshot(
             rawByteCount: bytes.count, rawSHA256: digest,
-            decoderPolicy: .smipStrictUTF8V1, decodeResult: decoded,
+            decoderPolicy: RPCESourceDecoder.policy, decodeResult: decoded
         )
         let outcome = try CodeMapSyntaxArtifactBuilder.build(source: source, language: language)
         let projection: Any = if case let .ready(artifact) = outcome {
@@ -101,7 +94,9 @@ struct Extraction {
     }
 
     private func pipeline(_ language: LanguageType) throws -> CodeMapPipelineIdentity {
-        try CodeMapSyntaxEngine.shared.pipelineIdentity(for: language, decoderPolicy: .smipStrictUTF8V1, regexEngineFingerprint: fingerprint)
+        try CodeMapSyntaxEngine.shared.pipelineIdentity(
+            for: language, decoderPolicy: RPCESourceDecoder.policy, regexEngineFingerprint: fingerprint
+        )
     }
 
     static func identity(_ bytes: Data) -> SourceIdentity {

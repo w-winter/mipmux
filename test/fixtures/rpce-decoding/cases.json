@@ -1,0 +1,1622 @@
+[
+  {
+    "base64" : "",
+    "expected" : "",
+    "linuxExpected" : "",
+    "name" : "empty"
+  },
+  {
+    "base64" : "c2FtZSB0ZXh0",
+    "expected" : "same text",
+    "linuxExpected" : "same text",
+    "name" : "utf8-ascii"
+  },
+  {
+    "base64" : "ZnVuYyBjYWbDqSgpIHsgcHJpbnQoIuaXpeacrOiqniIpIH0NCg==",
+    "expected" : "func café() { print(\"日本語\") }\r\n",
+    "linuxExpected" : "func café() { print(\"日本語\") }\r\n",
+    "name" : "utf8-unicode"
+  },
+  {
+    "base64" : "77u/c2FtZSB0ZXh0",
+    "expected" : "same text",
+    "linuxExpected" : "same text",
+    "name" : "utf8-leading-bom"
+  },
+  {
+    "base64" : "//5zAGEAbQBlACAAdABlAHgAdAA=",
+    "expected" : "same text",
+    "linuxExpected" : "same text",
+    "name" : "utf16-le-bom"
+  },
+  {
+    "base64" : "//4A2A==",
+    "expected" : null,
+    "linuxExpected" : null,
+    "name" : "utf16-le-invalid-surrogate"
+  },
+  {
+    "base64" : "/v8AcwBhAG0AZQAgAHQAZQB4AHQ=",
+    "expected" : "same text",
+    "linuxExpected" : "same text",
+    "name" : "utf16-be-bom"
+  },
+  {
+    "base64" : "//4AAHMAAABhAAAAbQAAAGUAAAAgAAAAdAAAAGUAAAB4AAAAdAAAAA==",
+    "expected" : "same text",
+    "linuxExpected" : "same text",
+    "name" : "utf32-le-bom"
+  },
+  {
+    "base64" : "AAD+/wAAAHMAAABhAAAAbQAAAGUAAAAgAAAAdAAAAGUAAAB4AAAAdA==",
+    "expected" : "same text",
+    "linuxExpected" : "same text",
+    "name" : "utf32-be-bom"
+  },
+  {
+    "base64" : "Y2Fm6SBuYe92ZSBy6XN1bekggCCTcXVvdGVklA==",
+    "expected" : "café naïve résumé € “quoted”",
+    "linuxExpected" : "café naïve résumé € “quoted”",
+    "name" : "windows-1252"
+  },
+  {
+    "base64" : "k/qWe4zqgsyVto6ag1KBW4NogvCMn49vgrWC3IK3gUI=",
+    "expected" : "日本語の文字コードを検出します。",
+    "linuxExpected" : "日本語の文字コードを検出します。",
+    "name" : "shift-jis"
+  },
+  {
+    "base64" : "xvzL3LjspM7KuLv6pbOhvKXJpPK4ob3QpLek3qS5oaM=",
+    "expected" : "日本語の文字コードを検出します。",
+    "linuxExpected" : "日本語の文字コードを検出します。",
+    "name" : "euc-jp"
+  },
+  {
+    "base64" : "1tDOxNfWt/ux4MLrvOyy4qGj",
+    "expected" : "中文字符编码检测。",
+    "linuxExpected" : null,
+    "name" : "gb18030"
+  },
+  {
+    "base64" : "pKSk5aZyssW9c71YwMu0+qFD",
+    "expected" : "中文字符編碼檢測。",
+    "linuxExpected" : null,
+    "name" : "big5"
+  },
+  {
+    "base64" : "AA==",
+    "expected" : "\u0000",
+    "linuxExpected" : "\u0000",
+    "name" : "single-00"
+  },
+  {
+    "base64" : "AQ==",
+    "expected" : "\u0001",
+    "linuxExpected" : "\u0001",
+    "name" : "single-01"
+  },
+  {
+    "base64" : "Ag==",
+    "expected" : "\u0002",
+    "linuxExpected" : "\u0002",
+    "name" : "single-02"
+  },
+  {
+    "base64" : "Aw==",
+    "expected" : "\u0003",
+    "linuxExpected" : "\u0003",
+    "name" : "single-03"
+  },
+  {
+    "base64" : "BA==",
+    "expected" : "\u0004",
+    "linuxExpected" : "\u0004",
+    "name" : "single-04"
+  },
+  {
+    "base64" : "BQ==",
+    "expected" : "\u0005",
+    "linuxExpected" : "\u0005",
+    "name" : "single-05"
+  },
+  {
+    "base64" : "Bg==",
+    "expected" : "\u0006",
+    "linuxExpected" : "\u0006",
+    "name" : "single-06"
+  },
+  {
+    "base64" : "Bw==",
+    "expected" : "\u0007",
+    "linuxExpected" : "\u0007",
+    "name" : "single-07"
+  },
+  {
+    "base64" : "CA==",
+    "expected" : "\b",
+    "linuxExpected" : "\b",
+    "name" : "single-08"
+  },
+  {
+    "base64" : "CQ==",
+    "expected" : "\t",
+    "linuxExpected" : "\t",
+    "name" : "single-09"
+  },
+  {
+    "base64" : "Cg==",
+    "expected" : "\n",
+    "linuxExpected" : "\n",
+    "name" : "single-0a"
+  },
+  {
+    "base64" : "Cw==",
+    "expected" : "\u000b",
+    "linuxExpected" : "\u000b",
+    "name" : "single-0b"
+  },
+  {
+    "base64" : "DA==",
+    "expected" : "\f",
+    "linuxExpected" : "\f",
+    "name" : "single-0c"
+  },
+  {
+    "base64" : "DQ==",
+    "expected" : "\r",
+    "linuxExpected" : "\r",
+    "name" : "single-0d"
+  },
+  {
+    "base64" : "Dg==",
+    "expected" : "\u000e",
+    "linuxExpected" : "\u000e",
+    "name" : "single-0e"
+  },
+  {
+    "base64" : "Dw==",
+    "expected" : "\u000f",
+    "linuxExpected" : "\u000f",
+    "name" : "single-0f"
+  },
+  {
+    "base64" : "EA==",
+    "expected" : "\u0010",
+    "linuxExpected" : "\u0010",
+    "name" : "single-10"
+  },
+  {
+    "base64" : "EQ==",
+    "expected" : "\u0011",
+    "linuxExpected" : "\u0011",
+    "name" : "single-11"
+  },
+  {
+    "base64" : "Eg==",
+    "expected" : "\u0012",
+    "linuxExpected" : "\u0012",
+    "name" : "single-12"
+  },
+  {
+    "base64" : "Ew==",
+    "expected" : "\u0013",
+    "linuxExpected" : "\u0013",
+    "name" : "single-13"
+  },
+  {
+    "base64" : "FA==",
+    "expected" : "\u0014",
+    "linuxExpected" : "\u0014",
+    "name" : "single-14"
+  },
+  {
+    "base64" : "FQ==",
+    "expected" : "\u0015",
+    "linuxExpected" : "\u0015",
+    "name" : "single-15"
+  },
+  {
+    "base64" : "Fg==",
+    "expected" : "\u0016",
+    "linuxExpected" : "\u0016",
+    "name" : "single-16"
+  },
+  {
+    "base64" : "Fw==",
+    "expected" : "\u0017",
+    "linuxExpected" : "\u0017",
+    "name" : "single-17"
+  },
+  {
+    "base64" : "GA==",
+    "expected" : "\u0018",
+    "linuxExpected" : "\u0018",
+    "name" : "single-18"
+  },
+  {
+    "base64" : "GQ==",
+    "expected" : "\u0019",
+    "linuxExpected" : "\u0019",
+    "name" : "single-19"
+  },
+  {
+    "base64" : "Gg==",
+    "expected" : "\u001a",
+    "linuxExpected" : "\u001a",
+    "name" : "single-1a"
+  },
+  {
+    "base64" : "Gw==",
+    "expected" : "\u001b",
+    "linuxExpected" : "\u001b",
+    "name" : "single-1b"
+  },
+  {
+    "base64" : "HA==",
+    "expected" : "\u001c",
+    "linuxExpected" : "\u001c",
+    "name" : "single-1c"
+  },
+  {
+    "base64" : "HQ==",
+    "expected" : "\u001d",
+    "linuxExpected" : "\u001d",
+    "name" : "single-1d"
+  },
+  {
+    "base64" : "Hg==",
+    "expected" : "\u001e",
+    "linuxExpected" : "\u001e",
+    "name" : "single-1e"
+  },
+  {
+    "base64" : "Hw==",
+    "expected" : "\u001f",
+    "linuxExpected" : "\u001f",
+    "name" : "single-1f"
+  },
+  {
+    "base64" : "IA==",
+    "expected" : " ",
+    "linuxExpected" : " ",
+    "name" : "single-20"
+  },
+  {
+    "base64" : "IQ==",
+    "expected" : "!",
+    "linuxExpected" : "!",
+    "name" : "single-21"
+  },
+  {
+    "base64" : "Ig==",
+    "expected" : "\"",
+    "linuxExpected" : "\"",
+    "name" : "single-22"
+  },
+  {
+    "base64" : "Iw==",
+    "expected" : "#",
+    "linuxExpected" : "#",
+    "name" : "single-23"
+  },
+  {
+    "base64" : "JA==",
+    "expected" : "$",
+    "linuxExpected" : "$",
+    "name" : "single-24"
+  },
+  {
+    "base64" : "JQ==",
+    "expected" : "%",
+    "linuxExpected" : "%",
+    "name" : "single-25"
+  },
+  {
+    "base64" : "Jg==",
+    "expected" : "&",
+    "linuxExpected" : "&",
+    "name" : "single-26"
+  },
+  {
+    "base64" : "Jw==",
+    "expected" : "'",
+    "linuxExpected" : "'",
+    "name" : "single-27"
+  },
+  {
+    "base64" : "KA==",
+    "expected" : "(",
+    "linuxExpected" : "(",
+    "name" : "single-28"
+  },
+  {
+    "base64" : "KQ==",
+    "expected" : ")",
+    "linuxExpected" : ")",
+    "name" : "single-29"
+  },
+  {
+    "base64" : "Kg==",
+    "expected" : "*",
+    "linuxExpected" : "*",
+    "name" : "single-2a"
+  },
+  {
+    "base64" : "Kw==",
+    "expected" : "+",
+    "linuxExpected" : "+",
+    "name" : "single-2b"
+  },
+  {
+    "base64" : "LA==",
+    "expected" : ",",
+    "linuxExpected" : ",",
+    "name" : "single-2c"
+  },
+  {
+    "base64" : "LQ==",
+    "expected" : "-",
+    "linuxExpected" : "-",
+    "name" : "single-2d"
+  },
+  {
+    "base64" : "Lg==",
+    "expected" : ".",
+    "linuxExpected" : ".",
+    "name" : "single-2e"
+  },
+  {
+    "base64" : "Lw==",
+    "expected" : "/",
+    "linuxExpected" : "/",
+    "name" : "single-2f"
+  },
+  {
+    "base64" : "MA==",
+    "expected" : "0",
+    "linuxExpected" : "0",
+    "name" : "single-30"
+  },
+  {
+    "base64" : "MQ==",
+    "expected" : "1",
+    "linuxExpected" : "1",
+    "name" : "single-31"
+  },
+  {
+    "base64" : "Mg==",
+    "expected" : "2",
+    "linuxExpected" : "2",
+    "name" : "single-32"
+  },
+  {
+    "base64" : "Mw==",
+    "expected" : "3",
+    "linuxExpected" : "3",
+    "name" : "single-33"
+  },
+  {
+    "base64" : "NA==",
+    "expected" : "4",
+    "linuxExpected" : "4",
+    "name" : "single-34"
+  },
+  {
+    "base64" : "NQ==",
+    "expected" : "5",
+    "linuxExpected" : "5",
+    "name" : "single-35"
+  },
+  {
+    "base64" : "Ng==",
+    "expected" : "6",
+    "linuxExpected" : "6",
+    "name" : "single-36"
+  },
+  {
+    "base64" : "Nw==",
+    "expected" : "7",
+    "linuxExpected" : "7",
+    "name" : "single-37"
+  },
+  {
+    "base64" : "OA==",
+    "expected" : "8",
+    "linuxExpected" : "8",
+    "name" : "single-38"
+  },
+  {
+    "base64" : "OQ==",
+    "expected" : "9",
+    "linuxExpected" : "9",
+    "name" : "single-39"
+  },
+  {
+    "base64" : "Og==",
+    "expected" : ":",
+    "linuxExpected" : ":",
+    "name" : "single-3a"
+  },
+  {
+    "base64" : "Ow==",
+    "expected" : ";",
+    "linuxExpected" : ";",
+    "name" : "single-3b"
+  },
+  {
+    "base64" : "PA==",
+    "expected" : "<",
+    "linuxExpected" : "<",
+    "name" : "single-3c"
+  },
+  {
+    "base64" : "PQ==",
+    "expected" : "=",
+    "linuxExpected" : "=",
+    "name" : "single-3d"
+  },
+  {
+    "base64" : "Pg==",
+    "expected" : ">",
+    "linuxExpected" : ">",
+    "name" : "single-3e"
+  },
+  {
+    "base64" : "Pw==",
+    "expected" : "?",
+    "linuxExpected" : "?",
+    "name" : "single-3f"
+  },
+  {
+    "base64" : "QA==",
+    "expected" : "@",
+    "linuxExpected" : "@",
+    "name" : "single-40"
+  },
+  {
+    "base64" : "QQ==",
+    "expected" : "A",
+    "linuxExpected" : "A",
+    "name" : "single-41"
+  },
+  {
+    "base64" : "Qg==",
+    "expected" : "B",
+    "linuxExpected" : "B",
+    "name" : "single-42"
+  },
+  {
+    "base64" : "Qw==",
+    "expected" : "C",
+    "linuxExpected" : "C",
+    "name" : "single-43"
+  },
+  {
+    "base64" : "RA==",
+    "expected" : "D",
+    "linuxExpected" : "D",
+    "name" : "single-44"
+  },
+  {
+    "base64" : "RQ==",
+    "expected" : "E",
+    "linuxExpected" : "E",
+    "name" : "single-45"
+  },
+  {
+    "base64" : "Rg==",
+    "expected" : "F",
+    "linuxExpected" : "F",
+    "name" : "single-46"
+  },
+  {
+    "base64" : "Rw==",
+    "expected" : "G",
+    "linuxExpected" : "G",
+    "name" : "single-47"
+  },
+  {
+    "base64" : "SA==",
+    "expected" : "H",
+    "linuxExpected" : "H",
+    "name" : "single-48"
+  },
+  {
+    "base64" : "SQ==",
+    "expected" : "I",
+    "linuxExpected" : "I",
+    "name" : "single-49"
+  },
+  {
+    "base64" : "Sg==",
+    "expected" : "J",
+    "linuxExpected" : "J",
+    "name" : "single-4a"
+  },
+  {
+    "base64" : "Sw==",
+    "expected" : "K",
+    "linuxExpected" : "K",
+    "name" : "single-4b"
+  },
+  {
+    "base64" : "TA==",
+    "expected" : "L",
+    "linuxExpected" : "L",
+    "name" : "single-4c"
+  },
+  {
+    "base64" : "TQ==",
+    "expected" : "M",
+    "linuxExpected" : "M",
+    "name" : "single-4d"
+  },
+  {
+    "base64" : "Tg==",
+    "expected" : "N",
+    "linuxExpected" : "N",
+    "name" : "single-4e"
+  },
+  {
+    "base64" : "Tw==",
+    "expected" : "O",
+    "linuxExpected" : "O",
+    "name" : "single-4f"
+  },
+  {
+    "base64" : "UA==",
+    "expected" : "P",
+    "linuxExpected" : "P",
+    "name" : "single-50"
+  },
+  {
+    "base64" : "UQ==",
+    "expected" : "Q",
+    "linuxExpected" : "Q",
+    "name" : "single-51"
+  },
+  {
+    "base64" : "Ug==",
+    "expected" : "R",
+    "linuxExpected" : "R",
+    "name" : "single-52"
+  },
+  {
+    "base64" : "Uw==",
+    "expected" : "S",
+    "linuxExpected" : "S",
+    "name" : "single-53"
+  },
+  {
+    "base64" : "VA==",
+    "expected" : "T",
+    "linuxExpected" : "T",
+    "name" : "single-54"
+  },
+  {
+    "base64" : "VQ==",
+    "expected" : "U",
+    "linuxExpected" : "U",
+    "name" : "single-55"
+  },
+  {
+    "base64" : "Vg==",
+    "expected" : "V",
+    "linuxExpected" : "V",
+    "name" : "single-56"
+  },
+  {
+    "base64" : "Vw==",
+    "expected" : "W",
+    "linuxExpected" : "W",
+    "name" : "single-57"
+  },
+  {
+    "base64" : "WA==",
+    "expected" : "X",
+    "linuxExpected" : "X",
+    "name" : "single-58"
+  },
+  {
+    "base64" : "WQ==",
+    "expected" : "Y",
+    "linuxExpected" : "Y",
+    "name" : "single-59"
+  },
+  {
+    "base64" : "Wg==",
+    "expected" : "Z",
+    "linuxExpected" : "Z",
+    "name" : "single-5a"
+  },
+  {
+    "base64" : "Ww==",
+    "expected" : "[",
+    "linuxExpected" : "[",
+    "name" : "single-5b"
+  },
+  {
+    "base64" : "XA==",
+    "expected" : "\\",
+    "linuxExpected" : "\\",
+    "name" : "single-5c"
+  },
+  {
+    "base64" : "XQ==",
+    "expected" : "]",
+    "linuxExpected" : "]",
+    "name" : "single-5d"
+  },
+  {
+    "base64" : "Xg==",
+    "expected" : "^",
+    "linuxExpected" : "^",
+    "name" : "single-5e"
+  },
+  {
+    "base64" : "Xw==",
+    "expected" : "_",
+    "linuxExpected" : "_",
+    "name" : "single-5f"
+  },
+  {
+    "base64" : "YA==",
+    "expected" : "`",
+    "linuxExpected" : "`",
+    "name" : "single-60"
+  },
+  {
+    "base64" : "YQ==",
+    "expected" : "a",
+    "linuxExpected" : "a",
+    "name" : "single-61"
+  },
+  {
+    "base64" : "Yg==",
+    "expected" : "b",
+    "linuxExpected" : "b",
+    "name" : "single-62"
+  },
+  {
+    "base64" : "Yw==",
+    "expected" : "c",
+    "linuxExpected" : "c",
+    "name" : "single-63"
+  },
+  {
+    "base64" : "ZA==",
+    "expected" : "d",
+    "linuxExpected" : "d",
+    "name" : "single-64"
+  },
+  {
+    "base64" : "ZQ==",
+    "expected" : "e",
+    "linuxExpected" : "e",
+    "name" : "single-65"
+  },
+  {
+    "base64" : "Zg==",
+    "expected" : "f",
+    "linuxExpected" : "f",
+    "name" : "single-66"
+  },
+  {
+    "base64" : "Zw==",
+    "expected" : "g",
+    "linuxExpected" : "g",
+    "name" : "single-67"
+  },
+  {
+    "base64" : "aA==",
+    "expected" : "h",
+    "linuxExpected" : "h",
+    "name" : "single-68"
+  },
+  {
+    "base64" : "aQ==",
+    "expected" : "i",
+    "linuxExpected" : "i",
+    "name" : "single-69"
+  },
+  {
+    "base64" : "ag==",
+    "expected" : "j",
+    "linuxExpected" : "j",
+    "name" : "single-6a"
+  },
+  {
+    "base64" : "aw==",
+    "expected" : "k",
+    "linuxExpected" : "k",
+    "name" : "single-6b"
+  },
+  {
+    "base64" : "bA==",
+    "expected" : "l",
+    "linuxExpected" : "l",
+    "name" : "single-6c"
+  },
+  {
+    "base64" : "bQ==",
+    "expected" : "m",
+    "linuxExpected" : "m",
+    "name" : "single-6d"
+  },
+  {
+    "base64" : "bg==",
+    "expected" : "n",
+    "linuxExpected" : "n",
+    "name" : "single-6e"
+  },
+  {
+    "base64" : "bw==",
+    "expected" : "o",
+    "linuxExpected" : "o",
+    "name" : "single-6f"
+  },
+  {
+    "base64" : "cA==",
+    "expected" : "p",
+    "linuxExpected" : "p",
+    "name" : "single-70"
+  },
+  {
+    "base64" : "cQ==",
+    "expected" : "q",
+    "linuxExpected" : "q",
+    "name" : "single-71"
+  },
+  {
+    "base64" : "cg==",
+    "expected" : "r",
+    "linuxExpected" : "r",
+    "name" : "single-72"
+  },
+  {
+    "base64" : "cw==",
+    "expected" : "s",
+    "linuxExpected" : "s",
+    "name" : "single-73"
+  },
+  {
+    "base64" : "dA==",
+    "expected" : "t",
+    "linuxExpected" : "t",
+    "name" : "single-74"
+  },
+  {
+    "base64" : "dQ==",
+    "expected" : "u",
+    "linuxExpected" : "u",
+    "name" : "single-75"
+  },
+  {
+    "base64" : "dg==",
+    "expected" : "v",
+    "linuxExpected" : "v",
+    "name" : "single-76"
+  },
+  {
+    "base64" : "dw==",
+    "expected" : "w",
+    "linuxExpected" : "w",
+    "name" : "single-77"
+  },
+  {
+    "base64" : "eA==",
+    "expected" : "x",
+    "linuxExpected" : "x",
+    "name" : "single-78"
+  },
+  {
+    "base64" : "eQ==",
+    "expected" : "y",
+    "linuxExpected" : "y",
+    "name" : "single-79"
+  },
+  {
+    "base64" : "eg==",
+    "expected" : "z",
+    "linuxExpected" : "z",
+    "name" : "single-7a"
+  },
+  {
+    "base64" : "ew==",
+    "expected" : "{",
+    "linuxExpected" : "{",
+    "name" : "single-7b"
+  },
+  {
+    "base64" : "fA==",
+    "expected" : "|",
+    "linuxExpected" : "|",
+    "name" : "single-7c"
+  },
+  {
+    "base64" : "fQ==",
+    "expected" : "}",
+    "linuxExpected" : "}",
+    "name" : "single-7d"
+  },
+  {
+    "base64" : "fg==",
+    "expected" : "~",
+    "linuxExpected" : "~",
+    "name" : "single-7e"
+  },
+  {
+    "base64" : "fw==",
+    "expected" : "",
+    "linuxExpected" : "",
+    "name" : "single-7f"
+  },
+  {
+    "base64" : "gA==",
+    "expected" : "€",
+    "linuxExpected" : "€",
+    "name" : "single-80"
+  },
+  {
+    "base64" : "gQ==",
+    "expected" : "Ѓ",
+    "linuxExpected" : null,
+    "name" : "single-81"
+  },
+  {
+    "base64" : "gg==",
+    "expected" : "‚",
+    "linuxExpected" : "‚",
+    "name" : "single-82"
+  },
+  {
+    "base64" : "gw==",
+    "expected" : "ƒ",
+    "linuxExpected" : "ƒ",
+    "name" : "single-83"
+  },
+  {
+    "base64" : "hA==",
+    "expected" : "„",
+    "linuxExpected" : "„",
+    "name" : "single-84"
+  },
+  {
+    "base64" : "hQ==",
+    "expected" : "…",
+    "linuxExpected" : "…",
+    "name" : "single-85"
+  },
+  {
+    "base64" : "hg==",
+    "expected" : "†",
+    "linuxExpected" : "†",
+    "name" : "single-86"
+  },
+  {
+    "base64" : "hw==",
+    "expected" : "‡",
+    "linuxExpected" : "‡",
+    "name" : "single-87"
+  },
+  {
+    "base64" : "iA==",
+    "expected" : "ˆ",
+    "linuxExpected" : "ˆ",
+    "name" : "single-88"
+  },
+  {
+    "base64" : "iQ==",
+    "expected" : "‰",
+    "linuxExpected" : "‰",
+    "name" : "single-89"
+  },
+  {
+    "base64" : "ig==",
+    "expected" : "Š",
+    "linuxExpected" : "Š",
+    "name" : "single-8a"
+  },
+  {
+    "base64" : "iw==",
+    "expected" : "‹",
+    "linuxExpected" : "‹",
+    "name" : "single-8b"
+  },
+  {
+    "base64" : "jA==",
+    "expected" : "Œ",
+    "linuxExpected" : "Œ",
+    "name" : "single-8c"
+  },
+  {
+    "base64" : "jQ==",
+    "expected" : "¨",
+    "linuxExpected" : null,
+    "name" : "single-8d"
+  },
+  {
+    "base64" : "jg==",
+    "expected" : "Ž",
+    "linuxExpected" : "Ž",
+    "name" : "single-8e"
+  },
+  {
+    "base64" : "jw==",
+    "expected" : "¸",
+    "linuxExpected" : null,
+    "name" : "single-8f"
+  },
+  {
+    "base64" : "kA==",
+    "expected" : "ђ",
+    "linuxExpected" : null,
+    "name" : "single-90"
+  },
+  {
+    "base64" : "kQ==",
+    "expected" : "‘",
+    "linuxExpected" : "‘",
+    "name" : "single-91"
+  },
+  {
+    "base64" : "kg==",
+    "expected" : "’",
+    "linuxExpected" : "’",
+    "name" : "single-92"
+  },
+  {
+    "base64" : "kw==",
+    "expected" : "“",
+    "linuxExpected" : "“",
+    "name" : "single-93"
+  },
+  {
+    "base64" : "lA==",
+    "expected" : "”",
+    "linuxExpected" : "”",
+    "name" : "single-94"
+  },
+  {
+    "base64" : "lQ==",
+    "expected" : "•",
+    "linuxExpected" : "•",
+    "name" : "single-95"
+  },
+  {
+    "base64" : "lg==",
+    "expected" : "–",
+    "linuxExpected" : "–",
+    "name" : "single-96"
+  },
+  {
+    "base64" : "lw==",
+    "expected" : "—",
+    "linuxExpected" : "—",
+    "name" : "single-97"
+  },
+  {
+    "base64" : "mA==",
+    "expected" : "˜",
+    "linuxExpected" : "˜",
+    "name" : "single-98"
+  },
+  {
+    "base64" : "mQ==",
+    "expected" : "™",
+    "linuxExpected" : "™",
+    "name" : "single-99"
+  },
+  {
+    "base64" : "mg==",
+    "expected" : "š",
+    "linuxExpected" : "š",
+    "name" : "single-9a"
+  },
+  {
+    "base64" : "mw==",
+    "expected" : "›",
+    "linuxExpected" : "›",
+    "name" : "single-9b"
+  },
+  {
+    "base64" : "nA==",
+    "expected" : "œ",
+    "linuxExpected" : "œ",
+    "name" : "single-9c"
+  },
+  {
+    "base64" : "nQ==",
+    "expected" : "¯",
+    "linuxExpected" : null,
+    "name" : "single-9d"
+  },
+  {
+    "base64" : "ng==",
+    "expected" : "ž",
+    "linuxExpected" : "ž",
+    "name" : "single-9e"
+  },
+  {
+    "base64" : "nw==",
+    "expected" : "Ÿ",
+    "linuxExpected" : "Ÿ",
+    "name" : "single-9f"
+  },
+  {
+    "base64" : "oA==",
+    "expected" : " ",
+    "linuxExpected" : " ",
+    "name" : "single-a0"
+  },
+  {
+    "base64" : "oQ==",
+    "expected" : "¡",
+    "linuxExpected" : "¡",
+    "name" : "single-a1"
+  },
+  {
+    "base64" : "og==",
+    "expected" : "¢",
+    "linuxExpected" : "¢",
+    "name" : "single-a2"
+  },
+  {
+    "base64" : "ow==",
+    "expected" : "£",
+    "linuxExpected" : "£",
+    "name" : "single-a3"
+  },
+  {
+    "base64" : "pA==",
+    "expected" : "¤",
+    "linuxExpected" : "¤",
+    "name" : "single-a4"
+  },
+  {
+    "base64" : "pQ==",
+    "expected" : "¥",
+    "linuxExpected" : "¥",
+    "name" : "single-a5"
+  },
+  {
+    "base64" : "pg==",
+    "expected" : "¦",
+    "linuxExpected" : "¦",
+    "name" : "single-a6"
+  },
+  {
+    "base64" : "pw==",
+    "expected" : "§",
+    "linuxExpected" : "§",
+    "name" : "single-a7"
+  },
+  {
+    "base64" : "qA==",
+    "expected" : "¨",
+    "linuxExpected" : "¨",
+    "name" : "single-a8"
+  },
+  {
+    "base64" : "qQ==",
+    "expected" : "©",
+    "linuxExpected" : "©",
+    "name" : "single-a9"
+  },
+  {
+    "base64" : "qg==",
+    "expected" : "ª",
+    "linuxExpected" : "ª",
+    "name" : "single-aa"
+  },
+  {
+    "base64" : "qw==",
+    "expected" : "«",
+    "linuxExpected" : "«",
+    "name" : "single-ab"
+  },
+  {
+    "base64" : "rA==",
+    "expected" : "¬",
+    "linuxExpected" : "¬",
+    "name" : "single-ac"
+  },
+  {
+    "base64" : "rQ==",
+    "expected" : "­",
+    "linuxExpected" : "­",
+    "name" : "single-ad"
+  },
+  {
+    "base64" : "rg==",
+    "expected" : "®",
+    "linuxExpected" : "®",
+    "name" : "single-ae"
+  },
+  {
+    "base64" : "rw==",
+    "expected" : "¯",
+    "linuxExpected" : "¯",
+    "name" : "single-af"
+  },
+  {
+    "base64" : "sA==",
+    "expected" : "°",
+    "linuxExpected" : "°",
+    "name" : "single-b0"
+  },
+  {
+    "base64" : "sQ==",
+    "expected" : "±",
+    "linuxExpected" : "±",
+    "name" : "single-b1"
+  },
+  {
+    "base64" : "sg==",
+    "expected" : "²",
+    "linuxExpected" : "²",
+    "name" : "single-b2"
+  },
+  {
+    "base64" : "sw==",
+    "expected" : "³",
+    "linuxExpected" : "³",
+    "name" : "single-b3"
+  },
+  {
+    "base64" : "tA==",
+    "expected" : "´",
+    "linuxExpected" : "´",
+    "name" : "single-b4"
+  },
+  {
+    "base64" : "tQ==",
+    "expected" : "µ",
+    "linuxExpected" : "µ",
+    "name" : "single-b5"
+  },
+  {
+    "base64" : "tg==",
+    "expected" : "¶",
+    "linuxExpected" : "¶",
+    "name" : "single-b6"
+  },
+  {
+    "base64" : "tw==",
+    "expected" : "·",
+    "linuxExpected" : "·",
+    "name" : "single-b7"
+  },
+  {
+    "base64" : "uA==",
+    "expected" : "¸",
+    "linuxExpected" : "¸",
+    "name" : "single-b8"
+  },
+  {
+    "base64" : "uQ==",
+    "expected" : "¹",
+    "linuxExpected" : "¹",
+    "name" : "single-b9"
+  },
+  {
+    "base64" : "ug==",
+    "expected" : "º",
+    "linuxExpected" : "º",
+    "name" : "single-ba"
+  },
+  {
+    "base64" : "uw==",
+    "expected" : "»",
+    "linuxExpected" : "»",
+    "name" : "single-bb"
+  },
+  {
+    "base64" : "vA==",
+    "expected" : "¼",
+    "linuxExpected" : "¼",
+    "name" : "single-bc"
+  },
+  {
+    "base64" : "vQ==",
+    "expected" : "½",
+    "linuxExpected" : "½",
+    "name" : "single-bd"
+  },
+  {
+    "base64" : "vg==",
+    "expected" : "¾",
+    "linuxExpected" : "¾",
+    "name" : "single-be"
+  },
+  {
+    "base64" : "vw==",
+    "expected" : "¿",
+    "linuxExpected" : "¿",
+    "name" : "single-bf"
+  },
+  {
+    "base64" : "wA==",
+    "expected" : "À",
+    "linuxExpected" : "À",
+    "name" : "single-c0"
+  },
+  {
+    "base64" : "wQ==",
+    "expected" : "Á",
+    "linuxExpected" : "Á",
+    "name" : "single-c1"
+  },
+  {
+    "base64" : "wg==",
+    "expected" : "Â",
+    "linuxExpected" : "Â",
+    "name" : "single-c2"
+  },
+  {
+    "base64" : "ww==",
+    "expected" : "Ã",
+    "linuxExpected" : "Ã",
+    "name" : "single-c3"
+  },
+  {
+    "base64" : "xA==",
+    "expected" : "Ä",
+    "linuxExpected" : "Ä",
+    "name" : "single-c4"
+  },
+  {
+    "base64" : "xQ==",
+    "expected" : "Å",
+    "linuxExpected" : "Å",
+    "name" : "single-c5"
+  },
+  {
+    "base64" : "xg==",
+    "expected" : "Æ",
+    "linuxExpected" : "Æ",
+    "name" : "single-c6"
+  },
+  {
+    "base64" : "xw==",
+    "expected" : "Ç",
+    "linuxExpected" : "Ç",
+    "name" : "single-c7"
+  },
+  {
+    "base64" : "yA==",
+    "expected" : "È",
+    "linuxExpected" : "È",
+    "name" : "single-c8"
+  },
+  {
+    "base64" : "yQ==",
+    "expected" : "É",
+    "linuxExpected" : "É",
+    "name" : "single-c9"
+  },
+  {
+    "base64" : "yg==",
+    "expected" : "Ê",
+    "linuxExpected" : "Ê",
+    "name" : "single-ca"
+  },
+  {
+    "base64" : "yw==",
+    "expected" : "Ë",
+    "linuxExpected" : "Ë",
+    "name" : "single-cb"
+  },
+  {
+    "base64" : "zA==",
+    "expected" : "Ì",
+    "linuxExpected" : "Ì",
+    "name" : "single-cc"
+  },
+  {
+    "base64" : "zQ==",
+    "expected" : "Í",
+    "linuxExpected" : "Í",
+    "name" : "single-cd"
+  },
+  {
+    "base64" : "zg==",
+    "expected" : "Î",
+    "linuxExpected" : "Î",
+    "name" : "single-ce"
+  },
+  {
+    "base64" : "zw==",
+    "expected" : "Ï",
+    "linuxExpected" : "Ï",
+    "name" : "single-cf"
+  },
+  {
+    "base64" : "0A==",
+    "expected" : "Ð",
+    "linuxExpected" : "Ð",
+    "name" : "single-d0"
+  },
+  {
+    "base64" : "0Q==",
+    "expected" : "Ñ",
+    "linuxExpected" : "Ñ",
+    "name" : "single-d1"
+  },
+  {
+    "base64" : "0g==",
+    "expected" : "Ò",
+    "linuxExpected" : "Ò",
+    "name" : "single-d2"
+  },
+  {
+    "base64" : "0w==",
+    "expected" : "Ó",
+    "linuxExpected" : "Ó",
+    "name" : "single-d3"
+  },
+  {
+    "base64" : "1A==",
+    "expected" : "Ô",
+    "linuxExpected" : "Ô",
+    "name" : "single-d4"
+  },
+  {
+    "base64" : "1Q==",
+    "expected" : "Õ",
+    "linuxExpected" : "Õ",
+    "name" : "single-d5"
+  },
+  {
+    "base64" : "1g==",
+    "expected" : "Ö",
+    "linuxExpected" : "Ö",
+    "name" : "single-d6"
+  },
+  {
+    "base64" : "1w==",
+    "expected" : "×",
+    "linuxExpected" : "×",
+    "name" : "single-d7"
+  },
+  {
+    "base64" : "2A==",
+    "expected" : "Ø",
+    "linuxExpected" : "Ø",
+    "name" : "single-d8"
+  },
+  {
+    "base64" : "2Q==",
+    "expected" : "Ù",
+    "linuxExpected" : "Ù",
+    "name" : "single-d9"
+  },
+  {
+    "base64" : "2g==",
+    "expected" : "Ú",
+    "linuxExpected" : "Ú",
+    "name" : "single-da"
+  },
+  {
+    "base64" : "2w==",
+    "expected" : "Û",
+    "linuxExpected" : "Û",
+    "name" : "single-db"
+  },
+  {
+    "base64" : "3A==",
+    "expected" : "Ü",
+    "linuxExpected" : "Ü",
+    "name" : "single-dc"
+  },
+  {
+    "base64" : "3Q==",
+    "expected" : "Ý",
+    "linuxExpected" : "Ý",
+    "name" : "single-dd"
+  },
+  {
+    "base64" : "3g==",
+    "expected" : "Þ",
+    "linuxExpected" : "Þ",
+    "name" : "single-de"
+  },
+  {
+    "base64" : "3w==",
+    "expected" : "ß",
+    "linuxExpected" : "ß",
+    "name" : "single-df"
+  },
+  {
+    "base64" : "4A==",
+    "expected" : "à",
+    "linuxExpected" : "à",
+    "name" : "single-e0"
+  },
+  {
+    "base64" : "4Q==",
+    "expected" : "á",
+    "linuxExpected" : "á",
+    "name" : "single-e1"
+  },
+  {
+    "base64" : "4g==",
+    "expected" : "â",
+    "linuxExpected" : "â",
+    "name" : "single-e2"
+  },
+  {
+    "base64" : "4w==",
+    "expected" : "ã",
+    "linuxExpected" : "ã",
+    "name" : "single-e3"
+  },
+  {
+    "base64" : "5A==",
+    "expected" : "ä",
+    "linuxExpected" : "ä",
+    "name" : "single-e4"
+  },
+  {
+    "base64" : "5Q==",
+    "expected" : "å",
+    "linuxExpected" : "å",
+    "name" : "single-e5"
+  },
+  {
+    "base64" : "5g==",
+    "expected" : "æ",
+    "linuxExpected" : "æ",
+    "name" : "single-e6"
+  },
+  {
+    "base64" : "5w==",
+    "expected" : "ç",
+    "linuxExpected" : "ç",
+    "name" : "single-e7"
+  },
+  {
+    "base64" : "6A==",
+    "expected" : "è",
+    "linuxExpected" : "è",
+    "name" : "single-e8"
+  },
+  {
+    "base64" : "6Q==",
+    "expected" : "é",
+    "linuxExpected" : "é",
+    "name" : "single-e9"
+  },
+  {
+    "base64" : "6g==",
+    "expected" : "ê",
+    "linuxExpected" : "ê",
+    "name" : "single-ea"
+  },
+  {
+    "base64" : "6w==",
+    "expected" : "ë",
+    "linuxExpected" : "ë",
+    "name" : "single-eb"
+  },
+  {
+    "base64" : "7A==",
+    "expected" : "ì",
+    "linuxExpected" : "ì",
+    "name" : "single-ec"
+  },
+  {
+    "base64" : "7Q==",
+    "expected" : "í",
+    "linuxExpected" : "í",
+    "name" : "single-ed"
+  },
+  {
+    "base64" : "7g==",
+    "expected" : "î",
+    "linuxExpected" : "î",
+    "name" : "single-ee"
+  },
+  {
+    "base64" : "7w==",
+    "expected" : "ï",
+    "linuxExpected" : "ï",
+    "name" : "single-ef"
+  },
+  {
+    "base64" : "8A==",
+    "expected" : "ð",
+    "linuxExpected" : "ð",
+    "name" : "single-f0"
+  },
+  {
+    "base64" : "8Q==",
+    "expected" : "ñ",
+    "linuxExpected" : "ñ",
+    "name" : "single-f1"
+  },
+  {
+    "base64" : "8g==",
+    "expected" : "ò",
+    "linuxExpected" : "ò",
+    "name" : "single-f2"
+  },
+  {
+    "base64" : "8w==",
+    "expected" : "ó",
+    "linuxExpected" : "ó",
+    "name" : "single-f3"
+  },
+  {
+    "base64" : "9A==",
+    "expected" : "ô",
+    "linuxExpected" : "ô",
+    "name" : "single-f4"
+  },
+  {
+    "base64" : "9Q==",
+    "expected" : "õ",
+    "linuxExpected" : "õ",
+    "name" : "single-f5"
+  },
+  {
+    "base64" : "9g==",
+    "expected" : "ö",
+    "linuxExpected" : "ö",
+    "name" : "single-f6"
+  },
+  {
+    "base64" : "9w==",
+    "expected" : "÷",
+    "linuxExpected" : "÷",
+    "name" : "single-f7"
+  },
+  {
+    "base64" : "+A==",
+    "expected" : "ø",
+    "linuxExpected" : "ø",
+    "name" : "single-f8"
+  },
+  {
+    "base64" : "+Q==",
+    "expected" : "ù",
+    "linuxExpected" : "ù",
+    "name" : "single-f9"
+  },
+  {
+    "base64" : "+g==",
+    "expected" : "ú",
+    "linuxExpected" : "ú",
+    "name" : "single-fa"
+  },
+  {
+    "base64" : "+w==",
+    "expected" : "û",
+    "linuxExpected" : "û",
+    "name" : "single-fb"
+  },
+  {
+    "base64" : "/A==",
+    "expected" : "ü",
+    "linuxExpected" : "ü",
+    "name" : "single-fc"
+  },
+  {
+    "base64" : "/Q==",
+    "expected" : "ý",
+    "linuxExpected" : "ý",
+    "name" : "single-fd"
+  },
+  {
+    "base64" : "/g==",
+    "expected" : "þ",
+    "linuxExpected" : "þ",
+    "name" : "single-fe"
+  },
+  {
+    "base64" : "/w==",
+    "expected" : "ÿ",
+    "linuxExpected" : "ÿ",
+    "name" : "single-ff"
+  }
+]

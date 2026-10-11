@@ -32,6 +32,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     if (inventoryPaths.has(id)) throw new WorkspaceFailure('bundleIntegrityFailed');
     inventoryPaths.add(id);
   }
+  requireEqual(manifest.decoder, manifest.inventory.decoderPolicy);
   const context = await readBundleFile(directory, 'context.md', signal),
     handoff = await readBundleFile(directory, 'handoff.md', signal);
   requireEqual(identity(context), manifest.files.context);
@@ -81,9 +82,11 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
       );
       if (entry?.kind !== 'file') throw new WorkspaceFailure('bundleIntegrityFailed');
       requireEqual(entry.identity, record.identity);
+      if (entry.decoding.kind !== 'decoded') throw new WorkspaceFailure('bundleIntegrityFailed');
+      requireEqual(entry.decoding.identity, record.decodedIdentity);
       if (record.selection.kind === 'full') {
         requireEqual(bodies.length, 1);
-        requireEqual(identity(bodies[0]!), record.identity);
+        requireEqual(identity(bodies[0]!), record.decodedIdentity);
       }
       if (record.selection.kind === 'slices') {
         requireEqual(record.normalized, normalizeRanges(record.selection.ranges, Number.MAX_SAFE_INTEGER));
@@ -99,7 +102,14 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
       requireEqual(record.id, 'document:' + record.input.id);
       requireEqual(bodies.length, 1);
       requireEqual(identity(bodies[0]!), record.identity);
-      if (record.input.kind === 'suppliedDocument') requireEqual(bodies[0], record.input.text);
+      if ('sourceIdentity' in record) {
+        const entry = manifest.inventory.entries.find(entry =>
+          entry.root === record.input.source.root && entry.path === record.input.source.path
+        );
+        if (entry?.kind !== 'file' || entry.decoding.kind !== 'decoded') throw new WorkspaceFailure('bundleIntegrityFailed');
+        requireEqual(entry.identity, record.sourceIdentity);
+        requireEqual(entry.decoding.identity, record.identity);
+      } else requireEqual(bodies[0], record.input.text);
     } else {
       requireEqual(record.id, 'patch:' + record.receipt.input.id);
       requireEqual(bodies.length, 1);

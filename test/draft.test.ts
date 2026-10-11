@@ -34,7 +34,7 @@ async function fixture() {
   await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/a.swift'), 'struct Alpha {\r\n let value: String\r}\n');
   await writeFile(join(base, 'root/b.txt'), 'first\nsecond\nthird');
-  await writeFile(join(base, 'root/binary.swift'), 'struct Binary {\n let value: String\n}\n\0');
+  await writeFile(join(base, 'root/binary.swift'), Buffer.from([0xff, 0xfe, 0x00, 0xd8]));
   const options = {
     cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
@@ -270,7 +270,7 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
         ...request,
         requiredSources: [{ kind: 'codemap', source: { root: 'r', path: 'binary.swift' } }],
       }, signal()),
-      /binarySource/,
+      /decodeFailed/,
     );
     await workspace.close();
   } finally {

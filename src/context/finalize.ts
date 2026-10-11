@@ -73,7 +73,7 @@ export class FinalizationOperation {
       }
       const { generation, ...inventory } = owner.snapshot;
       const manifest: Manifest = {
-        schemaVersion: 3,
+        schemaVersion: 4,
         codemapMode,
         request,
         requestDigest: sha256(canonicalJSON(request)),
@@ -99,7 +99,7 @@ export class FinalizationOperation {
           'complete-readback',
           'final-input-revalidation',
         ],
-        decoder: 'smip-strict-utf8-v1',
+        decoder: inventory.decoderPolicy,
       };
       const output = owner.snapshot.outputRoot;
       const opened = await bridge.request({

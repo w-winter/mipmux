@@ -23,7 +23,7 @@ test('real search modes and output continuations preserve complete counts and re
     const full = await operation.fileSearch(query);
     if (full.kind !== 'search') assert.fail('Missing search');
     assert.equal(full.counts.matchingLines, 6); assert.equal(full.counts.occurrences, 6);
-    assert.equal(full.files[0]?.lines[0]?.text, '\uFEFFcafé\r\n');
+    assert.equal(full.files[0]?.lines[0]?.text, 'café\r\n');
     const cap = serializedBytes({ ...full, files: full.files.slice(0, 1), returnedMatchingLines: 2,
       truncated: true, continuation: { digest: '0'.repeat(64), offset: 1 } });
     const paths: string[] = [];

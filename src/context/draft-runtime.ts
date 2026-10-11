@@ -312,7 +312,7 @@ export class DraftRuntime {
       const text = material.bodies.join('');
       const digest = sha256(canonicalJSON({ id: this.id, material: material.record, text }));
       return pageResult(
-        prepareText(Buffer.from(text)).lines,
+        prepareText(text).lines,
         pageOffset(continuation, digest),
         maxOutputBytes,
         (lines, next) => ({

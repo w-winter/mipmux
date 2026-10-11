@@ -116,7 +116,7 @@ test('base64 framing preserves arbitrary bytes and failed decoding remains a sou
       assert.equal(response.result.kind, 'extracted');
       if (response.result.kind !== 'extracted') assert.fail('Missing extraction result');
       const valid = Buffer.from(bytes.toString('utf8')).equals(bytes);
-      assert.equal(response.result.outcome.kind === 'decodeFailed', !valid);
+      if (valid) assert.notEqual(response.result.outcome.kind, 'decodeFailed');
     }));
     const response = await client.request({ kind: 'extract', extension: 'txt', bytes: '', expected: { sha256: createHash('sha256').update('').digest('hex'), byteCount: 0 } }, new AbortController().signal);
     assert.equal(response.result.kind, 'unsupportedExtension');

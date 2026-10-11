@@ -162,7 +162,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 3);
+    assert.equal(ready.manifest.schemaVersion, 4);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -237,22 +237,18 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
   } finally { await f.runtime.close(); }
 });
 
-test('an inferred binary dependency fails admission before scout dispatch with an attributed cause', async () => {
+test('automatic codemaps retain a dependency accepted by the source decoder even when its text contains NUL', async () => {
   const f = await fixture();
   try {
     await writeFile(join(f.directory, 'r/SharedB.swift'), f.files['SharedB.swift'] + '\0');
-    const snapshot = await f.workspace.refresh(signal());
-    const binary = snapshot.entries.find(item => item.root === 'r' && item.path === 'SharedB.swift');
-    assert(binary?.kind === 'file' && binary.structural.kind === 'artifact' && binary.structural.record.outcome.kind === 'ready');
-    let calls = 0;
-    const client = f.runtime.createClient({ run: async () => { calls++; throw new Error('Unexpected scout dispatch'); } });
-    const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.directory, 'r') }],
-      exclusions: [], outputRoot: join(f.directory, 'out') }, signal());
-    const job = client.build(workspace.id, 'binary', { ...request, requiredSources: [fullSeed] });
-    const result = await client.wait(job.jobId, 10000, signal(), () => {});
-    assert.equal(result.state, 'failed'); assert(result.state === 'failed');
-    assert.equal(result.code, 'automaticCodemapUnavailable'); assert.equal(calls, 0); assert.equal(result.localSettled, true);
-    await writeFile(join(f.directory, 'admission-failure-proof.json'), JSON.stringify({ result, calls }, null, 2));
+    await f.workspace.refresh(signal());
+    const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
+    try {
+      assert(sources(draft).some(item => item.kind === 'source' && item.selection.source.path === 'SharedB.swift'));
+      const result = await draft.finalize(signal()); assert(result.kind === 'ready');
+      await verifyBundle(result.directory); await verifyCurrentBundle(result.directory, f.runtime, signal());
+      await writeFile(join(f.directory, 'decoded-dependency-proof.json'), JSON.stringify(result.manifest.files, null, 2));
+    } finally { await draft.close(); }
   } finally { await f.runtime.close(); }
 });
 

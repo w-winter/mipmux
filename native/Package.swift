@@ -27,7 +27,8 @@ let package = Package(name: "SmipNative", platforms: [.macOS(.v14)], products: [
 ], targets: [
     .executableTarget(
         name: "SmipBridge",
-        dependencies: ["RepoPromptCodeMapCore", "RepoPromptRegexCore", "RepoPromptC", "CPCRE2",
+        dependencies: ["RepoPromptCodeMapCore", "RepoPromptRegexCore", "RepoPromptC",
+                       "UniversalCharsetDetection", "CPCRE2",
                        .product(name: "Crypto", package: "swift-crypto")],
         swiftSettings: swift6LanguageMode
     ),
@@ -35,7 +36,7 @@ let package = Package(name: "SmipNative", platforms: [.macOS(.v14)], products: [
         name: "RepoPromptRegexCore",
         dependencies: ["CSwiftPCRE2"],
         path: "Sources/RepoPromptRegexCore",
-        swiftSettings: swift6LanguageMode,
+        swiftSettings: swift6LanguageMode
     ),
     .target(
         name: "RepoPromptCodeMapCore",
@@ -60,9 +61,11 @@ let package = Package(name: "SmipNative", platforms: [.macOS(.v14)], products: [
         path: "Sources/RepoPromptCodeMapCore",
         swiftSettings: swift6LanguageMode + [
             .define("DEBUG", .when(configuration: .debug)),
-        ],
+        ]
     ),
     .target(name: "RepoPromptC", path: "Sources/RepoPromptC", publicHeadersPath: "include"),
+    .target(name: "Cuchardet", path: "Sources/Cuchardet", publicHeadersPath: "include"),
+    .target(name: "UniversalCharsetDetection", dependencies: ["Cuchardet"], swiftSettings: [.swiftLanguageMode(.v5)]),
     .systemLibrary(name: "CPCRE2", pkgConfig: "libpcre2-8"),
     .target(name: "CSwiftPCRE2", dependencies: ["CPCRE2"], publicHeadersPath: "include"),
     .target(name: "TreeSitterScannerSupport", path: "Sources/TreeSitterScannerSupport", sources: ["src/javascript/scanner.c", "src/python/scanner.c"], publicHeadersPath: "include"),

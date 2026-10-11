@@ -17,7 +17,7 @@ stdin.once('data', bytes => {
     case 'wrongKind': frame.result = { kind: 'directoryComplete', count: 0, sha256: '0'.repeat(64) }; break;
     case 'held': process.stderr.write('held\n'); return;
     case 'idleSource':
-      frame.result = { kind: 'sourceComplete', identity: { sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', byteCount: 0 }, fingerprint: { device: '1', inode: '1', size: 0, mode: 33188, modifiedSeconds: '0', modifiedNanoseconds: 0, changedSeconds: '0', changedNanoseconds: 0 }, key: null };
+      frame.result = { kind: 'sourceComplete', identity: { sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', byteCount: 0 }, fingerprint: { device: '1', inode: '1', size: 0, mode: 33188, modifiedSeconds: '0', modifiedNanoseconds: 0, changedSeconds: '0', changedNanoseconds: 0 }, key: null, decoding: { kind: 'decoded', text: '', identity: { sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', byteCount: 0 }, encoding: 4 } };
       break;
     case 'wrongId': frame.requestId = 'wrong'; break;
     case 'wrongGeneration': frame.generation = 'wrong'; break;
@@ -28,7 +28,7 @@ stdin.once('data', bytes => {
     case 'emptyClose': process.exit(23); break;
     case 'badSourceReceipt':
       stdout.write(JSON.stringify({ ...frame, kind: 'bytes', result: undefined, bytes: 'YWJj' }) + '\n');
-      frame.result = { kind: 'sourceComplete', identity: { sha256: '0'.repeat(64), byteCount: 3 }, fingerprint: { device: '1', inode: '1', size: 3, mode: 33188, modifiedSeconds: '0', modifiedNanoseconds: 0, changedSeconds: '0', changedNanoseconds: 0 }, key: null };
+      frame.result = { kind: 'sourceComplete', identity: { sha256: '0'.repeat(64), byteCount: 3 }, fingerprint: { device: '1', inode: '1', size: 3, mode: 33188, modifiedSeconds: '0', modifiedNanoseconds: 0, changedSeconds: '0', changedNanoseconds: 0 }, key: null, decoding: { kind: 'decoded', text: '', identity: { sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', byteCount: 0 }, encoding: 4 } };
       break;
     default: throw new Error('Missing test scenario');
   }

@@ -14,9 +14,9 @@ export async function revalidateMaterials(
   for (const material of materials) {
     const record = material.record;
     const local = record.kind === 'source'
-      ? { source: record.selection.source, identity: record.identity }
-      : record.kind === 'document' && record.input.kind === 'localDocument'
-      ? { source: record.input.source, identity: record.identity }
+      ? { source: record.selection.source, identity: record.identity, decodedIdentity: record.decodedIdentity }
+      : record.kind === 'document' && 'sourceIdentity' in record
+      ? { source: record.input.source, identity: record.sourceIdentity, decodedIdentity: record.identity }
       : null;
     if (local) {
       const { source } = local;
@@ -29,8 +29,9 @@ export async function revalidateMaterials(
         record.kind === 'source' && record.selection.kind === 'codemap' &&
         canonicalJSON(read.key) !== canonicalJSON(record.artifactKey)
       ) throw new WorkspaceFailure('pipelineChanged', source);
+      if (canonicalJSON(identity(read.text)) !== canonicalJSON(local.decodedIdentity)) throw new WorkspaceFailure('pipelineChanged', source);
       if (record.kind === 'source' && record.selection.kind === 'slices') {
-        const text = prepareText(read.bytes);
+        const text = prepareText(read.text);
         const normalized = normalizeRanges(record.selection.ranges, text.lines.length);
         const bodies = normalized.map(range =>
           text.lines.slice(range.start - 1, range.end).map(line => line.text).join('')

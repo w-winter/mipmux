@@ -4,6 +4,11 @@ import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, 
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
 
 const closed = { additionalProperties: false };
+export const DecoderPolicy = Type.Enum(['workspace-automatic-v1', 'workspace-automatic-linux-v1']);
+export const SourceDecoding = Type.Union([
+  Type.Object({ kind: Type.Literal('decoded'), identity: SourceIdentity, encoding: SafeCount }, closed),
+  Type.Object({ kind: Type.Literal('undecodable') }, closed),
+]);
 export const SourcePath = Type.Object({ root: RootName, path: RelativePath }, closed);
 export type SourcePath = Static<typeof SourcePath>;
 export { ArtifactKey, Projection } from './artifact.js';
@@ -37,7 +42,7 @@ const disposition = Type.Union([
   Type.Object({ kind: Type.Literal('unsupported') }, closed),
 ]);
 export const InventoryEntry = Type.Union([
-  Type.Object({ kind: Type.Literal('file'), root: RootName, path: RelativePath, identity: SourceIdentity, structural: disposition }, closed),
+  Type.Object({ kind: Type.Literal('file'), root: RootName, path: RelativePath, identity: SourceIdentity, decoding: SourceDecoding, structural: disposition }, closed),
   Type.Object({ kind: Type.Literal('directory'), root: RootName, path: RelativePath }, closed),
   Type.Object({ kind: Type.Literal('acquisitionFailed'), root: RootName, path: RelativePath, code: Type.String(), structural: Type.Union([
     Type.Object({ kind: Type.Literal('unsupported') }, closed),
@@ -48,7 +53,7 @@ export const InventoryEntry = Type.Union([
     reason: Type.Union([Type.Literal('policy'), Type.Literal('symlink'), Type.Literal('nonRegular')]) }, closed),
 ]);
 export type InventoryEntry = Static<typeof InventoryEntry>;
-export const InventorySnapshot = Type.Object({ schemaVersion: Type.Literal(2), workspaceKey: SHA256, roots: Type.Array(AdmittedRoot), outputRoot: RootIdentity,
+export const InventorySnapshot = Type.Object({ schemaVersion: Type.Literal(3), decoderPolicy: DecoderPolicy, workspaceKey: SHA256, roots: Type.Array(AdmittedRoot), outputRoot: RootIdentity,
   policy: PolicySnapshot, entries: Type.Array(InventoryEntry), generation: SafeCount, inventoryDigest: SHA256,
   processing: Type.Literal('settled'), enumeration: Type.Union([
     Type.Object({ kind: Type.Literal('complete') }, closed),

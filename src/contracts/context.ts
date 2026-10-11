@@ -1,6 +1,6 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { InventorySnapshot, SourcePath, Exclusion } from './inventory.js';
+import { InventorySnapshot, SourcePath, Exclusion, DecoderPolicy } from './inventory.js';
 import { SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
@@ -100,7 +100,7 @@ export type DraftInspection = Static<typeof DraftInspection>;
 export const Span = Type.Object({ offset: SafeCount, length: SafeCount, sha256: SHA256 }, closed);
 export type Span = Static<typeof Span>;
 const sourceRecord = {
-  kind: Type.Literal('source'), id: Type.String(), identity: SourceIdentity,
+  kind: Type.Literal('source'), id: Type.String(), identity: SourceIdentity, decodedIdentity: SourceIdentity,
   mode: Type.Enum(['100644', '100755']), spans: Type.Array(Span),
 };
 export const MaterialRecord = Type.Union([
@@ -116,11 +116,12 @@ export const MaterialRecord = Type.Union([
     selection: SourceSelection.anyOf[2], normalized: Type.Tuple([]), artifactKey: ArtifactKey,
   }, closed),
   Type.Object({
-    kind: Type.Literal('document'),
-    id: Type.String(),
-    input: DocumentInput,
-    identity: SourceIdentity,
-    spans: Type.Array(Span),
+    kind: Type.Literal('document'), id: Type.String(), input: DocumentInput.anyOf[0],
+    identity: SourceIdentity, sourceIdentity: SourceIdentity, spans: Type.Array(Span),
+  }, closed),
+  Type.Object({
+    kind: Type.Literal('document'), id: Type.String(), input: SuppliedDocument,
+    identity: SourceIdentity, spans: Type.Array(Span),
   }, closed),
   Type.Object(
     { kind: Type.Literal('patch'), id: Type.String(), receipt: PatchReceipt, spans: Type.Array(Span) },
@@ -129,7 +130,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(3),
+  schemaVersion: Type.Literal(4),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,
@@ -148,7 +149,7 @@ export const Manifest = Type.Object({
     limitation: Type.Literal('Heuristic estimate; not an exact token count or provider acceptance guarantee.'),
   }, closed),
   checks: Type.Array(Type.String()),
-  decoder: Type.Literal('smip-strict-utf8-v1'),
+  decoder: DecoderPolicy,
 }, closed);
 export type Manifest = Static<typeof Manifest>;
 export const contextRequestValidator = Compile(ContextBuildRequest),

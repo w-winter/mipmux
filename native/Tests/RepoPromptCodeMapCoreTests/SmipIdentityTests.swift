@@ -5,11 +5,11 @@ import XCTest
 final class SmipIdentityTests: XCTestCase {
     func testDependencyFingerprintAndDecoderParticipateInCanonicalKey() throws {
         let first = try CodeMapSyntaxEngine.shared.pipelineIdentity(
-            for: .swift, decoderPolicy: .smipStrictUTF8V1,
+            for: .swift, decoderPolicy: .workspaceAutomaticLinuxV1,
             regexEngineFingerprint: CodeMapSHA256Digest(bytes: Data(repeating: 1, count: 32)),
         )
         let otherEngine = try CodeMapSyntaxEngine.shared.pipelineIdentity(
-            for: .swift, decoderPolicy: .smipStrictUTF8V1,
+            for: .swift, decoderPolicy: .workspaceAutomaticV1,
             regexEngineFingerprint: CodeMapSHA256Digest(bytes: Data(repeating: 2, count: 32)),
         )
         let otherDecoder = try CodeMapSyntaxEngine.shared.pipelineIdentity(

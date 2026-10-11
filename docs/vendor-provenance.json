@@ -188,9 +188,9 @@
         "Crypto import",
         "required regexEngineFingerprint reader/writer/initializer",
         "canonical domain v2",
-        "strict UTF-8 decoder mapping"
+        "approved Linux automatic-decoder identity mapping"
       ],
-      "sha256": "91764c0e8e48e0b39c19149dab0d5cd5c48e7155747e0016e60138ab9f16b72a",
+      "sha256": "843c9c17a69a5e8e94066b90d2e300535400625b1c561764630b56eb4cd38615",
       "classification": "handwritten",
       "ranges": [
         [
@@ -204,9 +204,10 @@
       "sourceSHA256": "dfe2e53fe36e1e161421549457f992fefd42c839580676aee0bbf7c471deec51",
       "destination": "native/Sources/RepoPromptCodeMapCore/Models/CodeMapCoreSourceSnapshot.swift",
       "changes": [
-        "strict UTF-8 decoder policy"
+        "approved Linux automatic-decoder policy",
+        "Move compiler-conditional declaration blocks to file scope for the staging analyzer; compiled policy variants and decoding behavior remain unchanged."
       ],
-      "sha256": "442f6f2c5d509f497fcf9dbe70626a59f93cf88fa4ca69f9456c2364db8f0973",
+      "sha256": "00cbfcf5ae3a7664f8ccd8fb906d2adda423b17ede948c309a6bc5f847d04662",
       "classification": "handwritten",
       "ranges": [
         [
@@ -3288,6 +3289,1332 @@
       ],
       "changes": [
         "Retain complete original matcher/header/parser code and copyright notices; remove trailing whitespace and add a terminal newline for repository whitespace checks."
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/Big5Freq.tab",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "f31a6725b0e5a4c0140c8b6e74673edc841ab68047353de148a85bdc02be1b76",
+      "destination": "native/Sources/Cuchardet/Big5Freq.tab",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "1ee80d648bf99a20d0df55ffc5c5eee03e204de450f3dfece52c11ce844e7f9b",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          943
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/CharDistribution.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "517cfc5c5d44f8c521b48fdfd548ce4852ebc0bec102265965d7167519939529",
+      "destination": "native/Sources/Cuchardet/CharDistribution.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "fdf018159262591b563db061ab456fd0697b878c9283bcf09f36bdde062b5931",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          109
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/CharDistribution.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4bf8a60f75df47fb592e1fdf10973e0c6e668332c9cb31102851b9336bbbdc0a",
+      "destination": "native/Sources/Cuchardet/CharDistribution.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "8ae1c9225e68ca6370cd0bb3436454da2674916dba2b68734d4e20834abbb2ee",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          242
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/EUCKRFreq.tab",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b287916cf516a51b8cb7e6207134caee64be0bdf568297a80ad2c20b41613808",
+      "destination": "native/Sources/Cuchardet/EUCKRFreq.tab",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "79daa95b9716bf48fcc03d387b07408372fcf13e6d12c44c0818d78f958ad607",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          614
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/EUCTWFreq.tab",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4516fd94ed04c1312b6e18a75e9ccad1165d10c5b23139b128d3b7f5dbc99f2c",
+      "destination": "native/Sources/Cuchardet/EUCTWFreq.tab",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "312ccb099df0fee8fcdb6a618a6032caecf9238df5e018b41715141ea922cc53",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          447
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/GB2312Freq.tab",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "aa63c90481cb16f11b83510feb4d443aa20ae574ce586822247e598ccf29f559",
+      "destination": "native/Sources/Cuchardet/GB2312Freq.tab",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "59c27dfdf783e343b524dd489fe8728b07a353892849b9790dfab206aed7fc7c",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          491
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/JISFreq.tab",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a819812eebf3a300e6d4d776d9757aa7b105db7ed512e83770d10fb2fbffc549",
+      "destination": "native/Sources/Cuchardet/JISFreq.tab",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "1990de4ab6dd90f08769121183b9a296e4cd63c12666cbb903421cbfdf9698a4",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          589
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/JpCntx.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b56275af4396d2798ae62c9cd5554e92a8263d2cf76cab6624c0c5ece1d7b27a",
+      "destination": "native/Sources/Cuchardet/JpCntx.cpp",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "2330009073c4020b3b26c6cb5090d491e72a3c1bbed849fba385533bfbd57ac6",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          230
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/JpCntx.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1169b08c98ce9f7f3e333229d840789ba5bb58c19179583895cb4dc7ab897100",
+      "destination": "native/Sources/Cuchardet/JpCntx.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "4ac0fbe787eddd54d380c548f88378908c122a472e45334aef849ab0239e8bed",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          140
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/VERSION.md",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "971fc62bab61f17f2d507c3d45abd7855862d794347afd3c2a4a08bd20213cd3",
+      "destination": "native/Sources/Cuchardet/VERSION.md",
+      "changes": [],
+      "sha256": "971fc62bab61f17f2d507c3d45abd7855862d794347afd3c2a4a08bd20213cd3",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsBig5Prober.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "720c498616b4d7eea2ba93df36305790fdab773e22ba5dd4dfd4d6e45eb361a5",
+      "destination": "native/Sources/Cuchardet/nsBig5Prober.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "2c2182bdf3669c9f7a4e9850c2b7a2cf577ef88feb29f18302a6f5920e13cc7a",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsBig5Prober.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "6b64eeb59b2e248ac1a320603d8536483c580e2e973306c603a1f980543e9498",
+      "destination": "native/Sources/Cuchardet/nsBig5Prober.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "eae1bab222a0606676f77dd775e02a8144717434fc1971da7de0bda6895deed1",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsCharSetProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ff516be498b94d238f51dd624495c0ea4911e0eb989763193435c0842304a63b",
+      "destination": "native/Sources/Cuchardet/nsCharSetProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "09e26875d3333fd8462c66f0295bfbfeb695ebe056c3ce40555452a851087104",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          125
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsCharSetProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "76382dba904f950b918721756715d43da226ef8fd25e5f5276e94f5d6592fba0",
+      "destination": "native/Sources/Cuchardet/nsCharSetProber.h",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "649b126b9047f1085000408f759d6ec5e97a93ede88dfd229ee1ecc4edf2029c",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsCodingStateMachine.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "492f90a6c281121e65cad6dbd7bd70465e5da231adbc1af16e1377fe328f4766",
+      "destination": "native/Sources/Cuchardet/nsCodingStateMachine.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "4a9fb808c4f3b06d3ee50aa39afbe73dae43eea246c02f6ddb759ecbc974e497",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          105
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEUCJPProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "fd64369bdb7a6d6040c6101c74cf2604828baa042bb2a84f066015c1df08f44b",
+      "destination": "native/Sources/Cuchardet/nsEUCJPProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "f6fe14e7c2377a4de7153b0720e5c029f2c2bc20da8fa791eba2935e5df46b08",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          99
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEUCJPProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c06cec4b40cf07cd2cd51f847e7b9e9936af36f0c0979a2ad283fb4e97eff3b",
+      "destination": "native/Sources/Cuchardet/nsEUCJPProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "aeca47a4303740f4aa1fefeb40d351707af354186f940f1a7791c030ad0a3df3",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          78
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEUCKRProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9aa65e4e11a83e7598fa1d8644bd38b62d15ab0002aae4159b64a13b9854be91",
+      "destination": "native/Sources/Cuchardet/nsEUCKRProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "eea3cb083daf4d90a8d093680073ecd860cdfc6f5c1578e697d33e95ab52751e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          91
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEUCKRProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "d638a459fb3ddaffe9b437da891051c9ade59738b45208379d1fe42cc8e45457",
+      "destination": "native/Sources/Cuchardet/nsEUCKRProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "ff76c150dfa494e4138b57b03bb5a35d479287d839ba06c2b8154933fa570cbb",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          80
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEUCTWProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1b884593e6912740ce3317453610f7a8c65f8d907278f413c5e4ec16d684ba92",
+      "destination": "native/Sources/Cuchardet/nsEUCTWProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "ad4bf4607a779b5aa6ac74d1dfbb5525afa4a1ce45bbcb5071a69eacac772fd7",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          91
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEUCTWProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "64ae2e52af8ba8bf261d7993ba027aac029c4da36e6eeae54fe5b11665159e48",
+      "destination": "native/Sources/Cuchardet/nsEUCTWProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "1f8036fd120a7f1a26a0942fcc41dce0acc16bcdc74bb9850fc5cd493a51a7b5",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEscCharsetProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "706a587f16e9afaa50ae1ce71970d97e5f56f221a002e3e118b8d6f956b1febc",
+      "destination": "native/Sources/Cuchardet/nsEscCharsetProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "79924dfd4db8207394b1e25f1a45c487bf34b0dd46fd4f6c4850210be0a6b8ea",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          101
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEscCharsetProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1c05e601b440a426a89267d2139a6c4cb099263b76e31c1b66b13880a4902a9d",
+      "destination": "native/Sources/Cuchardet/nsEscCharsetProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "0d2d00739b371a06146924aebb05515fba2088341c5659535ae3d6738ded5630",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          67
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsEscSM.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "5e4651e87899e14ba2be5587a3e1b7373c9a020f140baf66a7adbcf81d25c9a8",
+      "destination": "native/Sources/Cuchardet/nsEscSM.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "bab33e2088d07755dfe02905f004e8c2ca0a63946e64df5239b50050ea47e164",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          267
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsGB2312Prober.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3045650ab3b2bf5715529a29a0bdcbf9ad7f9184d0ae3b85391c9277ada480d2",
+      "destination": "native/Sources/Cuchardet/nsGB2312Prober.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "06bf1152929515b3ac82f01fbd4b8dd30ef29b19c16628c66e5a3aaacc3266aa",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          96
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsGB2312Prober.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ce474faae71a77356544b6f53b80a683512401078afcedc1d35cdc6c05d5cd39",
+      "destination": "native/Sources/Cuchardet/nsGB2312Prober.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "4ad1add06dd827f60fafd73507767901288373649c3f1d19ced0ae5134eccd5e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsHebrewProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "70192a077faea9bcc0c0a09c5449bb57c0805c6e8c27c6d34f632642ed9ed1ca",
+      "destination": "native/Sources/Cuchardet/nsHebrewProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "8a70e64078566cb8a0dc3256835d490f399e8cdbbc7a61b350980375c173b6eb",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          194
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsHebrewProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b93ab04ad58272fbc88e5c1fa11284706fffcad5ad7b523bc063443d15a4eb96",
+      "destination": "native/Sources/Cuchardet/nsHebrewProber.h",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "89785a8522010133aad0610a4aac3a41506b60d0d877d41ada00bed881c422c0",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          176
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsLatin1Prober.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "8e25a4bdb437f8e354248d80f979417637751965952ad2b67d087dc4520a5f70",
+      "destination": "native/Sources/Cuchardet/nsLatin1Prober.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "75b44390e31e3c9f55f2b0bafc9b75a0a0d3f13e3bd9ba082fca430d120c161e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          182
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsLatin1Prober.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "56e6e8bf4e66fcec93fab7c39ea6e855dd55ee357f0395bcce0e4a2418b94495",
+      "destination": "native/Sources/Cuchardet/nsLatin1Prober.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "7b351d4b112c298bdae2615ee20906df10b50ca078387218c308ab93290375f1",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          70
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsMBCSGroupProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ac338a43e90131e9bc5d55d001fc25d609d9f25c5eead6bac99138ac3607f19a",
+      "destination": "native/Sources/Cuchardet/nsMBCSGroupProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "854b0076db646752e041d91adcc1fad0185ec36f2d78067eeb1b6fa07b507190",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          230
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsMBCSGroupProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "aaaad86d8faaaf03b97ffc3a37aff0ad54a9b6ea31451756d81963bdf95b5816",
+      "destination": "native/Sources/Cuchardet/nsMBCSGroupProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "0524ee68a9151d84f73c2efa505308099e5a11b2348f0d2737d733f478a84695",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          80
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsMBCSSM.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ac365e4e07e4ad93c66b6e42b6566ce91725102d11324b0485ca7ae11e8c051c",
+      "destination": "native/Sources/Cuchardet/nsMBCSSM.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "b0d262506d86d65b167987b0e56aaddd560e6b6219b3665dad94f8d749feca53",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          513
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsPkgInt.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "5a56645ec3a24a810e1805e68613144f554bdf950e709352fbd5e021d3d28738",
+      "destination": "native/Sources/Cuchardet/nsPkgInt.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "2d8b0c4030c3611a73e3dbb1ed3535b00dd1a21e4140dbfb18f2a19fbaf36d22",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          89
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsSBCSGroupProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e9f4b491570fa906e5a34b1b3ea5081a7a105973475a14f04d26390a8f4276b6",
+      "destination": "native/Sources/Cuchardet/nsSBCSGroupProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "76034323a1d5d4061b073a5d02ff4aff31903586975a6ef76cdffe5d3ca2a1bf",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          332
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsSBCSGroupProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e2ee9ee0d65ac8a97b79c6edaaed3b330aad4a02d699969fdaeefbf7f21fa550",
+      "destination": "native/Sources/Cuchardet/nsSBCSGroupProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "c767d7964d5cdfe0d1377ff197fbfe8745ae6111bccbc77053c25fc1a9bef1c5",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          70
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsSBCharSetProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b3c1b5cd9c3a55e443de97ea442e2082c8f590f4a9c04bb892c47e211dc178cc",
+      "destination": "native/Sources/Cuchardet/nsSBCharSetProber.cpp",
+      "changes": [],
+      "sha256": "b3c1b5cd9c3a55e443de97ea442e2082c8f590f4a9c04bb892c47e211dc178cc",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          153
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsSBCharSetProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0e70de86b88e5c6689e6ea2d31fbfafcdf5b7ce71d7708b43c52d2ad589d402a",
+      "destination": "native/Sources/Cuchardet/nsSBCharSetProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "5243f1eb9afc04d067032791ed84eba4b4ebb2f22e3fc9f66970d2a0202fd068",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          256
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsSJISProber.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "db0ea8c72515b005a14dbc19c882eb54db004534c70d1503afb4b22fdf658a6b",
+      "destination": "native/Sources/Cuchardet/nsSJISProber.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "88ae35e262186375cbf93e8c2ae6836f8fcc948e9c76591705cd4edff7121800",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          98
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsSJISProber.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "06e949f4c07a479f9e3c006341eddd74b2600594373c1f4db19c1118e083fcb1",
+      "destination": "native/Sources/Cuchardet/nsSJISProber.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "48a8022bf5a24368c5de276964b88182c0bd725706dd3e99cd13694867a9eda1",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          80
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsUTF8Prober.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1b163c5c3cfa28bfef22d9693ec3bea5b8851577576be213dfd9978b3ec18a12",
+      "destination": "native/Sources/Cuchardet/nsUTF8Prober.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "6ab4c37993d83eacebaaac1dcdce18c2210cc361aad19ee4e95fdda4657d2487",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsUTF8Prober.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "f5868db3b3f6db97e908d7a4e518336581d40839dbc602153b6c7aff159e3c06",
+      "destination": "native/Sources/Cuchardet/nsUTF8Prober.h",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "7e8bc3486924fd0ed04f9f2621ee8e2f8073a0f7d0e8edf966fa7edbf62d371f",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsUniversalDetector.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "5a88ff705e97892c210dcb7fca63e4fef403fe67b6b6f5c108914eb076d60a7c",
+      "destination": "native/Sources/Cuchardet/nsUniversalDetector.cpp",
+      "changes": [],
+      "sha256": "5a88ff705e97892c210dcb7fca63e4fef403fe67b6b6f5c108914eb076d60a7c",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          340
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nsUniversalDetector.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "100efd2765d2962b14a1e344ee20e135f73df15ea896d3de28cb07217f20781b",
+      "destination": "native/Sources/Cuchardet/nsUniversalDetector.h",
+      "changes": [],
+      "sha256": "100efd2765d2962b14a1e344ee20e135f73df15ea896d3de28cb07217f20781b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          89
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/nscore.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b7a1e8e763581886d8cd80b483f640b6306b7a310a054614c4afcd07600b4c5f",
+      "destination": "native/Sources/Cuchardet/nscore.h",
+      "changes": [],
+      "sha256": "b7a1e8e763581886d8cd80b483f640b6306b7a310a054614c4afcd07600b4c5f",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          59
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/prmem.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1b3c8aa3d27be8b3a1ed1064fb7fb6769c7acc27fb513dd07529a82e4a6441bf",
+      "destination": "native/Sources/Cuchardet/prmem.h",
+      "changes": [],
+      "sha256": "1b3c8aa3d27be8b3a1ed1064fb7fb6769c7acc27fb513dd07529a82e4a6441bf",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/uchardet.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "55bbefbfed3bbe70a10ae6be7de97e69945f8050662b98b35b0d50a1e93fc739",
+      "destination": "native/Sources/Cuchardet/uchardet.cpp",
+      "changes": [],
+      "sha256": "55bbefbfed3bbe70a10ae6be7de97e69945f8050662b98b35b0d50a1e93fc739",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          111
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangArabicModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "7d9f4580f70abee6eb8b12882f6e35d90bf0a0dcc978260f7ed66c5e590f24c7",
+      "destination": "native/Sources/Cuchardet/LangModels/LangArabicModel.cpp",
+      "changes": [],
+      "sha256": "7d9f4580f70abee6eb8b12882f6e35d90bf0a0dcc978260f7ed66c5e590f24c7",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          265
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangBulgarianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "2b0d2aee40d6f91e48fcbd55e361a145399146af17eea6f081c3c04bc9dfbb47",
+      "destination": "native/Sources/Cuchardet/LangModels/LangBulgarianModel.cpp",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "071a5f9c346d60736f69f48c525ec9441472215e1de907324a7a6d5011c3348d",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          247
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangCroatianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "31eec7d003b236063deb354f7f06a657ca9b797723c5334d9247c0024291249b",
+      "destination": "native/Sources/Cuchardet/LangModels/LangCroatianModel.cpp",
+      "changes": [],
+      "sha256": "31eec7d003b236063deb354f7f06a657ca9b797723c5334d9247c0024291249b",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          292
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangCzechModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "63c5a43f052dbad1971c67aa238ca607bbefddeaeb49c3b3719ef0f3ae060747",
+      "destination": "native/Sources/Cuchardet/LangModels/LangCzechModel.cpp",
+      "changes": [],
+      "sha256": "63c5a43f052dbad1971c67aa238ca607bbefddeaeb49c3b3719ef0f3ae060747",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          281
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangDanishModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "c213acca04d93709e6ebf3148e59fc94cd69572c71cd64a7827902092ebbc640",
+      "destination": "native/Sources/Cuchardet/LangModels/LangDanishModel.cpp",
+      "changes": [],
+      "sha256": "c213acca04d93709e6ebf3148e59fc94cd69572c71cd64a7827902092ebbc640",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          198
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangEsperantoModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "d6afecf1e89bcf2aaa966febffc19a9831e0558aff0b13703d16aa91a038b4a5",
+      "destination": "native/Sources/Cuchardet/LangModels/LangEsperantoModel.cpp",
+      "changes": [],
+      "sha256": "d6afecf1e89bcf2aaa966febffc19a9831e0558aff0b13703d16aa91a038b4a5",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          141
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangEstonianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "523cd437545fb780c862ab8f64f33adae95f9189c864d847360832eb94c2aaa2",
+      "destination": "native/Sources/Cuchardet/LangModels/LangEstonianModel.cpp",
+      "changes": [],
+      "sha256": "523cd437545fb780c862ab8f64f33adae95f9189c864d847360832eb94c2aaa2",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          263
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangFinnishModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "6d91c378235ace0c5cfdfaefeaa19240070fc96fa4a3bab7f2887fa05b758205",
+      "destination": "native/Sources/Cuchardet/LangModels/LangFinnishModel.cpp",
+      "changes": [],
+      "sha256": "6d91c378235ace0c5cfdfaefeaa19240070fc96fa4a3bab7f2887fa05b758205",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          291
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangFrenchModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "22a097568aee73e27efc0bb2cbee0eeaa07cd030c8e842334fbe7464ad90762d",
+      "destination": "native/Sources/Cuchardet/LangModels/LangFrenchModel.cpp",
+      "changes": [],
+      "sha256": "22a097568aee73e27efc0bb2cbee0eeaa07cd030c8e842334fbe7464ad90762d",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          206
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangGermanModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9b444ccd774431710eed0592ca778e8ccc2c9cfde9aaf74ee76f47712ab20451",
+      "destination": "native/Sources/Cuchardet/LangModels/LangGermanModel.cpp",
+      "changes": [],
+      "sha256": "9b444ccd774431710eed0592ca778e8ccc2c9cfde9aaf74ee76f47712ab20451",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          168
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangGreekModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "23ae7fbfec598429c847046f4153d0c4acea556d40b8497b387b6dad6a247611",
+      "destination": "native/Sources/Cuchardet/LangModels/LangGreekModel.cpp",
+      "changes": [],
+      "sha256": "23ae7fbfec598429c847046f4153d0c4acea556d40b8497b387b6dad6a247611",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          229
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangHebrewModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "7913965b29732c0037957b26580af226a07887a705a0a0c9634c89923cbfd990",
+      "destination": "native/Sources/Cuchardet/LangModels/LangHebrewModel.cpp",
+      "changes": [
+        "Normalize trailing whitespace and final blank lines for Git staging; retain detector algorithms, constants and model data."
+      ],
+      "sha256": "c768141191d922a4acceb6542cc97cf91241d557fc68948285eb0fc70f8a5dcc",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          220
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangHungarianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "25acf3fd51a3e204229be9ae32a07c54be711609b505b58a167a377e578b0649",
+      "destination": "native/Sources/Cuchardet/LangModels/LangHungarianModel.cpp",
+      "changes": [],
+      "sha256": "25acf3fd51a3e204229be9ae32a07c54be711609b505b58a167a377e578b0649",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          169
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangIrishModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9a82fc58eee53fd0a589f8b008989c1ce1f64288cf54974b43d7215c4be46ca7",
+      "destination": "native/Sources/Cuchardet/LangModels/LangIrishModel.cpp",
+      "changes": [],
+      "sha256": "9a82fc58eee53fd0a589f8b008989c1ce1f64288cf54974b43d7215c4be46ca7",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          230
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangItalianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "f0e070678ce81a0a17764e785219c82526137e92b63f8a73c24e3b43d8f20420",
+      "destination": "native/Sources/Cuchardet/LangModels/LangItalianModel.cpp",
+      "changes": [],
+      "sha256": "f0e070678ce81a0a17764e785219c82526137e92b63f8a73c24e3b43d8f20420",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          264
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangLatvianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1b9c4304cb928b8a5267404d68a9fac7b7b77414e8b2c7543717bc68e02c9647",
+      "destination": "native/Sources/Cuchardet/LangModels/LangLatvianModel.cpp",
+      "changes": [],
+      "sha256": "1b9c4304cb928b8a5267404d68a9fac7b7b77414e8b2c7543717bc68e02c9647",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          207
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangLithuanianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "dbda92c4db74c86df05b2b7c70b8d8e09ca6afe70fbc8e169f8119b860cb0f3c",
+      "destination": "native/Sources/Cuchardet/LangModels/LangLithuanianModel.cpp",
+      "changes": [],
+      "sha256": "dbda92c4db74c86df05b2b7c70b8d8e09ca6afe70fbc8e169f8119b860cb0f3c",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          206
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangMalteseModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a26d2d6a357f4bebf7b57fc54b332a540f17e49891b9d0affbc5d4b366402802",
+      "destination": "native/Sources/Cuchardet/LangModels/LangMalteseModel.cpp",
+      "changes": [],
+      "sha256": "a26d2d6a357f4bebf7b57fc54b332a540f17e49891b9d0affbc5d4b366402802",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          137
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangPolishModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "2e2fab92a7fd8b1cfc7c4518ca9f3b681e78a18873d7a9011a906a4e60107eb2",
+      "destination": "native/Sources/Cuchardet/LangModels/LangPolishModel.cpp",
+      "changes": [],
+      "sha256": "2e2fab92a7fd8b1cfc7c4518ca9f3b681e78a18873d7a9011a906a4e60107eb2",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          298
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangPortugueseModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "02d7be0bc50a8271a474f6018513c2bec5342361fb343038da1f900f486a8c43",
+      "destination": "native/Sources/Cuchardet/LangModels/LangPortugueseModel.cpp",
+      "changes": [],
+      "sha256": "02d7be0bc50a8271a474f6018513c2bec5342361fb343038da1f900f486a8c43",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          237
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangRomanianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "7253244e80bd71c9433e33378241b261f8a3c81a67f32bb8963d891768df7fa1",
+      "destination": "native/Sources/Cuchardet/LangModels/LangRomanianModel.cpp",
+      "changes": [],
+      "sha256": "7253244e80bd71c9433e33378241b261f8a3c81a67f32bb8963d891768df7fa1",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          232
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangRussianModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "deee8de6da650dd4f4f5853fd384e396d3a23eeefe971b697d31d604ba3e30c9",
+      "destination": "native/Sources/Cuchardet/LangModels/LangRussianModel.cpp",
+      "changes": [
+        "Normalize trailing whitespace for Git staging; retain the detector algorithms, constants and generated model data."
+      ],
+      "sha256": "1428dd33f738caff5c4b04d770a184085476f6b920c45f27ff4592dc4e94fa1b",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          361
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangSlovakModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "bc216869e509beeb668056ea812b9a8eabd631a3723144ff6f1c7577043b4c08",
+      "destination": "native/Sources/Cuchardet/LangModels/LangSlovakModel.cpp",
+      "changes": [],
+      "sha256": "bc216869e509beeb668056ea812b9a8eabd631a3723144ff6f1c7577043b4c08",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          289
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangSloveneModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "5eafa808e0515aeee750e38dba898ef0cbba9c558f4dae3f8dcca7088ab26ae7",
+      "destination": "native/Sources/Cuchardet/LangModels/LangSloveneModel.cpp",
+      "changes": [],
+      "sha256": "5eafa808e0515aeee750e38dba898ef0cbba9c558f4dae3f8dcca7088ab26ae7",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          259
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangSpanishModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "f7845e2674bea92914ad28377d77828280a576dd984a91d86049556c28461062",
+      "destination": "native/Sources/Cuchardet/LangModels/LangSpanishModel.cpp",
+      "changes": [],
+      "sha256": "f7845e2674bea92914ad28377d77828280a576dd984a91d86049556c28461062",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          201
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangSwedishModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0cb86b38747659032801fb7b465de722e8760b8e42568d83255dfee4be550ef6",
+      "destination": "native/Sources/Cuchardet/LangModels/LangSwedishModel.cpp",
+      "changes": [],
+      "sha256": "0cb86b38747659032801fb7b465de722e8760b8e42568d83255dfee4be550ef6",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          261
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangThaiModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9d7963fc6529544521fab1f9c99a21e26314782228814c08e6d157cb871851b0",
+      "destination": "native/Sources/Cuchardet/LangModels/LangThaiModel.cpp",
+      "changes": [],
+      "sha256": "9d7963fc6529544521fab1f9c99a21e26314782228814c08e6d157cb871851b0",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          265
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangTurkishModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3fd2798b5a3fc554ce2795b5e4ce17ccdbec580278a0d99fe741a2e491338484",
+      "destination": "native/Sources/Cuchardet/LangModels/LangTurkishModel.cpp",
+      "changes": [],
+      "sha256": "3fd2798b5a3fc554ce2795b5e4ce17ccdbec580278a0d99fe741a2e491338484",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          173
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/LangModels/LangVietnameseModel.cpp",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4151e22500407a0cc2d8edab5ea5b7eb928ff5142cc3834b7c91f7bc83d8aa80",
+      "destination": "native/Sources/Cuchardet/LangModels/LangVietnameseModel.cpp",
+      "changes": [],
+      "sha256": "4151e22500407a0cc2d8edab5ea5b7eb928ff5142cc3834b7c91f7bc83d8aa80",
+      "classification": "generated",
+      "ranges": [
+        [
+          1,
+          247
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/Cuchardet/include/uchardet.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "754a4aba8ff1431365276b3ed2c771f0b55f3c4edf45fa917cc30fc911e14d56",
+      "destination": "native/Sources/Cuchardet/include/uchardet.h",
+      "changes": [],
+      "sha256": "754a4aba8ff1431365276b3ed2c771f0b55f3c4edf45fa917cc30fc911e14d56",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          100
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/UniversalCharsetDetection/CharacterEncodingDetector.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "467ea5b58374ce85503d5937a2a5a7b52a4abe987e17a4d103bda25005bbc0f4",
+      "destination": "native/Sources/UniversalCharsetDetection/CharacterEncodingDetector.swift",
+      "changes": [],
+      "sha256": "467ea5b58374ce85503d5937a2a5a7b52a4abe987e17a4d103bda25005bbc0f4",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          106
+        ]
+      ]
+    },
+    {
+      "source": "Vendor/UniversalCharsetDetection/Sources/UniversalCharsetDetection/DataProtocol+CharacterEncoding.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3d1e3e9e14f080cb35ef8e7eeda72cca01e949eea009c917d77d2aac561fb00e",
+      "destination": "native/Sources/UniversalCharsetDetection/DataProtocol+CharacterEncoding.swift",
+      "changes": [],
+      "sha256": "3d1e3e9e14f080cb35ef8e7eeda72cca01e949eea009c917d77d2aac561fb00e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          37
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/FileSystemService+ContentLoading.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "21dbd91451a0e9831894b5563008016b79c71e59ccdae70a1b7945f857b3cecc",
+      "destination": "native/Sources/SmipBridge/RPCESourceDecoder.swift",
+      "changes": [
+        "Extract the automatic decoding order and macOS IANA/Foundation heuristic behavior into the shared native source decoder.",
+        "Use the original UniversalCharsetDetection library; on Linux return an explicit undecodable result on detector failure and convert detected encodings with the native codec, as approved in SC-002.",
+        "Record a distinct Linux policy identity; do not claim equality for the unavailable Foundation heuristic.",
+        "Bind decoding outcomes to the existing CodeMapSourceDecodeResult and sourceComplete transport with raw and decoded identities.",
+        "Move compiler-conditional declaration blocks to file scope for the staging analyzer; compiled policy variants and decoding behavior remain unchanged."
+      ],
+      "sha256": "5eebe74705fd991c29c7b150dfee968cec32a3771fb61a0d617e9298d6e17883",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          8,
+          51
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/FileSystemService+ContentLoading.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "21dbd91451a0e9831894b5563008016b79c71e59ccdae70a1b7945f857b3cecc",
+      "destination": "native/Sources/RepoPromptC/repo_text_decode.c",
+      "changes": [
+        "New Linux-only iconv adapter replaces String(data:encoding:) for detector-selected encodings under approved SC-002. No detection heuristic or lossy conversion is added."
+      ],
+      "sha256": "f319313b4c93f9a332bff0f6cd9dd09c4ce8814efd90e64ff8930acf11b06ddf",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          8,
+          51
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/FileSystemService+ContentLoading.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "21dbd91451a0e9831894b5563008016b79c71e59ccdae70a1b7945f857b3cecc",
+      "destination": "native/Sources/RepoPromptC/include/repo_text_decode.h",
+      "changes": [
+        "Declare the private C conversion boundary used by the approved Linux automatic-decoder mapping."
+      ],
+      "sha256": "beba1f270ba7ee4e2257214e326a756d5f31692b1a59e9fec54f4f4ac6b05913",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          8,
+          51
+        ]
       ]
     }
   ],

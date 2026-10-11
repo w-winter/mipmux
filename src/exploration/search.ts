@@ -50,10 +50,10 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   try {
     for (const [index, candidate] of candidates.entries()) {
       // Each candidate is revalidated even for count-only and path-only continuations.
-      const source = await operation.readSource(candidate);
-      if (request.mode === 'path') continue;
+      if (request.mode === 'path') { await operation.readRawSource(candidate); continue; }
       try {
-        const text = prepareText(source.bytes);
+        const source = await operation.readSource(candidate);
+        const text = prepareText(source.text);
         const path = join(directory, String(index).padStart(String(candidates.length).length, '0'));
         await writeFile(path, text.searchText, { flag: 'wx', mode: 0o600 }); temporaryCount++;
       } catch (error) {
@@ -116,7 +116,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
         if (match.line_number <= found.lastLine) throw new WorkspaceFailure('searchProtocolError');
         found.occurrences += match.submatches.length; found.matchingLines++; found.lastLine = match.line_number;
         if (retain()) {
-          text ??= prepareText((await operation.readSource(candidates[index]!)).bytes);
+          text ??= prepareText((await operation.readSource(candidates[index]!)).text);
           if (match.line_number > text.lines.length) throw new WorkspaceFailure('searchProtocolError');
           matching.add(match.line_number);
         }
@@ -132,7 +132,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       matchingLines: matches.reduce((sum, match) => sum + match.matchingLines, 0), matchedFiles };
     return pageResult(records, 0, maxOutputBytes, (files) => ({
       kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest, engine: 'PCRE2',
-      newlineView: 'CRLF and CR become LF; BOM and all other text are preserved', counts,
+      newlineView: 'CRLF and CR become LF; all other decoded text is preserved', counts,
       returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files, limitations,
       truncated: !request.countOnly && offset + files.length < matchedFiles,
       continuation: request.countOnly || offset + files.length === matchedFiles ? null : { digest, offset: offset + files.length },

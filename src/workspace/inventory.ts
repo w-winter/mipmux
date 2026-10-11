@@ -35,7 +35,10 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
         }, access.signal);
         structural = { kind: 'artifact', key, record };
       }
-      entries.push({ kind: 'file', ...source, identity: acquired.identity, structural });
+      const decoding = acquired.decoding.kind === 'decoded'
+        ? { kind: 'decoded' as const, identity: acquired.decoding.identity, encoding: acquired.decoding.encoding }
+        : { kind: 'undecodable' as const };
+      entries.push({ kind: 'file', ...source, identity: acquired.identity, decoding, structural });
     } catch (error) {
       if (!(error instanceof NativeFailure) || ['cancelled', 'nativeWorkerClosed', 'nativeProtocolError'].includes(error.code)) throw error;
       const supported = supportedExtensions.has(extname(source.path).slice(1).toLowerCase());
@@ -77,7 +80,7 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
     if (await policy.admitted({ root: root.name, path: '' }, true)) await walk(root.name, '');
   }
   entries.sort((a, b) => compareBytes(a.root, b.root) || compareBytes(a.path, b.path));
-  const body = { schemaVersion: 2 as const, workspaceKey, roots: [...declaration.roots], outputRoot: declaration.outputRoot, policy: policy.snapshot(), entries,
+  const body = { schemaVersion: 3 as const, decoderPolicy: description.decoderPolicy, workspaceKey, roots: [...declaration.roots], outputRoot: declaration.outputRoot, policy: policy.snapshot(), entries,
     generation, processing: 'settled' as const,
     enumeration: failures.length ? { kind: 'incomplete' as const, failures } : { kind: 'complete' as const } };
   const snapshot = freeze({ ...body, inventoryDigest: inventoryDigest(body) });

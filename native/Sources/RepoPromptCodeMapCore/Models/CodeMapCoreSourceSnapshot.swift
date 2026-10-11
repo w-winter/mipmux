@@ -1,15 +1,20 @@
-// Modified for smip: adds the lossless strict UTF-8 decoder identity.
+// Modified for smip: identifies the approved Linux automatic-decoder mapping.
 import Foundation
 
-package enum CodeMapSourceDecoderPolicy: String, Codable, Hashable, Sendable {
-    case workspaceAutomaticV1
-    case smipStrictUTF8V1
-    #if DEBUG
+#if DEBUG
+    package enum CodeMapSourceDecoderPolicy: String, Codable, Hashable {
+        case workspaceAutomaticV1
+        case workspaceAutomaticLinuxV1
         case testOnlyMismatch
-    #endif
-}
+    }
+#else
+    package enum CodeMapSourceDecoderPolicy: String, Codable, Hashable {
+        case workspaceAutomaticV1
+        case workspaceAutomaticLinuxV1
+    }
+#endif
 
-package struct CodeMapRawSourceDigest: Hashable, Codable, Sendable {
+package struct CodeMapRawSourceDigest: Hashable, Codable {
     private static let requiredByteCount = 32
 
     package let bytes: Data
@@ -41,7 +46,7 @@ package struct CodeMapRawSourceDigest: Hashable, Codable, Sendable {
     }
 }
 
-package struct CodeMapDecodedSource: Equatable, Sendable {
+package struct CodeMapDecodedSource: Equatable {
     package let text: String
     package let detectedEncodingRawValue: UInt
 
@@ -51,16 +56,16 @@ package struct CodeMapDecodedSource: Equatable, Sendable {
     }
 }
 
-package enum CodeMapSourceDecodeFailure: String, Codable, Equatable, Sendable {
+package enum CodeMapSourceDecodeFailure: String, Codable, Equatable {
     case undecodable
 }
 
-package enum CodeMapSourceDecodeResult: Equatable, Sendable {
+package enum CodeMapSourceDecodeResult: Equatable {
     case decoded(CodeMapDecodedSource)
     case failed(CodeMapSourceDecodeFailure)
 }
 
-package struct CodeMapCoreSourceSnapshot: Equatable, Sendable {
+package struct CodeMapCoreSourceSnapshot: Equatable {
     package let rawByteCount: Int
     package let rawSHA256: CodeMapRawSourceDigest
     package let decoderPolicy: CodeMapSourceDecoderPolicy

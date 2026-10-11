@@ -154,6 +154,11 @@ export class BridgeClient {
     if (!kinds.includes(result.kind)) throw new Error('wrong response kind');
     if (result.kind === 'sourceComplete') {
       if (result.identity.byteCount !== bytes.length || result.identity.sha256 !== sha256(bytes)) throw new Error('source identity mismatch');
+      if (result.decoding.kind === 'decoded') {
+        const text = Buffer.from(result.decoding.text);
+        if (text.toString() !== result.decoding.text || text.length !== result.decoding.identity.byteCount ||
+          sha256(text) !== result.decoding.identity.sha256) throw new Error('decoded source identity mismatch');
+      }
     }
     if (result.kind === 'directoryComplete') {
       const canonical = pending.entries.map(entry => `${entry.entryKind}\0${entry.name}\0`).join('');

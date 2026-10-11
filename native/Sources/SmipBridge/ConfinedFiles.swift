@@ -131,7 +131,9 @@ final class ConfinedFiles {
         guard try status(file.value).st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw BridgeFailure("nonRegularFile") }
         var digest = SHA256()
         var count = 0
+        var content = Data()
         try readChunks(file.value) { bytes in
+            content.append(bytes)
             digest.update(data: bytes); count += bytes.count
             try request.emit(["kind": "bytes", "bytes": bytes.base64EncodedString()])
         }
@@ -141,6 +143,7 @@ final class ConfinedFiles {
         if let expected, expected != identity { throw BridgeFailure("sourceChanged") }
         try validate(root)
         return try ["kind": "sourceComplete", "identity": identity.json, "fingerprint": before.json,
+                    "decoding": RPCESourceDecoder.describe(RPCESourceDecoder.decode(content)),
                     "key": extraction.key(rawDigest, byteCount: count, extension: (path as NSString).pathExtension)]
     }
 

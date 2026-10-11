@@ -109,7 +109,7 @@ test('required full source, complete report and patch reach verified output; sta
     );
     assert.equal(verified.kind, 'verified');
     const context = await readFile(join(result.directory, 'context.md'), 'utf8');
-    for (const text of [body, report, patch, request.task, request.constraints]) assert(context.includes(text));
+    for (const text of [body.slice(1), report, patch, request.task, request.constraints]) assert(context.includes(text));
     assert(Buffer.byteLength(context) > 100000);
     await readyDraft.close();
     await assert.rejects(

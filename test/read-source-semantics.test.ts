@@ -27,7 +27,7 @@ test('public MCP read_file executes source bounds and retains exact text and dia
   await mkdir('test-output', { recursive: true });
   const base = await mkdtemp(resolve('test-output/read-source-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
-  for (const [index, entry] of cases.entries()) await writeFile(join(root, index + '.txt'), entry.input.text);
+  for (const [index, entry] of cases.entries()) await writeFile(join(root, index + '.txt'), '\uFEFF' + entry.input.text);
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},

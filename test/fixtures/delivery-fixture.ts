@@ -50,7 +50,7 @@ export async function prepareDeliveryFixture() {
 export async function verifyDeliveryMaterials(directory: string, fixture: Awaited<ReturnType<typeof prepareDeliveryFixture>>, expectedPatch: string) {
   const { manifest } = await verifyBundle(directory), bytes = await readFile(join(directory, 'context.md'));
   const bodies = manifest.materials.map(record => ({ record, bodies: record.spans.map(span => bytes.subarray(span.offset, span.offset + span.length)) }));
-  const expected = new Map<string, string>([['full.swift', fixture.full], ['slice.txt', 'SLICE BEGIN 🙂\r\nExact middle e\u0301\rSLICE END\n']]);
+  const expected = new Map<string, string>([['full.swift', fixture.full.slice(1)], ['slice.txt', 'SLICE BEGIN 🙂\r\nExact middle e\u0301\rSLICE END\n']]);
   const verified = [];
   for (const item of bodies) {
     assert.equal(item.bodies.length, 1);

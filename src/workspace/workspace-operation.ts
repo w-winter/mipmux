@@ -88,7 +88,7 @@ export class WorkspaceOperation {
     void pending.then(() => this.#pending.delete(pending), () => this.#pending.delete(pending));
     return pending;
   }
-  readSource(source: SourcePath) {
+  readRawSource(source: SourcePath) {
     source = structuredClone(source);
     return this.#track(async () => {
       const entry = this.snapshot.entries.find(entry => entry.root === source.root && entry.path === source.path);
@@ -97,6 +97,18 @@ export class WorkspaceOperation {
       const policy = new RootPolicy(this.declaration, access);
       await policy.revalidate(source, this.snapshot.policy);
       return access.read(source, entry.identity);
+    });
+  }
+  readSource(source: SourcePath) {
+    source = structuredClone(source);
+    return this.#track(async () => {
+      const acquired = await this.readRawSource(source);
+      if (acquired.decoding.kind !== 'decoded') throw new WorkspaceFailure('decodeFailed', source);
+      const entry = this.snapshot.entries.find(entry => entry.root === source.root && entry.path === source.path);
+      if (entry?.kind !== 'file' || entry.decoding.kind !== 'decoded' ||
+        acquired.decoding.identity.sha256 !== entry.decoding.identity.sha256 ||
+        acquired.decoding.identity.byteCount !== entry.decoding.identity.byteCount) throw new WorkspaceFailure('pipelineChanged', source);
+      return { ...acquired, text: acquired.decoding.text };
     });
   }
   readGit(request: GitRequest, encode?: ResultEncoding) {

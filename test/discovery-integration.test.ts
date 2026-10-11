@@ -64,7 +64,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
       hints: request.discoveryHints, roots: ['r'] });
     await verifyBundle(result.bundle.directory);
     const packet = await readFile(join(result.bundle.directory, 'context.md'), 'utf8');
-    for (const text of [source, report, request.task, request.constraints]) assert(packet.includes(text));
+    for (const text of [source.slice(1), report, request.task, request.constraints]) assert(packet.includes(text));
     assert(!packet.includes('OPTIONAL'));
     assert(provider.requests.some(request => JSON.stringify(request.messages).includes('overBudget')));
     assert(!packet.includes('Diagnostic acknowledgement only'));
@@ -107,7 +107,7 @@ test('cancellation during blocked SDK preflight joins forced closure before any 
 
 test('discovery material paging measures the real Pi result and returns every complete line without an MCP copy', async () => {
   const text = '"\\🙂'.repeat(80) + '\n' + 'second'.repeat(80) + '\n';
-  const lines = prepareText(Buffer.from(text)).lines;
+  const lines = prepareText(text).lines;
   const firstPage = { kind: 'material', materialId: 'document:report', digest: '0'.repeat(64), lines: lines.slice(0, 1),
     truncated: true, continuation: { digest: '0'.repeat(64), offset: 1 } };
   const cap = Buffer.byteLength(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(firstPage) }], isError: false }));

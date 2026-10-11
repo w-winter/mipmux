@@ -107,3 +107,9 @@ Literal LF splitting in `GitDiffPatchParsing` calls `NSString` on both platforms
 `queryIgnoreRules` compiles captured Git, global, repository and cursor ignore controls into the original RPCE rule snapshot. Git-root policy retains the mandatory Git floor; secondary negations can override secondary rules. Non-Git roots use the source ordered layers. Repository-relative prefixes and scoped child layers use the original matching rules, including their negation traversal hints.
 
 The native implementation retains the original C wildcard matcher, Swift compiler, immutable rule nodes and bounded pattern-string pool. `test/fixtures/rpce-ignore/` contains 20 outputs produced by compiling the original source. `scripts/generate-ignore-fixtures.mjs` regenerates them. These fixtures exercise supplied control text and query paths. Physical control-file acquisition, repository authority, workspace enumeration and current-source verification require separate integration evidence.
+
+## Automatic source decoding
+
+`RPCESourceDecoder` applies the automatic decoding order from `FileSystemService+ContentLoading.swift` at the pinned RPCE revision. The original UniversalCharsetDetection wrapper and Cuchardet detector are compiled in the native package. macOS retains the Foundation heuristic; Linux uses native conversion for detected encodings and reports detector failure explicitly. The two policies have distinct identities because the macOS heuristic can accept short Big5/GB18030 inputs the Linux policy rejects.
+
+Inventory, reads, search, source selection, local documents and structural extraction use this decoded view. Raw source bytes retain their acquisition identity; exports and line spans use decoded UTF-8. `test/fixtures/rpce-decoding/` contains 270 original-source decoder cases. The pipeline test verifies full, slice, codemap and local-document delivery plus saved/current verification on both platforms.

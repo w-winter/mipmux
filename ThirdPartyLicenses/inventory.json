@@ -269,5 +269,32 @@
       "path": "Sources/RepoPromptC/src/wildmatch/wildmatch.c"
     },
     "sha256": "f10b60b93e4d7a4bf879df6f1f1e806b2f537b79cb6ffdb23ba4aa58e03beace"
+  },
+  {
+    "path": "ThirdPartyLicenses/uchardet/LICENSE-UCHARDET",
+    "origin": {
+      "repository": "https://github.com/repoprompt/repoprompt-ce",
+      "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "path": "Vendor/UniversalCharsetDetection/LICENSE-UCHARDET"
+    },
+    "sha256": "107a29ccdd2d778aa2df5462f85dddfa099059abd22e064e07ec2cc9bafc37cd"
+  },
+  {
+    "path": "ThirdPartyLicenses/uchardet/LICENSE.md",
+    "origin": {
+      "repository": "https://github.com/repoprompt/repoprompt-ce",
+      "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "path": "Vendor/UniversalCharsetDetection/LICENSE.md"
+    },
+    "sha256": "91aba949656616f692553d623b86426c8c796acea2a35e02031675f37e19fd09"
+  },
+  {
+    "path": "ThirdPartyLicenses/uchardet/source.tar.gz",
+    "origin": {
+      "repository": "https://github.com/repoprompt/repoprompt-ce",
+      "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "path": "Vendor/UniversalCharsetDetection/Sources/Cuchardet"
+    },
+    "sha256": "054b8ceb3076ba9b2860f027fea25a38e26b7388c82e5304b40774043664e796"
   }
 ]
