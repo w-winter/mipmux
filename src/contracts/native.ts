@@ -118,6 +118,23 @@ export const NativeReadTextResult = Type.Union([
 ]);
 const NativeGitCommitInfo = Type.Object({ id: Type.String(), shortID: Type.String(), author: Type.String(),
   dateISO: Type.String(), message: Type.String() }, { additionalProperties: false });
+const NativeGitComparison = Type.Union([
+  Type.Object({ kind: Type.Literal('uncommitted'), base: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('uncommittedMergeBase'), base: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('staged'), base: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('stagedMergeBase'), base: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('unstaged') }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('revspec'), spec: Type.String() }, { additionalProperties: false }),
+]);
+const NativeGitChangedFile = Type.Object({ path: Type.String(), status: Type.String(),
+  additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) }, { additionalProperties: false });
+const NativeGitDiff = Type.Object({ compare: Type.String(), detail: Type.Optional(Type.String()),
+  totals: Type.Object({ files: Type.Integer(), insertions: Type.Integer(), deletions: Type.Integer() }, { additionalProperties: false }),
+  files: Type.Optional(Type.Array(Type.Object({ path: Type.String(), status: Type.String(), insertions: Type.Optional(Type.Integer()),
+    deletions: Type.Optional(Type.Integer()), hunks: Type.Optional(Type.Array(Type.Object({ header: Type.String(), old_start: Type.Integer(),
+      new_start: Type.Integer(), patch: Type.String() }, { additionalProperties: false }))) }, { additionalProperties: false }))),
+  by_status: Type.Optional(Type.Record(Type.String(), Type.Integer())), oneliner: Type.String(), truncated: Type.Optional(Type.Boolean()),
+  truncation_note: Type.Optional(Type.String()) }, { additionalProperties: false });
 const NativeGitPatchInput = Type.Object({ kind: Type.Literal('parseGitPatch'), text: Type.String() }, { additionalProperties: false });
 const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
   files: Type.Array(Type.Object({ path: Type.String(), patch: Type.String(), insertions: Type.Integer(), deletions: Type.Integer(),
@@ -126,6 +143,10 @@ const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
   changedLinesTsv: Type.String() }, { additionalProperties: false });
 export const NativeOperation = Type.Union([
   NativeGitPatchInput,
+  Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('projectGitDiff'), compare: Type.String(), detail: Type.String(), pathspecCount: SafeCount,
+    isMultiRepo: Type.Boolean(), changedFiles: Type.Array(NativeGitChangedFile),
+    perFilePatches: Type.Union([Type.Record(Type.String(), Type.String()), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('prepareGitShow'), ref: Type.String(), detail: Type.String(), contextLines: Type.Integer(),
     detectRenames: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('parseGitShowMetadata'), bytes: base64 }, { additionalProperties: false }),
@@ -177,6 +198,8 @@ export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
   NativeGitPatchResult,
+  Type.Object({ kind: Type.Literal('gitComparison'), comparison: NativeGitComparison, rawKey: Type.String(), display: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitDiff'), diff: NativeGitDiff }, { additionalProperties: false }),
   ...NativeGitReadResult.anyOf,
   Type.Object({ kind: Type.Literal('gitShowArguments'), ref: Type.String(), metadata: Type.Array(Type.String()),
     numstat: Type.Array(Type.String()), nameStatus: Type.Array(Type.String()),

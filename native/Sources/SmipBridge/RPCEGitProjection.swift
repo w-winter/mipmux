@@ -85,4 +85,91 @@ enum RPCEGitProjection {
             )
         }
     }
+
+    static func makeDiffDTO(
+        compare: String,
+        detail: String,
+        changedFiles: [VCSUncommittedFile],
+        perFilePatches: [String: String]?,
+        maxLinesForPatches: Int
+    ) -> DiffDTO {
+        let includesHunks = detail == "patches" || detail == "full"
+        let totals = totals(from: changedFiles)
+        var files: [DiffFileDTO]?
+        var truncated: Bool?
+        var truncationNote: String?
+
+        if detail == "files" || includesHunks {
+            files = diffFileDTOsWithoutHunks(from: changedFiles)
+        }
+        if includesHunks, let perFilePatches {
+            let parsedFiles = parsedFileHunks(
+                changedFiles: changedFiles,
+                perFilePatches: perFilePatches
+            )
+            let truncation = GitDiffPatchParsing.truncatePatches(
+                files: parsedFiles,
+                maxLines: maxLinesForPatches
+            )
+            truncated = truncation.truncated
+            truncationNote = truncation.note
+            files = truncation.files.map { file in
+                DiffFileDTO(
+                    path: file.path,
+                    status: file.status,
+                    insertions: file.insertions,
+                    deletions: file.deletions,
+                    hunks: hunkDTOs(from: file.hunks, nilWhenEmpty: false)
+                )
+            }
+        }
+
+        return DiffDTO(
+            compare: compare,
+            detail: detail,
+            files: files,
+            totals: totals,
+            byStatus: statusBreakdown(from: changedFiles),
+            oneliner: oneliner(
+                files: totals.files,
+                insertions: totals.insertions,
+                deletions: totals.deletions
+            ),
+            truncated: truncated,
+            truncationNote: truncationNote
+        )
+    }
+
+    private nonisolated static func statusBreakdown(from files: [VCSUncommittedFile]) -> [String: Int]? {
+        var counts: [String: Int] = [:]
+        for file in files {
+            counts[file.status, default: 0] += 1
+        }
+        return counts.isEmpty ? nil : counts
+    }
+
+    private nonisolated static func oneliner(files: Int, insertions: Int, deletions: Int) -> String {
+        "\(files) files (+\(insertions) -\(deletions))"
+    }
+
+    private nonisolated static func parsedFileHunks(
+        changedFiles: [VCSUncommittedFile],
+        perFilePatches: [String: String]
+    ) -> [GitDiffPatchParsing.ParsedFileHunks] {
+        var parsedFiles: [GitDiffPatchParsing.ParsedFileHunks] = []
+        parsedFiles.reserveCapacity(changedFiles.count)
+        for file in changedFiles {
+            guard let patchText = perFilePatches[file.path] else { continue }
+            let hunks = patchText.isEmpty ? [] : GitDiffPatchParsing.parseHunks(from: patchText)
+            parsedFiles.append(GitDiffPatchParsing.ParsedFileHunks(
+                path: file.path,
+                status: file.status,
+                insertions: file.additions ?? 0,
+                deletions: file.deletions ?? 0,
+                hunks: hunks
+            ))
+        }
+
+        return parsedFiles
+    }
 }

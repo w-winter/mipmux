@@ -2964,7 +2964,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "432c96e3b7ca569dcea3ee999103e57f19edaed2b8f45c6097f26fdf091ac661",
       "destination": "native/Sources/SmipBridge/RPCEGitProjection.swift",
-      "sha256": "70a49d487a0c8291fb95db1fc4f74f4a73fe76c7de2da9a2da382e39f28383d5",
+      "sha256": "abdf27dfaffdbfbbfe8d0e52b95f4f20ea2822de3d914fa7950c82ebf86c2bd9",
       "classification": "handwritten",
       "ranges": [
         [
@@ -2998,11 +2998,44 @@
         [
           437,
           438
+        ],
+        [
+          98,
+          104
+        ],
+        [
+          109,
+          153
+        ],
+        [
+          340,
+          347
+        ],
+        [
+          369,
+          371
+        ],
+        [
+          440,
+          443
+        ],
+        [
+          448,
+          449
+        ],
+        [
+          453,
+          454
+        ],
+        [
+          458,
+          468
         ]
       ],
       "changes": [
         "Retain show totals/files/detail/hunk projection; replace app worker/telemetry wrappers with the existing native request owner.",
-        "Use the previously retained source patch splitter and hunk parser."
+        "Use the previously retained source patch splitter and hunk parser.",
+        "Retain original diff DTO projection, status breakdown, oneliner and parsed-file collection; reuse source hunk-aware truncation. Desktop telemetry and projection-worker wrappers remain replaced by the existing native request owner."
       ]
     },
     {
@@ -3025,6 +3058,73 @@
       "changes": [
         "Retain source ref trimming/required diagnostic, lowercase detail and patches-to-full mapping.",
         "Bind source command construction and captured outputs to native transport; strict UTF-8 decoding retains the existing explicit headless diagnostic rather than empty-output substitution."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffCompareSpec.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "56c59ce347338fafb693131945c808917ce7770a4feadc3f9602c82b7adb90bc",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCompareSpec.swift",
+      "sha256": "f3671fbc7d51214aa1e0cfdef26acf9cf0dc343e01f38429838ac684829ed519",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          25
+        ],
+        [
+          43,
+          128
+        ],
+        [
+          190,
+          212
+        ]
+      ],
+      "changes": [
+        "Internal visibility; retain source comparison variants, parser, raw/display strings and canonical encoder.",
+        "Use Encodable rather than the source persistence decoder. No persisted comparison input or legacy-reader path is admitted by the native dependency.",
+        "Retain the source parsing branch layout with a scoped SwiftLint cyclomatic exception; configured CCCC limits remain enabled."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffDTO.swift",
+      "sha256": "1fd5992f0f9f0278651d89cb5f927d110cc8ca0010065b4f76af26a80f3bb433",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2319,
+          2334
+        ]
+      ],
+      "changes": [
+        "Retain the diff DTO and its CodingKeys under the existing native Git projection owner; reuse the already retained file/hunk/totals DTOs."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/GitDiffInput.swift",
+      "sha256": "2081fbd321c335e368bf40e4e9aaf91ab90c36d014544b595ce81b1aa5c17af5",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1112,
+          1112
+        ],
+        [
+          1120,
+          1126
+        ]
+      ],
+      "changes": [
+        "Retain lowercase detail, single-path/single-repository summary upgrade and the source 300-line versus Int.max policy.",
+        "Bind captured VCS files and per-file patches to the existing native projection; parse raw comparison input through the original source parser.",
+        "This is a data-only dependency. Repository/snapshot resolution, pathspec acquisition, artifacts and public diff admission are not implemented by this boundary."
       ]
     }
   ],
@@ -7990,6 +8090,66 @@
       "line": 1011,
       "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
       "destination": "native/Sources/SmipBridge/GitShowInput.swift"
+    },
+    {
+      "name": "GitDiffCompareSpec",
+      "line": 3,
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffCompareSpec.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCompareSpec.swift"
+    },
+    {
+      "name": "parse",
+      "line": 43,
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffCompareSpec.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCompareSpec.swift"
+    },
+    {
+      "name": "rawKey",
+      "line": 95,
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffCompareSpec.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCompareSpec.swift"
+    },
+    {
+      "name": "displayString",
+      "line": 112,
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffCompareSpec.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCompareSpec.swift"
+    },
+    {
+      "name": "encode",
+      "line": 190,
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffCompareSpec.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCompareSpec.swift"
+    },
+    {
+      "name": "DiffDTO",
+      "line": 2319,
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffDTO.swift"
+    },
+    {
+      "name": "makeDiffDTO",
+      "line": 98,
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitProjection.swift"
+    },
+    {
+      "name": "statusBreakdown",
+      "line": 340,
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitProjection.swift"
+    },
+    {
+      "name": "oneliner",
+      "line": 369,
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitProjection.swift"
+    },
+    {
+      "name": "parsedFileHunks",
+      "line": 440,
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitProjection.swift"
     }
   ],
   "sourceCoverage": [

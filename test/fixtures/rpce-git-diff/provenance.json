@@ -1,0 +1,38 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffCompareSpec.swift",
+      "sha256": "56c59ce347338fafb693131945c808917ce7770a4feadc3f9602c82b7adb90bc"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "sha256": "432c96e3b7ca569dcea3ee999103e57f19edaed2b8f45c6097f26fdf091ac661"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sha256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559"
+    },
+    {
+      "path": "Sources/RepoPromptVCS/VCSModels.swift",
+      "sha256": "c9a2fb82b5071647a580ffc333672e09784cde7b1ae80d0549b73ea6b501fe37"
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "sha256": "cbebe00125f866136b8ef60aad2fa9372b320d7e41bec783b50e4cc68f5edd95"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sha256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201"
+    }
+  ],
+  "bindings": [
+    "Compile the original comparison parser, canonical encoder, rawKey and displayString. The production dependency does not accept persisted comparison payloads and does not add the original legacy reader.",
+    "Compile original diff DTO projection and hunk-aware truncation. The original DTO/VCS records and parser bodies execute independently; desktop worker and telemetry calls are inert wrappers only.",
+    "Apply the original provider lowercase detail, single-path single-repository upgrade and 300-line versus Int.max policy before projecting.",
+    "Reference inputs capture changed-file records and per-file patch dictionaries after Git acquisition. They do not establish repository/pathspec resolution, untracked reads, artifacts, source text formatting or public diff integration.",
+    "The existing NSString literal-LF binding in production preserves Darwin outputs on Linux. No fixture patch bodies or output fields are normalized."
+  ],
+  "cases": 32,
+  "generatorSHA256": "9b450be2912819e9a72030b3fd1b1edac5fc43f57932f19fc1b73b38b0d137ef"
+}

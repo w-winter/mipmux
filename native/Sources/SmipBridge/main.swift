@@ -10,9 +10,7 @@ import Foundation
 private func execute(_ request: Request, files: ConfinedFiles, extraction: Extraction) async throws -> [String: Any] {
     switch request.operation {
     case .describe: try extraction.describe()
-    case let .gitRead(input): try input.render()
-    case let .gitShow(input): try input.render()
-    case let .gitPatch(input): input.render()
+    case let .git(input): try input.render()
     case let .sliceReadText(input): input.render()
     case let .selection(input): await input.render()
     case let .renderDiscoveryPrompt(input): input.render()
