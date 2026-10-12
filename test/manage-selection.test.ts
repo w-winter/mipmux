@@ -185,7 +185,7 @@ test('selection commits before reply rendering and survives cancellation, failur
       const work = draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
         op: 'add', paths: ['r/Main.swift'], maxOutputBytes: 30000 })), abort.signal);
       await Promise.race([entering, work.then(() => { throw new Error('Selection settled before reply rendering'); })]);
-      const committed = draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+      const committed = (await draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 30000 }, new AbortController().signal));
       assert(committed.kind === 'metadata'); assert.equal(committed.revision, 1);
       assert(committed.items.some(item => 'kind' in item && item.kind === 'source' && item.selection.source.path === 'Main.swift'));
       const rejected = scenario === 'revision' ? null
@@ -201,7 +201,7 @@ test('selection commits before reply rendering and survives cancellation, failur
         assert(reply.files.some(file => file.path === 'Main.swift'));
         receipts.push({ scenario, reply });
       }
-      const state = draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+      const state = (await draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 30000 }, new AbortController().signal));
       assert(state.kind === 'metadata');
       assert.equal(state.revision, scenario === 'revision' ? 2 : 1);
       assert.equal(state.items.some(item => 'kind' in item && item.kind === 'source'), scenario !== 'revision');
@@ -440,11 +440,11 @@ test('cancellation during codemap extraction retains committed membership and ge
       op: 'add', mode: 'codemap_only', paths: [join(f.root, 'private/Hidden.swift')], maxOutputBytes: 30000 })), abort.signal);
     const rejected = assert.rejects(work, /cancelled|aborted|nativeWorkerClosed/i);
     await Promise.race([entering, work.then(() => { throw new Error('Selection settled before post-registration extraction'); })]);
-    const committed = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+    const committed = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 }, new AbortController().signal));
     assert(committed.kind === 'metadata'); assert.equal(committed.revision, 1);
     assert(committed.items.some(item => 'kind' in item && item.kind === 'source' && item.selection.kind === 'codemap'));
     abort.abort(); release(); await rejected;
-    const state = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+    const state = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 }, new AbortController().signal));
     assert(state.kind === 'metadata'); assert.equal(state.revision, 1);
     const blocked = await client.finalize(draft.id, signal());
     assert.equal(blocked.kind, 'blocked');
@@ -520,16 +520,16 @@ test('the source readiness deadline reports pending codemaps and a later get com
     assert.equal(pending.revision, 1); assert.deepEqual(pending.files, []); assert.deepEqual(pending.blocks, []);
     assert.deepEqual(pending.code_structure, { file_count: 0, content: '', pending_paths: ['private/Hidden.swift'] });
     assert.equal(pending.measurement.complete, false);
-    const costs = client.inspect(draft.id, { view: 'costs', continuation: null, maxOutputBytes: 30000 });
+    const costs = (await client.inspect(draft.id, { view: 'costs', continuation: null, maxOutputBytes: 30000 }, new AbortController().signal));
     assert(costs.kind === 'costs'); assert.equal(costs.items.length, 3);
     const oneRecordBytes = Buffer.byteLength(JSON.stringify({ ...costs, items: costs.items.slice(0, 1), truncated: true,
       continuation: { digest: '0'.repeat(64), offset: 1 } }));
-    const page = client.inspect(draft.id, { view: 'costs', continuation: null, maxOutputBytes: oneRecordBytes });
+    const page = (await client.inspect(draft.id, { view: 'costs', continuation: null, maxOutputBytes: oneRecordBytes }, new AbortController().signal));
     assert(page.kind === 'costs'); assert(page.truncated); assert(page.continuation);
     const completed = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
       op: 'get', view: 'content', maxOutputBytes: 30000 })), signal());
     assert.equal(completed.revision, 1); assert(completed.blocks?.some(body => body.includes('ExplicitlyManaged')));
-    assert.throws(() => client.inspect(draft.id, { view: 'costs', continuation: page.continuation, maxOutputBytes: 30000 }), /staleContinuation/);
+    await assert.rejects(async () => (await client.inspect(draft.id, { view: 'costs', continuation: page.continuation, maxOutputBytes: 30000 }, new AbortController().signal)), /staleContinuation/);
     const finalized = await client.finalize(draft.id, signal()); assert.equal(finalized.kind, 'ready');
     if (finalized.kind === 'ready') await verifyBundle(finalized.directory);
     await writeFile(join(f.base, 'codemap-deadline-receipt.json'), JSON.stringify({ pending, completed, finalized }, null, 2) + '\n');

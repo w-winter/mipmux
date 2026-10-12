@@ -42,20 +42,20 @@ test('batch source edits commit one revision and no partial selection on failure
     const draft = await client.createDraft(workspace.id, request, signal());
     const result = await client.update(draft.id, batch([upsert('one.txt'), upsert('two.txt')], 0), signal());
     assert.equal(result.revision, 1);
-    let inspection = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 });
+    let inspection = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal));
     assert(inspection.kind === 'metadata');
     const before = inspection;
     await assert.rejects(client.update(draft.id, batch([{ kind: 'remove', source: source('one.txt') }, upsert('absent.txt')], 1), signal()), /unavailableSource/);
-    assert.deepEqual(client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }), before);
+    assert.deepEqual((await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal)), before);
     await assert.rejects(client.update(draft.id, batch([{ kind: 'remove', source: source('one.txt') }, { kind: 'remove', source: source('two.txt') }], 1, 1), signal()), /outputBudgetTooSmall/);
-    assert.deepEqual(client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }), before);
+    assert.deepEqual((await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal)), before);
     const slices = await client.update(draft.id, batch([
       { kind: 'slices', op: 'setPaths', source: source('one.txt'), ranges: [{ start: 1, end: 1, description: 'One' }] },
       { kind: 'slices', op: 'add', source: source('one.txt'), ranges: [{ start: 2, end: 2, description: 'Two' }] },
       { kind: 'remove', source: source('two.txt') },
     ], 1), signal());
     assert.equal(slices.revision, 2);
-    inspection = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 });
+    inspection = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal));
     assert(inspection.kind === 'metadata');
     const selected = inspection.items.filter(item => 'kind' in item && item.kind === 'source');
     assert.equal(selected.length, 1);
@@ -114,7 +114,7 @@ test('cancelled second batch acquisition cannot commit the first prepared source
     const work = client.update(draft.id, batch([upsert('one.txt'), upsert('two.txt')], 0), abort.signal);
     const rejected = assert.rejects(work, /cancelled|aborted/i);
     await entering; abort.abort(); assert(state.signal?.aborted); release(); await rejected;
-    const inspection = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 });
+    const inspection = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal));
     assert(inspection.kind === 'metadata'); assert.equal(inspection.revision, 0);
     assert(!inspection.items.some(item => 'kind' in item && item.kind === 'source'));
     await writeFile(join(f.base, 'batch-cancel-proof.json'), JSON.stringify(inspection, null, 2) + '\n');

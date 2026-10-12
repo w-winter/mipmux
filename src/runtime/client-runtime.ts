@@ -65,9 +65,10 @@ export class ClientRuntime {
       return { kind: 'draft' as const, id: draft.id, revision: draft.revision };
     });
   }
-  inspect(id: string, request: DraftInspection, encode: ResultEncoding = identityEncoding) {
+  inspect(id: string, request: DraftInspection, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     this.#check();
-    return (this.#drafts.get(id)?.draft ?? this.#jobs.inspectDraft(id)).inspect(request, encode);
+    const draft = this.#drafts.get(id)?.draft ?? this.#jobs.inspectDraft(id);
+    return this.#track(signal, combined => draft.inspect(request, combined, encode));
   }
   update(id: string, request: DraftUpdate, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     const { draft } = this.#manual(id);

@@ -66,7 +66,7 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
   register('draft_inspect', Type.Object({ draftId: id, input: Type.Union([
     Type.Omit(DraftInspection.anyOf[0], ['maxOutputBytes']), Type.Omit(DraftInspection.anyOf[1], ['maxOutputBytes']),
   ]), ...budget }, closed),
-    input => client().inspect(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, toolResult));
+    (input, ctx) => client().inspect(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('draft_update', Type.Object({ draftId: id, input: Type.Omit(DraftUpdate, ['maxOutputBytes']), ...budget }, closed),
     (input, ctx) => client().update(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('draft_preview', Type.Object({ draftId: id, input: Type.Omit(DraftPreview, ['maxOutputBytes']), ...budget }, closed),

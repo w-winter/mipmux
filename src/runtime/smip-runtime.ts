@@ -4,6 +4,7 @@ import { BridgeClient } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
 import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
 import type { ContextBuildRequest } from '../contracts/context.js';
+import type { NativeOperation } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle } from '../context/verify.js';
 import { revalidateMaterials } from '../context/revalidate.js';
@@ -13,6 +14,7 @@ import { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import type { DiscoveryRunner } from '../discovery/runner.js';
 import { ClientRuntime } from './client-runtime.js';
+import { finalFileTreeInput } from '../context/final-tree.js';
 
 export interface RuntimeOptions {
   /** User-owned maximum packet allowance in utf8-21-over-80-v1 units; larger request allowances are rejected. */
@@ -51,6 +53,20 @@ export class SmipRuntime {
   }
   makeBridge(): BridgeClient {
     return new BridgeClient({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
+  }
+  /** Owns data-only tree rendering, including inspection after a draft releases its workspace lease. */
+  renderFileTree(input: Extract<NativeOperation, { kind: 'renderFileTree' }>, signal: AbortSignal) {
+    if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
+    const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
+    const work = (async () => {
+      combined.throwIfAborted();
+      const bridge = this.makeBridge();
+      try { return (await bridge.request(captured, combined)).result; }
+      finally { await bridge.close(); }
+    })();
+    this.#admissions.add(work);
+    void work.then(() => this.#admissions.delete(work), () => this.#admissions.delete(work));
+    return work;
   }
   createClient(runner: DiscoveryRunner | null): ClientRuntime {
     if (this.#closing) throw new WorkspaceFailure('runtimeClosed');
@@ -138,7 +154,7 @@ export class SmipRuntime {
   }
   async #verifyCurrentBundle(directory: string, signal: AbortSignal) {
     signal.throwIfAborted();
-    const { verified,materials } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
+    const { verified,materials,fileTree } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
     validateWorkspaceSpec({ roots:manifest.inventory.roots.map(root=>({name:root.name,absolutePath:root.identity.declaredPath})),
       exclusions:manifest.exclusions,outputRoot:manifest.inventory.outputRoot.declaredPath });
     const cache = await this.#admitCache();
@@ -155,6 +171,8 @@ export class SmipRuntime {
     this.#operations.add(operation);
     try {
       await revalidateMaterials(operation,materials);
+      const tree = await this.renderFileTree(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), signal);
+      if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
       return {...verified,kind:'currentVerified' as const};
     } finally { await operation.close(); }
   }

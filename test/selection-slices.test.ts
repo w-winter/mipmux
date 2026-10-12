@@ -119,7 +119,7 @@ test('cancelling native slice preparation leaves the committed draft unchanged a
     const rejected = assert.rejects(work, /cancelled|aborted/i);
     await entering; abort.abort(); assert(state.signal?.aborted);
     release(); await rejected;
-    const result = metadata.Parse(client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }));
+    const result = metadata.Parse((await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal)));
     assert.equal(result.revision, 0); assert(!result.items.some(item => item.kind === 'source'));
     await writeFile(join(f.base, 'slice-cancellation-proof.json'), JSON.stringify(result, null, 2) + '\n');
   } finally { release(); await runtime.close(); }

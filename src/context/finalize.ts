@@ -4,6 +4,7 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { identity, type Material } from './material-store.js';
 import { renderBundle } from './render.js';
+import { prepareRenderInput } from './final-tree.js';
 import { revalidateMaterials } from './revalidate.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
 
@@ -61,7 +62,9 @@ export class FinalizationOperation {
     const bridge = owner.runtime.makeBridge();
     try {
       await revalidateMaterials(operation, materials);
-      const rendered = renderBundle({ request, prompt, codemapMode, materials, inventory: owner.snapshot });
+      const { generation, ...inventory } = owner.snapshot;
+      const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory }, signal);
+      const rendered = renderBundle(input);
       if (rendered.diagnostics.length) {
         return {
           kind: 'blocked',
@@ -71,9 +74,8 @@ export class FinalizationOperation {
           costs: rendered.costs,
         };
       }
-      const { generation, ...inventory } = owner.snapshot;
       const manifest: Manifest = {
-      schemaVersion: 8,
+        schemaVersion: 9,
         codemapMode,
         request,
         requestDigest: sha256(canonicalJSON(request)),
@@ -82,6 +84,7 @@ export class FinalizationOperation {
         deniedAbsolutePaths: [...owner.declaration.deniedAbsolutePaths],
         prompt,
         materials: rendered.records,
+        fileTree: { input: input.fileTree.input, span: rendered.fileTreeSpan },
         files: { context: identity(rendered.context), handoff: identity(rendered.handoff) },
         accounting: {
           recipient: 'context.md',

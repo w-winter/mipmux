@@ -38,7 +38,7 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
     }
     assert.equal(calls, 0);
     const draft = await client.createDraft(workspace.id, request, signal);
-    const inspection = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 });
+    const inspection = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal));
     assert(inspection.kind === 'metadata'); assert.equal(inspection.measurement.allowance, contextBudgetUnits);
     await writeFile(join(directory, 'assembly-budget-proof.json'), JSON.stringify({ contextBudgetUnits, calls, terminals, inspection }, null, 2));
   } finally { await runtime.close(); }
@@ -87,7 +87,7 @@ test('client jobs deduplicate admission, isolate ids, release cancelled work', a
     await a.update(manual.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] }) } }, signal);
     await a.closeWorkspace(nextWorkspace.id);
     assert.equal((await a.finalize(manual.id, signal)).kind, 'ready');
-    assert.equal(a.inspect(manual.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }).kind, 'metadata');
+    assert.equal((await a.inspect(manual.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal)).kind, 'metadata');
     await assert.rejects(a.explore(nextWorkspace.id, { name: 'read_file', input: { root: 'r', path: 'file.txt',
       start_line: null, offset: null, limit: null, continuation: null, maxOutputBytes: 10000 } }, signal, manual.id), /operationClosed|workspaceClosed/);
     await a.close(); await b.close();

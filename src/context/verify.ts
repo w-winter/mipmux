@@ -9,6 +9,7 @@ import { renderBundle } from './render.js';
 import { readRegularFile } from '../runtime/host-files.js';
 import { StructureIndex } from '../workspace/structure-index.js';
 import { parseSourceBlock, type SourceBlock } from './source-block.js';
+import { finalFileTreeInput } from './final-tree.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -43,24 +44,30 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   requireEqual(sha256(canonicalJSON(manifest.request)), manifest.requestDigest);
   requireEqual(inventoryDigest(manifest.inventory), manifest.inventory.inventoryDigest);
   const materials = decodeMaterials(manifest, context);
+  requireEqual(manifest.fileTree.input, finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode));
+  const treeSpan = manifest.fileTree.span, treeBytes = context.subarray(treeSpan.offset, treeSpan.offset + treeSpan.length);
+  requireEqual(identity(treeBytes), { byteCount: treeSpan.length, sha256: treeSpan.sha256 });
+  const fileTree = { input: manifest.fileTree.input, text: decodedBody(treeBytes) };
   const rendered = renderBundle({
     codemapMode: manifest.codemapMode,
     request: manifest.request,
     inventory: manifest.inventory,
     prompt: manifest.prompt,
     materials,
+    fileTree,
   });
   if (
     rendered.diagnostics.length || !Buffer.from(rendered.context).equals(context) ||
     !Buffer.from(rendered.handoff).equals(handoff)
   ) throw new WorkspaceFailure('bundleIntegrityFailed');
   requireEqual(rendered.records, manifest.materials);
+  requireEqual(rendered.fileTreeSpan, manifest.fileTree.span);
   requireEqual({
     bytes: rendered.measurement.bytes,
     units: rendered.measurement.units,
     allowance: rendered.measurement.allowance,
   }, { bytes: manifest.accounting.bytes, units: manifest.accounting.units, allowance: manifest.accounting.allowance });
-  return { verified: { kind: 'verified' as const, manifest }, materials };
+  return { verified: { kind: 'verified' as const, manifest }, materials, fileTree };
 }
 function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
   return readRegularFile(join(directory, filename), new WorkspaceFailure('nonRegularBundleFile', { component: filename }), signal);

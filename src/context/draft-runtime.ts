@@ -42,6 +42,7 @@ import { estimateUnits } from './budget.js';
 import { posix } from 'node:path';
 import { resolveSelectedCodemaps } from './codemap-readiness.js';
 import { descriptorGitMode } from '../contracts/patches.js';
+import { prepareRenderInput } from './final-tree.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -203,8 +204,8 @@ export class DraftRuntime {
   async #selectionReply(operation: WorkspaceOperation, request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
     invalid: readonly string[], revision: number, prompt: string) {
     const snapshot = operation.snapshot;
-    const rendered = renderBundle({ request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: [...materials.values()] });
+    const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
+      prompt, codemapMode: mode, materials: [...materials.values()] }, operation.signal));
     const unmapped: string[] = [];
     const pending: string[] = [];
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
@@ -263,8 +264,10 @@ export class DraftRuntime {
       const { next, mode } = await this.#prepareSourceEdits(request.edits, current, request.expectedRevision, signal);
       this.#check(signal, request.expectedRevision);
       if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-      const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot, prompt,
-        codemapMode: mode, materials: [...next.values()] });
+      const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
+        codemapMode: mode, materials: [...next.values()] }, AbortSignal.any([signal, this.#cancel.signal])));
+      this.#check(signal, request.expectedRevision);
+      if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
       const result = { kind: 'preview' as const, draftId: this.id, revision: this.#revision, codemapMode: mode,
         items: [...next.values()].map(material => materialMetadata(material.record)),
         measurement: rendered.measurement, costs: rendered.costs, diagnostics: rendered.diagnostics };
@@ -344,7 +347,9 @@ export class DraftRuntime {
     }
     this.#check(signal, input.expectedRevision);
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-    const { changed, revision, result } = this.#mutationReceipt(current, next, mode, prompt, input.maxOutputBytes, encode, promptResponse);
+    const { changed, revision, result } = await this.#mutationReceipt(current, next, mode, prompt, input.maxOutputBytes, encode, promptResponse, signal);
+    this.#check(signal, input.expectedRevision);
+    if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
     if (changed) {
       this.#commit(next, mode, prompt, revision);
     }
@@ -360,12 +365,12 @@ export class DraftRuntime {
     const revision = this.#revision + (changed ? 1 : 0);
     return { changedIds, changed, revision };
   }
-  #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode,
+  async #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode,
     prompt: string, maxOutputBytes: number, encode: ResultEncoding,
-    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null) {
+    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null, signal: AbortSignal) {
     const { changedIds, changed, revision } = this.#mutationChanges(current, next, mode, prompt);
-    const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot, prompt,
-      codemapMode: mode, materials: [...next.values()] });
+    const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
+      codemapMode: mode, materials: [...next.values()] }, AbortSignal.any([signal, this.#cancel.signal])));
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
     for (const id of changedIds) if (!next.has(id)) changedCosts.push({ id, bytes: 0, units: 0 });
@@ -441,9 +446,13 @@ export class DraftRuntime {
     return kind === 'clearCodemaps' || this.request.requiredSources.some(selection => selection.kind === 'codemap')
       ? 'manual' : 'automatic';
   }
-  inspect(input: DraftInspection, encode: ResultEncoding = identityEncoding) {
+  inspect(input: DraftInspection, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!inspectionValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
-    const request = structuredClone(input);
+    return this.#track(this.#inspect(structuredClone(input), signal, encode));
+  }
+  async #inspect(input: DraftInspection, signal: AbortSignal, encode: ResultEncoding) {
+    signal.throwIfAborted();
+    const request = input;
     const { maxOutputBytes, continuation } = request;
     if (request.view === 'material') {
       const material = this.#materials.get(request.materialId);
@@ -465,19 +474,20 @@ export class DraftRuntime {
         encode,
       );
     }
-    const materials = [...this.#materials.values()],
-      rendered = renderBundle({
-        codemapMode: this.#codemapMode,
+    const materials = [...this.#materials.values()], codemapMode = this.#codemapMode,
+      revision = this.#revision, state = this.#state, text = this.#prompt;
+    const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
+        codemapMode,
         request: this.request,
         inventory: this.operation.snapshot,
-        prompt: this.#prompt,
+        prompt: text,
         materials,
-      });
-    const prompt = { kind: 'prompt' as const, prompt: this.#prompt };
+      }, signal));
+    const prompt = { kind: 'prompt' as const, prompt: text };
     const records: (ItemCost | ReturnType<typeof materialMetadata> | typeof prompt)[] = request.view === 'costs'
       ? rendered.costs
       : [...materials.map((material) => materialMetadata(material.record)), prompt];
-    const digest = sha256(canonicalJSON({ id: this.id, revision: this.#revision, view: request.view,
+    const digest = sha256(canonicalJSON({ id: this.id, revision, view: request.view,
       records, measurement: rendered.measurement }));
     return pageResult(
       records,
@@ -485,10 +495,10 @@ export class DraftRuntime {
       maxOutputBytes,
       (items, next) => ({
         kind: request.view,
-        codemapMode: this.#codemapMode,
+        codemapMode,
         draftId: this.id,
-        revision: this.#revision,
-        state: this.#state,
+        revision,
+        state,
         items,
         measurement: rendered.measurement,
         diagnostics: rendered.diagnostics,
@@ -518,7 +528,8 @@ export class DraftRuntime {
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const tree = await initialFileTree(operation, selection);
-        return renderInitialContext({ ...input, tree });
+        return renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, input, operation.signal),
+          draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
       } finally { await operation.close(); }
     })());
   }
@@ -529,13 +540,13 @@ export class DraftRuntime {
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         await revalidateMaterials(operation, materials);
-        const rendered = renderBundle({
+        const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
           codemapMode,
           request: this.request,
           inventory: this.operation.snapshot,
           prompt,
           materials,
-        });
+        }, operation.signal));
         return freeze({
           kind: 'validation' as const,
           codemapMode,

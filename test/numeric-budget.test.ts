@@ -41,7 +41,7 @@ test('numeric assembly budget remains the packet limit while scout input receive
       const observed = received[received.length - 1]; assert(observed);
       assert.equal(observed.tokenBudget, Math.max(0, budgetUnits - 1500));
       const draft = await client.createDraft(workspace.id, { ...request, outputName: `manual-${budgetUnits}` }, signal);
-      const inspection = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 });
+      const inspection = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal));
       assert(inspection.kind === 'metadata'); assert.equal(inspection.measurement.allowance, budgetUnits);
     }
     await writeFile(join(base, 'numeric-budget-proof.json'), JSON.stringify({ contextBudgetUnits, received }, null, 2) + '\n');

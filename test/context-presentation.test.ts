@@ -20,7 +20,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
     const draft = await workspace.createDraft(fixture.input.request, signal);
     await draft.update({ expectedRevision: 0, maxOutputBytes: 12000,
       mutation: { kind: 'prompt', op: 'append', text: addition } }, signal);
-    const admitted = draft.inspect({ view: 'material', materialId: 'patch:changes', maxOutputBytes: 12000, continuation: null });
+    const admitted = (await draft.inspect({ view: 'material', materialId: 'patch:changes', maxOutputBytes: 12000, continuation: null }, new AbortController().signal));
     assert.equal(admitted.kind, 'material');
     if (admitted.kind !== 'material') assert.fail('Missing patch material');
     const patch = admitted.lines.map(line => line.text).join('');
@@ -50,8 +50,9 @@ test('recipient Markdown retains the literal prompt and material paths with exac
         return { ...material, sourceBlock: { ...material.sourceBlock, text } };
       });
       const forged = renderBundle({ request: manifest.request, inventory: manifest.inventory, codemapMode: manifest.codemapMode,
-        prompt: manifest.prompt, materials });
+        prompt: manifest.prompt, materials, fileTree: saved.fileTree });
       manifest.materials = forged.records;
+      manifest.fileTree.span = forged.fileTreeSpan;
       manifest.files = { context: identity(forged.context), handoff: identity(forged.handoff) };
       manifest.accounting.bytes = forged.measurement.bytes; manifest.accounting.units = forged.measurement.units;
       await writeFile(join(result.directory, 'context.md'), forged.context);
@@ -60,7 +61,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
       await assert.rejects(verifyBundle(result.directory), /bundleIntegrityFailed/);
     }
     const restored = renderBundle({ request: result.manifest.request, inventory: result.manifest.inventory,
-      codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials });
+      codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials, fileTree: saved.fileTree });
     await writeFile(join(result.directory, 'context.md'), restored.context);
     await writeFile(join(result.directory, 'handoff.md'), restored.handoff);
     await writeFile(join(result.directory, 'manifest.json'), canonicalJSON(result.manifest));

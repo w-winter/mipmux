@@ -74,22 +74,26 @@ test('curated documents reject duplicates, invalid text, stale revisions and can
     const abort = new AbortController(), pending = draft.update(input, abort.signal);
     abort.abort(); await assert.rejects(pending, /cancelled/);
     assert.equal(draft.revision, 0);
+    const competingDocument = { ...document, id: 'competing' };
     const first = draft.update(input, signal());
-    const competing = draft.update({ ...input, mutation: { ...mutation, document: { ...document, id: 'competing' } } }, signal());
+    const competing = draft.update({ ...input, mutation: { ...mutation, document: competingDocument } }, signal());
     const results = await Promise.allSettled([first, competing]);
-    assert.equal(results[0]?.status, 'fulfilled'); assert.equal(results[1]?.status, 'rejected');
-    if (results[1]?.status === 'rejected') assert.match(String(results[1].reason), /revisionConflict/);
+    assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+    const rejected = results.find(result => result.status === 'rejected');
+    assert(rejected?.status === 'rejected'); assert.match(String(rejected.reason), /revisionConflict/);
+    const winner = results[0]?.status === 'fulfilled' ? document : competingDocument;
+    const loser = results[0]?.status === 'fulfilled' ? competingDocument : document;
     assert.equal(draft.revision, 1);
     await assert.rejects(draft.update(input, signal()), /revisionConflict/);
-    await assert.rejects(draft.update({ ...input, expectedRevision: 1 }, signal()), /duplicateMaterial/);
-    assert.throws(() => draft.inspect({ view: 'material', materialId: 'document:competing', continuation: null, maxOutputBytes: 10000 }), /materialUnavailable/);
-    for (const expected of [original, document]) {
-      const page = draft.inspect({ view: 'material', materialId: 'document:' + expected.id, continuation: null, maxOutputBytes: 10000 });
+    await assert.rejects(draft.update({ ...input, expectedRevision: 1, mutation: { ...mutation, document: winner } }, signal()), /duplicateMaterial/);
+    await assert.rejects(async () => (await draft.inspect({ view: 'material', materialId: 'document:' + loser.id, continuation: null, maxOutputBytes: 10000 }, new AbortController().signal)), /materialUnavailable/);
+    for (const expected of [original, winner]) {
+      const page = (await draft.inspect({ view: 'material', materialId: 'document:' + expected.id, continuation: null, maxOutputBytes: 10000 }, new AbortController().signal));
       assert(page.kind === 'material'); assert.equal(page.lines.map(line => line.text).join(''), expected.text);
     }
     assert.deepEqual(draft.request.documents, [original]);
     await writeFile(join(f.base, 'curated-document-admission-proof.json'), JSON.stringify({ results, revision: draft.revision,
-      inspection: draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 10000 }) }, null, 2));
+      inspection: (await draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal)) }, null, 2));
     await draft.close(); await workspace.close();
   } finally { await runtime.close(); }
 });
@@ -226,7 +230,7 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
       materialId: 'document:report',
       maxOutputBytes: 10000,
       continuation: null,
-    });
+    }, new AbortController().signal);
     assert.equal(content.kind, 'material');
     if (content.kind !== 'material') assert.fail('Missing material');
     const cap = Buffer.byteLength(
@@ -240,12 +244,12 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
     let continuation: null | { digest: string; offset: number } = null;
     const texts: string[] = [];
     do {
-      const page = required.inspect({
+      const page = (await required.inspect({
         view: 'material',
         materialId: 'document:report',
         maxOutputBytes: cap,
         continuation,
-      });
+      }, new AbortController().signal));
       if (page.kind !== 'material') assert.fail('Missing material page');
       assert(Buffer.byteLength(JSON.stringify(page)) <= cap);
       texts.push(...page.lines.map((line) => line.text));
@@ -376,12 +380,12 @@ test('minimum mutation receipts commit omitted item costs but reject before comm
     assert.equal(result.incompleteDetails, true);
     assert.deepEqual(result.changedCosts, []);
     assert.deepEqual(result.costInspection, { draftId: draft.id, revision: 1 });
-    const costs = draft.inspect({ view: 'costs', continuation: null, maxOutputBytes: 10000 });
+    const costs = (await draft.inspect({ view: 'costs', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal));
     assert(costs.kind === 'costs'); assert.equal(costs.items.length, 1);
     const handoffResult = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     assert.equal(handoffResult.incompleteDetails, false);
     assert.deepEqual(handoffResult.changedCosts, []);
-    assert.throws(() => draft.inspect({ view: 'material', materialId: 'missing', continuation: null, maxOutputBytes: 10000 }), /materialUnavailable/);
+    await assert.rejects(async () => (await draft.inspect({ view: 'material', materialId: 'missing', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal)), /materialUnavailable/);
     await probe.close(); await draft.close(); await workspace.close();
   } finally { await runtime.close(); }
 });
@@ -445,24 +449,24 @@ test('bounded metadata inspection exposes the current literal prompt and invalid
     const client = runtime.createClient(null), other = runtime.createClient(null);
     const workspace = await client.declare(f.spec, signal());
     const draft = await client.createDraft(workspace.id, { ...request, documents: [{ kind: 'suppliedDocument', id: 'doc', role: 'report', origin: 'fixture', text: 'body' }] }, signal());
-    const inspect = (maxOutputBytes: number, continuation: { digest: string; offset: number } | null = null) =>
-      client.inspect(draft.id, { view: 'metadata', maxOutputBytes, continuation });
-    const unset = inspect(10000); assert(unset.kind === 'metadata');
+    const inspect = async (maxOutputBytes: number, continuation: { digest: string; offset: number } | null = null) =>
+      (await client.inspect(draft.id, { view: 'metadata', maxOutputBytes, continuation }, new AbortController().signal));
+    const unset = (await inspect(10000)); assert(unset.kind === 'metadata');
     assert.deepEqual(unset.items.at(-1), { kind: 'prompt', prompt: request.task }); assert.equal(unset.revision, 0);
     await client.update(draft.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, architecture: 'old'.repeat(500) }) } }, signal());
-    const committed = inspect(10000); assert(committed.kind === 'metadata');
+    const committed = (await inspect(10000)); assert(committed.kind === 'metadata');
     const cap = Buffer.byteLength(JSON.stringify({ ...committed, items: committed.items.slice(0, 1), truncated: true,
       continuation: { digest: '0'.repeat(64), offset: 1 } }));
-    const page = inspect(cap); assert(page.kind === 'metadata' && page.continuation);
+    const page = (await inspect(cap)); assert(page.kind === 'metadata' && page.continuation);
     const value = { clarifiedTask: 'complete clarification', architecture: 'architecture'.repeat(200), relationships: ['A uses B', 'C owns D'], ambiguities: ['one', 'two'] };
     await client.update(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'set', text: JSON.stringify(value) } }, signal());
-    assert.throws(() => inspect(10000, page.continuation), /staleContinuation/);
-    assert.equal(inspect(cap).kind, 'metadata');
-    const first = inspect(cap); assert(first.kind === 'metadata' && first.continuation);
-    const oversized = inspect(cap, first.continuation); assert.equal(oversized.kind, 'recordTooLarge');
-    const recovered = inspect(10000, first.continuation); assert(recovered.kind === 'metadata');
+    await assert.rejects(async () => (await inspect(10000, page.continuation)), /staleContinuation/);
+    assert.equal((await inspect(cap)).kind, 'metadata');
+    const first = (await inspect(cap)); assert(first.kind === 'metadata' && first.continuation);
+    const oversized = (await inspect(cap, first.continuation)); assert.equal(oversized.kind, 'recordTooLarge');
+    const recovered = (await inspect(10000, first.continuation)); assert(recovered.kind === 'metadata');
     assert.equal(recovered.revision, 2); assert.deepEqual(recovered.items, [{ kind: 'prompt', prompt: JSON.stringify(value) }]);
-    assert.throws(() => other.inspect(draft.id, { view: 'metadata', maxOutputBytes: 10000, continuation: null }), /unknownDraft/);
+    await assert.rejects(async () => (await other.inspect(draft.id, { view: 'metadata', maxOutputBytes: 10000, continuation: null }, new AbortController().signal)), /unknownDraft/);
     await writeFile(join(f.base, 'handoff-inspection-proof.json'), JSON.stringify({ unset, oversized, recovered }) + '\n');
     await client.close(); await other.close();
   } finally { await runtime.close(); }

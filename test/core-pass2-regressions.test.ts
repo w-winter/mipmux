@@ -211,7 +211,7 @@ test('terminal manual finalization releases the workspace lease while blocked dr
         await assert.rejects(client.finalize(draft.id, signal()), /nativeIOFailed/);
         await readFile(join(f.spec.outputRoot, 'packet/context.md')); await readFile(join(f.spec.outputRoot, 'packet/handoff.md'));
       }
-      const metadata = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 });
+      const metadata = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal));
       assert(metadata.kind === 'metadata' && metadata.state === 'terminal' && metadata.revision === 1);
       await assert.rejects(client.update(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal()), /draftFrozen|cancelled/);
       const owner = await Promise.race([ownerBridge.closed.then(() => 'closed' as const), sleep(5000, 'retained' as const, { ref: false })]);

@@ -5,6 +5,7 @@ import { SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
+import { NativeFileTreeInput } from './native.js';
 
 const closed = { additionalProperties: false };
 const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
@@ -136,7 +137,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(8),
+  schemaVersion: Type.Literal(9),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,
@@ -145,6 +146,7 @@ export const Manifest = Type.Object({
   deniedAbsolutePaths: Type.Array(Type.String({ pattern: '^/[^\\u0000]*$' })),
   prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
+  fileTree: Type.Object({ input: NativeFileTreeInput, span: Span }, closed),
   files: Type.Object({ context: SourceIdentity, handoff: SourceIdentity }, closed),
   accounting: Type.Object({
     recipient: Type.Literal('context.md'),

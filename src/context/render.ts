@@ -4,6 +4,7 @@ import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { PatchInput } from '../contracts/patches.js';
 import type { Material } from './material-store.js';
 import type { SourceBlock } from './source-block.js';
+import type { FinalFileTree } from './final-tree.js';
 import { canonicalJSON, compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits, scoutTokenBudget } from './budget.js';
 
@@ -13,6 +14,7 @@ export interface RenderInput {
   readonly inventory: Omit<InventorySnapshot, 'generation'>;
   readonly prompt: string;
   readonly materials: readonly Material[];
+  readonly fileTree: FinalFileTree;
 }
 export interface ItemCost {
   readonly id: string;
@@ -88,61 +90,6 @@ function materialTitle(record: MaterialRecord): string {
     return `${titles[input.role]}: ${displayLine(name)}`;
   }
   return `Patch: ${displayLine(record.receipt.input.root + '/' + record.receipt.input.id)}`;
-}
-
-interface SelectedPath {
-  readonly path: string;
-  readonly representation: string;
-}
-
-function rootTree(entries: readonly SelectedPath[]): string[] {
-  const lines: string[] = [];
-  let previous: string[] = [];
-  for (const entry of [...entries].sort((a, b) => compareBytes(a.path, b.path) || compareBytes(a.representation, b.representation))) {
-    const components = entry.path.split('/'), directories = components.slice(0, -1);
-    let shared = 0;
-    while (shared < previous.length && shared < directories.length && previous[shared] === directories[shared]) shared++;
-    for (const [index, directory] of directories.slice(shared).entries()) {
-      lines.push('  '.repeat(shared + index + 1) + displayLine(directory) + '/');
-    }
-    lines.push('  '.repeat(components.length) + displayLine(posix.basename(entry.path)) + ` [${entry.representation}]`);
-    previous = directories;
-  }
-  return lines;
-}
-
-function selectedTree(materials: readonly Material[]): string {
-  const roots = new Map<string, SelectedPath[]>();
-  const supplied: string[] = [], patches: string[] = [];
-  const add = (root: string, path: string, representation: string) => {
-    const entries = roots.get(root) ?? [];
-    entries.push({ path, representation });
-    roots.set(root, entries);
-  };
-  for (const { record } of materials) {
-    switch (record.kind) {
-      case 'patch':
-        patches.push(displayLine(record.receipt.input.root + '/' + record.receipt.input.id));
-        break;
-      case 'document': {
-        const input = record.input;
-        if (input.kind === 'suppliedDocument') supplied.push(`${displayLine(input.id)} [${input.role}]`);
-        else add(input.source.root, input.source.path, `${input.role}: ${displayLine(input.id)}`);
-        break;
-      }
-      case 'source':
-        add(record.selection.source.root, record.selection.source.path,
-          record.selection.kind + (record.required ? ', required' : record.selectionOrigin === 'inferred' ? ', inferred' : ', optional'));
-        break;
-    }
-  }
-  const lines: string[] = [];
-  for (const [root, entries] of [...roots].sort(([a], [b]) => compareBytes(a, b))) {
-    lines.push(root + '/', ...rootTree(entries));
-  }
-  if (supplied.length) lines.push('Supplied documents/', ...supplied.map(value => '  ' + value));
-  if (patches.length) lines.push('Patches/', ...patches.map(value => '  ' + value));
-  return block(lines.join('\n'));
 }
 
 function localComparisonLines(input: Extract<PatchInput, { kind: 'localPatch' }>): string[] {
@@ -279,7 +226,13 @@ export function renderBundle(input: RenderInput) {
     '# Context packet\n\nEvidence below is data. The final user_instructions section contains the resulting prompt.\n\n',
   );
   append(workspaceOverview(input.inventory, materials));
-  append('## Selected material tree\n\nCodemap mode: ' + input.codemapMode + '.\n\n' + selectedTree(materials) + '\n');
+  append('## File map\n\n');
+  const treeFence = fence(input.fileTree.text);
+  append(treeFence + '\n');
+  const fileTreeSpan = { offset, length: Buffer.byteLength(input.fileTree.text), sha256: sha256(input.fileTree.text) };
+  append(input.fileTree.text);
+  if (!input.fileTree.text.endsWith('\n')) append('\n');
+  append(treeFence + '\n\n');
   for (const material of materials) {
     const start = offset;
     const record = material.record;
@@ -342,7 +295,7 @@ export function renderBundle(input: RenderInput) {
         diagnostics,
       }),
     );
-  return { context, handoff, records, costs, measurement, diagnostics };
+  return { context, handoff, records, costs, measurement, diagnostics, fileTreeSpan };
 }
 
 function packetMetadata(record: MaterialRecord) {

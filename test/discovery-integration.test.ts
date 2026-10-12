@@ -132,7 +132,7 @@ test('discovery material paging measures the real Pi result and returns every co
     const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] }, {
       call: async (call, _signal, encode) => {
         assert(call.name === 'draft_inspect');
-        const page = originalCall(draft.id, call.input, encode);
+        const page = await originalCall(draft.id, call.input, _signal, encode);
         assert(page.kind === 'material');
         continuation = page.continuation;
         returned.push(...page.lines.map(line => line.text));
@@ -248,12 +248,12 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     const job = client.build(workspace.id, 'handoff', { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'blocked', budgetUnits: 1 });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {}); assert(result.state === 'blocked');
-    const small = client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 2000 });
+    const small = (await client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 2000 }, new AbortController().signal));
     assert.equal(small.kind, 'recordTooLarge');
-    const recovered = client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 });
+    const recovered = (await client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal));
     assert(recovered.kind === 'metadata'); assert.equal(recovered.revision, 1);
     assert.deepEqual(recovered.items, [{ kind: 'prompt', prompt: 'Inspect\n\n' + JSON.stringify(handoff) }]);
-    assert.throws(() => other.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }), /unknownDraft/);
+    await assert.rejects(async () => (await other.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal)), /unknownDraft/);
     assert.equal(calls, 2); assert.equal(result.discovery.acceptedRuns, 1);
     await writeFile(join(provider.directory, 'blocked-handoff-proof.json'), JSON.stringify({ result, small, recovered, calls }) + '\n');
     await client.close(); await other.close();

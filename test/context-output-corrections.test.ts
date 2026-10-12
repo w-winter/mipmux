@@ -10,6 +10,7 @@ import { acquireLocalPatch } from '../src/patches/local-git.js';
 import { identity } from '../src/context/material-store.js';
 import { loadVerifiedBundle } from '../src/context/verify.js';
 import { renderBundle } from '../src/context/render.js';
+import { finalFileTreeInput } from '../src/context/final-tree.js';
 import { canonicalJSON, sha256 } from '../src/workspace/values.js';
 
 const signal = () => new AbortController().signal;
@@ -178,7 +179,9 @@ test('current verification rejects self-consistent forged slices against the exa
       const body = bodies.join('');
       materials[materials.indexOf(material)] = { ...material, bodies, sourceBlock: { text: prefix + body + '\n```',
         bodySpans: [{ offset: Buffer.byteLength(prefix), length: Buffer.byteLength(body) }] } };
-      const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials });
+      const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials,
+        fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), text: saved.fileTree.text } });
+      manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), span: rendered.fileTreeSpan };
       manifest.requestDigest = sha256(canonicalJSON(manifest.request));
       manifest.materials = rendered.records;
       manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
@@ -227,7 +230,8 @@ test('integrity reestablishes supplied patch input and receipt agreement without
         const saved = await loadVerifiedBundle(ready.directory);
         const material = saved.materials.find(item => item.record.kind === 'patch'); assert(material);
         const materials = saved.materials.map(item => item === material ? { ...item, record: patch } : item);
-        const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials });
+        const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials, fileTree: saved.fileTree });
+        manifest.fileTree.span = rendered.fileTreeSpan;
         manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
         manifest.accounting.bytes = rendered.measurement.bytes; manifest.accounting.units = rendered.measurement.units;
         await writeFile(join(ready.directory, 'context.md'), rendered.context); await writeFile(join(ready.directory, 'handoff.md'), rendered.handoff);
