@@ -108,6 +108,10 @@ export const NativeSelectionInputParsingRequest = Type.Object({ kind: Type.Liter
   paths: Type.Array(Type.String()), slices: Type.Unknown() }, { additionalProperties: false });
 export const NativeSelectionInputParsingResult = Type.Object({ kind: Type.Literal('selectionInputs'), paths: Type.Array(Type.String()),
   slices: Type.Array(NativeSelectionSliceInput), sliceErrors: Type.Array(Type.String()), hadExplicitSliceSpec: Type.Boolean() }, { additionalProperties: false });
+const SelectionPathBindingsInput = Type.Object({ kind: Type.Literal('selectionPathBindings'),
+  paths: Type.Array(Type.String()) }, { additionalProperties: false });
+const SelectionPathBindingsResult = Type.Object({ kind: Type.Literal('selectionPathBindings'),
+  paths: Type.Array(Type.String()) }, { additionalProperties: false });
 export const NativeReadArgument = Type.Union([Type.Integer(), Type.String(), Type.Null()]);
 export const NativeReadTextInput = Type.Object({ kind: Type.Literal('sliceReadText'), text: Type.String(),
   start_line: NativeReadArgument, offset: NativeReadArgument, limit: NativeReadArgument }, { additionalProperties: false });
@@ -185,6 +189,7 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('projectGitRead'), query: NativeGitReadQuery, bytes: base64 }, { additionalProperties: false }),
   NativeReadTextInput,
   NativeSelectionInputParsingRequest,
+  SelectionPathBindingsInput,
   NativeSelectionPreparationInput,
   NativeSelectionPathMutationInput,
   NativeSelectionCandidatesInput,
@@ -245,6 +250,7 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitShowError'), message: Type.String() }, { additionalProperties: false }),
   ...NativeReadTextResult.anyOf,
   NativeSelectionInputParsingResult,
+  SelectionPathBindingsResult,
   ...NativeSelectionPreparationResult.anyOf,
   ...NativeSelectionPathMutationResult.anyOf,
   NativeSelectionCandidatesResult,

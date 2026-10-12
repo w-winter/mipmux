@@ -16,7 +16,8 @@ export async function getCodeStructure(operation: WorkspaceOperation, request: S
   const snapshot = operation.snapshot;
   const roots: NativeStructureInput['roots'] = snapshot.roots.map(root => {
     const files: NativeStructureInput['roots'][number]['files'] = snapshot.entries.flatMap<NativeStructureInput['roots'][number]['files'][number]>(entry => {
-      if (entry.root !== root.name || entry.kind !== 'file' && entry.kind !== 'acquisitionFailed') return [];
+      if (entry.root !== root.name || entry.kind !== 'file' && entry.kind !== 'acquisitionFailed' ||
+        entry.kind === 'file' && entry.visibility === 'managedOnly') return [];
       const id = structureId(root.identity, entry.path);
       const empty = { id, path: entry.path, definitions: [], references: [], signature: null };
       if (entry.kind === 'acquisitionFailed') {
@@ -25,6 +26,7 @@ export async function getCodeStructure(operation: WorkspaceOperation, request: S
         return [{ ...empty, state }];
       }
       if (entry.structural.kind === 'unsupported') return [{ ...empty, state: null }];
+      if (entry.structural.kind === 'pending') return [{ ...empty, state: 'pending' as const }];
       const record = entry.structural.record;
       if (record.outcome.kind === 'readyNoSymbols') return [{ ...empty, state: 'empty' as const }];
       if (record.outcome.kind !== 'ready') return [{ ...empty, state: 'terminalArtifact' as const }];
@@ -35,7 +37,7 @@ export async function getCodeStructure(operation: WorkspaceOperation, request: S
     });
     const complete = snapshot.enumeration.kind === 'complete' || !snapshot.enumeration.failures.some(failure => failure.root === root.name);
     return { id: structureId(root.identity, null), name: root.name, canonicalPath: root.identity.canonicalPath, complete, files,
-      directories: snapshot.entries.filter(entry => entry.root === root.name && entry.kind === 'directory').map(entry => entry.path) };
+      directories: snapshot.entries.filter(entry => entry.root === root.name && entry.kind === 'directory' && entry.visibility === 'discoverable').map(entry => entry.path) };
   });
   const selectors: NativeStructureInput['seedInput']['selectors'] = request.seeds === null
     ? (request.selection?.sources ?? []).map(source => ({ ...source, kind: 'file' as const }))

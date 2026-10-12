@@ -13,6 +13,8 @@ import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
 import type { NativeOperation } from '../contracts/native.js';
+import type { WorkspaceRuntime } from './workspace-runtime.js';
+import { capturedFile, completeFile } from './inventory-file.js';
 
 /** Pins one inventory and owns a separate bridge until close joins admitted operations. */
 export class WorkspaceOperation {
@@ -22,9 +24,33 @@ export class WorkspaceOperation {
   #bridge: BridgeClient | null = null;
   readonly #pending = new Set<Promise<unknown>>();
   #closing: Promise<void> | null = null;
-  constructor(readonly snapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
+  constructor(private readonly baseSnapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
     signal: AbortSignal,
-    readonly runtime: SmipRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal) => Promise<WorkspaceOperation>) { this.signal = AbortSignal.any([signal, this.#controller.signal]); }
+    readonly runtime: SmipRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal) => Promise<WorkspaceOperation>,
+    private readonly catalog: { kind: 'workspace'; owner: WorkspaceRuntime } | { kind: 'verification' }) { this.signal = AbortSignal.any([signal, this.#controller.signal]); }
+  get snapshot(): InventorySnapshot {
+    return this.catalog.kind === 'workspace' ? this.catalog.owner.registeredSnapshot(this.baseSnapshot) : this.baseSnapshot;
+  }
+  materializeExplicitSource(source: SourcePath) {
+    const captured = structuredClone(source);
+    return this.#track(async () => {
+      if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
+      const existing = this.snapshot.entries.find(entry => entry.root === captured.root && entry.path === captured.path);
+      if (existing?.kind === 'file') return;
+      const access = await (this.#access ??= this.#openAccess());
+      const policy = new RootPolicy(this.declaration, access);
+      if (policy.denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
+      const discoverable = await policy.admitted(captured, false);
+      const acquired = await access.read(captured, null);
+      this.signal.throwIfAborted();
+      const entry = capturedFile(captured, acquired, discoverable ? 'discoverable' : 'managedOnly');
+      const owner = this.catalog.owner;
+      owner.registerExplicitFile(this.snapshot, entry, policy.snapshot());
+      const complete = await completeFile(access, entry, acquired, this.runtime.artifacts, () => owner.retain());
+      this.signal.throwIfAborted();
+      owner.completeExplicitFile(complete);
+    });
+  }
   fork(signal: AbortSignal): Promise<WorkspaceOperation> { this.#check(); return this.openPinned(signal); }
   validateRoots() {
     return this.#track(async () => {
@@ -95,7 +121,7 @@ export class WorkspaceOperation {
       if (!entry || entry.kind !== 'file') throw new WorkspaceFailure('unavailableSource', source);
       const access = await (this.#access ??= this.#openAccess());
       const policy = new RootPolicy(this.declaration, access);
-      await policy.revalidate(source, this.snapshot.policy);
+      await policy.revalidate(source, this.snapshot.policy, entry.visibility);
       return access.read(source, entry.identity);
     });
   }
@@ -178,6 +204,30 @@ export class WorkspaceOperation {
     });
   }
   calculateSliceRanges(input: Extract<NativeOperation, { kind: 'calculateSliceRanges' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  parseSelectionInputs(input: Extract<NativeOperation, { kind: 'parseSelectionInputs' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  selectionPathBindings(paths: readonly string[]) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request({ kind: 'selectionPathBindings', paths: [...paths] }, this.signal)).result.paths;
+    });
+  }
+  prepareSelection(input: Extract<NativeOperation, { kind: 'prepareSelection' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
+  mutateSelectionPaths(input: Extract<NativeOperation, { kind: 'mutateSelectionPaths' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(input, this.signal)).result;

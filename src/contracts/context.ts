@@ -130,7 +130,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(5),
+  schemaVersion: Type.Literal(6),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,

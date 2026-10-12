@@ -57,10 +57,13 @@ export type AdmittedRoot = Static<typeof AdmittedRoot>;
 const disposition = Type.Union([
   Type.Object({ kind: Type.Literal('artifact'), key: ArtifactKey, record: ArtifactRecord }, closed),
   Type.Object({ kind: Type.Literal('unsupported') }, closed),
+  Type.Object({ kind: Type.Literal('pending'), key: ArtifactKey }, closed),
 ]);
+const visibility = Type.Enum(['discoverable', 'managedOnly']);
 export const InventoryEntry = Type.Union([
-  Type.Object({ kind: Type.Literal('file'), root: RootName, path: RelativePath, identity: SourceIdentity, decoding: SourceDecoding, structural: disposition }, closed),
-  Type.Object({ kind: Type.Literal('directory'), root: RootName, path: RelativePath }, closed),
+  Type.Object({ kind: Type.Literal('file'), root: RootName, path: RelativePath, visibility,
+    identity: SourceIdentity, decoding: SourceDecoding, structural: disposition }, closed),
+  Type.Object({ kind: Type.Literal('directory'), root: RootName, path: RelativePath, visibility }, closed),
   Type.Object({ kind: Type.Literal('acquisitionFailed'), root: RootName, path: RelativePath, code: Type.String(), structural: Type.Union([
     Type.Object({ kind: Type.Literal('unsupported') }, closed),
     Type.Object({ kind: Type.Literal('pending') }, closed),
@@ -70,7 +73,7 @@ export const InventoryEntry = Type.Union([
     reason: Type.Union([Type.Literal('policy'), Type.Literal('symlink'), Type.Literal('nonRegular')]) }, closed),
 ]);
 export type InventoryEntry = Static<typeof InventoryEntry>;
-export const InventorySnapshot = Type.Object({ schemaVersion: Type.Literal(4), decoderPolicy: DecoderPolicy, workspaceKey: SHA256, roots: Type.Array(AdmittedRoot), outputRoot: RootIdentity,
+export const InventorySnapshot = Type.Object({ schemaVersion: Type.Literal(5), decoderPolicy: DecoderPolicy, workspaceKey: SHA256, roots: Type.Array(AdmittedRoot), outputRoot: RootIdentity,
   policy: PolicySnapshot, entries: Type.Array(InventoryEntry), generation: SafeCount, inventoryDigest: SHA256,
   processing: Type.Literal('settled'), enumeration: Type.Union([
     Type.Object({ kind: Type.Literal('complete') }, closed),

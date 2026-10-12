@@ -5,6 +5,7 @@ import { WorkspaceSpec } from '../contracts/inventory.js';
 import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from '../contracts/context.js';
 import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, ScopedStructure, toolDescription } from '../contracts/exploration.js';
 import { GitInput, gitValidator } from '../contracts/git.js';
+import { SelectionInput, selectionValidator } from '../contracts/selection.js';
 import { Positive, TreeInput, ScopedTree } from '../contracts/discovery.js';
 import type { ClientRuntime } from '../runtime/client-runtime.js';
 import { toolResult, failureResult } from '../runtime/tool-result.js';
@@ -58,6 +59,10 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     });
   register('draft_create', Type.Object({ workspaceId: id, request: ContextBuildRequest }, closed),
     (input, ctx) => client().createDraft(input.workspaceId, input.request, ctx.mcpReq.signal));
+  register('manage_selection', Type.Object({ draftId: id, input: Type.Optional(SelectionInput), ...budget }, closed),
+    (input, ctx) => client().manageSelection(input.draftId,
+      selectionValidator.Parse(selectionValidator.Default({ ...input.input,
+        maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes })), ctx.mcpReq.signal, toolResult));
   register('draft_inspect', Type.Object({ draftId: id, input: Type.Union([
     Type.Omit(DraftInspection.anyOf[0], ['maxOutputBytes']), Type.Omit(DraftInspection.anyOf[1], ['maxOutputBytes']),
   ]), ...budget }, closed),

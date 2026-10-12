@@ -115,24 +115,24 @@ export class RootPolicy {
     return freeze({ ...body, digest: sha256(canonicalJSON(body)) });
   }
 
-  async revalidate(source: SourcePath, snapshot: PolicySnapshot): Promise<void> {
+  async revalidate(source: SourcePath, snapshot: PolicySnapshot, visibility: 'discoverable' | 'managedOnly' = 'discoverable'): Promise<void> {
+    const admitted = await this.admitted(source, false);
+    if (!admitted && visibility === 'discoverable' || this.denied(source)) throw new WorkspaceFailure('policyChanged', source);
+    const captured = this.snapshot();
     for (const binding of this.#bindings(source)) {
-      const root = await this.#capture(binding.root, '');
+      const root = captured.roots.find(root => root.root === binding.root);
+      if (!root) continue;
       const previousRoot = snapshot.roots.find(root => root.root === binding.root);
-      if (!previousRoot || canonicalJSON({ root: binding.root, authority: root.authority, settings: root.settings }) !== canonicalJSON(previousRoot)) {
+      if (!previousRoot || canonicalJSON(root) !== canonicalJSON(previousRoot)) {
         throw new WorkspaceFailure('policyChanged', source);
       }
-      const relevant = [...root.controls];
-      if (root.settings.enableHierarchicalIgnores) for (const ancestor of ancestors(binding.path)) {
-        if (ancestor) relevant.push(...(await this.#capture(binding.root, ancestor)).controls);
-      }
+      const relevant = captured.inputs.filter(input => input.root === binding.root);
       for (const control of relevant) {
         const previous = snapshot.inputs.find(input => input.root === binding.root && input.path === control.path);
-        if (!previous || canonicalJSON({ root: binding.root, ...control }) !== canonicalJSON(previous)) {
+        if (!previous || canonicalJSON(control) !== canonicalJSON(previous)) {
           throw new WorkspaceFailure('policyChanged', source);
         }
       }
     }
-    if (!await this.admitted(source, false)) throw new WorkspaceFailure('policyChanged', source);
   }
 }

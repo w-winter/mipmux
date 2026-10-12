@@ -33,6 +33,10 @@ import { StructureIndex } from '../workspace/structure-index.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { Compile } from 'typebox/compile';
 import { initialFileTree } from '../exploration/tree.js';
+import { selectionValidator, type SelectionRequest } from '../contracts/selection.js';
+import { prepareSelection } from './selection-preparation.js';
+import { estimateUnits } from './budget.js';
+import { posix } from 'node:path';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -44,7 +48,7 @@ export class DraftRuntime {
   readonly id = randomUUID();
   #materials: ReadonlyMap<string, Material> = new Map();
   #codemapMode: CodemapMode;
-  #structure: StructureIndex | null = null;
+  #structure: { readonly digest: string; readonly index: StructureIndex } | null = null;
   readonly #pending = new Set<Promise<unknown>>();
   readonly #cancel = new AbortController();
   #revision = 0;
@@ -126,6 +130,75 @@ export class DraftRuntime {
     if (!updateValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
     return this.#track(this.#update(structuredClone(input), signal, encode));
   }
+  manageSelection(input: SelectionRequest, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    if (!selectionValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
+    const request = structuredClone(input);
+    return this.#track((async () => {
+      const revision = request.expectedRevision ?? this.#revision;
+      this.#check(signal, revision);
+      const freezeGeneration = this.#freezeGeneration, current = this.#materials;
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      try {
+        const prepared = await prepareSelection(operation, request, current, this.#codemapMode);
+        const next = request.op === 'get' ? current
+          : await this.#prepareResolvedSelection(operation, prepared, current, revision);
+        this.#check(signal, revision);
+        if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+        const candidate = this.#mutationChanges(current, next, prepared.mode, this.#prompt);
+        const isMutation = request.op !== 'get' && request.op !== 'preview';
+        const reply = this.#selectionReply(request, next, prepared.mode, prepared.invalid,
+          isMutation ? candidate.revision : revision);
+        const requiredBytes = serializedBytes(encode(reply));
+        if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
+        if (isMutation && candidate.changed) {
+          this.#commit(next, prepared.mode, this.#prompt, candidate.revision);
+        }
+        return freeze(reply);
+      } finally { await operation.close(); }
+    })());
+  }
+  async #prepareResolvedSelection(operation: WorkspaceOperation, prepared: Awaited<ReturnType<typeof prepareSelection>>,
+    current: ReadonlyMap<string, Material>, revision: number): Promise<ReadonlyMap<string, Material>> {
+    const explicit = new Map([...current].filter(([, material]) => material.record.kind !== 'source'));
+    for (const required of this.request.requiredSources) {
+      if (!prepared.selections.some(selection => canonicalJSON(selection) === canonicalJSON(required))) {
+        throw new WorkspaceFailure('requiredMaterialMutation', { id: sourceId(required.source) });
+      }
+    }
+    for (const selection of prepared.selections) {
+      const id = sourceId(selection.source), existing = current.get(id);
+      const material = existing?.record.kind === 'source' && existing.record.selectionOrigin === 'explicit'
+        && canonicalJSON(existing.record.selection) === canonicalJSON(selection) ? existing
+        : await acquireSource(operation, { selectionOrigin: 'explicit', selection,
+          required: this.request.requiredSources.some(required => sourceId(required.source) === id) });
+      explicit.set(id, material);
+    }
+    return this.#derive(operation, explicit, prepared.mode, current, revision);
+  }
+  #selectionReply(request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
+    invalid: readonly string[], revision: number) {
+    const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot,
+      prompt: this.#prompt, codemapMode: mode, materials: [...materials.values()] });
+    const files = [...materials.values()].flatMap(material => {
+      const record = material.record;
+      if (record.kind !== 'source') return [];
+      const root = this.operation.snapshot.roots.find(root => root.name === record.selection.source.root)!;
+      const relative = this.operation.snapshot.roots.length === 1 ? record.selection.source.path
+        : root.name + '/' + record.selection.source.path;
+      return [{ path: request.path_display === 'full' ? posix.join(root.identity.canonicalPath, record.selection.source.path) : relative,
+        tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
+        render_mode: record.selection.kind === 'slices' ? 'slice' : record.selection.kind,
+        ranges: record.selection.kind === 'slices' ? record.selection.ranges : null,
+        is_auto: record.selectionOrigin === 'inferred',
+        codemap_origin: record.selection.kind === 'codemap' ? record.selectionOrigin === 'inferred' ? 'auto' : 'manual' : null,
+        root_path: root.identity.canonicalPath, path_within_root: record.selection.source.path }];
+    });
+    return { status: request.op === 'preview' ? 'preview' : 'ok', revision,
+      files: request.view === 'none' ? null : files, total_tokens: files.reduce((sum, file) => sum + file.tokens, 0),
+      invalid_paths: invalid.length ? [...invalid] : null, codemap_auto_enabled: mode === 'automatic',
+      blocks: request.view === 'content' ? [...materials.values()].flatMap(material => [...material.bodies]) : null,
+      measurement: rendered.measurement, diagnostics: rendered.diagnostics };
+  }
   preview(input: DraftPreview, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!previewValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
     const request = structuredClone(input);
@@ -168,7 +241,11 @@ export class DraftRuntime {
     const seeds = [...explicit.values()].flatMap(({ record }) =>
       record.kind === 'source' && record.selection.kind !== 'codemap' ? [record.selection.source] : []);
     if (!seeds.length) return explicit;
-    const targets = (this.#structure ??= new StructureIndex(this.operation.snapshot)).resolveAutomaticCodemapTargets(seeds);
+    const snapshot = this.operation.snapshot;
+    if (this.#structure?.digest !== snapshot.inventoryDigest) {
+      this.#structure = { digest: snapshot.inventoryDigest, index: new StructureIndex(snapshot) };
+    }
+    const targets = this.#structure.index.resolveAutomaticCodemapTargets(seeds);
     for (const target of targets) {
       const source = { root: target.root, path: target.path }, id = sourceId(source), existing = previous.get(id);
       if (existing?.record.kind === 'source' && existing.record.selectionOrigin === 'inferred') {
@@ -214,17 +291,24 @@ export class DraftRuntime {
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
     const { changed, revision, result } = this.#mutationReceipt(current, next, mode, prompt, input.maxOutputBytes, encode, promptResponse);
     if (changed) {
-      this.#materials = next; this.#codemapMode = mode; this.#prompt = prompt; this.#revision = revision;
+      this.#commit(next, mode, prompt, revision);
     }
     return freeze(result);
   }
-  #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode,
-    prompt: string, maxOutputBytes: number, encode: ResultEncoding,
-    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null) {
+  #commit(next: ReadonlyMap<string, Material>, mode: CodemapMode, prompt: string, revision: number): void {
+    this.#materials = next; this.#codemapMode = mode; this.#prompt = prompt; this.#revision = revision;
+  }
+  #mutationChanges(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode, prompt: string) {
     const changedIds = [...new Set([...current.keys(), ...next.keys()])].filter(id =>
       current.get(id) !== next.get(id) && canonicalJSON(current.get(id) ?? null) !== canonicalJSON(next.get(id) ?? null)).sort(compareBytes);
     const changed = changedIds.length > 0 || mode !== this.#codemapMode || prompt !== this.#prompt;
     const revision = this.#revision + (changed ? 1 : 0);
+    return { changedIds, changed, revision };
+  }
+  #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode,
+    prompt: string, maxOutputBytes: number, encode: ResultEncoding,
+    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null) {
+    const { changedIds, changed, revision } = this.#mutationChanges(current, next, mode, prompt);
     const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot, prompt,
       codemapMode: mode, materials: [...next.values()] });
     const changedSet = new Set(changedIds);

@@ -4,6 +4,7 @@ import { SafeCount, SHA256 } from './workspace.js';
 import { ReadRequest, TreeRequest, ScopedStructure, SearchRequest, ReadInput, StructureInput, SearchInput, Continuation } from './exploration.js';
 import { GitRequest, GitInput } from './git.js';
 import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from './context.js';
+import { SelectionInput, SelectionRequest } from './selection.js';
 
 const closed = { additionalProperties: false };
 export const DiscoveryInput = Type.Object({ tokenBudget: SafeCount, purpose: ContextBuildRequest.properties.purpose,
@@ -29,7 +30,8 @@ export const toolSchemas = { git: Type.Union(GitInput.anyOf.map(schema => Type.O
   get_code_structure: Type.Object({ ...StructureInput.properties, maxOutputBytes: Positive }, closed),
   file_search: Type.Union(SearchInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))),
   read_file: Type.Object({ ...ReadInput.properties, maxOutputBytes: Positive }, closed), draft_inspect: DraftInspection,
-  draft_update: DraftUpdate, draft_preview: DraftPreview, draft_validate: ValidateRequest, prompt: PromptRequest };
+  draft_update: DraftUpdate, draft_preview: DraftPreview, draft_validate: ValidateRequest, prompt: PromptRequest,
+  manage_selection: Type.Object({ ...SelectionInput.properties, maxOutputBytes: Positive }, closed) };
 export const DiscoveryCall = Type.Union([
   Type.Object({ name: Type.Literal('git'), input: GitRequest }, closed),
   Type.Object({ name: Type.Literal('get_file_tree'), input: ScopedTree }, closed),
@@ -41,6 +43,7 @@ export const DiscoveryCall = Type.Union([
   Type.Object({ name: Type.Literal('draft_preview'), input: DraftPreview }, closed),
   Type.Object({ name: Type.Literal('draft_validate'), input: ValidateRequest }, closed),
   Type.Object({ name: Type.Literal('prompt'), input: PromptRequest }, closed),
+  Type.Object({ name: Type.Literal('manage_selection'), input: SelectionRequest }, closed),
 ]);
 export type DiscoveryCall = Static<typeof DiscoveryCall>;
 export const callValidator = Compile(DiscoveryCall);

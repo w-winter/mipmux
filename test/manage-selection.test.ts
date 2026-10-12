@@ -1,0 +1,225 @@
+import assert from 'node:assert/strict';
+import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { test } from 'node:test';
+import { Client } from '@modelcontextprotocol/client';
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
+import Type, { type Static } from 'typebox';
+import { Compile } from 'typebox/compile';
+import { SourceSelection, verifyBundle, SmipRuntime } from '../src/index.js';
+import { selectionValidator, SelectionInput } from '../src/contracts/selection.js';
+import { BridgeClient } from '../src/native/bridge-client.js';
+import type { NativeOperation } from '../src/contracts/native.js';
+import { inventoryValidator } from '../src/contracts/inventory.js';
+
+const identifier = Compile(Type.Object({ id: Type.String() }));
+const sourceMetadata = Type.Object({ kind: Type.Literal('source'), selection: SourceSelection,
+  selectionOrigin: Type.Enum(['explicit', 'inferred']) });
+const inspection = Compile(Type.Object({ revision: Type.Integer(), codemapMode: Type.Enum(['automatic', 'manual']),
+  items: Type.Array(Type.Union([sourceMetadata, Type.Object({ kind: Type.Literal('prompt'), prompt: Type.String() })])) }));
+const ready = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String() }));
+
+async function fixture() {
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-manage-selection-')));
+  const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
+  await mkdir(join(root, 'zone'), { recursive: true }); await mkdir(output);
+  await writeFile(join(root, 'Main.swift'), 'struct Main {\n  let value: Int\n}\n');
+  await writeFile(join(root, 'zone/Peer.swift'), 'struct Peer {\n  let title: String\n}\n');
+  await writeFile(join(root, 'zone/notes.txt'), 'First\nSecond\nThird\n');
+  await mkdir(join(root, 'private'));
+  await writeFile(join(root, '.repo_ignore'), 'private/\n');
+  await writeFile(join(root, 'private/Hidden.swift'), 'struct ExplicitlyManaged {\n  let value: Int\n}\n');
+  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, search: null, git: null,
+    discovery: null, defaultMaxOutputBytes: 30000 }));
+  const client = new Client({ name: 'source-selection', version: '1' });
+  const transport = new StdioClientTransport({ command: process.execPath,
+    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  await client.connect(transport);
+  const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
+    roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output } } });
+  assert.equal(declared.isError, false, JSON.stringify(declared));
+  const created = await client.callTool({ name: 'draft_create', arguments: {
+    workspaceId: identifier.Parse(declared.structuredContent).id, request: {
+      task: 'Inspect source selection behavior', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      requiredSources: [], documents: [], patches: [], discoveryHints: [], budgetUnits: 100000, outputName: 'packet',
+    } } });
+  assert.equal(created.isError, false, JSON.stringify(created));
+  const draftId = identifier.Parse(created.structuredContent).id;
+  const select = (input: Static<typeof SelectionInput>, maxOutputBytes = 30000) => client.callTool({
+    name: 'manage_selection', arguments: { draftId, input, maxOutputBytes },
+  });
+  const inspect = async () => {
+    const reply = await client.callTool({ name: 'draft_inspect', arguments: {
+      draftId, input: { view: 'metadata', continuation: null }, maxOutputBytes: 30000,
+    } });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    return inspection.Parse(reply.structuredContent);
+  };
+  return { base, root, output, client, draftId, select, inspect, workspaceId: identifier.Parse(declared.structuredContent).id };
+}
+
+test('public source selection preserves slices on full add and source promotion/manual-mode semantics', async () => {
+  const f = await fixture();
+  const receipts = [];
+  try {
+    let reply = await f.select({ op: 'set', mode: 'slices', slices: [{ path: 'r/zone/notes.txt',
+      ranges: [{ start_line: 2, end_line: 2, description: 'Second line' }] }] });
+    assert.equal(reply.isError, false, JSON.stringify(reply)); receipts.push(reply);
+    reply = await f.select({ op: 'add', paths: ['r/zone'], mode: 'full', strict: true });
+    assert.equal(reply.isError, false, JSON.stringify(reply)); receipts.push(reply);
+    let state = await f.inspect();
+    const notes = state.items.find(item => item.kind === 'source' && item.selection.source.path === 'zone/notes.txt');
+    assert(notes?.kind === 'source'); assert.equal(notes.selection.kind, 'slices');
+    assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'));
+    reply = await f.select({ op: 'demote', paths: ['r/zone/Peer.swift'] });
+    assert.equal(reply.isError, false, JSON.stringify(reply)); receipts.push(reply);
+    state = await f.inspect(); assert.equal(state.codemapMode, 'manual');
+    assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'
+      && item.selection.kind === 'codemap'));
+    reply = await f.select({ op: 'remove', paths: ['r/zone/Peer.swift'], mode: 'full', strict: true });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    assert((await f.inspect()).items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'
+      && item.selection.kind === 'codemap'));
+    reply = await f.select({ op: 'promote', paths: ['r/zone/Peer.swift'] });
+    assert.equal(reply.isError, false, JSON.stringify(reply)); receipts.push(reply);
+    state = await f.inspect(); assert.equal(state.codemapMode, 'manual');
+    assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'
+      && item.selection.kind === 'full'));
+    await writeFile(join(f.base, 'representation-receipt.json'), JSON.stringify({ receipts, state }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
+test('source set rejects invalid inputs even without strict and preview/receipt failure cannot commit selection', async () => {
+  const f = await fixture();
+  try {
+    let reply = await f.select({ op: 'set', paths: ['r/Main.swift'] });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    const before = await f.inspect();
+    reply = await f.select({ op: 'set', paths: ['r/zone/notes.txt', 'r/missing.txt'], strict: false });
+    assert.equal(reply.isError, true, JSON.stringify(reply));
+    assert.deepEqual(await f.inspect(), before);
+    reply = await f.select({ op: 'preview', paths: ['r/zone'], strict: true });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    assert.deepEqual(await f.inspect(), before);
+    reply = await f.select({ op: 'set', paths: ['r/zone'] }, 1);
+    assert.equal(reply.isError, true, JSON.stringify(reply));
+    assert.deepEqual(await f.inspect(), before);
+    reply = await f.select({ op: 'demote', paths: ['r/zone'], strict: false });
+    assert.equal(reply.isError, true, JSON.stringify(reply));
+    assert.deepEqual(await f.inspect(), before);
+    await writeFile(join(f.base, 'transaction-receipt.json'), JSON.stringify({ before, after: await f.inspect() }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
+test('absolute explicit selection admits ignored regular sources and preserves saved packet evidence', async () => {
+  const f = await fixture();
+  try {
+    const text = 'struct ExplicitlyManaged {\n  let value: Int\n}\n';
+    const reply = await f.select({ op: 'add', paths: [join(f.root, 'private/Hidden.swift')], strict: true });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    const state = await f.inspect();
+    assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'private/Hidden.swift'
+      && item.selection.kind === 'full'));
+    const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
+    assert.equal(finalized.isError, false, JSON.stringify(finalized));
+    const packet = ready.Parse(finalized.structuredContent);
+    const verified = await verifyBundle(packet.directory);
+    assert(verified.manifest.materials.some(record => record.kind === 'source'
+      && record.selection.source.path === 'private/Hidden.swift'));
+    assert((await readFile(join(packet.directory, 'context.md'), 'utf8')).includes(text));
+    await writeFile(join(f.base, 'explicit-source-receipt.json'), JSON.stringify({ state, directory: packet.directory }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
+test('a rejected selection retains explicit workspace registration but ordinary discovery excludes it', async () => {
+  const f = await fixture();
+  try {
+    const before = await f.inspect();
+    const rejected = await f.select({ op: 'set', paths: [join(f.root, 'private/Hidden.swift'), 'r/missing.txt'] });
+    assert.equal(rejected.isError, true, JSON.stringify(rejected));
+    assert.deepEqual(await f.inspect(), before);
+    const exact = await f.client.callTool({ name: 'read_file', arguments: { workspaceId: f.workspaceId,
+      input: { root: 'r', path: 'private/Hidden.swift' } } });
+    assert.equal(exact.isError, false, JSON.stringify(exact));
+    const tree = await f.client.callTool({ name: 'get_file_tree', arguments: { workspaceId: f.workspaceId,
+      input: { type: 'files', mode: 'full' } } });
+    assert.equal(tree.isError, false, JSON.stringify(tree));
+    const decoded = Compile(Type.Object({ tree: Type.String() })).Parse(tree.structuredContent);
+    assert(!decoded.tree.includes('Hidden.swift'));
+    await writeFile(join(f.root, 'private/Hidden.swift'), 'struct RefreshedManaged {}\n');
+    await writeFile(join(f.root, '.repo_ignore'), 'private/\n# refreshed control\n');
+    const refreshed = await f.client.callTool({ name: 'workspace_refresh', arguments: { workspaceId: f.workspaceId } });
+    assert.equal(refreshed.isError, false, JSON.stringify(refreshed));
+    const reread = await f.client.callTool({ name: 'read_file', arguments: { workspaceId: f.workspaceId,
+      input: { root: 'r', path: 'private/Hidden.swift' } } });
+    assert.equal(reread.isError, false, JSON.stringify(reread));
+    assert(JSON.stringify(reread.structuredContent).includes('RefreshedManaged'));
+    await writeFile(join(f.base, 'rejected-registration-receipt.json'), JSON.stringify({ before, exact, tree }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
+test('cancellation during post-registration extraction retains exact access without committing selection', async () => {
+  const f = await fixture(); await f.client.close();
+  let entered!: () => void, release!: () => void;
+  const entering = new Promise<void>(resolve => { entered = resolve; });
+  const held = new Promise<void>(resolve => { release = resolve; });
+  let armed = true;
+  class Runtime extends SmipRuntime {
+    override makeBridge() {
+      class Bridge extends BridgeClient {
+        override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
+          if (armed && operation.kind === 'extract') { armed = false; entered(); await held; }
+          return super.request(operation, signal);
+        }
+      }
+      return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
+    }
+  }
+  const runtime = new Runtime({ cachePath: join(f.base, 'cancel-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  const signal = () => new AbortController().signal;
+  armed = false;
+  try {
+    const client = runtime.createClient(null), spec = { roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output };
+    const workspace = await client.declare(spec, signal());
+    const owner = await runtime.declare(spec, signal());
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      requiredSources: [], documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'cancel' }, signal());
+    armed = true;
+    const abort = new AbortController();
+    const work = client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+      op: 'add', paths: [join(f.root, 'private/Hidden.swift')], maxOutputBytes: 30000 })), abort.signal);
+    const rejected = assert.rejects(work, /cancelled|aborted|nativeWorkerClosed/i);
+    await Promise.race([entering, work.then(() => { throw new Error('Selection settled before post-registration extraction'); })]);
+    abort.abort(); release(); await rejected;
+    const state = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+    assert(state.kind === 'metadata'); assert.equal(state.revision, 0);
+    const operation = await owner.openOperation(signal());
+    try {
+      assert.equal((await operation.readSource({ root: 'r', path: 'private/Hidden.swift' })).text,
+        'struct ExplicitlyManaged {\n  let value: Int\n}\n');
+      await writeFile(join(f.base, 'cancel-registration-receipt.json'), JSON.stringify({ state, enumeration: operation.snapshot.enumeration }, null, 2) + '\n');
+    } finally { await operation.close(); await owner.close(); await client.close(); }
+  } finally { release(); await runtime.close(); }
+});
+
+test('get, clear and rejected representation syntax do not acquire unrelated explicit files', async () => {
+  for (const op of ['get', 'clear', 'demote'] as const) {
+    const f = await fixture();
+    try {
+      const paths = [join(f.root, 'private/Hidden.swift')];
+      const input = op === 'demote' ? { op, paths,
+        slices: [{ path: 'r/zone/notes.txt', ranges: [{ start_line: 1, end_line: 1 }] }] } : { op, paths };
+      const reply = await f.select(input);
+      assert.equal(reply.isError, op === 'demote', JSON.stringify(reply));
+      const refreshed = await f.client.callTool({ name: 'workspace_refresh', arguments: { workspaceId: f.workspaceId } });
+      assert.equal(refreshed.isError, false, JSON.stringify(refreshed));
+      const snapshot = inventoryValidator.Parse(refreshed.structuredContent);
+      assert(!snapshot.entries.some(entry => entry.kind === 'file' && entry.path === 'private/Hidden.swift'), op);
+      await writeFile(join(f.base, 'non-acquiring-selection-receipt.json'), JSON.stringify({ op, reply, inventory: snapshot.inventoryDigest }, null, 2) + '\n');
+    } finally { await f.client.close(); }
+  }
+});

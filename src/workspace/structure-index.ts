@@ -15,7 +15,7 @@ export class StructureIndex {
     for (const entry of snapshot.entries) {
       if (entry.kind !== 'file') continue;
       this.#files.set(sourceKey(entry), entry);
-      if (entry.structural.kind !== 'artifact') continue;
+      if (entry.visibility === 'managedOnly' || entry.structural.kind !== 'artifact') continue;
       const record = entry.structural.record;
       if (record.outcome.kind !== 'ready' || !record.projection) continue;
       for (const name of new Set(record.projection.definedTypeNames.map(name => name.normalize('NFC')))) {
@@ -45,7 +45,7 @@ export class StructureIndex {
     for (const key of seedKeys) {
       const seed = this.#files.get(key);
       if (!seed) throw new WorkspaceFailure('unavailableSource');
-      if (seed.structural.kind !== 'artifact') continue;
+      if (seed.visibility === 'managedOnly' || seed.structural.kind !== 'artifact') continue;
       const record = seed.structural.record;
       if (record.outcome.kind !== 'ready' || !record.projection) continue;
       for (const name of record.outcome.artifact.referencedTypes) {

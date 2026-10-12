@@ -65,7 +65,7 @@ test('official MCP negotiation and EOF create no workspace during probes; CLI in
   try {
     await client.connect(transport);
     const tools = await client.listTools();
-    assert.equal(tools.tools.length, 19);
+    assert.equal(tools.tools.length, 20);
     const result = await client.callTool({ name: 'context_builder_result', arguments: { jobId: 'foreign' } });
     assert.equal(result.isError, true);
     assert.match(JSON.stringify(result.structuredContent), /unknownJob/);

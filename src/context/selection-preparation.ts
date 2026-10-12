@@ -1,0 +1,170 @@
+import { randomUUID } from 'node:crypto';
+import { posix } from 'node:path';
+import type { SelectionRequest } from '../contracts/selection.js';
+import type { SourceSelection, CodemapMode } from '../contracts/context.js';
+import type { InventorySnapshot } from '../contracts/inventory.js';
+import type { NativeOperation, NativeResult } from '../contracts/native.js';
+import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
+import { WorkspaceFailure } from '../workspace/values.js';
+import type { Material } from './material-store.js';
+import { NativeFailure } from '../native/bridge-client.js';
+import { contains } from '../workspace/root-policy.js';
+
+type State = Extract<NativeOperation, { kind: 'prepareSelection' }>['selection'];
+type Catalog = Extract<NativeOperation, { kind: 'prepareSelection' }>['catalog'];
+type Parsed = Extract<NativeResult, { kind: 'selectionInputs' }>;
+type RootBinding = InventorySnapshot['roots'][number] & { readonly selectionPath: string };
+type PathRequest = SelectionRequest & { readonly op: 'add' | 'remove' | 'promote' | 'demote' };
+interface SelectionPreparation { readonly state: State; readonly invalid: string[] }
+
+function rootForPath(roots: readonly RootBinding[], path: string) {
+  return roots.filter(root => contains(root.selectionPath, path))
+    .sort((a, b) => b.selectionPath.length - a.selectionPath.length)[0];
+}
+function relativePath(root: RootBinding, path: string): string {
+  return path === root.selectionPath ? '' : path.slice(root.selectionPath === '/' ? 1 : root.selectionPath.length + 1);
+}
+function capturedState(roots: readonly RootBinding[], materials: ReadonlyMap<string, Material>, mode: CodemapMode): State {
+  const state: State = { selectedPaths: [], manualCodemapPaths: [], slices: {}, codemapAutoEnabled: mode === 'automatic' };
+  for (const { record } of materials.values()) {
+    if (record.kind !== 'source' || record.selectionOrigin !== 'explicit') continue;
+    const root = roots.find(root => root.name === record.selection.source.root)!;
+    const path = posix.join(root.selectionPath, record.selection.source.path);
+    if (record.selection.kind === 'codemap') state.manualCodemapPaths.push(path);
+    else {
+      state.selectedPaths.push(path);
+      if (record.selection.kind === 'slices') state.slices[path] = [...record.selection.ranges];
+    }
+  }
+  return state;
+}
+function validateIngress(request: SelectionRequest, parsed: Parsed): void {
+  if (request.op === 'get' || request.op === 'clear') return;
+  if (request.op === 'promote' || request.op === 'demote') {
+    if (!parsed.paths.length) throw new WorkspaceFailure('invalidSelection', { message: 'paths required for ' + request.op });
+    if (parsed.slices.length) throw new WorkspaceFailure('invalidSelection', { message: request.op + ' does not support slices' });
+    return;
+  }
+  if ((request.op === 'add' || request.op === 'remove') && !parsed.paths.length && !parsed.slices.length) {
+    throw new WorkspaceFailure('invalidSelection', { message: 'paths or slices required for ' + request.op });
+  }
+  if (request.mode === 'codemap_only' && parsed.slices.length) {
+    throw new WorkspaceFailure('invalidSelection', { message: "mode 'codemap_only' cannot be used with slices" });
+  }
+}
+async function materializePath(operation: WorkspaceOperation, roots: readonly RootBinding[], path: string, absolute: string) {
+  if (!absolute.startsWith('/') || path.includes('\0')) return null;
+  const root = rootForPath(roots, absolute);
+  if (!root) return null;
+  const relative = relativePath(root, absolute);
+  const existing = operation.snapshot.entries.find(entry => entry.root === root.name && entry.path === relative);
+  if (existing?.kind === 'file') return null;
+  if (!relative || existing?.kind === 'directory') return { path, outcome: 'unavailable' as const };
+  try {
+    await operation.materializeExplicitSource({ root: root.name, path: relative });
+    return null;
+  } catch (error) {
+    if (error instanceof WorkspaceFailure && error.code === 'pathDenied') return { path, outcome: 'blocked' as const };
+    if (error instanceof NativeFailure && ['notFound', 'permissionDenied', 'symlink', 'nonRegularFile'].includes(error.code)) {
+      return { path, outcome: 'unavailable' as const };
+    }
+    throw error;
+  }
+}
+async function capturedCatalog(operation: WorkspaceOperation, roots: readonly RootBinding[], parsed: Parsed): Promise<Catalog> {
+  const materialization: Catalog['materialization'] = [];
+  const paths = [...new Set([...parsed.paths, ...parsed.slices.map(slice => slice.path)])];
+  const normalized = await operation.selectionPathBindings(paths);
+  for (const [index, path] of paths.entries()) {
+    const outcome = await materializePath(operation, roots, path, normalized[index]!);
+    if (outcome) materialization.push(outcome);
+  }
+  const entries = operation.snapshot.entries;
+  return { roots: roots.map(root => ({ id: randomUUID(), name: root.name, path: root.selectionPath,
+    files: entries.filter(entry => entry.root === root.name && (entry.kind === 'file' || entry.kind === 'acquisitionFailed'))
+      .map(entry => ({ path: entry.path, discoverable: entry.kind === 'acquisitionFailed' ||
+        entry.kind === 'file' && entry.visibility === 'discoverable' })),
+    directories: entries.filter(entry => entry.root === root.name && entry.kind === 'directory')
+      .map(entry => ({ path: entry.path, discoverable: entry.kind === 'directory' && entry.visibility === 'discoverable' })),
+  })), materialization };
+}
+async function replaceSelection(operation: WorkspaceOperation, request: SelectionRequest, parsed: Parsed, state: State, catalog: Catalog) {
+  const result = await operation.prepareSelection({ kind: 'prepareSelection', selection: state, catalog,
+    mutation: { kind: 'set', mode: request.mode, paths: parsed.paths, slices: parsed.slices,
+      sliceErrors: parsed.sliceErrors, hasFullFileArtifactInputs: false } });
+  if (result.kind !== 'selectionBuilt') throw new WorkspaceFailure('nativeProtocolError');
+  if (request.op === 'set' && result.invalidPaths.length) {
+    throw new WorkspaceFailure('invalidSelection', { message: 'Invalid selection inputs: ' + result.invalidPaths.join(', ') });
+  }
+  if (request.op === 'preview' && request.strict && !result.selection.selectedPaths.length && !result.selection.manualCodemapPaths.length) {
+    throw new WorkspaceFailure('invalidSelection', { message: 'Provided selection inputs did not match any files' });
+  }
+  return { state: result.selection, invalid: [...result.invalidPaths, ...result.codemapUnavailable] };
+}
+async function mutatePaths(operation: WorkspaceOperation, request: PathRequest, parsed: Parsed, state: State, catalog: Catalog) {
+  const invalid: string[] = [];
+  if (!parsed.paths.length) return { state, invalid, resolved: false };
+  const mutation = request.op === 'promote' || request.op === 'demote'
+    ? { op: request.op, paths: parsed.paths, rawPaths: request.paths }
+    : { op: request.op, mode: request.mode === 'codemap_only' ? 'codemap_only' as const : 'full' as const,
+      paths: parsed.paths, rawPaths: request.paths };
+  const result = await operation.mutateSelectionPaths({ kind: 'mutateSelectionPaths', selection: state, catalog, mutation });
+  invalid.push(...result.invalidPaths);
+  if ('codemapUnavailable' in result) invalid.push(...result.codemapUnavailable);
+  const resolved = result.op === 'promote' || result.op === 'demote'
+    ? result.validCandidateCount > 0 : result.mutated || Object.keys(result.resolvedMap).length > 0;
+  if ((request.op === 'promote' || request.op === 'demote') && !resolved) {
+    throw new WorkspaceFailure('invalidSelection', { message: invalid.join('; ') });
+  }
+  return { state: result.selection, invalid, resolved };
+}
+async function mutateSelection(operation: WorkspaceOperation, request: PathRequest, parsed: Parsed, state: State, catalog: Catalog) {
+  const paths = await mutatePaths(operation, request, parsed, state, catalog);
+  let next = paths.state, resolved = paths.resolved;
+  const invalid = [...parsed.sliceErrors, ...paths.invalid];
+  if (parsed.slices.length) {
+    const result = await operation.prepareSelection({ kind: 'prepareSelection', selection: next, catalog,
+      mutation: { kind: 'slices', op: request.op === 'remove' ? 'remove' : 'add', entries: parsed.slices } });
+    if (result.kind !== 'selectionSlicesChanged') throw new WorkspaceFailure('nativeProtocolError');
+    next = result.selection; invalid.push(...result.invalidPaths);
+    resolved ||= result.mutated || Object.keys(result.resolvedMap).length > 0;
+  } else if (parsed.hadExplicitSliceSpec && request.strict) {
+    throw new WorkspaceFailure('invalidSelection', { message: parsed.sliceErrors.join('; ') });
+  }
+  if (request.strict && !resolved) throw new WorkspaceFailure('invalidSelection', { message: invalid.join('; ') });
+  return { state: next, invalid };
+}
+function selectedSources(roots: readonly RootBinding[], state: State): SourceSelection[] {
+  const source = (path: string) => {
+    const root = rootForPath(roots, path);
+    if (!root) throw new WorkspaceFailure('nativeProtocolError');
+    return { root: root.name, path: relativePath(root, path) };
+  };
+  const selections: SourceSelection[] = state.selectedPaths.map(path => state.slices[path]?.length
+    ? { kind: 'slices', source: source(path), ranges: state.slices[path]! }
+    : { kind: 'full', source: source(path) });
+  selections.push(...state.manualCodemapPaths.map(path => ({ kind: 'codemap' as const, source: source(path) })));
+  return selections;
+}
+export async function prepareSelection(operation: WorkspaceOperation, request: SelectionRequest,
+  materials: ReadonlyMap<string, Material>, mode: CodemapMode) {
+  const bindings = await operation.selectionPathBindings(operation.snapshot.roots.map(root => root.identity.canonicalPath));
+  const roots = operation.snapshot.roots.map((root, index) => ({ ...root, selectionPath: bindings[index]! }));
+  const state = capturedState(roots, materials, mode);
+  const parsed = await operation.parseSelectionInputs({ kind: 'parseSelectionInputs', paths: request.paths, slices: request.slices });
+  validateIngress(request, parsed);
+  let prepared: SelectionPreparation;
+  switch (request.op) {
+    case 'get': prepared = { state, invalid: parsed.sliceErrors }; break;
+    case 'clear': prepared = { state: request.mode === 'codemap_only'
+      ? { ...state, manualCodemapPaths: [], codemapAutoEnabled: false }
+      : { selectedPaths: [], manualCodemapPaths: [], slices: {}, codemapAutoEnabled: true }, invalid: parsed.sliceErrors }; break;
+    case 'set': case 'preview': prepared = await replaceSelection(operation, request, parsed, state,
+      await capturedCatalog(operation, roots, parsed)); break;
+    case 'add': case 'remove': case 'promote': case 'demote': prepared = await mutateSelection(operation,
+      { ...request, op: request.op }, parsed, state, await capturedCatalog(operation, roots, parsed)); break;
+  }
+  return { selections: selectedSources(roots, prepared.state),
+    mode: prepared.state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const,
+    invalid: [...new Set(prepared.invalid)] };
+}

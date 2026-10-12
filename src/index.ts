@@ -15,3 +15,4 @@ export type { ClientRuntime } from './runtime/client-runtime.js';
 export type { JobSnapshot } from './contracts/jobs.js';
 
 export { GitRequest, GitResult } from './contracts/git.js';
+export { SelectionRequest } from './contracts/selection.js';

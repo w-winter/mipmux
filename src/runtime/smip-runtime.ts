@@ -116,7 +116,8 @@ export class SmipRuntime {
     try {
       const snapshot = pinned ?? await owner.current(combined);
       const operation = new WorkspaceOperation(snapshot, owner.declaration, combined,
-        this, async () => { this.#operations.delete(operation); await release(); }, nextSignal => this.#admitOperation(owner, nextSignal, snapshot));
+        this, async () => { this.#operations.delete(operation); await release(); }, nextSignal => this.#admitOperation(owner, nextSignal, snapshot),
+        { kind: 'workspace', owner });
       this.#operations.add(operation);
       return operation;
     } catch (error) { await release(); throw error; }
@@ -149,7 +150,7 @@ export class SmipRuntime {
     const verificationOnlyGeneration = 0;
     const snapshot = freeze({...manifest.inventory,generation:verificationOnlyGeneration});
     const operation = new WorkspaceOperation(snapshot,declaration,signal,this,
-      async()=>{this.#operations.delete(operation);},()=>Promise.reject(new WorkspaceFailure('verificationOperationOnly')));
+      async()=>{this.#operations.delete(operation);},()=>Promise.reject(new WorkspaceFailure('verificationOperationOnly')), { kind: 'verification' });
     this.#operations.add(operation);
     try {
       await revalidateMaterials(operation,materials);

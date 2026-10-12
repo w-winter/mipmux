@@ -5,6 +5,7 @@ enum SelectionOperation {
     case paths(SelectionPathMutationInput)
     case preparation(SelectionPreparationInput)
     case parse(SelectionInputParsing)
+    case pathBindings(SelectionPathBindingsInput)
 
     func render() async -> [String: Any] {
         switch self {
@@ -14,6 +15,7 @@ enum SelectionOperation {
         case let .paths(input): await input.render()
         case let .preparation(input): await input.render()
         case let .parse(input): input.render()
+        case let .pathBindings(input): input.render()
         }
     }
 }

@@ -12,6 +12,8 @@ async function renderWorkspaceTree(operation: WorkspaceOperation, settings: File
   const snapshot = operation.snapshot;
   const selected = new Set(settings.selection?.sources.map(source => JSON.stringify([source.root, source.path])));
   const entries = snapshot.entries.flatMap<TreeEntry>(entry => {
+    if ((entry.kind === 'file' || entry.kind === 'directory') && entry.visibility === 'managedOnly' &&
+      settings.mode !== 'selected') return [];
     if (entry.kind === 'directory') return [{ kind: 'directory' as const, root: entry.root, path: entry.path }];
     if (entry.kind !== 'file' && entry.kind !== 'acquisitionFailed') return [];
     const hasCodeMap = entry.kind === 'file' && entry.structural.kind === 'artifact' &&

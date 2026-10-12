@@ -23,6 +23,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   const { executable } = configured;
   await runRipgrep(operation.runtime.supervisor, executable, ['--pcre2-version'], '/', '', operation.signal, () => {}, true);
   const candidates = operation.snapshot.entries.filter(entry => entry.kind === 'file').filter(entry => {
+    if (entry.visibility !== 'discoverable') return false;
     const filters = request.filters;
     return (!filters.roots.length || filters.roots.includes(entry.root)) &&
       (!filters.directories.length || filters.directories.some(directory => directory.root === entry.root && entry.path.startsWith(directory.path + '/'))) &&
