@@ -66,7 +66,6 @@ async function acquireExplicitCodemap(operation: WorkspaceOperation, selection: 
     if (representation.kind !== 'unmapped') throw new WorkspaceFailure('pipelineChanged', selection.source);
     return freeze({ record: { ...record, required: false, decoding: { kind: 'undecodable' as const }, normalized: [] }, bodies: [] });
   }
-  prepareText(source.decoding.text);
   const decoding = { kind: 'decoded' as const, identity: source.decoding.identity, encoding: source.decoding.encoding };
   return freeze({ record: { ...record, decoding, normalized: [] }, bodies: representation.kind === 'rendered' ? [representation.body] : [] });
 }
@@ -74,7 +73,6 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
   if (input.selectionOrigin === 'inferred') {
     const path = input.source;
     const source = await operation.readSource(path);
-    prepareText(source.text);
     const entry = operation.snapshot.entries.find(entry => entry.root === path.root && entry.path === path.path);
     const representation = codemapRepresentation(entry, path);
     if (representation?.kind !== 'rendered') throw new WorkspaceFailure('codemapUnavailable', path);
