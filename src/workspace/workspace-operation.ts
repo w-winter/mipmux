@@ -271,6 +271,12 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result.reply;
     });
   }
+  renderFileBlock(input: Extract<NativeOperation, { kind: 'renderFileBlock' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   mutateSelectionPaths(input: Extract<NativeOperation, { kind: 'mutateSelectionPaths' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());

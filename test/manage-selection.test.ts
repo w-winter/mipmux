@@ -133,6 +133,25 @@ test('selection receipts expose source summaries, slice DTOs and the codemaps-on
   } finally { await f.client.close(); }
 });
 
+test('selection content view uses the source full-file and described-slice blocks', async () => {
+  const f = await fixture();
+  const blocks = Compile(Type.Object({ blocks: Type.Array(Type.String()) }));
+  try {
+    let reply = await f.select({ op: 'set', paths: ['r/Main.swift'], view: 'content' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    assert.deepEqual(blocks.Parse(reply.structuredContent).blocks,
+      ['File: Main.swift\n```swift\nstruct Main {\n  let value: Int\n}\n\n```']);
+    reply = await f.select({ op: 'clear' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    reply = await f.select({ op: 'set', slices: [{ path: 'r/zone/notes.txt',
+      ranges: [{ start_line: 2, end_line: 3, description: 'Selected notes' }] }], view: 'content' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    assert.deepEqual(blocks.Parse(reply.structuredContent).blocks,
+      ['File: zone/notes.txt\n(lines 2-3: Selected notes)\n```txt\nSecond\nThird\n\n```']);
+    await writeFile(join(f.base, 'selection-content-block-receipt.json'), JSON.stringify({ reply }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
 test('selection commits before reply rendering and survives cancellation, failure and a later mutation', async () => {
   const f = await fixture(); await f.client.close();
   const receipts = [];

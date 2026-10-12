@@ -41,6 +41,7 @@ import { prepareSelection } from './selection-preparation.js';
 import { estimateUnits } from './budget.js';
 import { posix } from 'node:path';
 import { resolveSelectedCodemaps } from './codemap-readiness.js';
+import { descriptorGitMode } from '../contracts/patches.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -220,13 +221,31 @@ export class DraftRuntime {
       const fields = { path, tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
         rootPath: root.name, pathWithinRoot: record.selection.source.path };
       entries.push(this.#selectionFileEntry(record, fields));
-      blocks.push(...material.bodies);
+      if (request.view === 'content') blocks.push(await this.#sourceBlock(operation, record, material.bodies, path));
     }
     const reply = await operation.renderSelectionReply({ kind: 'renderSelectionReply', entries,
       status: request.op === 'preview' ? 'preview' : 'ok', codemapAutoEnabled: mode === 'automatic',
       invalidPaths: [...invalid], unmappedPaths: unmapped, pendingPaths: pending,
       blocks: request.view === 'content' ? blocks : null, view: request.view });
     return { ...reply, revision, measurement: rendered.measurement, diagnostics: rendered.diagnostics };
+  }
+  async #sourceBlock(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'source' }>,
+    bodies: readonly string[], path: string): Promise<string> {
+    if (record.selection.kind === 'codemap') return bodies.join('');
+    let content = bodies.join('');
+    if (record.selection.kind === 'slices') {
+      const captured = await operation.readSource(record.selection.source);
+      const decoding = { kind: captured.decoding.kind, identity: captured.decoding.identity, encoding: captured.decoding.encoding };
+      if (canonicalJSON(captured.identity) !== canonicalJSON(record.identity) ||
+        descriptorGitMode(captured.fingerprint.mode) !== record.mode || canonicalJSON(decoding) !== canonicalJSON(record.decoding)) {
+        throw new WorkspaceFailure('sourceChanged', record.selection.source);
+      }
+      content = captured.text;
+    }
+    const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: path,
+      fileName: posix.basename(record.selection.source.path), content,
+      ranges: record.selection.kind === 'slices' ? record.selection.ranges : null });
+    return block.text;
   }
   #selectionFileEntry(record: Extract<Material['record'], { kind: 'source' }>, fields: SelectionReplyFile): SelectionReplyEntry {
     switch (record.selection.kind) {
