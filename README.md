@@ -102,6 +102,8 @@ Explicit exclusions govern every root, including overlapping roots. Git administ
 
 The MCP and Pi `manage_selection` tool supports get, set, add, remove, preview, promote, demote and clear operations. File and directory paths can use declared root aliases; absolute file paths also support explicit access to ignored regular files within the workspace. Managed-only files remain accessible by exact path and are excluded from ordinary discovery. Full-file additions retain existing slices, while promotion restores full content. Codemap-only additions and demotion select manual mode; promotion retains the current mode. See the [selection contracts](docs/contracts.md#public-selection-and-explicit-registration) for transaction and registration ownership.
 
+A supported file with no rendered codemap remains selected. Selection replies identify it in `code_structure.unmapped_paths`; it contributes no source or codemap body. Pending extraction left by cancellation can complete on a later explicit codemap request.
+
 Create a draft from a workspace handle after declaring its roots and output directory. Creation reconciles the workspace and acquires required material before returning. A draft owns its selections and pins exact source bytes; close each draft when finished. Closing the workspace handle does not revoke an existing draft.
 
 ```ts

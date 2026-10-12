@@ -1,5 +1,6 @@
 import { join } from 'node:path';
-import { type Manifest, manifestValidator } from '../contracts/context.js';
+import { type Manifest, type MaterialRecord, manifestValidator } from '../contracts/context.js';
+import type { InventoryEntry } from '../contracts/inventory.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { inventoryDigest } from '../workspace/artifact-store.js';
@@ -62,6 +63,13 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
 function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
   return readRegularFile(join(directory, filename), new WorkspaceFailure('nonRegularBundleFile', { component: filename }), signal);
 }
+function verifyCodemap(record: Extract<MaterialRecord, { kind: 'source' }>, entry: InventoryEntry, bodies: readonly string[]): void {
+  const representation = codemapRepresentation(entry, record.selection.source);
+  if (!representation) throw new WorkspaceFailure('bundleIntegrityFailed');
+  requireEqual(record.artifactKey, representation.key);
+  if (representation.kind === 'unmapped') requireEqual(record.selectionOrigin, 'explicit');
+  requireEqual(bodies, representation.kind === 'rendered' ? [representation.body] : []);
+}
 function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
   const seen = new Set<string>();
   const materials = manifest.materials.map((record) => {
@@ -93,10 +101,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
         requireEqual(bodies.length, record.normalized.length);
       }
       if (record.selection.kind === 'codemap') {
-        const representation = codemapRepresentation(entry, record.selection.source);
-        if (!representation) throw new WorkspaceFailure('bundleIntegrityFailed');
-        requireEqual(record.artifactKey, representation.key);
-        requireEqual(bodies, [representation.body]);
+        verifyCodemap(record, entry, bodies);
       }
     } else if (record.kind === 'document') {
       requireEqual(record.id, 'document:' + record.input.id);

@@ -36,16 +36,18 @@ export class WorkspaceOperation {
     return this.#track(async () => {
       if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
       const existing = this.snapshot.entries.find(entry => entry.root === captured.root && entry.path === captured.path);
-      if (existing?.kind === 'file') return;
+      if (existing?.kind === 'file' && existing.structural.kind !== 'pending') return;
       const access = await (this.#access ??= this.#openAccess());
       const policy = new RootPolicy(this.declaration, access);
       if (policy.denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
-      const discoverable = await policy.admitted(captured, false);
-      const acquired = await access.read(captured, null);
+      if (existing?.kind === 'file') await policy.revalidate(captured, this.snapshot.policy, existing.visibility);
+      const visibility = existing?.kind === 'file' ? existing.visibility
+        : await policy.admitted(captured, false) ? 'discoverable' : 'managedOnly';
+      const acquired = await access.read(captured, existing?.kind === 'file' ? existing.identity : null);
       this.signal.throwIfAborted();
-      const entry = capturedFile(captured, acquired, discoverable ? 'discoverable' : 'managedOnly');
+      const entry = capturedFile(captured, acquired, visibility);
       const owner = this.catalog.owner;
-      owner.registerExplicitFile(this.snapshot, entry, policy.snapshot());
+      if (existing?.kind !== 'file') owner.registerExplicitFile(this.snapshot, entry, policy.snapshot());
       const complete = await completeFile(access, entry, acquired, this.runtime.artifacts, () => owner.retain());
       this.signal.throwIfAborted();
       owner.completeExplicitFile(complete);

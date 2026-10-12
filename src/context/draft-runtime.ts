@@ -179,13 +179,16 @@ export class DraftRuntime {
     invalid: readonly string[], revision: number) {
     const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot,
       prompt: this.#prompt, codemapMode: mode, materials: [...materials.values()] });
+    const unmapped: string[] = [];
     const files = [...materials.values()].flatMap(material => {
       const record = material.record;
       if (record.kind !== 'source') return [];
       const root = this.operation.snapshot.roots.find(root => root.name === record.selection.source.root)!;
       const relative = this.operation.snapshot.roots.length === 1 ? record.selection.source.path
         : root.name + '/' + record.selection.source.path;
-      return [{ path: request.path_display === 'full' ? posix.join(root.identity.canonicalPath, record.selection.source.path) : relative,
+      const path = request.path_display === 'full' ? posix.join(root.identity.canonicalPath, record.selection.source.path) : relative;
+      if (record.selection.kind === 'codemap' && !material.bodies.length) { unmapped.push(path); return []; }
+      return [{ path,
         tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
         render_mode: record.selection.kind === 'slices' ? 'slice' : record.selection.kind,
         ranges: record.selection.kind === 'slices' ? record.selection.ranges : null,
@@ -196,6 +199,7 @@ export class DraftRuntime {
     return { status: request.op === 'preview' ? 'preview' : 'ok', revision,
       files: request.view === 'none' ? null : files, total_tokens: files.reduce((sum, file) => sum + file.tokens, 0),
       invalid_paths: invalid.length ? [...invalid] : null, codemap_auto_enabled: mode === 'automatic',
+      code_structure: unmapped.length ? { file_count: 0, content: '', unmapped_paths: unmapped } : null,
       blocks: request.view === 'content' ? [...materials.values()].flatMap(material => [...material.bodies]) : null,
       measurement: rendered.measurement, diagnostics: rendered.diagnostics };
   }

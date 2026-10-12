@@ -36,9 +36,11 @@ export function normalizeRanges(ranges: readonly LineRange[], total: number): { 
   return normalized;
 }
 export function codemapRepresentation(entry: InventoryEntry | undefined, source: SourcePath) {
-  if (entry?.kind !== 'file' || entry.structural.kind !== 'artifact' ||
-    entry.structural.record.outcome.kind !== 'ready' || !entry.structural.record.projection) return null;
+  if (entry?.kind !== 'file' || entry.structural.kind !== 'artifact') return null;
+  if (entry.structural.record.outcome.kind !== 'ready') return { kind: 'unmapped' as const, key: entry.structural.key };
+  if (!entry.structural.record.projection) throw new WorkspaceFailure('invalidArtifact');
   return {
+    kind: 'rendered' as const,
     key: entry.structural.key,
     body: [
       'File: ' + source.root + '/' + source.path,
@@ -53,12 +55,15 @@ type SourceAcquisition =
 
 export async function acquireSource(operation: WorkspaceOperation, input: SourceAcquisition): Promise<Material> {
   const path = input.selectionOrigin === 'explicit' ? input.selection.source : input.source;
+  if (input.selectionOrigin === 'explicit' && input.selection.kind === 'codemap') {
+    await operation.materializeExplicitSource(path);
+  }
   const source = await operation.readSource(path);
   const text = prepareText(source.text);
   if (input.selectionOrigin === 'inferred') {
     const entry = operation.snapshot.entries.find(entry => entry.root === path.root && entry.path === path.path);
     const representation = codemapRepresentation(entry, path);
-    if (!representation) throw new WorkspaceFailure('codemapUnavailable', path);
+    if (representation?.kind !== 'rendered') throw new WorkspaceFailure('codemapUnavailable', path);
     return freeze({ record: { kind: 'source', id: sourceId(path), selectionOrigin: 'inferred', required: false,
       selection: { kind: 'codemap', source: path }, identity: source.identity, decodedIdentity: identity(source.text), mode: descriptorGitMode(source.fingerprint.mode),
       normalized: [], artifactKey: representation.key, spans: [] }, bodies: [representation.body] });
@@ -85,7 +90,7 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
     const representation = codemapRepresentation(entry, selection.source);
     if (!representation) throw new WorkspaceFailure('codemapUnavailable', selection.source);
     record.artifactKey = representation.key;
-    bodies = [representation.body];
+    bodies = representation.kind === 'rendered' ? [representation.body] : [];
   } else {
     if (selection.kind === 'full') bodies = [source.text];
     else {

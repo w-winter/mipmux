@@ -25,6 +25,7 @@ async function fixture() {
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(join(root, 'zone'), { recursive: true }); await mkdir(output);
   await writeFile(join(root, 'Main.swift'), 'struct Main {\n  let value: Int\n}\n');
+  await writeFile(join(root, 'Empty.swift'), '');
   await writeFile(join(root, 'zone/Peer.swift'), 'struct Peer {\n  let title: String\n}\n');
   await writeFile(join(root, 'zone/notes.txt'), 'First\nSecond\nThird\n');
   await mkdir(join(root, 'private'));
@@ -89,6 +90,43 @@ test('public source selection preserves slices on full add and source promotion/
     assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'
       && item.selection.kind === 'full'));
     await writeFile(join(f.base, 'representation-receipt.json'), JSON.stringify({ receipts, state }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
+test('codemap-only selection retains a supported file with no rendered symbols and reports it as unmapped', async () => {
+  const f = await fixture();
+  const replySchema = Compile(Type.Object({ files: Type.Array(Type.Object({ path: Type.String() })),
+    blocks: Type.Array(Type.String()), code_structure: Type.Object({ file_count: Type.Integer(), content: Type.String(),
+      unmapped_paths: Type.Array(Type.String()) }) }));
+  const receipts = [];
+  try {
+    let reply = await f.select({ op: 'set', mode: 'codemap_only', paths: ['r/Empty.swift'], view: 'content' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    let projected = replySchema.Parse(reply.structuredContent);
+    assert.deepEqual(projected.files, []);
+    assert.deepEqual(projected.blocks, []);
+    assert.deepEqual(projected.code_structure, { file_count: 0, content: '', unmapped_paths: ['Empty.swift'] });
+    let state = await f.inspect();
+    assert(state.items.some(item => item.kind === 'source' && item.selection.kind === 'codemap' &&
+      item.selection.source.path === 'Empty.swift'));
+    receipts.push(reply);
+    reply = await f.select({ op: 'promote', paths: ['r/Empty.swift'] });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    reply = await f.select({ op: 'demote', paths: ['r/Empty.swift'], view: 'content' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    projected = replySchema.Parse(reply.structuredContent);
+    assert.deepEqual(projected.files, []);
+    assert.deepEqual(projected.code_structure.unmapped_paths, ['Empty.swift']);
+    state = await f.inspect();
+    assert.equal(state.codemapMode, 'manual');
+    receipts.push(reply);
+    const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
+    assert.equal(finalized.isError, false, JSON.stringify(finalized));
+    const bundle = await verifyBundle(ready.Parse(finalized.structuredContent).directory);
+    const material = bundle.manifest.materials.find(record => record.kind === 'source' && record.selection.source.path === 'Empty.swift');
+    assert(material?.kind === 'source' && material.selection.kind === 'codemap');
+    assert.deepEqual(material.spans, []);
+    await writeFile(join(f.base, 'unrendered-codemap-receipt.json'), JSON.stringify({ receipts, bundle }, null, 2) + '\n');
   } finally { await f.client.close(); }
 });
 
@@ -201,7 +239,11 @@ test('cancellation during post-registration extraction retains exact access with
     try {
       assert.equal((await operation.readSource({ root: 'r', path: 'private/Hidden.swift' })).text,
         'struct ExplicitlyManaged {\n  let value: Int\n}\n');
-      await writeFile(join(f.base, 'cancel-registration-receipt.json'), JSON.stringify({ state, enumeration: operation.snapshot.enumeration }, null, 2) + '\n');
+      const resumed = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+        op: 'add', mode: 'codemap_only', paths: [join(f.root, 'private/Hidden.swift')], view: 'content', maxOutputBytes: 30000 })), signal());
+      assert(resumed.blocks?.some(body => body.includes('ExplicitlyManaged')));
+      assert.equal(resumed.revision, 1);
+      await writeFile(join(f.base, 'cancel-registration-receipt.json'), JSON.stringify({ state, resumed, enumeration: operation.snapshot.enumeration }, null, 2) + '\n');
     } finally { await operation.close(); await owner.close(); await client.close(); }
   } finally { release(); await runtime.close(); }
 });
