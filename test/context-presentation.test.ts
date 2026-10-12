@@ -6,6 +6,7 @@ import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js'
 import { prepareDeliveryFixture, verifyDeliveryMaterials } from './fixtures/delivery-fixture.js';
 import { loadVerifiedBundle } from '../src/context/verify.js';
 import { renderBundle } from '../src/context/render.js';
+import { prepareClipboard } from '../src/context/clipboard.js';
 import { identity } from '../src/context/material-store.js';
 import { canonicalJSON } from '../src/workspace/values.js';
 
@@ -49,8 +50,8 @@ test('recipient Markdown retains the literal prompt and material paths with exac
           : material.sourceBlock.text.replace('```swift', '```textx');
         return { ...material, sourceBlock: { ...material.sourceBlock, text } };
       });
-      const forged = renderBundle({ request: manifest.request, inventory: manifest.inventory, codemapMode: manifest.codemapMode,
-        prompt: manifest.prompt, materials, fileTree: saved.fileTree });
+      const forged = renderBundle(await prepareClipboard(runtime, { request: manifest.request, inventory: manifest.inventory, codemapMode: manifest.codemapMode,
+        prompt: manifest.prompt, materials, fileTree: saved.fileTree }, signal));
       manifest.materials = forged.records;
       manifest.fileTree.span = forged.fileTreeSpan;
       manifest.files = { context: identity(forged.context), handoff: identity(forged.handoff) };
@@ -60,8 +61,8 @@ test('recipient Markdown retains the literal prompt and material paths with exac
       await writeFile(join(result.directory, 'manifest.json'), canonicalJSON(manifest));
       await assert.rejects(verifyBundle(result.directory), /bundleIntegrityFailed/);
     }
-    const restored = renderBundle({ request: result.manifest.request, inventory: result.manifest.inventory,
-      codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials, fileTree: saved.fileTree });
+    const restored = renderBundle(await prepareClipboard(runtime, { request: result.manifest.request, inventory: result.manifest.inventory,
+      codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials, fileTree: saved.fileTree }, signal));
     await writeFile(join(result.directory, 'context.md'), restored.context);
     await writeFile(join(result.directory, 'handoff.md'), restored.handoff);
     await writeFile(join(result.directory, 'manifest.json'), canonicalJSON(result.manifest));

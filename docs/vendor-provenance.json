@@ -4923,7 +4923,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb",
       "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
-      "sha256": "70bb8e2aad72c87921ccba1427f09ada82f5e476b4a07d182af7a16763cd2e1a",
+      "sha256": "d5b00d81e992004d814a85bc15a322b7b17bb7890d176e07c5bf9143cedaf9a6",
       "classification": "handwritten",
       "ranges": [
         [
@@ -4948,7 +4948,8 @@
         ]
       ],
       "changes": [
-        "Extract clipboard packaging and its helpers with captured DTOs instead of app records. Reuse the retained native file-block formatter and slice assembler; formatter calls project their text. Keep source title, selected-Git precedence, codemap placement, snippet inclusion, dates and section assembly logic. Apply formatter layout and scoped lint exemptions for original signatures."
+        "Extract clipboard packaging and its helpers with captured DTOs instead of app records. Reuse the retained native file-block formatter and slice assembler; formatter calls project their text. Keep source title, selected-Git precedence, codemap placement, snippet inclusion, dates and section assembly logic. Apply formatter layout and scoped lint exemptions for original signatures.",
+        "Separate captured-block snippet construction from whole-file preparation; both callers execute the original snippet, inclusion and assembly bodies. The packet path supplies already-retained native full/slice/document blocks, with explicit caller constraints as a meta instruction."
       ]
     }
   ],
@@ -10442,6 +10443,12 @@
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
       "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
       "line": 34
+    },
+    {
+      "name": "generatePreparedClipboardContent",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 300
     }
   ],
   "sourceCoverage": [

@@ -38,24 +38,25 @@ test('final map uses export selection, native neighbors and operation-specific c
     const result = await f.client.finalize(f.draft.id, f.signal);
     assert(result.kind === 'ready');
     const context = await readFile(join(result.directory, 'context.md'), 'utf8');
-    const map = /^## File map\n\n(`{3,})\n([\s\S]*?)\n\1\n/m.exec(context);
+    const map = /^<file_map>\n([\s\S]*?)\n<\/file_map>\n/m.exec(context);
     assert(map, 'The final packet must contain the native file map');
-    assert(map[2]!.includes('Main.swift * +'));
-    assert(map[2]!.includes('Peer.swift * +'));
-    assert(map[2]!.includes('Neighbor.swift\n'));
-    assert(!map[2]!.includes('Neighbor.swift +'));
-    assert(!map[2]!.includes('Other.swift'));
+    assert(map[1]!.includes('Main.swift * +'));
+    assert(map[1]!.includes('Peer.swift * +'));
+    assert(map[1]!.includes('Neighbor.swift\n'));
+    assert(!map[1]!.includes('Neighbor.swift +'));
+    assert(!map[1]!.includes('Other.swift'));
     assert.equal(costs.measurement.bytes, Buffer.byteLength(context));
     assert.equal(costs.measurement.units, result.manifest.accounting.units);
     const retained = await f.client.inspect(f.draft.id, { view: 'costs', continuation: null, maxOutputBytes: 30000 }, new AbortController().signal);
     assert.deepEqual(retained, { ...costs, state: 'terminal' });
     await verifyBundle(result.directory);
     await verifyCurrentBundle(result.directory, f.runtime, f.signal);
-    await writeFile(join(f.directory, 'final-map-receipt.json'), JSON.stringify({ directory: result.directory, costs, map: map[2] }, null, 2) + '\n');
+    await writeFile(join(f.directory, 'final-map-receipt.json'), JSON.stringify({ directory: result.directory, costs, map: map[1] }, null, 2) + '\n');
   } finally { await f.runtime.close(); }
 });
 
-for (const boundary of ['cancellation', 'revision', 'freeze'] as const) test(`final-map preparation cannot commit across ${boundary}`, async () => {
+for (const operation of ['renderFileTree', 'renderPreparedClipboard'] as const)
+for (const boundary of ['cancellation', 'revision', 'freeze'] as const) test(`${operation} preparation cannot commit across ${boundary}`, async () => {
   let armed = false, entered!: () => void, release!: () => void;
   const started = new Promise<void>(resolve => { entered = resolve; });
   const held = new Promise<void>(resolve => { release = resolve; });
@@ -63,7 +64,7 @@ for (const boundary of ['cancellation', 'revision', 'freeze'] as const) test(`fi
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(input: O, signal: AbortSignal) {
-          if (armed && input.kind === 'renderFileTree') { armed = false; entered(); await held; }
+          if (armed && input.kind === operation) { armed = false; entered(); await held; }
           return super.request(input, signal);
         }
       }
@@ -77,7 +78,7 @@ for (const boundary of ['cancellation', 'revision', 'freeze'] as const) test(`fi
       mutation: { kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'Main.swift' } } } }, abort.signal);
     const rejected = assert.rejects(work, boundary === 'cancellation' ? /cancelled|aborted|nativeWorkerClosed/i
       : boundary === 'revision' ? /revisionConflict/ : /draftFrozen|cancelled|aborted/i);
-    await Promise.race([started, work.then(() => { throw new Error('Mutation did not prepare a final map'); })]);
+    await Promise.race([started, work.then(() => { throw new Error('Mutation did not prepare native presentation'); })]);
     if (boundary === 'cancellation') abort.abort();
     if (boundary === 'revision') await f.client.update(f.draft.id, { expectedRevision: 0, maxOutputBytes: 30000,
       mutation: { kind: 'prompt', op: 'append', text: ' changed' } }, f.signal);

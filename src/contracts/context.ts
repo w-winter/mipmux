@@ -124,11 +124,11 @@ export const MaterialRecord = Type.Union([
   }, closed),
   Type.Object({
     kind: Type.Literal('document'), id: Type.String(), input: DocumentInput.anyOf[0],
-    identity: SourceIdentity, sourceIdentity: SourceIdentity, spans: Type.Array(Span),
+    identity: SourceIdentity, sourceIdentity: SourceIdentity, spans: Type.Array(Span), frame: Type.Union([Span, Type.Null()]),
   }, closed),
   Type.Object({
     kind: Type.Literal('document'), id: Type.String(), input: SuppliedDocument,
-    identity: SourceIdentity, spans: Type.Array(Span),
+    identity: SourceIdentity, spans: Type.Array(Span), frame: Type.Union([Span, Type.Null()]),
   }, closed),
   Type.Object(
     { kind: Type.Literal('patch'), id: Type.String(), receipt: PatchReceipt, spans: Type.Array(Span) },
@@ -137,7 +137,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(9),
+  schemaVersion: Type.Literal(10),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,

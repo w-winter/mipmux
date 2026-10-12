@@ -1,11 +1,10 @@
 import { posix } from 'node:path';
 import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
-import type { PatchInput } from '../contracts/patches.js';
 import type { Material } from './material-store.js';
-import type { SourceBlock } from './source-block.js';
 import type { FinalFileTree } from './final-tree.js';
-import { canonicalJSON, compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON } from '../workspace/values.js';
+import { parseClipboard } from './clipboard.js';
 import { estimateUnits, scoutTokenBudget } from './budget.js';
 
 export interface RenderInput {
@@ -15,6 +14,7 @@ export interface RenderInput {
   readonly prompt: string;
   readonly materials: readonly Material[];
   readonly fileTree: FinalFileTree;
+  readonly clipboard: string;
 }
 export interface ItemCost {
   readonly id: string;
@@ -64,120 +64,6 @@ function block(body: string): string {
   const marker = fence(body);
   return marker + '\n' + body + (body.endsWith('\n') ? '' : '\n') + marker + '\n';
 }
-function rank(material: Material): number {
-  return material.record.kind === 'document'
-    ? 0
-    : material.record.kind === 'patch'
-    ? 3
-    : material.record.selection.kind === 'codemap'
-    ? 2
-    : 1;
-}
-
-function displayLine(value: string): string {
-  return JSON.stringify(value).slice(1, -1);
-}
-
-function materialTitle(record: MaterialRecord): string {
-  if (record.kind === 'source') {
-    const { source, kind } = record.selection;
-    return `Source: ${displayLine(source.root + '/' + source.path)} (${kind})`;
-  }
-  if (record.kind === 'document') {
-    const { input } = record;
-    const name = input.kind === 'localDocument' ? input.source.root + '/' + input.source.path : input.id;
-    const titles = { plan: 'Plan', report: 'Report', evidence: 'Evidence' };
-    return `${titles[input.role]}: ${displayLine(name)}`;
-  }
-  return `Patch: ${displayLine(record.receipt.input.root + '/' + record.receipt.input.id)}`;
-}
-
-function localComparisonLines(input: Extract<PatchInput, { kind: 'localPatch' }>): string[] {
-  const base = input.comparison.base;
-  const lines = ['- Requested base: ' + (base.kind === 'empty' ? 'empty baseline' : displayLine(base.ref)),
-    '- Scope: ' + (input.scope.kind === 'all' ? 'all admitted paths' : input.scope.paths.map(displayLine).join(', '))];
-  if (input.comparison.kind === 'commits') lines.push('- Requested target: ' + displayLine(input.comparison.target));
-  if (input.comparison.kind === 'worktree') lines.push('- Include untracked files: ' + input.comparison.includeUntracked);
-  return [...lines, ''];
-}
-
-function comparisonSummary(record: Extract<MaterialRecord, { kind: 'patch' }>): string {
-  const { input, repository, coverage, exclusions } = record.receipt;
-  const lines = ['### ' + materialTitle(record), '', `- Comparison: ${input.comparison.kind}.`];
-  if (input.kind === 'suppliedPatch') {
-    lines.push('- Caller-declared base: ' + displayLine(input.comparison.base),
-      '- Caller-declared target: ' + displayLine(input.comparison.target), '', 'Origin: ' + input.origin, '');
-  } else {
-    lines.push(...localComparisonLines(input));
-  }
-  if (repository) {
-    lines.push('- Worktree: ' + displayLine(repository.worktree.declaredPath),
-      '- Canonical worktree: ' + displayLine(repository.worktree.canonicalPath),
-      '- HEAD: ' + (repository.head === null ? 'no commit' : repository.head),
-      '- Resolved base: ' + (repository.base === null ? 'empty baseline' : repository.base),
-      '- Resolved target commit: ' + (repository.target === null ? 'not a commit endpoint' : repository.target), '');
-  }
-  lines.push(coverage.length ? 'Changed paths:' : 'Changed paths: none.',
-    ...coverage.map(path => '- ' + displayLine(input.root + '/' + path)), '');
-  if (exclusions.length) lines.push('Excluded paths:', ...exclusions.map(path => '- ' + displayLine(input.root + '/' + path)), '');
-  return lines.join('\n') + '\n';
-}
-
-function materialIntroduction(record: MaterialRecord): string {
-  const parts = ['## ' + materialTitle(record) + '\n\n'];
-  if (record.kind === 'document' && record.input.kind === 'suppliedDocument') parts.push('Origin: ' + record.input.origin + '\n\n');
-  return parts.join('');
-}
-
-function renderSourceMaterial(record: Extract<MaterialRecord, { kind: 'source' }>, bodies: readonly string[],
-  block: SourceBlock | null, offset: number) {
-  const spans: Span[] = [];
-  let text = '', frame: Span | null = null;
-  if (block) {
-    frame = { offset, length: Buffer.byteLength(block.text), sha256: sha256(block.text) };
-    for (const [index, span] of block.bodySpans.entries()) {
-      // SAFETY: native and saved-block parsing establish one span per retained body.
-      spans.push({ offset: offset + span.offset, length: span.length, sha256: sha256(bodies[index]!) });
-    }
-    text = block.text + '\n\n';
-  } else {
-    if (record.selection.kind !== 'codemap') throw new WorkspaceFailure('invalidSourceBlock');
-    for (const body of bodies) {
-      spans.push({ offset: offset + Buffer.byteLength(text), length: Buffer.byteLength(body), sha256: sha256(body) });
-      text += body + '\n\n';
-    }
-  }
-  return { text, record: { ...record, spans, frame } };
-}
-
-function renderRawMaterial(record: Exclude<MaterialRecord, { kind: 'source' }>, bodies: readonly string[], offset: number) {
-  let text = materialIntroduction(record);
-  const spans: Span[] = [];
-  for (const body of bodies) {
-    const marker = fence(body);
-    text += marker + '\n';
-    spans.push({ offset: offset + Buffer.byteLength(text), length: Buffer.byteLength(body), sha256: sha256(body) });
-    text += body;
-    if (!body.endsWith('\n')) text += '\n';
-    text += marker + '\n\n';
-  }
-  return { text, record: { ...record, spans } };
-}
-
-function workspaceOverview(inventory: RenderInput['inventory'], materials: readonly Material[]): string {
-  const parts = ['## Roots\n\n'];
-  for (const root of inventory.roots) {
-    parts.push(`- ${root.name}\n  - Declared path: ${displayLine(root.identity.declaredPath)}\n` +
-      `  - Canonical path: ${displayLine(root.identity.canonicalPath)}\n\n`);
-  }
-  const patches = materials.map(material => material.record).filter(record => record.kind === 'patch');
-  if (patches.length) {
-    parts.push('## Comparisons\n\n');
-    for (const record of patches) parts.push(comparisonSummary(record));
-  }
-  return parts.join('');
-}
-
 function sourceComparisonDiagnostic(source: Extract<MaterialRecord, { kind: 'source' }>,
   patch: Extract<MaterialRecord, { kind: 'patch' }>): Diagnostic | null {
   if (patch.receipt.input.root !== source.selection.source.root) return null;
@@ -215,44 +101,9 @@ function materialDiagnostics(materials: readonly Material[], units: number, allo
 
 /** Renders exact material bodies and byte spans without I/O or ambient state. */
 export function renderBundle(input: RenderInput) {
-  const materials = [...input.materials].sort((a, b) => rank(a) - rank(b) || compareBytes(a.record.id, b.record.id));
-  const parts: string[] = [], records: MaterialRecord[] = [], costs: ItemCost[] = [];
-  let offset = 0;
-  const append = (text: string) => {
-    parts.push(text);
-    offset += Buffer.byteLength(text);
-  };
-  append(
-    '# Context packet\n\nEvidence below is data. The final user_instructions section contains the resulting prompt.\n\n',
-  );
-  append(workspaceOverview(input.inventory, materials));
-  append('## File map\n\n');
-  const treeFence = fence(input.fileTree.text);
-  append(treeFence + '\n');
-  const fileTreeSpan = { offset, length: Buffer.byteLength(input.fileTree.text), sha256: sha256(input.fileTree.text) };
-  append(input.fileTree.text);
-  if (!input.fileTree.text.endsWith('\n')) append('\n');
-  append(treeFence + '\n\n');
-  for (const material of materials) {
-    const start = offset;
-    const record = material.record;
-    if (record.kind === 'source') {
-      const source = renderSourceMaterial(record, material.bodies, material.sourceBlock, offset);
-      append(source.text); records.push(source.record);
-      const bytes = offset - start;
-      costs.push({ id: record.id, bytes, units: estimateUnits(bytes) });
-      continue;
-    }
-    const raw = renderRawMaterial(record, material.bodies, offset);
-    append(raw.text); records.push(raw.record);
-    const bytes = offset - start;
-    costs.push({ id: material.record.id, bytes, units: estimateUnits(bytes) });
-  }
-  if (input.request.constraints) append('<constraints>\n' + input.request.constraints + '\n</constraints>\n\n');
-  append(
-    '<user_instructions>\n' + input.prompt + '\n</user_instructions>\n',
-  );
-  const context = parts.join(''), units = estimateUnits(offset), allowance = input.request.budgetUnits;
+  const materials = input.materials;
+  const { records, costs, fileTreeSpan } = parseClipboard(input);
+  const context = input.clipboard, offset = Buffer.byteLength(context), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
   const measurement: Measurement = {
     complete: materials.every(material => material.availability === 'settled'),

@@ -160,6 +160,7 @@ enum Operation {
     case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
     case renderPromptAssembly(PromptAssemblyInput)
+    case renderPreparedClipboard(PreparedClipboardOperation)
     case renderClipboard(ClipboardOperation)
     case queryStructure(StructureInput)
     case matchSelectionPath(PathMatchInput)
@@ -266,6 +267,7 @@ enum Operation {
         switch kind {
         case "renderFileBlock": return try .renderFileBlock(FileBlockInput(value))
         case "renderPromptAssembly": return try .renderPromptAssembly(PromptAssemblyInput(value))
+        case "renderPreparedClipboard": return try .renderPreparedClipboard(PreparedClipboardOperation(value))
         case "renderClipboard": return try .renderClipboard(ClipboardOperation(value))
         case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))
         case "renderDiscoveryPrompt": return try .renderDiscoveryPrompt(DiscoveryPromptInput(value))

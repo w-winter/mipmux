@@ -5,6 +5,7 @@ import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import type { Material } from './material-store.js';
 import { sourceId } from './material-store.js';
 import type { RenderInput } from './render.js';
+import { prepareClipboard } from './clipboard.js';
 
 type TreeInput = Extract<NativeOperation, { kind: 'renderFileTree' }>;
 export interface FinalFileTree {
@@ -44,12 +45,12 @@ export function finalFileTreeInput(inventory: Omit<InventorySnapshot, 'generatio
 export async function renderFinalFileTree(runtime: SmipRuntime, inventory: Omit<InventorySnapshot, 'generation'>,
   materials: readonly Material[], mode: CodemapMode, signal: AbortSignal): Promise<FinalFileTree> {
   const input = finalFileTreeInput(inventory, materials, mode);
-  const result = await runtime.renderFileTree(input, signal);
+  const result = await runtime.renderPresentation(input, signal);
   return { input, text: result.tree };
 }
 
-export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree'>,
+export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard'>,
   signal: AbortSignal): Promise<RenderInput> {
   const fileTree = await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, signal);
-  return { ...input, fileTree };
+  return prepareClipboard(runtime, { ...input, fileTree }, signal);
 }

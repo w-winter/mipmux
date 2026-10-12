@@ -48,14 +48,19 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   const treeSpan = manifest.fileTree.span, treeBytes = context.subarray(treeSpan.offset, treeSpan.offset + treeSpan.length);
   requireEqual(identity(treeBytes), { byteCount: treeSpan.length, sha256: treeSpan.sha256 });
   const fileTree = { input: manifest.fileTree.input, text: decodedBody(treeBytes) };
-  const rendered = renderBundle({
+  let rendered: ReturnType<typeof renderBundle>;
+  try { rendered = renderBundle({
     codemapMode: manifest.codemapMode,
     request: manifest.request,
     inventory: manifest.inventory,
     prompt: manifest.prompt,
     materials,
     fileTree,
-  });
+    clipboard: decodedBody(context),
+  }); } catch (error) {
+    if (!(error instanceof WorkspaceFailure && error.code === 'invalidClipboard')) throw error;
+    throw new WorkspaceFailure('bundleIntegrityFailed');
+  }
   if (
     rendered.diagnostics.length || !Buffer.from(rendered.context).equals(context) ||
     !Buffer.from(rendered.handoff).equals(handoff)
@@ -67,7 +72,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     units: rendered.measurement.units,
     allowance: rendered.measurement.allowance,
   }, { bytes: manifest.accounting.bytes, units: manifest.accounting.units, allowance: manifest.accounting.allowance });
-  return { verified: { kind: 'verified' as const, manifest }, materials, fileTree };
+  return { verified: { kind: 'verified' as const, manifest }, materials, fileTree, clipboard: decodedBody(context) };
 }
 function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
   return readRegularFile(join(directory, filename), new WorkspaceFailure('nonRegularBundleFile', { component: filename }), signal);
@@ -142,6 +147,13 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
         requireEqual(entry.identity, record.sourceIdentity);
         requireEqual(entry.decoding.identity, record.identity);
       } else requireEqual(bodies[0], record.input.text);
+      const frame = record.frame;
+      if (!frame) throw new WorkspaceFailure('bundleIntegrityFailed');
+      const bytes = context.subarray(frame.offset, frame.offset + frame.length);
+      requireEqual(identity(bytes), { byteCount: frame.length, sha256: frame.sha256 });
+      sourceBlock = parseSourceBlock(record, { text: decodedBody(bytes),
+        bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
+        bodies, new WorkspaceFailure('bundleIntegrityFailed'));
     } else {
       requireEqual(record.id, 'patch:' + record.receipt.input.id);
       requireEqual(bodies.length, 1);

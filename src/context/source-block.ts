@@ -11,8 +11,15 @@ function sliceAnnotation(range: LineRange): string {
   return '(lines ' + label + (range.description ? ': ' + range.description : '') + ')\n';
 }
 
+export function documentBlockPath(record: Extract<MaterialRecord, { kind: 'document' }>) {
+  const input = record.input;
+  if (input.kind === 'localDocument') return { path: input.source.root + '/' + input.source.path, name: posix.basename(input.source.path) };
+  const roles = { plan: 'Plan', report: 'Report', evidence: 'Evidence' };
+  return { path: roles[input.role] + ': ' + input.origin + ' (' + input.id + ')', name: input.id };
+}
+
 /** Parses native source framing and proves each raw body occupies its declared byte span. */
-export function parseSourceBlock(record: Extract<MaterialRecord, { kind: 'source' }>, block: SourceBlock,
+export function parseSourceBlock(record: Extract<MaterialRecord, { kind: 'source' | 'document' }>, block: SourceBlock,
   bodies: readonly string[], failure: WorkspaceFailure): SourceBlock {
   const bytes = Buffer.from(block.text);
   let cursor = 0, bodyIndex = 0;
@@ -27,10 +34,11 @@ export function parseSourceBlock(record: Extract<MaterialRecord, { kind: 'source
     if (!span || text === undefined || span.offset !== cursor || span.length !== Buffer.byteLength(text)) return reject();
     consume(text); bodyIndex++;
   };
-  const source = record.selection.source;
-  const extension = posix.extname(source.path).slice(1), fence = '```' + extension;
-  consume('File: ' + source.root + '/' + source.path + '\n');
-  if (record.selection.kind === 'full') {
+  const path = record.kind === 'document' ? documentBlockPath(record)
+    : { path: record.selection.source.root + '/' + record.selection.source.path, name: record.selection.source.path };
+  const extension = posix.extname(path.name).slice(1), fence = '```' + extension;
+  consume('File: ' + path.path + '\n');
+  if (record.kind === 'document' || record.selection.kind === 'full') {
     consume(fence + '\n'); body(); consume('\n```');
   } else if (record.selection.kind === 'slices') {
     for (const [index, range] of record.normalized.entries()) {

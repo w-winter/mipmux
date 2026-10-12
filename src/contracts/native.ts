@@ -53,6 +53,11 @@ export const NativeClipboardInput = Type.Object({ kind: Type.Literal('renderClip
   promptSectionsOrder: Type.Array(promptSection), disabledPromptSections: Type.Array(promptSection),
   duplicateUserInstructionsAtTop: Type.Boolean(), tabTitle: snippetText,
 }, { additionalProperties: false }) }, { additionalProperties: false });
+export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('renderPreparedClipboard'), input: Type.Object({
+  codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
+  gitDiff: snippetText, userInstructions: Type.String(),
+  metaInstructions: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
+}, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePromptAssemblyInput = Type.Object({ kind: Type.Literal('renderPromptAssembly'),
   order: Type.Array(promptSection), disabled: Type.Array(promptSection), duplicateUserInstructionsAtTop: Type.Boolean(),
   snippets: Type.Object({ fileMap: snippetText, fileContents: snippetText, gitDiff: snippetText,
@@ -280,6 +285,7 @@ export const NativeOperation = Type.Union([
   NativeFileTreeInput,
   NativePromptAssemblyInput,
   NativeClipboardInput,
+  NativePreparedClipboardInput,
   NativeStructureInput,
 ]);
 export type NativeOperation = Static<typeof NativeOperation>;

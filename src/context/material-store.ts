@@ -5,7 +5,7 @@ import { descriptorGitMode } from '../contracts/patches.js';
 import { prepareText } from '../exploration/lines.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { posix } from 'node:path';
-import { parseSourceBlock, type SourceBlock } from './source-block.js';
+import { documentBlockPath, parseSourceBlock, type SourceBlock } from './source-block.js';
 
 export interface SettledMaterial {
   readonly availability: 'settled';
@@ -141,22 +141,20 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
     sourceBlock: parseSourceBlock(record, { text: block.text, bodySpans: block.bodySpans }, bodies, new WorkspaceFailure('invalidSourceBlock')) });
 }
 export async function acquireDocument(operation: WorkspaceOperation, input: DocumentInput): Promise<Material> {
+  let record: Extract<MaterialRecord, { kind: 'document' }>, text: string;
   if (input.kind === 'suppliedDocument') {
     strictText(input.origin);
-    const text = strictText(input.text);
-    return freeze({
-      availability: 'settled',
-      sourceBlock: null,
-      record: { kind: 'document', id: 'document:' + input.id, input, identity: identity(text), spans: [] },
-      bodies: [text],
-    });
+    text = strictText(input.text);
+    record = { kind: 'document', id: 'document:' + input.id, input, identity: identity(text), spans: [], frame: null };
+  } else {
+    const source = await operation.readSource(input.source);
+    text = source.text;
+    record = { kind: 'document', id: 'document:' + input.id, input, identity: identity(text),
+      sourceIdentity: source.identity, spans: [], frame: null };
   }
-  const source = await operation.readSource(input.source);
-  return freeze({
-    availability: 'settled',
-    sourceBlock: null,
-    record: { kind: 'document', id: 'document:' + input.id, input, identity: identity(source.text),
-      sourceIdentity: source.identity, spans: [] },
-    bodies: [source.text],
-  });
+  const path = documentBlockPath(record);
+  const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: path.path,
+    fileName: path.name, content: text, ranges: null });
+  return freeze({ availability: 'settled', record, bodies: [text],
+    sourceBlock: parseSourceBlock(record, { text: block.text, bodySpans: block.bodySpans }, [text], new WorkspaceFailure('invalidSourceBlock')) });
 }

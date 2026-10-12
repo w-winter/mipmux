@@ -14,6 +14,7 @@ import { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import type { DiscoveryRunner } from '../discovery/runner.js';
 import { ClientRuntime } from './client-runtime.js';
+import { preparedClipboardInput } from '../context/clipboard.js';
 import { finalFileTreeInput } from '../context/final-tree.js';
 
 export interface RuntimeOptions {
@@ -54,8 +55,8 @@ export class SmipRuntime {
   makeBridge(): BridgeClient {
     return new BridgeClient({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
   }
-  /** Owns data-only tree rendering, including inspection after a draft releases its workspace lease. */
-  renderFileTree(input: Extract<NativeOperation, { kind: 'renderFileTree' }>, signal: AbortSignal) {
+  /** Owns captured tree/clipboard rendering, including observations after workspace lease release. */
+  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const work = (async () => {
@@ -154,7 +155,7 @@ export class SmipRuntime {
   }
   async #verifyCurrentBundle(directory: string, signal: AbortSignal) {
     signal.throwIfAborted();
-    const { verified,materials,fileTree } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
+    const { verified,materials,fileTree,clipboard: savedClipboard } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
     validateWorkspaceSpec({ roots:manifest.inventory.roots.map(root=>({name:root.name,absolutePath:root.identity.declaredPath})),
       exclusions:manifest.exclusions,outputRoot:manifest.inventory.outputRoot.declaredPath });
     const cache = await this.#admitCache();
@@ -171,8 +172,11 @@ export class SmipRuntime {
     this.#operations.add(operation);
     try {
       await revalidateMaterials(operation,materials);
-      const tree = await this.renderFileTree(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), signal);
+      const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), signal);
       if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
+      const clipboard = await this.renderPresentation(preparedClipboardInput({ request: manifest.request, prompt: manifest.prompt,
+        inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree }), signal);
+      if (savedClipboard !== clipboard.text) throw new WorkspaceFailure('presentationChanged');
       return {...verified,kind:'currentVerified' as const};
     } finally { await operation.close(); }
   }

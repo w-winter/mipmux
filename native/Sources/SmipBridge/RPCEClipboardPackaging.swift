@@ -206,7 +206,7 @@ enum RPCEClipboardPackaging {
         return blocks
     }
 
-    // swiftlint:disable:next function_body_length function_parameter_count
+    // swiftlint:disable:next function_parameter_count
     static func generateClipboardContent(
         metaInstructions: [MetaInstruction],
         userInstructions: String,
@@ -225,10 +225,30 @@ enum RPCEClipboardPackaging {
         tabTitle: String? = nil,
         displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil
     ) async -> String {
-        var snippets: [PromptSection: String] = [:]
-
         let (diffEntries, codeEntries) = partitionPromptEntriesForGitDiff(files)
         let (codemapBlocks, contentBlocks) = generatePartitionedFileBlocks(codeEntries, filePathDisplay: filePathDisplay, codemapPresentation: codemapPresentation, displayPathResolver: displayPathResolver)
+        let effectiveGitDiff = await resolveGitDiff(fromDiffEntries: diffEntries) { gitDiff }
+        return generatePreparedClipboardContent(
+            metaInstructions: metaInstructions, userInstructions: userInstructions,
+            codemapBlocks: codemapBlocks, contentBlocks: contentBlocks,
+            fileTreeContent: fileTreeContent, gitDiff: effectiveGitDiff,
+            includeSavedPrompts: includeSavedPrompts, includeFiles: includeFiles,
+            includeUserPrompt: includeUserPrompt, includeDatetimeInUserInstructions: includeDatetimeInUserInstructions,
+            promptSectionsOrder: promptSectionsOrder, disabledPromptSections: disabledPromptSections,
+            duplicateUserInstructionsAtTop: duplicateUserInstructionsAtTop, tabTitle: tabTitle
+        )
+    }
+
+    // Captured blocks already retain whole-file/slice framing; no source reread is needed for export.
+    // swiftlint:disable:next function_body_length function_parameter_count
+    static func generatePreparedClipboardContent(
+        metaInstructions: [MetaInstruction], userInstructions: String,
+        codemapBlocks: [String], contentBlocks: [String], fileTreeContent: String?, gitDiff: String?,
+        includeSavedPrompts: Bool, includeFiles: Bool, includeUserPrompt: Bool,
+        includeDatetimeInUserInstructions: Bool, promptSectionsOrder: [PromptSection],
+        disabledPromptSections: Set<PromptSection>, duplicateUserInstructionsAtTop: Bool, tabTitle: String?
+    ) -> String {
+        var snippets: [PromptSection: String] = [:]
 
         if let combinedMap = combinedFileMapContent(
             fileTreeContent: fileTreeContent,
@@ -256,13 +276,7 @@ enum RPCEClipboardPackaging {
             snippets[.metaPrompts] = metaSnippet
         }
 
-        let effectiveGitDiff = await resolveGitDiff(
-            fromDiffEntries: diffEntries
-        ) {
-            gitDiff
-        }
-
-        if let diff = effectiveGitDiff, !diff.isEmpty {
+        if let diff = gitDiff, !diff.isEmpty {
             let snippet = """
             <git_diff>
             \(diff)
@@ -341,4 +355,5 @@ enum RPCEClipboardPackaging {
         return snippet
     }
 }
+
 // swiftlint:enable line_length
