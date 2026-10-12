@@ -136,7 +136,7 @@ export class WorkspaceOperation {
       if (entry?.kind !== 'file' || entry.decoding.kind !== 'decoded' ||
         acquired.decoding.identity.sha256 !== entry.decoding.identity.sha256 ||
         acquired.decoding.identity.byteCount !== entry.decoding.identity.byteCount) throw new WorkspaceFailure('pipelineChanged', source);
-      return { ...acquired, text: acquired.decoding.text };
+      return { ...acquired, decoding: acquired.decoding, text: acquired.decoding.text };
     });
   }
   readGit(request: GitRequest, encode?: ResultEncoding) {

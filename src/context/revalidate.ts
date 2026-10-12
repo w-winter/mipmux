@@ -6,6 +6,33 @@ import { acquireLocalPatch } from '../patches/local-git.js';
 import { descriptorGitMode } from '../contracts/patches.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 
+async function revalidateSource(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'source' }>, bodies: readonly string[]): Promise<void> {
+  const source = record.selection.source;
+  if (record.decoding.kind === 'undecodable') {
+    const read = await operation.readRawSource(source);
+    if (read.decoding.kind !== 'undecodable' || canonicalJSON(read.key) !== canonicalJSON(record.artifactKey)) {
+      throw new WorkspaceFailure('pipelineChanged', source);
+    }
+    if (descriptorGitMode(read.fingerprint.mode) !== record.mode) throw new WorkspaceFailure('sourceChanged', source);
+    return;
+  }
+  const read = await operation.readSource(source);
+  if (canonicalJSON(read.identity) !== canonicalJSON(record.identity) || descriptorGitMode(read.fingerprint.mode) !== record.mode) {
+    throw new WorkspaceFailure('sourceChanged', source);
+  }
+  if (record.selection.kind === 'codemap' && canonicalJSON(read.key) !== canonicalJSON(record.artifactKey)) {
+    throw new WorkspaceFailure('pipelineChanged', source);
+  }
+  if (canonicalJSON(identity(read.text)) !== canonicalJSON(record.decoding.identity)) throw new WorkspaceFailure('pipelineChanged', source);
+  if (record.selection.kind === 'slices') {
+    const text = prepareText(read.text);
+    const normalized = normalizeRanges(record.selection.ranges, text.lines.length);
+    const currentBodies = normalized.map(range => text.lines.slice(range.start - 1, range.end).map(line => line.text).join(''));
+    if (canonicalJSON(normalized) !== canonicalJSON(record.normalized) || canonicalJSON(currentBodies) !== canonicalJSON(bodies)) {
+      throw new WorkspaceFailure('materialChanged');
+    }
+  }
+}
 export async function revalidateMaterials(
   operation: WorkspaceOperation,
   materials: readonly Material[],
@@ -13,36 +40,14 @@ export async function revalidateMaterials(
   await operation.validateRoots();
   for (const material of materials) {
     const record = material.record;
-    const local = record.kind === 'source'
-      ? { source: record.selection.source, identity: record.identity, decodedIdentity: record.decodedIdentity }
-      : record.kind === 'document' && 'sourceIdentity' in record
-      ? { source: record.input.source, identity: record.sourceIdentity, decodedIdentity: record.identity }
-      : null;
-    if (local) {
-      const { source } = local;
-      const read = await operation.readSource(source);
-      if (
-        canonicalJSON(read.identity) !== canonicalJSON(local.identity) ||
-        record.kind === 'source' && descriptorGitMode(read.fingerprint.mode) !== record.mode
-      ) throw new WorkspaceFailure('sourceChanged', source);
-      if (
-        record.kind === 'source' && record.selection.kind === 'codemap' &&
-        canonicalJSON(read.key) !== canonicalJSON(record.artifactKey)
-      ) throw new WorkspaceFailure('pipelineChanged', source);
-      if (canonicalJSON(identity(read.text)) !== canonicalJSON(local.decodedIdentity)) throw new WorkspaceFailure('pipelineChanged', source);
-      if (record.kind === 'source' && record.selection.kind === 'slices') {
-        const text = prepareText(read.text);
-        const normalized = normalizeRanges(record.selection.ranges, text.lines.length);
-        const bodies = normalized.map(range =>
-          text.lines.slice(range.start - 1, range.end).map(line => line.text).join('')
-        );
-        if (canonicalJSON(normalized) !== canonicalJSON(record.normalized) ||
-          canonicalJSON(bodies) !== canonicalJSON(material.bodies)) throw new WorkspaceFailure('materialChanged');
-      }
+    if (record.kind === 'source') {
+      await revalidateSource(operation, record, material.bodies);
+      continue;
     }
-    if (
-      record.kind === 'document' && canonicalJSON(identity(material.bodies.join(''))) !== canonicalJSON(record.identity)
-    ) throw new WorkspaceFailure('materialChanged');
+    if (record.kind === 'document') {
+      await revalidateDocument(operation, record, material.bodies);
+      continue;
+    }
     if (record.kind === 'patch') {
       if (canonicalJSON(identity(material.bodies.join(''))) !== canonicalJSON(record.receipt.identity)) {
         throw new WorkspaceFailure('materialChanged');
@@ -58,4 +63,13 @@ export async function revalidateMaterials(
       }
     }
   }
+}
+async function revalidateDocument(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'document' }>, bodies: readonly string[]): Promise<void> {
+  if ('sourceIdentity' in record) {
+    const source = record.input.source;
+    const read = await operation.readSource(source);
+    if (canonicalJSON(read.identity) !== canonicalJSON(record.sourceIdentity)) throw new WorkspaceFailure('sourceChanged', source);
+    if (canonicalJSON(identity(read.text)) !== canonicalJSON(record.identity)) throw new WorkspaceFailure('pipelineChanged', source);
+  }
+  if (canonicalJSON(identity(bodies.join(''))) !== canonicalJSON(record.identity)) throw new WorkspaceFailure('materialChanged');
 }

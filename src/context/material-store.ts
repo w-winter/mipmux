@@ -53,52 +53,60 @@ type SourceAcquisition =
   | { readonly selectionOrigin: 'explicit'; readonly selection: SourceSelection; readonly required: boolean }
   | { readonly selectionOrigin: 'inferred'; readonly source: SourcePath };
 
-export async function acquireSource(operation: WorkspaceOperation, input: SourceAcquisition): Promise<Material> {
-  const path = input.selectionOrigin === 'explicit' ? input.selection.source : input.source;
-  if (input.selectionOrigin === 'explicit' && input.selection.kind === 'codemap') {
-    await operation.materializeExplicitSource(path);
+async function acquireExplicitCodemap(operation: WorkspaceOperation, selection: Extract<SourceSelection, { kind: 'codemap' }>, required: boolean): Promise<Material> {
+  await operation.materializeExplicitSource(selection.source);
+  const source = await operation.readRawSource(selection.source);
+  const entry = operation.snapshot.entries.find(entry => entry.root === selection.source.root && entry.path === selection.source.path);
+  const representation = codemapRepresentation(entry, selection.source);
+  if (!representation) throw new WorkspaceFailure('codemapUnavailable', selection.source);
+  const record = { kind: 'source' as const, selectionOrigin: 'explicit' as const, id: sourceId(selection.source), required,
+    selection, identity: source.identity, mode: descriptorGitMode(source.fingerprint.mode), artifactKey: representation.key, spans: [] };
+  if (source.decoding.kind === 'undecodable') {
+    if (required) throw new WorkspaceFailure('decodeFailed', selection.source);
+    if (representation.kind !== 'unmapped') throw new WorkspaceFailure('pipelineChanged', selection.source);
+    return freeze({ record: { ...record, required: false, decoding: { kind: 'undecodable' as const }, normalized: [] }, bodies: [] });
   }
-  const source = await operation.readSource(path);
-  const text = prepareText(source.text);
+  prepareText(source.decoding.text);
+  const decoding = { kind: 'decoded' as const, identity: source.decoding.identity, encoding: source.decoding.encoding };
+  return freeze({ record: { ...record, decoding, normalized: [] }, bodies: representation.kind === 'rendered' ? [representation.body] : [] });
+}
+export async function acquireSource(operation: WorkspaceOperation, input: SourceAcquisition): Promise<Material> {
   if (input.selectionOrigin === 'inferred') {
+    const path = input.source;
+    const source = await operation.readSource(path);
+    prepareText(source.text);
     const entry = operation.snapshot.entries.find(entry => entry.root === path.root && entry.path === path.path);
     const representation = codemapRepresentation(entry, path);
     if (representation?.kind !== 'rendered') throw new WorkspaceFailure('codemapUnavailable', path);
     return freeze({ record: { kind: 'source', id: sourceId(path), selectionOrigin: 'inferred', required: false,
-      selection: { kind: 'codemap', source: path }, identity: source.identity, decodedIdentity: identity(source.text), mode: descriptorGitMode(source.fingerprint.mode),
+      selection: { kind: 'codemap', source: path }, identity: source.identity,
+      decoding: { kind: 'decoded', identity: source.decoding.identity, encoding: source.decoding.encoding }, mode: descriptorGitMode(source.fingerprint.mode),
       normalized: [], artifactKey: representation.key, spans: [] }, bodies: [representation.body] });
   }
   const { selection, required } = input;
-  const record: Extract<MaterialRecord, { kind: 'source'; selectionOrigin: 'explicit' }> = {
+  if (selection.kind === 'codemap') return acquireExplicitCodemap(operation, selection, required);
+  const source = await operation.readSource(selection.source);
+  const text = prepareText(source.text);
+  const record: Extract<MaterialRecord, { kind: 'source'; selectionOrigin: 'explicit'; decoding: { kind: 'decoded' } }> = {
     kind: 'source',
     selectionOrigin: 'explicit',
     id: sourceId(selection.source),
     required,
     selection,
     identity: source.identity,
-    decodedIdentity: identity(source.text),
+    decoding: { kind: 'decoded', identity: source.decoding.identity, encoding: source.decoding.encoding },
     mode: descriptorGitMode(source.fingerprint.mode),
     normalized: [],
     artifactKey: null,
     spans: [],
   };
   let bodies: string[];
-  if (selection.kind === 'codemap') {
-    const entry = operation.snapshot.entries.find((entry) =>
-      entry.root === selection.source.root && entry.path === selection.source.path
+  if (selection.kind === 'full') bodies = [source.text];
+  else {
+    record.normalized = normalizeRanges(selection.ranges, text.lines.length);
+    bodies = record.normalized.map((range) =>
+      text.lines.slice(range.start - 1, range.end).map((line) => line.text).join('')
     );
-    const representation = codemapRepresentation(entry, selection.source);
-    if (!representation) throw new WorkspaceFailure('codemapUnavailable', selection.source);
-    record.artifactKey = representation.key;
-    bodies = representation.kind === 'rendered' ? [representation.body] : [];
-  } else {
-    if (selection.kind === 'full') bodies = [source.text];
-    else {
-      record.normalized = normalizeRanges(selection.ranges, text.lines.length);
-      bodies = record.normalized.map((range) =>
-        text.lines.slice(range.start - 1, range.end).map((line) => line.text).join('')
-      );
-    }
   }
   return freeze({ record, bodies });
 }

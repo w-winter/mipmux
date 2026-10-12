@@ -73,7 +73,7 @@ export class FinalizationOperation {
       }
       const { generation, ...inventory } = owner.snapshot;
       const manifest: Manifest = {
-      schemaVersion: 6,
+      schemaVersion: 7,
         codemapMode,
         request,
         requestDigest: sha256(canonicalJSON(request)),

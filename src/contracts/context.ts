@@ -1,6 +1,6 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { InventorySnapshot, SourcePath, Exclusion, DecoderPolicy } from './inventory.js';
+import { InventorySnapshot, SourcePath, Exclusion, DecoderPolicy, SourceDecoding } from './inventory.js';
 import { SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
@@ -100,19 +100,25 @@ export type DraftInspection = Static<typeof DraftInspection>;
 export const Span = Type.Object({ offset: SafeCount, length: SafeCount, sha256: SHA256 }, closed);
 export type Span = Static<typeof Span>;
 const sourceRecord = {
-  kind: Type.Literal('source'), id: Type.String(), identity: SourceIdentity, decodedIdentity: SourceIdentity,
+  kind: Type.Literal('source'), id: Type.String(), identity: SourceIdentity,
   mode: Type.Enum(['100644', '100755']), spans: Type.Array(Span),
 };
 export const MaterialRecord = Type.Union([
   Type.Object({ ...sourceRecord,
     selectionOrigin: Type.Literal('explicit'),
+    decoding: SourceDecoding.anyOf[0],
     required: Type.Boolean(),
     selection: SourceSelection,
     normalized: Type.Array(Type.Object({ start: positive, end: positive }, closed)),
     artifactKey: Type.Union([Type.Null(), ArtifactKey]),
   }, closed),
   Type.Object({ ...sourceRecord,
-    selectionOrigin: Type.Literal('inferred'), required: Type.Literal(false),
+    selectionOrigin: Type.Literal('explicit'), decoding: SourceDecoding.anyOf[1],
+    required: Type.Literal(false), selection: SourceSelection.anyOf[2],
+    normalized: Type.Tuple([]), artifactKey: ArtifactKey,
+  }, closed),
+  Type.Object({ ...sourceRecord,
+    selectionOrigin: Type.Literal('inferred'), required: Type.Literal(false), decoding: SourceDecoding.anyOf[0],
     selection: SourceSelection.anyOf[2], normalized: Type.Tuple([]), artifactKey: ArtifactKey,
   }, closed),
   Type.Object({
@@ -130,7 +136,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(6),
+  schemaVersion: Type.Literal(7),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,

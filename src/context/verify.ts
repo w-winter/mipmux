@@ -70,6 +70,25 @@ function verifyCodemap(record: Extract<MaterialRecord, { kind: 'source' }>, entr
   if (representation.kind === 'unmapped') requireEqual(record.selectionOrigin, 'explicit');
   requireEqual(bodies, representation.kind === 'rendered' ? [representation.body] : []);
 }
+function verifySourceMaterial(record: Extract<MaterialRecord, { kind: 'source' }>, entry: InventoryEntry | undefined, bodies: readonly string[]): void {
+  requireEqual(record.id, sourceId(record.selection.source));
+  if (entry?.kind !== 'file') throw new WorkspaceFailure('bundleIntegrityFailed');
+  requireEqual(entry.identity, record.identity);
+  requireEqual(entry.decoding, record.decoding);
+  if (record.decoding.kind === 'decoded') {
+    if (record.selection.kind === 'full') {
+      requireEqual(bodies.length, 1);
+      requireEqual(identity(bodies[0]!), record.decoding.identity);
+    }
+    if (record.selection.kind === 'slices') {
+      requireEqual(record.normalized, normalizeRanges(record.selection.ranges, Number.MAX_SAFE_INTEGER));
+      requireEqual(bodies.length, record.normalized.length);
+    }
+  } else {
+    requireEqual(bodies, []);
+  }
+  if (record.selection.kind === 'codemap') verifyCodemap(record, entry, bodies);
+}
 function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
   const seen = new Set<string>();
   const materials = manifest.materials.map((record) => {
@@ -84,25 +103,10 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
       }
     });
     if (record.kind === 'source') {
-      requireEqual(record.id, sourceId(record.selection.source));
       const entry = manifest.inventory.entries.find((entry) =>
         entry.root === record.selection.source.root && entry.path === record.selection.source.path
       );
-      if (entry?.kind !== 'file') throw new WorkspaceFailure('bundleIntegrityFailed');
-      requireEqual(entry.identity, record.identity);
-      if (entry.decoding.kind !== 'decoded') throw new WorkspaceFailure('bundleIntegrityFailed');
-      requireEqual(entry.decoding.identity, record.decodedIdentity);
-      if (record.selection.kind === 'full') {
-        requireEqual(bodies.length, 1);
-        requireEqual(identity(bodies[0]!), record.decodedIdentity);
-      }
-      if (record.selection.kind === 'slices') {
-        requireEqual(record.normalized, normalizeRanges(record.selection.ranges, Number.MAX_SAFE_INTEGER));
-        requireEqual(bodies.length, record.normalized.length);
-      }
-      if (record.selection.kind === 'codemap') {
-        verifyCodemap(record, entry, bodies);
-      }
+      verifySourceMaterial(record, entry, bodies);
     } else if (record.kind === 'document') {
       requireEqual(record.id, 'document:' + record.input.id);
       requireEqual(bodies.length, 1);

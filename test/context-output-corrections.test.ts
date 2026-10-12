@@ -163,7 +163,7 @@ test('current verification rejects self-consistent forged slices against the exa
           assert(empty?.record.kind === 'source');
           materials.splice(materials.indexOf(empty), 1);
           material.record.identity = empty.record.identity;
-          material.record.decodedIdentity = empty.record.decodedIdentity;
+          material.record.decoding = empty.record.decoding;
           material.record.id = empty.record.id;
         }
         material.record.selection = { kind: 'slices', source: { root: 'r', path }, ranges: [{ start: 1, end, description: 'forged' }] };

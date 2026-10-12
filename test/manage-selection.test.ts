@@ -7,7 +7,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SourceSelection, verifyBundle, SmipRuntime } from '../src/index.js';
+import { SourceSelection, verifyBundle, verifyCurrentBundle, SmipRuntime } from '../src/index.js';
 import { selectionValidator, SelectionInput } from '../src/contracts/selection.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
@@ -26,6 +26,8 @@ async function fixture() {
   await mkdir(join(root, 'zone'), { recursive: true }); await mkdir(output);
   await writeFile(join(root, 'Main.swift'), 'struct Main {\n  let value: Int\n}\n');
   await writeFile(join(root, 'Empty.swift'), '');
+  const invalidUTF16Surrogate = Buffer.from('//4A2A==', 'base64');
+  await writeFile(join(root, 'Undecodable.swift'), invalidUTF16Surrogate);
   await writeFile(join(root, 'zone/Peer.swift'), 'struct Peer {\n  let title: String\n}\n');
   await writeFile(join(root, 'zone/notes.txt'), 'First\nSecond\nThird\n');
   await mkdir(join(root, 'private'));
@@ -211,6 +213,40 @@ test('codemap-only selection retains a supported file with no rendered symbols a
     assert.deepEqual(material.spans, []);
     await writeFile(join(f.base, 'unrendered-codemap-receipt.json'), JSON.stringify({ receipts, bundle }, null, 2) + '\n');
   } finally { await f.client.close(); }
+});
+
+test('undecodable codemap-only membership retains raw evidence and passes saved/current verification', async () => {
+  const f = await fixture();
+  const replySchema = Compile(Type.Object({ files: Type.Array(Type.Unknown()), blocks: Type.Array(Type.String()),
+    code_structure: Type.Object({ unmapped_paths: Type.Array(Type.String()) }) }));
+  const manifestSchema = Compile(Type.Object({ materials: Type.Array(Type.Object({ kind: Type.Literal('source'),
+    selection: SourceSelection, decoding: Type.Object({ kind: Type.Literal('undecodable') }), spans: Type.Array(Type.Unknown()) })) }));
+  const runtime = new SmipRuntime({ cachePath: join(f.base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  try {
+    const reply = await f.select({ op: 'set', mode: 'codemap_only', paths: ['r/Undecodable.swift'], view: 'content' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    const projected = replySchema.Parse(reply.structuredContent);
+    assert.deepEqual(projected.files, []);
+    assert.deepEqual(projected.blocks, []);
+    assert.deepEqual(projected.code_structure.unmapped_paths, ['Undecodable.swift']);
+    const before = await f.inspect();
+    const promoted = await f.select({ op: 'promote', paths: ['r/Undecodable.swift'] });
+    assert.equal(promoted.isError, true, JSON.stringify(promoted));
+    assert.deepEqual(await f.inspect(), before);
+    const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
+    assert.equal(finalized.isError, false, JSON.stringify(finalized));
+    const directory = ready.Parse(finalized.structuredContent).directory;
+    const verified = await verifyBundle(directory);
+    const material = manifestSchema.Parse(verified.manifest).materials[0]!;
+    assert.equal(material.selection.kind, 'codemap');
+    assert.deepEqual(material.spans, []);
+    const current = await verifyCurrentBundle(directory, runtime, new AbortController().signal);
+    assert.equal(current.kind, 'currentVerified');
+    await writeFile(join(f.root, 'Undecodable.swift'), 'struct NowDecoded { let value: Int }\n');
+    await assert.rejects(verifyCurrentBundle(directory, runtime, new AbortController().signal), /sourceChanged/);
+    await writeFile(join(f.base, 'undecodable-codemap-receipt.json'), JSON.stringify({ reply, before, verified, current }, null, 2) + '\n');
+  } finally { await f.client.close(); await runtime.close(); }
 });
 
 test('source set rejects invalid inputs even without strict and preview/receipt failure cannot commit selection', async () => {
