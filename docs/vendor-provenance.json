@@ -4880,7 +4880,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb",
       "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
-      "sha256": "9c41dac8b38efd03fd66608a541c47324a22e7cc650574190549bf4864488ba2",
+      "sha256": "9e65f98cbd602089b3f81738103379da3a20017ef9c98cb4e018ab98a13201e5",
       "classification": "handwritten",
       "ranges": [
         [
@@ -4897,7 +4897,8 @@
         ]
       ],
       "changes": [
-        "Extract the file-block formatting methods into an executable-local enum and expose its entry point. Formatting receives a captured display path; app routing is not copied. Apply formatter layout and discard the unused internal content binding without changing its argument label."
+        "Extract the file-block formatting methods into an executable-local enum and expose its entry point. Formatting receives a captured display path; app routing is not copied. Apply formatter layout and discard the unused internal content binding without changing its argument label.",
+        "Tag original source syntax/body lines during emission and capture raw-body UTF-8 spans. The source line sequence and exact text remain checked against independently compiled reference fixtures."
       ]
     }
   ],

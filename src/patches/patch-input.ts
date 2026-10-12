@@ -9,6 +9,7 @@ export async function acquirePatch(operation: WorkspaceOperation, input: PatchIn
     const patch = await acquireLocalPatch(operation, input);
     return freeze({
       availability: 'settled',
+      sourceBlock: null,
       record: { kind: 'patch', id: 'patch:' + input.id, receipt: patch.receipt, spans: [] },
       bodies: [strictText(patch.bytes.toString('utf8'))],
     });
@@ -24,6 +25,7 @@ export async function acquirePatch(operation: WorkspaceOperation, input: PatchIn
   }
   return freeze({
     availability: 'settled',
+    sourceBlock: null,
     record: {
       kind: 'patch',
       id: 'patch:' + input.id,

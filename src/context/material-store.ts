@@ -4,11 +4,14 @@ import type { ArtifactKey, InventoryEntry, SourcePath } from '../contracts/inven
 import { descriptorGitMode } from '../contracts/patches.js';
 import { prepareText } from '../exploration/lines.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { posix } from 'node:path';
+import { parseSourceBlock, type SourceBlock } from './source-block.js';
 
 export interface SettledMaterial {
   readonly availability: 'settled';
   readonly record: MaterialRecord;
   readonly bodies: readonly string[];
+  readonly sourceBlock: SourceBlock | null;
 }
 type CodemapSelection = Extract<SourceSelection, { kind: 'codemap' }>;
 interface PendingCodemapMaterial {
@@ -18,6 +21,7 @@ interface PendingCodemapMaterial {
     readonly normalized: []; readonly artifactKey: ArtifactKey;
   };
   readonly bodies: readonly [];
+  readonly sourceBlock: null;
 }
 export type Material = SettledMaterial | PendingCodemapMaterial;
 export function sourceId(source: { root: string; path: string }): string {
@@ -30,7 +34,7 @@ export function strictText(text: string): string {
 export function identity(text: string | Buffer) {
   return { sha256: sha256(text), byteCount: Buffer.byteLength(text) };
 }
-export function normalizeRanges(ranges: readonly LineRange[], total: number): { start: number; end: number }[] {
+export function normalizeRanges(ranges: readonly LineRange[], total: number): LineRange[] {
   if (
     !ranges.length ||
     ranges.some((range) =>
@@ -38,11 +42,15 @@ export function normalizeRanges(ranges: readonly LineRange[], total: number): { 
       range.end < range.start || range.end > total
     )
   ) throw new WorkspaceFailure('invalidRange');
-  const normalized: { start: number; end: number }[] = [];
+  const normalized: LineRange[] = [];
   for (const range of [...ranges].sort((a, b) => a.start - b.start || a.end - b.end)) {
     const last = normalized.at(-1);
-    if (last && range.start <= last.end + 1) last.end = Math.max(last.end, range.end);
-    else normalized.push({ start: range.start, end: range.end });
+    if (last && range.start <= last.end + 1) {
+      last.end = Math.max(last.end, range.end);
+      if (last.description !== null && range.description !== null &&
+        last.description.normalize('NFC') !== range.description.normalize('NFC')) last.description += '; ' + range.description;
+      else last.description ??= range.description;
+    } else normalized.push({ ...range });
   }
   return normalized;
 }
@@ -78,21 +86,21 @@ async function captureExplicitCodemap(operation: WorkspaceOperation, selection: 
   if (entry?.kind === 'file' && entry.structural.kind === 'pending' && !required) {
     const fields: Omit<PendingCodemapMaterial['record'], 'decoding'> = { kind: 'source', selectionOrigin: 'explicit', id: sourceId(selection.source),
       required: false, selection, identity: source.identity, mode: descriptorGitMode(source.fingerprint.mode),
-      normalized: [], artifactKey: entry.structural.key, spans: [] };
+      normalized: [], artifactKey: entry.structural.key, spans: [], frame: null };
     const record = entry.decoding.kind === 'decoded' ? { ...fields, decoding: entry.decoding } : { ...fields, decoding: entry.decoding };
-    return freeze({ availability: 'pendingCodemap', record, bodies: [] });
+    return freeze({ availability: 'pendingCodemap', record, bodies: [], sourceBlock: null });
   }
   const representation = codemapRepresentation(entry, selection.source);
   if (!representation) throw new WorkspaceFailure('codemapUnavailable', selection.source);
   const record = { kind: 'source' as const, selectionOrigin: 'explicit' as const, id: sourceId(selection.source), required,
-    selection, identity: source.identity, mode: descriptorGitMode(source.fingerprint.mode), artifactKey: representation.key, spans: [] };
+    selection, identity: source.identity, mode: descriptorGitMode(source.fingerprint.mode), artifactKey: representation.key, spans: [], frame: null };
   if (source.decoding.kind === 'undecodable') {
     if (required) throw new WorkspaceFailure('decodeFailed', selection.source);
     if (representation.kind !== 'unmapped') throw new WorkspaceFailure('pipelineChanged', selection.source);
-    return freeze({ availability: 'settled', record: { ...record, required: false, decoding: { kind: 'undecodable' as const }, normalized: [] }, bodies: [] });
+    return freeze({ availability: 'settled', record: { ...record, required: false, decoding: { kind: 'undecodable' as const }, normalized: [] }, bodies: [], sourceBlock: null });
   }
   const decoding = { kind: 'decoded' as const, identity: source.decoding.identity, encoding: source.decoding.encoding };
-  return freeze({ availability: 'settled', record: { ...record, decoding, normalized: [] }, bodies: representation.kind === 'rendered' ? [representation.body] : [] });
+  return freeze({ availability: 'settled', record: { ...record, decoding, normalized: [] }, bodies: representation.kind === 'rendered' ? [representation.body] : [], sourceBlock: null });
 }
 export async function acquireSource(operation: WorkspaceOperation, input: SourceAcquisition): Promise<Material> {
   if (input.selectionOrigin === 'inferred') {
@@ -104,7 +112,7 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
     return freeze({ availability: 'settled', record: { kind: 'source', id: sourceId(path), selectionOrigin: 'inferred', required: false,
       selection: { kind: 'codemap', source: path }, identity: source.identity,
       decoding: { kind: 'decoded', identity: source.decoding.identity, encoding: source.decoding.encoding }, mode: descriptorGitMode(source.fingerprint.mode),
-      normalized: [], artifactKey: representation.key, spans: [] }, bodies: [representation.body] });
+      normalized: [], artifactKey: representation.key, spans: [], frame: null }, bodies: [representation.body], sourceBlock: null });
   }
   const { selection, required } = input;
   if (selection.kind === 'codemap') return acquireExplicitCodemap(operation, selection, required);
@@ -122,16 +130,15 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
     normalized: [],
     artifactKey: null,
     spans: [],
+    frame: null,
   };
-  let bodies: string[];
-  if (selection.kind === 'full') bodies = [source.text];
-  else {
-    record.normalized = normalizeRanges(selection.ranges, text.lines.length);
-    bodies = record.normalized.map((range) =>
-      text.lines.slice(range.start - 1, range.end).map((line) => line.text).join('')
-    );
-  }
-  return freeze({ availability: 'settled', record, bodies });
+  if (selection.kind === 'slices') normalizeRanges(selection.ranges, text.lines.length);
+  const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: selection.source.root + '/' + selection.source.path,
+    fileName: posix.basename(selection.source.path), content: source.text, ranges: selection.kind === 'slices' ? selection.ranges : null });
+  const bodies = selection.kind === 'full' ? [source.text] : block.segments.map(segment => segment.text);
+  if (selection.kind === 'slices') record.normalized = block.segments.map(({ start, end, description }) => ({ start, end, description }));
+  return freeze({ availability: 'settled', record, bodies,
+    sourceBlock: parseSourceBlock(record, { text: block.text, bodySpans: block.bodySpans }, bodies, new WorkspaceFailure('invalidSourceBlock')) });
 }
 export async function acquireDocument(operation: WorkspaceOperation, input: DocumentInput): Promise<Material> {
   if (input.kind === 'suppliedDocument') {
@@ -139,6 +146,7 @@ export async function acquireDocument(operation: WorkspaceOperation, input: Docu
     const text = strictText(input.text);
     return freeze({
       availability: 'settled',
+      sourceBlock: null,
       record: { kind: 'document', id: 'document:' + input.id, input, identity: identity(text), spans: [] },
       bodies: [text],
     });
@@ -146,6 +154,7 @@ export async function acquireDocument(operation: WorkspaceOperation, input: Docu
   const source = await operation.readSource(input.source);
   return freeze({
     availability: 'settled',
+    sourceBlock: null,
     record: { kind: 'document', id: 'document:' + input.id, input, identity: identity(source.text),
       sourceIdentity: source.identity, spans: [] },
     bodies: [source.text],

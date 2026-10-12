@@ -11,6 +11,9 @@ const casesSchema = Compile(Type.Array(Type.Object({ name: Type.String(), input:
   selectedPath: Type.String(), fileName: Type.String(), content: Type.String(), ranges: Type.Union([Type.Array(range), Type.Null()]),
 }), expected: Type.Unknown() })));
 const resultSchema = Compile(Type.Object({ result: Type.Unknown() }));
+const blockSchema = Compile(Type.Object({ text: Type.String(), combinedText: Type.String(), isFullFile: Type.Boolean(),
+  segments: Type.Array(Type.Object({ text: Type.String() })),
+  bodySpans: Type.Array(Type.Object({ offset: Type.Integer(), length: Type.Integer() })) }));
 
 test('native file blocks preserve original full/slice formatting, normalized ranges and line endings', async () => {
   const cases = casesSchema.Parse(JSON.parse(await readFile(resolve('test/fixtures/rpce-file-blocks/cases.json'), 'utf8')));
@@ -22,7 +25,15 @@ test('native file blocks preserve original full/slice formatting, normalized ran
     });
     assert.equal(result.status, 0, entry.name + ': ' + result.stderr);
     const found = resultSchema.Parse(JSON.parse(result.stdout.trim())).result;
-    assert.deepEqual(found, entry.expected, entry.name);
+    const block = blockSchema.Parse(found);
+    const { bodySpans, ...formatted } = block;
+    assert.deepEqual(formatted, entry.expected, entry.name);
+    const bodies = block.isFullFile ? [block.combinedText] : block.segments.map(segment => segment.text);
+    assert.equal(bodySpans.length, bodies.length, entry.name);
+    const bytes = Buffer.from(block.text);
+    for (const [index, span] of bodySpans.entries()) {
+      assert(bytes.subarray(span.offset, span.offset + span.length).equals(Buffer.from(bodies[index]!)), entry.name);
+    }
     proof.push({ name: entry.name, result: found });
   }
   await writeFile(resolve('test-output/reference-file-block-proof.json'), JSON.stringify(proof, null, 2) + '\n');

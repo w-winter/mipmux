@@ -101,7 +101,7 @@ export const Span = Type.Object({ offset: SafeCount, length: SafeCount, sha256: 
 export type Span = Static<typeof Span>;
 const sourceRecord = {
   kind: Type.Literal('source'), id: Type.String(), identity: SourceIdentity,
-  mode: Type.Enum(['100644', '100755']), spans: Type.Array(Span),
+  mode: Type.Enum(['100644', '100755']), spans: Type.Array(Span), frame: Type.Union([Span, Type.Null()]),
 };
 export const MaterialRecord = Type.Union([
   Type.Object({ ...sourceRecord,
@@ -109,7 +109,7 @@ export const MaterialRecord = Type.Union([
     decoding: SourceDecoding.anyOf[0],
     required: Type.Boolean(),
     selection: SourceSelection,
-    normalized: Type.Array(Type.Object({ start: positive, end: positive }, closed)),
+    normalized: Type.Array(LineRange),
     artifactKey: Type.Union([Type.Null(), ArtifactKey]),
   }, closed),
   Type.Object({ ...sourceRecord,
@@ -136,7 +136,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(7),
+  schemaVersion: Type.Literal(8),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,

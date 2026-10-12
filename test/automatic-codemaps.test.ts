@@ -163,7 +163,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 7);
+    assert.equal(ready.manifest.schemaVersion, 8);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -186,7 +186,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
           assert(unrelated?.kind === 'file');
           const source = { root: unrelated.root, path: unrelated.path }, representation = codemapRepresentation(unrelated, source);
           assert(representation?.kind === 'rendered');
-          materials.push({ availability: 'settled', record: { ...template.record, id: sourceId(source), selection: { kind: 'codemap', source },
+          materials.push({ availability: 'settled', sourceBlock: null, record: { ...template.record, id: sourceId(source), selection: { kind: 'codemap', source },
             identity: unrelated.identity, artifactKey: representation.key }, bodies: [representation.body] });
         }
       }

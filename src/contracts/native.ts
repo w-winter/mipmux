@@ -147,6 +147,7 @@ export const NativeFileBlockInput = Type.Object({ kind: Type.Literal('renderFile
   ranges: Type.Union([Type.Array(NativeSliceRange), Type.Null()]),
 }, { additionalProperties: false });
 export const NativeFileBlockResult = Type.Object({ kind: Type.Literal('fileBlock'), text: Type.String(),
+  bodySpans: Type.Array(Type.Object({ offset: SafeCount, length: SafeCount }, { additionalProperties: false })),
   segments: Type.Array(Type.Object({ ...NativeSliceRange.properties, text: Type.String() }, { additionalProperties: false })),
   combinedText: Type.String(), totalLines: SafeCount, detectedLineEnding: Type.String(), isFullFile: Type.Boolean(),
 }, { additionalProperties: false });

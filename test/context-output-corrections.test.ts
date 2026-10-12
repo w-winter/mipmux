@@ -153,8 +153,9 @@ test('current verification rejects self-consistent forged slices against the exa
       const manifest = structuredClone(ready.manifest), materials = structuredClone(saved.materials);
       const material = materials.find(item => item.record.kind === 'source' && item.record.selection.kind === 'slices');
       assert(material?.record.kind === 'source' && material.record.selection.kind === 'slices');
+      let bodies = material.bodies;
       if (scenario === 'wrongBody') {
-        materials[materials.indexOf(material)] = { availability: 'settled', record: material.record, bodies: ['WRONG\r\n'] };
+        bodies = ['WRONG\r\n'];
       } else {
         const path = scenario === 'emptySlice' ? 'empty.txt' : 'slice.txt';
         const end = scenario === 'emptySlice' ? 1 : 5;
@@ -167,9 +168,16 @@ test('current verification rejects self-consistent forged slices against the exa
           material.record.id = empty.record.id;
         }
         material.record.selection = { kind: 'slices', source: { root: 'r', path }, ranges: [{ start: 1, end, description: 'forged' }] };
-        material.record.normalized = [{ start: 1, end }];
+        material.record.normalized = [{ start: 1, end, description: 'forged' }];
         manifest.request.requiredSources = [material.record.selection];
       }
+      const [range] = material.record.normalized; assert(range);
+      const label = range.start === range.end ? String(range.start) : range.start + '-' + range.end;
+      const prefix = 'File: r/' + material.record.selection.source.path + '\n(lines ' + label +
+        (range.description ? ': ' + range.description : '') + ')\n```txt\n';
+      const body = bodies.join('');
+      materials[materials.indexOf(material)] = { ...material, bodies, sourceBlock: { text: prefix + body + '\n```',
+        bodySpans: [{ offset: Buffer.byteLength(prefix), length: Buffer.byteLength(body) }] } };
       const rendered = renderBundle({ codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials });
       manifest.requestDigest = sha256(canonicalJSON(manifest.request));
       manifest.materials = rendered.records;

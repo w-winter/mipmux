@@ -3,7 +3,8 @@ import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span } from '../
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { PatchInput } from '../contracts/patches.js';
 import type { Material } from './material-store.js';
-import { canonicalJSON, compareBytes, sha256 } from '../workspace/values.js';
+import type { SourceBlock } from './source-block.js';
+import { canonicalJSON, compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits, scoutTokenBudget } from './budget.js';
 
 export interface RenderInput {
@@ -177,16 +178,43 @@ function comparisonSummary(record: Extract<MaterialRecord, { kind: 'patch' }>): 
 
 function materialIntroduction(record: MaterialRecord): string {
   const parts = ['## ' + materialTitle(record) + '\n\n'];
-  if (record.kind === 'source') {
-    parts.push(record.required ? 'Required source.\n\n' : record.selectionOrigin === 'inferred' ? 'Automatic related codemap.\n\n' : 'Optional source.\n\n');
-    if (record.selection.kind === 'slices') {
-      parts.push('Requested ranges:\n\n');
-      for (const range of record.selection.ranges) parts.push(`- Lines ${range.start}-${range.end}${range.description === null ? '' : ': ' + range.description}\n`);
-      parts.push('\n');
-    }
-  }
   if (record.kind === 'document' && record.input.kind === 'suppliedDocument') parts.push('Origin: ' + record.input.origin + '\n\n');
   return parts.join('');
+}
+
+function renderSourceMaterial(record: Extract<MaterialRecord, { kind: 'source' }>, bodies: readonly string[],
+  block: SourceBlock | null, offset: number) {
+  const spans: Span[] = [];
+  let text = '', frame: Span | null = null;
+  if (block) {
+    frame = { offset, length: Buffer.byteLength(block.text), sha256: sha256(block.text) };
+    for (const [index, span] of block.bodySpans.entries()) {
+      // SAFETY: native and saved-block parsing establish one span per retained body.
+      spans.push({ offset: offset + span.offset, length: span.length, sha256: sha256(bodies[index]!) });
+    }
+    text = block.text + '\n\n';
+  } else {
+    if (record.selection.kind !== 'codemap') throw new WorkspaceFailure('invalidSourceBlock');
+    for (const body of bodies) {
+      spans.push({ offset: offset + Buffer.byteLength(text), length: Buffer.byteLength(body), sha256: sha256(body) });
+      text += body + '\n\n';
+    }
+  }
+  return { text, record: { ...record, spans, frame } };
+}
+
+function renderRawMaterial(record: Exclude<MaterialRecord, { kind: 'source' }>, bodies: readonly string[], offset: number) {
+  let text = materialIntroduction(record);
+  const spans: Span[] = [];
+  for (const body of bodies) {
+    const marker = fence(body);
+    text += marker + '\n';
+    spans.push({ offset: offset + Buffer.byteLength(text), length: Buffer.byteLength(body), sha256: sha256(body) });
+    text += body;
+    if (!body.endsWith('\n')) text += '\n';
+    text += marker + '\n\n';
+  }
+  return { text, record: { ...record, spans } };
 }
 
 function workspaceOverview(inventory: RenderInput['inventory'], materials: readonly Material[]): string {
@@ -203,11 +231,39 @@ function workspaceOverview(inventory: RenderInput['inventory'], materials: reado
   return parts.join('');
 }
 
-function bodyHeading(record: MaterialRecord, index: number): string {
-  if (record.kind !== 'source' || record.selection.kind !== 'slices') return '';
-  // SAFETY: acquisition and saved-material decoding establish one body per normalized range.
-  const range = record.normalized[index]!;
-  return `### Lines ${range.start}-${range.end}\n\n`;
+function sourceComparisonDiagnostic(source: Extract<MaterialRecord, { kind: 'source' }>,
+  patch: Extract<MaterialRecord, { kind: 'patch' }>): Diagnostic | null {
+  if (patch.receipt.input.root !== source.selection.source.root) return null;
+  const target = patch.receipt.targets.find(target => target.path === source.selection.source.path);
+  if (patch.receipt.input.kind === 'localPatch' && patch.receipt.input.comparison.kind === 'worktree' &&
+    !target && !patch.receipt.coverage.includes(source.selection.source.path)) return null;
+  if (target && canonicalJSON(target.identity) === canonicalJSON(source.identity) && target.mode === source.mode) return null;
+  return { code: 'sourceComparisonMismatch', materialId: source.id, details: {
+    patchId: patch.id, expected: target ?? null, observed: { identity: source.identity, mode: source.mode },
+  } };
+}
+
+function materialDiagnostics(materials: readonly Material[], units: number, allowance: number): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  for (const material of materials) {
+    if (material.availability === 'pendingCodemap') {
+      diagnostics.push({ code: 'codemapPending', materialId: material.record.id, details: { source: material.record.selection.source } });
+    }
+  }
+  if (units > allowance) {
+    diagnostics.push({
+      code: 'overBudget',
+      materialId: null,
+      details: { units, allowance, excess: units - allowance },
+    });
+  }
+  const sources = materials.flatMap(({ record }) => record.kind === 'source' ? [record] : []);
+  const patches = materials.flatMap(({ record }) => record.kind === 'patch' ? [record] : []);
+  for (const source of sources) for (const patch of patches) {
+    const diagnostic = sourceComparisonDiagnostic(source, patch);
+    if (diagnostic) diagnostics.push(diagnostic);
+  }
+  return diagnostics;
 }
 
 /** Renders exact material bodies and byte spans without I/O or ambient state. */
@@ -225,19 +281,17 @@ export function renderBundle(input: RenderInput) {
   append(workspaceOverview(input.inventory, materials));
   append('## Selected material tree\n\nCodemap mode: ' + input.codemapMode + '.\n\n' + selectedTree(materials) + '\n');
   for (const material of materials) {
-    const start = offset, spans: Span[] = [];
+    const start = offset;
     const record = material.record;
-    append(materialIntroduction(record));
-    for (const [index, body] of material.bodies.entries()) {
-      append(bodyHeading(record, index));
-      const marker = fence(body);
-      append(marker + '\n');
-      spans.push({ offset, length: Buffer.byteLength(body), sha256: sha256(body) });
-      append(body);
-      if (!body.endsWith('\n')) append('\n');
-      append(marker + '\n\n');
+    if (record.kind === 'source') {
+      const source = renderSourceMaterial(record, material.bodies, material.sourceBlock, offset);
+      append(source.text); records.push(source.record);
+      const bytes = offset - start;
+      costs.push({ id: record.id, bytes, units: estimateUnits(bytes) });
+      continue;
     }
-    records.push({ ...material.record, spans });
+    const raw = renderRawMaterial(record, material.bodies, offset);
+    append(raw.text); records.push(raw.record);
     const bytes = offset - start;
     costs.push({ id: material.record.id, bytes, units: estimateUnits(bytes) });
   }
@@ -256,43 +310,7 @@ export function renderBundle(input: RenderInput) {
     excess: Math.max(0, units - allowance),
     fixedOverhead: { bytes: fixedBytes, units: estimateUnits(fixedBytes) },
   };
-  const diagnostics: Diagnostic[] = [];
-  for (const material of materials) {
-    if (material.availability === 'pendingCodemap') {
-      diagnostics.push({ code: 'codemapPending', materialId: material.record.id, details: { source: material.record.selection.source } });
-    }
-  }
-  if (units > allowance) {
-    diagnostics.push({
-      code: 'overBudget',
-      materialId: null,
-      details: { units, allowance, excess: units - allowance },
-    });
-  }
-  for (const material of materials) {
-    const source = material.record;
-    if (source.kind !== 'source') continue;
-    for (const candidate of materials) {
-      const patch = candidate.record;
-      if (
-        patch.kind !== 'patch' || patch.receipt.input.root !== source.selection.source.root
-      ) continue;
-      const target = patch.receipt.targets.find((target) => target.path === source.selection.source.path);
-      if (patch.receipt.input.kind === 'localPatch' && patch.receipt.input.comparison.kind === 'worktree' &&
-          !target && !patch.receipt.coverage.includes(source.selection.source.path)) continue;
-      if (!target || canonicalJSON(target.identity) !== canonicalJSON(source.identity) || target.mode !== source.mode) {
-        diagnostics.push({
-          code: 'sourceComparisonMismatch',
-          materialId: source.id,
-          details: {
-            patchId: patch.id,
-            expected: target ?? null,
-            observed: { identity: source.identity, mode: source.mode },
-          },
-        });
-      }
-    }
-  }
+  const diagnostics = materialDiagnostics(materials, units, allowance);
   const handoff = '# Context handoff\n\n' +
     block(
       canonicalJSON({

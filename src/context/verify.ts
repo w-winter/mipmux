@@ -8,6 +8,7 @@ import { codemapRepresentation, identity, type Material, normalizeRanges, source
 import { renderBundle } from './render.js';
 import { readRegularFile } from '../runtime/host-files.js';
 import { StructureIndex } from '../workspace/structure-index.js';
+import { parseSourceBlock, type SourceBlock } from './source-block.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -23,7 +24,8 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   let manifest: unknown;
   try {
     manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(raw));
-  } catch {
+  } catch (error) {
+    if (!(error instanceof SyntaxError || error instanceof TypeError)) throw error;
     throw new WorkspaceFailure('invalidManifest');
   }
   if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
@@ -63,7 +65,15 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
 function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
   return readRegularFile(join(directory, filename), new WorkspaceFailure('nonRegularBundleFile', { component: filename }), signal);
 }
+function decodedBody(bytes: Buffer): string {
+  try { return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes); }
+  catch (error) {
+    if (!(error instanceof TypeError)) throw error;
+    throw new WorkspaceFailure('bundleIntegrityFailed');
+  }
+}
 function verifyCodemap(record: Extract<MaterialRecord, { kind: 'source' }>, entry: InventoryEntry, bodies: readonly string[]): void {
+  requireEqual(record.frame, null);
   const representation = codemapRepresentation(entry, record.selection.source);
   if (!representation) throw new WorkspaceFailure('bundleIntegrityFailed');
   requireEqual(record.artifactKey, representation.key);
@@ -96,17 +106,23 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
     seen.add(record.id);
     const bodies = record.spans.map((span) => {
       const body = context.subarray(span.offset, span.offset + span.length);
-      try {
-        return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(body);
-      } catch {
-        throw new WorkspaceFailure('bundleIntegrityFailed');
-      }
+      return decodedBody(body);
     });
+    let sourceBlock: SourceBlock | null = null;
     if (record.kind === 'source') {
       const entry = manifest.inventory.entries.find((entry) =>
         entry.root === record.selection.source.root && entry.path === record.selection.source.path
       );
       verifySourceMaterial(record, entry, bodies);
+      if (record.selection.kind !== 'codemap') {
+        const frame = record.frame;
+        if (!frame) throw new WorkspaceFailure('bundleIntegrityFailed');
+        const bytes = context.subarray(frame.offset, frame.offset + frame.length);
+        requireEqual(identity(bytes), { byteCount: frame.length, sha256: frame.sha256 });
+        sourceBlock = parseSourceBlock(record, { text: decodedBody(bytes),
+          bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
+          bodies, new WorkspaceFailure('bundleIntegrityFailed'));
+      }
     } else if (record.kind === 'document') {
       requireEqual(record.id, 'document:' + record.input.id);
       requireEqual(bodies.length, 1);
@@ -132,7 +148,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
         requireEqual(record.receipt.policies.map(control => control.path).sort(), paths);
       }
     }
-    return { availability: 'settled' as const, record: { ...record, spans: [] }, bodies };
+    return { availability: 'settled' as const, record: { ...record, spans: [] }, bodies, sourceBlock };
   });
   for (const selection of manifest.request.requiredSources) {
     const material = materials.find((material) => material.record.id === sourceId(selection.source));

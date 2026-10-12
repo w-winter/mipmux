@@ -21,7 +21,7 @@ struct FileBlockInput {
 
     func render() -> [String: Any] {
         let assembly = SliceAssemblyBuilder.build(from: content, ranges: ranges)
-        let text = RPCEPromptFileBlocks.renderFileBlock(
+        let block = RPCEPromptFileBlocks.renderFileBlock(
             selectedPath: selectedPath, startFence: RPCEPromptFileBlocks.codeFenceStart(for: fileName),
             content: content, assembly: assembly
         )
@@ -29,7 +29,8 @@ struct FileBlockInput {
             ["start": segment.range.start, "end": segment.range.end,
              "description": segment.range.description.map { $0 as Any } ?? NSNull(), "text": segment.text]
         }
-        return ["kind": "fileBlock", "text": text, "segments": segments,
+        return ["kind": "fileBlock", "text": block.text, "segments": segments,
+                "bodySpans": block.bodySpans.map { ["offset": $0.offset, "length": $0.length] },
                 "combinedText": assembly.combinedText, "totalLines": assembly.totalLines,
                 "detectedLineEnding": assembly.detectedLineEnding, "isFullFile": assembly.isFullFile]
     }
