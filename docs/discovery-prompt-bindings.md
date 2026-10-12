@@ -130,6 +130,10 @@ This pinned headless binding uses captured identity instead of watcher tickets. 
 
 The formatter tags syntax and raw-body lines during source emission and returns UTF-8 body spans alongside unchanged reference text. Live acquisition retains that immutable block with declared-root-qualified labels for final packet rendering. `source-block.ts` is an inverse framing parser, not a second renderer: it checks the captured path, language fence, normalized annotations and each body span before constructing a typed archived block. Saved verification continues to use bundle bytes without a native executable. Packet tests preserve exact mixed-ending bodies and reject source-label/fence tampering even after consistent regeneration of manifests and hashes. Integration of copy presets, clipboard sections and source accounting remains unfinished.
 
+## Clipboard packaging dependency
+
+`renderClipboard` executes the pinned clipboard packaging functions against captured file, codemap, tree, meta and Git inputs. It reuses the existing native file-block formatter and slice assembler. The original title escaping, relative/full paths, selected-Git precedence, numbered meta blocks and section builder remain active in this boundary. `test/fixtures/rpce-clipboard/` contains 29 exact outputs from independently compiled RPCE bodies; `scripts/generate-clipboard-fixtures.mjs` regenerates them. The fixtures use datetime disabled and assume file/Git authorization occurred before packaging. Preset resolution and the smip packet renderer still require integration with this kernel.
+
 ## Final-map integration
 
 `final-tree.ts` binds the final-export selection to the retained native snapshot renderer. Unlike startup's all-root overview, final maps use the source selected-root filter. Availability markers come from the presentation requested by the operation: automatic seed projections and retained selected codemaps, not every indexed neighbor. The adapter includes admitted neighbors and explicitly selected managed-only files; the native trie reconstructs their ancestors. Receipt, preview, inspection, validation and publication measurements include this map.

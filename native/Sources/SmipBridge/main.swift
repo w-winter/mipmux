@@ -19,6 +19,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .renderDiscoveryMessage(input): input.render()
     case let .renderFileTree(input): input.render()
     case let .renderPromptAssembly(input): input.render()
+    case let .renderClipboard(input): await input.render()
     case let .queryStructure(input): try input.render()
     case let .matchSelectionPath(input): input.render()
     case let .openRoots(roots): try files.openRoots(roots)

@@ -1,0 +1,117 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "sha256": "22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb",
+      "retainedRanges": [
+        [
+          6,
+          46
+        ],
+        [
+          109,
+          153
+        ],
+        [
+          167,
+          443
+        ],
+        [
+          449,
+          470
+        ]
+      ],
+      "adaptations": [
+        "Original declarations extracted with their container; bodies unchanged."
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "sha256": "551f40f968ca24f53f60cc73416174f226a7f4801b253ee6997e1ea5f7cef4eb",
+      "retainedRanges": "complete",
+      "adaptations": []
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "sha256": "a39a4f69ba729de3e153d51c80b944a5317032b6605157466270043a519efce1",
+      "retainedRanges": "complete",
+      "adaptations": [
+        "Removed import RepoPromptFoundation; original LineRange compiled in same module."
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496",
+      "retainedRanges": "complete",
+      "adaptations": []
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239",
+      "retainedRanges": "complete",
+      "adaptations": []
+    },
+    {
+      "path": "Sources/RepoPromptDomainRuntime/StringExtensions.swift",
+      "sha256": "72c0578d3cf8ed69954c3e0900bf1702d9acc13c6ae2bcb9d1e6cbc5770422c3",
+      "retainedRanges": [
+        [
+          113,
+          135
+        ],
+        [
+          345,
+          386
+        ]
+      ],
+      "adaptations": [
+        "Extracted methods wrapped in extension String; bodies and package access unchanged."
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/src/Utils/string_extensions_wrapper.c",
+      "sha256": "96afedd30946f265e6a34b467054f7e2b91b85260d899b7145fb8e2807ec106d",
+      "retainedRanges": [
+        [
+          784,
+          961
+        ]
+      ],
+      "adaptations": [
+        "Original split/free implementations compiled with standard includes and extracted declarations."
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/include/string_extensions_wrapper.h",
+      "sha256": "ca75c176a359eeb8e687f8be7c769fe3f868ffad5768215d5fa49279d895f33e",
+      "retainedRanges": [
+        [
+          76,
+          89
+        ]
+      ],
+      "adaptations": [
+        "Added stddef.h and used Swift bridging header instead of RPCE C module."
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "sha256": "8888d33d8a3fe4e1eafc104bf76aa4f34596aee170961acee2535c2429b5f186",
+      "retainedRanges": [],
+      "adaptations": [
+        "Evidence only: Standard 23–39 and Review 93–109 inclusion flags supplied as resolved caller inputs. Preset resolver not executed."
+      ]
+    }
+  ],
+  "cases": 29,
+  "generator": "scripts/generate-clipboard-fixtures.mjs",
+  "adapters": "test/fixtures/rpce-clipboard/reference-adapters.swift",
+  "adaptersSHA256": "d6dfeba35e9534fff9cc6c83504bbee0d217eee6f238f2698dce199bc628f2b1",
+  "harnessSHA256": "cd5811418ac24349153d2e7b867e890156f1f831f5db53b53e0b0ffae11e505c",
+  "executionSHA256": "7b5479c8197f1ed59e0f3f80d60883e18e3380f599a6d7708c124dbf9af87e38",
+  "limits": [
+    "Datetime is disabled in all reference inputs.",
+    "Captured DTOs supply presentation and authorization facts; tree, acquisition, Git queries, preassembly and preset resolution are not executed."
+  ]
+}

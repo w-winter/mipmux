@@ -21,6 +21,7 @@ const resultKinds = {
   renderDiscoveryMessage: ['discoveryMessage'],
   renderFileTree: ['fileTree'],
   renderPromptAssembly: ['promptAssembly'],
+  renderClipboard: ['clipboard'],
   queryStructure: ['structure'],
   transitionSelection: ['selectionTransition'],
   calculateSliceRanges: ['sliceRanges'],

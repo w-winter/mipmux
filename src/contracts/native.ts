@@ -35,6 +35,24 @@ export const NativeFileTreeResult = Type.Object({ kind: Type.Literal('fileTree')
 export type NativeFileTreeResult = Static<typeof NativeFileTreeResult>;
 const promptSection = Type.Enum(['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions']);
 const snippetText = Type.Union([Type.String(), Type.Null()]);
+const clipboardLine = Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER });
+const clipboardRange = Type.Object({ start: clipboardLine, end: clipboardLine, description: snippetText }, { additionalProperties: false });
+export const NativeClipboardInput = Type.Object({ kind: Type.Literal('renderClipboard'), input: Type.Object({
+  metaInstructions: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
+  userInstructions: Type.String(), files: Type.Array(Type.Object({
+    file: Type.Object({ id: Type.String(), rootID: Type.String(), name: Type.String(), relativePath: Type.String(),
+      fullPath: Type.String() }, { additionalProperties: false }),
+    role: Type.Enum(['ordinary', 'authorizedGitDiffArtifact']), isCodemap: Type.Boolean(), loadedContent: snippetText,
+    lineRanges: Type.Union([Type.Array(clipboardRange), Type.Null()]), rootFolderPath: snippetText,
+  }, { additionalProperties: false })), fileTreeContent: snippetText, gitDiff: snippetText,
+  includeSavedPrompts: Type.Boolean(), includeFiles: Type.Boolean(), includeUserPrompt: Type.Boolean(),
+  includeDatetimeInUserInstructions: Type.Boolean(),
+  filePathDisplay: Type.Enum(['full', 'relative']),
+  codemapPresentation: Type.Object({ renderedEntriesByFileID: Type.Record(Type.String(),
+    Type.Object({ text: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false }),
+  promptSectionsOrder: Type.Array(promptSection), disabledPromptSections: Type.Array(promptSection),
+  duplicateUserInstructionsAtTop: Type.Boolean(), tabTitle: snippetText,
+}, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePromptAssemblyInput = Type.Object({ kind: Type.Literal('renderPromptAssembly'),
   order: Type.Array(promptSection), disabled: Type.Array(promptSection), duplicateUserInstructionsAtTop: Type.Boolean(),
   snippets: Type.Object({ fileMap: snippetText, fileContents: snippetText, gitDiff: snippetText,
@@ -261,6 +279,7 @@ export const NativeOperation = Type.Union([
   }, { additionalProperties: false }),
   NativeFileTreeInput,
   NativePromptAssemblyInput,
+  NativeClipboardInput,
   NativeStructureInput,
 ]);
 export type NativeOperation = Static<typeof NativeOperation>;
@@ -279,6 +298,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('clipboard'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }, { additionalProperties: false }),
   NativeFileBlockResult,
   NativeIgnoreInputs,

@@ -4917,6 +4917,39 @@
       "changes": [
         "Replace package access with executable-local access. Omit app-storage and edit-history comments; formatter layout changes only. Original section ordering, omission, repetition, duplication and newline logic is retained."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "sha256": "70bb8e2aad72c87921ccba1427f09ada82f5e476b4a07d182af7a16763cd2e1a",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          6,
+          12
+        ],
+        [
+          19,
+          46
+        ],
+        [
+          109,
+          153
+        ],
+        [
+          167,
+          401
+        ],
+        [
+          453,
+          470
+        ]
+      ],
+      "changes": [
+        "Extract clipboard packaging and its helpers with captured DTOs instead of app records. Reuse the retained native file-block formatter and slice assembler; formatter calls project their text. Keep source title, selected-Git precedence, codemap placement, snippet inclusion, dates and section assembly logic. Apply formatter layout and scoped lint exemptions for original signatures."
+      ]
     }
   ],
   "dependencies": [
@@ -10349,6 +10382,66 @@
       "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
       "destination": "native/Sources/SmipBridge/RPCEPromptAssembly.swift",
       "line": 70
+    },
+    {
+      "name": "MetaInstruction",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 6
+    },
+    {
+      "name": "generateClipboardContent",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 286
+    },
+    {
+      "name": "combinedFileMapContent",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 214
+    },
+    {
+      "name": "partitionPromptEntriesForGitDiff",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 110
+    },
+    {
+      "name": "generateRawFileTexts",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 177
+    },
+    {
+      "name": "generatePartitionedFileBlocks",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 225
+    },
+    {
+      "name": "generateFileBlocksDetailed",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 248
+    },
+    {
+      "name": "buildMetaPromptsSnippet",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 457
+    },
+    {
+      "name": "selectedPath",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 385
+    },
+    {
+      "name": "titleSnippet",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
+      "line": 34
     }
   ],
   "sourceCoverage": [
