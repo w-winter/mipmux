@@ -233,6 +233,7 @@ enum Operation {
     private static func decodeProjection(_ kind: String, _ value: Any) throws -> Operation {
         switch kind {
         case "selectionPathBindings": return try .selection(.pathBindings(SelectionPathBindingsInput(value)))
+        case "selectionHint": return try .selection(.hint(SelectionHintInput(value)))
         case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": return try .git(.show(GitShowInput(value)))
         case "parseGitComparison", "projectGitDiff": return try .git(.diff(GitDiffInput(value)))
         case "parseGitPatch": return try .git(.patch(GitPatchInput(value)))

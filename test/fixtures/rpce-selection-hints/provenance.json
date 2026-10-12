@@ -1,0 +1,24 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "sha256": "a4e6c2d540cc80b7b3977ae5716cc91ba4fd726ace775a7b7117bafa2d6df3d5",
+      "ranges": [
+        [
+          5867,
+          5900
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239"
+    }
+  ],
+  "generatorSHA256": "6eea62d6eaf231ea7bcf0e5380a037f1e2627e5adf124880e51d7c65242762fe",
+  "cases": 5,
+  "bindings": [
+    "Captured root names/paths replace the app store lookup. Root projection and absolute input translation are identity for these headless fixture roots. Original hint method and StandardizedPath bodies execute independently."
+  ]
+}

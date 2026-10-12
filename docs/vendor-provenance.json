@@ -4687,6 +4687,24 @@
           96
         ]
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a4e6c2d540cc80b7b3977ae5716cc91ba4fd726ace775a7b7117bafa2d6df3d5",
+      "destination": "native/Sources/SmipBridge/RPCESelectionHints.swift",
+      "sha256": "aeebe2da9d104dab60dcd7715b7a63ccdaa3f42590fd9a79ccbc9f2ea95d4cf1",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          5867,
+          5900
+        ]
+      ],
+      "changes": [
+        "Extract the original hint method into a static function; captured root records replace app store and binding-projection reads. Absolute inputs already refer to physical headless roots.",
+        "Split two diagnostic literals with string concatenation to meet line-length checks while preserving their complete output."
+      ]
     }
   ],
   "dependencies": [
@@ -9897,6 +9915,12 @@
       "destination": "native/Sources/SmipBridge/RPCEHierarchicalIgnoreEvaluator.swift",
       "name": "isIgnored",
       "line": 36
+    },
+    {
+      "name": "makeSelectionHintError",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionHints.swift",
+      "line": 5867
     }
   ],
   "sourceCoverage": [

@@ -229,6 +229,13 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  selectionHint(paths: readonly string[], operation: string) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request({ kind: 'selectionHint', paths: [...paths], operation,
+        roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result.message;
+    });
+  }
   mutateSelectionPaths(input: Extract<NativeOperation, { kind: 'mutateSelectionPaths' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());

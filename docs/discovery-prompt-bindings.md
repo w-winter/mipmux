@@ -39,7 +39,7 @@ Every substantive difference belongs to one of these interface bindings. Discove
 | Prompt operations | `prompt` with get, set, append and clear; revision and response-cap fields for mutations | Literal prompt state supports Rewrite, Augment and Preserve; the resulting text is delivered in `user_instructions`. |
 | Tab naming | Task-name metadata is omitted | Smip has no compose tab to rename. |
 | Review evidence | Inspect the admitted patches and select supporting source | Git comparison acquisition belongs to the caller. Admitted patches are immutable and cannot be sliced. |
-| Slice preview | `read_file` before a slice upsert | There is no `manage_selection.preview` operation. |
+| Slice preview | `manage_selection` with `op: "preview"` | Native selection policies resolve files, folders and slices; the prepared reply is admitted without committing selection. Strict preview requires rendered files or slices. |
 | Final gate and settlement | `draft_validate`, followed by an acknowledgement; parent-owned verification/publication | The scout stores its handoff and selection; its final response is not the published packet. |
 | Unattainable required budget | Preserve required material, record the gap and return a blocking diagnostic | Immutable caller inputs can make the budget impossible; the scout cannot remove them to force success. |
 | Native tool constraints | Revisions, continuations, pinned-source recovery and complete MCP documents | These contracts are needed to operate the native tools and preserve the authority of the original assignment. |
@@ -111,6 +111,10 @@ Literal LF splitting in `GitDiffPatchParsing` calls `NSString` on both platforms
 The native implementation retains the original C wildcard matcher, Swift compiler, immutable rule nodes and bounded pattern-string pool. `test/fixtures/rpce-ignore/` contains 20 outputs produced by compiling the original source. `scripts/generate-ignore-fixtures.mjs` regenerates them. These fixtures exercise supplied control text and query paths.
 
 Workspace admission uses the original containing-repository resolver, Git layout resolver, global pattern defaults and hierarchical prefix evaluator. A source-root capability replaces the desktop filesystem service. Native capture reads the fixed control names and records authority, settings, text and byte identities; TypeScript retains the captured policy for the generation and current verification. On macOS, directory paths are canonicalized before no-follow traversal so Foundation's `/var` and `/private/var` spellings address the same physical parent. Mandatory Git controls keep their no-follow leaf rule. `test/workspace-ignore-parity.test.ts` exercises inherited controls, mandatory Git exclusions, negation reachability, configured layer switches, separate Git directories and current-policy change rejection through runtime operations.
+
+## Selection error hints
+
+`selectionHint` executes the extracted `MCPServerViewModel.makeSelectionHintError` method at the pinned RPCE revision. Captured root names and physical paths replace the app store and tab projection. Absolute input paths use the retained `StandardizedPath` implementation; trimming, root order, descendant boundaries, the two-path sample and diagnostic wording follow the source. `test/fixtures/rpce-selection-hints/` contains five outputs from independently compiling the original method and path normalization; `scripts/generate-selection-hint-fixtures.mjs` regenerates them. Public MCP tests exercise strict add/remove/preview failures, invalid slice specifications, promotion/demotion and non-renderable codemap previews.
 
 ## Automatic source decoding
 

@@ -112,6 +112,10 @@ const SelectionPathBindingsInput = Type.Object({ kind: Type.Literal('selectionPa
   paths: Type.Array(Type.String()) }, { additionalProperties: false });
 const SelectionPathBindingsResult = Type.Object({ kind: Type.Literal('selectionPathBindings'),
   paths: Type.Array(Type.String()) }, { additionalProperties: false });
+const SelectionHintInput = Type.Object({ kind: Type.Literal('selectionHint'),
+  roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String({ pattern: '^/[^\\u0000]*$' }) }, { additionalProperties: false }), { minItems: 1 }),
+  paths: Type.Array(Type.String()), operation: Type.String() }, { additionalProperties: false });
+const SelectionHintResult = Type.Object({ kind: Type.Literal('selectionHint'), message: Type.String() }, { additionalProperties: false });
 export const NativeReadArgument = Type.Union([Type.Integer(), Type.String(), Type.Null()]);
 export const NativeReadTextInput = Type.Object({ kind: Type.Literal('sliceReadText'), text: Type.String(),
   start_line: NativeReadArgument, offset: NativeReadArgument, limit: NativeReadArgument }, { additionalProperties: false });
@@ -190,6 +194,7 @@ export const NativeOperation = Type.Union([
   NativeReadTextInput,
   NativeSelectionInputParsingRequest,
   SelectionPathBindingsInput,
+  SelectionHintInput,
   NativeSelectionPreparationInput,
   NativeSelectionPathMutationInput,
   NativeSelectionCandidatesInput,
@@ -251,6 +256,7 @@ export const NativeResult = Type.Union([
   ...NativeReadTextResult.anyOf,
   NativeSelectionInputParsingResult,
   SelectionPathBindingsResult,
+  SelectionHintResult,
   ...NativeSelectionPreparationResult.anyOf,
   ...NativeSelectionPathMutationResult.anyOf,
   NativeSelectionCandidatesResult,

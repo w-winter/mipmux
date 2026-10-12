@@ -148,6 +148,9 @@ export class DraftRuntime {
         const isMutation = request.op !== 'get' && request.op !== 'preview';
         const reply = this.#selectionReply(request, next, prepared.mode, prepared.invalid,
           isMutation ? candidate.revision : revision);
+        if (request.op === 'preview' && request.strict && !reply.files?.length) {
+          throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
+        }
         const requiredBytes = serializedBytes(encode(reply));
         if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
         if (isMutation && candidate.changed) {

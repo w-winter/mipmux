@@ -152,6 +152,40 @@ test('source set rejects invalid inputs even without strict and preview/receipt 
   } finally { await f.client.close(); }
 });
 
+test('strict selection failures retain source path hints and leave selection unchanged', async () => {
+  const f = await fixture();
+  const failure = Compile(Type.Object({ message: Type.String() }));
+  const receipts = [];
+  try {
+    const paths = [' /outside-one/File.swift ', '\n', '/outside-two/File.swift', '/outside-three/File.swift'];
+    for (const op of ['add', 'remove', 'preview'] as const) {
+      const reply = await f.select({ op, paths, strict: true });
+      assert.equal(reply.isError, true, JSON.stringify(reply));
+      assert.equal(failure.Parse(reply.structuredContent).message,
+        "No provided paths matched any files or folders for '" + op + "'. Loaded roots: r → " + f.root +
+        " Provide either: (a) Root-name + relative path (e.g., 'Root/Sub/Path.swift'), or (b) a full absolute path under a loaded root." +
+        ' Not under any loaded root: /outside-one/File.swift, /outside-two/File.swift');
+      receipts.push(reply);
+    }
+    const invalidSlices = await f.select({ op: 'add', paths: ['r/Main.swift'], slices: [null], strict: true });
+    assert.equal(invalidSlices.isError, true, JSON.stringify(invalidSlices));
+    assert.equal(failure.Parse(invalidSlices.structuredContent).message, 'No valid slices parsed from provided specification');
+    for (const op of ['promote', 'demote'] as const) {
+      const reply = await f.select({ op, paths: ['r/zone'] });
+      assert.equal(reply.isError, true, JSON.stringify(reply));
+      assert(failure.Parse(reply.structuredContent).message.startsWith('Invalid selection inputs: '));
+      receipts.push(reply);
+    }
+    const emptyPreview = await f.select({ op: 'preview', mode: 'codemap_only', paths: ['r/Empty.swift'], strict: true });
+    assert.equal(emptyPreview.isError, true, JSON.stringify(emptyPreview));
+    assert(failure.Parse(emptyPreview.structuredContent).message.startsWith("No provided paths matched any files or folders for 'preview'."));
+    const state = await f.inspect();
+    assert.equal(state.revision, 0);
+    assert(!state.items.some(item => item.kind === 'source'));
+    await writeFile(join(f.base, 'selection-error-hints-receipt.json'), JSON.stringify({ receipts, invalidSlices, emptyPreview, state }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
 test('absolute explicit selection admits ignored regular sources and preserves saved packet evidence', async () => {
   const f = await fixture();
   try {

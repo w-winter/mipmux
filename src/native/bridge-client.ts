@@ -28,6 +28,7 @@ const resultKinds = {
   prepareSelection: ['selectionBuilt', 'selectionSlicesChanged'],
   parseSelectionInputs: ['selectionInputs'],
   selectionPathBindings: ['selectionPathBindings'],
+  selectionHint: ['selectionHint'],
 } as const satisfies Record<NativeOperation['kind'], readonly NativeResult['kind'][]>;
 type ResultByOperation = { [K in NativeOperation['kind']]: Extract<NativeResult, { kind: typeof resultKinds[K][number] }> };
 export interface NativeReply<K extends NativeOperation['kind'] = NativeOperation['kind']> {

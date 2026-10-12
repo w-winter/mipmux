@@ -1,0 +1,97 @@
+[
+  {
+    "name": "outside-sample-and-trimming",
+    "input": {
+      "kind": "selectionHint",
+      "roots": [
+        {
+          "name": "A",
+          "path": "/repo/a"
+        }
+      ],
+      "paths": [
+        " /outside/one ",
+        "\n",
+        "/outside/two",
+        "/outside/three"
+      ],
+      "operation": "add"
+    },
+    "expected": "No provided paths matched any files or folders for 'add'. Loaded roots: A → /repo/a Provide either: (a) Root-name + relative path (e.g., 'Root/Sub/Path.swift'), or (b) a full absolute path under a loaded root. Not under any loaded root: /outside/one, /outside/two"
+  },
+  {
+    "name": "multi-root-order",
+    "input": {
+      "kind": "selectionHint",
+      "roots": [
+        {
+          "name": "B",
+          "path": "/repo/b"
+        },
+        {
+          "name": "A",
+          "path": "/repo/a"
+        }
+      ],
+      "paths": [
+        "unknown.swift"
+      ],
+      "operation": "remove"
+    },
+    "expected": "No provided paths matched any files or folders for 'remove'. Loaded roots: B → /repo/b; A → /repo/a Provide either: (a) Root-name + relative path (e.g., 'Root/Sub/Path.swift'), or (b) a full absolute path under a loaded root."
+  },
+  {
+    "name": "descendant-boundary",
+    "input": {
+      "kind": "selectionHint",
+      "roots": [
+        {
+          "name": "A",
+          "path": "/repo/a"
+        }
+      ],
+      "paths": [
+        "/repo/a",
+        "/repo/a/sub/file.swift",
+        "/repo/ab/file.swift"
+      ],
+      "operation": "preview"
+    },
+    "expected": "No provided paths matched any files or folders for 'preview'. Loaded roots: A → /repo/a Provide either: (a) Root-name + relative path (e.g., 'Root/Sub/Path.swift'), or (b) a full absolute path under a loaded root. Not under any loaded root: /repo/ab/file.swift"
+  },
+  {
+    "name": "standardized-absolute",
+    "input": {
+      "kind": "selectionHint",
+      "roots": [
+        {
+          "name": "A",
+          "path": "/repo/a"
+        }
+      ],
+      "paths": [
+        "/repo/a/sub/../file.swift"
+      ],
+      "operation": "promote"
+    },
+    "expected": "No provided paths matched any files or folders for 'promote'. Loaded roots: A → /repo/a Provide either: (a) Root-name + relative path (e.g., 'Root/Sub/Path.swift'), or (b) a full absolute path under a loaded root."
+  },
+  {
+    "name": "empty-input",
+    "input": {
+      "kind": "selectionHint",
+      "roots": [
+        {
+          "name": "A",
+          "path": "/repo/a"
+        }
+      ],
+      "paths": [
+        "",
+        "\t"
+      ],
+      "operation": "demote"
+    },
+    "expected": "No provided paths matched any files or folders for 'demote'. Loaded roots: A → /repo/a Provide either: (a) Root-name + relative path (e.g., 'Root/Sub/Path.swift'), or (b) a full absolute path under a loaded root."
+  }
+]

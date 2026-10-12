@@ -96,9 +96,6 @@ async function replaceSelection(operation: WorkspaceOperation, request: Selectio
   if (request.op === 'set' && result.invalidPaths.length) {
     throw new WorkspaceFailure('invalidSelection', { message: 'Invalid selection inputs: ' + result.invalidPaths.join(', ') });
   }
-  if (request.op === 'preview' && request.strict && !result.selection.selectedPaths.length && !result.selection.manualCodemapPaths.length) {
-    throw new WorkspaceFailure('invalidSelection', { message: 'Provided selection inputs did not match any files' });
-  }
   return { state: result.selection, invalid: [...result.invalidPaths, ...result.codemapUnavailable] };
 }
 async function mutatePaths(operation: WorkspaceOperation, request: PathRequest, parsed: Parsed, state: State, catalog: Catalog) {
@@ -114,7 +111,9 @@ async function mutatePaths(operation: WorkspaceOperation, request: PathRequest, 
   const resolved = result.op === 'promote' || result.op === 'demote'
     ? result.validCandidateCount > 0 : result.mutated || Object.keys(result.resolvedMap).length > 0;
   if ((request.op === 'promote' || request.op === 'demote') && !resolved) {
-    throw new WorkspaceFailure('invalidSelection', { message: invalid.join('; ') });
+    const combinedInvalid = [...new Set([...invalid, ...parsed.sliceErrors])];
+    throw new WorkspaceFailure('invalidSelection', { message: combinedInvalid.length ? 'Invalid selection inputs: ' + combinedInvalid.join(', ')
+      : await operation.selectionHint(request.paths, request.op) });
   }
   return { state: result.selection, invalid, resolved };
 }
@@ -128,10 +127,16 @@ async function mutateSelection(operation: WorkspaceOperation, request: PathReque
     if (result.kind !== 'selectionSlicesChanged') throw new WorkspaceFailure('nativeProtocolError');
     next = result.selection; invalid.push(...result.invalidPaths);
     resolved ||= result.mutated || Object.keys(result.resolvedMap).length > 0;
-  } else if (parsed.hadExplicitSliceSpec && request.strict) {
-    throw new WorkspaceFailure('invalidSelection', { message: parsed.sliceErrors.join('; ') });
+    if (request.strict && !resolved && !result.invalidPaths.length && (request.op === 'remove' || !parsed.paths.length)) {
+      throw new WorkspaceFailure('invalidSelection', { message: 'Provided slices did not match any files' });
+    }
+  } else if (parsed.hadExplicitSliceSpec && request.strict && !(request.op === 'add' && request.mode === 'codemap_only')) {
+    throw new WorkspaceFailure('invalidSelection', { message: parsed.sliceErrors.length ? parsed.sliceErrors.join('; ')
+      : 'No valid slices parsed from provided specification' });
   }
-  if (request.strict && !resolved) throw new WorkspaceFailure('invalidSelection', { message: invalid.join('; ') });
+  if (request.strict && !resolved && parsed.paths.length) {
+    throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(request.paths, request.op) });
+  }
   return { state: next, invalid };
 }
 function selectedSources(roots: readonly RootBinding[], state: State): SourceSelection[] {
@@ -164,7 +169,10 @@ export async function prepareSelection(operation: WorkspaceOperation, request: S
     case 'add': case 'remove': case 'promote': case 'demote': prepared = await mutateSelection(operation,
       { ...request, op: request.op }, parsed, state, await capturedCatalog(operation, roots, parsed)); break;
   }
+  const hintPaths = [...request.paths];
+  for (const slice of parsed.slices) if (!hintPaths.includes(slice.path)) hintPaths.push(slice.path);
   return { selections: selectedSources(roots, prepared.state),
     mode: prepared.state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const,
-    invalid: [...new Set(prepared.invalid)] };
+    invalid: [...new Set(prepared.invalid)],
+    hintPaths };
 }
