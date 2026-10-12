@@ -9,7 +9,7 @@ export const SelectionRequest = Type.Object({
   paths: Type.Array(Type.String(), { default: [] }),
   slices: Type.Unknown({ default: null }),
   strict: Type.Boolean({ default: false }),
-  view: Type.Enum(['none', 'summary', 'files', 'content'], { default: 'summary' }),
+  view: Type.Enum(['summary', 'files', 'content', 'codemaps'], { default: 'summary' }),
   path_display: Type.Enum(['relative', 'full'], { default: 'relative' }),
   expectedRevision: Type.Optional(SafeCount),
   maxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),

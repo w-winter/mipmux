@@ -116,6 +116,28 @@ const SelectionHintInput = Type.Object({ kind: Type.Literal('selectionHint'),
   roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String({ pattern: '^/[^\\u0000]*$' }) }, { additionalProperties: false }), { minItems: 1 }),
   paths: Type.Array(Type.String()), operation: Type.String() }, { additionalProperties: false });
 const SelectionHintResult = Type.Object({ kind: Type.Literal('selectionHint'), message: Type.String() }, { additionalProperties: false });
+const selectionReplyFields = { path: Type.String(), rootPath: Type.String(), pathWithinRoot: Type.String(), tokens: SafeCount };
+export const NativeSelectionReplyInput = Type.Object({ kind: Type.Literal('renderSelectionReply'), entries: Type.Array(Type.Union([
+  Type.Object({ ...selectionReplyFields, kind: Type.Literal('full') }, { additionalProperties: false }),
+  Type.Object({ ...selectionReplyFields, kind: Type.Literal('slice'), ranges: Type.Array(NativeSliceRange, { minItems: 1 }) }, { additionalProperties: false }),
+  Type.Object({ ...selectionReplyFields, kind: Type.Literal('codemap'), origin: Type.Enum(['auto', 'manual']) }, { additionalProperties: false }),
+])), status: Type.Enum(['ok', 'preview']), codemapAutoEnabled: Type.Boolean(), invalidPaths: Type.Array(Type.String()),
+  unmappedPaths: Type.Array(Type.String()), blocks: Type.Union([Type.Array(Type.String()), Type.Null()]),
+  view: Type.Enum(['summary', 'files', 'content', 'codemaps']) }, { additionalProperties: false });
+const selectionRangeDTO = Type.Object({ start_line: SafeCount, end_line: SafeCount, description: Type.Optional(Type.String()) }, { additionalProperties: false });
+const selectionFileDTO = Type.Object({ path: Type.String(), tokens: SafeCount, render_mode: Type.Enum(['full', 'slice', 'codemap']),
+  ranges: Type.Optional(Type.Array(selectionRangeDTO)), is_auto: Type.Boolean(), codemap_origin: Type.Optional(Type.Enum(['auto', 'manual', 'selected_mode'])),
+  root_path: Type.String(), path_within_root: Type.String() }, { additionalProperties: false });
+export const NativeSelectionReplyResult = Type.Object({ kind: Type.Literal('selectionReply'), reply: Type.Object({
+  files: Type.Array(selectionFileDTO), total_tokens: SafeCount, status: Type.Enum(['ok', 'preview']),
+  invalid_paths: Type.Optional(Type.Array(Type.String())), blocks: Type.Optional(Type.Array(Type.String())),
+  code_structure: Type.Optional(Type.Object({ file_count: SafeCount, content: Type.String(), unmapped_paths: Type.Array(Type.String()) }, { additionalProperties: false })),
+  file_slices: Type.Optional(Type.Array(Type.Object({ path: Type.String(), ranges: Type.Array(selectionRangeDTO),
+    root_path: Type.String(), path_within_root: Type.String() }, { additionalProperties: false }))),
+  codemap_auto_enabled: Type.Boolean(), code_map_usage: Type.Literal('auto'),
+  summary: Type.Object({ full_count: SafeCount, slice_count: SafeCount, codemap_count: SafeCount,
+    full_tokens: SafeCount, slice_tokens: SafeCount, codemap_tokens: SafeCount }, { additionalProperties: false }),
+}, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativeReadArgument = Type.Union([Type.Integer(), Type.String(), Type.Null()]);
 export const NativeReadTextInput = Type.Object({ kind: Type.Literal('sliceReadText'), text: Type.String(),
   start_line: NativeReadArgument, offset: NativeReadArgument, limit: NativeReadArgument }, { additionalProperties: false });
@@ -195,6 +217,7 @@ export const NativeOperation = Type.Union([
   NativeSelectionInputParsingRequest,
   SelectionPathBindingsInput,
   SelectionHintInput,
+  NativeSelectionReplyInput,
   NativeSelectionPreparationInput,
   NativeSelectionPathMutationInput,
   NativeSelectionCandidatesInput,
@@ -257,6 +280,7 @@ export const NativeResult = Type.Union([
   NativeSelectionInputParsingResult,
   SelectionPathBindingsResult,
   SelectionHintResult,
+  NativeSelectionReplyResult,
   ...NativeSelectionPreparationResult.anyOf,
   ...NativeSelectionPathMutationResult.anyOf,
   NativeSelectionCandidatesResult,

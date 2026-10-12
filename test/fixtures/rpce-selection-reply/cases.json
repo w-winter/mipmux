@@ -1,0 +1,249 @@
+[
+  {
+    "name": "empty-summary",
+    "input": {
+      "kind": "renderSelectionReply",
+      "entries": [],
+      "status": "ok",
+      "codemapAutoEnabled": true,
+      "invalidPaths": [],
+      "unmappedPaths": [],
+      "blocks": null,
+      "view": "summary"
+    },
+    "expected": {
+      "code_map_usage": "auto",
+      "codemap_auto_enabled": true,
+      "files": [],
+      "status": "ok",
+      "summary": {
+        "codemap_count": 0,
+        "codemap_tokens": 0,
+        "full_count": 0,
+        "full_tokens": 0,
+        "slice_count": 0,
+        "slice_tokens": 0
+      },
+      "total_tokens": 0
+    }
+  },
+  {
+    "name": "mixed-slices-and-codemaps",
+    "input": {
+      "kind": "renderSelectionReply",
+      "entries": [
+        {
+          "kind": "codemap",
+          "path": "src/Peer.swift",
+          "rootPath": "repo",
+          "pathWithinRoot": "src/Peer.swift",
+          "tokens": 5,
+          "origin": "manual"
+        },
+        {
+          "kind": "full",
+          "path": "Main.swift",
+          "rootPath": "repo",
+          "pathWithinRoot": "Main.swift",
+          "tokens": 7
+        },
+        {
+          "kind": "slice",
+          "path": "notes.txt",
+          "rootPath": "repo",
+          "pathWithinRoot": "notes.txt",
+          "tokens": 3,
+          "ranges": [
+            {
+              "start": 2,
+              "end": 4,
+              "description": "Read notes"
+            },
+            {
+              "start": 8,
+              "end": 9,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "status": "preview",
+      "codemapAutoEnabled": false,
+      "invalidPaths": [
+        "Missing.swift"
+      ],
+      "unmappedPaths": [
+        "Empty.swift"
+      ],
+      "blocks": [
+        "Main body",
+        "Slice body",
+        "Codemap body"
+      ],
+      "view": "content"
+    },
+    "expected": {
+      "blocks": [
+        "Main body",
+        "Slice body",
+        "Codemap body"
+      ],
+      "code_map_usage": "auto",
+      "code_structure": {
+        "content": "",
+        "file_count": 0,
+        "unmapped_paths": [
+          "Empty.swift"
+        ]
+      },
+      "codemap_auto_enabled": false,
+      "file_slices": [
+        {
+          "path": "notes.txt",
+          "path_within_root": "notes.txt",
+          "ranges": [
+            {
+              "description": "Read notes",
+              "end_line": 4,
+              "start_line": 2
+            },
+            {
+              "end_line": 9,
+              "start_line": 8
+            }
+          ],
+          "root_path": "repo"
+        }
+      ],
+      "files": [
+        {
+          "is_auto": false,
+          "path": "Main.swift",
+          "path_within_root": "Main.swift",
+          "render_mode": "full",
+          "root_path": "repo",
+          "tokens": 7
+        },
+        {
+          "is_auto": false,
+          "path": "notes.txt",
+          "path_within_root": "notes.txt",
+          "ranges": [
+            {
+              "description": "Read notes",
+              "end_line": 4,
+              "start_line": 2
+            },
+            {
+              "end_line": 9,
+              "start_line": 8
+            }
+          ],
+          "render_mode": "slice",
+          "root_path": "repo",
+          "tokens": 3
+        },
+        {
+          "codemap_origin": "manual",
+          "is_auto": false,
+          "path": "src/Peer.swift",
+          "path_within_root": "src/Peer.swift",
+          "render_mode": "codemap",
+          "root_path": "repo",
+          "tokens": 5
+        }
+      ],
+      "invalid_paths": [
+        "Missing.swift"
+      ],
+      "status": "preview",
+      "summary": {
+        "codemap_count": 1,
+        "codemap_tokens": 5,
+        "full_count": 1,
+        "full_tokens": 7,
+        "slice_count": 1,
+        "slice_tokens": 3
+      },
+      "total_tokens": 15
+    }
+  },
+  {
+    "name": "codemaps-view-retains-diagnostics",
+    "input": {
+      "kind": "renderSelectionReply",
+      "entries": [
+        {
+          "kind": "slice",
+          "path": "notes.txt",
+          "rootPath": "repo",
+          "pathWithinRoot": "notes.txt",
+          "tokens": 3,
+          "ranges": [
+            {
+              "start": 2,
+              "end": 4,
+              "description": "Read notes"
+            }
+          ]
+        },
+        {
+          "kind": "codemap",
+          "path": "src/Peer.swift",
+          "rootPath": "repo",
+          "pathWithinRoot": "src/Peer.swift",
+          "tokens": 5,
+          "origin": "auto"
+        }
+      ],
+      "status": "ok",
+      "codemapAutoEnabled": true,
+      "invalidPaths": [
+        "Missing.swift"
+      ],
+      "unmappedPaths": [
+        "Empty.swift"
+      ],
+      "blocks": [
+        "Do not include bodies in codemaps view"
+      ],
+      "view": "codemaps"
+    },
+    "expected": {
+      "code_map_usage": "auto",
+      "code_structure": {
+        "content": "",
+        "file_count": 0,
+        "unmapped_paths": [
+          "Empty.swift"
+        ]
+      },
+      "codemap_auto_enabled": true,
+      "file_slices": [],
+      "files": [
+        {
+          "codemap_origin": "auto",
+          "is_auto": true,
+          "path": "src/Peer.swift",
+          "path_within_root": "src/Peer.swift",
+          "render_mode": "codemap",
+          "root_path": "repo",
+          "tokens": 5
+        }
+      ],
+      "invalid_paths": [
+        "Missing.swift"
+      ],
+      "status": "ok",
+      "summary": {
+        "codemap_count": 1,
+        "codemap_tokens": 5,
+        "full_count": 0,
+        "full_tokens": 0,
+        "slice_count": 0,
+        "slice_tokens": 0
+      },
+      "total_tokens": 5
+    }
+  }
+]

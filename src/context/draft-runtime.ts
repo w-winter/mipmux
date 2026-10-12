@@ -14,6 +14,8 @@ import {
 } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { SourcePath } from '../contracts/inventory.js';
+import type { NativeSelectionReplyInput } from '../contracts/native.js';
+import type { Static } from 'typebox';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { pageResult, serializedBytes, identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
 import { pageOffset } from '../exploration/continuation.js';
@@ -43,6 +45,8 @@ const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathD
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 type SourceMutation = Exclude<SourceEdit, { kind: 'slices' }>;
+type SelectionReplyEntry = Static<typeof NativeSelectionReplyInput>['entries'][number];
+type SelectionReplyFile = Omit<Extract<SelectionReplyEntry, { kind: 'full' }>, 'kind'>;
 
 export class DraftRuntime {
   readonly id = randomUUID();
@@ -142,13 +146,13 @@ export class DraftRuntime {
         const prepared = await prepareSelection(operation, request, current, this.#codemapMode);
         const next = request.op === 'get' ? current
           : await this.#prepareResolvedSelection(operation, prepared, current, revision);
-        this.#check(signal, revision);
-        if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         const candidate = this.#mutationChanges(current, next, prepared.mode, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
-        const reply = this.#selectionReply(request, next, prepared.mode, prepared.invalid,
+        const reply = await this.#selectionReply(operation, request, next, prepared.mode, prepared.invalid,
           isMutation ? candidate.revision : revision);
-        if (request.op === 'preview' && request.strict && !reply.files?.length) {
+        this.#check(signal, revision);
+        if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+        if (request.op === 'preview' && request.strict && !reply.files.length && !reply.file_slices?.length) {
           throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
         }
         const requiredBytes = serializedBytes(encode(reply));
@@ -178,33 +182,38 @@ export class DraftRuntime {
     }
     return this.#derive(operation, explicit, prepared.mode, current, revision);
   }
-  #selectionReply(request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
+  async #selectionReply(operation: WorkspaceOperation, request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
     invalid: readonly string[], revision: number) {
-    const rendered = renderBundle({ request: this.request, inventory: this.operation.snapshot,
+    const snapshot = operation.snapshot;
+    const rendered = renderBundle({ request: this.request, inventory: snapshot,
       prompt: this.#prompt, codemapMode: mode, materials: [...materials.values()] });
     const unmapped: string[] = [];
-    const files = [...materials.values()].flatMap(material => {
+    const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
+    const blocks: string[] = [];
+    for (const material of materials.values()) {
       const record = material.record;
-      if (record.kind !== 'source') return [];
-      const root = this.operation.snapshot.roots.find(root => root.name === record.selection.source.root)!;
-      const relative = this.operation.snapshot.roots.length === 1 ? record.selection.source.path
+      if (record.kind !== 'source') continue;
+      const root = snapshot.roots.find(root => root.name === record.selection.source.root)!;
+      const relative = snapshot.roots.length === 1 ? record.selection.source.path
         : root.name + '/' + record.selection.source.path;
       const path = request.path_display === 'full' ? posix.join(root.identity.canonicalPath, record.selection.source.path) : relative;
-      if (record.selection.kind === 'codemap' && !material.bodies.length) { unmapped.push(path); return []; }
-      return [{ path,
-        tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
-        render_mode: record.selection.kind === 'slices' ? 'slice' : record.selection.kind,
-        ranges: record.selection.kind === 'slices' ? record.selection.ranges : null,
-        is_auto: record.selectionOrigin === 'inferred',
-        codemap_origin: record.selection.kind === 'codemap' ? record.selectionOrigin === 'inferred' ? 'auto' : 'manual' : null,
-        root_path: root.identity.canonicalPath, path_within_root: record.selection.source.path }];
-    });
-    return { status: request.op === 'preview' ? 'preview' : 'ok', revision,
-      files: request.view === 'none' ? null : files, total_tokens: files.reduce((sum, file) => sum + file.tokens, 0),
-      invalid_paths: invalid.length ? [...invalid] : null, codemap_auto_enabled: mode === 'automatic',
-      code_structure: unmapped.length ? { file_count: 0, content: '', unmapped_paths: unmapped } : null,
-      blocks: request.view === 'content' ? [...materials.values()].flatMap(material => [...material.bodies]) : null,
-      measurement: rendered.measurement, diagnostics: rendered.diagnostics };
+      if (record.selection.kind === 'codemap' && !material.bodies.length) { unmapped.push(path); continue; }
+      const fields = { path, tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
+        rootPath: root.name, pathWithinRoot: record.selection.source.path };
+      entries.push(this.#selectionFileEntry(record, fields));
+      blocks.push(...material.bodies);
+    }
+    const reply = await operation.renderSelectionReply({ kind: 'renderSelectionReply', entries,
+      status: request.op === 'preview' ? 'preview' : 'ok', codemapAutoEnabled: mode === 'automatic',
+      invalidPaths: [...invalid], unmappedPaths: unmapped, blocks: request.view === 'content' ? blocks : null, view: request.view });
+    return { ...reply, revision, measurement: rendered.measurement, diagnostics: rendered.diagnostics };
+  }
+  #selectionFileEntry(record: Extract<Material['record'], { kind: 'source' }>, fields: SelectionReplyFile): SelectionReplyEntry {
+    switch (record.selection.kind) {
+      case 'codemap': return { ...fields, kind: 'codemap', origin: record.selectionOrigin === 'inferred' ? 'auto' : 'manual' };
+      case 'slices': return { ...fields, kind: 'slice', ranges: record.selection.ranges };
+      case 'full': return { ...fields, kind: 'full' };
+    }
   }
   preview(input: DraftPreview, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!previewValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));

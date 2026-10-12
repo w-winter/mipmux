@@ -4705,6 +4705,106 @@
         "Extract the original hint method into a static function; captured root records replace app store and binding-projection reads. Absolute inputs already refer to physical headless roots.",
         "Split two diagnostic literals with string concatenation to meet line-length checks while preserving their complete output."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "ranges": [
+        [
+          478,
+          528
+        ],
+        [
+          552,
+          825
+        ]
+      ],
+      "changes": [
+        "Retain selection DTO fields, nesting, Codable keys and initializers in an extension of the retained DTO namespace.",
+        "Apply scoped source-layout SwiftLint exceptions for nested types and explicit nil initializers."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "sha256": "4683dd31e2390dea8be07c11b0e18930ddc9390e26e05b9ec890d51d7a49494f",
+      "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCETokenAccountingDTO.swift",
+      "ranges": [
+        [
+          1449,
+          1535
+        ]
+      ],
+      "changes": [
+        "Split token-accounting DTO declarations from selection DTO declarations without changing their field contracts."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "sha256": "b0c205a8ebd1eaeb0a23eca6311b84f7a16e10f4aa59713fa4b1b5b9dbbdbbab",
+      "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionReplyAssembler.swift",
+      "ranges": [
+        [
+          615,
+          625
+        ],
+        [
+          1028,
+          1255
+        ],
+        [
+          1448,
+          1490
+        ]
+      ],
+      "changes": [
+        "Replace app path and token-service reads with captured immutable entry values; rename app-only supporting type references to captured bindings.",
+        "Separate selected entries, codemap entries and result assembly into private phases using one reply-local accumulator; preserve category order, arithmetic, projection decisions and output.",
+        "Retain source identifiers and optional initialization; scoped layout exceptions leave CCCC complexity checks enabled."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
+      "sha256": "301f854519bef1926d4e507e3a24b41767632cb389a6057669d28fb26d853fbc",
+      "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "destination": "native/Sources/SmipBridge/RPCECopyPresetProjection.swift",
+      "ranges": [
+        [
+          957,
+          1026
+        ]
+      ],
+      "changes": [
+        "Isolate the pure copy-preset projection policy in an extension of the source assembler."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
+      "sha256": "bc3340fa4d0e954f06839a6365bc308ca8c53c6cb360392402a14078feb86156",
+      "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPromptSettingsCore/SettingsCopyValues.swift",
+      "destination": "native/Sources/SmipBridge/RPCECodeMapUsage.swift",
+      "ranges": [
+        [
+          16,
+          24
+        ]
+      ],
+      "changes": [
+        "Remove package visibility for compilation in the executable target."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "703ebbd7272f67f869b2aa2cb4503bbe1d608caa6cf35a6350b085c78f04ed1e",
+      "sha256": "64753520d90e847789b08525d1cb509a05e7eb4645ffdc248ac4843f3c4176c3",
+      "classification": "handwritten"
     }
   ],
   "dependencies": [
@@ -9921,6 +10021,96 @@
       "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
       "destination": "native/Sources/SmipBridge/RPCESelectionHints.swift",
       "line": 5867
+    },
+    {
+      "name": "SelectedCodeStructureDTO",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "line": 478
+    },
+    {
+      "name": "LineRangeDTO",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "line": 552
+    },
+    {
+      "name": "FileSliceDTO",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "line": 575
+    },
+    {
+      "name": "SelectedFileInfo",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "line": 603
+    },
+    {
+      "name": "SelectionSummary",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "line": 668
+    },
+    {
+      "name": "SelectedFilesReply",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "line": 686
+    },
+    {
+      "name": "SelectionReply",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionDTO.swift",
+      "line": 730
+    },
+    {
+      "name": "CopyPresetProjectionSummaryDTO",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCETokenAccountingDTO.swift",
+      "line": 1449
+    },
+    {
+      "name": "TokenAccountingDTO",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCETokenAccountingDTO.swift",
+      "line": 1463
+    },
+    {
+      "name": "TokenStats",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "destination": "native/Sources/SmipBridge/RPCETokenAccountingDTO.swift",
+      "line": 1489
+    },
+    {
+      "name": "UserPresetState",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionReplyAssembler.swift",
+      "line": 616
+    },
+    {
+      "name": "buildSelectedFilesReply",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionReplyAssembler.swift",
+      "line": 1028
+    },
+    {
+      "name": "applyViewFilter",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "destination": "native/Sources/SmipBridge/RPCESelectionReplyAssembler.swift",
+      "line": 1449
+    },
+    {
+      "name": "computeCopyPresetProjection",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "destination": "native/Sources/SmipBridge/RPCECopyPresetProjection.swift",
+      "line": 958
+    },
+    {
+      "name": "CodeMapUsage",
+      "source": "Sources/RepoPromptSettingsCore/SettingsCopyValues.swift",
+      "destination": "native/Sources/SmipBridge/RPCECodeMapUsage.swift",
+      "line": 16
     }
   ],
   "sourceCoverage": [

@@ -7,8 +7,9 @@ enum SelectionOperation {
     case parse(SelectionInputParsing)
     case pathBindings(SelectionPathBindingsInput)
     case hint(SelectionHintInput)
+    case reply(SelectionReplyInput)
 
-    func render() async -> [String: Any] {
+    func render() async throws -> [String: Any] {
         switch self {
         case let .transition(input): input.render()
         case let .sliceRanges(input): input.render()
@@ -18,6 +19,7 @@ enum SelectionOperation {
         case let .parse(input): input.render()
         case let .pathBindings(input): input.render()
         case let .hint(input): input.render()
+        case let .reply(input): try await input.render()
         }
     }
 }

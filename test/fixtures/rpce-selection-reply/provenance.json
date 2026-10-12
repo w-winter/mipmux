@@ -1,0 +1,26 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sha256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "sha256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539"
+    },
+    {
+      "path": "Sources/RepoPromptSettingsCore/SettingsCopyValues.swift",
+      "sha256": "703ebbd7272f67f869b2aa2cb4503bbe1d608caa6cf35a6350b085c78f04ed1e"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496"
+    }
+  ],
+  "cases": 3,
+  "generatorSHA256": "40010c144aed71db7e36ce480564a4f9b6e8cbea18dae7ada438877e72556ab0",
+  "bindings": [
+    "Original DTO, aggregation, copy-projection and view-filter bodies compile independently. Shared immutable input parsing supplies paths, category/ranges and captured token values. App path metadata and token services are replaced by those captured values; workspace token recount and content packaging are not tested by these cases."
+  ]
+}

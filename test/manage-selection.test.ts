@@ -93,6 +93,89 @@ test('public source selection preserves slices on full add and source promotion/
   } finally { await f.client.close(); }
 });
 
+test('selection receipts expose source summaries, slice DTOs and the codemaps-only view', async () => {
+  const f = await fixture();
+  const range = Type.Object({ start_line: Type.Integer(), end_line: Type.Integer(), description: Type.Optional(Type.String()) });
+  const file = Type.Object({ path: Type.String(), tokens: Type.Integer(), render_mode: Type.String(), ranges: Type.Optional(Type.Array(range)),
+    root_path: Type.String(), path_within_root: Type.String() });
+  const replySchema = Compile(Type.Object({ files: Type.Array(file), total_tokens: Type.Integer(), code_map_usage: Type.String(),
+    summary: Type.Object({ full_count: Type.Integer(), slice_count: Type.Integer(), codemap_count: Type.Integer(),
+      full_tokens: Type.Integer(), slice_tokens: Type.Integer(), codemap_tokens: Type.Integer() }),
+    file_slices: Type.Array(Type.Object({ path: Type.String(), ranges: Type.Array(range), root_path: Type.String(), path_within_root: Type.String() })),
+  }));
+  try {
+    let reply = await f.select({ op: 'set', paths: ['r/Main.swift'], slices: [{ path: 'r/zone/notes.txt',
+      ranges: [{ start_line: 2, end_line: 3, description: 'Selected notes' }] }] });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    reply = await f.select({ op: 'add', mode: 'codemap_only', paths: ['r/zone/Peer.swift'], view: 'files' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    const full = replySchema.Parse(reply.structuredContent);
+    assert.equal(full.code_map_usage, 'auto');
+    assert.deepEqual([full.summary.full_count, full.summary.slice_count, full.summary.codemap_count], [1, 1, 1]);
+    assert.equal(full.total_tokens, full.summary.full_tokens + full.summary.slice_tokens + full.summary.codemap_tokens);
+    const slice = full.files.find(file => file.render_mode === 'slice');
+    assert(slice);
+    assert.deepEqual(slice.ranges, [{ start_line: 2, end_line: 3, description: 'Selected notes' }]);
+    assert.deepEqual(full.file_slices, [{ path: 'zone/notes.txt', ranges: slice.ranges, root_path: 'r', path_within_root: 'zone/notes.txt' }]);
+    const before = await f.inspect();
+    reply = await f.client.callTool({ name: 'manage_selection', arguments: { draftId: f.draftId, input: { op: 'get', view: 'codemaps' } } });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    const filtered = replySchema.Parse(reply.structuredContent);
+    assert.deepEqual(filtered.files, full.files.filter(file => file.render_mode === 'codemap'));
+    assert.deepEqual(filtered.file_slices, []);
+    assert.deepEqual(filtered.summary, { full_count: 0, slice_count: 0, codemap_count: 1,
+      full_tokens: 0, slice_tokens: 0, codemap_tokens: full.summary.codemap_tokens });
+    assert.equal(filtered.total_tokens, full.summary.codemap_tokens);
+    assert.deepEqual(await f.inspect(), before);
+    await writeFile(join(f.base, 'selection-views-receipt.json'), JSON.stringify({ full, filtered, before }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
+
+test('selection reply rendering cannot commit after cancellation or a competing revision', async () => {
+  const f = await fixture(); await f.client.close();
+  const receipts = [];
+  for (const scenario of ['cancel', 'revision'] as const) {
+    let entered!: () => void, release!: () => void;
+    const entering = new Promise<void>(resolve => { entered = resolve; });
+    const held = new Promise<void>(resolve => { release = resolve; });
+    let armed = true;
+    class Runtime extends SmipRuntime {
+      override makeBridge() {
+        class Bridge extends BridgeClient {
+          override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
+            if (armed && ['renderSelectionReply'].includes(operation.kind)) { armed = false; entered(); await held; }
+            return super.request(operation, signal);
+          }
+        }
+        return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
+      }
+    }
+    const runtime = new Runtime({ cachePath: join(f.base, scenario + '-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    try {
+      const signal = () => new AbortController().signal;
+      const owner = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output }, signal());
+      const draft = await owner.createDraft({ task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+        requiredSources: [], documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: scenario }, signal());
+      const abort = new AbortController();
+      const work = draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
+        op: 'add', paths: ['r/Main.swift'], maxOutputBytes: 30000 })), abort.signal);
+      await Promise.race([entering, work.then(() => { throw new Error('Selection settled before reply rendering'); })]);
+      const rejected = assert.rejects(work, scenario === 'cancel' ? /cancelled|aborted|nativeWorkerClosed/i : /revisionConflict/);
+      if (scenario === 'cancel') abort.abort();
+      else await draft.update({ expectedRevision: 0, maxOutputBytes: 30000, mutation: { kind: 'prompt', op: 'append', text: 'Updated' } }, signal());
+      release(); await rejected;
+      const state = draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+      assert(state.kind === 'metadata');
+      assert.equal(state.revision, scenario === 'cancel' ? 0 : 1);
+      assert(!state.items.some(item => 'kind' in item && item.kind === 'source'));
+      receipts.push({ scenario, state });
+      await draft.close(); await owner.close();
+    } finally { release(); await runtime.close(); }
+  }
+  await writeFile(join(f.base, 'selection-reply-lifecycle-receipt.json'), JSON.stringify(receipts, null, 2) + '\n');
+});
+
 test('codemap-only selection retains a supported file with no rendered symbols and reports it as unmapped', async () => {
   const f = await fixture();
   const replySchema = Compile(Type.Object({ files: Type.Array(Type.Object({ path: Type.String() })),
