@@ -133,10 +133,10 @@ test('selection receipts expose source summaries, slice DTOs and the codemaps-on
   } finally { await f.client.close(); }
 });
 
-test('selection reply rendering cannot commit after cancellation or a competing revision', async () => {
+test('selection commits before reply rendering and survives cancellation, failure and a later mutation', async () => {
   const f = await fixture(); await f.client.close();
   const receipts = [];
-  for (const scenario of ['cancel', 'revision'] as const) {
+  for (const scenario of ['cancel', 'revision', 'failure'] as const) {
     let entered!: () => void, release!: () => void;
     const entering = new Promise<void>(resolve => { entered = resolve; });
     const held = new Promise<void>(resolve => { release = resolve; });
@@ -145,7 +145,10 @@ test('selection reply rendering cannot commit after cancellation or a competing 
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
-            if (armed && ['renderSelectionReply'].includes(operation.kind)) { armed = false; entered(); await held; }
+            if (armed && operation.kind === 'renderSelectionReply') {
+              armed = false; entered(); await held;
+              if (scenario === 'failure') throw new Error('Held reply failed');
+            }
             return super.request(operation, signal);
           }
         }
@@ -163,19 +166,55 @@ test('selection reply rendering cannot commit after cancellation or a competing 
       const work = draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
         op: 'add', paths: ['r/Main.swift'], maxOutputBytes: 30000 })), abort.signal);
       await Promise.race([entering, work.then(() => { throw new Error('Selection settled before reply rendering'); })]);
-      const rejected = assert.rejects(work, scenario === 'cancel' ? /cancelled|aborted|nativeWorkerClosed/i : /revisionConflict/);
+      const committed = draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+      assert(committed.kind === 'metadata'); assert.equal(committed.revision, 1);
+      assert(committed.items.some(item => 'kind' in item && item.kind === 'source' && item.selection.source.path === 'Main.swift'));
+      const rejected = scenario === 'revision' ? null
+        : assert.rejects(work, scenario === 'cancel' ? /cancelled|aborted|nativeWorkerClosed/i : /Held reply failed/);
       if (scenario === 'cancel') abort.abort();
-      else await draft.update({ expectedRevision: 0, maxOutputBytes: 30000, mutation: { kind: 'prompt', op: 'append', text: 'Updated' } }, signal());
-      release(); await rejected;
+      else if (scenario === 'revision') await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
+        op: 'clear', expectedRevision: 1, maxOutputBytes: 30000 })), signal());
+      release();
+      if (rejected) await rejected;
+      else {
+        const reply = await work;
+        assert.equal(reply.revision, 1);
+        assert(reply.files.some(file => file.path === 'Main.swift'));
+        receipts.push({ scenario, reply });
+      }
       const state = draft.inspect({ view: 'metadata', continuation: null, maxOutputBytes: 30000 });
       assert(state.kind === 'metadata');
-      assert.equal(state.revision, scenario === 'cancel' ? 0 : 1);
-      assert(!state.items.some(item => 'kind' in item && item.kind === 'source'));
-      receipts.push({ scenario, state });
+      assert.equal(state.revision, scenario === 'revision' ? 2 : 1);
+      assert.equal(state.items.some(item => 'kind' in item && item.kind === 'source'), scenario !== 'revision');
+      receipts.push({ scenario, committed, state });
       await draft.close(); await owner.close();
     } finally { release(); await runtime.close(); }
   }
   await writeFile(join(f.base, 'selection-reply-lifecycle-receipt.json'), JSON.stringify(receipts, null, 2) + '\n');
+});
+
+test('selection reply-size rejection retains a mutation but preview remains non-mutating', async () => {
+  const f = await fixture();
+  const receipts = [];
+  try {
+    const before = await f.inspect();
+    const preview = await f.select({ op: 'preview', paths: ['r/Main.swift'] }, 1);
+    assert.equal(preview.isError, true); assert(JSON.stringify(preview).includes('outputBudgetTooSmall'));
+    assert.deepEqual(await f.inspect(), before);
+    receipts.push(preview);
+    const rejected = await f.select({ op: 'set', paths: ['r/Main.swift'] }, 1);
+    assert.equal(rejected.isError, true); assert(JSON.stringify(rejected).includes('outputBudgetTooSmall'));
+    const state = await f.inspect(); assert.equal(state.revision, 1);
+    assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'Main.swift'));
+    const reply = await f.select({ op: 'get' });
+    assert.equal(reply.isError, false, JSON.stringify(reply));
+    const current = Compile(Type.Object({ revision: Type.Integer(), files: Type.Array(Type.Object({ path: Type.String() })) })).Parse(reply.structuredContent);
+    assert.equal(current.revision, 1); assert.deepEqual(current.files.map(file => file.path), ['Main.swift']);
+    const noOp = await f.select({ op: 'add', paths: ['r/Main.swift'] }, 1);
+    assert.equal(noOp.isError, true); assert.deepEqual(await f.inspect(), state);
+    receipts.push(rejected, reply, noOp);
+    await writeFile(join(f.base, 'selection-reply-cap-receipt.json'), JSON.stringify({ receipts, before, state }, null, 2) + '\n');
+  } finally { await f.client.close(); }
 });
 
 test('codemap-only selection retains a supported file with no rendered symbols and reports it as unmapped', async () => {
@@ -249,7 +288,7 @@ test('undecodable codemap-only membership retains raw evidence and passes saved/
   } finally { await f.client.close(); await runtime.close(); }
 });
 
-test('source set rejects invalid inputs even without strict and preview/receipt failure cannot commit selection', async () => {
+test('source set rejects invalid inputs even without strict and preview never commits selection', async () => {
   const f = await fixture();
   try {
     let reply = await f.select({ op: 'set', paths: ['r/Main.swift'] });
@@ -260,9 +299,6 @@ test('source set rejects invalid inputs even without strict and preview/receipt 
     assert.deepEqual(await f.inspect(), before);
     reply = await f.select({ op: 'preview', paths: ['r/zone'], strict: true });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    assert.deepEqual(await f.inspect(), before);
-    reply = await f.select({ op: 'set', paths: ['r/zone'] }, 1);
-    assert.equal(reply.isError, true, JSON.stringify(reply));
     assert.deepEqual(await f.inspect(), before);
     reply = await f.select({ op: 'demote', paths: ['r/zone'], strict: false });
     assert.equal(reply.isError, true, JSON.stringify(reply));

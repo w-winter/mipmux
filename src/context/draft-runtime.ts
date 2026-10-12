@@ -148,18 +148,19 @@ export class DraftRuntime {
           : await this.#prepareResolvedSelection(operation, prepared, current, revision);
         const candidate = this.#mutationChanges(current, next, prepared.mode, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
-        const reply = await this.#selectionReply(operation, request, next, prepared.mode, prepared.invalid,
-          isMutation ? candidate.revision : revision);
         this.#check(signal, revision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+        if (isMutation && candidate.changed) {
+          this.#commit(next, prepared.mode, this.#prompt, candidate.revision);
+        }
+        const reply = await this.#selectionReply(operation, request, next, prepared.mode, prepared.invalid,
+          isMutation ? candidate.revision : revision);
+        operation.signal.throwIfAborted();
         if (request.op === 'preview' && request.strict && !reply.files.length && !reply.file_slices?.length) {
           throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
         }
         const requiredBytes = serializedBytes(encode(reply));
         if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
-        if (isMutation && candidate.changed) {
-          this.#commit(next, prepared.mode, this.#prompt, candidate.revision);
-        }
         return freeze(reply);
       } finally { await operation.close(); }
     })());
