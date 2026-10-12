@@ -1,0 +1,34 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "sha256": "22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "sha256": "a39a4f69ba729de3e153d51c80b944a5317032b6605157466270043a519efce1"
+    },
+    {
+      "path": "Sources/RepoPromptDomainRuntime/StringExtensions.swift",
+      "sha256": "72c0578d3cf8ed69954c3e0900bf1702d9acc13c6ae2bcb9d1e6cbc5770422c3"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496"
+    },
+    {
+      "path": "Sources/RepoPromptC/src/Utils/string_extensions_wrapper.c",
+      "sha256": "96afedd30946f265e6a34b467054f7e2b91b85260d899b7145fb8e2807ec106d"
+    },
+    {
+      "path": "Sources/RepoPromptC/include/string_extensions_wrapper.h",
+      "sha256": "ca75c176a359eeb8e687f8be7c769fe3f868ffad5768215d5fa49279d895f33e"
+    }
+  ],
+  "cases": 13,
+  "generatorSHA256": "321899ad390c5829a5cb636de5feb5aa1cf80c0cba2f579831c6796f6b0351bb",
+  "bindings": [
+    "Original formatting, slice assembly, Swift scalar splitting and C ending detection compile independently. Inputs supply already resolved display paths; path routing and final packet assembly are not covered. The reference-only harness imports its extracted C declarations through a temporary header; shipped targets use an explicit C module."
+  ]
+}

@@ -142,6 +142,14 @@ export const NativeSelectionReplyResult = Type.Object({ kind: Type.Literal('sele
 export const NativeReadArgument = Type.Union([Type.Integer(), Type.String(), Type.Null()]);
 export const NativeReadTextInput = Type.Object({ kind: Type.Literal('sliceReadText'), text: Type.String(),
   start_line: NativeReadArgument, offset: NativeReadArgument, limit: NativeReadArgument }, { additionalProperties: false });
+export const NativeFileBlockInput = Type.Object({ kind: Type.Literal('renderFileBlock'),
+  selectedPath: Type.String(), fileName: Type.String(), content: Type.String(),
+  ranges: Type.Union([Type.Array(NativeSliceRange), Type.Null()]),
+}, { additionalProperties: false });
+export const NativeFileBlockResult = Type.Object({ kind: Type.Literal('fileBlock'), text: Type.String(),
+  segments: Type.Array(Type.Object({ ...NativeSliceRange.properties, text: Type.String() }, { additionalProperties: false })),
+  combinedText: Type.String(), totalLines: SafeCount, detectedLineEnding: Type.String(), isFullFile: Type.Boolean(),
+}, { additionalProperties: false });
 export const NativeReadTextResult = Type.Union([
   Type.Object({ kind: Type.Literal('readTextSlice'), content: Type.String(), totalLines: SafeCount,
     firstLine: Type.Integer({ minimum: 0 }), lastLine: SafeCount, returnedLineCount: SafeCount, message: Type.Union([Type.String(), Type.Null()]),
@@ -200,6 +208,7 @@ const IgnoreHierarchy = Type.Object({ kind: Type.Literal('queryIgnoreHierarchy')
 }, { additionalProperties: false });
 
 export const NativeOperation = Type.Union([
+  NativeFileBlockInput,
   IgnoreCapture, IgnoreHierarchy,
   IgnoreQueryInput,
   NativeGitPatchInput,
@@ -260,6 +269,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  NativeFileBlockResult,
   NativeIgnoreInputs,
   Type.Object({ kind: Type.Literal('ignoreHierarchy'), paths: Type.Array(Type.Union([
     Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean() }, { additionalProperties: false }),

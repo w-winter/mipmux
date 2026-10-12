@@ -2,5 +2,6 @@ module RepoPromptC {
     header "repo_gitignore.h"
     header "wildmatch.h"
     header "repo_text_decode.h"
+    header "repo_split_content.h"
     export *
 }

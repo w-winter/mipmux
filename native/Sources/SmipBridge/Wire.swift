@@ -19,9 +19,15 @@ struct WireObject {
     }
 
     func string(_ name: String) throws -> String {
-        guard let value = fields[name] as? String, !value.utf8.contains(0) else {
+        let value = try text(name)
+        guard !value.utf8.contains(0) else {
             throw BridgeFailure("nativeProtocolError")
         }
+        return value
+    }
+
+    func text(_ name: String) throws -> String {
+        guard let value = fields[name] as? String else { throw BridgeFailure("nativeProtocolError") }
         return value
     }
 
@@ -150,6 +156,7 @@ enum Operation {
     case git(GitOperation)
     case ignore(IgnoreOperation)
     case sliceReadText(ReadTextInput)
+    case renderFileBlock(FileBlockInput)
     case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
     case queryStructure(StructureInput)
@@ -240,8 +247,6 @@ enum Operation {
         case "parseGitPatch": return try .git(.patch(GitPatchInput(value)))
         case "prepareGitRead", "projectGitRead": return try .git(.read(GitReadInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))
-        case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))
-        case "renderDiscoveryPrompt": return try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
         case "parseSelectionInputs": return try .selection(.parse(SelectionInputParsing(value)))
         case "prepareSelection": return try .selection(.preparation(SelectionPreparationInput(value)))
         case "mutateSelectionPaths": return try .selection(.paths(SelectionPathMutationInput(value)))
@@ -251,6 +256,15 @@ enum Operation {
         case "transitionSelection": return try .selection(.transition(SelectionTransitionInput(value)))
         case "queryStructure": return try .queryStructure(StructureInput(value))
         case "renderFileTree": return try .renderFileTree(FileTreeInput(value))
+        default: return try decodePromptProjection(kind, value)
+        }
+    }
+
+    private static func decodePromptProjection(_ kind: String, _ value: Any) throws -> Operation {
+        switch kind {
+        case "renderFileBlock": return try .renderFileBlock(FileBlockInput(value))
+        case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))
+        case "renderDiscoveryPrompt": return try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
         default: throw BridgeFailure("nativeProtocolError")
         }
     }

@@ -15,7 +15,7 @@ struct ReadTextInput {
         let offsetFromString = args["offset"]?.stringValue.flatMap(Int.init)
         startLine1Based = startLineFromInteger ?? offsetFromInteger ?? startLineFromString ?? offsetFromString
         limit = args["limit"]?.intValue ?? args["limit"]?.stringValue.flatMap(Int.init)
-        prepared = try WorkspaceInteractiveReadProcessor.prepare(input.string("text"))
+        prepared = try WorkspaceInteractiveReadProcessor.prepare(input.text("text"))
     }
 
     func render() -> [String: Any] {

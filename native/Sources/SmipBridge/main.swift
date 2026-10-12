@@ -13,6 +13,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .git(input): try input.render()
     case let .ignore(input): try await input.render(files: files)
     case let .sliceReadText(input): input.render()
+    case let .renderFileBlock(input): input.render()
     case let .selection(input): try await input.render()
     case let .renderDiscoveryPrompt(input): input.render()
     case let .renderDiscoveryMessage(input): input.render()

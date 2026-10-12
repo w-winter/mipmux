@@ -1,0 +1,400 @@
+[
+  {
+    "name": "full-final-newline",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "struct Example {}\n",
+      "ranges": null
+    },
+    "expected": {
+      "combinedText": "struct Example {}\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": true,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": null,
+          "end": 1,
+          "start": 1,
+          "text": "struct Example {}\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n```swift\nstruct Example {}\n\n```",
+      "totalLines": 1
+    }
+  },
+  {
+    "name": "full-no-final-newline",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/README",
+      "fileName": "README",
+      "content": "text",
+      "ranges": null
+    },
+    "expected": {
+      "combinedText": "text",
+      "detectedLineEnding": "\n",
+      "isFullFile": true,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": null,
+          "end": 1,
+          "start": 1,
+          "text": "text"
+        }
+      ],
+      "text": "File: root/README\n```\ntext\n```",
+      "totalLines": 1
+    }
+  },
+  {
+    "name": "full-empty",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "",
+      "ranges": null
+    },
+    "expected": {
+      "combinedText": "",
+      "detectedLineEnding": "\n",
+      "isFullFile": true,
+      "kind": "fileBlock",
+      "segments": [],
+      "text": "File: root/Example.swift\n```swift\n\n```",
+      "totalLines": 0
+    }
+  },
+  {
+    "name": "full-embedded-fence",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.md",
+      "fileName": "Example.md",
+      "content": "```\ninside\n```\n",
+      "ranges": null
+    },
+    "expected": {
+      "combinedText": "```\ninside\n```\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": true,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": null,
+          "end": 3,
+          "start": 1,
+          "text": "```\ninside\n```\n"
+        }
+      ],
+      "text": "File: root/Example.md\n```md\n```\ninside\n```\n\n```",
+      "totalLines": 3
+    }
+  },
+  {
+    "name": "slice-mixed-endings",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "one\r\ntwo\rthree\nfour",
+      "ranges": [
+        {
+          "start": 2,
+          "end": 3,
+          "description": "Mixed endings"
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "two\rthree\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": false,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": "Mixed endings",
+          "end": 3,
+          "start": 2,
+          "text": "two\rthree\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n(lines 2-3: Mixed endings)\n```swift\ntwo\rthree\n\n```",
+      "totalLines": 4
+    }
+  },
+  {
+    "name": "slice-disjoint",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "one\ntwo\nthree\nfour\n",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 1,
+          "description": "First"
+        },
+        {
+          "start": 3,
+          "end": 3,
+          "description": "Third"
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "one\nthree\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": false,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": "First",
+          "end": 1,
+          "start": 1,
+          "text": "one\n"
+        },
+        {
+          "description": "Third",
+          "end": 3,
+          "start": 3,
+          "text": "three\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n(lines 1: First)\n```swift\none\n\n```\n\n(lines 3: Third)\n```swift\nthree\n\n```",
+      "totalLines": 4
+    }
+  },
+  {
+    "name": "slice-merged-descriptions",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "one\ntwo\nthree\nfour\n",
+      "ranges": [
+        {
+          "start": 2,
+          "end": 3,
+          "description": "Second"
+        },
+        {
+          "start": 1,
+          "end": 2,
+          "description": "First"
+        },
+        {
+          "start": 4,
+          "end": 4,
+          "description": "Fourth"
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "one\ntwo\nthree\nfour\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": false,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": "First; Second; Fourth",
+          "end": 4,
+          "start": 1,
+          "text": "one\ntwo\nthree\nfour\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n(lines 1-4: First; Second; Fourth)\n```swift\none\ntwo\nthree\nfour\n\n```",
+      "totalLines": 4
+    }
+  },
+  {
+    "name": "slice-clamped-end",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "one\ntwo\n",
+      "ranges": [
+        {
+          "start": 2,
+          "end": 20,
+          "description": null
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "two\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": false,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": null,
+          "end": 2,
+          "start": 2,
+          "text": "two\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n(lines 2)\n```swift\ntwo\n\n```",
+      "totalLines": 2
+    }
+  },
+  {
+    "name": "slice-outside-file",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "one\ntwo\n",
+      "ranges": [
+        {
+          "start": 20,
+          "end": 30,
+          "description": null
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "one\ntwo\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": true,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": null,
+          "end": 2,
+          "start": 1,
+          "text": "one\ntwo\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n```swift\none\ntwo\n\n```",
+      "totalLines": 2
+    }
+  },
+  {
+    "name": "slice-empty-ranges",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "one\n",
+      "ranges": []
+    },
+    "expected": {
+      "combinedText": "one\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": true,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": null,
+          "end": 1,
+          "start": 1,
+          "text": "one\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n```swift\none\n\n```",
+      "totalLines": 1
+    }
+  },
+  {
+    "name": "slice-empty-file",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 1,
+          "description": null
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "",
+      "detectedLineEnding": "\n",
+      "isFullFile": true,
+      "kind": "fileBlock",
+      "segments": [],
+      "text": "File: root/Example.swift\n```swift\n\n```",
+      "totalLines": 0
+    }
+  },
+  {
+    "name": "unicode-and-nul",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "﻿😀\u0000text\r\nλ\n",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 2,
+          "description": "Unicode"
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "﻿😀\u0000text\r\nλ\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": false,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": "Unicode",
+          "end": 2,
+          "start": 1,
+          "text": "﻿😀\u0000text\r\nλ\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n(lines 1-2: Unicode)\n```swift\n﻿😀\u0000text\r\nλ\n\n```",
+      "totalLines": 2
+    }
+  },
+  {
+    "name": "canonical-equivalent-descriptions",
+    "input": {
+      "kind": "renderFileBlock",
+      "selectedPath": "root/Example.swift",
+      "fileName": "Example.swift",
+      "content": "one\ntwo\n",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 1,
+          "description": "é"
+        },
+        {
+          "start": 2,
+          "end": 2,
+          "description": "é"
+        }
+      ]
+    },
+    "expected": {
+      "combinedText": "one\ntwo\n",
+      "detectedLineEnding": "\n",
+      "isFullFile": false,
+      "kind": "fileBlock",
+      "segments": [
+        {
+          "description": "é",
+          "end": 2,
+          "start": 1,
+          "text": "one\ntwo\n"
+        }
+      ],
+      "text": "File: root/Example.swift\n(lines 1-2: é)\n```swift\none\ntwo\n\n```",
+      "totalLines": 2
+    }
+  }
+]

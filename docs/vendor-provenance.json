@@ -2635,7 +2635,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
       "destination": "native/Sources/SmipBridge/ReadTextInput.swift",
-      "sha256": "8aed7d37ace566f9f28b5c4d3be812fc7879cfa326d0a58aa9d6d48cd82b0cc9",
+      "sha256": "96c43f310a51ef3a398a7b6d7a81a891b02488cc85400a2953fa74303fccbe53",
       "classification": "handwritten",
       "ranges": [
         [
@@ -2647,7 +2647,8 @@
         "Retain integer/string start_line/offset/limit priority using the previously mapped SDK decoding/read accessors.",
         "Bind slice replies to native JSON and add decoded UTF-8 line offsets for continuation transport.",
         "Retain fixed range diagnostics from MCPServerViewModel.swift:6775-6778 and MCPReadFileToolProjection.swift:32-34 at the same pinned revision; exact source hashes/ranges and outputs are recorded in test/fixtures/rpce-read/provenance.json.",
-        "Scoped source-body/diagnostic SwiftLint exceptions retain original source text; configured CCCC limits remain enabled."
+        "Scoped source-body/diagnostic SwiftLint exceptions retain original source text; configured CCCC limits remain enabled.",
+        "Decode file text through the raw-text wire accessor so embedded NUL remains data;path and identifier accessors retain their NUL exclusion."
       ]
     },
     {
@@ -4805,6 +4806,99 @@
       "sourceSHA256": "703ebbd7272f67f869b2aa2cb4503bbe1d608caa6cf35a6350b085c78f04ed1e",
       "sha256": "64753520d90e847789b08525d1cb509a05e7eb4645ffdc248ac4843f3c4176c3",
       "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPromptC/include/string_extensions_wrapper.h",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ca75c176a359eeb8e687f8be7c769fe3f868ffad5768215d5fa49279d895f33e",
+      "destination": "native/Sources/RepoPromptC/include/repo_split_content.h",
+      "sha256": "1d3a9eac791ce01f4fad575c16907e332c35335195763628ea42720ee12d1b6f",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          75,
+          89
+        ]
+      ],
+      "changes": [
+        "Retain the split-result C declaration and owned allocation/free entry points;include only stddef and use the existing explicit C module."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptC/src/Utils/string_extensions_wrapper.c",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "96afedd30946f265e6a34b467054f7e2b91b85260d899b7145fb8e2807ec106d",
+      "destination": "native/Sources/RepoPromptC/repo_split_content.c",
+      "sha256": "3e58da360ffde7f9071e0158af4be1283d7b658d4e3d77f0fb7cdb654aaa376e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          784,
+          961
+        ]
+      ],
+      "changes": [
+        "Retain line scanning,counts,tie ordering,allocation and cleanup behavior. Separate beginning,line append,tail append and ending classification into private phases to satisfy configured complexity limits."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptDomainRuntime/StringExtensions.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "72c0578d3cf8ed69954c3e0900bf1702d9acc13c6ae2bcb9d1e6cbc5770422c3",
+      "destination": "native/Sources/SmipBridge/RPCELineEndingDetection.swift",
+      "sha256": "acfa9b19fc4c26621706dd51c76734e3b9b85d2ccabb713afbc1554e7e0b6814",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          113,
+          135
+        ]
+      ],
+      "changes": [
+        "Change package visibility to executable-local scope and import the existing RepoPromptC module explicitly. Preserve source C-backed ending detection. Apply scoped source-identifier SwiftLint exception."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a39a4f69ba729de3e153d51c80b944a5317032b6605157466270043a519efce1",
+      "destination": "native/Sources/SmipBridge/RPCESliceAssembly.swift",
+      "sha256": "266462b90a4445262a77733c15512611ce99f62aeefde75ee15c7af9c90941c2",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "changes": [
+        "Reuse the executable-local original LineRange instead of importing its app package. Preserve assembly,clamping,coalescing,descriptions and full-file outcomes. Apply targeted formatter layout and source-layout SwiftLint exceptions."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb",
+      "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
+      "sha256": "9c41dac8b38efd03fd66608a541c47324a22e7cc650574190549bf4864488ba2",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          13,
+          17
+        ],
+        [
+          403,
+          443
+        ],
+        [
+          449,
+          451
+        ]
+      ],
+      "changes": [
+        "Extract the file-block formatting methods into an executable-local enum and expose its entry point. Formatting receives a captured display path; app routing is not copied. Apply formatter layout and discard the unused internal content binding without changing its argument label."
+      ]
     }
   ],
   "dependencies": [
@@ -10111,6 +10205,102 @@
       "source": "Sources/RepoPromptSettingsCore/SettingsCopyValues.swift",
       "destination": "native/Sources/SmipBridge/RPCECodeMapUsage.swift",
       "line": 16
+    },
+    {
+      "name": "repo_split_result",
+      "source": "Sources/RepoPromptC/include/string_extensions_wrapper.h",
+      "destination": "native/Sources/RepoPromptC/include/repo_split_content.h",
+      "line": 76
+    },
+    {
+      "name": "repo_split_content_preserving_endings",
+      "source": "Sources/RepoPromptC/include/string_extensions_wrapper.h",
+      "destination": "native/Sources/RepoPromptC/include/repo_split_content.h",
+      "line": 86
+    },
+    {
+      "name": "repo_free_split_result",
+      "source": "Sources/RepoPromptC/include/string_extensions_wrapper.h",
+      "destination": "native/Sources/RepoPromptC/include/repo_split_content.h",
+      "line": 84
+    },
+    {
+      "name": "repo_split_content_preserving_endings",
+      "source": "Sources/RepoPromptC/src/Utils/string_extensions_wrapper.c",
+      "destination": "native/Sources/RepoPromptC/repo_split_content.c",
+      "line": 784
+    },
+    {
+      "name": "repo_free_split_result",
+      "source": "Sources/RepoPromptC/src/Utils/string_extensions_wrapper.c",
+      "destination": "native/Sources/RepoPromptC/repo_split_content.c",
+      "line": 952
+    },
+    {
+      "name": "splitContentPreservingLineEndings",
+      "source": "Sources/RepoPromptDomainRuntime/StringExtensions.swift",
+      "destination": "native/Sources/SmipBridge/RPCELineEndingDetection.swift",
+      "line": 113
+    },
+    {
+      "name": "WorkspaceSliceSegment",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "destination": "native/Sources/SmipBridge/RPCESliceAssembly.swift",
+      "line": 4
+    },
+    {
+      "name": "WorkspaceSliceAssembly",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "destination": "native/Sources/SmipBridge/RPCESliceAssembly.swift",
+      "line": 9
+    },
+    {
+      "name": "SliceAssemblyBuilder",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "destination": "native/Sources/SmipBridge/RPCESliceAssembly.swift",
+      "line": 22
+    },
+    {
+      "name": "build",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "destination": "native/Sources/SmipBridge/RPCESliceAssembly.swift",
+      "line": 23
+    },
+    {
+      "name": "normalizeSlices",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Slices/SliceAssembly.swift",
+      "destination": "native/Sources/SmipBridge/RPCESliceAssembly.swift",
+      "line": 50
+    },
+    {
+      "name": "codeFenceStart",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
+      "line": 14
+    },
+    {
+      "name": "renderFullFileBlock",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
+      "line": 403
+    },
+    {
+      "name": "renderSliceFileBlock",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
+      "line": 413
+    },
+    {
+      "name": "renderFileBlock",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
+      "line": 433
+    },
+    {
+      "name": "formatRange",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
+      "line": 417
     }
   ],
   "sourceCoverage": [

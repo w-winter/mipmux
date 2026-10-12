@@ -13,6 +13,7 @@ const resultKinds = {
   describe: ['description'], openRoots: ['rootsOpened'], listDirectory: ['directoryComplete'],
   prepareGitRead: ['gitReadArguments'], projectGitRead: ['gitLog', 'gitBlame', 'gitStatus', 'gitStatusError'],
   sliceReadText: ['readTextSlice', 'readTextRangeError'],
+  renderFileBlock: ['fileBlock'],
   readSource: ['sourceComplete'], extract: ['extracted', 'unsupportedExtension'],
   beginExport: ['exportOpened'], writeExport: ['exportWritten'], readExport: ['exportRead'],
   publishManifest: ['manifestPublished'],
