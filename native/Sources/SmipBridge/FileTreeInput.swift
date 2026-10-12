@@ -30,10 +30,13 @@ struct FileTreeInput {
     private let depth: Int?
     private let includeLegend: Bool
     private let showFullPaths: Bool
+    private let onlyIncludeRootsWithSelectedFiles: Bool
+    private let showCodeMapMarkers: Bool
 
     init(_ value: Any) throws {
         let object = try WireObject(value, keys: [
-            "kind", "roots", "entries", "scope", "mode", "maxDepth", "includeLegend", "showFullPaths"
+            "kind", "roots", "entries", "scope", "mode", "maxDepth", "includeLegend", "showFullPaths",
+            "onlyIncludeRootsWithSelectedFiles", "showCodeMapMarkers"
         ])
         guard let rawRoots = object.fields["roots"] as? [Any], let entries = object.fields["entries"] as? [Any]
         else { throw BridgeFailure("nativeProtocolError") }
@@ -42,6 +45,8 @@ struct FileTreeInput {
         depth = object.fields["maxDepth"] is NSNull ? nil : try object.integer("maxDepth")
         includeLegend = try object.boolean("includeLegend")
         showFullPaths = try object.boolean("showFullPaths")
+        onlyIncludeRootsWithSelectedFiles = try object.boolean("onlyIncludeRootsWithSelectedFiles")
+        showCodeMapMarkers = try object.boolean("showCodeMapMarkers")
         let parsedRoots = try Self.parseRoots(rawRoots)
         selectedIDs = try Self.populateEntries(entries, roots: parsedRoots.byName)
         roots = try Self.scopedRoots(object.value("scope"), roots: parsedRoots.byName, order: parsedRoots.order)
@@ -133,8 +138,9 @@ struct FileTreeInput {
             return ["kind": "fileTree", "tree": "No files are selected.", "rootsCount": 0, "note": "Selection is empty"]
         }
         let snapshot = FileTreeSelectionSnapshot(roots: roots.map { $0.snapshot() }, selectedFileIDs: selectedIDs,
-            mode: mode, showFullPaths: showFullPaths, onlyIncludeRootsWithSelectedFiles: mode == "selected",
-            includeLegend: includeLegend, showCodeMapMarkers: true, maxDepth: depth)
+            mode: mode, showFullPaths: showFullPaths,
+            onlyIncludeRootsWithSelectedFiles: onlyIncludeRootsWithSelectedFiles,
+            includeLegend: includeLegend, showCodeMapMarkers: showCodeMapMarkers, maxDepth: depth)
         return ["kind": "fileTree", "tree": WorkspaceFileTreePresentationRenderer.render(snapshot),
             "rootsCount": roots.count, "note": NSNull()]
     }

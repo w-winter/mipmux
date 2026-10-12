@@ -20,6 +20,11 @@ const source = entry => {
   return bytes.toString().split('\n').slice(entry.start - 1, entry.end).join('\n');
 };
 const native = name => readFileSync('native/Sources/SmipBridge/' + name, 'utf8');
+const adapterRevision = '8abccaad4c3938036be31d178b3aaa6540c4cc50';
+const adapter = execFileSync('git', ['show', adapterRevision + ':native/Sources/SmipBridge/FileTreeInput.swift'], { encoding: 'utf8' })
+  .replace('func render() -> [String: Any]', 'func render(onlyIncludeRootsWithSelectedFiles: Bool, showCodeMapMarkers: Bool) -> [String: Any]')
+  .replace('onlyIncludeRootsWithSelectedFiles: mode == "selected"', 'onlyIncludeRootsWithSelectedFiles: onlyIncludeRootsWithSelectedFiles')
+  .replace('showCodeMapMarkers: true', 'showCodeMapMarkers: showCodeMapMarkers');
 const wire = native('Wire.swift');
 const wireStart = wire.indexOf('struct WireObject {'), wireEnd = wire.indexOf('struct SourceIdentity:');
 const text = [
@@ -27,10 +32,14 @@ const text = [
   wire.slice(wireStart, wireEnd),
   source(provenance.sources[1]), source(provenance.sources[3]),
   'enum TokenCalculationService {\n' + source(provenance.sources[2]) + '\n}',
-  source(provenance.sources[0]), native('FileTreeInput.swift'),
+  source(provenance.sources[0]), adapter,
   `let raw = try JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile()) as! [[String: Any]]
 let output = try raw.map { entry -> [String: Any] in
-    ["name": entry["name"]!, "input": entry["input"]!, "expected": try FileTreeInput(entry["input"]!).render()]
+    var input = entry["input"] as! [String: Any]
+    let onlySelectedRoots = input.removeValue(forKey: "onlyIncludeRootsWithSelectedFiles") as! Bool
+    let markers = input.removeValue(forKey: "showCodeMapMarkers") as! Bool
+    return ["name": entry["name"]!, "input": entry["input"]!, "expected": try FileTreeInput(input).render(
+        onlyIncludeRootsWithSelectedFiles: onlySelectedRoots, showCodeMapMarkers: markers)]
 }
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: output, options: [.sortedKeys]))`,
 ].join('\n\n') + '\n';
@@ -43,6 +52,7 @@ finally { closeSync(inputFile); closeSync(outputFile); }
 const output = readFileSync(run + '/output.json');
 writeFileSync(directory + 'cases.json', output.toString() + '\n');
 provenance.cases = JSON.parse(output).length;
+provenance.adapterRevision = adapterRevision;
 provenance.generatorSHA256 = createHash('sha256').update(text).digest('hex');
 writeFileSync(directory + 'provenance.json', JSON.stringify(provenance, null, 2) + '\n');
 console.log(JSON.stringify({ cases: provenance.cases, scratch: run }));

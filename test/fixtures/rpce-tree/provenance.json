@@ -30,13 +30,14 @@
   "command": "node scripts/generate-tree-fixtures.mjs <pinned-rpce-checkout>",
   "bindings": [
     "Original renderer, snapshot models and token estimator are compiled from pinned RPCE source.",
-    "The immutable root/entry adapter and native field parser are shared with smip; these fixtures do not independently verify adapter parity.",
+    "The immutable root/entry adapter and native field parser are reused from the recorded smip adapter revision; these fixtures do not independently verify trie construction. Selected-root filtering and marker flags are passed explicitly to the original snapshot renderer.",
     "Logical root labels are supplied as data. Empty selection uses the MCP provider message."
   ],
   "limits": [
     "Public MCP and admitted startup tests cover selection and available-codemap projection separately.",
     "No desktop watcher, ignore-policy or codemap demand coordination is exercised by the synthetic snapshots."
   ],
-  "cases": 19,
-  "generatorSHA256": "51f694d001979b9ee1657634a63178b085a85ec6f89814f2c6391bda49a4045e"
+  "cases": 23,
+  "generatorSHA256": "76be541cfb4af774a16bc571f31fb3c1108da6afe9e531c79a7a340fcfda87a9",
+  "adapterRevision": "8abccaad4c3938036be31d178b3aaa6540c4cc50"
 }

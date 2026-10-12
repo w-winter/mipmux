@@ -28,6 +28,7 @@ export const NativeFileTreeInput = Type.Object({ kind: Type.Literal('renderFileT
   mode: Type.Enum(['auto', 'full', 'folders', 'selected']),
   maxDepth: Type.Union([Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }), Type.Null()]),
   includeLegend: Type.Boolean(), showFullPaths: Type.Boolean(),
+  onlyIncludeRootsWithSelectedFiles: Type.Boolean(), showCodeMapMarkers: Type.Boolean(),
 }, { additionalProperties: false });
 export const NativeFileTreeResult = Type.Object({ kind: Type.Literal('fileTree'), tree: Type.String(), rootsCount: SafeCount,
   note: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false });

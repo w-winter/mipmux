@@ -29,7 +29,8 @@ async function renderWorkspaceTree(operation: WorkspaceOperation, settings: File
   }
   return operation.renderFileTree({ kind: 'renderFileTree',
     roots: snapshot.roots.map(root => ({ name: root.name, path: root.name })), entries, scope,
-    mode: settings.mode, maxDepth: settings.maxDepth, includeLegend, showFullPaths: false });
+    mode: settings.mode, maxDepth: settings.maxDepth, includeLegend, showFullPaths: false,
+    onlyIncludeRootsWithSelectedFiles: settings.mode === 'selected', showCodeMapMarkers: true });
 }
 
 /** Renders the captured startup selection with RPCE's automatic view and available-codemap legend. */
