@@ -122,7 +122,7 @@ export const NativeSelectionReplyInput = Type.Object({ kind: Type.Literal('rende
   Type.Object({ ...selectionReplyFields, kind: Type.Literal('slice'), ranges: Type.Array(NativeSliceRange, { minItems: 1 }) }, { additionalProperties: false }),
   Type.Object({ ...selectionReplyFields, kind: Type.Literal('codemap'), origin: Type.Enum(['auto', 'manual']) }, { additionalProperties: false }),
 ])), status: Type.Enum(['ok', 'preview']), codemapAutoEnabled: Type.Boolean(), invalidPaths: Type.Array(Type.String()),
-  unmappedPaths: Type.Array(Type.String()), blocks: Type.Union([Type.Array(Type.String()), Type.Null()]),
+  unmappedPaths: Type.Array(Type.String()), pendingPaths: Type.Array(Type.String()), blocks: Type.Union([Type.Array(Type.String()), Type.Null()]),
   view: Type.Enum(['summary', 'files', 'content', 'codemaps']) }, { additionalProperties: false });
 const selectionRangeDTO = Type.Object({ start_line: SafeCount, end_line: SafeCount, description: Type.Optional(Type.String()) }, { additionalProperties: false });
 const selectionFileDTO = Type.Object({ path: Type.String(), tokens: SafeCount, render_mode: Type.Enum(['full', 'slice', 'codemap']),
@@ -131,7 +131,8 @@ const selectionFileDTO = Type.Object({ path: Type.String(), tokens: SafeCount, r
 export const NativeSelectionReplyResult = Type.Object({ kind: Type.Literal('selectionReply'), reply: Type.Object({
   files: Type.Array(selectionFileDTO), total_tokens: SafeCount, status: Type.Enum(['ok', 'preview']),
   invalid_paths: Type.Optional(Type.Array(Type.String())), blocks: Type.Optional(Type.Array(Type.String())),
-  code_structure: Type.Optional(Type.Object({ file_count: SafeCount, content: Type.String(), unmapped_paths: Type.Array(Type.String()) }, { additionalProperties: false })),
+  code_structure: Type.Optional(Type.Object({ file_count: SafeCount, content: Type.String(),
+    unmapped_paths: Type.Optional(Type.Array(Type.String())), pending_paths: Type.Optional(Type.Array(Type.String())) }, { additionalProperties: false })),
   file_slices: Type.Optional(Type.Array(Type.Object({ path: Type.String(), ranges: Type.Array(selectionRangeDTO),
     root_path: Type.String(), path_within_root: Type.String() }, { additionalProperties: false }))),
   codemap_auto_enabled: Type.Boolean(), code_map_usage: Type.Literal('auto'),

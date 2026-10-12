@@ -8,6 +8,7 @@ export async function acquirePatch(operation: WorkspaceOperation, input: PatchIn
   if (input.kind === 'localPatch') {
     const patch = await acquireLocalPatch(operation, input);
     return freeze({
+      availability: 'settled',
       record: { kind: 'patch', id: 'patch:' + input.id, receipt: patch.receipt, spans: [] },
       bodies: [strictText(patch.bytes.toString('utf8'))],
     });
@@ -22,6 +23,7 @@ export async function acquirePatch(operation: WorkspaceOperation, input: PatchIn
     policies.push({ path, policy: await operation.authorizeComparisonPath({ root: input.root, path }) });
   }
   return freeze({
+    availability: 'settled',
     record: {
       kind: 'patch',
       id: 'patch:' + input.id,

@@ -15,6 +15,7 @@ import type { ResultEncoding } from '../exploration/output-budget.js';
 import type { NativeOperation } from '../contracts/native.js';
 import type { WorkspaceRuntime } from './workspace-runtime.js';
 import { capturedFile, completeFile } from './inventory-file.js';
+import { observe } from './observe.js';
 
 /** Pins one inventory and owns a separate bridge until close joins admitted operations. */
 export class WorkspaceOperation {
@@ -23,6 +24,7 @@ export class WorkspaceOperation {
   #access: Promise<NativeAccess> | null = null;
   #bridge: BridgeClient | null = null;
   readonly #pending = new Set<Promise<unknown>>();
+  readonly #codemapRetains = new Set<() => Promise<void>>();
   #closing: Promise<void> | null = null;
   constructor(private readonly baseSnapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
     signal: AbortSignal,
@@ -31,26 +33,53 @@ export class WorkspaceOperation {
   get snapshot(): InventorySnapshot {
     return this.catalog.kind === 'workspace' ? this.catalog.owner.registeredSnapshot(this.baseSnapshot) : this.baseSnapshot;
   }
-  materializeExplicitSource(source: SourcePath) {
+  registerExplicitSource(source: SourcePath) {
     const captured = structuredClone(source);
     return this.#track(async () => {
       if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
       const existing = this.snapshot.entries.find(entry => entry.root === captured.root && entry.path === captured.path);
-      if (existing?.kind === 'file' && existing.structural.kind !== 'pending') return;
+      if (existing?.kind === 'file') return existing;
       const access = await (this.#access ??= this.#openAccess());
       const policy = new RootPolicy(this.declaration, access);
       if (policy.denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
-      if (existing?.kind === 'file') await policy.revalidate(captured, this.snapshot.policy, existing.visibility);
-      const visibility = existing?.kind === 'file' ? existing.visibility
-        : await policy.admitted(captured, false) ? 'discoverable' : 'managedOnly';
-      const acquired = await access.read(captured, existing?.kind === 'file' ? existing.identity : null);
+      const visibility = await policy.admitted(captured, false) ? 'discoverable' : 'managedOnly';
+      const acquired = await access.read(captured, null);
       this.signal.throwIfAborted();
       const entry = capturedFile(captured, acquired, visibility);
       const owner = this.catalog.owner;
-      if (existing?.kind !== 'file') owner.registerExplicitFile(this.snapshot, entry, policy.snapshot());
-      const complete = await completeFile(access, entry, acquired, this.runtime.artifacts, () => owner.retain());
+      owner.registerExplicitFile(this.snapshot, entry, policy.snapshot());
+      return entry;
+    });
+  }
+  requestExplicitCodemap(source: SourcePath) {
+    const captured = structuredClone(source);
+    return this.#track(async () => {
+      if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
+      const entry = await this.registerExplicitSource(captured);
       this.signal.throwIfAborted();
-      owner.completeExplicitFile(complete);
+      if (entry.structural.kind !== 'pending') return { result: Promise.resolve(entry), release: async () => {} };
+      const owner = this.catalog.owner;
+      const lease = owner.retainCodemap(entry, async signal => {
+        const operation = await this.openPinned(signal);
+        try {
+          const access = await (operation.#access ??= operation.#openAccess());
+          const acquired = await operation.readRawSource(captured);
+          const complete = await completeFile(access, entry, acquired, this.runtime.artifacts, () => owner.retain(), owner.artifactBuildSignal);
+          signal.throwIfAborted();
+          owner.completeExplicitFile(complete);
+          return complete;
+        } finally { await operation.close(); }
+      });
+      const release = async () => { await lease.release(); this.#codemapRetains.delete(release); };
+      this.#codemapRetains.add(release);
+      return { result: lease.result, release };
+    });
+  }
+  materializeExplicitSource(source: SourcePath) {
+    return this.#track(async () => {
+      const demand = await this.requestExplicitCodemap(source);
+      try { await observe(demand.result, this.signal); }
+      finally { await demand.release(); }
     });
   }
   fork(signal: AbortSignal): Promise<WorkspaceOperation> { this.#check(); return this.openPinned(signal); }
@@ -258,7 +287,7 @@ export class WorkspaceOperation {
   close(): Promise<void> {
     this.#closing ??= (async () => {
       this.cancel();
-      try { await this.#bridge?.close(); }
+      try { await Promise.all([...this.#codemapRetains].map(release => release())); await this.#bridge?.close(); }
       finally { await Promise.allSettled([...this.#pending]); await this.release(); }
     })();
     return this.#closing;

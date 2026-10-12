@@ -16,14 +16,16 @@ export function capturedFile(source: SourcePath, acquired: AcquiredSource, visib
 }
 
 export async function completeFile(access: NativeAccess, entry: FileEntry, acquired: AcquiredSource,
-  artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>): Promise<FileEntry> {
+  artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal): Promise<FileEntry> {
   if (acquired.key === null) return entry;
   const key = acquired.key;
   const record = await artifacts.resolve(key, async () => {
     const release = retainExtraction();
     try {
+      access.signal.throwIfAborted();
+      // Observer cancellation does not cancel an admitted build; runtime shutdown does.
       const extracted = await access.bridge.request({ kind: 'extract', extension: extname(entry.path).slice(1),
-        bytes: acquired.bytes.toString('base64'), expected: acquired.identity }, access.signal);
+        bytes: acquired.bytes.toString('base64'), expected: acquired.identity }, artifactBuildSignal);
       if (extracted.result.kind !== 'extracted') throw new WorkspaceFailure('nativeProtocolError');
       return extracted.result;
     } finally { void release(); }

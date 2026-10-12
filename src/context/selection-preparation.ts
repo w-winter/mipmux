@@ -61,7 +61,7 @@ async function materializePath(operation: WorkspaceOperation, roots: readonly Ro
   if (existing?.kind === 'file') return null;
   if (!relative || existing?.kind === 'directory') return { path, outcome: 'unavailable' as const };
   try {
-    await operation.materializeExplicitSource({ root: root.name, path: relative });
+    await operation.registerExplicitSource({ root: root.name, path: relative });
     return null;
   } catch (error) {
     if (error instanceof WorkspaceFailure && error.code === 'pathDenied') return { path, outcome: 'blocked' as const };

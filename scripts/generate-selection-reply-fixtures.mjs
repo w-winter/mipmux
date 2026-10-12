@@ -45,7 +45,9 @@ const text = [
         let collections = input.collections
         let filesReply = await RPCESelectionReplyAssembler.buildSelectedFilesReply(collections: collections, formatter: .init(), tokens: .init())
         let status = input.status, invalid = input.invalidPaths, blocks = input.blocks
-        let minimal = input.unmappedPaths.isEmpty ? nil : ToolResultDTOs.SelectedCodeStructureDTO(fileCount: 0, content: "", unmappedPaths: input.unmappedPaths)
+        let minimal = input.unmappedPaths.isEmpty && input.pendingPaths.isEmpty ? nil : ToolResultDTOs.SelectedCodeStructureDTO(
+          fileCount: 0, content: "", unmappedPaths: input.unmappedPaths.isEmpty ? nil : input.unmappedPaths,
+          pendingPaths: input.pendingPaths.isEmpty ? nil : input.pendingPaths)
         let userPresetState: RPCESelectionReplyAssembler.UserPresetState? = nil
         let tokenStats: ToolResultDTOs.TokenStats? = nil
         let tokenAccounting: ToolResultDTOs.TokenAccountingDTO? = nil

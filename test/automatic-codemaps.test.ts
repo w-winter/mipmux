@@ -186,7 +186,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
           assert(unrelated?.kind === 'file');
           const source = { root: unrelated.root, path: unrelated.path }, representation = codemapRepresentation(unrelated, source);
           assert(representation?.kind === 'rendered');
-          materials.push({ record: { ...template.record, id: sourceId(source), selection: { kind: 'codemap', source },
+          materials.push({ availability: 'settled', record: { ...template.record, id: sourceId(source), selection: { kind: 'codemap', source },
             identity: unrelated.identity, artifactKey: representation.key }, bodies: [representation.body] });
         }
       }

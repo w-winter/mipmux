@@ -4,12 +4,19 @@ import { ArtifactStore } from './artifact-store.js';
 import { scanInventory } from './inventory.js';
 import { NativeAccess, type OpenRoot } from './source-access.js';
 import type { PolicyDeclaration } from './root-policy.js';
-import { WorkspaceFailure } from './values.js';
+import { canonicalJSON, WorkspaceFailure } from './values.js';
 import { entryKey, managedInventory, type ManagedRegistration } from './managed-inventory.js';
 import type { FileEntry } from './inventory-file.js';
 import { capturedFile, completeFile } from './inventory-file.js';
 import { RootPolicy } from './root-policy.js';
 import { NativeFailure } from '../native/bridge-client.js';
+import { failureCode } from '../runtime/tool-result.js';
+
+interface CodemapDemand {
+  readonly controller: AbortController;
+  readonly retains: Set<symbol>;
+  readonly result: Promise<FileEntry>;
+}
 
 export class WorkspaceRuntime {
   readonly #controller = new AbortController();
@@ -23,10 +30,11 @@ export class WorkspaceRuntime {
   readonly #observers = new Set<{ target: number; resolve: (snapshot: InventorySnapshot) => void; reject: (error: unknown) => void }>();
   readonly #managed = new Map<string, ManagedRegistration>();
   readonly #managedViews = new WeakMap<InventorySnapshot, { revision: number; snapshot: InventorySnapshot }>();
+  readonly #codemapDemands = new Map<string, CodemapDemand>();
   #managedRevision = 0;
   constructor(readonly key: string, readonly declaration: PolicyDeclaration, private roots: readonly OpenRoot[],
     private bridge: BridgeClient, readonly artifacts: ArtifactStore, readonly onClosed: () => void,
-    readonly makeBridge: () => BridgeClient) {}
+    readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal) {}
 
   registeredSnapshot(base: InventorySnapshot): InventorySnapshot {
     if (!this.#managed.size) return base;
@@ -53,6 +61,38 @@ export class WorkspaceRuntime {
     this.#managedRevision++;
   }
 
+  retainCodemap(entry: FileEntry, load: (signal: AbortSignal) => Promise<FileEntry>) {
+    if (this.#closing) throw new WorkspaceFailure('workspaceClosed');
+    const key = canonicalJSON([entry.root, entry.path, entry.identity, entry.structural]);
+    let demand = this.#codemapDemands.get(key);
+    if (!demand) {
+      const controller = new AbortController();
+      const result = Promise.resolve().then(() => load(AbortSignal.any([controller.signal, this.#controller.signal])));
+      demand = { controller, retains: new Set(), result };
+      this.#codemapDemands.set(key, demand);
+      void result.catch(error => {
+        const cause = failureCode(error);
+        process.stderr.write(JSON.stringify({ level: cause === 'cancelled' ? 'debug' : 'error', event: 'codemapDemandFailed',
+          workspaceKey: this.key, root: entry.root, path: entry.path, cause }) + '\n');
+      });
+    }
+    const owned = demand, retain = Symbol();
+    owned.retains.add(retain);
+    process.stderr.write(JSON.stringify({ level: 'debug', event: 'codemapDemandRetained', workspaceKey: this.key,
+      root: entry.root, path: entry.path, retains: owned.retains.size }) + '\n');
+    let releasing: Promise<void> | null = null;
+    const release = () => releasing ??= (async () => {
+      if (!owned.retains.delete(retain)) return;
+      if (owned.retains.size) return;
+      owned.controller.abort();
+      if (this.#codemapDemands.get(key) === owned) this.#codemapDemands.delete(key);
+      await Promise.allSettled([owned.result]);
+      process.stderr.write(JSON.stringify({ level: 'debug', event: 'codemapDemandReleased', workspaceKey: this.key,
+        root: entry.root, path: entry.path }) + '\n');
+    })();
+    return { result: owned.result, release };
+  }
+
   async #refreshManaged(access: NativeAccess): Promise<void> {
     for (const [key, registered] of [...this.#managed]) {
       await this.#refreshRegistration(access, key, registered);
@@ -65,7 +105,7 @@ export class WorkspaceRuntime {
       const discoverable = await policy.admitted(source, false);
       const acquired = await access.read(source, null);
       const entry = await completeFile(access, capturedFile(source, acquired, discoverable ? 'discoverable' : 'managedOnly'),
-        acquired, this.artifacts, () => this.retain());
+        acquired, this.artifacts, () => this.retain(), this.artifactBuildSignal);
       access.signal.throwIfAborted();
       if (this.#managed.get(key) !== registered) throw new WorkspaceFailure('sourceChanged', source);
       this.#managed.set(key, { entry, policy: policy.snapshot() });
@@ -86,7 +126,7 @@ export class WorkspaceRuntime {
     return async () => {
       if (released) return;
       released = true; this.#references--;
-      if (this.#references === 0) await this.close();
+      if (this.#references === 0 && !this.#closing) await this.close();
     };
   }
 
@@ -103,7 +143,7 @@ export class WorkspaceRuntime {
         process.stderr.write(JSON.stringify({ level: 'info', event: 'inventoryStarted', workspaceKey: this.key, generation: target }) + '\n');
         const access = new NativeAccess(this.bridge, this.roots, this.#controller.signal);
         const snapshot = await scanInventory(access,
-          this.declaration, this.key, target, this.artifacts, () => this.retain());
+          this.declaration, this.key, target, this.artifacts, () => this.retain(), this.artifactBuildSignal);
         await this.#refreshManaged(access);
         this.#controller.signal.throwIfAborted();
         this.#snapshot = snapshot; this.#published = target; this.#failure = null;
@@ -178,9 +218,13 @@ export class WorkspaceRuntime {
   close(): Promise<void> {
     this.#closing ??= (async () => {
       this.#controller.abort();
+      const demands = [...this.#codemapDemands.values()];
+      for (const demand of demands) demand.controller.abort();
       for (const observer of this.#observers) observer.reject(new WorkspaceFailure('workspaceClosed'));
       this.#observers.clear();
       await this.bridge.close(); await this.#flight;
+      await Promise.allSettled(demands.map(demand => demand.result));
+      this.#codemapDemands.clear();
       this.onClosed();
     })();
     return this.#closing;

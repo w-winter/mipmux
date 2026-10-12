@@ -23,6 +23,7 @@ import { prepareText } from '../exploration/lines.js';
 import {
   acquireDocument,
   acquireSource,
+  prepareCodemapSelection,
   type Material,
   sourceId,
   strictText,
@@ -39,6 +40,7 @@ import { selectionValidator, type SelectionRequest } from '../contracts/selectio
 import { prepareSelection } from './selection-preparation.js';
 import { estimateUnits } from './budget.js';
 import { posix } from 'node:path';
+import { resolveSelectedCodemaps } from './codemap-readiness.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -140,7 +142,7 @@ export class DraftRuntime {
     return this.#track((async () => {
       const revision = request.expectedRevision ?? this.#revision;
       this.#check(signal, revision);
-      const freezeGeneration = this.#freezeGeneration, current = this.#materials;
+      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const prepared = await prepareSelection(operation, request, current, this.#codemapMode);
@@ -153,8 +155,10 @@ export class DraftRuntime {
         if (isMutation && candidate.changed) {
           this.#commit(next, prepared.mode, this.#prompt, candidate.revision);
         }
-        const reply = await this.#selectionReply(operation, request, next, prepared.mode, prepared.invalid,
-          isMutation ? candidate.revision : revision);
+        const settled = await resolveSelectedCodemaps(operation, next);
+        if (request.op !== 'preview') this.#retainReadyCodemaps(next, settled);
+        const reply = await this.#selectionReply(operation, request, settled, prepared.mode, prepared.invalid,
+          isMutation ? candidate.revision : revision, prompt);
         operation.signal.throwIfAborted();
         if (request.op === 'preview' && request.strict && !reply.files.length && !reply.file_slices?.length) {
           throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
@@ -175,20 +179,33 @@ export class DraftRuntime {
     }
     for (const selection of prepared.selections) {
       const id = sourceId(selection.source), existing = current.get(id);
+      const required = this.request.requiredSources.some(required => sourceId(required.source) === id);
       const material = existing?.record.kind === 'source' && existing.record.selectionOrigin === 'explicit'
         && canonicalJSON(existing.record.selection) === canonicalJSON(selection) ? existing
-        : await acquireSource(operation, { selectionOrigin: 'explicit', selection,
-          required: this.request.requiredSources.some(required => sourceId(required.source) === id) });
+        : selection.kind === 'codemap' && !required ? await prepareCodemapSelection(operation, selection)
+        : await acquireSource(operation, { selectionOrigin: 'explicit', selection, required });
       explicit.set(id, material);
     }
     return this.#derive(operation, explicit, prepared.mode, current, revision);
   }
+  #retainReadyCodemaps(pending: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>): void {
+    if (this.#closing || this.#state !== 'editable') return;
+    const next = new Map(this.#materials);
+    for (const [id, material] of settled) {
+      const previous = pending.get(id);
+      if (previous?.availability === 'pendingCodemap' && material.availability === 'settled' && next.get(id) === previous) {
+        next.set(id, material);
+      }
+    }
+    this.#materials = next;
+  }
   async #selectionReply(operation: WorkspaceOperation, request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
-    invalid: readonly string[], revision: number) {
+    invalid: readonly string[], revision: number, prompt: string) {
     const snapshot = operation.snapshot;
     const rendered = renderBundle({ request: this.request, inventory: snapshot,
-      prompt: this.#prompt, codemapMode: mode, materials: [...materials.values()] });
+      prompt, codemapMode: mode, materials: [...materials.values()] });
     const unmapped: string[] = [];
+    const pending: string[] = [];
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
     const blocks: string[] = [];
     for (const material of materials.values()) {
@@ -198,6 +215,7 @@ export class DraftRuntime {
       const relative = snapshot.roots.length === 1 ? record.selection.source.path
         : root.name + '/' + record.selection.source.path;
       const path = request.path_display === 'full' ? posix.join(root.identity.canonicalPath, record.selection.source.path) : relative;
+      if (material.availability === 'pendingCodemap') { pending.push(path); continue; }
       if (record.selection.kind === 'codemap' && !material.bodies.length) { unmapped.push(path); continue; }
       const fields = { path, tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
         rootPath: root.name, pathWithinRoot: record.selection.source.path };
@@ -206,7 +224,8 @@ export class DraftRuntime {
     }
     const reply = await operation.renderSelectionReply({ kind: 'renderSelectionReply', entries,
       status: request.op === 'preview' ? 'preview' : 'ok', codemapAutoEnabled: mode === 'automatic',
-      invalidPaths: [...invalid], unmappedPaths: unmapped, blocks: request.view === 'content' ? blocks : null, view: request.view });
+      invalidPaths: [...invalid], unmappedPaths: unmapped, pendingPaths: pending,
+      blocks: request.view === 'content' ? blocks : null, view: request.view });
     return { ...reply, revision, measurement: rendered.measurement, diagnostics: rendered.diagnostics };
   }
   #selectionFileEntry(record: Extract<Material['record'], { kind: 'source' }>, fields: SelectionReplyFile): SelectionReplyEntry {
@@ -435,11 +454,12 @@ export class DraftRuntime {
         prompt: this.#prompt,
         materials,
       });
-    const digest = sha256(canonicalJSON({ id: this.id, revision: this.#revision, view: request.view }));
     const prompt = { kind: 'prompt' as const, prompt: this.#prompt };
     const records: (ItemCost | ReturnType<typeof materialMetadata> | typeof prompt)[] = request.view === 'costs'
       ? rendered.costs
       : [...materials.map((material) => materialMetadata(material.record)), prompt];
+    const digest = sha256(canonicalJSON({ id: this.id, revision: this.#revision, view: request.view,
+      records, measurement: rendered.measurement }));
     return pageResult(
       records,
       pageOffset(continuation, digest),

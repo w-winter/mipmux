@@ -89,7 +89,7 @@ function verifySourceMaterial(record: Extract<MaterialRecord, { kind: 'source' }
   }
   if (record.selection.kind === 'codemap') verifyCodemap(record, entry, bodies);
 }
-function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
+function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material, { availability: 'settled' }>[] {
   const seen = new Set<string>();
   const materials = manifest.materials.map((record) => {
     if (seen.has(record.id)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -132,7 +132,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Material[] {
         requireEqual(record.receipt.policies.map(control => control.path).sort(), paths);
       }
     }
-    return { record: { ...record, spans: [] }, bodies };
+    return { availability: 'settled' as const, record: { ...record, spans: [] }, bodies };
   });
   for (const selection of manifest.request.requiredSources) {
     const material = materials.find((material) => material.record.id === sourceId(selection.source));

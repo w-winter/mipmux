@@ -6,16 +6,19 @@ struct SelectionReplyInput {
     private let codemapAutoEnabled: Bool
     private let invalidPaths: [String]
     private let unmappedPaths: [String]
+    private let pendingPaths: [String]
     private let blocks: [String]?
     private let view: String
 
     init(_ value: Any) throws {
         let input = try WireObject(value, keys: [
-            "kind", "entries", "status", "codemapAutoEnabled", "invalidPaths", "unmappedPaths", "blocks", "view"
+            "kind", "entries", "status", "codemapAutoEnabled", "invalidPaths", "unmappedPaths", "pendingPaths",
+            "blocks", "view"
         ])
         guard let entries = input.fields["entries"] as? [Any],
               let invalid = input.fields["invalidPaths"] as? [String],
-              let unmapped = input.fields["unmappedPaths"] as? [String]
+              let unmapped = input.fields["unmappedPaths"] as? [String],
+              let pending = input.fields["pendingPaths"] as? [String]
         else { throw BridgeFailure("nativeProtocolError") }
         var selected: [RPCESelectionReplyAssembler.SelectedEntry] = []
         var codemap: [RPCESelectionReplyAssembler.CodemapEntry] = []
@@ -36,6 +39,7 @@ struct SelectionReplyInput {
         codemapAutoEnabled = try input.boolean("codemapAutoEnabled")
         invalidPaths = invalid
         unmappedPaths = unmapped
+        pendingPaths = pending
         let rawBlocks = try input.value("blocks")
         if rawBlocks is NSNull {
             blocks = nil
@@ -89,8 +93,9 @@ struct SelectionReplyInput {
         let files = await RPCESelectionReplyAssembler.buildSelectedFilesReply(
             collections: collections, formatter: .init(), tokens: .init()
         )
-        let diagnostics = unmappedPaths.isEmpty ? nil : ToolResultDTOs.SelectedCodeStructureDTO(
-            fileCount: 0, content: "", unmappedPaths: unmappedPaths
+        let diagnostics = unmappedPaths.isEmpty && pendingPaths.isEmpty ? nil : ToolResultDTOs.SelectedCodeStructureDTO(
+            fileCount: 0, content: "", unmappedPaths: unmappedPaths.isEmpty ? nil : unmappedPaths,
+            pendingPaths: pendingPaths.isEmpty ? nil : pendingPaths
         )
         let reply = ToolResultDTOs.SelectionReply(
             files: files.files, totalTokens: files.totalTokens, status: status,

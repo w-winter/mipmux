@@ -388,7 +388,7 @@ test('a rejected selection retains explicit workspace registration but ordinary 
   } finally { await f.client.close(); }
 });
 
-test('cancellation during post-registration extraction retains exact access without committing selection', async () => {
+test('cancellation during codemap extraction retains committed membership and get reacquires its presentation', async () => {
   const f = await fixture(); await f.client.close();
   let entered!: () => void, release!: () => void;
   const entering = new Promise<void>(resolve => { entered = resolve; });
@@ -418,21 +418,30 @@ test('cancellation during post-registration extraction retains exact access with
     armed = true;
     const abort = new AbortController();
     const work = client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
-      op: 'add', paths: [join(f.root, 'private/Hidden.swift')], maxOutputBytes: 30000 })), abort.signal);
+      op: 'add', mode: 'codemap_only', paths: [join(f.root, 'private/Hidden.swift')], maxOutputBytes: 30000 })), abort.signal);
     const rejected = assert.rejects(work, /cancelled|aborted|nativeWorkerClosed/i);
     await Promise.race([entering, work.then(() => { throw new Error('Selection settled before post-registration extraction'); })]);
+    const committed = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 });
+    assert(committed.kind === 'metadata'); assert.equal(committed.revision, 1);
+    assert(committed.items.some(item => 'kind' in item && item.kind === 'source' && item.selection.kind === 'codemap'));
     abort.abort(); release(); await rejected;
     const state = client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 });
-    assert(state.kind === 'metadata'); assert.equal(state.revision, 0);
+    assert(state.kind === 'metadata'); assert.equal(state.revision, 1);
+    const blocked = await client.finalize(draft.id, signal());
+    assert.equal(blocked.kind, 'blocked');
     const operation = await owner.openOperation(signal());
     try {
       assert.equal((await operation.readSource({ root: 'r', path: 'private/Hidden.swift' })).text,
         'struct ExplicitlyManaged {\n  let value: Int\n}\n');
       const resumed = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
-        op: 'add', mode: 'codemap_only', paths: [join(f.root, 'private/Hidden.swift')], view: 'content', maxOutputBytes: 30000 })), signal());
+        op: 'get', view: 'content', maxOutputBytes: 30000 })), signal());
       assert(resumed.blocks?.some(body => body.includes('ExplicitlyManaged')));
       assert.equal(resumed.revision, 1);
-      await writeFile(join(f.base, 'cancel-registration-receipt.json'), JSON.stringify({ state, resumed, enumeration: operation.snapshot.enumeration }, null, 2) + '\n');
+      const finalized = await client.finalize(draft.id, signal());
+      assert.equal(finalized.kind, 'ready');
+      if (finalized.kind === 'ready') await verifyBundle(finalized.directory);
+      await writeFile(join(f.base, 'cancel-registration-receipt.json'), JSON.stringify({ committed, state, blocked, resumed, finalized,
+        enumeration: operation.snapshot.enumeration }, null, 2) + '\n');
     } finally { await operation.close(); await owner.close(); await client.close(); }
   } finally { release(); await runtime.close(); }
 });
@@ -453,4 +462,57 @@ test('get, clear and rejected representation syntax do not acquire unrelated exp
       await writeFile(join(f.base, 'non-acquiring-selection-receipt.json'), JSON.stringify({ op, reply, inventory: snapshot.inventoryDigest }, null, 2) + '\n');
     } finally { await f.client.close(); }
   }
+});
+
+test('the source readiness deadline reports pending codemaps and a later get completes the same selection', async () => {
+  const f = await fixture(); await f.client.close();
+  const sourceReadinessMilliseconds = 10000;
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  let armed = false, timer: ReturnType<typeof setTimeout> | null = null;
+  class Runtime extends SmipRuntime {
+    override makeBridge() {
+      class Bridge extends BridgeClient {
+        override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
+          if (armed && operation.kind === 'extract') {
+            armed = false;
+            timer = setTimeout(release, sourceReadinessMilliseconds);
+            await held;
+          }
+          return super.request(operation, signal);
+        }
+      }
+      return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
+    }
+  }
+  const runtime = new Runtime({ cachePath: join(f.base, 'deadline-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  const signal = () => new AbortController().signal;
+  const client = runtime.createClient(null);
+  try {
+    const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output }, signal());
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      requiredSources: [], documents: [{ kind: 'suppliedDocument', id: 'evidence', role: 'evidence', origin: 'fixture', text: 'Required evidence' },
+        { kind: 'suppliedDocument', id: 'supporting-evidence', role: 'evidence', origin: 'fixture', text: 'Supporting evidence' }],
+      patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'deadline' }, signal());
+    armed = true;
+    const pending = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+      op: 'set', mode: 'codemap_only', paths: [join(f.root, 'private/Hidden.swift')], view: 'content', maxOutputBytes: 30000 })), signal());
+    assert.equal(pending.revision, 1); assert.deepEqual(pending.files, []); assert.deepEqual(pending.blocks, []);
+    assert.deepEqual(pending.code_structure, { file_count: 0, content: '', pending_paths: ['private/Hidden.swift'] });
+    assert.equal(pending.measurement.complete, false);
+    const costs = client.inspect(draft.id, { view: 'costs', continuation: null, maxOutputBytes: 30000 });
+    assert(costs.kind === 'costs'); assert.equal(costs.items.length, 3);
+    const oneRecordBytes = Buffer.byteLength(JSON.stringify({ ...costs, items: costs.items.slice(0, 1), truncated: true,
+      continuation: { digest: '0'.repeat(64), offset: 1 } }));
+    const page = client.inspect(draft.id, { view: 'costs', continuation: null, maxOutputBytes: oneRecordBytes });
+    assert(page.kind === 'costs'); assert(page.truncated); assert(page.continuation);
+    const completed = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+      op: 'get', view: 'content', maxOutputBytes: 30000 })), signal());
+    assert.equal(completed.revision, 1); assert(completed.blocks?.some(body => body.includes('ExplicitlyManaged')));
+    assert.throws(() => client.inspect(draft.id, { view: 'costs', continuation: page.continuation, maxOutputBytes: 30000 }), /staleContinuation/);
+    const finalized = await client.finalize(draft.id, signal()); assert.equal(finalized.kind, 'ready');
+    if (finalized.kind === 'ready') await verifyBundle(finalized.directory);
+    await writeFile(join(f.base, 'codemap-deadline-receipt.json'), JSON.stringify({ pending, completed, finalized }, null, 2) + '\n');
+  } finally { if (timer !== null) clearTimeout(timer); release(); await client.close(); await runtime.close(); }
 });

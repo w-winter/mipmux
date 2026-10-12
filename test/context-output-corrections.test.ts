@@ -154,7 +154,7 @@ test('current verification rejects self-consistent forged slices against the exa
       const material = materials.find(item => item.record.kind === 'source' && item.record.selection.kind === 'slices');
       assert(material?.record.kind === 'source' && material.record.selection.kind === 'slices');
       if (scenario === 'wrongBody') {
-        materials[materials.indexOf(material)] = { record: material.record, bodies: ['WRONG\r\n'] };
+        materials[materials.indexOf(material)] = { availability: 'settled', record: material.record, bodies: ['WRONG\r\n'] };
       } else {
         const path = scenario === 'emptySlice' ? 'empty.txt' : 'slice.txt';
         const end = scenario === 'emptySlice' ? 1 : 5;

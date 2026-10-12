@@ -9,7 +9,8 @@
       "invalidPaths": [],
       "unmappedPaths": [],
       "blocks": null,
-      "view": "summary"
+      "view": "summary",
+      "pendingPaths": []
     },
     "expected": {
       "code_map_usage": "auto",
@@ -80,7 +81,8 @@
         "Slice body",
         "Codemap body"
       ],
-      "view": "content"
+      "view": "content",
+      "pendingPaths": []
     },
     "expected": {
       "blocks": [
@@ -207,7 +209,8 @@
       "blocks": [
         "Do not include bodies in codemaps view"
       ],
-      "view": "codemaps"
+      "view": "codemaps",
+      "pendingPaths": []
     },
     "expected": {
       "code_map_usage": "auto",
@@ -244,6 +247,87 @@
         "slice_tokens": 0
       },
       "total_tokens": 5
+    }
+  },
+  {
+    "name": "pending-only-codemaps",
+    "input": {
+      "kind": "renderSelectionReply",
+      "entries": [],
+      "status": "ok",
+      "codemapAutoEnabled": false,
+      "invalidPaths": [],
+      "unmappedPaths": [],
+      "pendingPaths": [
+        "private/Hidden.swift"
+      ],
+      "blocks": [],
+      "view": "codemaps"
+    },
+    "expected": {
+      "code_map_usage": "auto",
+      "code_structure": {
+        "content": "",
+        "file_count": 0,
+        "pending_paths": [
+          "private/Hidden.swift"
+        ]
+      },
+      "codemap_auto_enabled": false,
+      "files": [],
+      "status": "ok",
+      "summary": {
+        "codemap_count": 0,
+        "codemap_tokens": 0,
+        "full_count": 0,
+        "full_tokens": 0,
+        "slice_count": 0,
+        "slice_tokens": 0
+      },
+      "total_tokens": 0
+    }
+  },
+  {
+    "name": "pending-and-terminal-diagnostics",
+    "input": {
+      "kind": "renderSelectionReply",
+      "entries": [],
+      "status": "ok",
+      "codemapAutoEnabled": false,
+      "invalidPaths": [],
+      "unmappedPaths": [
+        "Empty.swift"
+      ],
+      "pendingPaths": [
+        "private/Hidden.swift"
+      ],
+      "blocks": null,
+      "view": "summary"
+    },
+    "expected": {
+      "code_map_usage": "auto",
+      "code_structure": {
+        "content": "",
+        "file_count": 0,
+        "pending_paths": [
+          "private/Hidden.swift"
+        ],
+        "unmapped_paths": [
+          "Empty.swift"
+        ]
+      },
+      "codemap_auto_enabled": false,
+      "files": [],
+      "status": "ok",
+      "summary": {
+        "codemap_count": 0,
+        "codemap_tokens": 0,
+        "full_count": 0,
+        "full_tokens": 0,
+        "slice_count": 0,
+        "slice_tokens": 0
+      },
+      "total_tokens": 0
     }
   }
 ]

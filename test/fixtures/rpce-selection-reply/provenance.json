@@ -18,8 +18,8 @@
       "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496"
     }
   ],
-  "cases": 3,
-  "generatorSHA256": "40010c144aed71db7e36ce480564a4f9b6e8cbea18dae7ada438877e72556ab0",
+  "cases": 5,
+  "generatorSHA256": "a9fa49063578cbfa091efa71d56690d67e6857c1a38033552b4a9ce712364444",
   "bindings": [
     "Original DTO, aggregation, copy-projection and view-filter bodies compile independently. Shared immutable input parsing supplies paths, category/ranges and captured token values. App path metadata and token services are replaced by those captured values; workspace token recount and content packaging are not tested by these cases."
   ]

@@ -15,7 +15,7 @@ const entry = Type.Union([
 ]);
 const casesSchema = Compile(Type.Array(Type.Object({ name: Type.String(), input: Type.Object({ kind: Type.Literal('renderSelectionReply'),
   entries: Type.Array(entry), status: Type.String(), codemapAutoEnabled: Type.Boolean(), invalidPaths: Type.Array(Type.String()),
-  unmappedPaths: Type.Array(Type.String()), blocks: Type.Union([Type.Array(Type.String()), Type.Null()]), view: Type.String(),
+  unmappedPaths: Type.Array(Type.String()), pendingPaths: Type.Array(Type.String()), blocks: Type.Union([Type.Array(Type.String()), Type.Null()]), view: Type.String(),
 }), expected: Type.Unknown() })));
 const reply = Compile(Type.Object({ result: Type.Object({ kind: Type.Literal('selectionReply'), reply: Type.Unknown() }) }));
 

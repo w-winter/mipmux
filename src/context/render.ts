@@ -248,7 +248,7 @@ export function renderBundle(input: RenderInput) {
   const context = parts.join(''), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
   const measurement: Measurement = {
-    complete: true,
+    complete: materials.every(material => material.availability === 'settled'),
     bytes: offset,
     units,
     allowance,
@@ -257,6 +257,11 @@ export function renderBundle(input: RenderInput) {
     fixedOverhead: { bytes: fixedBytes, units: estimateUnits(fixedBytes) },
   };
   const diagnostics: Diagnostic[] = [];
+  for (const material of materials) {
+    if (material.availability === 'pendingCodemap') {
+      diagnostics.push({ code: 'codemapPending', materialId: material.record.id, details: { source: material.record.selection.source } });
+    }
+  }
   if (units > allowance) {
     diagnostics.push({
       code: 'overBudget',

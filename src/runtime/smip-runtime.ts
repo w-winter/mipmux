@@ -89,7 +89,8 @@ export class SmipRuntime {
         // Recheck after disk I/O so concurrent declarations adopt one owner.
         signal.throwIfAborted(); owner = this.#owners.get(key);
         if (!owner) {
-          owner = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => this.#owners.delete(key), () => this.makeBridge());
+          owner = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => this.#owners.delete(key),
+            () => this.makeBridge(), this.#shutdown.signal);
           this.#owners.set(key, owner); adopted = true;
         }
       }
