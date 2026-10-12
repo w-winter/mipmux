@@ -20,6 +20,7 @@ const resultKinds = {
   renderDiscoveryPrompt: ['discoveryPrompt'],
   renderDiscoveryMessage: ['discoveryMessage'],
   renderFileTree: ['fileTree'],
+  renderPromptAssembly: ['promptAssembly'],
   queryStructure: ['structure'],
   transitionSelection: ['selectionTransition'],
   calculateSliceRanges: ['sliceRanges'],

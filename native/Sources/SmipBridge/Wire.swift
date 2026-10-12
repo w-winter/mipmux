@@ -159,6 +159,7 @@ enum Operation {
     case renderFileBlock(FileBlockInput)
     case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
+    case renderPromptAssembly(PromptAssemblyInput)
     case queryStructure(StructureInput)
     case matchSelectionPath(PathMatchInput)
     case openRoots([RootDeclaration])
@@ -263,6 +264,7 @@ enum Operation {
     private static func decodePromptProjection(_ kind: String, _ value: Any) throws -> Operation {
         switch kind {
         case "renderFileBlock": return try .renderFileBlock(FileBlockInput(value))
+        case "renderPromptAssembly": return try .renderPromptAssembly(PromptAssemblyInput(value))
         case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))
         case "renderDiscoveryPrompt": return try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
         default: throw BridgeFailure("nativeProtocolError")

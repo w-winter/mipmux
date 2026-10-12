@@ -4900,6 +4900,23 @@
         "Extract the file-block formatting methods into an executable-local enum and expose its entry point. Formatting receives a captured display path; app routing is not copied. Apply formatter layout and discard the unused internal content binding without changing its argument label.",
         "Tag original source syntax/body lines during emission and capture raw-body UTF-8 spans. The source line sequence and exact text remain checked against independently compiled reference fixtures."
       ]
+    },
+    {
+      "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "551f40f968ca24f53f60cc73416174f226a7f4801b253ee6997e1ea5f7cef4eb",
+      "destination": "native/Sources/SmipBridge/RPCEPromptAssembly.swift",
+      "sha256": "561ab67867c2a1a11f6d691fdd104f7f3cf5d0b9d12937ad998ab75304e41959",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          8,
+          83
+        ]
+      ],
+      "changes": [
+        "Replace package access with executable-local access. Omit app-storage and edit-history comments; formatter layout changes only. Original section ordering, omission, repetition, duplication and newline logic is retained."
+      ]
     }
   ],
   "dependencies": [
@@ -10302,6 +10319,36 @@
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
       "destination": "native/Sources/SmipBridge/RPCEPromptFileBlocks.swift",
       "line": 417
+    },
+    {
+      "name": "PromptSection",
+      "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptAssembly.swift",
+      "line": 12
+    },
+    {
+      "name": "PromptAssemblyBuilder",
+      "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptAssembly.swift",
+      "line": 31
+    },
+    {
+      "name": "defaultSectionOrder",
+      "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptAssembly.swift",
+      "line": 32
+    },
+    {
+      "name": "build",
+      "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptAssembly.swift",
+      "line": 51
+    },
+    {
+      "name": "build",
+      "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "destination": "native/Sources/SmipBridge/RPCEPromptAssembly.swift",
+      "line": 70
     }
   ],
   "sourceCoverage": [

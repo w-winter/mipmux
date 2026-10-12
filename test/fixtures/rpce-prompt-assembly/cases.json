@@ -1,0 +1,234 @@
+[
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "<file_map>\nmap\n</file_map>\n\n<file_contents>\nfiles\n</file_contents>\n\n<git_diff>\npatch\n</git_diff>\n\n<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n<user_instructions>\ntask\n</user_instructions>\n\n"
+    },
+    "input": {
+      "disabled": [],
+      "duplicateUserInstructionsAtTop": false,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "snippets": {
+        "fileContents": "<file_contents>\nfiles\n</file_contents>\n\n",
+        "fileMap": "<file_map>\nmap\n</file_map>\n\n",
+        "gitDiff": "<git_diff>\npatch\n</git_diff>\n\n",
+        "metaPrompts": "<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n",
+        "userInstructions": "<user_instructions>\ntask\n</user_instructions>\n\n"
+      }
+    },
+    "name": "source-section-order"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "<user_instructions>\ntask\n</user_instructions>\n\n<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n<git_diff>\npatch\n</git_diff>\n\n<file_contents>\nfiles\n</file_contents>\n\n<file_map>\nmap\n</file_map>\n\n"
+    },
+    "input": {
+      "disabled": [],
+      "duplicateUserInstructionsAtTop": false,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "userInstructions",
+        "metaPrompts",
+        "gitDiff",
+        "fileContents",
+        "fileMap"
+      ],
+      "snippets": {
+        "fileContents": "<file_contents>\nfiles\n</file_contents>\n\n",
+        "fileMap": "<file_map>\nmap\n</file_map>\n\n",
+        "gitDiff": "<git_diff>\npatch\n</git_diff>\n\n",
+        "metaPrompts": "<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n",
+        "userInstructions": "<user_instructions>\ntask\n</user_instructions>\n\n"
+      }
+    },
+    "name": "caller-section-order"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "😀\u0000λ\n"
+    },
+    "input": {
+      "disabled": [],
+      "duplicateUserInstructionsAtTop": false,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "snippets": {
+        "fileContents": null,
+        "fileMap": "",
+        "gitDiff": null,
+        "metaPrompts": "",
+        "userInstructions": "😀\u0000λ"
+      }
+    },
+    "name": "empty-and-missing-snippets"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "map\nfiles\npatch\r\n\n \ntask\n\n"
+    },
+    "input": {
+      "disabled": [],
+      "duplicateUserInstructionsAtTop": false,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "snippets": {
+        "fileContents": "files\n",
+        "fileMap": "map",
+        "gitDiff": "patch\r\n",
+        "metaPrompts": " \n",
+        "userInstructions": "task\n\n"
+      }
+    },
+    "name": "newline-boundaries"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "<file_contents>\nfiles\n</file_contents>\n\n<user_instructions>\ntask\n</user_instructions>\n\n"
+    },
+    "input": {
+      "disabled": [
+        "fileMap",
+        "gitDiff",
+        "metaPrompts"
+      ],
+      "duplicateUserInstructionsAtTop": false,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "snippets": {
+        "fileContents": "<file_contents>\nfiles\n</file_contents>\n\n",
+        "fileMap": "<file_map>\nmap\n</file_map>\n\n",
+        "gitDiff": "<git_diff>\npatch\n</git_diff>\n\n",
+        "metaPrompts": "<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n",
+        "userInstructions": "<user_instructions>\ntask\n</user_instructions>\n\n"
+      }
+    },
+    "name": "disabled-sections"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "<user_instructions>\ntask\n</user_instructions>\n\n<file_map>\nmap\n</file_map>\n\n<file_contents>\nfiles\n</file_contents>\n\n<git_diff>\npatch\n</git_diff>\n\n<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n<user_instructions>\ntask\n</user_instructions>\n\n"
+    },
+    "input": {
+      "disabled": [],
+      "duplicateUserInstructionsAtTop": true,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "snippets": {
+        "fileContents": "<file_contents>\nfiles\n</file_contents>\n\n",
+        "fileMap": "<file_map>\nmap\n</file_map>\n\n",
+        "gitDiff": "<git_diff>\npatch\n</git_diff>\n\n",
+        "metaPrompts": "<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n",
+        "userInstructions": "<user_instructions>\ntask\n</user_instructions>\n\n"
+      }
+    },
+    "name": "duplicate-user-instructions"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "<user_instructions>\ntask\n</user_instructions>\n\n<file_map>\nmap\n</file_map>\n\n<file_contents>\nfiles\n</file_contents>\n\n<git_diff>\npatch\n</git_diff>\n\n<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n"
+    },
+    "input": {
+      "disabled": [
+        "userInstructions"
+      ],
+      "duplicateUserInstructionsAtTop": true,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "snippets": {
+        "fileContents": "<file_contents>\nfiles\n</file_contents>\n\n",
+        "fileMap": "<file_map>\nmap\n</file_map>\n\n",
+        "gitDiff": "<git_diff>\npatch\n</git_diff>\n\n",
+        "metaPrompts": "<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n",
+        "userInstructions": "<user_instructions>\ntask\n</user_instructions>\n\n"
+      }
+    },
+    "name": "disabled-user-still-duplicated-at-top"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "<user_instructions>\ntask\n</user_instructions>\n\n<file_map>\nmap\n</file_map>\n\n<user_instructions>\ntask\n</user_instructions>\n\n"
+    },
+    "input": {
+      "disabled": [],
+      "duplicateUserInstructionsAtTop": false,
+      "kind": "renderPromptAssembly",
+      "order": [
+        "userInstructions",
+        "fileMap",
+        "userInstructions"
+      ],
+      "snippets": {
+        "fileContents": "<file_contents>\nfiles\n</file_contents>\n\n",
+        "fileMap": "<file_map>\nmap\n</file_map>\n\n",
+        "gitDiff": "<git_diff>\npatch\n</git_diff>\n\n",
+        "metaPrompts": "<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n",
+        "userInstructions": "<user_instructions>\ntask\n</user_instructions>\n\n"
+      }
+    },
+    "name": "duplicate-section-order"
+  },
+  {
+    "expected": {
+      "kind": "promptAssembly",
+      "text": "<user_instructions>\ntask\n</user_instructions>\n\n"
+    },
+    "input": {
+      "disabled": [],
+      "duplicateUserInstructionsAtTop": true,
+      "kind": "renderPromptAssembly",
+      "order": [],
+      "snippets": {
+        "fileContents": "<file_contents>\nfiles\n</file_contents>\n\n",
+        "fileMap": "<file_map>\nmap\n</file_map>\n\n",
+        "gitDiff": "<git_diff>\npatch\n</git_diff>\n\n",
+        "metaPrompts": "<meta prompt 1 = \"Review\">\nrole\n</meta prompt 1>\n\n",
+        "userInstructions": "<user_instructions>\ntask\n</user_instructions>\n\n"
+      }
+    },
+    "name": "empty-order"
+  }
+]

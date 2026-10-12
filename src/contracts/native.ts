@@ -33,6 +33,13 @@ export const NativeFileTreeInput = Type.Object({ kind: Type.Literal('renderFileT
 export const NativeFileTreeResult = Type.Object({ kind: Type.Literal('fileTree'), tree: Type.String(), rootsCount: SafeCount,
   note: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false });
 export type NativeFileTreeResult = Static<typeof NativeFileTreeResult>;
+const promptSection = Type.Enum(['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions']);
+const snippetText = Type.Union([Type.String(), Type.Null()]);
+export const NativePromptAssemblyInput = Type.Object({ kind: Type.Literal('renderPromptAssembly'),
+  order: Type.Array(promptSection), disabled: Type.Array(promptSection), duplicateUserInstructionsAtTop: Type.Boolean(),
+  snippets: Type.Object({ fileMap: snippetText, fileContents: snippetText, gitDiff: snippetText,
+    metaPrompts: snippetText, userInstructions: snippetText }, { additionalProperties: false }),
+}, { additionalProperties: false });
 export const NativeDiscoveryMessageInput = Type.Object({ kind: Type.Literal('renderDiscoveryMessage'), tokenBudget: SafeCount,
   fileTree: Type.String(), currentPrompt: Type.String(), discoveryInstructions: Type.String(),
   contextBuilderPrompts: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
@@ -253,6 +260,7 @@ export const NativeOperation = Type.Union([
     restrictsReviewGitToExplicitReadOnly: Type.Boolean(), reviewRootNames: Type.Array(Type.String()),
   }, { additionalProperties: false }),
   NativeFileTreeInput,
+  NativePromptAssemblyInput,
   NativeStructureInput,
 ]);
 export type NativeOperation = Static<typeof NativeOperation>;
@@ -271,6 +279,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }, { additionalProperties: false }),
   NativeFileBlockResult,
   NativeIgnoreInputs,
   Type.Object({ kind: Type.Literal('ignoreHierarchy'), paths: Type.Array(Type.Union([

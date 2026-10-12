@@ -1,0 +1,14 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "sha256": "551f40f968ca24f53f60cc73416174f226a7f4801b253ee6997e1ea5f7cef4eb"
+    }
+  ],
+  "cases": 9,
+  "generatorSHA256": "6d7b6ac236b719a6912aa98596d4f2852ed8d507ecaf6506841be07b6287ac62",
+  "bindings": [
+    "The complete original PromptAssemblyBuilder executes independently. Inputs are already formatted snippets; file-block generation, final-map construction, presets and Git resolution are not covered."
+  ]
+}
