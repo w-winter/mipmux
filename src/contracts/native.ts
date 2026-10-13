@@ -6,6 +6,7 @@ import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, 
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
 import { GitDiff, NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult, NativeGitChangedFile } from './git.js';
 import { NativeGitSnapshotInput } from './git-snapshot.js';
+import { NativeGitArtifactInput, NativeGitArtifactResult } from './git-artifact.js';
 import { NativeWireFailureCode } from './errors.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -238,6 +239,7 @@ export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRoot
   repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
 export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
 export const NativeOperation = Type.Union([
+  ...NativeGitArtifactInput.anyOf,
   Type.Object({ kind: Type.Literal('fingerprintGitDiff'), root: handle, compare: Type.String(), headSHA: Type.String(),
     baseRefSHA: Type.String(), status: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('beginGitSnapshot'), root: handle, repoKey: Type.String(), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
@@ -347,6 +349,7 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitSnapshotRead'), bytes: base64, identity: SourceIdentity }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotFileWritten'), identity: SourceIdentity }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotBytes'), files: Type.Array(Type.Object({ path: Type.String(), bytes: base64 }, { additionalProperties: false })) }, { additionalProperties: false }),
+  ...NativeGitArtifactResult.anyOf,
   Type.Object({ kind: Type.Literal('gitTargetValidation'), valid: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('deferred') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('unavailable'),

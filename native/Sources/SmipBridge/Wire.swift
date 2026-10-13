@@ -295,6 +295,8 @@ enum Operation {
         case "electGitTarget": return try .git(.target(GitTargetInput(value)))
         case "revalidateGitTargets": return try .git(.targetRevalidation(GitTargetRevalidationInput(value)))
         case "serializeGitSnapshot": return try .git(.snapshot(GitSnapshotInput(value)))
+        case "projectGitArtifacts", "decorateGitArtifacts":
+            return try .git(.artifacts(GitArtifactProjectionInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))
         case "parseSelectionInputs": return try .selection(.parse(SelectionInputParsing(value)))
         case "prepareSelection": return try .selection(.preparation(SelectionPreparationInput(value)))

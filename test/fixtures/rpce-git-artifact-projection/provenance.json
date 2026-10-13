@@ -1,0 +1,155 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffPublishMode.swift",
+      "sha256": "2e92c3ed1c483392e7deb6ec8f6a138a4c3679de64f1baa3e7d5356b3a3a953e",
+      "ranges": [
+        [
+          1,
+          7
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffScope.swift",
+      "sha256": "e45a80cc52727dde75f28b232469188651652961d5f44970d221de1699103775",
+      "ranges": [
+        [
+          1,
+          6
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffFingerprint.swift",
+      "sha256": "ef7babf153771c5c5bdc4efde26245f249d3bbb8790957d02ba65bca2c818d93",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffSnapshotManifest.swift",
+      "sha256": "48974a6630200db692fe17263f303672fdb4d2f179605923725b7debf6f3b319",
+      "ranges": [
+        [
+          1,
+          182
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/GitDiffPrimaryArtifacts.swift",
+      "sha256": "bf9d1d9874967b961be25a4abf53bb2aae3cb35b3fcbba6ceba057fdca9b9b42",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/GitDiffPublishedArtifacts.swift",
+      "sha256": "81fed87dfed5acbabd7200df489c9586e94d52f044efb1997f8ad42b12698697",
+      "ranges": [
+        [
+          1,
+          205
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "sha256": "cbebe00125f866136b8ef60aad2fa9372b320d7e41bec783b50e4cc68f5edd95",
+      "ranges": [
+        [
+          1,
+          384
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "sha256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+      "ranges": [
+        [
+          1,
+          1504
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "sha256": "947658dcf11429e27c412fb23576f9fe6b2528a344eb868e44193d80a8d0e86a",
+      "ranges": [
+        [
+          1,
+          215
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239",
+      "ranges": [
+        [
+          1,
+          89
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sha256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "ranges": [
+        [
+          2045,
+          2511
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "sha256": "432c96e3b7ca569dcea3ee999103e57f19edaed2b8f45c6097f26fdf091ac661",
+      "ranges": [
+        [
+          1,
+          19
+        ],
+        [
+          157,
+          371
+        ],
+        [
+          481,
+          564
+        ]
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sha256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "ranges": [
+        [
+          1399,
+          1417
+        ]
+      ]
+    }
+  ],
+  "corpusSHA256": "e4ea210da8bffe620888f09dceb490ad5d124cd4473a826d8ebc76a361550436",
+  "compiledSourceSHA256": "583519d94ee190b54ee78f7d1eefe6e48997d2f82ff12ded869ab48457d1bfee",
+  "expectedSHA256": "f70d1abdf39568cc0d24f630229fe9fe1fe61773df3be5625a368621beae9182",
+  "adaptations": [
+    "Remove package access and unavailable module imports for standalone compilation.",
+    "Supply value-only diff input and repository declarations for unused writer bodies.",
+    "Execute original projection closures on MainActor without app worker or telemetry.",
+    "Normalize only the scratch directory prefix in published-artifact diagnostic paths; DTOs and snapshot bytes remain exact."
+  ],
+  "limits": [
+    "No live acquisition, selection, cancellation, readiness or transport executes in this reference generator."
+  ]
+}

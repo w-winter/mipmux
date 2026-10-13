@@ -1,0 +1,508 @@
+[
+  {
+    "name": "quick-selected/disabled",
+    "snapshot": "quick-selected",
+    "label": "disabled",
+    "inlineMap": false,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-selected/brief",
+    "snapshot": "quick-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-selected/brief-truncated",
+    "snapshot": "quick-selected",
+    "label": "brief-truncated",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 7,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-selected/full",
+    "snapshot": "quick-selected",
+    "label": "full",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-selected/full-truncated",
+    "snapshot": "quick-selected",
+    "label": "full-truncated",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 1,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-selected/other-mode",
+    "snapshot": "quick-selected",
+    "label": "other-mode",
+    "inlineMap": true,
+    "inlineMode": "other",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-empty/disabled",
+    "snapshot": "quick-empty",
+    "label": "disabled",
+    "inlineMap": false,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-empty/brief",
+    "snapshot": "quick-empty",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-empty/brief-truncated",
+    "snapshot": "quick-empty",
+    "label": "brief-truncated",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 7,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-empty/full",
+    "snapshot": "quick-empty",
+    "label": "full",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-empty/full-truncated",
+    "snapshot": "quick-empty",
+    "label": "full-truncated",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 1,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "quick-empty/other-mode",
+    "snapshot": "quick-empty",
+    "label": "other-mode",
+    "inlineMap": true,
+    "inlineMode": "other",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/disabled",
+    "snapshot": "standard-selected",
+    "label": "disabled",
+    "inlineMap": false,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/brief",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/brief-truncated",
+    "snapshot": "standard-selected",
+    "label": "brief-truncated",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 7,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/full",
+    "snapshot": "standard-selected",
+    "label": "full",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/full-truncated",
+    "snapshot": "standard-selected",
+    "label": "full-truncated",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 1,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/other-mode",
+    "snapshot": "standard-selected",
+    "label": "other-mode",
+    "inlineMap": true,
+    "inlineMode": "other",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-empty/disabled",
+    "snapshot": "standard-empty",
+    "label": "disabled",
+    "inlineMap": false,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-empty/brief",
+    "snapshot": "standard-empty",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-empty/brief-truncated",
+    "snapshot": "standard-empty",
+    "label": "brief-truncated",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 7,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-empty/full",
+    "snapshot": "standard-empty",
+    "label": "full",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-empty/full-truncated",
+    "snapshot": "standard-empty",
+    "label": "full-truncated",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 1,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-empty/other-mode",
+    "snapshot": "standard-empty",
+    "label": "other-mode",
+    "inlineMap": true,
+    "inlineMode": "other",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-selected/disabled",
+    "snapshot": "deep-selected",
+    "label": "disabled",
+    "inlineMap": false,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-selected/brief",
+    "snapshot": "deep-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-selected/brief-truncated",
+    "snapshot": "deep-selected",
+    "label": "brief-truncated",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 7,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-selected/full",
+    "snapshot": "deep-selected",
+    "label": "full",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-selected/full-truncated",
+    "snapshot": "deep-selected",
+    "label": "full-truncated",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 1,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-selected/other-mode",
+    "snapshot": "deep-selected",
+    "label": "other-mode",
+    "inlineMap": true,
+    "inlineMode": "other",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-empty/disabled",
+    "snapshot": "deep-empty",
+    "label": "disabled",
+    "inlineMap": false,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-empty/brief",
+    "snapshot": "deep-empty",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-empty/brief-truncated",
+    "snapshot": "deep-empty",
+    "label": "brief-truncated",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 7,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-empty/full",
+    "snapshot": "deep-empty",
+    "label": "full",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-empty/full-truncated",
+    "snapshot": "deep-empty",
+    "label": "full-truncated",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 1,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "deep-empty/other-mode",
+    "snapshot": "deep-empty",
+    "label": "other-mode",
+    "inlineMap": true,
+    "inlineMode": "other",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-filenames/disabled",
+    "snapshot": "standard-filenames",
+    "label": "disabled",
+    "inlineMap": false,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-filenames/brief",
+    "snapshot": "standard-filenames",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-filenames/brief-truncated",
+    "snapshot": "standard-filenames",
+    "label": "brief-truncated",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 7,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-filenames/full",
+    "snapshot": "standard-filenames",
+    "label": "full",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-filenames/full-truncated",
+    "snapshot": "standard-filenames",
+    "label": "full-truncated",
+    "inlineMap": true,
+    "inlineMode": "full",
+    "inlineMaxLines": 1,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-filenames/other-mode",
+    "snapshot": "standard-filenames",
+    "label": "other-mode",
+    "inlineMap": true,
+    "inlineMode": "other",
+    "inlineMaxLines": 10000,
+    "autoSelectedPaths": [],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/auto-map",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [
+      "_git_data/repos/fixture-repo/standard-selected/MAP.txt"
+    ],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/auto-patch",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [
+      "_git_data/repos/fixture-repo/standard-selected/diff/all.patch"
+    ],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/auto-both",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [
+      "_git_data/repos/fixture-repo/standard-selected/diff/all.patch",
+      "_git_data/repos/fixture-repo/standard-selected/MAP.txt",
+      "_git_data/repos/fixture-repo/standard-selected/diff/all.patch"
+    ],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/auto-nonprimary",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [
+      "_git_data/repos/fixture-repo/standard-selected/diff/per-file/src__a_file.swift.patch",
+      "_git_data/not-advertised"
+    ],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/auto-mixed",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [
+      "_git_data/repos/fixture-repo/standard-selected/diff/per-file/src__a_file.swift.patch",
+      "_git_data/repos/fixture-repo/standard-selected/diff/all.patch",
+      "_git_data/repos/fixture-repo/standard-selected/MAP.txt",
+      "unrelated"
+    ],
+    "mapState": "original"
+  },
+  {
+    "name": "standard-selected/map-missing",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "missing"
+  },
+  {
+    "name": "standard-selected/map-invalid-utf8",
+    "snapshot": "standard-selected",
+    "label": "brief",
+    "inlineMap": true,
+    "inlineMode": "brief",
+    "inlineMaxLines": 120,
+    "autoSelectedPaths": [],
+    "mapState": "invalid-utf8"
+  }
+]

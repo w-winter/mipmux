@@ -6,6 +6,107 @@
   },
   "files": [
     {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "destination": "native/Sources/SmipBridge/RPCEGitReply.swift",
+      "sha256": "7a794685b94a984990534dc999fc65ff00809382d8b58a8d7801c5062e7a0331",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2045,
+          2511
+        ]
+      ],
+      "changes": [
+        "Scope the Git reply to a native owner; reuse existing identical status, diff, show, hunk, file and totals DTOs through type aliases. Retain optional fields, CodingKeys and initializer semantics."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProjection.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "432c96e3b7ca569dcea3ee999103e57f19edaed2b8f45c6097f26fdf091ac661",
+      "destination": "native/Sources/SmipBridge/RPCEGitArtifactProjection.swift",
+      "sha256": "2747241482614572b4043e4ad73594139ab6e30f77cf409cbe2823c726ab6801",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          19
+        ],
+        [
+          157,
+          330
+        ],
+        [
+          348,
+          371
+        ],
+        [
+          481,
+          564
+        ]
+      ],
+      "changes": [
+        "Remove app projection workers, MainActor dispatch and telemetry. Bind filesystem existence and UTF-8 MAP loading to captured present paths and decoded input bytes; projection performs no filesystem IO. Retain artifact fields, inline policy, alias membership, per-file order, repository warning decoration and aggregate arithmetic."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPublishedArtifacts.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "81fed87dfed5acbabd7200df489c9586e94d52f044efb1997f8ad42b12698697",
+      "destination": "native/Sources/SmipBridge/RPCEGitPublishedArtifacts.swift",
+      "sha256": "5be94527adcc03c104600312ed44b7e54ad0f7f623860e354e5803868cb18e73",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          203
+        ]
+      ],
+      "changes": [
+        "Remove package access and unavailable module import. Require canonical repository-scoped snapshot references with a nonoptional repository key; omit the redundant nil-key check. Retain identity/path checks, ordered artifacts, alias construction and per-file deduplication."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotRef.swift",
+      "sha256": "1b2bb7aaa64f074a4bc027f44f807f88c89413e07addea09282d185636800072",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          26,
+          42
+        ],
+        [
+          125,
+          138
+        ]
+      ],
+      "changes": [
+        "Retain repository-scoped reference parsing and path composition only. Require a nonoptional repository key; omit legacy references and path branches."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/GitArtifactProjectionInput.swift",
+      "sha256": "9df295bf64f82b3f6ab0ff438bf2be8315e169559e917e514709801cbfdc7933",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1399,
+          1417
+        ]
+      ],
+      "changes": [
+        "Bind the single-repository reply expression to typed captured projection inputs. Native wire decoding, ordered artifact records and multi-repository dispatch are headless boundary code."
+      ]
+    },
+    {
       "source": "Sources/CSwiftPCRE2/CSwiftPCRE2.c",
       "sourceSHA256": "9ec4bf6c3efaa02feb2c002fac0da3c73d93c5c0fe72e0753de54f85ef20fe3d",
       "destination": "native/Sources/CSwiftPCRE2/CSwiftPCRE2.c",

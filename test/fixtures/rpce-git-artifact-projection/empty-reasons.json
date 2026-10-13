@@ -1,0 +1,74 @@
+[
+  {
+    "name": "nonempty",
+    "files": 1,
+    "scope": "all",
+    "requestedPaths": null,
+    "compare": "HEAD"
+  },
+  {
+    "name": "selected-nil",
+    "files": 0,
+    "scope": "selected",
+    "requestedPaths": null,
+    "compare": "HEAD"
+  },
+  {
+    "name": "selected-empty",
+    "files": 0,
+    "scope": "selected",
+    "requestedPaths": [],
+    "compare": "HEAD"
+  },
+  {
+    "name": "selected-no-changes",
+    "files": 0,
+    "scope": "selected",
+    "requestedPaths": [
+      "src/a file.swift"
+    ],
+    "compare": "HEAD"
+  },
+  {
+    "name": "staged",
+    "files": 0,
+    "scope": "all",
+    "requestedPaths": null,
+    "compare": "staged"
+  },
+  {
+    "name": "STAGED:HEAD",
+    "files": 0,
+    "scope": "all",
+    "requestedPaths": null,
+    "compare": "STAGED:HEAD"
+  },
+  {
+    "name": "unstaged",
+    "files": 0,
+    "scope": "all",
+    "requestedPaths": null,
+    "compare": "unstaged"
+  },
+  {
+    "name": "uncommitted",
+    "files": 0,
+    "scope": "all",
+    "requestedPaths": null,
+    "compare": "uncommitted"
+  },
+  {
+    "name": "UNCOMMITTED:HEAD",
+    "files": 0,
+    "scope": "all",
+    "requestedPaths": null,
+    "compare": "UNCOMMITTED:HEAD"
+  },
+  {
+    "name": "HEAD",
+    "files": 0,
+    "scope": "all",
+    "requestedPaths": null,
+    "compare": "HEAD"
+  }
+]

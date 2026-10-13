@@ -7,6 +7,7 @@ enum GitOperation {
     case target(GitTargetInput)
     case targetRevalidation(GitTargetRevalidationInput)
     case snapshot(GitSnapshotInput)
+    case artifacts(GitArtifactProjectionInput)
 
     func render() throws -> [String: Any] {
         switch self {
@@ -18,6 +19,7 @@ enum GitOperation {
         case let .target(input): try input.render()
         case let .targetRevalidation(input): input.render()
         case let .snapshot(input): try input.render()
+        case let .artifacts(input): try input.render()
         }
     }
 }
