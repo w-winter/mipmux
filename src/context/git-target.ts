@@ -1,8 +1,9 @@
 import { join } from 'node:path';
 import type { NativeResult, NativeGitCheckout } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
-import { freeze, WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON, freeze, WorkspaceFailure } from '../workspace/values.js';
 import type { Material } from './material-store.js';
+import { resolveDiffRepository } from '../exploration/git-repository.js';
 
 type Resolution = Extract<NativeResult, { kind: 'gitTarget' }>;
 
@@ -29,5 +30,29 @@ export class FrozenGitTarget {
     const current = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: this.resolution.checkouts });
     if (!current.valid) throw new WorkspaceFailure('gitRepositoryChanged');
     return this.resolution.primary;
+  }
+
+  async publication(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>,
+    selector: { readonly root: string | null; readonly worktree: string | null }): Promise<NativeGitCheckout> {
+    if (this.resolution.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
+    await operation.validateRoots();
+    await this.primary(operation);
+    const current = (await FrozenGitTarget.capture(operation, materials)).resolution;
+    if (current.state !== 'available') throw new WorkspaceFailure('gitSelectionOwnershipChanged');
+    const identityKey = (checkout: NativeGitCheckout) => canonicalJSON([
+      checkout.repoKey, checkout.repositoryID, checkout.worktreeID, checkout.checkoutRootPath,
+    ]);
+    const original = new Set(this.resolution.checkouts.map(identityKey));
+    if (!current.checkouts.every(checkout => original.has(identityKey(checkout)))) {
+      throw new WorkspaceFailure('gitSelectionOwnershipChanged');
+    }
+    const valid = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: current.checkouts });
+    if (!valid.valid) throw new WorkspaceFailure('gitRepositoryChanged');
+    if (selector.root === null && selector.worktree === null) return this.resolution.primary;
+    const requested = await resolveDiffRepository(operation, selector.root ?? this.resolution.primary.root,
+      { kind: 'explicit', worktree: selector.worktree });
+    const checkout = this.resolution.checkouts.find(checkout => checkout.checkoutRootPath === requested.repository.worktree.canonicalPath);
+    if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
+    return checkout;
   }
 }

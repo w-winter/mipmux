@@ -95,6 +95,12 @@ export async function captureGitDiff(operation: WorkspaceOperation, request: Dif
   return captureRepositoryDiff(operation, request, owner, generateDiffText);
 }
 
+export async function captureElectedGitDiff(operation: WorkspaceOperation, request: DiffRequest,
+  checkout: NativeGitCheckout, generateDiffText: boolean) {
+  const owner = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
+  return captureRepositoryDiff(operation, { ...request, root: checkout.root }, owner, generateDiffText);
+}
+
 async function captureRepositoryDiff(operation: WorkspaceOperation, request: DiffRequest, owner: Repository, generateDiffText: boolean) {
   const preparation = { kind: 'prepareGitDiff' as const, compare: request.compare,
     paths: [...(request.path === null ? [] : [request.path]), ...request.paths], repoRootPath: owner.repository.worktree.canonicalPath,

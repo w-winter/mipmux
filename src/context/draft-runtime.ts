@@ -45,7 +45,7 @@ import { descriptorGitMode } from '../contracts/patches.js';
 import { prepareRenderInput } from './final-tree.js';
 import { FrozenGitTarget } from './git-target.js';
 import type { GitRequest } from '../contracts/git.js';
-import { readElectedDiff } from '../exploration/git-diff.js';
+import { readElectedDiff, captureElectedGitDiff } from '../exploration/git-diff.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -159,6 +159,24 @@ export class DraftRuntime {
       try {
         const checkout = await this.gitTarget.primary(operation);
         return await readElectedDiff(operation, structuredClone(input), checkout, encode);
+      } finally { await operation.close(); }
+    })());
+  }
+  /** Captures publication evidence only after frozen/current ownership admission and an unchanged draft revision. */
+  captureGitPublication(input: Extract<GitRequest, { op: 'diff' }>, generateDiffText: boolean, signal: AbortSignal) {
+    const request = structuredClone(input), revision = this.#revision, current = this.#materials;
+    return this.#track((async () => {
+      this.#check(signal, revision);
+      const generation = this.#freezeGeneration;
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      try {
+        const checkout = await this.gitTarget.publication(operation, current, request);
+        this.#check(signal, revision);
+        if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+        const captured = await captureElectedGitDiff(operation, request, checkout, generateDiffText);
+        this.#check(signal, revision);
+        if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+        return { ...captured, checkout };
       } finally { await operation.close(); }
     })());
   }
