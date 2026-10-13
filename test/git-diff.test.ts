@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -145,5 +145,38 @@ test('cancelling diff during body statistics joins its child and leaves the work
     const joined = await Promise.all(held.map(child => child.closed)); assert.equal(joined.length, 1); armed = false;
     const usable = await client.explore(workspace.id, { name: 'git', input }, signal()); assert.equal(usable.kind, 'git');
     await writeFile('test-output/scout-diff-cancel-proof.json', JSON.stringify({ joined, usable }, null, 2) + '\n');
+  } finally { await runtime.close(); }
+});
+
+test('public diff retains later chunk matches and follows the original stdin-error recovery predicate', async () => {
+  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const sourceChunkSize = 3000, sourceStdinThresholdBytes = 128 * 1024;
+  const proof: unknown[] = [];
+  try {
+    const workspace = await client.declare(f.spec, signal());
+    for (const longNames of [false, true]) {
+      const paths = ['sub/file.swift', ...Array.from({ length: sourceChunkSize - 1 }, (_, index) =>
+        'missing/' + index + (longNames ? 'x'.repeat(48) : '')), 'outside.swift'];
+      const pathspecBytes = paths.reduce((count, path) => count + Buffer.byteLength(path) + 1, 0);
+      assert.equal(pathspecBytes >= sourceStdinThresholdBytes, longNames);
+      const input = gitValidator.Parse(gitValidator.Default({ op: 'diff', root: 'r', paths, detail: 'files', maxOutputBytes: 100000 }));
+      if (longNames) {
+        const original = spawnSync(git, ['diff', '--name-status', '--no-ext-diff', '--color=never',
+          '--pathspec-from-file=-', '--pathspec-file-nul', 'HEAD'], { cwd: f.repo, input: 'sub/file.swift\0outside.swift\0', encoding: 'utf8' });
+        assert.equal(original.error, undefined);
+        const sourceMessage = original.stderr.toLowerCase();
+        const recovers = sourceMessage.includes('unknown option') || sourceMessage.includes('pathspec-from-file');
+        if (original.status !== 0 && original.status !== 1 && !recovers) {
+          await assert.rejects(client.explore(workspace.id, { name: 'git', input }, signal()), /gitQueryFailed/);
+          proof.push({ pathspecCount: paths.length, pathspecBytes, sourceExit: original.status, recoveryAdmitted: false });
+          continue;
+        }
+      }
+      const result = reply.Parse(await client.explore(workspace.id, { name: 'git', input }, signal()));
+      assert.equal(result.kind, 'git', JSON.stringify(result));
+      assert.deepEqual(result.diff?.files?.map(file => file.path), ['outside.swift', 'sub/file.swift']);
+      proof.push({ pathspecCount: paths.length, pathspecBytes, result });
+    }
+    await writeFile('test-output/scout-diff-large-pathspec-proof.json', JSON.stringify(proof, null, 2) + '\n');
   } finally { await runtime.close(); }
 });
