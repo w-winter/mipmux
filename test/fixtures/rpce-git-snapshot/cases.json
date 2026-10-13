@@ -1,0 +1,638 @@
+[
+  {
+    "name": "quick-selected",
+    "input": {
+      "snapshotID": "quick-selected",
+      "repoKey": "fixture-repo",
+      "mode": "quick",
+      "scope": "selected",
+      "requestedPaths": [
+        "src/é.swift",
+        "src/a file.swift"
+      ],
+      "compare": "uncommitted:HEAD",
+      "compareInput": "UNCOMMITTED",
+      "diffText": "diff --git a/src/a file.swift b/src/a file.swift\n--- a/src/a file.swift\n+++ b/src/a file.swift\n@@ -1 +1 @@\n-old\n+new\n\ndiff --git a/src/é.swift b/src/é.swift\n--- a/src/é.swift\n+++ b/src/é.swift\n@@ -1 +1 @@\n-old\n+new\n",
+      "perFile": {
+        "src/a file.swift": "diff --git a/src/a file.swift b/src/a file.swift\n--- a/src/a file.swift\n+++ b/src/a file.swift\n@@ -1 +1 @@\n-old\n+new\n",
+        "src/é.swift": "diff --git a/src/é.swift b/src/é.swift\n--- a/src/é.swift\n+++ b/src/é.swift\n@@ -1 +1 @@\n-old\n+new\n"
+      },
+      "changedFiles": [
+        {
+          "path": "src/a file.swift",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/é.swift",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "binary.dat",
+          "status": "M",
+          "additions": null,
+          "deletions": null
+        }
+      ],
+      "summary": {
+        "files": 3,
+        "insertions": 2,
+        "deletions": 2
+      },
+      "fingerprint": {
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "baseRef": "HEAD",
+        "statusHash": "fixture-status",
+        "generatedAt": "2023-11-14T22:13:20Z"
+      },
+      "contextLines": 3,
+      "detectRenames": false,
+      "commitGraph": "* aaaaaaa fixture\n* bbbbbbb earlier",
+      "repoRoot": null,
+      "tabID": "11111111-1111-4111-8111-111111111111",
+      "worktree": null
+    },
+    "expected": [
+      {
+        "path": "MAP.txt",
+        "bytes": "IyBNQVAudHh0IHYxCiMgKGdyZXAgdGlwOiBzZWFyY2ggZm9yICJTTkFQU0hPVF8iIG9yICJTRUNUSU9OOiIpCgpTRUNUSU9OOiBTTkFQU0hPVF9NRVRBClNOQVBTSE9UX0lEOiBxdWljay1zZWxlY3RlZApTTkFQU0hPVF9ESVI6IHJlcG9zL2ZpeHR1cmUtcmVwby9xdWljay1zZWxlY3RlZApTTkFQU0hPVF9HRU5FUkFURURfQVQ6IDIwMjYtMTAtMTNUMTc6MTE6NDdaClNOQVBTSE9UX01PREU6IHF1aWNrClNOQVBTSE9UX01PREVfREVUQUlMUzogcXVpY2s6IG5vIHBhdGNoIHRleHQsIHN1bW1hcnktb25seSBhcnRpZmFjdHMKU05BUFNIT1RfQ09NUEFSRTogdW5jb21taXR0ZWQ6SEVBRApTTkFQU0hPVF9DT01QQVJFX0lOUFVUOiBVTkNPTU1JVFRFRApTTkFQU0hPVF9TQ09QRTogc2VsZWN0ZWQKU05BUFNIT1RfU0VMRUNURURfUEFUSFNfQ09VTlQ6IDIKU05BUFNIT1RfQ0hBTkdFRF9GSUxFUzogMwpTTkFQU0hPVF9JTlNFUlRJT05TOiAyClNOQVBTSE9UX0RFTEVUSU9OUzogMgoKU0VDVElPTjogUkVQT1NJVE9SWQpSRVBPX0tFWTogZml4dHVyZS1yZXBvCgpTRUNUSU9OOiBGSU5HRVJQUklOVApGSU5HRVJQUklOVF9IRUFEX1NIQTogYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYQpGSU5HRVJQUklOVF9CQVNFX1JFRjogSEVBRApGSU5HRVJQUklOVF9TVEFUVVNfSEFTSDogZml4dHVyZS1zdGF0dXMKClNFQ1RJT046IEFEVkFOQ0VECkFEVl9DT05URVhUX0xJTkVTOiAzCkFEVl9ERVRFQ1RfUkVOQU1FUzogZmFsc2UKClNFQ1RJT046IEFSVElGQUNUUwpBUlRJRkFDVF9NQU5JRkVTVDogbWFuaWZlc3QuanNvbgpBUlRJRkFDVF9NQVA6IE1BUC50eHQKQVJUSUZBQ1RfRklMRVNfVFNWOiBpbmRleC9maWxlcy50c3YKQVJUSUZBQ1RfVFJFRTogaW5kZXgvZmlsZXMudHJlZS50eHQKQVJUSUZBQ1RfU0VMRUNUSU9OX1BBVEhTOiBpbmRleC9zZWxlY3Rpb24ucGF0aHMudHh0CgpTRUNUSU9OOiBTRUxFQ1RJT05fUEFUSFMKKHNlbGVjdGlvbi5wYXRocy50eHQgaXMgdGhlIGNhbm9uaWNhbCBsaXN0OyBzaG93biBoZXJlIGZvciBjb252ZW5pZW5jZSkKLSBzcmMvw6kuc3dpZnQKLSBzcmMvYSBmaWxlLnN3aWZ0CgpTRUNUSU9OOiBDT01NSVRfR1JBUEgKKiBhYWFhYWFhIGZpeHR1cmUKKiBiYmJiYmJiIGVhcmxpZXIKClNFQ1RJT046IENIQU5HRURfRklMRV9UUkVFCnNyYy8KICBhIGZpbGUuc3dpZnQgIFswMl0gTSArMSAtMQogIMOpLnN3aWZ0ICBbMDNdIE0gKzEgLTEKYmluYXJ5LmRhdCAgWzAxXSBNICs/IC0/CgpTRUNUSU9OOiBKVU1QX1RBQkxFClswMV0gTSArPyAtPyAgYmluYXJ5LmRhdCAtPiAobm8gcGF0Y2gpClswMl0gTSArMSAtMSAgc3JjL2EgZmlsZS5zd2lmdCAtPiAobm8gcGF0Y2gpClswM10gTSArMSAtMSAgc3JjL8OpLnN3aWZ0IC0+IChubyBwYXRjaCkKClNFQ1RJT046IE5PVEVTCk5PVEVfUEFUQ0hfT01JVFRFRF9DT1VOVDogMwpOT1RFX1BBVENIX09NSVRURURfUkVBU09OOiBxdWlja19tb2RlCk5PVEVfUVVJQ0tfTU9ERTogdHJ1ZQpOT1RFX0JJTkFSWV9GSUxFUzogMQoKU0VDVElPTjogQklOQVJZX0ZJTEVTCi0gTSBiaW5hcnkuZGF0"
+      },
+      {
+        "path": "manifest.json",
+        "bytes": "ewogICJjb21wYXJlIiA6ICJ1bmNvbW1pdHRlZDpIRUFEIiwKICAiY29tcGFyZUlucHV0IiA6ICJVTkNPTU1JVFRFRCIsCiAgImNvbnRleHRMaW5lcyIgOiAzLAogICJkZXRlY3RSZW5hbWVzIiA6IGZhbHNlLAogICJmaWxlcyIgOiBbCiAgICB7CiAgICAgICJnaXRQYXRoIiA6ICJiaW5hcnkuZGF0IiwKICAgICAgInN0YXR1cyIgOiAiTSIKICAgIH0sCiAgICB7CiAgICAgICJhZGRpdGlvbnMiIDogMSwKICAgICAgImRlbGV0aW9ucyIgOiAxLAogICAgICAiZ2l0UGF0aCIgOiAic3JjXC9hIGZpbGUuc3dpZnQiLAogICAgICAic3RhdHVzIiA6ICJNIgogICAgfSwKICAgIHsKICAgICAgImFkZGl0aW9ucyIgOiAxLAogICAgICAiZGVsZXRpb25zIiA6IDEsCiAgICAgICJnaXRQYXRoIiA6ICJzcmNcL8OpLnN3aWZ0IiwKICAgICAgInN0YXR1cyIgOiAiTSIKICAgIH0KICBdLAogICJmaW5nZXJwcmludCIgOiB7CiAgICAiYmFzZVJlZiIgOiAiSEVBRCIsCiAgICAiZ2VuZXJhdGVkQXQiIDogIjIwMjMtMTEtMTRUMjI6MTM6MjBaIiwKICAgICJoZWFkU0hBIiA6ICJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwKICAgICJzdGF0dXNIYXNoIiA6ICJmaXh0dXJlLXN0YXR1cyIKICB9LAogICJnZW5lcmF0ZWRBdCIgOiAiMjAyNi0xMC0xM1QxNzoxMTo0N1oiLAogICJtb2RlIiA6ICJxdWljayIsCiAgInJlcG9LZXkiIDogImZpeHR1cmUtcmVwbyIsCiAgInJlcXVlc3RlZFBhdGhzIiA6IFsKICAgICJzcmNcL8OpLnN3aWZ0IiwKICAgICJzcmNcL2EgZmlsZS5zd2lmdCIKICBdLAogICJzY29wZSIgOiAic2VsZWN0ZWQiLAogICJzbmFwc2hvdElEIiA6ICJxdWljay1zZWxlY3RlZCIsCiAgInN1bW1hcnkiIDogewogICAgImRlbGV0aW9ucyIgOiAyLAogICAgImZpbGVzIiA6IDMsCiAgICAiaW5zZXJ0aW9ucyIgOiAyCiAgfSwKICAidGFiSUQiIDogIjExMTExMTExLTExMTEtNDExMS04MTExLTExMTExMTExMTExMSIKfQ=="
+      },
+      {
+        "path": "index/files.tree.txt",
+        "bytes": "c3JjLwogIGEgZmlsZS5zd2lmdCAgWzAyXSBNICsxIC0xCiAgw6kuc3dpZnQgIFswM10gTSArMSAtMQpiaW5hcnkuZGF0ICBbMDFdIE0gKz8gLT8="
+      },
+      {
+        "path": "index/files.tsv",
+        "bytes": "c3RhdHVzCWFkZGl0aW9ucwlkZWxldGlvbnMJZ2l0X3BhdGgJcGF0Y2hfcGF0aAlieXRlcwlsaW5lcwpNCQkJYmluYXJ5LmRhdAkJCQpNCTEJMQlzcmMvYSBmaWxlLnN3aWZ0CQkJCk0JMQkxCXNyYy/DqS5zd2lmdAkJCQ=="
+      },
+      {
+        "path": "index/selection.paths.txt",
+        "bytes": "c3JjL8OpLnN3aWZ0CnNyYy9hIGZpbGUuc3dpZnQ="
+      }
+    ],
+    "excerpts": {
+      "brief": {
+        "returnedLines": 7,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: quick-selected\nSNAPSHOT_DIR: repos/fixture-repo/quick-selected",
+        "totalLines": 24,
+        "truncated": true
+      },
+      "full": {
+        "returnedLines": 64,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: quick-selected\nSNAPSHOT_DIR: repos/fixture-repo/quick-selected\nSNAPSHOT_GENERATED_AT: 2026-10-13T17:11:47Z\nSNAPSHOT_MODE: quick\nSNAPSHOT_MODE_DETAILS: quick: no patch text, summary-only artifacts\nSNAPSHOT_COMPARE: uncommitted:HEAD\nSNAPSHOT_COMPARE_INPUT: UNCOMMITTED\nSNAPSHOT_SCOPE: selected\nSNAPSHOT_SELECTED_PATHS_COUNT: 2\nSNAPSHOT_CHANGED_FILES: 3\nSNAPSHOT_INSERTIONS: 2\nSNAPSHOT_DELETIONS: 2\n\nSECTION: REPOSITORY\nREPO_KEY: fixture-repo\n\nSECTION: FINGERPRINT\nFINGERPRINT_HEAD_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFINGERPRINT_BASE_REF: HEAD\nFINGERPRINT_STATUS_HASH: fixture-status\n\nSECTION: ADVANCED\nADV_CONTEXT_LINES: 3\nADV_DETECT_RENAMES: false\n\nSECTION: ARTIFACTS\nARTIFACT_MANIFEST: manifest.json\nARTIFACT_MAP: MAP.txt\nARTIFACT_FILES_TSV: index/files.tsv\nARTIFACT_TREE: index/files.tree.txt\nARTIFACT_SELECTION_PATHS: index/selection.paths.txt\n\nSECTION: SELECTION_PATHS\n(selection.paths.txt is the canonical list; shown here for convenience)\n- src/é.swift\n- src/a file.swift\n\nSECTION: COMMIT_GRAPH\n* aaaaaaa fixture\n* bbbbbbb earlier\n\nSECTION: CHANGED_FILE_TREE\nsrc/\n  a file.swift  [02] M +1 -1\n  é.swift  [03] M +1 -1\nbinary.dat  [01] M +? -?\n\nSECTION: JUMP_TABLE\n[01] M +? -?  binary.dat -> (no patch)\n[02] M +1 -1  src/a file.swift -> (no patch)\n[03] M +1 -1  src/é.swift -> (no patch)\n\nSECTION: NOTES\nNOTE_PATCH_OMITTED_COUNT: 3\nNOTE_PATCH_OMITTED_REASON: quick_mode\nNOTE_QUICK_MODE: true\nNOTE_BINARY_FILES: 1\n\nSECTION: BINARY_FILES\n- M binary.dat",
+        "totalLines": 64,
+        "truncated": false
+      },
+      "name": "quick-selected",
+      "snapshotID": "quick-selected"
+    }
+  },
+  {
+    "name": "quick-empty",
+    "input": {
+      "snapshotID": "quick-empty",
+      "repoKey": "fixture-repo",
+      "mode": "quick",
+      "scope": "all",
+      "requestedPaths": null,
+      "compare": "uncommitted:HEAD",
+      "compareInput": "UNCOMMITTED",
+      "diffText": "",
+      "perFile": {},
+      "changedFiles": [],
+      "summary": {
+        "files": 0,
+        "insertions": 0,
+        "deletions": 0
+      },
+      "fingerprint": {
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "baseRef": "HEAD",
+        "statusHash": "fixture-status",
+        "generatedAt": "2023-11-14T22:13:20Z"
+      },
+      "contextLines": 3,
+      "detectRenames": false,
+      "commitGraph": "* aaaaaaa fixture\n* bbbbbbb earlier",
+      "repoRoot": null,
+      "tabID": "11111111-1111-4111-8111-111111111111",
+      "worktree": null
+    },
+    "expected": [
+      {
+        "path": "MAP.txt",
+        "bytes": "IyBNQVAudHh0IHYxCiMgKGdyZXAgdGlwOiBzZWFyY2ggZm9yICJTTkFQU0hPVF8iIG9yICJTRUNUSU9OOiIpCgpTRUNUSU9OOiBTTkFQU0hPVF9NRVRBClNOQVBTSE9UX0lEOiBxdWljay1lbXB0eQpTTkFQU0hPVF9ESVI6IHJlcG9zL2ZpeHR1cmUtcmVwby9xdWljay1lbXB0eQpTTkFQU0hPVF9HRU5FUkFURURfQVQ6IDIwMjYtMTAtMTNUMTc6MTE6NDdaClNOQVBTSE9UX01PREU6IHF1aWNrClNOQVBTSE9UX01PREVfREVUQUlMUzogcXVpY2s6IG5vIHBhdGNoIHRleHQsIHN1bW1hcnktb25seSBhcnRpZmFjdHMKU05BUFNIT1RfQ09NUEFSRTogdW5jb21taXR0ZWQ6SEVBRApTTkFQU0hPVF9DT01QQVJFX0lOUFVUOiBVTkNPTU1JVFRFRApTTkFQU0hPVF9TQ09QRTogYWxsClNOQVBTSE9UX0NIQU5HRURfRklMRVM6IDAKU05BUFNIT1RfSU5TRVJUSU9OUzogMApTTkFQU0hPVF9ERUxFVElPTlM6IDAKClNFQ1RJT046IFJFUE9TSVRPUlkKUkVQT19LRVk6IGZpeHR1cmUtcmVwbwoKU0VDVElPTjogRklOR0VSUFJJTlQKRklOR0VSUFJJTlRfSEVBRF9TSEE6IGFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEKRklOR0VSUFJJTlRfQkFTRV9SRUY6IEhFQUQKRklOR0VSUFJJTlRfU1RBVFVTX0hBU0g6IGZpeHR1cmUtc3RhdHVzCgpTRUNUSU9OOiBBRFZBTkNFRApBRFZfQ09OVEVYVF9MSU5FUzogMwpBRFZfREVURUNUX1JFTkFNRVM6IGZhbHNlCgpTRUNUSU9OOiBBUlRJRkFDVFMKQVJUSUZBQ1RfTUFOSUZFU1Q6IG1hbmlmZXN0Lmpzb24KQVJUSUZBQ1RfTUFQOiBNQVAudHh0CkFSVElGQUNUX0ZJTEVTX1RTVjogaW5kZXgvZmlsZXMudHN2CkFSVElGQUNUX1RSRUU6IGluZGV4L2ZpbGVzLnRyZWUudHh0CgpTRUNUSU9OOiBDT01NSVRfR1JBUEgKKiBhYWFhYWFhIGZpeHR1cmUKKiBiYmJiYmJiIGVhcmxpZXIKClNFQ1RJT046IENIQU5HRURfRklMRV9UUkVFCgoKU0VDVElPTjogSlVNUF9UQUJMRQoKClNFQ1RJT046IE5PVEVTCk5PVEVfUEFUQ0hfT01JVFRFRF9DT1VOVDogMApOT1RFX1FVSUNLX01PREU6IHRydWUKTk9URV9FTVBUWV9SRVNVTFQ6IHRydWUKTk9URV9FTVBUWV9SRUFTT046IG5vX3VuY29tbWl0dGVkX2NoYW5nZXM="
+      },
+      {
+        "path": "manifest.json",
+        "bytes": "ewogICJjb21wYXJlIiA6ICJ1bmNvbW1pdHRlZDpIRUFEIiwKICAiY29tcGFyZUlucHV0IiA6ICJVTkNPTU1JVFRFRCIsCiAgImNvbnRleHRMaW5lcyIgOiAzLAogICJkZXRlY3RSZW5hbWVzIiA6IGZhbHNlLAogICJmaWxlcyIgOiBbCgogIF0sCiAgImZpbmdlcnByaW50IiA6IHsKICAgICJiYXNlUmVmIiA6ICJIRUFEIiwKICAgICJnZW5lcmF0ZWRBdCIgOiAiMjAyMy0xMS0xNFQyMjoxMzoyMFoiLAogICAgImhlYWRTSEEiIDogImFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEiLAogICAgInN0YXR1c0hhc2giIDogImZpeHR1cmUtc3RhdHVzIgogIH0sCiAgImdlbmVyYXRlZEF0IiA6ICIyMDI2LTEwLTEzVDE3OjExOjQ3WiIsCiAgIm1vZGUiIDogInF1aWNrIiwKICAicmVwb0tleSIgOiAiZml4dHVyZS1yZXBvIiwKICAic2NvcGUiIDogImFsbCIsCiAgInNuYXBzaG90SUQiIDogInF1aWNrLWVtcHR5IiwKICAic3VtbWFyeSIgOiB7CiAgICAiZGVsZXRpb25zIiA6IDAsCiAgICAiZmlsZXMiIDogMCwKICAgICJpbnNlcnRpb25zIiA6IDAKICB9LAogICJ0YWJJRCIgOiAiMTExMTExMTEtMTExMS00MTExLTgxMTEtMTExMTExMTExMTExIgp9"
+      },
+      {
+        "path": "index/files.tree.txt",
+        "bytes": ""
+      },
+      {
+        "path": "index/files.tsv",
+        "bytes": "c3RhdHVzCWFkZGl0aW9ucwlkZWxldGlvbnMJZ2l0X3BhdGgJcGF0Y2hfcGF0aAlieXRlcwlsaW5lcw=="
+      }
+    ],
+    "excerpts": {
+      "brief": {
+        "returnedLines": 7,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: quick-empty\nSNAPSHOT_DIR: repos/fixture-repo/quick-empty",
+        "totalLines": 19,
+        "truncated": true
+      },
+      "full": {
+        "returnedLines": 49,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: quick-empty\nSNAPSHOT_DIR: repos/fixture-repo/quick-empty\nSNAPSHOT_GENERATED_AT: 2026-10-13T17:11:47Z\nSNAPSHOT_MODE: quick\nSNAPSHOT_MODE_DETAILS: quick: no patch text, summary-only artifacts\nSNAPSHOT_COMPARE: uncommitted:HEAD\nSNAPSHOT_COMPARE_INPUT: UNCOMMITTED\nSNAPSHOT_SCOPE: all\nSNAPSHOT_CHANGED_FILES: 0\nSNAPSHOT_INSERTIONS: 0\nSNAPSHOT_DELETIONS: 0\n\nSECTION: REPOSITORY\nREPO_KEY: fixture-repo\n\nSECTION: FINGERPRINT\nFINGERPRINT_HEAD_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFINGERPRINT_BASE_REF: HEAD\nFINGERPRINT_STATUS_HASH: fixture-status\n\nSECTION: ADVANCED\nADV_CONTEXT_LINES: 3\nADV_DETECT_RENAMES: false\n\nSECTION: ARTIFACTS\nARTIFACT_MANIFEST: manifest.json\nARTIFACT_MAP: MAP.txt\nARTIFACT_FILES_TSV: index/files.tsv\nARTIFACT_TREE: index/files.tree.txt\n\nSECTION: COMMIT_GRAPH\n* aaaaaaa fixture\n* bbbbbbb earlier\n\nSECTION: CHANGED_FILE_TREE\n\n\nSECTION: JUMP_TABLE\n\n\nSECTION: NOTES\nNOTE_PATCH_OMITTED_COUNT: 0\nNOTE_QUICK_MODE: true\nNOTE_EMPTY_RESULT: true\nNOTE_EMPTY_REASON: no_uncommitted_changes",
+        "totalLines": 49,
+        "truncated": false
+      },
+      "name": "quick-empty",
+      "snapshotID": "quick-empty"
+    }
+  },
+  {
+    "name": "standard-selected",
+    "input": {
+      "snapshotID": "standard-selected",
+      "repoKey": "fixture-repo",
+      "mode": "standard",
+      "scope": "selected",
+      "requestedPaths": [
+        "src/é.swift",
+        "src/a file.swift"
+      ],
+      "compare": "uncommitted:HEAD",
+      "compareInput": "UNCOMMITTED",
+      "diffText": "diff --git a/src/a file.swift b/src/a file.swift\n--- a/src/a file.swift\n+++ b/src/a file.swift\n@@ -1 +1 @@\n-old\n+new\n\ndiff --git a/src/é.swift b/src/é.swift\n--- a/src/é.swift\n+++ b/src/é.swift\n@@ -1 +1 @@\n-old\n+new\n",
+      "perFile": {
+        "src/a file.swift": "diff --git a/src/a file.swift b/src/a file.swift\n--- a/src/a file.swift\n+++ b/src/a file.swift\n@@ -1 +1 @@\n-old\n+new\n",
+        "src/é.swift": "diff --git a/src/é.swift b/src/é.swift\n--- a/src/é.swift\n+++ b/src/é.swift\n@@ -1 +1 @@\n-old\n+new\n"
+      },
+      "changedFiles": [
+        {
+          "path": "src/a file.swift",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/é.swift",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "binary.dat",
+          "status": "M",
+          "additions": null,
+          "deletions": null
+        }
+      ],
+      "summary": {
+        "files": 3,
+        "insertions": 2,
+        "deletions": 2
+      },
+      "fingerprint": {
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "baseRef": "HEAD",
+        "statusHash": "fixture-status",
+        "generatedAt": "2023-11-14T22:13:20Z"
+      },
+      "contextLines": 3,
+      "detectRenames": false,
+      "commitGraph": "* aaaaaaa fixture\n* bbbbbbb earlier",
+      "repoRoot": null,
+      "tabID": "11111111-1111-4111-8111-111111111111",
+      "worktree": null
+    },
+    "expected": [
+      {
+        "path": "MAP.txt",
+        "bytes": "IyBNQVAudHh0IHYxCiMgKGdyZXAgdGlwOiBzZWFyY2ggZm9yICJTTkFQU0hPVF8iIG9yICJTRUNUSU9OOiIpCgpTRUNUSU9OOiBTTkFQU0hPVF9NRVRBClNOQVBTSE9UX0lEOiBzdGFuZGFyZC1zZWxlY3RlZApTTkFQU0hPVF9ESVI6IHJlcG9zL2ZpeHR1cmUtcmVwby9zdGFuZGFyZC1zZWxlY3RlZApTTkFQU0hPVF9HRU5FUkFURURfQVQ6IDIwMjYtMTAtMTNUMTc6MTE6NDdaClNOQVBTSE9UX01PREU6IHN0YW5kYXJkClNOQVBTSE9UX01PREVfREVUQUlMUzogc3RhbmRhcmQ6IGZ1bGwgZGlmZiBwYXRjaGVzIChhbGwucGF0Y2ggKyBwZXItZmlsZSB3aGVuIHNpemUgYWxsb3dzKQpTTkFQU0hPVF9DT01QQVJFOiB1bmNvbW1pdHRlZDpIRUFEClNOQVBTSE9UX0NPTVBBUkVfSU5QVVQ6IFVOQ09NTUlUVEVEClNOQVBTSE9UX1NDT1BFOiBzZWxlY3RlZApTTkFQU0hPVF9TRUxFQ1RFRF9QQVRIU19DT1VOVDogMgpTTkFQU0hPVF9DSEFOR0VEX0ZJTEVTOiAzClNOQVBTSE9UX0lOU0VSVElPTlM6IDIKU05BUFNIT1RfREVMRVRJT05TOiAyCgpTRUNUSU9OOiBSRVBPU0lUT1JZClJFUE9fS0VZOiBmaXh0dXJlLXJlcG8KClNFQ1RJT046IEZJTkdFUlBSSU5UCkZJTkdFUlBSSU5UX0hFQURfU0hBOiBhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhCkZJTkdFUlBSSU5UX0JBU0VfUkVGOiBIRUFECkZJTkdFUlBSSU5UX1NUQVRVU19IQVNIOiBmaXh0dXJlLXN0YXR1cwoKU0VDVElPTjogQURWQU5DRUQKQURWX0NPTlRFWFRfTElORVM6IDMKQURWX0RFVEVDVF9SRU5BTUVTOiBmYWxzZQoKU0VDVElPTjogQVJUSUZBQ1RTCkFSVElGQUNUX01BTklGRVNUOiBtYW5pZmVzdC5qc29uCkFSVElGQUNUX01BUDogTUFQLnR4dApBUlRJRkFDVF9GSUxFU19UU1Y6IGluZGV4L2ZpbGVzLnRzdgpBUlRJRkFDVF9DSEFOR0VEX0xJTkVTOiBpbmRleC9jaGFuZ2VkX2xpbmVzLnRzdgpBUlRJRkFDVF9UUkVFOiBpbmRleC9maWxlcy50cmVlLnR4dApBUlRJRkFDVF9TRUxFQ1RJT05fUEFUSFM6IGluZGV4L3NlbGVjdGlvbi5wYXRocy50eHQKQVJUSUZBQ1RfQUxMX1BBVENIOiBkaWZmL2FsbC5wYXRjaAoKU0VDVElPTjogQ0hBTkdFRF9MSU5FU19GT1JNQVQKaW5kZXgvY2hhbmdlZF9saW5lcy50c3Y6IFRTViBjb2x1bW5zOiBwYXRoLCBsaW5lX251bWJlciwgY2hhbmdlX3R5cGUoKy8tKSwgY29udGVudAogIC0gbGluZV9udW1iZXI6IG5ldy1maWxlIGxpbmUgZm9yICcrJywgb2xkLWZpbGUgbGluZSBmb3IgJy0nCgpTRUNUSU9OOiBTRUxFQ1RJT05fUEFUSFMKKHNlbGVjdGlvbi5wYXRocy50eHQgaXMgdGhlIGNhbm9uaWNhbCBsaXN0OyBzaG93biBoZXJlIGZvciBjb252ZW5pZW5jZSkKLSBzcmMvw6kuc3dpZnQKLSBzcmMvYSBmaWxlLnN3aWZ0CgpTRUNUSU9OOiBDT01NSVRfR1JBUEgKKiBhYWFhYWFhIGZpeHR1cmUKKiBiYmJiYmJiIGVhcmxpZXIKClNFQ1RJT046IENIQU5HRURfRklMRV9UUkVFCnNyYy8KICBhIGZpbGUuc3dpZnQgIFswMl0gTSArMSAtMQogIMOpLnN3aWZ0ICBbMDNdIE0gKzEgLTEKYmluYXJ5LmRhdCAgWzAxXSBNICs/IC0/CgpTRUNUSU9OOiBKVU1QX1RBQkxFClswMV0gTSArPyAtPyAgYmluYXJ5LmRhdCAtPiAobm8gcGF0Y2gpClswMl0gTSArMSAtMSAgc3JjL2EgZmlsZS5zd2lmdCAtPiBkaWZmL3Blci1maWxlL3NyY19fYV9maWxlLnN3aWZ0LnBhdGNoClswM10gTSArMSAtMSAgc3JjL8OpLnN3aWZ0IC0+IGRpZmYvcGVyLWZpbGUvc3JjX19lzIEuc3dpZnQucGF0Y2gKClNFQ1RJT046IFBFUl9GSUxFX1BBVENIX1NFTEVDVElPTl9QQVRIUwooc2VsZWN0aW9uLXJlYWR5IGBfZ2l0X2RhdGEvLi4uYCBwYXRocyBmb3IgZGlyZWN0IHNlbGVjdGlvbjsgbm8gbWFudWFsIHNuYXBzaG90LWRpciByZWNvbnN0cnVjdGlvbiBvciBgX19gIGZpbGVuYW1lIGVuY29kaW5nIHJlcXVpcmVkKQpbMDJdIE0gKzEgLTEgIHNyYy9hIGZpbGUuc3dpZnQgLT4gX2dpdF9kYXRhL3JlcG9zL2ZpeHR1cmUtcmVwby9zdGFuZGFyZC1zZWxlY3RlZC9kaWZmL3Blci1maWxlL3NyY19fYV9maWxlLnN3aWZ0LnBhdGNoClswM10gTSArMSAtMSAgc3JjL8OpLnN3aWZ0IC0+IF9naXRfZGF0YS9yZXBvcy9maXh0dXJlLXJlcG8vc3RhbmRhcmQtc2VsZWN0ZWQvZGlmZi9wZXItZmlsZS9zcmNfX2XMgS5zd2lmdC5wYXRjaAoKU0VDVElPTjogTk9URVMKTk9URV9QQVRDSF9PTUlUVEVEX0NPVU5UOiAxCk5PVEVfUVVJQ0tfTU9ERTogZmFsc2UKTk9URV9CSU5BUllfRklMRVM6IDEKClNFQ1RJT046IEJJTkFSWV9GSUxFUwotIE0gYmluYXJ5LmRhdA=="
+      },
+      {
+        "path": "manifest.json",
+        "bytes": "ewogICJjb21wYXJlIiA6ICJ1bmNvbW1pdHRlZDpIRUFEIiwKICAiY29tcGFyZUlucHV0IiA6ICJVTkNPTU1JVFRFRCIsCiAgImNvbnRleHRMaW5lcyIgOiAzLAogICJkZXRlY3RSZW5hbWVzIiA6IGZhbHNlLAogICJmaWxlcyIgOiBbCiAgICB7CiAgICAgICJnaXRQYXRoIiA6ICJiaW5hcnkuZGF0IiwKICAgICAgInN0YXR1cyIgOiAiTSIKICAgIH0sCiAgICB7CiAgICAgICJhZGRpdGlvbnMiIDogMSwKICAgICAgImJ5dGVzIiA6IDExNywKICAgICAgImRlbGV0aW9ucyIgOiAxLAogICAgICAiZ2l0UGF0aCIgOiAic3JjXC9hIGZpbGUuc3dpZnQiLAogICAgICAiaHVua3MiIDogWwogICAgICAgIHsKICAgICAgICAgICJlbmRMaW5lIiA6IDcsCiAgICAgICAgICAiaGVhZGVyIiA6ICJAQCAtMSArMSBAQCIsCiAgICAgICAgICAic3RhcnRMaW5lIiA6IDQKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJsaW5lcyIgOiA3LAogICAgICAicGF0Y2hQYXRoIiA6ICJkaWZmXC9wZXItZmlsZVwvc3JjX19hX2ZpbGUuc3dpZnQucGF0Y2giLAogICAgICAic3RhdHVzIiA6ICJNIgogICAgfSwKICAgIHsKICAgICAgImFkZGl0aW9ucyIgOiAxLAogICAgICAiYnl0ZXMiIDogMTAxLAogICAgICAiZGVsZXRpb25zIiA6IDEsCiAgICAgICJnaXRQYXRoIiA6ICJzcmNcL8OpLnN3aWZ0IiwKICAgICAgImh1bmtzIiA6IFsKICAgICAgICB7CiAgICAgICAgICAiZW5kTGluZSIgOiA3LAogICAgICAgICAgImhlYWRlciIgOiAiQEAgLTEgKzEgQEAiLAogICAgICAgICAgInN0YXJ0TGluZSIgOiA0CiAgICAgICAgfQogICAgICBdLAogICAgICAibGluZXMiIDogNywKICAgICAgInBhdGNoUGF0aCIgOiAiZGlmZlwvcGVyLWZpbGVcL3NyY19fZcyBLnN3aWZ0LnBhdGNoIiwKICAgICAgInN0YXR1cyIgOiAiTSIKICAgIH0KICBdLAogICJmaW5nZXJwcmludCIgOiB7CiAgICAiYmFzZVJlZiIgOiAiSEVBRCIsCiAgICAiZ2VuZXJhdGVkQXQiIDogIjIwMjMtMTEtMTRUMjI6MTM6MjBaIiwKICAgICJoZWFkU0hBIiA6ICJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwKICAgICJzdGF0dXNIYXNoIiA6ICJmaXh0dXJlLXN0YXR1cyIKICB9LAogICJnZW5lcmF0ZWRBdCIgOiAiMjAyNi0xMC0xM1QxNzoxMTo0N1oiLAogICJtb2RlIiA6ICJzdGFuZGFyZCIsCiAgInJlcG9LZXkiIDogImZpeHR1cmUtcmVwbyIsCiAgInJlcXVlc3RlZFBhdGhzIiA6IFsKICAgICJzcmNcL8OpLnN3aWZ0IiwKICAgICJzcmNcL2EgZmlsZS5zd2lmdCIKICBdLAogICJzY29wZSIgOiAic2VsZWN0ZWQiLAogICJzbmFwc2hvdElEIiA6ICJzdGFuZGFyZC1zZWxlY3RlZCIsCiAgInN1bW1hcnkiIDogewogICAgImRlbGV0aW9ucyIgOiAyLAogICAgImZpbGVzIiA6IDMsCiAgICAiaW5zZXJ0aW9ucyIgOiAyCiAgfSwKICAidGFiSUQiIDogIjExMTExMTExLTExMTEtNDExMS04MTExLTExMTExMTExMTExMSIKfQ=="
+      },
+      {
+        "path": "diff/all.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL3NyYy9hIGZpbGUuc3dpZnQgYi9zcmMvYSBmaWxlLnN3aWZ0Ci0tLSBhL3NyYy9hIGZpbGUuc3dpZnQKKysrIGIvc3JjL2EgZmlsZS5zd2lmdApAQCAtMSArMSBAQAotb2xkCituZXcKCmRpZmYgLS1naXQgYS9zcmMvw6kuc3dpZnQgYi9zcmMvw6kuc3dpZnQKLS0tIGEvc3JjL8OpLnN3aWZ0CisrKyBiL3NyYy/DqS5zd2lmdApAQCAtMSArMSBAQAotb2xkCituZXcK"
+      },
+      {
+        "path": "index/changed_lines.tsv",
+        "bytes": "cGF0aAlsaW5lX251bWJlcgljaGFuZ2VfdHlwZQljb250ZW50CnNyYy9hIGZpbGUuc3dpZnQJMQktCW9sZApzcmMvYSBmaWxlLnN3aWZ0CTEJKwluZXcKc3JjL8OpLnN3aWZ0CTEJLQlvbGQKc3JjL8OpLnN3aWZ0CTEJKwluZXc="
+      },
+      {
+        "path": "index/files.tree.txt",
+        "bytes": "c3JjLwogIGEgZmlsZS5zd2lmdCAgWzAyXSBNICsxIC0xCiAgw6kuc3dpZnQgIFswM10gTSArMSAtMQpiaW5hcnkuZGF0ICBbMDFdIE0gKz8gLT8="
+      },
+      {
+        "path": "index/files.tsv",
+        "bytes": "c3RhdHVzCWFkZGl0aW9ucwlkZWxldGlvbnMJZ2l0X3BhdGgJcGF0Y2hfcGF0aAlieXRlcwlsaW5lcwpNCQkJYmluYXJ5LmRhdAkJCQpNCTEJMQlzcmMvYSBmaWxlLnN3aWZ0CWRpZmYvcGVyLWZpbGUvc3JjX19hX2ZpbGUuc3dpZnQucGF0Y2gJMTE3CTcKTQkxCTEJc3JjL8OpLnN3aWZ0CWRpZmYvcGVyLWZpbGUvc3JjX19lzIEuc3dpZnQucGF0Y2gJMTAxCTc="
+      },
+      {
+        "path": "index/selection.paths.txt",
+        "bytes": "c3JjL8OpLnN3aWZ0CnNyYy9hIGZpbGUuc3dpZnQ="
+      },
+      {
+        "path": "diff/per-file/src__a_file.swift.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL3NyYy9hIGZpbGUuc3dpZnQgYi9zcmMvYSBmaWxlLnN3aWZ0Ci0tLSBhL3NyYy9hIGZpbGUuc3dpZnQKKysrIGIvc3JjL2EgZmlsZS5zd2lmdApAQCAtMSArMSBAQAotb2xkCituZXcK"
+      },
+      {
+        "path": "diff/per-file/src__é.swift.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL3NyYy/DqS5zd2lmdCBiL3NyYy/DqS5zd2lmdAotLS0gYS9zcmMvw6kuc3dpZnQKKysrIGIvc3JjL8OpLnN3aWZ0CkBAIC0xICsxIEBACi1vbGQKK25ldwo="
+      }
+    ],
+    "excerpts": {
+      "brief": {
+        "returnedLines": 7,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: standard-selected\nSNAPSHOT_DIR: repos/fixture-repo/standard-selected",
+        "totalLines": 24,
+        "truncated": true
+      },
+      "full": {
+        "returnedLines": 74,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: standard-selected\nSNAPSHOT_DIR: repos/fixture-repo/standard-selected\nSNAPSHOT_GENERATED_AT: 2026-10-13T17:11:47Z\nSNAPSHOT_MODE: standard\nSNAPSHOT_MODE_DETAILS: standard: full diff patches (all.patch + per-file when size allows)\nSNAPSHOT_COMPARE: uncommitted:HEAD\nSNAPSHOT_COMPARE_INPUT: UNCOMMITTED\nSNAPSHOT_SCOPE: selected\nSNAPSHOT_SELECTED_PATHS_COUNT: 2\nSNAPSHOT_CHANGED_FILES: 3\nSNAPSHOT_INSERTIONS: 2\nSNAPSHOT_DELETIONS: 2\n\nSECTION: REPOSITORY\nREPO_KEY: fixture-repo\n\nSECTION: FINGERPRINT\nFINGERPRINT_HEAD_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFINGERPRINT_BASE_REF: HEAD\nFINGERPRINT_STATUS_HASH: fixture-status\n\nSECTION: ADVANCED\nADV_CONTEXT_LINES: 3\nADV_DETECT_RENAMES: false\n\nSECTION: ARTIFACTS\nARTIFACT_MANIFEST: manifest.json\nARTIFACT_MAP: MAP.txt\nARTIFACT_FILES_TSV: index/files.tsv\nARTIFACT_CHANGED_LINES: index/changed_lines.tsv\nARTIFACT_TREE: index/files.tree.txt\nARTIFACT_SELECTION_PATHS: index/selection.paths.txt\nARTIFACT_ALL_PATCH: diff/all.patch\n\nSECTION: CHANGED_LINES_FORMAT\nindex/changed_lines.tsv: TSV columns: path, line_number, change_type(+/-), content\n  - line_number: new-file line for '+', old-file line for '-'\n\nSECTION: SELECTION_PATHS\n(selection.paths.txt is the canonical list; shown here for convenience)\n- src/é.swift\n- src/a file.swift\n\nSECTION: COMMIT_GRAPH\n* aaaaaaa fixture\n* bbbbbbb earlier\n\nSECTION: CHANGED_FILE_TREE\nsrc/\n  a file.swift  [02] M +1 -1\n  é.swift  [03] M +1 -1\nbinary.dat  [01] M +? -?\n\nSECTION: JUMP_TABLE\n[01] M +? -?  binary.dat -> (no patch)\n[02] M +1 -1  src/a file.swift -> diff/per-file/src__a_file.swift.patch\n[03] M +1 -1  src/é.swift -> diff/per-file/src__é.swift.patch\n\nSECTION: PER_FILE_PATCH_SELECTION_PATHS\n(selection-ready `_git_data/...` paths for direct selection; no manual snapshot-dir reconstruction or `__` filename encoding required)\n[02] M +1 -1  src/a file.swift -> _git_data/repos/fixture-repo/standard-selected/diff/per-file/src__a_file.swift.patch\n[03] M +1 -1  src/é.swift -> _git_data/repos/fixture-repo/standard-selected/diff/per-file/src__é.swift.patch\n\nSECTION: NOTES\nNOTE_PATCH_OMITTED_COUNT: 1\nNOTE_QUICK_MODE: false\nNOTE_BINARY_FILES: 1\n\nSECTION: BINARY_FILES\n- M binary.dat",
+        "totalLines": 74,
+        "truncated": false
+      },
+      "name": "standard-selected",
+      "snapshotID": "standard-selected"
+    }
+  },
+  {
+    "name": "standard-empty",
+    "input": {
+      "snapshotID": "standard-empty",
+      "repoKey": "fixture-repo",
+      "mode": "standard",
+      "scope": "all",
+      "requestedPaths": null,
+      "compare": "uncommitted:HEAD",
+      "compareInput": "UNCOMMITTED",
+      "diffText": "",
+      "perFile": {},
+      "changedFiles": [],
+      "summary": {
+        "files": 0,
+        "insertions": 0,
+        "deletions": 0
+      },
+      "fingerprint": {
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "baseRef": "HEAD",
+        "statusHash": "fixture-status",
+        "generatedAt": "2023-11-14T22:13:20Z"
+      },
+      "contextLines": 3,
+      "detectRenames": false,
+      "commitGraph": "* aaaaaaa fixture\n* bbbbbbb earlier",
+      "repoRoot": null,
+      "tabID": "11111111-1111-4111-8111-111111111111",
+      "worktree": null
+    },
+    "expected": [
+      {
+        "path": "MAP.txt",
+        "bytes": "IyBNQVAudHh0IHYxCiMgKGdyZXAgdGlwOiBzZWFyY2ggZm9yICJTTkFQU0hPVF8iIG9yICJTRUNUSU9OOiIpCgpTRUNUSU9OOiBTTkFQU0hPVF9NRVRBClNOQVBTSE9UX0lEOiBzdGFuZGFyZC1lbXB0eQpTTkFQU0hPVF9ESVI6IHJlcG9zL2ZpeHR1cmUtcmVwby9zdGFuZGFyZC1lbXB0eQpTTkFQU0hPVF9HRU5FUkFURURfQVQ6IDIwMjYtMTAtMTNUMTc6MTE6NDdaClNOQVBTSE9UX01PREU6IHN0YW5kYXJkClNOQVBTSE9UX01PREVfREVUQUlMUzogc3RhbmRhcmQ6IGZ1bGwgZGlmZiBwYXRjaGVzIChhbGwucGF0Y2ggKyBwZXItZmlsZSB3aGVuIHNpemUgYWxsb3dzKQpTTkFQU0hPVF9DT01QQVJFOiB1bmNvbW1pdHRlZDpIRUFEClNOQVBTSE9UX0NPTVBBUkVfSU5QVVQ6IFVOQ09NTUlUVEVEClNOQVBTSE9UX1NDT1BFOiBhbGwKU05BUFNIT1RfQ0hBTkdFRF9GSUxFUzogMApTTkFQU0hPVF9JTlNFUlRJT05TOiAwClNOQVBTSE9UX0RFTEVUSU9OUzogMAoKU0VDVElPTjogUkVQT1NJVE9SWQpSRVBPX0tFWTogZml4dHVyZS1yZXBvCgpTRUNUSU9OOiBGSU5HRVJQUklOVApGSU5HRVJQUklOVF9IRUFEX1NIQTogYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYQpGSU5HRVJQUklOVF9CQVNFX1JFRjogSEVBRApGSU5HRVJQUklOVF9TVEFUVVNfSEFTSDogZml4dHVyZS1zdGF0dXMKClNFQ1RJT046IEFEVkFOQ0VECkFEVl9DT05URVhUX0xJTkVTOiAzCkFEVl9ERVRFQ1RfUkVOQU1FUzogZmFsc2UKClNFQ1RJT046IEFSVElGQUNUUwpBUlRJRkFDVF9NQU5JRkVTVDogbWFuaWZlc3QuanNvbgpBUlRJRkFDVF9NQVA6IE1BUC50eHQKQVJUSUZBQ1RfRklMRVNfVFNWOiBpbmRleC9maWxlcy50c3YKQVJUSUZBQ1RfVFJFRTogaW5kZXgvZmlsZXMudHJlZS50eHQKClNFQ1RJT046IENPTU1JVF9HUkFQSAoqIGFhYWFhYWEgZml4dHVyZQoqIGJiYmJiYmIgZWFybGllcgoKU0VDVElPTjogQ0hBTkdFRF9GSUxFX1RSRUUKCgpTRUNUSU9OOiBKVU1QX1RBQkxFCgoKU0VDVElPTjogTk9URVMKTk9URV9QQVRDSF9PTUlUVEVEX0NPVU5UOiAwCk5PVEVfUVVJQ0tfTU9ERTogZmFsc2UKTk9URV9FTVBUWV9SRVNVTFQ6IHRydWUKTk9URV9FTVBUWV9SRUFTT046IG5vX3VuY29tbWl0dGVkX2NoYW5nZXM="
+      },
+      {
+        "path": "manifest.json",
+        "bytes": "ewogICJjb21wYXJlIiA6ICJ1bmNvbW1pdHRlZDpIRUFEIiwKICAiY29tcGFyZUlucHV0IiA6ICJVTkNPTU1JVFRFRCIsCiAgImNvbnRleHRMaW5lcyIgOiAzLAogICJkZXRlY3RSZW5hbWVzIiA6IGZhbHNlLAogICJmaWxlcyIgOiBbCgogIF0sCiAgImZpbmdlcnByaW50IiA6IHsKICAgICJiYXNlUmVmIiA6ICJIRUFEIiwKICAgICJnZW5lcmF0ZWRBdCIgOiAiMjAyMy0xMS0xNFQyMjoxMzoyMFoiLAogICAgImhlYWRTSEEiIDogImFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEiLAogICAgInN0YXR1c0hhc2giIDogImZpeHR1cmUtc3RhdHVzIgogIH0sCiAgImdlbmVyYXRlZEF0IiA6ICIyMDI2LTEwLTEzVDE3OjExOjQ3WiIsCiAgIm1vZGUiIDogInN0YW5kYXJkIiwKICAicmVwb0tleSIgOiAiZml4dHVyZS1yZXBvIiwKICAic2NvcGUiIDogImFsbCIsCiAgInNuYXBzaG90SUQiIDogInN0YW5kYXJkLWVtcHR5IiwKICAic3VtbWFyeSIgOiB7CiAgICAiZGVsZXRpb25zIiA6IDAsCiAgICAiZmlsZXMiIDogMCwKICAgICJpbnNlcnRpb25zIiA6IDAKICB9LAogICJ0YWJJRCIgOiAiMTExMTExMTEtMTExMS00MTExLTgxMTEtMTExMTExMTExMTExIgp9"
+      },
+      {
+        "path": "index/files.tree.txt",
+        "bytes": ""
+      },
+      {
+        "path": "index/files.tsv",
+        "bytes": "c3RhdHVzCWFkZGl0aW9ucwlkZWxldGlvbnMJZ2l0X3BhdGgJcGF0Y2hfcGF0aAlieXRlcwlsaW5lcw=="
+      }
+    ],
+    "excerpts": {
+      "brief": {
+        "returnedLines": 7,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: standard-empty\nSNAPSHOT_DIR: repos/fixture-repo/standard-empty",
+        "totalLines": 19,
+        "truncated": true
+      },
+      "full": {
+        "returnedLines": 49,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: standard-empty\nSNAPSHOT_DIR: repos/fixture-repo/standard-empty\nSNAPSHOT_GENERATED_AT: 2026-10-13T17:11:47Z\nSNAPSHOT_MODE: standard\nSNAPSHOT_MODE_DETAILS: standard: full diff patches (all.patch + per-file when size allows)\nSNAPSHOT_COMPARE: uncommitted:HEAD\nSNAPSHOT_COMPARE_INPUT: UNCOMMITTED\nSNAPSHOT_SCOPE: all\nSNAPSHOT_CHANGED_FILES: 0\nSNAPSHOT_INSERTIONS: 0\nSNAPSHOT_DELETIONS: 0\n\nSECTION: REPOSITORY\nREPO_KEY: fixture-repo\n\nSECTION: FINGERPRINT\nFINGERPRINT_HEAD_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFINGERPRINT_BASE_REF: HEAD\nFINGERPRINT_STATUS_HASH: fixture-status\n\nSECTION: ADVANCED\nADV_CONTEXT_LINES: 3\nADV_DETECT_RENAMES: false\n\nSECTION: ARTIFACTS\nARTIFACT_MANIFEST: manifest.json\nARTIFACT_MAP: MAP.txt\nARTIFACT_FILES_TSV: index/files.tsv\nARTIFACT_TREE: index/files.tree.txt\n\nSECTION: COMMIT_GRAPH\n* aaaaaaa fixture\n* bbbbbbb earlier\n\nSECTION: CHANGED_FILE_TREE\n\n\nSECTION: JUMP_TABLE\n\n\nSECTION: NOTES\nNOTE_PATCH_OMITTED_COUNT: 0\nNOTE_QUICK_MODE: false\nNOTE_EMPTY_RESULT: true\nNOTE_EMPTY_REASON: no_uncommitted_changes",
+        "totalLines": 49,
+        "truncated": false
+      },
+      "name": "standard-empty",
+      "snapshotID": "standard-empty"
+    }
+  },
+  {
+    "name": "deep-selected",
+    "input": {
+      "snapshotID": "deep-selected",
+      "repoKey": "fixture-repo",
+      "mode": "deep",
+      "scope": "selected",
+      "requestedPaths": [
+        "src/é.swift",
+        "src/a file.swift"
+      ],
+      "compare": "uncommitted:HEAD",
+      "compareInput": "UNCOMMITTED",
+      "diffText": "diff --git a/src/a file.swift b/src/a file.swift\n--- a/src/a file.swift\n+++ b/src/a file.swift\n@@ -1 +1 @@\n-old\n+new\n\ndiff --git a/src/é.swift b/src/é.swift\n--- a/src/é.swift\n+++ b/src/é.swift\n@@ -1 +1 @@\n-old\n+new\n",
+      "perFile": {
+        "src/a file.swift": "diff --git a/src/a file.swift b/src/a file.swift\n--- a/src/a file.swift\n+++ b/src/a file.swift\n@@ -1 +1 @@\n-old\n+new\n",
+        "src/é.swift": "diff --git a/src/é.swift b/src/é.swift\n--- a/src/é.swift\n+++ b/src/é.swift\n@@ -1 +1 @@\n-old\n+new\n"
+      },
+      "changedFiles": [
+        {
+          "path": "src/a file.swift",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/é.swift",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "binary.dat",
+          "status": "M",
+          "additions": null,
+          "deletions": null
+        }
+      ],
+      "summary": {
+        "files": 3,
+        "insertions": 2,
+        "deletions": 2
+      },
+      "fingerprint": {
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "baseRef": "HEAD",
+        "statusHash": "fixture-status",
+        "generatedAt": "2023-11-14T22:13:20Z"
+      },
+      "contextLines": 3,
+      "detectRenames": false,
+      "commitGraph": "* aaaaaaa fixture\n* bbbbbbb earlier",
+      "repoRoot": null,
+      "tabID": "11111111-1111-4111-8111-111111111111",
+      "worktree": null
+    },
+    "expected": [
+      {
+        "path": "MAP.txt",
+        "bytes": "IyBNQVAudHh0IHYxCiMgKGdyZXAgdGlwOiBzZWFyY2ggZm9yICJTTkFQU0hPVF8iIG9yICJTRUNUSU9OOiIpCgpTRUNUSU9OOiBTTkFQU0hPVF9NRVRBClNOQVBTSE9UX0lEOiBkZWVwLXNlbGVjdGVkClNOQVBTSE9UX0RJUjogcmVwb3MvZml4dHVyZS1yZXBvL2RlZXAtc2VsZWN0ZWQKU05BUFNIT1RfR0VORVJBVEVEX0FUOiAyMDI2LTEwLTEzVDE3OjExOjQ3WgpTTkFQU0hPVF9NT0RFOiBkZWVwClNOQVBTSE9UX01PREVfREVUQUlMUzogZGVlcDogc3RhbmRhcmQgcGF0Y2hlcyArIGh1bmsgYW5kIGNoYW5nZWQtbGluZSBpbmRleGVzClNOQVBTSE9UX0NPTVBBUkU6IHVuY29tbWl0dGVkOkhFQUQKU05BUFNIT1RfQ09NUEFSRV9JTlBVVDogVU5DT01NSVRURUQKU05BUFNIT1RfU0NPUEU6IHNlbGVjdGVkClNOQVBTSE9UX1NFTEVDVEVEX1BBVEhTX0NPVU5UOiAyClNOQVBTSE9UX0NIQU5HRURfRklMRVM6IDMKU05BUFNIT1RfSU5TRVJUSU9OUzogMgpTTkFQU0hPVF9ERUxFVElPTlM6IDIKClNFQ1RJT046IFJFUE9TSVRPUlkKUkVQT19LRVk6IGZpeHR1cmUtcmVwbwoKU0VDVElPTjogRklOR0VSUFJJTlQKRklOR0VSUFJJTlRfSEVBRF9TSEE6IGFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEKRklOR0VSUFJJTlRfQkFTRV9SRUY6IEhFQUQKRklOR0VSUFJJTlRfU1RBVFVTX0hBU0g6IGZpeHR1cmUtc3RhdHVzCgpTRUNUSU9OOiBBRFZBTkNFRApBRFZfQ09OVEVYVF9MSU5FUzogMwpBRFZfREVURUNUX1JFTkFNRVM6IGZhbHNlCgpTRUNUSU9OOiBBUlRJRkFDVFMKQVJUSUZBQ1RfTUFOSUZFU1Q6IG1hbmlmZXN0Lmpzb24KQVJUSUZBQ1RfTUFQOiBNQVAudHh0CkFSVElGQUNUX0ZJTEVTX1RTVjogaW5kZXgvZmlsZXMudHN2CkFSVElGQUNUX0NIQU5HRURfTElORVM6IGluZGV4L2NoYW5nZWRfbGluZXMudHN2CkFSVElGQUNUX1RSRUU6IGluZGV4L2ZpbGVzLnRyZWUudHh0CkFSVElGQUNUX1NFTEVDVElPTl9QQVRIUzogaW5kZXgvc2VsZWN0aW9uLnBhdGhzLnR4dApBUlRJRkFDVF9BTExfUEFUQ0g6IGRpZmYvYWxsLnBhdGNoCkFSVElGQUNUX0RFRVBfSFVOS1M6IGRlZXAvaHVua3MuanNvbmwKQVJUSUZBQ1RfREVFUF9DSEFOR0VEX0xJTkVTOiBkZWVwL2NoYW5nZWRfbGluZXMudHN2CgpTRUNUSU9OOiBDSEFOR0VEX0xJTkVTX0ZPUk1BVAppbmRleC9jaGFuZ2VkX2xpbmVzLnRzdjogVFNWIGNvbHVtbnM6IHBhdGgsIGxpbmVfbnVtYmVyLCBjaGFuZ2VfdHlwZSgrLy0pLCBjb250ZW50CiAgLSBsaW5lX251bWJlcjogbmV3LWZpbGUgbGluZSBmb3IgJysnLCBvbGQtZmlsZSBsaW5lIGZvciAnLScKClNFQ1RJT046IERFRVBfRk9STUFUCmRlZXAvaHVua3MuanNvbmw6IEpTT05MIHJlY29yZHMge3BhdGgsIGhlYWRlciwgb2xkX3N0YXJ0LCBvbGRfY291bnQsIG5ld19zdGFydCwgbmV3X2NvdW50fQpkZWVwL2NoYW5nZWRfbGluZXMudHN2OiBUU1YgY29sdW1uczogcGF0aCwgb3AoKy8tKSwgb2xkX2xpbmUsIG5ld19saW5lLCB0ZXh0CgpTRUNUSU9OOiBTRUxFQ1RJT05fUEFUSFMKKHNlbGVjdGlvbi5wYXRocy50eHQgaXMgdGhlIGNhbm9uaWNhbCBsaXN0OyBzaG93biBoZXJlIGZvciBjb252ZW5pZW5jZSkKLSBzcmMvw6kuc3dpZnQKLSBzcmMvYSBmaWxlLnN3aWZ0CgpTRUNUSU9OOiBDT01NSVRfR1JBUEgKKiBhYWFhYWFhIGZpeHR1cmUKKiBiYmJiYmJiIGVhcmxpZXIKClNFQ1RJT046IENIQU5HRURfRklMRV9UUkVFCnNyYy8KICBhIGZpbGUuc3dpZnQgIFswMl0gTSArMSAtMQogIMOpLnN3aWZ0ICBbMDNdIE0gKzEgLTEKYmluYXJ5LmRhdCAgWzAxXSBNICs/IC0/CgpTRUNUSU9OOiBKVU1QX1RBQkxFClswMV0gTSArPyAtPyAgYmluYXJ5LmRhdCAtPiAobm8gcGF0Y2gpClswMl0gTSArMSAtMSAgc3JjL2EgZmlsZS5zd2lmdCAtPiBkaWZmL3Blci1maWxlL3NyY19fYV9maWxlLnN3aWZ0LnBhdGNoClswM10gTSArMSAtMSAgc3JjL8OpLnN3aWZ0IC0+IGRpZmYvcGVyLWZpbGUvc3JjX19lzIEuc3dpZnQucGF0Y2gKClNFQ1RJT046IFBFUl9GSUxFX1BBVENIX1NFTEVDVElPTl9QQVRIUwooc2VsZWN0aW9uLXJlYWR5IGBfZ2l0X2RhdGEvLi4uYCBwYXRocyBmb3IgZGlyZWN0IHNlbGVjdGlvbjsgbm8gbWFudWFsIHNuYXBzaG90LWRpciByZWNvbnN0cnVjdGlvbiBvciBgX19gIGZpbGVuYW1lIGVuY29kaW5nIHJlcXVpcmVkKQpbMDJdIE0gKzEgLTEgIHNyYy9hIGZpbGUuc3dpZnQgLT4gX2dpdF9kYXRhL3JlcG9zL2ZpeHR1cmUtcmVwby9kZWVwLXNlbGVjdGVkL2RpZmYvcGVyLWZpbGUvc3JjX19hX2ZpbGUuc3dpZnQucGF0Y2gKWzAzXSBNICsxIC0xICBzcmMvw6kuc3dpZnQgLT4gX2dpdF9kYXRhL3JlcG9zL2ZpeHR1cmUtcmVwby9kZWVwLXNlbGVjdGVkL2RpZmYvcGVyLWZpbGUvc3JjX19lzIEuc3dpZnQucGF0Y2gKClNFQ1RJT046IE5PVEVTCk5PVEVfUEFUQ0hfT01JVFRFRF9DT1VOVDogMQpOT1RFX1FVSUNLX01PREU6IGZhbHNlCk5PVEVfQklOQVJZX0ZJTEVTOiAxCgpTRUNUSU9OOiBCSU5BUllfRklMRVMKLSBNIGJpbmFyeS5kYXQ="
+      },
+      {
+        "path": "manifest.json",
+        "bytes": "ewogICJjb21wYXJlIiA6ICJ1bmNvbW1pdHRlZDpIRUFEIiwKICAiY29tcGFyZUlucHV0IiA6ICJVTkNPTU1JVFRFRCIsCiAgImNvbnRleHRMaW5lcyIgOiAzLAogICJkZXRlY3RSZW5hbWVzIiA6IGZhbHNlLAogICJmaWxlcyIgOiBbCiAgICB7CiAgICAgICJnaXRQYXRoIiA6ICJiaW5hcnkuZGF0IiwKICAgICAgInN0YXR1cyIgOiAiTSIKICAgIH0sCiAgICB7CiAgICAgICJhZGRpdGlvbnMiIDogMSwKICAgICAgImJ5dGVzIiA6IDExNywKICAgICAgImRlbGV0aW9ucyIgOiAxLAogICAgICAiZ2l0UGF0aCIgOiAic3JjXC9hIGZpbGUuc3dpZnQiLAogICAgICAiaHVua3MiIDogWwogICAgICAgIHsKICAgICAgICAgICJlbmRMaW5lIiA6IDcsCiAgICAgICAgICAiaGVhZGVyIiA6ICJAQCAtMSArMSBAQCIsCiAgICAgICAgICAic3RhcnRMaW5lIiA6IDQKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJsaW5lcyIgOiA3LAogICAgICAicGF0Y2hQYXRoIiA6ICJkaWZmXC9wZXItZmlsZVwvc3JjX19hX2ZpbGUuc3dpZnQucGF0Y2giLAogICAgICAic3RhdHVzIiA6ICJNIgogICAgfSwKICAgIHsKICAgICAgImFkZGl0aW9ucyIgOiAxLAogICAgICAiYnl0ZXMiIDogMTAxLAogICAgICAiZGVsZXRpb25zIiA6IDEsCiAgICAgICJnaXRQYXRoIiA6ICJzcmNcL8OpLnN3aWZ0IiwKICAgICAgImh1bmtzIiA6IFsKICAgICAgICB7CiAgICAgICAgICAiZW5kTGluZSIgOiA3LAogICAgICAgICAgImhlYWRlciIgOiAiQEAgLTEgKzEgQEAiLAogICAgICAgICAgInN0YXJ0TGluZSIgOiA0CiAgICAgICAgfQogICAgICBdLAogICAgICAibGluZXMiIDogNywKICAgICAgInBhdGNoUGF0aCIgOiAiZGlmZlwvcGVyLWZpbGVcL3NyY19fZcyBLnN3aWZ0LnBhdGNoIiwKICAgICAgInN0YXR1cyIgOiAiTSIKICAgIH0KICBdLAogICJmaW5nZXJwcmludCIgOiB7CiAgICAiYmFzZVJlZiIgOiAiSEVBRCIsCiAgICAiZ2VuZXJhdGVkQXQiIDogIjIwMjMtMTEtMTRUMjI6MTM6MjBaIiwKICAgICJoZWFkU0hBIiA6ICJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwKICAgICJzdGF0dXNIYXNoIiA6ICJmaXh0dXJlLXN0YXR1cyIKICB9LAogICJnZW5lcmF0ZWRBdCIgOiAiMjAyNi0xMC0xM1QxNzoxMTo0N1oiLAogICJtb2RlIiA6ICJkZWVwIiwKICAicmVwb0tleSIgOiAiZml4dHVyZS1yZXBvIiwKICAicmVxdWVzdGVkUGF0aHMiIDogWwogICAgInNyY1wvw6kuc3dpZnQiLAogICAgInNyY1wvYSBmaWxlLnN3aWZ0IgogIF0sCiAgInNjb3BlIiA6ICJzZWxlY3RlZCIsCiAgInNuYXBzaG90SUQiIDogImRlZXAtc2VsZWN0ZWQiLAogICJzdW1tYXJ5IiA6IHsKICAgICJkZWxldGlvbnMiIDogMiwKICAgICJmaWxlcyIgOiAzLAogICAgImluc2VydGlvbnMiIDogMgogIH0sCiAgInRhYklEIiA6ICIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiCn0="
+      },
+      {
+        "path": "deep/changed_lines.tsv",
+        "bytes": "c3JjL2EgZmlsZS5zd2lmdAktCTEJCW9sZApzcmMvYSBmaWxlLnN3aWZ0CSsJCTEJbmV3CnNyYy/DqS5zd2lmdAktCTEJCW9sZApzcmMvw6kuc3dpZnQJKwkJMQluZXc="
+      },
+      {
+        "path": "deep/hunks.jsonl",
+        "bytes": "eyJvbGRfY291bnQiOjEsInBhdGgiOiJzcmNcL2EgZmlsZS5zd2lmdCIsIm9sZF9zdGFydCI6MSwibmV3X2NvdW50IjoxLCJuZXdfc3RhcnQiOjEsImhlYWRlciI6IkBAIC0xICsxIEBAIn0KeyJvbGRfY291bnQiOjEsInBhdGgiOiJzcmNcL8OpLnN3aWZ0Iiwib2xkX3N0YXJ0IjoxLCJuZXdfY291bnQiOjEsIm5ld19zdGFydCI6MSwiaGVhZGVyIjoiQEAgLTEgKzEgQEAifQ=="
+      },
+      {
+        "path": "diff/all.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL3NyYy9hIGZpbGUuc3dpZnQgYi9zcmMvYSBmaWxlLnN3aWZ0Ci0tLSBhL3NyYy9hIGZpbGUuc3dpZnQKKysrIGIvc3JjL2EgZmlsZS5zd2lmdApAQCAtMSArMSBAQAotb2xkCituZXcKCmRpZmYgLS1naXQgYS9zcmMvw6kuc3dpZnQgYi9zcmMvw6kuc3dpZnQKLS0tIGEvc3JjL8OpLnN3aWZ0CisrKyBiL3NyYy/DqS5zd2lmdApAQCAtMSArMSBAQAotb2xkCituZXcK"
+      },
+      {
+        "path": "index/changed_lines.tsv",
+        "bytes": "cGF0aAlsaW5lX251bWJlcgljaGFuZ2VfdHlwZQljb250ZW50CnNyYy9hIGZpbGUuc3dpZnQJMQktCW9sZApzcmMvYSBmaWxlLnN3aWZ0CTEJKwluZXcKc3JjL8OpLnN3aWZ0CTEJLQlvbGQKc3JjL8OpLnN3aWZ0CTEJKwluZXc="
+      },
+      {
+        "path": "index/files.tree.txt",
+        "bytes": "c3JjLwogIGEgZmlsZS5zd2lmdCAgWzAyXSBNICsxIC0xCiAgw6kuc3dpZnQgIFswM10gTSArMSAtMQpiaW5hcnkuZGF0ICBbMDFdIE0gKz8gLT8="
+      },
+      {
+        "path": "index/files.tsv",
+        "bytes": "c3RhdHVzCWFkZGl0aW9ucwlkZWxldGlvbnMJZ2l0X3BhdGgJcGF0Y2hfcGF0aAlieXRlcwlsaW5lcwpNCQkJYmluYXJ5LmRhdAkJCQpNCTEJMQlzcmMvYSBmaWxlLnN3aWZ0CWRpZmYvcGVyLWZpbGUvc3JjX19hX2ZpbGUuc3dpZnQucGF0Y2gJMTE3CTcKTQkxCTEJc3JjL8OpLnN3aWZ0CWRpZmYvcGVyLWZpbGUvc3JjX19lzIEuc3dpZnQucGF0Y2gJMTAxCTc="
+      },
+      {
+        "path": "index/selection.paths.txt",
+        "bytes": "c3JjL8OpLnN3aWZ0CnNyYy9hIGZpbGUuc3dpZnQ="
+      },
+      {
+        "path": "diff/per-file/src__a_file.swift.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL3NyYy9hIGZpbGUuc3dpZnQgYi9zcmMvYSBmaWxlLnN3aWZ0Ci0tLSBhL3NyYy9hIGZpbGUuc3dpZnQKKysrIGIvc3JjL2EgZmlsZS5zd2lmdApAQCAtMSArMSBAQAotb2xkCituZXcK"
+      },
+      {
+        "path": "diff/per-file/src__é.swift.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL3NyYy/DqS5zd2lmdCBiL3NyYy/DqS5zd2lmdAotLS0gYS9zcmMvw6kuc3dpZnQKKysrIGIvc3JjL8OpLnN3aWZ0CkBAIC0xICsxIEBACi1vbGQKK25ldwo="
+      }
+    ],
+    "excerpts": {
+      "brief": {
+        "returnedLines": 7,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: deep-selected\nSNAPSHOT_DIR: repos/fixture-repo/deep-selected",
+        "totalLines": 24,
+        "truncated": true
+      },
+      "full": {
+        "returnedLines": 80,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: deep-selected\nSNAPSHOT_DIR: repos/fixture-repo/deep-selected\nSNAPSHOT_GENERATED_AT: 2026-10-13T17:11:47Z\nSNAPSHOT_MODE: deep\nSNAPSHOT_MODE_DETAILS: deep: standard patches + hunk and changed-line indexes\nSNAPSHOT_COMPARE: uncommitted:HEAD\nSNAPSHOT_COMPARE_INPUT: UNCOMMITTED\nSNAPSHOT_SCOPE: selected\nSNAPSHOT_SELECTED_PATHS_COUNT: 2\nSNAPSHOT_CHANGED_FILES: 3\nSNAPSHOT_INSERTIONS: 2\nSNAPSHOT_DELETIONS: 2\n\nSECTION: REPOSITORY\nREPO_KEY: fixture-repo\n\nSECTION: FINGERPRINT\nFINGERPRINT_HEAD_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFINGERPRINT_BASE_REF: HEAD\nFINGERPRINT_STATUS_HASH: fixture-status\n\nSECTION: ADVANCED\nADV_CONTEXT_LINES: 3\nADV_DETECT_RENAMES: false\n\nSECTION: ARTIFACTS\nARTIFACT_MANIFEST: manifest.json\nARTIFACT_MAP: MAP.txt\nARTIFACT_FILES_TSV: index/files.tsv\nARTIFACT_CHANGED_LINES: index/changed_lines.tsv\nARTIFACT_TREE: index/files.tree.txt\nARTIFACT_SELECTION_PATHS: index/selection.paths.txt\nARTIFACT_ALL_PATCH: diff/all.patch\nARTIFACT_DEEP_HUNKS: deep/hunks.jsonl\nARTIFACT_DEEP_CHANGED_LINES: deep/changed_lines.tsv\n\nSECTION: CHANGED_LINES_FORMAT\nindex/changed_lines.tsv: TSV columns: path, line_number, change_type(+/-), content\n  - line_number: new-file line for '+', old-file line for '-'\n\nSECTION: DEEP_FORMAT\ndeep/hunks.jsonl: JSONL records {path, header, old_start, old_count, new_start, new_count}\ndeep/changed_lines.tsv: TSV columns: path, op(+/-), old_line, new_line, text\n\nSECTION: SELECTION_PATHS\n(selection.paths.txt is the canonical list; shown here for convenience)\n- src/é.swift\n- src/a file.swift\n\nSECTION: COMMIT_GRAPH\n* aaaaaaa fixture\n* bbbbbbb earlier\n\nSECTION: CHANGED_FILE_TREE\nsrc/\n  a file.swift  [02] M +1 -1\n  é.swift  [03] M +1 -1\nbinary.dat  [01] M +? -?\n\nSECTION: JUMP_TABLE\n[01] M +? -?  binary.dat -> (no patch)\n[02] M +1 -1  src/a file.swift -> diff/per-file/src__a_file.swift.patch\n[03] M +1 -1  src/é.swift -> diff/per-file/src__é.swift.patch\n\nSECTION: PER_FILE_PATCH_SELECTION_PATHS\n(selection-ready `_git_data/...` paths for direct selection; no manual snapshot-dir reconstruction or `__` filename encoding required)\n[02] M +1 -1  src/a file.swift -> _git_data/repos/fixture-repo/deep-selected/diff/per-file/src__a_file.swift.patch\n[03] M +1 -1  src/é.swift -> _git_data/repos/fixture-repo/deep-selected/diff/per-file/src__é.swift.patch\n\nSECTION: NOTES\nNOTE_PATCH_OMITTED_COUNT: 1\nNOTE_QUICK_MODE: false\nNOTE_BINARY_FILES: 1\n\nSECTION: BINARY_FILES\n- M binary.dat",
+        "totalLines": 80,
+        "truncated": false
+      },
+      "name": "deep-selected",
+      "snapshotID": "deep-selected"
+    }
+  },
+  {
+    "name": "deep-empty",
+    "input": {
+      "snapshotID": "deep-empty",
+      "repoKey": "fixture-repo",
+      "mode": "deep",
+      "scope": "all",
+      "requestedPaths": null,
+      "compare": "uncommitted:HEAD",
+      "compareInput": "UNCOMMITTED",
+      "diffText": "",
+      "perFile": {},
+      "changedFiles": [],
+      "summary": {
+        "files": 0,
+        "insertions": 0,
+        "deletions": 0
+      },
+      "fingerprint": {
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "baseRef": "HEAD",
+        "statusHash": "fixture-status",
+        "generatedAt": "2023-11-14T22:13:20Z"
+      },
+      "contextLines": 3,
+      "detectRenames": false,
+      "commitGraph": "* aaaaaaa fixture\n* bbbbbbb earlier",
+      "repoRoot": null,
+      "tabID": "11111111-1111-4111-8111-111111111111",
+      "worktree": null
+    },
+    "expected": [
+      {
+        "path": "MAP.txt",
+        "bytes": "IyBNQVAudHh0IHYxCiMgKGdyZXAgdGlwOiBzZWFyY2ggZm9yICJTTkFQU0hPVF8iIG9yICJTRUNUSU9OOiIpCgpTRUNUSU9OOiBTTkFQU0hPVF9NRVRBClNOQVBTSE9UX0lEOiBkZWVwLWVtcHR5ClNOQVBTSE9UX0RJUjogcmVwb3MvZml4dHVyZS1yZXBvL2RlZXAtZW1wdHkKU05BUFNIT1RfR0VORVJBVEVEX0FUOiAyMDI2LTEwLTEzVDE3OjExOjQ3WgpTTkFQU0hPVF9NT0RFOiBkZWVwClNOQVBTSE9UX01PREVfREVUQUlMUzogZGVlcDogc3RhbmRhcmQgcGF0Y2hlcyArIGh1bmsgYW5kIGNoYW5nZWQtbGluZSBpbmRleGVzClNOQVBTSE9UX0NPTVBBUkU6IHVuY29tbWl0dGVkOkhFQUQKU05BUFNIT1RfQ09NUEFSRV9JTlBVVDogVU5DT01NSVRURUQKU05BUFNIT1RfU0NPUEU6IGFsbApTTkFQU0hPVF9DSEFOR0VEX0ZJTEVTOiAwClNOQVBTSE9UX0lOU0VSVElPTlM6IDAKU05BUFNIT1RfREVMRVRJT05TOiAwCgpTRUNUSU9OOiBSRVBPU0lUT1JZClJFUE9fS0VZOiBmaXh0dXJlLXJlcG8KClNFQ1RJT046IEZJTkdFUlBSSU5UCkZJTkdFUlBSSU5UX0hFQURfU0hBOiBhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhCkZJTkdFUlBSSU5UX0JBU0VfUkVGOiBIRUFECkZJTkdFUlBSSU5UX1NUQVRVU19IQVNIOiBmaXh0dXJlLXN0YXR1cwoKU0VDVElPTjogQURWQU5DRUQKQURWX0NPTlRFWFRfTElORVM6IDMKQURWX0RFVEVDVF9SRU5BTUVTOiBmYWxzZQoKU0VDVElPTjogQVJUSUZBQ1RTCkFSVElGQUNUX01BTklGRVNUOiBtYW5pZmVzdC5qc29uCkFSVElGQUNUX01BUDogTUFQLnR4dApBUlRJRkFDVF9GSUxFU19UU1Y6IGluZGV4L2ZpbGVzLnRzdgpBUlRJRkFDVF9UUkVFOiBpbmRleC9maWxlcy50cmVlLnR4dApBUlRJRkFDVF9ERUVQX0hVTktTOiBkZWVwL2h1bmtzLmpzb25sCkFSVElGQUNUX0RFRVBfQ0hBTkdFRF9MSU5FUzogZGVlcC9jaGFuZ2VkX2xpbmVzLnRzdgoKU0VDVElPTjogREVFUF9GT1JNQVQKZGVlcC9odW5rcy5qc29ubDogSlNPTkwgcmVjb3JkcyB7cGF0aCwgaGVhZGVyLCBvbGRfc3RhcnQsIG9sZF9jb3VudCwgbmV3X3N0YXJ0LCBuZXdfY291bnR9CmRlZXAvY2hhbmdlZF9saW5lcy50c3Y6IFRTViBjb2x1bW5zOiBwYXRoLCBvcCgrLy0pLCBvbGRfbGluZSwgbmV3X2xpbmUsIHRleHQKClNFQ1RJT046IENPTU1JVF9HUkFQSAoqIGFhYWFhYWEgZml4dHVyZQoqIGJiYmJiYmIgZWFybGllcgoKU0VDVElPTjogQ0hBTkdFRF9GSUxFX1RSRUUKCgpTRUNUSU9OOiBKVU1QX1RBQkxFCgoKU0VDVElPTjogTk9URVMKTk9URV9QQVRDSF9PTUlUVEVEX0NPVU5UOiAwCk5PVEVfUVVJQ0tfTU9ERTogZmFsc2UKTk9URV9FTVBUWV9SRVNVTFQ6IHRydWUKTk9URV9FTVBUWV9SRUFTT046IG5vX3VuY29tbWl0dGVkX2NoYW5nZXM="
+      },
+      {
+        "path": "manifest.json",
+        "bytes": "ewogICJjb21wYXJlIiA6ICJ1bmNvbW1pdHRlZDpIRUFEIiwKICAiY29tcGFyZUlucHV0IiA6ICJVTkNPTU1JVFRFRCIsCiAgImNvbnRleHRMaW5lcyIgOiAzLAogICJkZXRlY3RSZW5hbWVzIiA6IGZhbHNlLAogICJmaWxlcyIgOiBbCgogIF0sCiAgImZpbmdlcnByaW50IiA6IHsKICAgICJiYXNlUmVmIiA6ICJIRUFEIiwKICAgICJnZW5lcmF0ZWRBdCIgOiAiMjAyMy0xMS0xNFQyMjoxMzoyMFoiLAogICAgImhlYWRTSEEiIDogImFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEiLAogICAgInN0YXR1c0hhc2giIDogImZpeHR1cmUtc3RhdHVzIgogIH0sCiAgImdlbmVyYXRlZEF0IiA6ICIyMDI2LTEwLTEzVDE3OjExOjQ3WiIsCiAgIm1vZGUiIDogImRlZXAiLAogICJyZXBvS2V5IiA6ICJmaXh0dXJlLXJlcG8iLAogICJzY29wZSIgOiAiYWxsIiwKICAic25hcHNob3RJRCIgOiAiZGVlcC1lbXB0eSIsCiAgInN1bW1hcnkiIDogewogICAgImRlbGV0aW9ucyIgOiAwLAogICAgImZpbGVzIiA6IDAsCiAgICAiaW5zZXJ0aW9ucyIgOiAwCiAgfSwKICAidGFiSUQiIDogIjExMTExMTExLTExMTEtNDExMS04MTExLTExMTExMTExMTExMSIKfQ=="
+      },
+      {
+        "path": "deep/changed_lines.tsv",
+        "bytes": ""
+      },
+      {
+        "path": "deep/hunks.jsonl",
+        "bytes": ""
+      },
+      {
+        "path": "index/files.tree.txt",
+        "bytes": ""
+      },
+      {
+        "path": "index/files.tsv",
+        "bytes": "c3RhdHVzCWFkZGl0aW9ucwlkZWxldGlvbnMJZ2l0X3BhdGgJcGF0Y2hfcGF0aAlieXRlcwlsaW5lcw=="
+      }
+    ],
+    "excerpts": {
+      "brief": {
+        "returnedLines": 7,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: deep-empty\nSNAPSHOT_DIR: repos/fixture-repo/deep-empty",
+        "totalLines": 19,
+        "truncated": true
+      },
+      "full": {
+        "returnedLines": 55,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: deep-empty\nSNAPSHOT_DIR: repos/fixture-repo/deep-empty\nSNAPSHOT_GENERATED_AT: 2026-10-13T17:11:47Z\nSNAPSHOT_MODE: deep\nSNAPSHOT_MODE_DETAILS: deep: standard patches + hunk and changed-line indexes\nSNAPSHOT_COMPARE: uncommitted:HEAD\nSNAPSHOT_COMPARE_INPUT: UNCOMMITTED\nSNAPSHOT_SCOPE: all\nSNAPSHOT_CHANGED_FILES: 0\nSNAPSHOT_INSERTIONS: 0\nSNAPSHOT_DELETIONS: 0\n\nSECTION: REPOSITORY\nREPO_KEY: fixture-repo\n\nSECTION: FINGERPRINT\nFINGERPRINT_HEAD_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFINGERPRINT_BASE_REF: HEAD\nFINGERPRINT_STATUS_HASH: fixture-status\n\nSECTION: ADVANCED\nADV_CONTEXT_LINES: 3\nADV_DETECT_RENAMES: false\n\nSECTION: ARTIFACTS\nARTIFACT_MANIFEST: manifest.json\nARTIFACT_MAP: MAP.txt\nARTIFACT_FILES_TSV: index/files.tsv\nARTIFACT_TREE: index/files.tree.txt\nARTIFACT_DEEP_HUNKS: deep/hunks.jsonl\nARTIFACT_DEEP_CHANGED_LINES: deep/changed_lines.tsv\n\nSECTION: DEEP_FORMAT\ndeep/hunks.jsonl: JSONL records {path, header, old_start, old_count, new_start, new_count}\ndeep/changed_lines.tsv: TSV columns: path, op(+/-), old_line, new_line, text\n\nSECTION: COMMIT_GRAPH\n* aaaaaaa fixture\n* bbbbbbb earlier\n\nSECTION: CHANGED_FILE_TREE\n\n\nSECTION: JUMP_TABLE\n\n\nSECTION: NOTES\nNOTE_PATCH_OMITTED_COUNT: 0\nNOTE_QUICK_MODE: false\nNOTE_EMPTY_RESULT: true\nNOTE_EMPTY_REASON: no_uncommitted_changes",
+        "totalLines": 55,
+        "truncated": false
+      },
+      "name": "deep-empty",
+      "snapshotID": "deep-empty"
+    }
+  },
+  {
+    "name": "standard-filenames",
+    "input": {
+      "snapshotID": "standard-filenames",
+      "repoKey": "fixture-repo",
+      "mode": "standard",
+      "scope": "all",
+      "requestedPaths": null,
+      "compare": "staged:HEAD",
+      "compareInput": "staged",
+      "diffText": "diff --git a/./a b.txt b/./a b.txt\n--- a/./a b.txt\n+++ b/./a b.txt\n@@ -1 +1 @@\n-old\n+new-0\n\ndiff --git a/a_b.txt b/a_b.txt\n--- a/a_b.txt\n+++ b/a_b.txt\n@@ -1 +1 @@\n-old\n+new-1\n\ndiff --git a/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift b/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift\n--- a/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift\n+++ b/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift\n@@ -1 +1 @@\n-old\n+new-2\n",
+      "perFile": {
+        "./a b.txt": "diff --git a/./a b.txt b/./a b.txt\n--- a/./a b.txt\n+++ b/./a b.txt\n@@ -1 +1 @@\n-old\n+new-0\n",
+        "a_b.txt": "diff --git a/a_b.txt b/a_b.txt\n--- a/a_b.txt\n+++ b/a_b.txt\n@@ -1 +1 @@\n-old\n+new-1\n",
+        "src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift": "diff --git a/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift b/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift\n--- a/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift\n+++ b/src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift\n@@ -1 +1 @@\n-old\n+new-2\n"
+      },
+      "changedFiles": [
+        {
+          "path": "./a b.txt",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "a_b.txt",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift",
+          "status": "M",
+          "additions": 1,
+          "deletions": 1
+        }
+      ],
+      "summary": {
+        "files": 3,
+        "insertions": 3,
+        "deletions": 3
+      },
+      "fingerprint": {
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "baseRef": "HEAD",
+        "statusHash": "fixture-status",
+        "generatedAt": "2023-11-14T22:13:20Z"
+      },
+      "contextLines": 3,
+      "detectRenames": false,
+      "commitGraph": "* aaaaaaa fixture\n* bbbbbbb earlier",
+      "repoRoot": null,
+      "tabID": "11111111-1111-4111-8111-111111111111",
+      "worktree": null
+    },
+    "expected": [
+      {
+        "path": "MAP.txt",
+        "bytes": "IyBNQVAudHh0IHYxCiMgKGdyZXAgdGlwOiBzZWFyY2ggZm9yICJTTkFQU0hPVF8iIG9yICJTRUNUSU9OOiIpCgpTRUNUSU9OOiBTTkFQU0hPVF9NRVRBClNOQVBTSE9UX0lEOiBzdGFuZGFyZC1maWxlbmFtZXMKU05BUFNIT1RfRElSOiByZXBvcy9maXh0dXJlLXJlcG8vc3RhbmRhcmQtZmlsZW5hbWVzClNOQVBTSE9UX0dFTkVSQVRFRF9BVDogMjAyNi0xMC0xM1QxNzoxMTo0N1oKU05BUFNIT1RfTU9ERTogc3RhbmRhcmQKU05BUFNIT1RfTU9ERV9ERVRBSUxTOiBzdGFuZGFyZDogZnVsbCBkaWZmIHBhdGNoZXMgKGFsbC5wYXRjaCArIHBlci1maWxlIHdoZW4gc2l6ZSBhbGxvd3MpClNOQVBTSE9UX0NPTVBBUkU6IHN0YWdlZDpIRUFEClNOQVBTSE9UX0NPTVBBUkVfSU5QVVQ6IHN0YWdlZApTTkFQU0hPVF9TQ09QRTogYWxsClNOQVBTSE9UX0NIQU5HRURfRklMRVM6IDMKU05BUFNIT1RfSU5TRVJUSU9OUzogMwpTTkFQU0hPVF9ERUxFVElPTlM6IDMKClNFQ1RJT046IFJFUE9TSVRPUlkKUkVQT19LRVk6IGZpeHR1cmUtcmVwbwoKU0VDVElPTjogRklOR0VSUFJJTlQKRklOR0VSUFJJTlRfSEVBRF9TSEE6IGFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEKRklOR0VSUFJJTlRfQkFTRV9SRUY6IEhFQUQKRklOR0VSUFJJTlRfU1RBVFVTX0hBU0g6IGZpeHR1cmUtc3RhdHVzCgpTRUNUSU9OOiBBRFZBTkNFRApBRFZfQ09OVEVYVF9MSU5FUzogMwpBRFZfREVURUNUX1JFTkFNRVM6IGZhbHNlCgpTRUNUSU9OOiBBUlRJRkFDVFMKQVJUSUZBQ1RfTUFOSUZFU1Q6IG1hbmlmZXN0Lmpzb24KQVJUSUZBQ1RfTUFQOiBNQVAudHh0CkFSVElGQUNUX0ZJTEVTX1RTVjogaW5kZXgvZmlsZXMudHN2CkFSVElGQUNUX0NIQU5HRURfTElORVM6IGluZGV4L2NoYW5nZWRfbGluZXMudHN2CkFSVElGQUNUX1RSRUU6IGluZGV4L2ZpbGVzLnRyZWUudHh0CkFSVElGQUNUX0FMTF9QQVRDSDogZGlmZi9hbGwucGF0Y2gKClNFQ1RJT046IENIQU5HRURfTElORVNfRk9STUFUCmluZGV4L2NoYW5nZWRfbGluZXMudHN2OiBUU1YgY29sdW1uczogcGF0aCwgbGluZV9udW1iZXIsIGNoYW5nZV90eXBlKCsvLSksIGNvbnRlbnQKICAtIGxpbmVfbnVtYmVyOiBuZXctZmlsZSBsaW5lIGZvciAnKycsIG9sZC1maWxlIGxpbmUgZm9yICctJwoKU0VDVElPTjogQ09NTUlUX0dSQVBICiogYWFhYWFhYSBmaXh0dXJlCiogYmJiYmJiYiBlYXJsaWVyCgpTRUNUSU9OOiBDSEFOR0VEX0ZJTEVfVFJFRQouLwogIGEgYi50eHQgIFswMV0gTSArMSAtMQpzcmMvCiAgeHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC5zd2lmdCAgWzAzXSBNICsxIC0xCmFfYi50eHQgIFswMl0gTSArMSAtMQoKU0VDVElPTjogSlVNUF9UQUJMRQpbMDFdIE0gKzEgLTEgIC4vYSBiLnR4dCAtPiBkaWZmL3Blci1maWxlL2FfYi50eHQucGF0Y2gKWzAyXSBNICsxIC0xICBhX2IudHh0IC0+IGRpZmYvcGVyLWZpbGUvYV9iLnR4dC5wYXRjaApbMDNdIE0gKzEgLTEgIHNyYy94eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4LnN3aWZ0IC0+IGRpZmYvcGVyLWZpbGUvc3JjX194eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4LWYzMzhkZWVlLnBhdGNoCgpTRUNUSU9OOiBQRVJfRklMRV9QQVRDSF9TRUxFQ1RJT05fUEFUSFMKKHNlbGVjdGlvbi1yZWFkeSBgX2dpdF9kYXRhLy4uLmAgcGF0aHMgZm9yIGRpcmVjdCBzZWxlY3Rpb247IG5vIG1hbnVhbCBzbmFwc2hvdC1kaXIgcmVjb25zdHJ1Y3Rpb24gb3IgYF9fYCBmaWxlbmFtZSBlbmNvZGluZyByZXF1aXJlZCkKWzAxXSBNICsxIC0xICAuL2EgYi50eHQgLT4gX2dpdF9kYXRhL3JlcG9zL2ZpeHR1cmUtcmVwby9zdGFuZGFyZC1maWxlbmFtZXMvZGlmZi9wZXItZmlsZS9hX2IudHh0LnBhdGNoClswMl0gTSArMSAtMSAgYV9iLnR4dCAtPiBfZ2l0X2RhdGEvcmVwb3MvZml4dHVyZS1yZXBvL3N0YW5kYXJkLWZpbGVuYW1lcy9kaWZmL3Blci1maWxlL2FfYi50eHQucGF0Y2gKWzAzXSBNICsxIC0xICBzcmMveHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC5zd2lmdCAtPiBfZ2l0X2RhdGEvcmVwb3MvZml4dHVyZS1yZXBvL3N0YW5kYXJkLWZpbGVuYW1lcy9kaWZmL3Blci1maWxlL3NyY19feHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC1mMzM4ZGVlZS5wYXRjaAoKU0VDVElPTjogTk9URVMKTk9URV9QQVRDSF9PTUlUVEVEX0NPVU5UOiAwCk5PVEVfUVVJQ0tfTU9ERTogZmFsc2U="
+      },
+      {
+        "path": "manifest.json",
+        "bytes": "ewogICJjb21wYXJlIiA6ICJzdGFnZWQ6SEVBRCIsCiAgImNvbXBhcmVJbnB1dCIgOiAic3RhZ2VkIiwKICAiY29udGV4dExpbmVzIiA6IDMsCiAgImRldGVjdFJlbmFtZXMiIDogZmFsc2UsCiAgImZpbGVzIiA6IFsKICAgIHsKICAgICAgImFkZGl0aW9ucyIgOiAxLAogICAgICAiYnl0ZXMiIDogOTEsCiAgICAgICJkZWxldGlvbnMiIDogMSwKICAgICAgImdpdFBhdGgiIDogIi5cL2EgYi50eHQiLAogICAgICAiaHVua3MiIDogWwogICAgICAgIHsKICAgICAgICAgICJlbmRMaW5lIiA6IDcsCiAgICAgICAgICAiaGVhZGVyIiA6ICJAQCAtMSArMSBAQCIsCiAgICAgICAgICAic3RhcnRMaW5lIiA6IDQKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJsaW5lcyIgOiA3LAogICAgICAicGF0Y2hQYXRoIiA6ICJkaWZmXC9wZXItZmlsZVwvYV9iLnR4dC5wYXRjaCIsCiAgICAgICJzdGF0dXMiIDogIk0iCiAgICB9LAogICAgewogICAgICAiYWRkaXRpb25zIiA6IDEsCiAgICAgICJieXRlcyIgOiA4MywKICAgICAgImRlbGV0aW9ucyIgOiAxLAogICAgICAiZ2l0UGF0aCIgOiAiYV9iLnR4dCIsCiAgICAgICJodW5rcyIgOiBbCiAgICAgICAgewogICAgICAgICAgImVuZExpbmUiIDogNywKICAgICAgICAgICJoZWFkZXIiIDogIkBAIC0xICsxIEBAIiwKICAgICAgICAgICJzdGFydExpbmUiIDogNAogICAgICAgIH0KICAgICAgXSwKICAgICAgImxpbmVzIiA6IDcsCiAgICAgICJwYXRjaFBhdGgiIDogImRpZmZcL3Blci1maWxlXC9hX2IudHh0LnBhdGNoIiwKICAgICAgInN0YXR1cyIgOiAiTSIKICAgIH0sCiAgICB7CiAgICAgICJhZGRpdGlvbnMiIDogMSwKICAgICAgImJ5dGVzIiA6IDg1NSwKICAgICAgImRlbGV0aW9ucyIgOiAxLAogICAgICAiZ2l0UGF0aCIgOiAic3JjXC94eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4LnN3aWZ0IiwKICAgICAgImh1bmtzIiA6IFsKICAgICAgICB7CiAgICAgICAgICAiZW5kTGluZSIgOiA3LAogICAgICAgICAgImhlYWRlciIgOiAiQEAgLTEgKzEgQEAiLAogICAgICAgICAgInN0YXJ0TGluZSIgOiA0CiAgICAgICAgfQogICAgICBdLAogICAgICAibGluZXMiIDogNywKICAgICAgInBhdGNoUGF0aCIgOiAiZGlmZlwvcGVyLWZpbGVcL3NyY19feHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC1mMzM4ZGVlZS5wYXRjaCIsCiAgICAgICJzdGF0dXMiIDogIk0iCiAgICB9CiAgXSwKICAiZmluZ2VycHJpbnQiIDogewogICAgImJhc2VSZWYiIDogIkhFQUQiLAogICAgImdlbmVyYXRlZEF0IiA6ICIyMDIzLTExLTE0VDIyOjEzOjIwWiIsCiAgICAiaGVhZFNIQSIgOiAiYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSIsCiAgICAic3RhdHVzSGFzaCIgOiAiZml4dHVyZS1zdGF0dXMiCiAgfSwKICAiZ2VuZXJhdGVkQXQiIDogIjIwMjYtMTAtMTNUMTc6MTE6NDdaIiwKICAibW9kZSIgOiAic3RhbmRhcmQiLAogICJyZXBvS2V5IiA6ICJmaXh0dXJlLXJlcG8iLAogICJzY29wZSIgOiAiYWxsIiwKICAic25hcHNob3RJRCIgOiAic3RhbmRhcmQtZmlsZW5hbWVzIiwKICAic3VtbWFyeSIgOiB7CiAgICAiZGVsZXRpb25zIiA6IDMsCiAgICAiZmlsZXMiIDogMywKICAgICJpbnNlcnRpb25zIiA6IDMKICB9LAogICJ0YWJJRCIgOiAiMTExMTExMTEtMTExMS00MTExLTgxMTEtMTExMTExMTExMTExIgp9"
+      },
+      {
+        "path": "diff/all.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhLy4vYSBiLnR4dCBiLy4vYSBiLnR4dAotLS0gYS8uL2EgYi50eHQKKysrIGIvLi9hIGIudHh0CkBAIC0xICsxIEBACi1vbGQKK25ldy0wCgpkaWZmIC0tZ2l0IGEvYV9iLnR4dCBiL2FfYi50eHQKLS0tIGEvYV9iLnR4dAorKysgYi9hX2IudHh0CkBAIC0xICsxIEBACi1vbGQKK25ldy0xCgpkaWZmIC0tZ2l0IGEvc3JjL3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHguc3dpZnQgYi9zcmMveHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC5zd2lmdAotLS0gYS9zcmMveHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC5zd2lmdAorKysgYi9zcmMveHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC5zd2lmdApAQCAtMSArMSBAQAotb2xkCituZXctMgo="
+      },
+      {
+        "path": "index/changed_lines.tsv",
+        "bytes": "cGF0aAlsaW5lX251bWJlcgljaGFuZ2VfdHlwZQljb250ZW50Ci4vYSBiLnR4dAkxCS0Jb2xkCi4vYSBiLnR4dAkxCSsJbmV3LTAKYV9iLnR4dAkxCS0Jb2xkCmFfYi50eHQJMQkrCW5ldy0xCnNyYy94eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4LnN3aWZ0CTEJLQlvbGQKc3JjL3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHguc3dpZnQJMQkrCW5ldy0y"
+      },
+      {
+        "path": "index/files.tree.txt",
+        "bytes": "Li8KICBhIGIudHh0ICBbMDFdIE0gKzEgLTEKc3JjLwogIHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHguc3dpZnQgIFswM10gTSArMSAtMQphX2IudHh0ICBbMDJdIE0gKzEgLTE="
+      },
+      {
+        "path": "index/files.tsv",
+        "bytes": "c3RhdHVzCWFkZGl0aW9ucwlkZWxldGlvbnMJZ2l0X3BhdGgJcGF0Y2hfcGF0aAlieXRlcwlsaW5lcwpNCTEJMQkuL2EgYi50eHQJZGlmZi9wZXItZmlsZS9hX2IudHh0LnBhdGNoCTkxCTcKTQkxCTEJYV9iLnR4dAlkaWZmL3Blci1maWxlL2FfYi50eHQucGF0Y2gJODMJNwpNCTEJMQlzcmMveHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC5zd2lmdAlkaWZmL3Blci1maWxlL3NyY19feHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eC1mMzM4ZGVlZS5wYXRjaAk4NTUJNw=="
+      },
+      {
+        "path": "diff/per-file/a_b.txt.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL2FfYi50eHQgYi9hX2IudHh0Ci0tLSBhL2FfYi50eHQKKysrIGIvYV9iLnR4dApAQCAtMSArMSBAQAotb2xkCituZXctMQo="
+      },
+      {
+        "path": "diff/per-file/src__xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-f338deee.patch",
+        "bytes": "ZGlmZiAtLWdpdCBhL3NyYy94eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4LnN3aWZ0IGIvc3JjL3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHguc3dpZnQKLS0tIGEvc3JjL3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHguc3dpZnQKKysrIGIvc3JjL3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHguc3dpZnQKQEAgLTEgKzEgQEAKLW9sZAorbmV3LTIK"
+      }
+    ],
+    "excerpts": {
+      "brief": {
+        "returnedLines": 7,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: standard-filenames\nSNAPSHOT_DIR: repos/fixture-repo/standard-filenames",
+        "totalLines": 24,
+        "truncated": true
+      },
+      "full": {
+        "returnedLines": 65,
+        "text": "# MAP.txt v1\n# (grep tip: search for \"SNAPSHOT_\" or \"SECTION:\")\n\nSECTION: SNAPSHOT_META\nSNAPSHOT_ID: standard-filenames\nSNAPSHOT_DIR: repos/fixture-repo/standard-filenames\nSNAPSHOT_GENERATED_AT: 2026-10-13T17:11:47Z\nSNAPSHOT_MODE: standard\nSNAPSHOT_MODE_DETAILS: standard: full diff patches (all.patch + per-file when size allows)\nSNAPSHOT_COMPARE: staged:HEAD\nSNAPSHOT_COMPARE_INPUT: staged\nSNAPSHOT_SCOPE: all\nSNAPSHOT_CHANGED_FILES: 3\nSNAPSHOT_INSERTIONS: 3\nSNAPSHOT_DELETIONS: 3\n\nSECTION: REPOSITORY\nREPO_KEY: fixture-repo\n\nSECTION: FINGERPRINT\nFINGERPRINT_HEAD_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nFINGERPRINT_BASE_REF: HEAD\nFINGERPRINT_STATUS_HASH: fixture-status\n\nSECTION: ADVANCED\nADV_CONTEXT_LINES: 3\nADV_DETECT_RENAMES: false\n\nSECTION: ARTIFACTS\nARTIFACT_MANIFEST: manifest.json\nARTIFACT_MAP: MAP.txt\nARTIFACT_FILES_TSV: index/files.tsv\nARTIFACT_CHANGED_LINES: index/changed_lines.tsv\nARTIFACT_TREE: index/files.tree.txt\nARTIFACT_ALL_PATCH: diff/all.patch\n\nSECTION: CHANGED_LINES_FORMAT\nindex/changed_lines.tsv: TSV columns: path, line_number, change_type(+/-), content\n  - line_number: new-file line for '+', old-file line for '-'\n\nSECTION: COMMIT_GRAPH\n* aaaaaaa fixture\n* bbbbbbb earlier\n\nSECTION: CHANGED_FILE_TREE\n./\n  a b.txt  [01] M +1 -1\nsrc/\n  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift  [03] M +1 -1\na_b.txt  [02] M +1 -1\n\nSECTION: JUMP_TABLE\n[01] M +1 -1  ./a b.txt -> diff/per-file/a_b.txt.patch\n[02] M +1 -1  a_b.txt -> diff/per-file/a_b.txt.patch\n[03] M +1 -1  src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift -> diff/per-file/src__xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-f338deee.patch\n\nSECTION: PER_FILE_PATCH_SELECTION_PATHS\n(selection-ready `_git_data/...` paths for direct selection; no manual snapshot-dir reconstruction or `__` filename encoding required)\n[01] M +1 -1  ./a b.txt -> _git_data/repos/fixture-repo/standard-filenames/diff/per-file/a_b.txt.patch\n[02] M +1 -1  a_b.txt -> _git_data/repos/fixture-repo/standard-filenames/diff/per-file/a_b.txt.patch\n[03] M +1 -1  src/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.swift -> _git_data/repos/fixture-repo/standard-filenames/diff/per-file/src__xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-f338deee.patch\n\nSECTION: NOTES\nNOTE_PATCH_OMITTED_COUNT: 0\nNOTE_QUICK_MODE: false",
+        "totalLines": 65,
+        "truncated": false
+      },
+      "name": "standard-filenames",
+      "snapshotID": "standard-filenames"
+    }
+  }
+]

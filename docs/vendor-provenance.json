@@ -5179,6 +5179,164 @@
           506
         ]
       ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffPublishMode.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "2e92c3ed1c483392e7deb6ec8f6a138a4c3679de64f1baa3e7d5356b3a3a953e",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPublishMode.swift",
+      "sha256": "ed77c29a298d288932893c2dbf902804489bdd833a471f4292595db4c1b3cfc4",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          7
+        ]
+      ],
+      "changes": [
+        "Retain source value model in existing native target; add attribution and apply scoped formatter."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffScope.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e45a80cc52727dde75f28b232469188651652961d5f44970d221de1699103775",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffScope.swift",
+      "sha256": "59b6e0063a9be84b7a23de935a01b34c3800d93dcc21ed8abf09442c576c47d4",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          6
+        ]
+      ],
+      "changes": [
+        "Retain source value model in existing native target; add attribution and apply scoped formatter."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffFingerprint.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ef7babf153771c5c5bdc4efde26245f249d3bbb8790957d02ba65bca2c818d93",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffFingerprint.swift",
+      "sha256": "a926dc49ee2c92d82de3252718881d4d7d0f01ce9a9802ef5b1f436741af7481",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "changes": [
+        "Retain source value model in existing native target; add attribution and apply scoped formatter."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffSnapshotManifest.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "48974a6630200db692fe17263f303672fdb4d2f179605923725b7debf6f3b319",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffSnapshotManifest.swift",
+      "sha256": "e3269ad7c8c2474b840d88d4265785900e66ef4c1d745daf46959a2d610bc7d7",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          98
+        ],
+        [
+          138,
+          182
+        ]
+      ],
+      "changes": [
+        "Retain canonical repo-scoped manifest model, coding and fields; omit unused legacy initializer; native access/type names remain source-backed."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotSerialization.swift",
+      "sha256": "e3d8b2019964630e8cbcd2fcf23bb06ebcd19dec0629596d209589c7cf1e3c94",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          459,
+          657
+        ],
+        [
+          768,
+          817
+        ]
+      ],
+      "changes": [
+        "Retain repo-scoped artifact byte generation and source filename/snapshot-ID normalization. Replace filesystem calls with an ordered caller byte-writer callback; directory creation/removal belongs to publication. A virtual URL base supplies source-relative labels only.",
+        "Accept captured checkout metadata and acquisition records from the host instead of consulting app services. Preserve source manifest encoding, timestamps, patch/index ordering and filename collisions.",
+        "Separate per-file/aggregate patch writes into one source-backed phase for existing complexity checks; scope SwiftLint source function length/parameter-count exemptions."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotIndexes.swift",
+      "sha256": "e5639e41101acd317f92e5f30578d43941adbdd839621775105671bd85252ecb",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          819,
+          839
+        ],
+        [
+          859,
+          1116
+        ]
+      ],
+      "changes": [
+        "Retain hunk, TSV, tree, jump and deep-artifact helpers. Internal visibility replaces file-private access across split native owners; Crypto replaces CryptoKit. Scope copied-source lint exceptions without disabling cognitive checks.",
+        "Separate per-file deep parsing from ordered aggregation for existing cognitive limits; all original hunk/line conditions and output fields remain.",
+        "Extract deep hunk-row construction and omit the terminal no-op backslash continue; other unmatched lines already end the same loop iteration."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotMap.swift",
+      "sha256": "0f3c92bdf59f04a55b2ea43187a6123cfa2155ba9996ab9ad2315318cc0fe920",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1118,
+          1504
+        ]
+      ],
+      "changes": [
+        "Retain complete MAP sections, line filtering/excerpts, empty-result labels and mode text. Split build into source section phases for the existing cognitive cap, preserving all original section order, conditions and text.",
+        "Use an invocation-local ISO8601DateFormatter through a computed property for Swift6 isolation rather than unsafe shared non-Sendable state. Retain exact source format/timezone. Scope source tuple/size/style lint exceptions.",
+        "Separate selected-section assembly from scanning to satisfy existing cognitive checks; keep source headers, blank-line rules, section order and final trim."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPrimaryArtifacts.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "bf9d1d9874967b961be25a4abf53bb2aae3cb35b3fcbba6ceba057fdca9b9b42",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotPrimary.swift",
+      "sha256": "8c6abbfb9de57b1df3d72ec65d7418208acb3764232979306142b11e6a057273",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          11
+        ],
+        [
+          16,
+          86
+        ]
+      ],
+      "changes": [
+        "Retain source primary/per-file aliases and jump ordering. Omit the unused initializer requiring the unported published-artifact catalog. Internal native visibility replaces package access."
+      ]
     }
   ],
   "dependencies": [

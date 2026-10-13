@@ -4,7 +4,8 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
-import { GitDiff, NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult } from './git.js';
+import { GitDiff, NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult, NativeGitChangedFile } from './git.js';
+import { NativeGitSnapshotInput } from './git-snapshot.js';
 import { NativeWireFailureCode } from './errors.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -216,8 +217,6 @@ const NativeGitComparison = Type.Union([
   Type.Object({ kind: Type.Literal('unstaged') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('revspec'), spec: Type.String() }, { additionalProperties: false }),
 ]);
-const NativeGitChangedFile = Type.Object({ path: Type.String(), status: Type.String(),
-  additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) }, { additionalProperties: false });
 const NativeGitPatchInput = Type.Object({ kind: Type.Literal('parseGitPatch'), text: Type.String() }, { additionalProperties: false });
 const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
   files: Type.Array(Type.Object({ path: Type.String(), patch: Type.String(), insertions: Type.Integer(), deletions: Type.Integer(),
@@ -239,6 +238,7 @@ export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRoot
   repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
 export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
 export const NativeOperation = Type.Union([
+  Type.Object({ kind: Type.Literal('serializeGitSnapshot'), input: NativeGitSnapshotInput }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('revalidateGitTargets'), checkouts: Type.Array(NativeGitCheckout) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('electGitTarget'), roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String() }, { additionalProperties: false })),
     paths: Type.Array(Type.String()) }, { additionalProperties: false }),
@@ -312,6 +312,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('gitSnapshotBytes'), files: Type.Array(Type.Object({ path: Type.String(), bytes: base64 }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTargetValidation'), valid: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('deferred') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('unavailable'),

@@ -3,6 +3,8 @@ import { Compile } from 'typebox/compile';
 import { RelativePath, RootName, RootIdentity } from './workspace.js';
 
 const closed = { additionalProperties: false };
+export const NativeGitChangedFile = Type.Object({ path: Type.String(), status: Type.String(),
+  additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) }, closed);
 const output = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
 export const GitRequest = Type.Union([
   Type.Object({ op: Type.Literal('log'), root: RootName, count: Type.Integer({ default: 10 }),

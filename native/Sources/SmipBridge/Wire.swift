@@ -254,6 +254,7 @@ enum Operation {
         case "prepareGitRead", "projectGitRead": return try .git(.read(GitReadInput(value)))
         case "electGitTarget": return try .git(.target(GitTargetInput(value)))
         case "revalidateGitTargets": return try .git(.targetRevalidation(GitTargetRevalidationInput(value)))
+        case "serializeGitSnapshot": return try .git(.snapshot(GitSnapshotInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))
         case "parseSelectionInputs": return try .selection(.parse(SelectionInputParsing(value)))
         case "prepareSelection": return try .selection(.preparation(SelectionPreparationInput(value)))

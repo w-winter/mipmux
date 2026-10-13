@@ -6,6 +6,7 @@ import type { NativeFailureCode } from '../contracts/errors.js';
 
 type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
+  serializeGitSnapshot: ['gitSnapshotBytes'],
   electGitTarget: ['gitTarget'],
   revalidateGitTargets: ['gitTargetValidation'],
   captureIgnoreInputs: ['ignoreInputs'], queryIgnoreHierarchy: ['ignoreHierarchy'],

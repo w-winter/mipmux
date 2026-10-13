@@ -1,0 +1,49 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffPublishMode.swift",
+      "sha256": "2e92c3ed1c483392e7deb6ec8f6a138a4c3679de64f1baa3e7d5356b3a3a953e"
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffScope.swift",
+      "sha256": "e45a80cc52727dde75f28b232469188651652961d5f44970d221de1699103775"
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffFingerprint.swift",
+      "sha256": "ef7babf153771c5c5bdc4efde26245f249d3bbb8790957d02ba65bca2c818d93"
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/Models/GitDiffSnapshotManifest.swift",
+      "sha256": "48974a6630200db692fe17263f303672fdb4d2f179605923725b7debf6f3b319"
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPrimaryArtifacts.swift",
+      "sha256": "bf9d1d9874967b961be25a4abf53bb2aae3cb35b3fcbba6ceba057fdca9b9b42"
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffPatchParsing.swift",
+      "sha256": "cbebe00125f866136b8ef60aad2fa9372b320d7e41bec783b50e4cc68f5edd95"
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "sha256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8"
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepositoryLayout.swift",
+      "sha256": "947658dcf11429e27c412fb23576f9fe6b2528a344eb868e44193d80a8d0e86a"
+    }
+  ],
+  "adaptations": [
+    "Remove package access and unavailable module imports for standalone reference compilation.",
+    "Supply value-only acquisition and inert descriptor records for filesystem-independent inputs.",
+    "Omit the unused published-artifact initializer at GitDiffPrimaryArtifacts.swift:12-15.",
+    "Keep executed snapshot writer, index, manifest and MAP policy bodies unchanged; record actual original timestamps."
+  ],
+  "generatorSHA256": "b19fe965e2528f3d29ea11f2a21f6bf26589155bf38eee73c029f0719d061fb5",
+  "normalizations": [
+    "Snapshot write timestamp only",
+    "JSON object field order only",
+    "Canonical-equivalent Unicode for artifact identifiers only, grounded by the unchanged relativePath helper on macOS/Linux. No source/Git path or patch/body normalization."
+  ]
+}
