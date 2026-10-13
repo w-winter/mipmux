@@ -238,6 +238,8 @@ export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRoot
   repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
 export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
 export const NativeOperation = Type.Union([
+  Type.Object({ kind: Type.Literal('beginGitSnapshot'), root: handle, repoKey: Type.String(), snapshotID: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('writeGitSnapshotFile'), run: handle, path: RelativePath, bytes: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('serializeGitSnapshot'), input: NativeGitSnapshotInput }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('revalidateGitTargets'), checkouts: Type.Array(NativeGitCheckout) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('electGitTarget'), roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String() }, { additionalProperties: false })),
@@ -312,6 +314,8 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('gitSnapshotOpened'), run: handle, relativePath: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitSnapshotFileWritten'), identity: SourceIdentity }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotBytes'), files: Type.Array(Type.Object({ path: Type.String(), bytes: base64 }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTargetValidation'), valid: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('deferred') }, { additionalProperties: false }),

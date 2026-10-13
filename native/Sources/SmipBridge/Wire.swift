@@ -169,6 +169,8 @@ enum Operation {
     case readSource(NativeHandle, String, SourceIdentity?)
     case extract(String, Data, SourceIdentity)
     case beginExport(NativeHandle, String)
+    case beginGitSnapshot(NativeHandle, String, String)
+    case writeGitSnapshotFile(NativeHandle, String, Data)
     case writeExport(NativeHandle, String, Data)
     case readExport(NativeHandle, String)
     case publishManifest(NativeHandle, Data)
@@ -217,6 +219,16 @@ enum Operation {
         case "beginExport":
             let fields = try WireObject(value, keys: ["kind", "root", "name"])
             self = try .beginExport(NativeHandle(fields.value("root")), fields.string("name"))
+        case "beginGitSnapshot":
+            let fields = try WireObject(value, keys: ["kind", "root", "repoKey", "snapshotID"])
+            self = try .beginGitSnapshot(
+                NativeHandle(fields.value("root")), fields.string("repoKey"), fields.string("snapshotID")
+            )
+        case "writeGitSnapshotFile":
+            let fields = try WireObject(value, keys: ["kind", "run", "path", "bytes"])
+            self = try .writeGitSnapshotFile(
+                NativeHandle(fields.value("run")), fields.string("path"), fields.bytes("bytes")
+            )
         case "writeExport", "readExport":
             let keys: Set<String> = kind == "writeExport" ? ["kind", "run", "filename", "bytes"] : [
                 "kind",

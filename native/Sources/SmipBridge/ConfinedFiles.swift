@@ -32,15 +32,20 @@ private struct Root {
 private struct ExportRun {
     let directory: Descriptor
     let root: Root
-    let name: String
+    let name: [String]
     let device: String
     let inode: String
+}
+
+private enum OutputRun {
+    case bundle(ExportRun)
+    case gitSnapshot(ExportRun)
 }
 
 final class ConfinedFiles {
     private let generation: String
     private var roots: [String: Root] = [:]
-    private var runs: [String: ExportRun] = [:]
+    private var runs: [String: OutputRun] = [:]
     private let readChunkBytes = 64 * 1024
     init(generation: String) {
         self.generation = generation
@@ -300,23 +305,54 @@ final class ConfinedFiles {
         let directory = try traverse(root.directory.value, components: [name])
         let info = try status(directory.value)
         let id = UUID().uuidString
-        runs[id] = ExportRun(directory: directory, root: root, name: name, device: String(info.st_dev), inode: String(info.st_ino))
+        runs[id] = .bundle(ExportRun(directory: directory, root: root, name: [name],
+                                     device: String(info.st_dev), inode: String(info.st_ino)))
         return ["kind": "exportOpened", "run": NativeHandle(generation: generation, id: id).json]
+    }
+
+    func beginGitSnapshot(_ handle: NativeHandle, repoKey: String, snapshotID: String) throws -> [String: Any] {
+        let root = try lookupRoot(handle)
+        guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        guard try components(repoKey).count == 1,
+              let normalized = GitDiffSnapshotStore.normalizeSnapshotID(snapshotID)
+        else { throw BridgeFailure("invalidPath") }
+        let parts = try components("_git_data/repos/" + repoKey + "/" + normalized)
+        let parent = try createDirectories(root.directory.value, components: Array(parts.dropLast()))
+        let leaf = parts[parts.count - 1]
+        guard mkdirat(parent.value, leaf, 0o700) == 0 else { throw ioFailure() }
+        let directory = try traverse(parent.value, components: [leaf])
+        let info = try status(directory.value)
+        let id = UUID().uuidString
+        let run = ExportRun(directory: directory, root: root, name: parts,
+                            device: String(info.st_dev), inode: String(info.st_ino))
+        try validate(run)
+        runs[id] = .gitSnapshot(run)
+        return ["kind": "gitSnapshotOpened", "run": NativeHandle(generation: generation, id: id).json,
+                "relativePath": parts.joined(separator: "/")]
+    }
+
+    func writeGitSnapshotFile(_ handle: NativeHandle, path: String, bytes: Data) throws -> [String: Any] {
+        guard handle.generation == generation, case let .gitSnapshot(run) = runs[handle.id] else {
+            throw BridgeFailure("invalidExportHandle")
+        }
+        try validate(run)
+        let parts = try components(path), directories = Array(parts.dropLast()), leaf = parts[parts.count - 1]
+        let parent = try createDirectories(run.directory.value, components: directories)
+        try writeAtomic(parent.value, filename: leaf, bytes: bytes)
+        try validate(run)
+        let current = try traverse(run.directory.value, components: directories)
+        let previousInfo = try status(parent.value), currentInfo = try status(current.value)
+        guard previousInfo.st_dev == currentInfo.st_dev, previousInfo.st_ino == currentInfo.st_ino else {
+            throw BridgeFailure("outputChanged")
+        }
+        return ["kind": "gitSnapshotFileWritten", "identity": Extraction.identity(bytes).json]
     }
 
     func writeExport(_ handle: NativeHandle, filename: String, bytes: Data, publish: Bool) throws -> [String: Any] {
         let run = try lookupRun(handle)
         let file = try Descriptor(openat(run.directory.value, filename, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600))
         do {
-            try bytes.withUnsafeBytes { buffer in
-                var offset = 0
-                while offset < buffer.count {
-                    let written = write(file.value, buffer.baseAddress!.advanced(by: offset), buffer.count - offset)
-                    if written < 0, errno == EINTR { continue }
-                    guard written > 0 else { throw ioFailure() }
-                    offset += written
-                }
-            }
+            try writeBytes(bytes, descriptor: file.value)
             guard fsync(file.value) == 0 else { throw ioFailure() }
             try file.finish()
             try validate(run)
@@ -340,6 +376,34 @@ final class ConfinedFiles {
         guard try fingerprint(file.value) == before else { throw BridgeFailure("sourceChanged") }
         try validate(run)
         return ["kind": "exportRead", "bytes": bytes.base64EncodedString(), "identity": Extraction.identity(bytes).json]
+    }
+
+    private func writeBytes(_ bytes: Data, descriptor: Int32) throws {
+        try bytes.withUnsafeBytes { buffer in
+            var offset = 0
+            while offset < buffer.count {
+                let written = write(descriptor, buffer.baseAddress!.advanced(by: offset), buffer.count - offset)
+                if written < 0, errno == EINTR { continue }
+                guard written > 0 else { throw ioFailure() }
+                offset += written
+            }
+        }
+    }
+
+    private func writeAtomic(_ parent: Int32, filename: String, bytes: Data) throws {
+        var existing = stat()
+        if fstatat(parent, filename, &existing, AT_SYMLINK_NOFOLLOW) == 0 {
+            guard existing.st_mode & mode_t(S_IFMT) != mode_t(S_IFLNK) else { throw BridgeFailure("symlink") }
+            guard existing.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw BridgeFailure("nonRegularFile") }
+        } else if errno != ENOENT { throw ioFailure() }
+        let temporary = ".snapshot-" + UUID().uuidString
+        let file = try Descriptor(openat(parent, temporary,
+                                        O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600))
+        defer { unlinkat(parent, temporary, 0) }
+        try writeBytes(bytes, descriptor: file.value)
+        guard fsync(file.value) == 0 else { throw ioFailure() }
+        try file.finish()
+        guard renameat(parent, temporary, parent, filename) == 0, fsync(parent) == 0 else { throw ioFailure() }
     }
 
     private func readChunks(_ fd: Int32, body: (Data) throws -> Void) throws {
@@ -366,7 +430,9 @@ final class ConfinedFiles {
     }
 
     private func lookupRun(_ handle: NativeHandle) throws -> ExportRun {
-        guard handle.generation == generation, let run = runs[handle.id] else { throw BridgeFailure("invalidExportHandle") }
+        guard handle.generation == generation, case let .bundle(run) = runs[handle.id] else {
+            throw BridgeFailure("invalidExportHandle")
+        }
         try validate(run)
         return run
     }
@@ -384,7 +450,7 @@ final class ConfinedFiles {
 
     private func validate(_ run: ExportRun) throws {
         try validate(run.root)
-        let reopened = try traverse(run.root.directory.value, components: [run.name])
+        let reopened = try traverse(run.root.directory.value, components: run.name)
         let info = try status(reopened.value)
         guard String(info.st_dev) == run.device, String(info.st_ino) == run.inode else { throw BridgeFailure("outputChanged") }
     }
@@ -407,6 +473,15 @@ private func traverse(_ root: Int32, components: [String]) throws -> Descriptor 
     // A fresh open avoids sharing directory offsets and overlayfs enumeration caches.
     var current = try Descriptor(openat(root, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
     for part in components {
+        current = try Descriptor(openat(current.value, part, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+    }
+    return current
+}
+
+private func createDirectories(_ root: Int32, components: [String]) throws -> Descriptor {
+    var current = try Descriptor(openat(root, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+    for part in components {
+        if mkdirat(current.value, part, 0o700) != 0, errno != EEXIST { throw ioFailure() }
         current = try Descriptor(openat(current.value, part, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
     }
     return current
