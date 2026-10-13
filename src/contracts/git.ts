@@ -67,7 +67,7 @@ export const GitDiff = Type.Object({ compare: Type.String(), detail: Type.Option
 const authority = { kind: Type.Literal('git'), root: RootName, repository: Type.Object({ worktree: RootIdentity, gitDirectory: RootIdentity }, closed) };
 export const GitResult = Type.Union([
   Type.Object({ ...authority, op: Type.Literal('diff'), diff: GitDiff, exclusions: Type.Array(Type.String()) }, closed),
-  Type.Object({ ...authority, op: Type.Literal('show'), show }, closed),
+  Type.Object({ ...authority, op: Type.Literal('show'), show, exclusions: Type.Array(Type.String()) }, closed),
   Type.Object({ ...authority, op: Type.Literal('status'), status }, closed),
   Type.Object({ ...authority, op: Type.Literal('log'), log: Type.Object({ commits: Type.Array(commit) }, closed) }, closed),
   Type.Object({ ...authority, op: Type.Literal('blame'), blame: Type.Object({ path: RelativePath, lines: Type.Array(blame) }, closed) }, closed),

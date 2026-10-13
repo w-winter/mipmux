@@ -16,7 +16,7 @@ type DiffCommands = Extract<NativeResult, { kind: 'gitDiffArguments' }>;
 const pathspecByteLimit = 128 * 1024;
 const pathspecChunkSize = 3000;
 
-async function runDiff(operation: WorkspaceOperation, owner: Repository, args: readonly string[], paths: readonly string[],
+export async function runDiff(operation: WorkspaceOperation, owner: Repository, args: readonly string[], paths: readonly string[],
   literalPaths: boolean, worktree: string) {
   const run = (command: readonly string[], stdin: Buffer | null) => gitProcess(operation.runtime.supervisor, owner.executable,
     worktree, command, operation.signal, { kind: 'diff', gitDirectory: owner.repository.gitDirectory.canonicalPath,
@@ -84,7 +84,8 @@ export async function readDiff(operation: WorkspaceOperation, request: DiffReque
   const workRoot = join(operation.runtime.options.cachePath, 'work'); await mkdir(workRoot, { recursive: true, mode: 0o700 });
   const scratch = await mkdtemp(join(workRoot, 'scout-diff-'));
   try {
-    const diff = await projectDiff(operation, owner, request, commands, { tracked, untracked }, scratch);
+    const live = await usesWorktree(operation, owner, commands.comparison);
+    const diff = await projectDiff(operation, owner, request, commands, { tracked, untracked }, scratch, live);
     await owner.revalidate();
     const repository = { worktree: owner.repository.worktree, gitDirectory: owner.repository.gitDirectory };
     const reply = { kind: 'git' as const, op: 'diff' as const, root: request.root, repository,
@@ -95,10 +96,10 @@ export async function readDiff(operation: WorkspaceOperation, request: DiffReque
 }
 
 async function projectDiff(operation: WorkspaceOperation, owner: Repository, request: DiffRequest, commands: DiffCommands,
-  paths: { tracked: string[]; untracked: string[] }, scratch: string) {
+  paths: { tracked: string[]; untracked: string[] }, scratch: string, live: boolean) {
   const { tracked, untracked } = paths;
-  const materialized = await captureWorktree(operation, owner, scratch, commands.includeUntracked ? tracked : [], untracked);
-  const workingDirectory = commands.includeUntracked ? materialized.trackedRoot : owner.repository.worktree.canonicalPath;
+  const materialized = await captureWorktree(operation, owner, scratch, live ? tracked : [], untracked);
+  const workingDirectory = live ? materialized.trackedRoot : owner.repository.worktree.canonicalPath;
   const numstat = tracked.length ? await runDiff(operation, owner, commands.numstat, tracked, true, workingDirectory) : '';
   const nameStatus = tracked.length ? await runDiff(operation, owner, commands.nameStatus, tracked, true, workingDirectory) : '';
   const stats = await operation.gitDiffOperation({ kind: 'parseGitDiffStats', numstat: Buffer.from(numstat).toString('base64'),
@@ -119,8 +120,8 @@ async function projectDiff(operation: WorkspaceOperation, owner: Repository, req
   return projected.diff;
 }
 
-async function discoverPaths(operation: WorkspaceOperation, owner: Repository,
-  commands: DiffCommands,
+export async function discoverPaths(operation: WorkspaceOperation, owner: Repository,
+  commands: Pick<DiffCommands, 'inputCount' | 'pathspecs' | 'nameStatus' | 'includeUntracked'>,
   authorize: (paths: readonly string[]) => string[], exclusions: string[]) {
   if (commands.inputCount && !commands.pathspecs.length) return { tracked: [], untracked: [] };
   const names = await runDiff(operation, owner, [...commands.nameStatus.slice(0, 1), '-z', ...commands.nameStatus.slice(1)],
@@ -157,7 +158,7 @@ function parseEndpoints(names: string): (readonly [string] | readonly [string, s
   return endpoints;
 }
 
-async function captureWorktree(operation: WorkspaceOperation, owner: Repository, scratch: string, tracked: string[], untracked: string[]) {
+export async function captureWorktree(operation: WorkspaceOperation, owner: Repository, scratch: string, tracked: string[], untracked: string[]) {
   const trackedRoot = join(scratch, 'tracked'), untrackedRoot = join(scratch, 'untracked');
   await mkdir(trackedRoot); await mkdir(untrackedRoot); await mkdir(join(scratch, 'empty'));
   const read = async (path: string) => {
@@ -183,6 +184,18 @@ async function captureWorktree(operation: WorkspaceOperation, owner: Repository,
     records.push({ path, bytes: source ? source.bytes.toString('base64') : null });
   }
   return { trackedRoot, untrackedRoot, untracked: records };
+}
+
+/** A lone revision, including a root commit's ^! expansion, compares against live files. */
+export async function usesWorktree(operation: WorkspaceOperation, owner: Repository, comparison: DiffCommands['comparison']) {
+  if (comparison.kind === 'staged' || comparison.kind === 'stagedMergeBase') return false;
+  if (comparison.kind !== 'revspec') return true;
+  const result = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
+    ['rev-parse', '--revs-only', '--end-of-options', comparison.spec], operation.signal, { kind: 'repository' });
+  if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
+  const revisions = gitText(result.bytes).split('\n').filter(Boolean);
+  if (revisions.some(revision => !/^\^?(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(revision))) throw new WorkspaceFailure('gitProtocolError');
+  return revisions.length < 2;
 }
 
 function attributePaths(paths: readonly string[]): string[] {

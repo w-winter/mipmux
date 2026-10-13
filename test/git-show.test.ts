@@ -14,7 +14,8 @@ import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-superviso
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
-const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()), message: Type.Optional(Type.String()), show: Type.Optional(Type.Object({
+const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()), message: Type.Optional(Type.String()),
+  exclusions: Type.Optional(Type.Array(Type.String())), show: Type.Optional(Type.Object({
   sha: Type.String(), short_sha: Type.String(), author: Type.String(), date: Type.String(), message: Type.String(),
   totals: Type.Object({ files: Type.Integer(), insertions: Type.Integer(), deletions: Type.Integer() }),
   files: Type.Optional(Type.Array(Type.Object({ path: Type.String(), status: Type.String(), insertions: Type.Optional(Type.Integer()),
@@ -100,6 +101,43 @@ test('cancelling show between Git phases joins its process and preserves workspa
     assert.equal(usable.kind, 'git');
     await writeFile(join(f.base, 'cancel-receipt.json'), JSON.stringify({ joined, usable }, null, 2) + '\n');
   } finally { await runtime.close(); }
+});
+
+test('public show excludes protected files and both protected rename endpoints while retaining authorized checkout evidence', async () => {
+  const f = await fixture(), credential = join(f.repo, 'credential.txt');
+  await writeFile(credential, 'PROTECTED_SHOW_FIXTURE\n');
+  await writeFile(join(f.root, 'skip.txt'), 'EXCLUDED_SHOW_FIXTURE\n');
+  await writeFile(join(f.repo, 'safe-outside.txt'), 'authorized checkout evidence\n');
+  f.run(['add', '--', 'credential.txt', 'sub/skip.txt', 'safe-outside.txt']); f.run(['commit', '-qm', 'scoped evidence']);
+  const evidence = f.run(['rev-parse', 'HEAD']).trim();
+  f.run(['mv', '--', 'credential.txt', 'exposed.txt']); f.run(['commit', '-qm', 'rename protected source']);
+  const renamed = f.run(['rev-parse', 'HEAD']).trim(), index = await readFile(join(f.repo, '.git/index'));
+  const config = join(f.base, 'protected-config.json');
+  await writeFile(config, JSON.stringify({ ...f.options, credentialPaths: [credential], search: null, discovery: null, defaultMaxOutputBytes: 24000 }));
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  transport.stderr?.on('data', () => {});
+  const client = new Client({ name: 'protected-show', version: '1' }), proof: unknown[] = [];
+  try {
+    await client.connect(transport);
+    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: { ...f.spec,
+      exclusions: [{ kind: 'prefix', root: 'r', path: 'skip.txt' }] } } })).structuredContent);
+    const call = async (ref: string, detail: string) => {
+      const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
+        input: { op: 'show', root: 'r', ref, detail, detectRenames: true } } });
+      assert.equal(result.isError, false, JSON.stringify(result)); proof.push(result); return reply.Parse(result.structuredContent);
+    };
+    const full = await call(evidence, 'full'); assert(full.show?.files);
+    assert(!JSON.stringify(full).includes('PROTECTED_SHOW_FIXTURE')); assert(!JSON.stringify(full).includes('EXCLUDED_SHOW_FIXTURE'));
+    assert.deepEqual(full.show.files.map(file => file.path), ['safe-outside.txt']);
+    assert.deepEqual(full.show.totals, { files: 1, insertions: 1, deletions: 0 });
+    assert(full.exclusions?.includes('credential.txt')); assert(full.exclusions?.includes('sub/skip.txt'));
+    const summary = await call(evidence, 'summary'); assert.deepEqual(summary.show?.totals, full.show.totals);
+    const rename = await call(renamed, 'full'); assert(!JSON.stringify(rename).includes('PROTECTED_SHOW_FIXTURE'));
+    assert(rename.exclusions?.includes('credential.txt')); assert(rename.exclusions?.includes('exposed.txt'));
+    assert.deepEqual(rename.show?.totals, { files: 0, insertions: 0, deletions: 0 });
+    assert.deepEqual(await readFile(join(f.repo, '.git/index')), index);
+    await writeFile('test-output/git-show-protected-proof.json', JSON.stringify({ proof, indexUnchanged: true }, null, 2) + '\n');
+  } finally { await client.close(); }
 });
 
 test('malformed show metadata stops before subsequent diff commands', async t => {

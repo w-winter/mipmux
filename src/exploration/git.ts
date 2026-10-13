@@ -1,11 +1,13 @@
 import { join } from 'node:path';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { gitValidator, type GitRequest } from '../contracts/git.js';
 import { directoryIdentity, resolveGitCommit } from '../patches/local-git.js';
 import { gitProcess } from '../patches/git-process.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import { serializedBytes, identityEncoding, type ResultEncoding } from './output-budget.js';
-import { readDiff } from './git-diff.js';
+import { captureWorktree, discoverPaths, readDiff, runDiff, usesWorktree } from './git-diff.js';
+import { resolveDiffRepository } from './git-repository.js';
 
 export async function readGit(operation: WorkspaceOperation, request: GitRequest, encode: ResultEncoding = identityEncoding) {
   if (!gitValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
@@ -37,7 +39,7 @@ export async function readGit(operation: WorkspaceOperation, request: GitRequest
   const common = { kind: 'git' as const, root: request.root, repository };
   const reply = projectReply();
   function projectReply() {
-    if (request.op === 'show' && projected.kind === 'gitShow') return { ...common, op: request.op, show: projected.show };
+    if (request.op === 'show' && projected.kind === 'gitShow') return { ...common, op: request.op, show: projected.show, exclusions: projected.exclusions };
     if (request.op === 'status' && projected.kind === 'gitStatus') return { ...common, op: request.op, status: projected.status };
     if (request.op === 'log' && projected.kind === 'gitLog') return { ...common, op: request.op, log: { commits: projected.commits } };
     if (request.op === 'blame' && projected.kind === 'gitBlame') return { ...common, op: request.op, blame: { path: request.path, lines: projected.lines } };
@@ -70,10 +72,27 @@ async function readShow(operation: WorkspaceOperation, request: Extract<GitReque
   const metadata = await operation.parseGitShowMetadata({ kind: 'parseGitShowMetadata', bytes: metadataBytes.toString('base64') });
   if (metadata.kind === 'gitShowError') throw new WorkspaceFailure('gitShowMalformed', { message: metadata.message });
   const revspec = oid + '^!';
-  const numstat = await read([...command.numstat, revspec, '--']);
-  const nameStatus = await read([...command.nameStatus, revspec, '--']);
-  const patch = command.patch === null ? null : await read([...command.patch, revspec, '--']);
-  const projected = await operation.projectGitShow({ kind: 'projectGitShow', detail: request.detail, metadata: metadata.commit,
-    numstat: numstat.toString('base64'), nameStatus: nameStatus.toString('base64'), patch: patch?.toString('base64') ?? null });
-  return projected;
+  const owner = await resolveDiffRepository(operation, request.root, null), exclusions: string[] = [];
+  const authorize = (paths: readonly string[]) => paths.filter(path => {
+    if (owner.permits(path)) return true;
+    exclusions.push(path); return false;
+  });
+  const { tracked } = await discoverPaths(operation, owner, { inputCount: 0, pathspecs: [],
+    nameStatus: [...command.nameStatus, revspec], includeUntracked: false }, authorize, exclusions);
+  const live = await usesWorktree(operation, owner, { kind: 'revspec', spec: revspec });
+  const workRoot = join(operation.runtime.options.cachePath, 'work'); await mkdir(workRoot, { recursive: true, mode: 0o700 });
+  const scratch = await mkdtemp(join(workRoot, 'show-'));
+  try {
+    const materialized = await captureWorktree(operation, owner, scratch, live ? tracked : [], []);
+    const workingDirectory = live ? materialized.trackedRoot : owner.repository.worktree.canonicalPath;
+    const numstat = tracked.length ? await runDiff(operation, owner, [...command.numstat, revspec], tracked, true, workingDirectory) : '';
+    const nameStatus = tracked.length ? await runDiff(operation, owner, [...command.nameStatus, revspec], tracked, true, workingDirectory) : '';
+    const patch = command.patch === null ? null : tracked.length
+      ? await runDiff(operation, owner, [...command.patch, revspec], tracked, true, workingDirectory) : '';
+    const projected = await operation.projectGitShow({ kind: 'projectGitShow', detail: request.detail, metadata: metadata.commit,
+      numstat: Buffer.from(numstat).toString('base64'), nameStatus: Buffer.from(nameStatus).toString('base64'),
+      patch: patch === null ? null : Buffer.from(patch).toString('base64') });
+    await owner.revalidate();
+    return { ...projected, exclusions: [...new Set(exclusions)] };
+  } finally { await rm(scratch, { recursive: true }); }
 }
