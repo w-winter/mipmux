@@ -7,7 +7,7 @@ import { compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits } from './budget.js';
 
 type ClipboardInput = Extract<NativeOperation, { kind: 'renderPreparedClipboard' }>;
-type PacketInput = Omit<RenderInput, 'clipboard'>;
+type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset'>;
 
 function partitionMaterials(materials: readonly Material[]) {
   const sorted = [...materials].sort((a, b) => compareBytes(a.record.id, b.record.id));
@@ -27,6 +27,7 @@ function contentBlock(material: Material): string {
 export function preparedClipboardInput(input: PacketInput): ClipboardInput {
   const materials = partitionMaterials(input.materials);
   return { kind: 'renderPreparedClipboard', input: {
+    copyPreset: input.request.copyPreset, storedPrompts: input.request.storedPrompts,
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
     contentBlocks: materials.contents.map(contentBlock),
     fileTreeContent: input.fileTree.text,
@@ -38,7 +39,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
 
 export async function prepareClipboard(runtime: SmipRuntime, input: PacketInput, signal: AbortSignal): Promise<RenderInput> {
   const clipboard = await runtime.renderPresentation(preparedClipboardInput(input), signal);
-  return { ...input, clipboard: clipboard.text };
+  return { ...input, clipboard: clipboard.text, clipboardPreset: clipboard.preset };
 }
 
 type Consume = (text: string) => Span;
@@ -62,6 +63,14 @@ function consumeFileMap(tree: string, codemaps: readonly Material[], consume: Co
   }
   for (const material of codemaps.filter(material => material.bodies.length === 0)) raw(material);
   return span;
+}
+
+function consumeMetaInstructions(input: RenderInput, consume: Consume) {
+  if (input.clipboardPreset.kind !== input.request.copyPreset) throw new WorkspaceFailure('invalidClipboard');
+  const metas = input.request.storedPrompts.filter(prompt => input.clipboardPreset.storedPromptIds.some(id => id === prompt.id.toLowerCase()))
+    .map(({ title, content }) => ({ title, content }));
+  if (input.request.constraints) metas.push({ title: 'Constraints', content: input.request.constraints });
+  for (const [index, meta] of metas.entries()) consume('<meta prompt ' + (index + 1) + ' = "' + meta.title + '">\n' + meta.content + '\n</meta prompt ' + (index + 1) + '>\n');
 }
 
 /** Reads source-default clipboard framing; never substitutes a TypeScript rendering for native assembly. */
@@ -99,7 +108,7 @@ export function parseClipboard(input: RenderInput) {
   if (gitDiff) consume('<git_diff>\n');
   consumeMaterialBlocks(materials.patches, consume, raw);
   if (gitDiff) consume('\n</git_diff>\n');
-  if (input.request.constraints) consume('<meta prompt 1 = "Constraints">\n' + input.request.constraints + '\n</meta prompt 1>\n');
+  consumeMetaInstructions(input, consume);
   if (input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n');
   if (cursor !== bytes.length) throw new WorkspaceFailure('invalidClipboard');
   return { records, costs, fileTreeSpan };

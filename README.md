@@ -109,6 +109,8 @@ Create a draft from a workspace handle after declaring its roots and output dire
 ```ts
 const draft = await workspace.createDraft({
   task: 'Review the implementation and identify correctness risks.',
+  copyPreset: 'standard',
+  storedPrompts: [],
   constraints: 'Keep every required document complete.',
   enhancementMode: 'augment',
   purpose: 'review',
@@ -136,6 +138,8 @@ try {
   await draft.close();
 }
 ```
+
+`copyPreset` selects `standard` or `codeReview`. Standard includes ordinary context; Review also selects the stored prompt with ID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b` from `storedPrompts`, an array of `{ id, title, content }` entries. Supply the complete role text when using that saved review prompt.
 
 `task` records the original prompt; `enhancementMode` is `fullRewrite`, `augment` or `preserve`. Discovery uses literal prompt operations: `set` replaces the current text, `append` adds text exactly, `clear` empties it and `get` returns it. Rewrite delivers the replacement; Augment preserves the original at the beginning and adds discoveries; Preserve leaves the original unchanged. These modes guide discovery rather than restricting the caller's explicit prompt operations. Caller constraints and required inputs remain fixed. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an explicit optional selection. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
 

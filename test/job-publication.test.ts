@@ -38,7 +38,7 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
     try {
       const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
-      const job = client.build(workspace.id, 'one', { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
+      const job = client.build(workspace.id, 'one', { task: 'Task', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [],
         budgetUnits: 10000, outputName: 'packet' });
       await paused;

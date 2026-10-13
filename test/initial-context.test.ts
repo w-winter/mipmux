@@ -19,7 +19,7 @@ test('initial context supplies all roots, explicit inputs and budget facts witho
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
       { name: 's', absolutePath: join(directory, 's') }], outputRoot: join(directory, 'out'), exclusions: [] }, new AbortController().signal);
-    const draft = await workspace.createDraft({ task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+    const draft = await workspace.createDraft({ task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'localDocument', id: 'notes', role: 'evidence', source: { root: 'r', path: 'notes.txt' } }],
       patches: [], discoveryHints: [], outputName: 'packet',
       budgetUnits: 100000 }, new AbortController().signal);

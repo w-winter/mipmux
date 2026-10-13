@@ -1,3 +1,4 @@
+import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
 import { DecoderPolicy, IgnoreAuthority, IgnoreControl, IgnoreSettings } from './inventory.js';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -54,6 +55,7 @@ export const NativeClipboardInput = Type.Object({ kind: Type.Literal('renderClip
   duplicateUserInstructionsAtTop: Type.Boolean(), tabTitle: snippetText,
 }, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('renderPreparedClipboard'), input: Type.Object({
+  copyPreset: ClipboardPreset, storedPrompts: Type.Array(StoredPrompt),
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
   gitDiff: snippetText, userInstructions: Type.String(),
   metaInstructions: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
@@ -304,6 +306,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('preparedClipboard'), text: Type.String(), preset: CapturedClipboardPreset }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('clipboard'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }, { additionalProperties: false }),
   NativeFileBlockResult,

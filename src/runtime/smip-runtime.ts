@@ -176,7 +176,7 @@ export class SmipRuntime {
       if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
       const clipboard = await this.renderPresentation(preparedClipboardInput({ request: manifest.request, prompt: manifest.prompt,
         inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree }), signal);
-      if (savedClipboard !== clipboard.text) throw new WorkspaceFailure('presentationChanged');
+      if (canonicalJSON(manifest.clipboardPreset) !== canonicalJSON(clipboard.preset) || savedClipboard !== clipboard.text) throw new WorkspaceFailure('presentationChanged');
       return {...verified,kind:'currentVerified' as const};
     } finally { await operation.close(); }
   }

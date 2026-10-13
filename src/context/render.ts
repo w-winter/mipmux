@@ -1,3 +1,4 @@
+import type { CapturedClipboardPreset } from '../contracts/presentation.js';
 import { posix } from 'node:path';
 import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
@@ -15,6 +16,7 @@ export interface RenderInput {
   readonly materials: readonly Material[];
   readonly fileTree: FinalFileTree;
   readonly clipboard: string;
+  readonly clipboardPreset: CapturedClipboardPreset;
 }
 export interface ItemCost {
   readonly id: string;

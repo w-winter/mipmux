@@ -50,7 +50,7 @@ test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap ma
       input: { type: 'roots' } } })).structuredContent);
     assert.equal(roots.tree, root + '\n' + other); assert.equal(roots.rootsCount, 2);
     const draft = identifier.Parse((await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
-      task: 'Keep the selected source', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      task: 'Keep the selected source', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'alpha', path: 'zone/child/deep.txt' } }],
       documents: [], patches: [], discoveryHints: [], outputName: 'packet',
       budgetUnits: 100000 } } })).structuredContent);
@@ -139,7 +139,7 @@ test('job cancellation reaches a held startup tree before scout dispatch and ter
   try {
     const client = runtime.createClient({ run: async () => { scoutCalls++; throw new Error('Scout must not dispatch'); } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, new AbortController().signal);
-    const job = client.build(workspace.id, 'startup-cancel', { task: 'Inspect', constraints: '', enhancementMode: 'preserve',
+    const job = client.build(workspace.id, 'startup-cancel', { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve',
       purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 10000 });
     await entering;
     assert(state.signal);

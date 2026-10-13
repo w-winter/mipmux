@@ -34,7 +34,7 @@ async function setup() {
   };
   const request: ContextBuildRequest = {
     task: 'Task',
-    constraints: '',
+    copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
     enhancementMode: 'augment' as const, purpose: 'investigation',
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }],
     documents: [{ kind: 'localDocument', id: 'plan', role: 'plan', source: { root: 'r', path: 'local.md' } }],

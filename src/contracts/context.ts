@@ -5,6 +5,7 @@ import { SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
+import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
 import { NativeFileTreeInput } from './native.js';
 
 const closed = { additionalProperties: false };
@@ -44,6 +45,8 @@ export type DocumentInput = Static<typeof DocumentInput>;
 export const PromptEnhancementMode = Type.Enum(['fullRewrite', 'augment', 'preserve']);
 export type PromptEnhancementMode = Static<typeof PromptEnhancementMode>;
 export const ContextBuildRequest = Type.Object({
+  copyPreset: ClipboardPreset,
+  storedPrompts: Type.Array(StoredPrompt),
   task: Type.String(),
   constraints: Type.String(),
   enhancementMode: PromptEnhancementMode,
@@ -137,7 +140,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(10),
+  schemaVersion: Type.Literal(11),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,
@@ -146,6 +149,7 @@ export const Manifest = Type.Object({
   deniedAbsolutePaths: Type.Array(Type.String({ pattern: '^/[^\\u0000]*$' })),
   prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
+  clipboardPreset: CapturedClipboardPreset,
   fileTree: Type.Object({ input: NativeFileTreeInput, span: Span }, closed),
   files: Type.Object({ context: SourceIdentity, handoff: SourceIdentity }, closed),
   accounting: Type.Object({

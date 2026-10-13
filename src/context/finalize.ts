@@ -75,7 +75,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 10,
+        schemaVersion: 11,
         codemapMode,
         request,
         requestDigest: sha256(canonicalJSON(request)),
@@ -84,6 +84,7 @@ export class FinalizationOperation {
         deniedAbsolutePaths: [...owner.declaration.deniedAbsolutePaths],
         prompt,
         materials: rendered.records,
+        clipboardPreset: input.clipboardPreset,
         fileTree: { input: input.fileTree.input, span: rendered.fileTreeSpan },
         files: { context: identity(rendered.context), handoff: identity(rendered.handoff) },
         accounting: {

@@ -35,7 +35,7 @@ test('current verification admits only recorded material, applies current denies
   };
   const request: ContextBuildRequest = {
     task: 'Review',
-    constraints: '',
+    copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
     enhancementMode: 'augment' as const, purpose: 'review',
     requiredSources: [{ kind: 'codemap', source: { root: 'r', path: 'model.swift' } }],
     documents: [],
@@ -157,7 +157,7 @@ test('current verification cancellation and runtime shutdown join native work an
   const writer = new SmipRuntime(options);
   const request: ContextBuildRequest = {
     task: 'Review',
-    constraints: '',
+    copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
     enhancementMode: 'augment' as const, purpose: 'review',
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }],
     documents: [],

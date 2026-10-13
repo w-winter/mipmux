@@ -22,7 +22,7 @@ const resultKinds = {
   renderFileTree: ['fileTree'],
   renderPromptAssembly: ['promptAssembly'],
   renderClipboard: ['clipboard'],
-  renderPreparedClipboard: ['clipboard'],
+  renderPreparedClipboard: ['preparedClipboard'],
   queryStructure: ['structure'],
   transitionSelection: ['selectionTransition'],
   calculateSliceRanges: ['sliceRanges'],

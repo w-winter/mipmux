@@ -4951,6 +4951,98 @@
         "Extract clipboard packaging and its helpers with captured DTOs instead of app records. Reuse the retained native file-block formatter and slice assembler; formatter calls project their text. Keep source title, selected-Git precedence, codemap placement, snippet inclusion, dates and section assembly logic. Apply formatter layout and scoped lint exemptions for original signatures.",
         "Separate captured-block snippet construction from whole-file preparation; both callers execute the original snippet, inclusion and assembly bodies. The packet path supplies already-retained native full/slice/document blocks, with explicit caller constraints as a meta instruction."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/CopyPreset.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0b9b7e879ead8717098fbe0d87fa48a33540a4eaba7186a3b7a78eef807791c4",
+      "destination": "native/Sources/SmipBridge/RPCECopyPresetModels.swift",
+      "sha256": "9bd1895f9bde692566bda792c68f451e76eb4f78707252c2d4984afe5b5bb048",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          7,
+          13
+        ],
+        [
+          38,
+          96
+        ]
+      ],
+      "changes": [
+        "Retain preset model and initializer; persistence compatibility decoding is outside captured headless inputs."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "8888d33d8a3fe4e1eafc104bf76aa4f34596aee170961acee2535c2429b5f186",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift",
+      "sha256": "5e1a9c9b7622f77be1e17c99aee28fe42563b976861bdabb0df5dbdce6bfc2b1",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          10,
+          10
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          23,
+          39
+        ],
+        [
+          93,
+          109
+        ]
+      ],
+      "changes": [
+        "Retain exact Standard/Review constructors and referenced UUIDs, without other preset branches. Those branches remain incomplete port requirements."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptSettingsCore/SettingsCopyValues.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "703ebbd7272f67f869b2aa2cb4503bbe1d608caa6cf35a6350b085c78f04ed1e",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardSettings.swift",
+      "sha256": "232d56bc3e8e755c11f12e45a3109eb7297191af58e8d1f9dff463c837757f73",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          5,
+          14
+        ],
+        [
+          39,
+          43
+        ]
+      ],
+      "changes": [
+        "Make copied value declarations executable-local; reuse existing CodeMapUsage."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "142aea37ff038a9fd4805257a9706d64e091e0a62e3850493236c3bf91cc01b2",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardMetaSelection.swift",
+      "sha256": "92c6dfdbc9df65caa339b210955820cb819e901de2ab82944994225e338200e9",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          6999,
+          7023
+        ]
+      ],
+      "changes": [
+        "Wrap the unmodified selection method in a captured catalog owner instead of the app view model."
+      ]
     }
   ],
   "dependencies": [
@@ -10449,6 +10541,48 @@
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift",
       "destination": "native/Sources/SmipBridge/RPCEClipboardPackaging.swift",
       "line": 300
+    },
+    {
+      "name": "CopyPreset",
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/CopyPreset.swift",
+      "destination": "native/Sources/SmipBridge/RPCECopyPresetModels.swift",
+      "line": 38
+    },
+    {
+      "name": "CopyPresetKind",
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/CopyPreset.swift",
+      "destination": "native/Sources/SmipBridge/RPCECopyPresetModels.swift",
+      "line": 7
+    },
+    {
+      "name": "standard",
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift",
+      "line": 24
+    },
+    {
+      "name": "codeReview",
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift",
+      "line": 94
+    },
+    {
+      "name": "FileTreeOption",
+      "source": "Sources/RepoPromptSettingsCore/SettingsCopyValues.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardSettings.swift",
+      "line": 5
+    },
+    {
+      "name": "GitInclusion",
+      "source": "Sources/RepoPromptSettingsCore/SettingsCopyValues.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardSettings.swift",
+      "line": 39
+    },
+    {
+      "name": "metaInstructions",
+      "source": "Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardMetaSelection.swift",
+      "line": 6999
     }
   ],
   "sourceCoverage": [

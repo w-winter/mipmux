@@ -46,7 +46,7 @@ async function fixture() {
   assert.equal(declared.isError, false, JSON.stringify(declared));
   const created = await client.callTool({ name: 'draft_create', arguments: {
     workspaceId: identifier.Parse(declared.structuredContent).id, request: {
-      task: 'Inspect source selection behavior', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      task: 'Inspect source selection behavior', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [], documents: [], patches: [], discoveryHints: [], budgetUnits: 100000, outputName: 'packet',
     } } });
   assert.equal(created.isError, false, JSON.stringify(created));
@@ -179,7 +179,7 @@ test('selection commits before reply rendering and survives cancellation, failur
     try {
       const signal = () => new AbortController().signal;
       const owner = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output }, signal());
-      const draft = await owner.createDraft({ task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      const draft = await owner.createDraft({ task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
         requiredSources: [], documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: scenario }, signal());
       const abort = new AbortController();
       const work = draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
@@ -432,7 +432,7 @@ test('cancellation during codemap extraction retains committed membership and ge
     const client = runtime.createClient(null), spec = { roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output };
     const workspace = await client.declare(spec, signal());
     const owner = await runtime.declare(spec, signal());
-    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [], documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'cancel' }, signal());
     armed = true;
     const abort = new AbortController();
@@ -510,7 +510,7 @@ test('the source readiness deadline reports pending codemaps and a later get com
   const client = runtime.createClient(null);
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output }, signal());
-    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [], documents: [{ kind: 'suppliedDocument', id: 'evidence', role: 'evidence', origin: 'fixture', text: 'Required evidence' },
         { kind: 'suppliedDocument', id: 'supporting-evidence', role: 'evidence', origin: 'fixture', text: 'Supporting evidence' }],
       patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'deadline' }, signal());

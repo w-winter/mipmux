@@ -44,7 +44,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
       inputs.push(input); return runner.run(input, tools, signal, progress);
     } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] }, new AbortController().signal);
-    const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', constraints: 'Keep complete evidence', enhancementMode: 'augment' as const, purpose: 'investigation',
+    const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Keep complete evidence', enhancementMode: 'augment' as const, purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'synthetic', text: report }], patches: [],
       budgetUnits: 100000, discoveryHints: [], outputName: 'packet' };
@@ -124,7 +124,7 @@ test('discovery material paging measures the real Pi result and returns every co
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
     const originalCall = client.inspect.bind(client);
-    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'fixture', text }], patches: [], discoveryHints: [],
       outputName: 'packet', budgetUnits: 10000 }, new AbortController().signal);
     const runner = new PiRunner(provider.config, runtime.supervisor);
@@ -143,7 +143,7 @@ test('discovery material paging measures the real Pi result and returns every co
     }, new AbortController().signal, () => {});
     assert.equal(result.kind, 'complete'); assert.equal(returned.join(''), text); assert.equal(continuation, null);
     calls = 1;
-    const job = client.build(workspace.id, 'paging', { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+    const job = client.build(workspace.id, 'paging', { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'fixture', text }], patches: [], discoveryHints: [],
       outputName: 'builder', budgetUnits: 10000 });
     const built = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});
@@ -245,7 +245,7 @@ test('normally completed budget-blocked SDK builder retains every committed hand
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor)), other = runtime.createClient(null);
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
-    const job = client.build(workspace.id, 'handoff', { task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [], documents: [], patches: [],
+    const job = client.build(workspace.id, 'handoff', { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'blocked', budgetUnits: 1 });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {}); assert(result.state === 'blocked');
     const small = (await client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 2000 }, new AbortController().signal));

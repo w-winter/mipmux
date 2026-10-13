@@ -223,7 +223,7 @@ test('incomplete enumeration permits known-source exploration but refuses draft 
       assert(result.kind === 'structure'); assert.equal(result.status, 'partial');
       assert.equal(result.roots[0]?.index.state, 'indexing');
       assert.equal(result.roots[0]?.unresolved[0]?.reason, 'not_indexed_yet');
-      await assert.rejects(workspace.createDraft({ task: 'Inspect known source.', constraints: '', enhancementMode: 'preserve',
+      await assert.rejects(workspace.createDraft({ task: 'Inspect known source.', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve',
         purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'partial',
         budgetUnits: 100000 }, signal), /enumerationIncomplete/);
       await writeFile(join(base, 'partial-inventory-proof.json'), JSON.stringify(result, null, 2) + '\n');

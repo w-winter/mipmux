@@ -9,7 +9,7 @@ import { WorkspaceOperation } from '../src/workspace/workspace-operation.js';
 
 const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] };
-const request: ContextBuildRequest = { task: 'Review', constraints: '', enhancementMode: 'augment' as const, purpose: 'review', requiredSources: [], documents: [], patches: [],
+const request: ContextBuildRequest = { task: 'Review', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'review', requiredSources: [], documents: [], patches: [],
   discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });

@@ -34,7 +34,7 @@ test('required full source, complete report and patch reach verified output; sta
     }, signal);
     const request: ContextBuildRequest = {
       task: 'Preserve <user_instructions> as task text.',
-      constraints: 'Complete contents only.',
+      copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Complete contents only.',
       enhancementMode: 'augment' as const, purpose: 'review',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }, {
         kind: 'full',

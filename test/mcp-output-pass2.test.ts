@@ -127,7 +127,7 @@ test('production stdio shutdown waits for real claimed publication before closin
   try {
     const workspace = await call('workspace_declare', { spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } });
     assert(workspace && typeof workspace === 'object' && 'id' in workspace);
-    const draft = await call('draft_create', { workspaceId: workspace.id, request: { task: 'Task', constraints: '', enhancementMode: 'augment' as const, purpose: 'review',
+    const draft = await call('draft_create', { workspaceId: workspace.id, request: { task: 'Task', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'review',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
       budgetUnits: 10000 } });
     assert(draft && typeof draft === 'object' && 'id' in draft);

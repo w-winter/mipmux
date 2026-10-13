@@ -57,6 +57,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     materials,
     fileTree,
     clipboard: decodedBody(context),
+    clipboardPreset: manifest.clipboardPreset,
   }); } catch (error) {
     if (!(error instanceof WorkspaceFailure && error.code === 'invalidClipboard')) throw error;
     throw new WorkspaceFailure('bundleIntegrityFailed');

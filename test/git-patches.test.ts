@@ -64,7 +64,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
     }, signal());
     const request: ContextBuildRequest = {
       task: 'Review patch',
-      constraints: '',
+      copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
       enhancementMode: 'augment' as const, purpose: 'review',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'text.txt' } }, {
         kind: 'codemap',

@@ -53,7 +53,7 @@ test('local package audits resources and executes relocated library, native, CLI
   try {
     await client.connect(transport); assert.equal((await client.listTools()).tools.length, 20);
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'relocation', request: {
-      task: 'Inspect', constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
+      task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'packet', budgetUnits: 10000 } }));
     const result = await new Promise<string>((resolveResult, reject) => {
       execFile(process.execPath,

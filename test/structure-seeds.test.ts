@@ -36,7 +36,7 @@ test('public structural seeds use owned selection, whole roots, direct-file prio
     const blank = graph.Parse(blankReply.structuredContent);
     assert.equal(blank.status, 'unavailable'); assert.equal(blank.issues[0]?.code, 'path_not_found');
     const draftId = identifier.Parse((await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
-      task: 'Inspect fixture structure.', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      task: 'Inspect fixture structure.', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'src/A.swift' } },
         { kind: 'slices', source: { root: 'r', path: 'src/B.swift' }, ranges: [{ start: 1, end: 1, description: 'Declaration' }] }],
       documents: [], patches: [], discoveryHints: [], outputName: 'selected-structure',
