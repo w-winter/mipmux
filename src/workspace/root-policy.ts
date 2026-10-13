@@ -22,6 +22,21 @@ function ancestors(path: string): string[] {
 type CapturedIgnoreInputs = Static<typeof NativeIgnoreInputs>;
 function inputKey(input: PolicyInput): string { return canonicalJSON([input.root, input.path]); }
 
+/** Applies host denies to physical evidence and its logical loaded-root path. */
+export function deniedAbsolutePath(declaration: PolicyDeclaration, absolute: string, logicalPath: string): boolean {
+  if ([absolute, logicalPath].some(path => path.split('/').some(part => part === '.git' || part === '.env' || part.startsWith('.env.')))) return true;
+  const bindings = declaration.roots.filter(root => contains(root.identity.canonicalPath, logicalPath))
+    .map(root => ({ root, path: relative(root.identity.canonicalPath, logicalPath) }));
+  const aliases = bindings.map(binding => posix.resolve(binding.root.identity.declaredPath, binding.path));
+  if (declaration.deniedAbsolutePaths.some(path => contains(path, absolute) || contains(path, logicalPath) || aliases.some(alias => contains(path, alias)))) return true;
+  for (const binding of bindings) for (const rule of declaration.exclusions) {
+    if (rule.root !== binding.root.name) continue;
+    const prefixes = binding.path.split('/').map((_, index, parts) => parts.slice(0, index + 1).join('/'));
+    if (rule.kind === 'prefix' ? contains(rule.path, binding.path) : prefixes.some(path => posix.matchesGlob(path, rule.pattern))) return true;
+  }
+  return false;
+}
+
 /** Captures controlling files and applies the original ordinary-crawl policy at the native boundary. */
 export class RootPolicy {
   readonly #inputs = new Map<string, PolicyInput>();
@@ -37,18 +52,7 @@ export class RootPolicy {
   }
   denied(source: SourcePath): boolean {
     const absolute = this.#absolute(source);
-    if (absolute.split('/').some(part => part === '.git' || part === '.env' || part.startsWith('.env.'))) return true;
-    const aliases = this.declaration.roots.filter(root => contains(root.identity.canonicalPath, absolute))
-      .map(root => posix.resolve(root.identity.declaredPath, relative(root.identity.canonicalPath, absolute)));
-    if (this.declaration.deniedAbsolutePaths.some(path => contains(path, absolute) || aliases.some(alias => contains(path, alias)))) return true;
-    for (const binding of this.#bindings(source)) {
-      for (const rule of this.declaration.exclusions) {
-        if (rule.root !== binding.root) continue;
-        const prefixes = binding.path.split('/').map((_, index, parts) => parts.slice(0, index + 1).join('/'));
-        if (rule.kind === 'prefix' ? contains(rule.path, binding.path) : prefixes.some(path => posix.matchesGlob(path, rule.pattern))) return true;
-      }
-    }
-    return false;
+    return deniedAbsolutePath(this.declaration, absolute, absolute);
   }
 
 

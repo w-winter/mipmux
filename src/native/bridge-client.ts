@@ -10,6 +10,8 @@ const resultKinds = {
   queryIgnoreRules: ['ignoreRules'],
   parseGitPatch: ['gitPatch'], parseGitComparison: ['gitComparison'], projectGitDiff: ['gitDiff'],
   normalizeGitDiffPaths: ['gitDiffPaths'],
+  prepareGitDiff: ['gitDiffArguments'], parseGitDiffStats: ['gitDiffStats'],
+  normalizeGitUntrackedPatch: ['gitUntrackedPatch'],
   prepareGitShow: ['gitShowArguments', 'gitShowError'], parseGitShowMetadata: ['gitShowMetadata', 'gitShowError'], projectGitShow: ['gitShow'],
   describe: ['description'], openRoots: ['rootsOpened'], listDirectory: ['directoryComplete'],
   prepareGitRead: ['gitReadArguments'], projectGitRead: ['gitLog', 'gitBlame', 'gitStatus', 'gitStatusError'],

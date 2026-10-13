@@ -13,6 +13,7 @@ import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
 import type { NativeOperation } from '../contracts/native.js';
+import type { RootIdentity } from '../contracts/workspace.js';
 import type { WorkspaceRuntime } from './workspace-runtime.js';
 import { capturedFile, completeFile } from './inventory-file.js';
 import { observe } from './observe.js';
@@ -171,6 +172,21 @@ export class WorkspaceOperation {
   readGit(request: GitRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
     return this.#track(() => readGit(this, captured, encode));
+  }
+  openGitSourceAccess(identity: RootIdentity) {
+    const captured = structuredClone(identity);
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      const opened = await access.bridge.request({ kind: 'openRoots', roots: [{ name: 'GitRepository',
+        absolutePath: captured.declaredPath, access: 'source', expected: captured }] }, this.signal);
+      return new NativeAccess(access.bridge, opened.result.roots, this.signal);
+    });
+  }
+  gitDiffOperation<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' }>>(input: O) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
   }
   prepareGitRead(input: Extract<NativeOperation, { kind: 'prepareGitRead' }>) {
     return this.#track(async () => {

@@ -1,0 +1,205 @@
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import type { GitRequest } from '../contracts/git.js';
+import type { NativeResult } from '../contracts/native.js';
+import { descriptorGitMode } from '../contracts/patches.js';
+import { NativeFailure } from '../native/bridge-client.js';
+import { gitProcess } from '../patches/git-process.js';
+import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
+import { WorkspaceFailure } from '../workspace/values.js';
+import { serializedBytes, type ResultEncoding } from './output-budget.js';
+import { gitText, resolveDiffRepository } from './git-repository.js';
+
+type DiffRequest = Extract<GitRequest, { op: 'diff' }>;
+type Repository = Awaited<ReturnType<typeof resolveDiffRepository>>;
+type DiffCommands = Extract<NativeResult, { kind: 'gitDiffArguments' }>;
+const pathspecByteLimit = 128 * 1024;
+const pathspecChunkSize = 3000;
+
+async function runDiff(operation: WorkspaceOperation, owner: Repository, args: readonly string[], paths: readonly string[],
+  literalPaths: boolean, worktree: string) {
+  const run = (command: readonly string[], stdin: Buffer | null) => gitProcess(operation.runtime.supervisor, owner.executable,
+    worktree, command, operation.signal, { kind: 'diff', gitDirectory: owner.repository.gitDirectory.canonicalPath,
+      worktree, literalPaths, stdin });
+  const accepted = (result: Awaited<ReturnType<typeof run>>) => {
+    if (result.code !== 0 && result.code !== 1) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
+    return gitText(result.bytes);
+  };
+  if (paths.reduce((count, path) => count + Buffer.byteLength(path) + 1, 0) >= pathspecByteLimit) {
+    const result = await run([...args, '--pathspec-from-file=-', '--pathspec-file-nul'], Buffer.from(paths.join('\0') + '\0'));
+    if (result.code === 0 || result.code === 1) return accepted(result);
+    const message = gitText(result.stderr).toLowerCase();
+    if (!message.includes('unknown option') && !message.includes('pathspec-from-file')) return accepted(result);
+  }
+  if (!paths.length) return accepted(await run(args, null));
+  if (paths.length <= pathspecChunkSize) return accepted(await run([...args, '--', ...paths], null));
+  let combined = '';
+  for (let offset = 0; offset < paths.length; offset += pathspecChunkSize) {
+    const text = accepted(await run([...args, '--', ...paths.slice(offset, offset + pathspecChunkSize)], null));
+    if (text) combined += args.includes('-z') || text.endsWith('\n') ? text : text + '\n';
+  }
+  return combined;
+}
+
+async function resolveMainCompare(operation: WorkspaceOperation, owner: Repository, comparison: DiffCommands['comparison']): Promise<string | null> {
+  if (comparison.kind === 'revspec' && comparison.spec.toLowerCase() === 'last') throw new WorkspaceFailure('gitSnapshotUnavailable');
+  if (comparison.kind !== 'revspec' && comparison.kind !== 'uncommitted' && comparison.kind !== 'staged') return null;
+  const baseName = comparison.kind === 'revspec' ? comparison.spec : comparison.base;
+  if (!/^(main|trunk)$/i.test(baseName)) return null;
+  const run = async (args: string[]) => {
+    const result = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
+      args, operation.signal, { kind: 'repository' });
+    if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
+    return gitText(result.bytes);
+  };
+  const branches = new Set((await run(['for-each-ref', '--format=%(refname:short)', '--count=200', 'refs/remotes']))
+    .split('\n').concat((await run(['for-each-ref', '--format=%(refname:short)', '--count=200', 'refs/heads'])).split('\n')));
+  let base = ['origin/main', 'upstream/main', 'main', 'origin/master', 'upstream/master', 'master'].find(ref => branches.has(ref));
+  if (!base) {
+    const result = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
+      ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}'], operation.signal, { kind: 'repository' });
+    if (result.code === 0) base = gitText(result.bytes).trim();
+  }
+  if (!base) throw new WorkspaceFailure('gitComparisonUnavailable');
+  return (comparison.kind === 'staged' ? 'staged-mergebase:' : 'uncommitted-mergebase:') + base;
+}
+
+export async function readDiff(operation: WorkspaceOperation, request: DiffRequest, encode: ResultEncoding) {
+  const owner = await resolveDiffRepository(operation, request.root, request.worktree);
+  const preparation = { kind: 'prepareGitDiff' as const, compare: request.compare,
+    paths: [...(request.path === null ? [] : [request.path]), ...request.paths], repoRootPath: owner.repository.worktree.canonicalPath,
+    contextLines: request.contextLines, detectRenames: request.detectRenames };
+  let commands = await operation.gitDiffOperation(preparation);
+  const resolved = await resolveMainCompare(operation, owner, commands.comparison);
+  if (resolved !== null) commands = await operation.gitDiffOperation({ ...preparation, compare: resolved });
+  const reference = commands.comparison.kind === 'unstaged' ? null : commands.comparison.kind === 'revspec'
+    ? commands.comparison.spec : commands.comparison.base;
+  if (reference?.startsWith('-')) throw new WorkspaceFailure('invalidRequest');
+  const exclusions: string[] = [];
+  const authorize = (paths: readonly string[]) => paths.filter(path => {
+    if (owner.permits(path)) return true;
+    exclusions.push(path); return false;
+  });
+  const { tracked, untracked } = await discoverPaths(operation, owner, commands, authorize, exclusions);
+  const workRoot = join(operation.runtime.options.cachePath, 'work'); await mkdir(workRoot, { recursive: true, mode: 0o700 });
+  const scratch = await mkdtemp(join(workRoot, 'scout-diff-'));
+  try {
+    const diff = await projectDiff(operation, owner, request, commands, { tracked, untracked }, scratch);
+    await owner.revalidate();
+    const repository = { worktree: owner.repository.worktree, gitDirectory: owner.repository.gitDirectory };
+    const reply = { kind: 'git' as const, op: 'diff' as const, root: request.root, repository,
+      diff, exclusions: [...new Set(exclusions)] };
+    const requiredBytes = serializedBytes(encode(reply));
+    return requiredBytes <= request.maxOutputBytes ? reply : { kind: 'outputBudgetTooSmall' as const, requiredBytes };
+  } finally { await rm(scratch, { recursive: true }); }
+}
+
+async function projectDiff(operation: WorkspaceOperation, owner: Repository, request: DiffRequest, commands: DiffCommands,
+  paths: { tracked: string[]; untracked: string[] }, scratch: string) {
+  const { tracked, untracked } = paths;
+  const materialized = await captureWorktree(operation, owner, scratch, commands.includeUntracked ? tracked : [], untracked);
+  const workingDirectory = commands.includeUntracked ? materialized.trackedRoot : owner.repository.worktree.canonicalPath;
+  const numstat = tracked.length ? await runDiff(operation, owner, commands.numstat, tracked, true, workingDirectory) : '';
+  const nameStatus = tracked.length ? await runDiff(operation, owner, commands.nameStatus, tracked, true, workingDirectory) : '';
+  const stats = await operation.gitDiffOperation({ kind: 'parseGitDiffStats', numstat: Buffer.from(numstat).toString('base64'),
+    nameStatus: Buffer.from(nameStatus).toString('base64'), untracked: materialized.untracked });
+  const changedFiles = commands.hasRelativeInputs || !commands.inputCount ? stats.files : stats.files.filter(file =>
+    commands.paths.some(path => file.path === path.replace(/\/$/, '') || file.path.startsWith(path.endsWith('/') ? path : path + '/')));
+  const detail = commands.inputCount === 1 && request.detail.toLowerCase() === 'summary' ? 'patches' : request.detail.toLowerCase();
+  let patches: Record<string, string> | null = null;
+  if (changedFiles.length && (detail === 'patches' || detail === 'full')) {
+    const trackedPatch = tracked.length ? await runDiff(operation, owner, commands.patch, tracked, true, workingDirectory) : '';
+    const untrackedPatch = await captureUntrackedPatch(operation, owner, materialized.untrackedRoot,
+      changedFiles.some(file => file.status === '??'), scratch, request.contextLines);
+    const parsed = await operation.gitDiffOperation({ kind: 'parseGitPatch', text: [trackedPatch, untrackedPatch].filter(Boolean).join('\n') });
+    patches = Object.fromEntries(parsed.files.map(file => [file.path, file.patch]));
+  }
+  const projected = await operation.gitDiffOperation({ kind: 'projectGitDiff', compare: commands.display, detail: request.detail,
+    pathspecCount: commands.inputCount, isMultiRepo: false, changedFiles, perFilePatches: patches });
+  return projected.diff;
+}
+
+async function discoverPaths(operation: WorkspaceOperation, owner: Repository,
+  commands: DiffCommands,
+  authorize: (paths: readonly string[]) => string[], exclusions: string[]) {
+  if (commands.inputCount && !commands.pathspecs.length) return { tracked: [], untracked: [] };
+  const names = await runDiff(operation, owner, [...commands.nameStatus.slice(0, 1), '-z', ...commands.nameStatus.slice(1)],
+    commands.pathspecs, false, owner.repository.worktree.canonicalPath);
+  const tracked: string[] = [];
+  for (const endpoints of parseEndpoints(names)) {
+    const allowed = authorize(endpoints);
+    if (allowed.length === endpoints.length) tracked.push(...allowed);
+    else exclusions.push(...endpoints);
+  }
+  let untracked: string[] = [];
+  if (commands.includeUntracked) {
+    const listed = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
+      ['ls-files', '--others', '--exclude-standard', ...(commands.pathspecs.length ? ['--', ...commands.pathspecs] : [])], operation.signal,
+      { kind: 'diff', gitDirectory: owner.repository.gitDirectory.canonicalPath, worktree: owner.repository.worktree.canonicalPath,
+        literalPaths: false, stdin: null });
+    if (listed.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: listed.code });
+    untracked = authorize(gitText(listed.bytes).split('\n').filter(Boolean));
+  }
+  return { tracked: [...new Set(tracked)], untracked };
+}
+
+function parseEndpoints(names: string): (readonly [string] | readonly [string, string])[] {
+  if (names && !names.endsWith('\0')) throw new WorkspaceFailure('gitProtocolError');
+  const fields = names ? names.slice(0, -1).split('\0') : [], endpoints: (readonly [string] | readonly [string, string])[] = [];
+  for (let offset = 0; offset < fields.length;) {
+    const status = fields[offset++], path = fields[offset++];
+    if (!status || !path || !/^[A-Z][0-9]*$/.test(status)) throw new WorkspaceFailure('gitProtocolError');
+    if (status.startsWith('R') || status.startsWith('C')) {
+      const target = fields[offset++]; if (!target) throw new WorkspaceFailure('gitProtocolError');
+      endpoints.push([path, target]);
+    } else endpoints.push([path]);
+  }
+  return endpoints;
+}
+
+async function captureWorktree(operation: WorkspaceOperation, owner: Repository, scratch: string, tracked: string[], untracked: string[]) {
+  const trackedRoot = join(scratch, 'tracked'), untrackedRoot = join(scratch, 'untracked');
+  await mkdir(trackedRoot); await mkdir(untrackedRoot); await mkdir(join(scratch, 'empty'));
+  const read = async (path: string) => {
+    try { return await owner.access.read({ root: 'GitRepository', path }, null); }
+    catch (error) { if (error instanceof NativeFailure && error.code === 'notFound') return null; throw error; }
+  };
+  const copy = async (path: string, root: string, source: NonNullable<Awaited<ReturnType<typeof read>>>) => {
+    const target = join(root, path); await mkdir(dirname(target), { recursive: true, mode: 0o700 });
+    await writeFile(target, source.bytes, { flag: 'wx', mode: 0o600 });
+    await chmod(target, descriptorGitMode(source.fingerprint.mode) === '100755' ? 0o755 : 0o644);
+  };
+  for (const path of tracked) {
+    const source = await read(path); if (source) await copy(path, trackedRoot, source);
+  }
+  for (const path of attributePaths(tracked)) {
+    if (tracked.includes(path)) continue;
+    if (!owner.permits(path)) throw new WorkspaceFailure('pathDenied');
+    const source = await read(path); if (source) await copy(path, trackedRoot, source);
+  }
+  const records: { path: string; bytes: string | null }[] = [];
+  for (const path of untracked) {
+    const source = await read(path); if (source) await copy(path, untrackedRoot, source);
+    records.push({ path, bytes: source ? source.bytes.toString('base64') : null });
+  }
+  return { trackedRoot, untrackedRoot, untracked: records };
+}
+
+function attributePaths(paths: readonly string[]): string[] {
+  const attributes = new Set<string>();
+  for (const path of paths) {
+    const parts = path.split('/'); parts.pop();
+    for (let depth = 0; depth <= parts.length; depth++) attributes.add([...parts.slice(0, depth), '.gitattributes'].join('/'));
+  }
+  return [...attributes];
+}
+
+async function captureUntrackedPatch(operation: WorkspaceOperation, owner: Repository, root: string, present: boolean,
+  scratch: string, contextLines: number) {
+  if (!present) return '';
+  const result = await gitProcess(operation.runtime.supervisor, owner.executable, root,
+    ['diff', '--no-index', '--unified=' + contextLines, '--no-ext-diff', '--no-textconv', '--color=never', '--', '../empty', '.'],
+    operation.signal, { kind: 'scratch', ceiling: scratch });
+  if (result.code !== 0 && result.code !== 1) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
+  return (await operation.gitDiffOperation({ kind: 'normalizeGitUntrackedPatch', text: gitText(result.bytes) })).text;
+}

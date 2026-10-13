@@ -3,6 +3,7 @@ enum GitOperation {
     case show(GitShowInput)
     case patch(GitPatchInput)
     case diff(GitDiffInput)
+    case acquisition(GitDiffAcquisitionInput)
 
     func render() throws -> [String: Any] {
         switch self {
@@ -10,6 +11,7 @@ enum GitOperation {
         case let .show(input): try input.render()
         case let .patch(input): input.render()
         case let .diff(input): try input.render()
+        case let .acquisition(input): try input.render()
         }
     }
 }

@@ -5,9 +5,11 @@ import { directoryIdentity, resolveGitCommit } from '../patches/local-git.js';
 import { gitProcess } from '../patches/git-process.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import { serializedBytes, identityEncoding, type ResultEncoding } from './output-budget.js';
+import { readDiff } from './git-diff.js';
 
 export async function readGit(operation: WorkspaceOperation, request: GitRequest, encode: ResultEncoding = identityEncoding) {
   if (!gitValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
+  if (request.op === 'diff') return readDiff(operation, request, encode);
   const configured = operation.runtime.options.git;
   if (!configured) throw new WorkspaceFailure('gitNotConfigured');
   const root = operation.snapshot.roots.find(root => root.name === request.root);
@@ -45,7 +47,7 @@ export async function readGit(operation: WorkspaceOperation, request: GitRequest
   return requiredBytes <= request.maxOutputBytes ? reply : { kind: 'outputBudgetTooSmall' as const, requiredBytes };
 }
 
-async function readQuery(operation: WorkspaceOperation, request: Exclude<GitRequest, { op: 'show' }>, root: string,
+async function readQuery(operation: WorkspaceOperation, request: Exclude<GitRequest, { op: 'show' | 'diff' }>, root: string,
   read: (args: readonly string[]) => Promise<Buffer>) {
   const query = request.op === 'status' ? { op: request.op } : request.op === 'log' ? { op: request.op, count: request.count,
     path: request.path === null ? null : join(root, request.path) }

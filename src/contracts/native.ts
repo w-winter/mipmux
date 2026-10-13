@@ -4,7 +4,7 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
-import { NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult } from './git.js';
+import { GitDiff, NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult } from './git.js';
 import { NativeWireFailureCode } from './errors.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -218,13 +218,6 @@ const NativeGitComparison = Type.Union([
 ]);
 const NativeGitChangedFile = Type.Object({ path: Type.String(), status: Type.String(),
   additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) }, { additionalProperties: false });
-const NativeGitDiff = Type.Object({ compare: Type.String(), detail: Type.Optional(Type.String()),
-  totals: Type.Object({ files: Type.Integer(), insertions: Type.Integer(), deletions: Type.Integer() }, { additionalProperties: false }),
-  files: Type.Optional(Type.Array(Type.Object({ path: Type.String(), status: Type.String(), insertions: Type.Optional(Type.Integer()),
-    deletions: Type.Optional(Type.Integer()), hunks: Type.Optional(Type.Array(Type.Object({ header: Type.String(), old_start: Type.Integer(),
-      new_start: Type.Integer(), patch: Type.String() }, { additionalProperties: false }))) }, { additionalProperties: false }))),
-  by_status: Type.Optional(Type.Record(Type.String(), Type.Integer())), oneliner: Type.String(), truncated: Type.Optional(Type.Boolean()),
-  truncation_note: Type.Optional(Type.String()) }, { additionalProperties: false });
 const NativeGitPatchInput = Type.Object({ kind: Type.Literal('parseGitPatch'), text: Type.String() }, { additionalProperties: false });
 const NativeGitPatchResult = Type.Object({ kind: Type.Literal('gitPatch'),
   files: Type.Array(Type.Object({ path: Type.String(), patch: Type.String(), insertions: Type.Integer(), deletions: Type.Integer(),
@@ -249,6 +242,11 @@ export const NativeOperation = Type.Union([
   NativeGitPatchInput,
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('normalizeGitDiffPaths'), paths: Type.Array(Type.String()), repoRootPath: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('prepareGitDiff'), compare: Type.String(), paths: Type.Array(Type.String()), repoRootPath: Type.String(),
+    contextLines: Type.Integer(), detectRenames: Type.Boolean() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('parseGitDiffStats'), numstat: base64, nameStatus: base64,
+    untracked: Type.Array(Type.Object({ path: Type.String(), bytes: Type.Union([base64, Type.Null()]) }, { additionalProperties: false })) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('normalizeGitUntrackedPatch'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('projectGitDiff'), compare: Type.String(), detail: Type.String(), pathspecCount: SafeCount,
     isMultiRepo: Type.Boolean(), changedFiles: Type.Array(NativeGitChangedFile),
     perFilePatches: Type.Union([Type.Record(Type.String(), Type.String()), Type.Null()]) }, { additionalProperties: false }),
@@ -322,7 +320,13 @@ export const NativeResult = Type.Union([
   NativeGitPatchResult,
   Type.Object({ kind: Type.Literal('gitComparison'), comparison: NativeGitComparison, rawKey: Type.String(), display: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitDiffPaths'), paths: Type.Array(Type.String()), pathspecs: Type.Array(Type.String()) }, { additionalProperties: false }),
-  Type.Object({ kind: Type.Literal('gitDiff'), diff: NativeGitDiff }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitDiff'), diff: GitDiff }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitDiffArguments'), comparison: NativeGitComparison, display: Type.String(), rawKey: Type.String(),
+    paths: Type.Array(Type.String()), pathspecs: Type.Array(Type.String()), inputCount: SafeCount, hasRelativeInputs: Type.Boolean(),
+    includeUntracked: Type.Boolean(), numstat: Type.Array(Type.String()), nameStatus: Type.Array(Type.String()),
+    patch: Type.Array(Type.String()) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitDiffStats'), files: Type.Array(NativeGitChangedFile) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitUntrackedPatch'), text: Type.String() }, { additionalProperties: false }),
   ...NativeGitReadResult.anyOf,
   Type.Object({ kind: Type.Literal('gitShowArguments'), ref: Type.String(), metadata: Type.Array(Type.String()),
     numstat: Type.Array(Type.String()), nameStatus: Type.Array(Type.String()),

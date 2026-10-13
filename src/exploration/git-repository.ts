@@ -1,0 +1,68 @@
+import { realpath } from 'node:fs/promises';
+import { isUtf8 } from 'node:buffer';
+import { join } from 'node:path';
+import { Compile } from 'typebox/compile';
+import { RelativePath } from '../contracts/workspace.js';
+import { directoryIdentity } from '../patches/local-git.js';
+import { gitProcess } from '../patches/git-process.js';
+import { contains, deniedAbsolutePath } from '../workspace/root-policy.js';
+import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
+import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
+
+const pathValidator = Compile(RelativePath);
+export function gitText(bytes: Buffer): string {
+  if (!isUtf8(bytes)) throw new WorkspaceFailure('gitOutputUndecodable');
+  return bytes.toString('utf8');
+}
+
+/** Resolves a loaded checkout or an advertised worktree, then fences its captured identities. */
+export async function resolveDiffRepository(operation: WorkspaceOperation, rootName: string, worktree: string | null) {
+  const configured = operation.runtime.options.git;
+  if (!configured) throw new WorkspaceFailure('gitNotConfigured');
+  const root = operation.snapshot.roots.find(root => root.name === rootName);
+  if (!root) throw new WorkspaceFailure('unknownRoot');
+  const run = async (cwd: string, args: readonly string[]) => {
+    const result = await gitProcess(operation.runtime.supervisor, configured.executable, cwd, args, operation.signal, { kind: 'repository' });
+    if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
+    return result.bytes;
+  };
+  const identify = async (cwd: string) => {
+    const identity = async (args: readonly string[]) => {
+      const text = gitText(await run(cwd, args));
+      if (!text.endsWith('\n')) throw new WorkspaceFailure('gitProtocolError');
+      return directoryIdentity(text.slice(0, -1));
+    };
+    return { worktree: await identity(['rev-parse', '--show-toplevel']), gitDirectory: await identity(['rev-parse', '--absolute-git-dir']),
+      commonDirectory: await identity(['rev-parse', '--path-format=absolute', '--git-common-dir']) };
+  };
+  const anchor = await identify(root.identity.canonicalPath);
+  let repository = anchor;
+  if (worktree !== null) {
+    const path = await realpath(worktree);
+    const listed = gitText(await run(anchor.worktree.canonicalPath, ['worktree', 'list', '--porcelain', '-z']))
+      .split('\0').filter(field => field.startsWith('worktree ')).map(field => field.slice('worktree '.length));
+    const advertised = await Promise.all(listed.map(path => realpath(path)));
+    const loaded = operation.snapshot.roots.some(root => contains(root.identity.canonicalPath, path));
+    const advertisingCheckoutLoaded = advertised.some(path => operation.snapshot.roots.some(root => contains(root.identity.canonicalPath, path)));
+    if (!advertised.includes(path) || !loaded && !advertisingCheckoutLoaded) throw new WorkspaceFailure('gitRepositoryDenied');
+    repository = await identify(path);
+    if (repository.worktree.canonicalPath !== path || canonicalJSON(repository.commonDirectory) !== canonicalJSON(anchor.commonDirectory)) {
+      throw new WorkspaceFailure('gitRepositoryDenied');
+    }
+  }
+  const access = await operation.openGitSourceAccess(repository.worktree);
+  const permits = (path: string) => {
+    if (!pathValidator.Check(path)) throw new WorkspaceFailure('gitProtocolError');
+    return !deniedAbsolutePath(operation.declaration, join(repository.worktree.canonicalPath, path), join(anchor.worktree.canonicalPath, path));
+  };
+  const revalidate = async () => {
+    if (canonicalJSON(await identify(root.identity.canonicalPath)) !== canonicalJSON(anchor) ||
+        canonicalJSON(await identify(repository.worktree.canonicalPath)) !== canonicalJSON(repository)) throw new WorkspaceFailure('gitRepositoryChanged');
+    if (worktree !== null) {
+      const listed = gitText(await run(anchor.worktree.canonicalPath, ['worktree', 'list', '--porcelain', '-z']))
+        .split('\0').filter(field => field.startsWith('worktree ')).map(field => field.slice('worktree '.length));
+      if (!listed.includes(repository.worktree.canonicalPath)) throw new WorkspaceFailure('gitRepositoryChanged');
+    }
+  };
+  return { executable: configured.executable, repository, access, permits, revalidate };
+}

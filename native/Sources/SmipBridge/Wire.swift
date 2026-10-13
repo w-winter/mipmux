@@ -248,6 +248,8 @@ enum Operation {
         case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": return try .git(.show(GitShowInput(value)))
         case "parseGitComparison", "normalizeGitDiffPaths", "projectGitDiff":
             return try .git(.diff(GitDiffInput(value)))
+        case "prepareGitDiff", "parseGitDiffStats", "normalizeGitUntrackedPatch":
+            return try .git(.acquisition(GitDiffAcquisitionInput(value)))
         case "parseGitPatch": return try .git(.patch(GitPatchInput(value)))
         case "prepareGitRead", "projectGitRead": return try .git(.read(GitReadInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))

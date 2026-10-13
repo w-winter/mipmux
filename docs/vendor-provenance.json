@@ -5066,6 +5066,29 @@
         "Retain original Git pathspec normalization with internal visibility; use the existing retained StandardizedPath dependency.",
         "Omit unrelated selection/snapshot path helpers and replace the outer closing delimiter for the retained subset. Native inputs are captured pathspec lists, not access authority."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCommands.swift",
+      "sha256": "9b837eb26395f6c111fa07ae893837ede3a222bfcf071b1d1a891f072c26611b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          3833,
+          3876
+        ],
+        [
+          3124,
+          3142
+        ]
+      ],
+      "changes": [
+        "Retain original six-case diff command-prefix/ref selection and batched untracked header normalization under an internal native owner.",
+        "Capture numstat/name-status/body argument arrays rather than executing app processes; reuse retained command flags, including the established no-textconv restriction.",
+        "Represent captured commands with a named struct; scoped SwiftLint cyclomatic exemption retains source diffArgs branches while CCCC remains enabled. Apply SwiftFormat layout."
+      ]
     }
   ],
   "dependencies": [
@@ -10678,6 +10701,24 @@
       "line": 120,
       "source": "Sources/RepoPromptFoundation/Utilities/WorkspacePathNormalizations.swift",
       "destination": "native/Sources/SmipBridge/RPCEGitDiffPathNormalization.swift"
+    },
+    {
+      "name": "DiffStatKind",
+      "line": 3833,
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCommands.swift"
+    },
+    {
+      "name": "diffArgs",
+      "line": 3838,
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCommands.swift"
+    },
+    {
+      "name": "normalizeBatchedUntrackedDiffPaths",
+      "line": 3124,
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffCommands.swift"
     }
   ],
   "sourceCoverage": [

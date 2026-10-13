@@ -100,11 +100,13 @@ test('public Git log/blame use the nearest owning checkout, retain source fields
 
 test('real scripted SDK scout can inspect Git through the allowed tool boundary and publish without app access', async () => {
   const f = await fixture();
+  await writeFile(join(f.root, 'file.txt'), 'one é\ntwo\nthree\nSDK_DIFF_EVIDENCE\n');
   const provider = await scriptedProvider((_summary, index) => index === 1
     ? { kind: 'tool', name: 'git', input: { op: 'status', root: 'r', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 2 ? { kind: 'tool', name: 'git', input: { op: 'log', root: 'r', count: 1, maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 3 ? { kind: 'tool', name: 'git', input: { op: 'blame', root: 'r', path: 'file.txt', lines: '1-2', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 4 ? { kind: 'tool', name: 'git', input: { op: 'show', root: 'r', ref: 'HEAD', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
+    : index === 5 ? { kind: 'tool', name: 'git', input: { op: 'diff', root: 'r', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
   const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
   try {
@@ -116,6 +118,7 @@ test('real scripted SDK scout can inspect Git through the allowed tool boundary 
     assert(provider.requests.every(request => request.tools.includes('git')));
     const returned = JSON.stringify(provider.requests.at(-1)?.messages);
     assert(returned.includes('second')); assert(returned.includes('one é')); assert(returned.includes('status'));
+    assert(returned.includes('SDK_DIFF_EVIDENCE')); assert(returned.includes('"op":"diff"'));
     assert(!returned.includes('Invalid arguments'), 'The scout status request must pass the real tool schema');
     await writeFile(join(f.base, 'sdk-receipt.json'), JSON.stringify({ terminal, requests: provider.requests }, null, 2) + '\n');
   } finally { await runtime.close(); await provider.close(); }
