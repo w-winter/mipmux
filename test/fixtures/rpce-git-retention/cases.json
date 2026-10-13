@@ -1,0 +1,664 @@
+[
+  {
+    "name": "publish-count",
+    "operation": {
+      "kind": "published"
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/00",
+        "generatedAt": 1699999974,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/01",
+        "generatedAt": 1699999975,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/02",
+        "generatedAt": 1699999976,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/03",
+        "generatedAt": 1699999977,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/04",
+        "generatedAt": 1699999978,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/05",
+        "generatedAt": 1699999979,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/06",
+        "generatedAt": 1699999980,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/07",
+        "generatedAt": 1699999981,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/08",
+        "generatedAt": 1699999982,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/09",
+        "generatedAt": 1699999983,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/10",
+        "generatedAt": 1699999984,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/11",
+        "generatedAt": 1699999985,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/12",
+        "generatedAt": 1699999986,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/13",
+        "generatedAt": 1699999987,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/14",
+        "generatedAt": 1699999988,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/15",
+        "generatedAt": 1699999989,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/16",
+        "generatedAt": 1699999990,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/17",
+        "generatedAt": 1699999991,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/18",
+        "generatedAt": 1699999992,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/19",
+        "generatedAt": 1699999993,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/20",
+        "generatedAt": 1699999994,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/21",
+        "generatedAt": 1699999995,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/22",
+        "generatedAt": 1699999996,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/23",
+        "generatedAt": 1699999997,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/24",
+        "generatedAt": 1699999998,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/25",
+        "generatedAt": 1699999999,
+        "tabID": null
+      }
+    ],
+    "expected": {
+      "name": "publish-count",
+      "pointers": [
+        {
+          "link": "dated/24",
+          "readCurrent": "dated/24",
+          "repoKey": "a"
+        },
+        {
+          "link": "dated/25",
+          "readCurrent": "dated/25",
+          "repoKey": "b"
+        }
+      ],
+      "remaining": [
+        "a/dated/02",
+        "a/dated/04",
+        "a/dated/06",
+        "a/dated/08",
+        "a/dated/10",
+        "a/dated/12",
+        "a/dated/14",
+        "a/dated/16",
+        "a/dated/18",
+        "a/dated/20",
+        "a/dated/22",
+        "a/dated/24",
+        "b/dated/01",
+        "b/dated/03",
+        "b/dated/05",
+        "b/dated/07",
+        "b/dated/09",
+        "b/dated/11",
+        "b/dated/13",
+        "b/dated/15",
+        "b/dated/17",
+        "b/dated/19",
+        "b/dated/21",
+        "b/dated/23",
+        "b/dated/25"
+      ],
+      "result": {}
+    }
+  },
+  {
+    "name": "publish-ties",
+    "operation": {
+      "kind": "published"
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/00",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/01",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/02",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/03",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/04",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/05",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/06",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/07",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/08",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/09",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/10",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/11",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/12",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/13",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/14",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/15",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/16",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/17",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/18",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/19",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/20",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/21",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/22",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/23",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/24",
+        "generatedAt": 1700000000,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/25",
+        "generatedAt": 1700000000,
+        "tabID": null
+      }
+    ],
+    "expected": {
+      "name": "publish-ties",
+      "pointers": [
+        {
+          "link": "dated/04",
+          "readCurrent": "dated/04",
+          "repoKey": "a"
+        },
+        {
+          "link": "dated/25",
+          "readCurrent": "dated/25",
+          "repoKey": "b"
+        }
+      ],
+      "remaining": [
+        "a/dated/02",
+        "a/dated/04",
+        "a/dated/06",
+        "a/dated/08",
+        "a/dated/10",
+        "a/dated/12",
+        "a/dated/14",
+        "a/dated/16",
+        "a/dated/18",
+        "a/dated/20",
+        "a/dated/22",
+        "a/dated/24",
+        "b/dated/01",
+        "b/dated/03",
+        "b/dated/05",
+        "b/dated/07",
+        "b/dated/09",
+        "b/dated/11",
+        "b/dated/13",
+        "b/dated/15",
+        "b/dated/17",
+        "b/dated/19",
+        "b/dated/21",
+        "b/dated/23",
+        "b/dated/25"
+      ],
+      "result": {}
+    }
+  },
+  {
+    "name": "publish-keeps-old-age",
+    "operation": {
+      "kind": "published"
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/00",
+        "generatedAt": 1699308800,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/01",
+        "generatedAt": 1699308800,
+        "tabID": null
+      }
+    ],
+    "expected": {
+      "name": "publish-keeps-old-age",
+      "pointers": [
+        {
+          "link": "dated/00",
+          "readCurrent": "dated/00",
+          "repoKey": "a"
+        },
+        {
+          "link": "dated/01",
+          "readCurrent": "dated/01",
+          "repoKey": "b"
+        }
+      ],
+      "remaining": [
+        "a/dated/00",
+        "b/dated/01"
+      ],
+      "result": {}
+    }
+  },
+  {
+    "name": "open-age",
+    "operation": {
+      "kind": "opened",
+      "lastCleanupAt": 1699974800
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/old",
+        "generatedAt": 1699308800,
+        "tabID": null
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/recent",
+        "generatedAt": 1699481600,
+        "tabID": null
+      }
+    ],
+    "expected": {
+      "name": "open-age",
+      "pointers": [
+        {
+          "link": "dated/recent",
+          "readCurrent": "dated/recent",
+          "repoKey": "a"
+        }
+      ],
+      "remaining": [
+        "a/dated/recent"
+      ],
+      "result": {
+        "excessDeleted": 0,
+        "expiredDeleted": 1
+      }
+    }
+  },
+  {
+    "name": "open-throttled",
+    "operation": {
+      "kind": "opened",
+      "lastCleanupAt": 1699982000
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/old",
+        "generatedAt": 1699308800,
+        "tabID": null
+      }
+    ],
+    "expected": {
+      "name": "open-throttled",
+      "pointers": [
+        {
+          "link": "dated/old",
+          "readCurrent": "dated/old",
+          "repoKey": "a"
+        }
+      ],
+      "remaining": [
+        "a/dated/old"
+      ],
+      "result": {
+        "excessDeleted": 0,
+        "expiredDeleted": 0
+      }
+    }
+  },
+  {
+    "name": "close-batch",
+    "operation": {
+      "kind": "closed",
+      "tabIDs": [
+        "11111111-1111-4111-8111-111111111111"
+      ]
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/00",
+        "generatedAt": 1699999995,
+        "tabID": "22222222-2222-4222-8222-222222222222"
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/01",
+        "generatedAt": 1699999996,
+        "tabID": "11111111-1111-4111-8111-111111111111"
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/02",
+        "generatedAt": 1699999997,
+        "tabID": "22222222-2222-4222-8222-222222222222"
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/03",
+        "generatedAt": 1699999998,
+        "tabID": "11111111-1111-4111-8111-111111111111"
+      },
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/04",
+        "generatedAt": 1699999999,
+        "tabID": "22222222-2222-4222-8222-222222222222"
+      }
+    ],
+    "expected": {
+      "name": "close-batch",
+      "pointers": [
+        {
+          "link": "dated/04",
+          "readCurrent": "dated/04",
+          "repoKey": "a"
+        },
+        {
+          "link": "dated/03",
+          "readCurrent": null,
+          "repoKey": "b"
+        }
+      ],
+      "remaining": [
+        "a/dated/00",
+        "a/dated/02",
+        "a/dated/04"
+      ],
+      "result": {
+        "deleted": 2
+      }
+    }
+  },
+  {
+    "name": "close-last",
+    "operation": {
+      "kind": "closed",
+      "tabIDs": [
+        "11111111-1111-4111-8111-111111111111"
+      ]
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/only",
+        "generatedAt": 1700000000,
+        "tabID": "11111111-1111-4111-8111-111111111111"
+      }
+    ],
+    "expected": {
+      "name": "close-last",
+      "pointers": [
+        {
+          "link": "dated/only",
+          "readCurrent": null,
+          "repoKey": "a"
+        }
+      ],
+      "remaining": [],
+      "result": {
+        "deleted": 1
+      }
+    }
+  },
+  {
+    "name": "close-empty-owner-set",
+    "operation": {
+      "kind": "closed",
+      "tabIDs": []
+    },
+    "entries": [
+      {
+        "repoKey": "a",
+        "snapshotID": "dated/00",
+        "generatedAt": 1699999998,
+        "tabID": null
+      },
+      {
+        "repoKey": "b",
+        "snapshotID": "dated/01",
+        "generatedAt": 1699999999,
+        "tabID": null
+      }
+    ],
+    "expected": {
+      "name": "close-empty-owner-set",
+      "pointers": [
+        {
+          "link": "dated/00",
+          "readCurrent": "dated/00",
+          "repoKey": "a"
+        },
+        {
+          "link": "dated/01",
+          "readCurrent": "dated/01",
+          "repoKey": "b"
+        }
+      ],
+      "remaining": [
+        "a/dated/00",
+        "b/dated/01"
+      ],
+      "result": {
+        "deleted": 0
+      }
+    }
+  }
+]
