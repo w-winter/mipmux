@@ -16,6 +16,8 @@ import type { DiscoveryRunner } from '../discovery/runner.js';
 import { ClientRuntime } from './client-runtime.js';
 import { preparedClipboardInput } from '../context/clipboard.js';
 import { finalFileTreeInput } from '../context/final-tree.js';
+import type { RootIdentity } from '../contracts/workspace.js';
+import { observe } from '../workspace/observe.js';
 
 export interface RuntimeOptions {
   /** User-owned maximum packet allowance in utf8-21-over-80-v1 units; larger request allowances are rejected. */
@@ -39,6 +41,7 @@ export class SmipRuntime {
   readonly #admissions = new Set<Promise<unknown>>();
   readonly #drafts = new Set<DraftRuntime>();
   readonly #clients = new Set<ClientRuntime>();
+  readonly #snapshotMutations = new Map<string, Promise<void>>();
   readonly #shutdown = new AbortController();
   #closing: Promise<void> | null = null;
   constructor(readonly options: RuntimeOptions) {
@@ -54,6 +57,25 @@ export class SmipRuntime {
   }
   makeBridge(): BridgeClient {
     return new BridgeClient({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
+  }
+  /** Serializes mutations of one captured output root. Queued cancellation releases its caller without bypassing earlier work. */
+  mutateGitSnapshots<T>(root: RootIdentity, signal: AbortSignal, mutation: (signal: AbortSignal) => Promise<T>): Promise<T> {
+    if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
+    const combined = AbortSignal.any([signal, this.#shutdown.signal]);
+    const key = canonicalJSON([root.canonicalPath, root.device, root.inode]);
+    const previous = this.#snapshotMutations.get(key) ?? Promise.resolve();
+    process.stderr.write(JSON.stringify({ level: 'debug', event: 'snapshotMutationQueued', outputKey: sha256(key) }) + '\n');
+    const work = (async () => {
+      await observe(previous, combined);
+      combined.throwIfAborted();
+      return mutation(combined);
+    })();
+    const settled = Promise.allSettled([previous, work]).then(() => {});
+    this.#snapshotMutations.set(key, settled);
+    this.#admissions.add(work);
+    void work.then(() => this.#admissions.delete(work), () => this.#admissions.delete(work));
+    void settled.then(() => { if (this.#snapshotMutations.get(key) === settled) this.#snapshotMutations.delete(key); });
+    return work;
   }
   /** Owns captured tree/clipboard rendering, including observations after workspace lease release. */
   renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' }>>(input: O, signal: AbortSignal) {
@@ -103,13 +125,18 @@ export class SmipRuntime {
       let owner = this.#owners.get(key);
       if (!owner) {
         await this.artifacts.readMembership(key);
-        // Recheck after disk I/O so concurrent declarations adopt one owner.
-        signal.throwIfAborted(); owner = this.#owners.get(key);
-        if (!owner) {
-          owner = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => this.#owners.delete(key),
+        owner = await this.mutateGitSnapshots(outputRoot.identity, signal, async combined => {
+          const existing = this.#owners.get(key);
+          if (existing) return existing;
+          const maintenance = await bridge.request({ kind: 'maintainGitSnapshots', root: outputRoot.handle, action: { kind: 'opened' } }, combined);
+          combined.throwIfAborted();
+          process.stderr.write(JSON.stringify({ level: 'info', event: 'workspaceSnapshotMaintenanceCompleted', workspaceKey: key,
+            outcome: maintenance.result.outcome }) + '\n');
+          const admitted = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => this.#owners.delete(key),
             () => this.makeBridge(), this.#shutdown.signal);
-          this.#owners.set(key, owner); adopted = true;
-        }
+          this.#owners.set(key, admitted); adopted = true;
+          return admitted;
+        });
       }
       const handle = new WorkspaceHandle(this, owner, owner.retain());
       if (adopted) owner.warm();
