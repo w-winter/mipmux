@@ -24,6 +24,14 @@
     {
       "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
       "sha256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Utilities/WorkspacePathNormalizations.swift",
+      "sha256": "d77d7af8e1d933df0530b8bea19b603581889c98b217b8213564f5635a9ce3a1"
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239"
     }
   ],
   "bindings": [
@@ -31,8 +39,9 @@
     "Compile original diff DTO projection and hunk-aware truncation. The original DTO/VCS records and parser bodies execute independently; desktop worker and telemetry calls are inert wrappers only.",
     "Apply the original provider lowercase detail, single-path single-repository upgrade and 300-line versus Int.max policy before projecting.",
     "Reference inputs capture changed-file records and per-file patch dictionaries after Git acquisition. They do not establish repository/pathspec resolution, untracked reads, artifacts, source text formatting or public diff integration.",
-    "The existing NSString literal-LF binding in production preserves Darwin outputs on Linux. No fixture patch bodies or output fields are normalized."
+    "The existing NSString literal-LF binding in production preserves Darwin outputs on Linux. No fixture patch bodies or output fields are normalized.",
+    "Compile original GitDiffPathNormalization methods with the original StandardizedPath dependency. Authored relative Git syntax remains raw; absolute-derived paths are normalized and literalized. Inputs are collected pathspecs, not workspace authorization proofs."
   ],
-  "cases": 32,
-  "generatorSHA256": "9b450be2912819e9a72030b3fd1b1edac5fc43f57932f19fc1b73b38b0d137ef"
+  "cases": 40,
+  "generatorSHA256": "ce2a69cda34b83ea7cbc93caf46338f0eb301fe763f11a39c55d18552df50b8f"
 }

@@ -246,7 +246,8 @@ enum Operation {
         case "selectionHint": return try .selection(.hint(SelectionHintInput(value)))
         case "renderSelectionReply": return try .selection(.reply(SelectionReplyInput(value)))
         case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": return try .git(.show(GitShowInput(value)))
-        case "parseGitComparison", "projectGitDiff": return try .git(.diff(GitDiffInput(value)))
+        case "parseGitComparison", "normalizeGitDiffPaths", "projectGitDiff":
+            return try .git(.diff(GitDiffInput(value)))
         case "parseGitPatch": return try .git(.patch(GitPatchInput(value)))
         case "prepareGitRead", "projectGitRead": return try .git(.read(GitReadInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))

@@ -12,6 +12,7 @@ struct GitDiffInput {
 
     private enum Work {
         case comparison(String?)
+        case paths([String], String)
         case projection(Projection)
     }
 
@@ -25,6 +26,12 @@ struct GitDiffInput {
         if kind == "parseGitComparison" {
             let fields = try WireObject(value, keys: ["kind", "raw"])
             work = try .comparison(fields.value("raw") is NSNull ? nil : fields.string("raw"))
+        } else if kind == "normalizeGitDiffPaths" {
+            let fields = try WireObject(value, keys: ["kind", "paths", "repoRootPath"])
+            guard let paths = try fields.value("paths") as? [String] else {
+                throw BridgeFailure("nativeProtocolError")
+            }
+            work = try .paths(paths, fields.string("repoRootPath"))
         } else {
             let fields = try WireObject(value, keys: [
                 "kind", "compare", "detail", "pathspecCount", "isMultiRepo", "changedFiles", "perFilePatches"
@@ -65,6 +72,10 @@ struct GitDiffInput {
             let bytes = try JSONEncoder().encode(comparison)
             return try ["kind": "gitComparison", "comparison": decodeWireJSON(bytes),
                         "rawKey": comparison.rawKey, "display": comparison.displayString]
+        case let .paths(paths, root):
+            return ["kind": "gitDiffPaths",
+                    "paths": GitDiffPathNormalization.gitPathspecs(from: paths, repoRootPath: root),
+                    "pathspecs": GitDiffPathNormalization.gitDiscoveryPathspecs(from: paths, repoRootPath: root)]
         case let .projection(input):
             let effectiveDetail: String = if input.pathspecCount == 1, input.detail == "summary", !input.isMultiRepo {
                 "patches"

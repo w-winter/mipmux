@@ -3,20 +3,21 @@ import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
-import Type from 'typebox';
+import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { NativeResult, type NativeOperation } from '../src/contracts/native.js';
+import { NativeResult } from '../src/contracts/native.js';
 const input = Type.Union([
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }),
+  Type.Object({ kind: Type.Literal('normalizeGitDiffPaths'), paths: Type.Array(Type.String()), repoRootPath: Type.String() }),
   Type.Object({ kind: Type.Literal('projectGitDiff'), compare: Type.String(), detail: Type.String(), pathspecCount: Type.Integer(),
     isMultiRepo: Type.Boolean(), changedFiles: Type.Array(Type.Object({ path: Type.String(), status: Type.String(),
       additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) })),
     perFilePatches: Type.Union([Type.Record(Type.String(), Type.String()), Type.Null()]) }),
 ]);
-type ProjectionInput = Extract<NativeOperation, { kind: 'parseGitComparison' | 'projectGitDiff' }>;
+type ProjectionInput = Static<typeof input>;
 const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input, expected: Type.Unknown() })));
 const envelope = Compile(Type.Object({ result: NativeResult }));
-test('native comparison parsing and diff DTO/truncation preserve original RPCE outputs', async () => {
+test('native comparison, pathspec normalization and diff projection preserve original RPCE outputs', async () => {
   const cases = fixtures.Parse(JSON.parse(await readFile('test/fixtures/rpce-git-diff/cases.json', 'utf8')));
   const proof: unknown[] = [];
   const call = (operation: ProjectionInput) => {

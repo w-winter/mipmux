@@ -1027,5 +1027,190 @@
       },
       "kind": "gitDiff"
     }
+  },
+  {
+    "name": "authored_globs_and_exclusions",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "*.swift",
+        ":(glob)**/*.swift",
+        ":(exclude)secret/**",
+        ":!private/**"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "*.swift",
+        ":(glob)**/*.swift",
+        ":(exclude)secret/**",
+        ":!private/**"
+      ],
+      "pathspecs": [
+        "*.swift",
+        ":(glob)**/*.swift",
+        ":(exclude)secret/**",
+        ":!private/**"
+      ]
+    }
+  },
+  {
+    "name": "absolute_literal_and_root",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "/checkout/literal*.swift",
+        "/checkout/space name.swift",
+        "/checkout"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "literal*.swift",
+        "space name.swift",
+        "."
+      ],
+      "pathspecs": [
+        ":(literal)literal*.swift",
+        ":(literal)space name.swift",
+        ":(literal)."
+      ]
+    }
+  },
+  {
+    "name": "mixed_deduplication",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "file.swift",
+        "/checkout/file.swift",
+        "file.swift",
+        "/checkout/file.swift"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "file.swift"
+      ],
+      "pathspecs": [
+        "file.swift",
+        ":(literal)file.swift"
+      ]
+    }
+  },
+  {
+    "name": "checkout_boundary",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "/checkout-neighbor/no.swift",
+        "/outside/no.swift",
+        "/checkout/yes.swift"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "yes.swift"
+      ],
+      "pathspecs": [
+        ":(literal)yes.swift"
+      ]
+    }
+  },
+  {
+    "name": "unicode_absolute_relative",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "/checkout/café.swift",
+        "/checkout/café.swift",
+        "café.swift",
+        "café.swift"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "café.swift"
+      ],
+      "pathspecs": [
+        ":(literal)café.swift",
+        "café.swift"
+      ]
+    }
+  },
+  {
+    "name": "filesystem_root",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "/dir/file.swift",
+        "/"
+      ],
+      "repoRootPath": "/"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "dir/file.swift",
+        "."
+      ],
+      "pathspecs": [
+        ":(literal)dir/file.swift",
+        ":(literal)."
+      ]
+    }
+  },
+  {
+    "name": "invalid_and_blank",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "  ",
+        "bad\u0000path",
+        "  keep.swift  ",
+        "/checkout/keep.swift"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "keep.swift"
+      ],
+      "pathspecs": [
+        "keep.swift",
+        ":(literal)keep.swift"
+      ]
+    }
+  },
+  {
+    "name": "absolute_parent_normalization",
+    "input": {
+      "kind": "normalizeGitDiffPaths",
+      "paths": [
+        "/checkout/one/../two.swift",
+        "/checkout/../outside.swift"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "two.swift"
+      ],
+      "pathspecs": [
+        ":(literal)two.swift"
+      ]
+    }
   }
 ]

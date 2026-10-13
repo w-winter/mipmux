@@ -9,6 +9,7 @@ const resultKinds = {
   captureIgnoreInputs: ['ignoreInputs'], queryIgnoreHierarchy: ['ignoreHierarchy'],
   queryIgnoreRules: ['ignoreRules'],
   parseGitPatch: ['gitPatch'], parseGitComparison: ['gitComparison'], projectGitDiff: ['gitDiff'],
+  normalizeGitDiffPaths: ['gitDiffPaths'],
   prepareGitShow: ['gitShowArguments', 'gitShowError'], parseGitShowMetadata: ['gitShowMetadata', 'gitShowError'], projectGitShow: ['gitShow'],
   describe: ['description'], openRoots: ['rootsOpened'], listDirectory: ['directoryComplete'],
   prepareGitRead: ['gitReadArguments'], projectGitRead: ['gitLog', 'gitBlame', 'gitStatus', 'gitStatusError'],

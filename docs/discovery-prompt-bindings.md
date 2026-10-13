@@ -102,7 +102,9 @@ Literal LF splitting in `GitDiffPatchParsing` calls `NSString` on both platforms
 
 `projectGitDiff` consumes captured changed-file records and per-file patches. It uses the source diff DTO, status totals, summary text and hunk-aware truncation. Summary detail upgrades to patches for one path in one repository. Patches use the source 300-line allowance; full detail retains complete hunks. Binary counts, empty patch dictionaries and omitted hunks follow the source projection. Git projections use the closed `GitOperation` enum in the native dispatcher, matching the existing selection-operation grouping.
 
-`test/fixtures/rpce-git-diff/` contains 32 outputs generated from the original comparison, provider-policy and projection functions. `scripts/generate-git-diff-fixtures.mjs` regenerates them. These fixtures supply captured inputs to the native policy; repository resolution, acquisition and selected-artifact behavior require their own integration evidence.
+`normalizeGitDiffPaths` executes RPCE's Git pathspec normalization. Its `paths` result contains normalized requested paths; `pathspecs` contains the command arguments. Relative inputs retain Git glob, magic and exclusion syntax. Absolute inputs under the checkout are standardized, NFC-normalized and prefixed with `:(literal)`. Duplicate results retain first-occurrence order; absolute inputs outside the checkout, blank inputs and NUL-containing inputs are omitted. Normalization is separate from repository admission and authorization of both rename/copy endpoints before acquiring bodies.
+
+`test/fixtures/rpce-git-diff/` contains 40 outputs generated from the original comparison, pathspec, provider-policy and projection functions. `scripts/generate-git-diff-fixtures.mjs` regenerates them. These fixtures supply captured inputs to the native policy; repository resolution, acquisition and selected-artifact behavior require their own integration evidence.
 
 ## Native ignore-policy snapshots
 

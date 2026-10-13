@@ -28,6 +28,9 @@ enum EditFlowPerf {
     static func end(_ stage: String, _ state: Int?, _ dimensions: Dimensions = Dimensions()) {}
 }
 ${sources[0].join('\n').replaceAll('public ', '')}
+${sources[7].join('\n').replaceAll('package ', '')}
+${lines(6, 78, 157).replaceAll('package ', '')}
+}
 ${lines(3, 70, 96).replaceAll('public ', '')}
 ${sources[4].join('\n').replaceAll('package ', '').replace('import RepoPromptFileSystem\n', '')}
 struct Reply {
@@ -46,6 +49,8 @@ struct Input: Codable {
     let isMultiRepo: Bool?
     let changedFiles: [File]?
     let perFilePatches: [String: String]?
+    let paths: [String]?
+    let repoRootPath: String?
 }
 struct Fixture: Codable { let name: String; let input: Input }
 let cases = try JSONDecoder().decode([Fixture].self, from: FileHandle.standardInput.readDataToEndOfFile())
@@ -56,6 +61,11 @@ for entry in cases {
         let comparison = GitDiffCompareSpec.parse(entry.input.raw)
         result = ["kind": "gitComparison", "comparison": try JSONSerialization.jsonObject(with: JSONEncoder().encode(comparison)),
             "rawKey": comparison.rawKey, "display": comparison.displayString]
+    } else if entry.input.kind == "normalizeGitDiffPaths" {
+        let paths = entry.input.paths!
+        let root = entry.input.repoRootPath!
+        result = ["kind": "gitDiffPaths", "paths": GitDiffPathNormalization.gitPathspecs(from: paths, repoRootPath: root),
+            "pathspecs": GitDiffPathNormalization.gitDiscoveryPathspecs(from: paths, repoRootPath: root)]
     } else {
         let pathCount = entry.input.pathspecCount!
         let isMultiRepo = entry.input.isMultiRepo!
