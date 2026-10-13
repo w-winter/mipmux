@@ -8,6 +8,8 @@ type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
   fingerprintGitDiff: ['gitDiffFingerprint'],
   beginGitSnapshot: ['gitSnapshotOpened'], writeGitSnapshotFile: ['gitSnapshotFileWritten'],
+  readGitSnapshotCurrent: ['gitSnapshotCurrent'], writeGitSnapshotCurrent: ['gitSnapshotCurrentWritten'],
+  readGitSnapshotFile: ['gitSnapshotRead'],
   serializeGitSnapshot: ['gitSnapshotBytes'],
   electGitTarget: ['gitTarget'],
   revalidateGitTargets: ['gitTargetValidation'],
@@ -184,9 +186,13 @@ export class BridgeClient {
       if (result.key && sha256(decodeBase64(result.key.canonicalBase64)) !== result.key.digest) throw new Error('key digest mismatch');
       if (result.kind === 'extracted' && (result.outcome.kind === 'ready') !== (result.projection !== null)) throw new Error('projection mismatch');
     }
-    if (result.kind === 'exportRead') {
+    if (result.kind === 'exportRead' || result.kind === 'gitSnapshotRead') {
       const content = decodeBase64(result.bytes);
       if (content.length !== result.identity.byteCount || sha256(content) !== result.identity.sha256) throw new Error('export identity mismatch');
+    }
+    if (result.kind === 'gitSnapshotCurrentWritten' && result.pointer.kind === 'file') {
+      process.stderr.write(JSON.stringify({ level: 'warn', event: 'gitCurrentSymlinkFailed', generation: this.#generation,
+        requestId: pending.id, errno: result.pointer.symlinkErrno }) + '\n');
     }
   }
 

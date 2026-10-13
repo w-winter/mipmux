@@ -46,7 +46,9 @@ test('snapshot filesystem boundary preserves ordered bytes, rejects traversal an
         saved.set(file.path, file.bytes);
       }
       for (const [path, bytes] of saved) assert.deepEqual(await readFile(join(output, opened.result.relativePath, path)), Buffer.from(bytes, 'base64'));
-      await assert.rejects(bridge.request({ kind: 'beginGitSnapshot', root: destination.handle, repoKey: 'fixture-repo', snapshotID }, signal()), /alreadyExists/);
+      const replaced: NativeReply<'beginGitSnapshot'> = await bridge.request({ kind: 'beginGitSnapshot', root: destination.handle, repoKey: 'fixture-repo', snapshotID }, signal());
+      assert.deepEqual(await readdir(join(output, replaced.result.relativePath)), []);
+      await assert.rejects(bridge.request({ kind: 'writeGitSnapshotFile', run: opened.result.run, path: 'stale.txt', bytes: '' }, signal()), /outputChanged/);
       proof.push({ name: fixture.name, opened: opened.result, files: [...saved.keys()] });
     }
     const failed = await bridge.request({ kind: 'beginGitSnapshot', root: destination.handle, repoKey: 'fixture-repo', snapshotID: 'failure' }, signal());

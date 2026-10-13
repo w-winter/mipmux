@@ -330,15 +330,20 @@ final class ConfinedFiles {
         return ["kind": "exportOpened", "run": NativeHandle(generation: generation, id: id).json]
     }
 
-    func beginGitSnapshot(_ handle: NativeHandle, repoKey: String, snapshotID: String) throws -> [String: Any] {
+    func beginGitSnapshot(_ handle: NativeHandle, repoKey: String, snapshotID: String?) throws -> [String: Any] {
         let root = try lookupRoot(handle)
         guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
-        guard try components(repoKey).count == 1,
-              let normalized = GitDiffSnapshotStore.normalizeSnapshotID(snapshotID)
+        let repoParts = try snapshotRepoComponents(repoKey)
+        let repository = try createDirectories(root.directory.value, components: repoParts)
+        let selected = try RPCEGitSnapshotNaming().resolveSnapshotID(override: snapshotID) { id in
+            try self.snapshotExists(repository.value, id: id)
+        }
+        guard let normalized = GitDiffSnapshotStore.normalizeSnapshotID(selected)
         else { throw BridgeFailure("invalidPath") }
-        let parts = try components("_git_data/repos/" + repoKey + "/" + normalized)
-        let parent = try createDirectories(root.directory.value, components: Array(parts.dropLast()))
+        let idParts = try components(normalized), parts = repoParts + idParts
+        let parent = try createDirectories(repository.value, components: Array(idParts.dropLast()))
         let leaf = parts[parts.count - 1]
+        try removeSnapshotEntry(parent.value, name: leaf)
         guard mkdirat(parent.value, leaf, 0o700) == 0 else { throw ioFailure() }
         let directory = try traverse(parent.value, components: [leaf])
         let info = try status(directory.value)
@@ -348,14 +353,84 @@ final class ConfinedFiles {
         try validate(run)
         runs[id] = .gitSnapshot(run)
         return ["kind": "gitSnapshotOpened", "run": NativeHandle(generation: generation, id: id).json,
-                "relativePath": parts.joined(separator: "/")]
+                "relativePath": parts.joined(separator: "/"), "snapshotID": normalized]
+    }
+
+    func writeGitSnapshotCurrent(_ handle: NativeHandle) throws -> [String: Any] {
+        let run = try lookupSnapshotRun(handle)
+        let repository = try traverse(run.root.directory.value, components: Array(run.name.prefix(3)))
+        let snapshotID = run.name.dropFirst(3).joined(separator: "/")
+        var info = stat()
+        if fstatat(repository.value, "CURRENT", &info, AT_SYMLINK_NOFOLLOW) == 0 {
+            guard info.st_mode & mode_t(S_IFMT) != mode_t(S_IFDIR) else { throw BridgeFailure("nonRegularFile") }
+            guard unlinkat(repository.value, "CURRENT", 0) == 0 else { throw ioFailure() }
+        } else if errno != ENOENT { throw ioFailure() }
+        let pointer: [String: Any]
+        if symlinkat(snapshotID, repository.value, "CURRENT") != 0 {
+            let failure = errno
+            try writeAtomic(repository.value, filename: "CURRENT", bytes: Data(snapshotID.utf8))
+            pointer = ["kind": "file", "symlinkErrno": failure]
+        } else {
+            pointer = ["kind": "symlink"]
+        }
+        try validate(run)
+        return ["kind": "gitSnapshotCurrentWritten", "snapshotID": snapshotID, "pointer": pointer]
+    }
+
+    func readGitSnapshotCurrent(_ handle: NativeHandle, repoKey: String) throws -> [String: Any] {
+        let root = try lookupRoot(handle)
+        guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        let repoParts = try snapshotRepoComponents(repoKey)
+        let pointer: CapturedGitSnapshotPointer
+        do {
+            let repository = try traverse(root.directory.value, components: repoParts)
+            pointer = try readSnapshotPointer(repository.value)
+            let repoPath = URL(fileURLWithPath: root.identity.canonicalPath)
+                .appendingPathComponent(repoParts.joined(separator: "/")).path
+            if let raw = RPCEGitSnapshotPointer().readCurrentPointer(pointer, relativeTo: repoPath) {
+                guard let normalized = GitDiffSnapshotStore.normalizeSnapshotID(raw) else {
+                    throw BridgeFailure("invalidPath")
+                }
+                let exists: Bool
+                if case .symlink = pointer {
+                    exists = try snapshotExists(repository.value, id: normalized)
+                } else {
+                    exists = true
+                }
+                try validate(root)
+                return ["kind": "gitSnapshotCurrent", "snapshotID": exists ? normalized : NSNull()]
+            }
+        } catch let failure as BridgeFailure where failure.code == "notFound" {
+            try validate(root)
+        }
+        try validate(root)
+        return ["kind": "gitSnapshotCurrent", "snapshotID": NSNull()]
+    }
+
+    func readGitSnapshotFile(
+        _ handle: NativeHandle, repoKey: String, snapshotID: String, path: String
+    ) throws -> [String: Any] {
+        let root = try lookupRoot(handle)
+        guard root.access == "output", let normalized = GitDiffSnapshotStore.normalizeSnapshotID(snapshotID) else {
+            throw BridgeFailure("invalidOutputCapability")
+        }
+        let parts = try snapshotRepoComponents(repoKey) + components(normalized) + components(path)
+        let parent = try traverse(root.directory.value, components: Array(parts.dropLast()))
+        let before = try status(parent.value)
+        let bytes = try readSnapshotBytes(parent.value, name: parts[parts.count - 1])
+        let current = try traverse(root.directory.value, components: Array(parts.dropLast()))
+        let after = try status(current.value)
+        guard before.st_dev == after.st_dev, before.st_ino == after.st_ino else { throw BridgeFailure("outputChanged") }
+        try validate(root)
+        return [
+            "kind": "gitSnapshotRead",
+            "bytes": bytes.base64EncodedString(),
+            "identity": Extraction.identity(bytes).json
+        ]
     }
 
     func writeGitSnapshotFile(_ handle: NativeHandle, path: String, bytes: Data) throws -> [String: Any] {
-        guard handle.generation == generation, case let .gitSnapshot(run) = runs[handle.id] else {
-            throw BridgeFailure("invalidExportHandle")
-        }
-        try validate(run)
+        let run = try lookupSnapshotRun(handle)
         let parts = try components(path), directories = Array(parts.dropLast()), leaf = parts[parts.count - 1]
         let parent = try createDirectories(run.directory.value, components: directories)
         try writeAtomic(parent.value, filename: leaf, bytes: bytes)
@@ -396,6 +471,89 @@ final class ConfinedFiles {
         guard try fingerprint(file.value) == before else { throw BridgeFailure("sourceChanged") }
         try validate(run)
         return ["kind": "exportRead", "bytes": bytes.base64EncodedString(), "identity": Extraction.identity(bytes).json]
+    }
+
+    private func snapshotRepoComponents(_ repoKey: String) throws -> [String] {
+        guard try components(repoKey).count == 1 else { throw BridgeFailure("invalidPath") }
+        return ["_git_data", "repos", repoKey]
+    }
+
+    private func snapshotExists(_ repository: Int32, id: String) throws -> Bool {
+        do {
+            let parts = try components(id)
+            let parent = try traverse(repository, components: Array(parts.dropLast()))
+            var info = stat()
+            if fstatat(parent.value, parts[parts.count - 1], &info, AT_SYMLINK_NOFOLLOW) == 0 { return true }
+            if errno == ENOENT { return false }
+            throw ioFailure()
+        } catch let failure as BridgeFailure where failure.code == "notFound" { return false }
+    }
+
+    private func readSnapshotPointer(_ repository: Int32) throws -> CapturedGitSnapshotPointer {
+        var info = stat()
+        guard fstatat(repository, "CURRENT", &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+        if info.st_mode & mode_t(S_IFMT) == mode_t(S_IFLNK) {
+            var bytes = [UInt8](repeating: 0, count: Int(info.st_size) + 1)
+            let count = readlinkat(repository, "CURRENT", &bytes, bytes.count)
+            guard count >= 0 else { throw ioFailure() }
+            guard count < bytes.count else { throw BridgeFailure("outputChanged") }
+            guard let text = String(data: Data(bytes.prefix(count)), encoding: .utf8) else { return .missing }
+            return .symlink(text)
+        }
+        return try .file(readSnapshotBytes(repository, name: "CURRENT"))
+    }
+
+    private func readSnapshotBytes(_ parent: Int32, name: String) throws -> Data {
+        let file = try Descriptor(openat(parent, name, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC))
+        guard try status(file.value).st_mode & mode_t(S_IFMT) == mode_t(S_IFREG)
+        else { throw BridgeFailure("nonRegularFile") }
+        let before = try fingerprint(file.value)
+        var bytes = Data()
+        try readChunks(file.value) { bytes.append($0) }
+        guard try fingerprint(file.value) == before else { throw BridgeFailure("sourceChanged") }
+        return bytes
+    }
+
+    private func removeSnapshotEntry(_ parent: Int32, name: String) throws {
+        var info = stat()
+        if fstatat(parent, name, &info, AT_SYMLINK_NOFOLLOW) != 0 {
+            if errno == ENOENT { return }
+            throw ioFailure()
+        }
+        guard info.st_mode & mode_t(S_IFMT) != mode_t(S_IFLNK) else { throw BridgeFailure("symlink") }
+        if info.st_mode & mode_t(S_IFMT) == mode_t(S_IFDIR) {
+            let directory = try traverse(parent, components: [name])
+            try removeSnapshotContents(directory.value)
+            var current = stat()
+            guard fstatat(parent, name, &current, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+            guard current.st_dev == info.st_dev,
+                  current.st_ino == info.st_ino else { throw BridgeFailure("outputChanged") }
+            guard unlinkat(parent, name, AT_REMOVEDIR) == 0 else { throw ioFailure() }
+        } else {
+            guard unlinkat(parent, name, 0) == 0 else { throw ioFailure() }
+        }
+    }
+
+    private func removeSnapshotContents(_ directory: Int32) throws {
+        let duplicate = dup(directory)
+        guard duplicate >= 0 else { throw ioFailure() }
+        guard let stream = fdopendir(duplicate) else { close(duplicate); throw ioFailure() }
+        defer { closedir(stream) }
+        while true {
+            errno = 0
+            guard let entry = readdir(stream) else {
+                if errno != 0 { throw ioFailure() }
+                break
+            }
+            let child = withUnsafePointer(to: entry.pointee.d_name) { pointer in
+                pointer.withMemoryRebound(to: CChar.self, capacity: MemoryLayout.size(ofValue: entry.pointee.d_name)) {
+                    String(validatingCString: $0)
+                }
+            }
+            guard let child else { throw BridgeFailure("invalidFilenameEncoding") }
+            if child == "." || child == ".." { continue }
+            try removeSnapshotEntry(directory, name: child)
+        }
     }
 
     private func writeBytes(_ bytes: Data, descriptor: Int32) throws {
@@ -447,6 +605,14 @@ final class ConfinedFiles {
         let root = try lookupRoot(handle)
         guard root.access == "source" else { throw BridgeFailure("invalidSourceCapability") }
         return root
+    }
+
+    private func lookupSnapshotRun(_ handle: NativeHandle) throws -> ExportRun {
+        guard handle.generation == generation, case let .gitSnapshot(run) = runs[handle.id] else {
+            throw BridgeFailure("invalidExportHandle")
+        }
+        try validate(run)
+        return run
     }
 
     private func lookupRun(_ handle: NativeHandle) throws -> ExportRun {

@@ -240,7 +240,10 @@ export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
 export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('fingerprintGitDiff'), root: handle, compare: Type.String(), headSHA: Type.String(),
     baseRefSHA: Type.String(), status: base64 }, { additionalProperties: false }),
-  Type.Object({ kind: Type.Literal('beginGitSnapshot'), root: handle, repoKey: Type.String(), snapshotID: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('beginGitSnapshot'), root: handle, repoKey: Type.String(), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('readGitSnapshotCurrent'), root: handle, repoKey: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('writeGitSnapshotCurrent'), run: handle }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('readGitSnapshotFile'), root: handle, repoKey: Type.String(), snapshotID: Type.String(), path: RelativePath }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('writeGitSnapshotFile'), run: handle, path: RelativePath, bytes: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('serializeGitSnapshot'), input: NativeGitSnapshotInput }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('revalidateGitTargets'), checkouts: Type.Array(NativeGitCheckout) }, { additionalProperties: false }),
@@ -317,7 +320,13 @@ export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),
-  Type.Object({ kind: Type.Literal('gitSnapshotOpened'), run: handle, relativePath: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitSnapshotOpened'), run: handle, relativePath: Type.String(), snapshotID: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitSnapshotCurrent'), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitSnapshotCurrentWritten'), snapshotID: Type.String(), pointer: Type.Union([
+    Type.Object({ kind: Type.Literal('symlink') }, { additionalProperties: false }),
+    Type.Object({ kind: Type.Literal('file'), symlinkErrno: Type.Integer() }, { additionalProperties: false }),
+  ]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitSnapshotRead'), bytes: base64, identity: SourceIdentity }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotFileWritten'), identity: SourceIdentity }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotBytes'), files: Type.Array(Type.Object({ path: Type.String(), bytes: base64 }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTargetValidation'), valid: Type.Boolean() }, { additionalProperties: false }),

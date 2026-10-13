@@ -5375,6 +5375,42 @@
       "sourceSHA256": "c47d70a5656200a7a4cfca08e03d480a83e57cd573b8ac6210b3a97acaf198dc",
       "sha256": "cb0bd64dcc84cfc666ed582cea921f657785b835f8d15d273faf80a0bc816239",
       "classification": "handwritten"
+    },
+    {
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotNaming.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotPublisher.swift",
+      "ranges": [
+        [
+          132,
+          159
+        ]
+      ],
+      "changes": [
+        "Retain local-date/minute naming and numeric collision suffixes over a confined existence callback instead of unrestricted snapshot paths."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "220895de5665d4b8a9eee1ed1565dddf951e7db9248998f477734f550d6490fe",
+      "sha256": "ca3a3ca133fe20f1b8d8dd0a0f535fbdd9e64223cdba9d08d125f6f4a705874a",
+      "classification": "handwritten"
+    },
+    {
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotPointer.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "ranges": [
+        [
+          432,
+          457
+        ]
+      ],
+      "changes": [
+        "Retain CURRENT target trimming and repository-relative absolute-link handling over captured symlink/file/missing variants. Descriptor-relative acquisition owns filesystem access and symlink-target existence.",
+        "Repo-scoped consumers have one canonical namespace; no legacy lookup is copied. Normalize returned IDs at the native trust boundary before artifact-path use.",
+        "Separate source symlink-target decoding from captured pointer dispatch for the existing cognitive limit; the seven original-reader filesystem fixtures verify both."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+      "sha256": "93523e68fa6a93def3cbdb03040cb136d84fb5ff908e70ddae52256688a6c75f",
+      "classification": "handwritten"
     }
   ],
   "dependencies": [

@@ -1,0 +1,15 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+  "ranges": [
+    [
+      432,
+      457
+    ]
+  ],
+  "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+  "referenceSHA256": "c0b02532f2c370bd0f4bb12afee18a077e77d1e4b48f1e096301fd318423481d",
+  "adaptations": [
+    "Compile the unchanged original CURRENT reader with real pointer files and symlinks under isolated temporary directories."
+  ]
+}

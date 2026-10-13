@@ -170,7 +170,10 @@ enum Operation {
     case fingerprintGitDiff(GitFingerprintInput)
     case extract(String, Data, SourceIdentity)
     case beginExport(NativeHandle, String)
-    case beginGitSnapshot(NativeHandle, String, String)
+    case beginGitSnapshot(NativeHandle, String, String?)
+    case readGitSnapshotCurrent(NativeHandle, String)
+    case writeGitSnapshotCurrent(NativeHandle)
+    case readGitSnapshotFile(NativeHandle, String, String, String)
     case writeGitSnapshotFile(NativeHandle, String, Data)
     case writeExport(NativeHandle, String, Data)
     case readExport(NativeHandle, String)
@@ -224,8 +227,19 @@ enum Operation {
         case "beginGitSnapshot":
             let fields = try WireObject(value, keys: ["kind", "root", "repoKey", "snapshotID"])
             self = try .beginGitSnapshot(
-                NativeHandle(fields.value("root")), fields.string("repoKey"), fields.string("snapshotID")
+                NativeHandle(fields.value("root")), fields.string("repoKey"),
+                fields.value("snapshotID") is NSNull ? nil : fields.string("snapshotID")
             )
+        case "readGitSnapshotCurrent":
+            let fields = try WireObject(value, keys: ["kind", "root", "repoKey"])
+            self = try .readGitSnapshotCurrent(NativeHandle(fields.value("root")), fields.string("repoKey"))
+        case "writeGitSnapshotCurrent":
+            let fields = try WireObject(value, keys: ["kind", "run"])
+            self = try .writeGitSnapshotCurrent(NativeHandle(fields.value("run")))
+        case "readGitSnapshotFile":
+            let fields = try WireObject(value, keys: ["kind", "root", "repoKey", "snapshotID", "path"])
+            self = try .readGitSnapshotFile(NativeHandle(fields.value("root")), fields.string("repoKey"),
+                                           fields.string("snapshotID"), fields.string("path"))
         case "writeGitSnapshotFile":
             let fields = try WireObject(value, keys: ["kind", "run", "path", "bytes"])
             self = try .writeGitSnapshotFile(

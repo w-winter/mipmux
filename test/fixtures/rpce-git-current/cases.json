@@ -1,0 +1,51 @@
+[
+  {
+    "name": "relative-link",
+    "kind": "symlink",
+    "target": "dated/one",
+    "exists": true,
+    "expected": "dated/one"
+  },
+  {
+    "name": "absolute-link",
+    "kind": "absoluteSymlink",
+    "target": "dated/one",
+    "exists": true,
+    "expected": "dated/one"
+  },
+  {
+    "name": "dangling-link",
+    "kind": "symlink",
+    "target": "absent",
+    "exists": false,
+    "expected": null
+  },
+  {
+    "name": "text-pointer",
+    "kind": "file",
+    "target": "\n dated/one \n",
+    "exists": true,
+    "expected": "dated/one"
+  },
+  {
+    "name": "missing-target-text",
+    "kind": "file",
+    "target": "absent",
+    "exists": false,
+    "expected": "absent"
+  },
+  {
+    "name": "empty-text",
+    "kind": "file",
+    "target": "\n  \n",
+    "exists": false,
+    "expected": null
+  },
+  {
+    "name": "missing",
+    "kind": "missing",
+    "target": "",
+    "exists": false,
+    "expected": null
+  }
+]
