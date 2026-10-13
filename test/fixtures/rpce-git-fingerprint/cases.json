@@ -1,0 +1,71 @@
+{
+  "mtime": 1700000000,
+  "files": [
+    {
+      "path": "modified.txt",
+      "text": "changed\n"
+    },
+    {
+      "path": "old.txt",
+      "text": "original\n"
+    },
+    {
+      "path": "renamed.txt",
+      "text": "destination\n"
+    },
+    {
+      "path": "é.txt",
+      "text": "unicode\n"
+    }
+  ],
+  "cases": [
+    {
+      "name": "empty",
+      "compare": "uncommitted",
+      "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "baseRefSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "",
+      "expected": {
+        "baseRef": "HEAD",
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "statusHash": "cada71839507cf9b50b3326dc413079e6ae34d87e445faadc3588aee737a5d70"
+      }
+    },
+    {
+      "name": "modified",
+      "compare": "staged",
+      "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "baseRefSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "IE0gbW9kaWZpZWQudHh0AD8/IMOpLnR4dAA=",
+      "expected": {
+        "baseRef": "HEAD",
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "statusHash": "bc791fa944ae7aeb6c6ddbb2c6ef3d4b09349340791ed98150083209f23588c8"
+      }
+    },
+    {
+      "name": "rename-copy",
+      "compare": "uncommitted:topic",
+      "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "baseRefSHA": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "UiAgcmVuYW1lZC50eHQAb2xkLnR4dABDICByZW5hbWVkLnR4dABvbGQudHh0AA==",
+      "expected": {
+        "baseRef": "topic",
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "statusHash": "2036b4929b85264bbf9ad5de54fb905778dba624408a77b31b1b7b22dde9997f"
+      }
+    },
+    {
+      "name": "missing-and-duplicates",
+      "compare": "uncommitted-mergebase:topic",
+      "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "baseRefSHA": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "IEQgYWJzZW50LnR4dAAgTSBtb2RpZmllZC50eHQAIE0gbW9kaWZpZWQudHh0AA==",
+      "expected": {
+        "baseRef": "topic",
+        "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "statusHash": "affbd0b72902518ccdf5e004200e88c1222d7bcbecf54b780ad474a3d040514e"
+      }
+    }
+  ]
+}

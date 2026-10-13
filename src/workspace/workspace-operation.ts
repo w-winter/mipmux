@@ -9,6 +9,7 @@ import { readFile } from '../exploration/read.js';
 import { getFileTree } from '../exploration/tree.js';
 import { getCodeStructure } from '../exploration/structure.js';
 import { readGit } from '../exploration/git.js';
+import { captureGitDiff } from '../exploration/git-diff.js';
 import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
@@ -172,6 +173,11 @@ export class WorkspaceOperation {
   readGit(request: GitRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
     return this.#track(() => readGit(this, captured, encode));
+  }
+  /** Captures authorized evidence before reply projection; maxOutputBytes does not limit this internal acquisition. */
+  captureGitDiff(request: Extract<GitRequest, { op: 'diff' }>, generateDiffText: boolean) {
+    const captured = structuredClone(request);
+    return this.#track(() => captureGitDiff(this, captured, generateDiffText));
   }
   electGitTarget(paths: readonly string[]) {
     const captured = [...paths];

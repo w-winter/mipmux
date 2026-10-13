@@ -1,4 +1,4 @@
-import Type from 'typebox';
+import Type, { type Static } from 'typebox';
 import { NativeGitChangedFile } from './git.js';
 
 const closed = { additionalProperties: false };
@@ -15,3 +15,5 @@ export const NativeGitSnapshotInput = Type.Object({
   worktree: Type.Union([Type.Object({ isWorktree: Type.Boolean(), worktreeName: text, worktreeRoot: text,
     mainWorktreeRoot: text, commonGitDir: text }, closed), Type.Null()]),
 }, closed);
+export type GitSnapshotContent = Pick<Static<typeof NativeGitSnapshotInput>,
+  'scope' | 'requestedPaths' | 'diffText' | 'perFile' | 'changedFiles' | 'summary' | 'fingerprint'>;

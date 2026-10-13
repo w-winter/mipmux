@@ -1,0 +1,16 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+  "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+  "ranges": [
+    [
+      2695,
+      2778
+    ]
+  ],
+  "referenceSHA256": "c2685bfc22bbd1acb88c8b86a01fb5fddb7aa407526a8724c45f285b0d6a819a",
+  "adaptations": [
+    "Supply captured head, base and porcelain bytes through value-only command adapters.",
+    "Run the unchanged original fingerprint and path parsing bodies against real files with fixed modification times."
+  ]
+}

@@ -5337,6 +5337,44 @@
       "changes": [
         "Retain source primary/per-file aliases and jump ordering. Omit the unused initializer requiring the unported published-artifact catalog. Internal native visibility replaces package access."
       ]
+    },
+    {
+      "destination": "native/Sources/SmipBridge/RPCEGitStatusFingerprint.swift",
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "ranges": [
+        [
+          2704,
+          2778
+        ]
+      ],
+      "changes": [
+        "Retain status-byte framing, sorted path metadata, missing markers, rename/copy parsing and SHA-256 fingerprint policy.",
+        "Supply captured head/base/status facts and confined descriptor-relative attributes instead of app command and FileManager owners; remove diagnostic timing wrappers.",
+        "Use installed Crypto in place of CryptoKit and invocation-local Date for the original timestamp.",
+        "Keep the original index variable with a scoped identifier-name lint exemption; no complexity exemption is added."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+      "sha256": "ba7586aa543ddfebc2468e7af5895959ce82ebe90118b361146b7fb3de246cfa",
+      "classification": "handwritten"
+    },
+    {
+      "destination": "native/Sources/SmipBridge/GitFingerprintInput.swift",
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffEngine.swift",
+      "ranges": [
+        [
+          296,
+          331
+        ]
+      ],
+      "changes": [
+        "Retain comparison-specific fingerprint construction over captured Git facts; closed wire parsing and JSON encoding replace app backend dispatch.",
+        "Git/Jujutsu backend election is not implemented by this adapter and remains an open port requirement."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "c47d70a5656200a7a4cfca08e03d480a83e57cd573b8ac6210b3a97acaf198dc",
+      "sha256": "cb0bd64dcc84cfc666ed582cea921f657785b835f8d15d273faf80a0bc816239",
+      "classification": "handwritten"
     }
   ],
   "dependencies": [

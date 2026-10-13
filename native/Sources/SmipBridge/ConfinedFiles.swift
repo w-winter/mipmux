@@ -126,6 +126,26 @@ final class ConfinedFiles {
         return ["kind": "directoryComplete", "count": entries.count, "sha256": digest.finalize().map { String(format: "%02x", $0) }.joined()]
     }
 
+    func fingerprintGitDiff(_ input: GitFingerprintInput) throws -> [String: Any] {
+        let root = try sourceRoot(input.root)
+        let result = try input.render { path in
+            var parts = try components(path)
+            let leaf = parts.removeLast()
+            let parent = try traverse(root.directory.value, components: parts)
+            var info = stat()
+            guard fstatat(parent.value, leaf, &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+            #if canImport(Darwin)
+                let modified = info.st_mtimespec
+            #else
+                let modified = info.st_mtim
+            #endif
+            let time = Double(modified.tv_sec) + Double(modified.tv_nsec) / 1_000_000_000
+            return [.size: NSNumber(value: Int64(info.st_size)), .modificationDate: Date(timeIntervalSince1970: time)]
+        }
+        try validate(root)
+        return result
+    }
+
     func readSource(_ handle: NativeHandle, path: String, expected: SourceIdentity?, request: Request, extraction: Extraction) throws -> [String: Any] {
         let root = try sourceRoot(handle)
         var parts = try components(path)

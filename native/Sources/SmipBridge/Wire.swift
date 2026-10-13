@@ -167,6 +167,7 @@ enum Operation {
     case openRoots([RootDeclaration])
     case listDirectory(NativeHandle, String?)
     case readSource(NativeHandle, String, SourceIdentity?)
+    case fingerprintGitDiff(GitFingerprintInput)
     case extract(String, Data, SourceIdentity)
     case beginExport(NativeHandle, String)
     case beginGitSnapshot(NativeHandle, String, String)
@@ -202,6 +203,7 @@ enum Operation {
                 path = try descendant.string("path")
             }
             self = try .listDirectory(NativeHandle(fields.value("root")), path)
+        case "fingerprintGitDiff": self = try .fingerprintGitDiff(GitFingerprintInput(value))
         case "readSource":
             let fields = try WireObject(value, keys: ["kind", "root", "path", "expected"])
             self = try .readSource(
