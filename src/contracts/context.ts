@@ -45,6 +45,7 @@ export type DocumentInput = Static<typeof DocumentInput>;
 export const PromptEnhancementMode = Type.Enum(['fullRewrite', 'augment', 'preserve']);
 export type PromptEnhancementMode = Static<typeof PromptEnhancementMode>;
 export const ContextBuildRequest = Type.Object({
+  duplicateUserInstructionsAtTop: Type.Boolean(),
   copyPreset: ClipboardPreset,
   storedPrompts: Type.Array(StoredPrompt),
   task: Type.String(),
@@ -140,7 +141,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(11),
+  schemaVersion: Type.Literal(12),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,

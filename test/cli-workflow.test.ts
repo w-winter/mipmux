@@ -21,7 +21,7 @@ test('built CLI warms, explores, renders, verifies, invalidates and emits failed
   const directory = provider.directory, root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'model.swift'), 'struct Example {\n let name: String\n}\n');
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };
-  const request = { task: 'Caller task', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }],
+  const request = { task: 'Caller task', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }],
     documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
   const config = { cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, search: null, git: null, discovery: provider.config };
@@ -89,7 +89,7 @@ test('CLI build interruption returns a settled cancelled receipt and exit 130', 
   await writeFile(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, search: null, git: null, discovery: provider.config }));
   await writeFile(request, JSON.stringify({ workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'one',
-    request: { task: 'Task', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
+    request: { task: 'Task', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
       outputName: 'packet', budgetUnits: 10000 } }));
   const child = spawn(process.execPath, [resolveCommand, 'build', '--request', request, '--config', config], { cwd: '/', stdio: 'pipe' });
   const stdout: Buffer[] = []; child.stdout.on('data', chunk => stdout.push(chunk)); child.stderr.resume();

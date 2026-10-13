@@ -22,7 +22,7 @@ for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
     const signal = new AbortController().signal;
     try {
       const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
-      const draft = await workspace.createDraft({ task: 'Original user prompt\nλ', copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Retain every required body.', enhancementMode,
+      const draft = await workspace.createDraft({ task: 'Original user prompt\nλ', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Retain every required body.', enhancementMode,
         purpose: 'investigation', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } },
           { kind: 'slices', source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: 'selected' }] }],
         documents: [{ kind: 'suppliedDocument', id: 'plan.md', role: 'plan', origin: 'fixture', text: 'Required plan\n```\n🙂\n' }],

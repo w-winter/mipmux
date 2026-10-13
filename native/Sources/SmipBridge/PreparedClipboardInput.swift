@@ -6,6 +6,7 @@ struct CapturedStoredPrompt: Decodable { let id: UUID; let title: String; let co
 enum ClipboardPresetKind: String, Decodable { case standard, codeReview }
 
 struct PreparedClipboardInput: Decodable {
+    let duplicateUserInstructionsAtTop: Bool
     let copyPreset: ClipboardPresetKind
     let storedPrompts: [CapturedStoredPrompt]
     let codemapBlocks: [String]
@@ -23,7 +24,8 @@ struct PreparedClipboardOperation {
         let object = try WireObject(value, keys: ["kind", "input"])
         let raw = try object.value("input")
         _ = try WireObject(raw, keys: [
-            "copyPreset", "storedPrompts", "codemapBlocks", "contentBlocks", "fileTreeContent", "gitDiff",
+            "duplicateUserInstructionsAtTop", "copyPreset", "storedPrompts", "codemapBlocks", "contentBlocks",
+            "fileTreeContent", "gitDiff",
             "metaInstructions", "userInstructions"
         ])
         let data = try JSONSerialization.data(withJSONObject: raw)
@@ -47,7 +49,8 @@ struct PreparedClipboardOperation {
             contentBlocks: input.contentBlocks, fileTreeContent: input.fileTreeContent, gitDiff: input.gitDiff,
             includeSavedPrompts: !metas.isEmpty, includeFiles: includeFiles, includeUserPrompt: includeUserPrompt,
             includeDatetimeInUserInstructions: false, promptSectionsOrder: PromptAssemblyBuilder.defaultSectionOrder,
-            disabledPromptSections: [], duplicateUserInstructionsAtTop: false, tabTitle: nil
+            disabledPromptSections: [],
+            duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: nil
         )
         return ["kind": "preparedClipboard", "text": text, "preset": [
             "kind": input.copyPreset.rawValue, "includeMetaPrompts": includeMetaPrompts,

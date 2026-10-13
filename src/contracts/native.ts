@@ -55,6 +55,7 @@ export const NativeClipboardInput = Type.Object({ kind: Type.Literal('renderClip
   duplicateUserInstructionsAtTop: Type.Boolean(), tabTitle: snippetText,
 }, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('renderPreparedClipboard'), input: Type.Object({
+  duplicateUserInstructionsAtTop: Type.Boolean(),
   copyPreset: ClipboardPreset, storedPrompts: Type.Array(StoredPrompt),
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
   gitDiff: snippetText, userInstructions: Type.String(),

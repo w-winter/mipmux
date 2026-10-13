@@ -67,7 +67,7 @@ test('two-phase finalization across many roots completes under a controlled desc
   }
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: limited, nativeEnvironment: environment(limit) });
-  const request: ContextBuildRequest = { task: 'Task', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', documents: [], patches: [], discoveryHints: [],
+  const request: ContextBuildRequest = { task: 'Task', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', documents: [], patches: [], discoveryHints: [],
     requiredSources: roots.map(root => ({ kind: 'full', source: { root: root.name, path: 'file.txt' } })), outputName: 'packet',
     budgetUnits: 100000 };
   try {

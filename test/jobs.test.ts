@@ -20,7 +20,7 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
   const signal = new AbortController().signal;
   let calls = 0;
   const runner: DiscoveryRunner = { run: async () => { calls++; throw new Error('Unexpected discovery dispatch'); } };
-  const request: ContextBuildRequest = { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+  const request: ContextBuildRequest = { task: 'Inspect', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
     documents: [], patches: [], budgetUnits: contextBudgetUnits,
     discoveryHints: [], outputName: 'packet' };
   try {
@@ -60,7 +60,7 @@ test('client jobs deduplicate admission, isolate ids, release cancelled work', a
   const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
-  const request: ContextBuildRequest = { task: 'Inspect', copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+  const request: ContextBuildRequest = { task: 'Inspect', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
     documents: [], patches: [], budgetUnits: 10000,
     discoveryHints: [], outputName: 'packet' };
   try {

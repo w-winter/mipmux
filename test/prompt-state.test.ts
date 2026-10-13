@@ -41,7 +41,7 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
     const workspaceId = workspaceReply.Parse(declaration.structuredContent).id;
     for (const mode of ['fullRewrite', 'augment', 'preserve']) {
       const created = await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
-        task: original, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', purpose: 'investigation', enhancementMode: mode,
+        task: original, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', purpose: 'investigation', enhancementMode: mode,
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }],
         documents: [], patches: [], discoveryHints: [], outputName: mode,
         budgetUnits: 100000 } } });
@@ -71,7 +71,7 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
       evidence.push({ mode, directory: ready.directory, prompt: expected, units: manifest.accounting.units });
     }
     const created = await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
-      task: original, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', purpose: 'investigation', enhancementMode: 'augment', requiredSources: [],
+      task: original, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', purpose: 'investigation', enhancementMode: 'augment', requiredSources: [],
       documents: [], patches: [], discoveryHints: [], outputName: 'operations',
       budgetUnits: 100000 } } });
     const draft = draftReply.Parse(created.structuredContent);

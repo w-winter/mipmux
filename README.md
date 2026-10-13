@@ -109,6 +109,7 @@ Create a draft from a workspace handle after declaring its roots and output dire
 ```ts
 const draft = await workspace.createDraft({
   task: 'Review the implementation and identify correctness risks.',
+  duplicateUserInstructionsAtTop: false,
   copyPreset: 'standard',
   storedPrompts: [],
   constraints: 'Keep every required document complete.',
@@ -138,6 +139,8 @@ try {
   await draft.close();
 }
 ```
+
+`duplicateUserInstructionsAtTop` adds the complete resulting prompt before the context sections when true. The ordinary final user-instruction section remains present; empty prompt text produces no user block. Set it to false for the source default. Both copies count toward the assembly budget.
 
 `copyPreset` selects `standard` or `codeReview`. Standard includes ordinary context; Review also selects the stored prompt with ID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b` from `storedPrompts`, an array of `{ id, title, content }` entries. Supply the complete role text when using that saved review prompt.
 

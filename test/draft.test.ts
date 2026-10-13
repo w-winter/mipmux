@@ -19,7 +19,7 @@ const handoff = {
 };
 const request: ContextBuildRequest = {
   task: 'Original task',
-  copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
+  duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
   enhancementMode: 'augment' as const, purpose: 'planning',
   requiredSources: [],
   documents: [],

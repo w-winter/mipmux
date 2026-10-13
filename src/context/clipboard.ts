@@ -27,6 +27,7 @@ function contentBlock(material: Material): string {
 export function preparedClipboardInput(input: PacketInput): ClipboardInput {
   const materials = partitionMaterials(input.materials);
   return { kind: 'renderPreparedClipboard', input: {
+    duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop,
     copyPreset: input.request.copyPreset, storedPrompts: input.request.storedPrompts,
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
     contentBlocks: materials.contents.map(contentBlock),
@@ -98,6 +99,7 @@ export function parseClipboard(input: RenderInput) {
     records.push({ ...material.record, frame, spans });
     costs.push({ id: material.record.id, bytes: frame.length, units: estimateUnits(frame.length) });
   };
+  if (input.request.duplicateUserInstructionsAtTop && input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n');
   const fileTreeSpan = consumeFileMap(input.fileTree.text, materials.codemaps, consume, raw);
   if (materials.contents.length) {
     consume('<file_contents>\n');

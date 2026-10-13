@@ -16,7 +16,7 @@ import { canonicalJSON, sha256 } from '../src/workspace/values.js';
 
 const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Inspect exact evidence', architecture: 'Synthetic files', relationships: [], ambiguities: [] };
-const request: ContextBuildRequest = { task: 'Complete task', copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Complete evidence', enhancementMode: 'augment' as const, purpose: 'review',
+const request: ContextBuildRequest = { task: 'Complete task', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Complete evidence', enhancementMode: 'augment' as const, purpose: 'review',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
   budgetUnits: 1000000 };
 async function fixture() {

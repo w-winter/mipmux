@@ -19,7 +19,7 @@ for (const [copyPreset, storedPrompts] of [
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'root') }],
       exclusions: [], outputRoot: join(directory, 'out') }, signal);
-    const request = { copyPreset, storedPrompts: [...storedPrompts], task: 'Literal task', constraints: 'Explicit constraint',
+    const request = { duplicateUserInstructionsAtTop: false, copyPreset, storedPrompts: [...storedPrompts], task: 'Literal task', constraints: 'Explicit constraint',
       enhancementMode: 'preserve' as const, purpose: 'review' as const, requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
     const draft = await workspace.createDraft(request, signal);
