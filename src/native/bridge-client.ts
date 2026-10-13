@@ -9,6 +9,7 @@ const resultKinds = {
   fingerprintGitDiff: ['gitDiffFingerprint'],
   beginGitSnapshot: ['gitSnapshotOpened'], writeGitSnapshotFile: ['gitSnapshotFileWritten'],
   readGitSnapshotCurrent: ['gitSnapshotCurrent'], writeGitSnapshotCurrent: ['gitSnapshotCurrentWritten'],
+  listGitSnapshots: ['gitSnapshots'], maintainGitSnapshots: ['gitSnapshotsMaintained'],
   resolveGitSnapshotComparison: ['gitSnapshotComparison', 'gitSnapshotComparisonError'],
   readGitSnapshotFile: ['gitSnapshotRead'],
   serializeGitSnapshot: ['gitSnapshotBytes'],

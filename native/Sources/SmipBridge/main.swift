@@ -38,6 +38,8 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .beginGitSnapshot(root, repoKey, snapshotID):
         try files.beginGitSnapshot(root, repoKey: repoKey, snapshotID: snapshotID)
     case let .readGitSnapshotCurrent(root, repoKey): try files.readGitSnapshotCurrent(root, repoKey: repoKey)
+    case let .listGitSnapshots(root): try files.listGitSnapshots(root)
+    case let .maintainGitSnapshots(input): try files.maintainGitSnapshots(input)
     case let .resolveGitSnapshotComparison(output, repository, compare):
         try files.resolveGitSnapshotComparison(output, repositoryHandle: repository, compare: compare)
     case let .writeGitSnapshotCurrent(run): try files.writeGitSnapshotCurrent(run)

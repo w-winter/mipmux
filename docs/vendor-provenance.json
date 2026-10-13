@@ -5444,6 +5444,51 @@
         "Inject confined CURRENT/manifest reads and repo display metadata instead of app workspace/store owners; represent expected parameter failures as typed native results.",
         "Retain the source result tuple with a scoped tuple lint exemption. No legacy namespace lookup or new source-policy fallback is added."
       ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffDataMaintenance.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "19684024513e62049a911dde85d9bc43e486921331caa991a92f6c84f7b0833b",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotMaintenance.swift",
+      "sha256": "28a5c0c6f3fd6d17679fe84a3b15d382570d967851245f1b1f114daf5ad90abf",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          28,
+          63
+        ],
+        [
+          85,
+          104
+        ],
+        [
+          150,
+          195
+        ],
+        [
+          240,
+          278
+        ],
+        [
+          303,
+          435
+        ],
+        [
+          445,
+          485
+        ],
+        [
+          532,
+          578
+        ]
+      ],
+      "changes": [
+        "Retain source default count/age/interval,ordering,successful-deletion accounting,cache/index updates,owner filtering and CURRENT refresh through root-bound IO callbacks.",
+        "Existing native request serialization replaces the app maintenance actor within each owned worker. Cross-operation runtime admission and automatic publication/workspace dispatch are not established by this native checkpoint.",
+        "Omit legacy purge/version upgrades;new state is canonical version2 and obsolete index/state versions fail explicitly as required by the approved current-state contract.",
+        "Inject confined listing,deletion,metadata IO and directory cleanup instead of unrestricted FileManager paths. Preserve the source missing/corrupt metadata rebuild path and partial failure effects.",
+        "Use named constants for source policy values and split IO-independent phases;source tuple and UI diagnostic-only fields are not part of the native response."
+      ]
     }
   ],
   "dependencies": [

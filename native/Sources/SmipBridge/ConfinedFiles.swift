@@ -46,6 +46,7 @@ final class ConfinedFiles {
     private let generation: String
     private var roots: [String: Root] = [:]
     private var runs: [String: OutputRun] = [:]
+    private let gitMaintenance = RPCEGitSnapshotMaintenance()
     private let readChunkBytes = 64 * 1024
     init(generation: String) {
         self.generation = generation
@@ -358,6 +359,10 @@ final class ConfinedFiles {
 
     func writeGitSnapshotCurrent(_ handle: NativeHandle) throws -> [String: Any] {
         let run = try lookupSnapshotRun(handle)
+        return try writeCurrentSnapshot(run)
+    }
+
+    private func writeCurrentSnapshot(_ run: ExportRun) throws -> [String: Any] {
         let repository = try traverse(run.root.directory.value, components: Array(run.name.prefix(3)))
         let snapshotID = run.name.dropFirst(3).joined(separator: "/")
         var info = stat()
@@ -507,13 +512,185 @@ final class ConfinedFiles {
     func readExport(_ handle: NativeHandle, filename: String) throws -> [String: Any] {
         let run = try lookupRun(handle)
         let file = try Descriptor(openat(run.directory.value, filename, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC))
-        guard try status(file.value).st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw BridgeFailure("nonRegularFile") }
+        guard try status(file.value).st_mode & mode_t(S_IFMT) == mode_t(S_IFREG)
+        else { throw BridgeFailure("nonRegularFile") }
         let before = try fingerprint(file.value)
         var bytes = Data()
         try readChunks(file.value) { bytes.append($0) }
         guard try fingerprint(file.value) == before else { throw BridgeFailure("sourceChanged") }
         try validate(run)
         return ["kind": "exportRead", "bytes": bytes.base64EncodedString(), "identity": Extraction.identity(bytes).json]
+    }
+
+    func listGitSnapshots(_ handle: NativeHandle) throws -> [String: Any] {
+        let root = try lookupRoot(handle)
+        guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        let rows = try maintenanceSnapshots(root)
+        try validate(root)
+        let formatter = ISO8601DateFormatter()
+        return ["kind": "gitSnapshots", "snapshots": rows.map {
+            ["repoKey": $0.repoKey, "snapshotID": $0.snapshotID,
+             "generatedAt": formatter.string(from: $0.manifest.generatedAt)]
+        }]
+    }
+
+    func maintainGitSnapshots(_ input: GitSnapshotMaintenanceInput) throws -> [String: Any] {
+        let root = try lookupRoot(input.root)
+        guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        let storage = GitSnapshotMaintenanceIO(
+            snapshots: { try self.maintenanceSnapshots(root) },
+            delete: { key, id in try self.deleteMaintenanceSnapshot(root, repoKey: key, id: id) },
+            updateCurrent: { key in try self.updateMaintenanceCurrent(root, repoKey: key) },
+            cleanup: { keys in try self.cleanupMaintenanceDirectories(root, keys: keys) },
+            read: { name in
+                do {
+                    let directory = try traverse(root.directory.value, components: ["_git_data"])
+                    return try self.readSnapshotBytes(directory.value, name: name.rawValue)
+                } catch let failure as BridgeFailure where failure.code == "notFound" { return nil }
+            },
+            write: { name, bytes in
+                try self.validate(root)
+                let directory = try traverse(root.directory.value, components: ["_git_data"])
+                try self.writeAtomic(directory.value, filename: name.rawValue, bytes: bytes)
+            },
+            remove: { name in
+                try self.validate(root)
+                let directory = try traverse(root.directory.value, components: ["_git_data"])
+                if unlinkat(directory.value, name.rawValue, 0) != 0, errno != ENOENT { throw ioFailure() }
+            }
+        )
+        let outcome = try gitMaintenance.run(input.action, workspace: root.identity.canonicalPath, storage: storage)
+        try validate(root)
+        return ["kind": "gitSnapshotsMaintained", "outcome": outcome]
+    }
+
+    private func maintenanceSnapshots(_ root: Root) throws -> [GitMaintenanceSnapshot] {
+        let repos: Descriptor
+        do {
+            repos = try traverse(root.directory.value, components: ["_git_data", "repos"])
+        } catch let failure as BridgeFailure where failure.code == "notFound" {
+            return []
+        }
+        var result: [GitMaintenanceSnapshot] = []
+        for key in try directoryNames(repos.value) where !key.hasPrefix(".") && key != "CURRENT" {
+            var info = stat()
+            guard fstatat(repos.value, key, &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+            guard info.st_mode & mode_t(S_IFMT) == mode_t(S_IFDIR) else { continue }
+            let directory = try traverse(repos.value, components: [key])
+            let snapshots = try? scanMaintenanceSnapshots(directory.value, root: root, repoKey: key, parts: [])
+            result.append(contentsOf: snapshots ?? [])
+        }
+        return result
+    }
+
+    private func scanMaintenanceSnapshots(
+        _ directory: Int32, root: Root, repoKey: String, parts: [String]
+    ) throws -> [GitMaintenanceSnapshot] {
+        var result: [GitMaintenanceSnapshot] = []
+        for name in try directoryNames(directory)
+            where !name.hasPrefix(".") && name != "CURRENT" && name != "diff-snapshots" {
+            var info = stat()
+            guard fstatat(directory, name, &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+            if info.st_mode & mode_t(S_IFMT) == mode_t(S_IFDIR) {
+                let path = ["_git_data", "repos", repoKey] + parts + [name]
+                let url = URL(fileURLWithPath: root.identity.canonicalPath)
+                    .appendingPathComponent(path.joined(separator: "/"))
+                if (try? url.resourceValues(forKeys: [.isPackageKey]).isPackage) == true { continue }
+                let child = try traverse(directory, components: [name])
+                result += try scanMaintenanceSnapshots(child.value, root: root, repoKey: repoKey, parts: parts + [name])
+            } else if name == "manifest.json", info.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG),
+                      let manifest = try? readSnapshotManifest(
+                          root,
+                          repoKey: repoKey,
+                          id: parts.joined(separator: "/")
+                      ) {
+                result.append(GitMaintenanceSnapshot(
+                    repoKey: repoKey,
+                    snapshotID: parts.joined(separator: "/"),
+                    manifest: manifest
+                ))
+            }
+        }
+        return result
+    }
+
+    private func deleteMaintenanceSnapshot(_ root: Root, repoKey: String, id: String) throws -> Bool {
+        try validate(root)
+        guard let normalized = GitDiffSnapshotStore.normalizeSnapshotID(id) else { throw BridgeFailure("invalidPath") }
+        let repository = try traverse(root.directory.value, components: snapshotRepoComponents(repoKey))
+        guard try snapshotExists(repository.value, id: normalized) else { return false }
+        let parts = try components(normalized)
+        let parent = try traverse(repository.value, components: Array(parts.dropLast()))
+        try removeSnapshotEntry(parent.value, name: parts[parts.count - 1])
+        var ancestors = Array(parts.dropLast())
+        while !ancestors.isEmpty {
+            let current = try traverse(repository.value, components: ancestors)
+            guard try directoryNames(current.value).allSatisfy({ $0.hasPrefix(".") }) else { break }
+            let container = try traverse(repository.value, components: Array(ancestors.dropLast()))
+            try removeSnapshotEntry(container.value, name: ancestors.removeLast())
+        }
+        return true
+    }
+
+    private func updateMaintenanceCurrent(_ root: Root, repoKey: String) throws {
+        let newest = try maintenanceSnapshots(root).filter { $0.repoKey == repoKey }
+            .sorted { $0.manifest.generatedAt > $1.manifest.generatedAt }.first
+        guard let newest else {
+            let repository = try traverse(root.directory.value, components: snapshotRepoComponents(repoKey))
+            let pointer = try readSnapshotPointer(repository.value)
+            let exists: Bool
+            switch pointer {
+            case .file: exists = true
+            case .symlink: exists = try currentSnapshotID(root, repoKey: repoKey) != nil
+            case .missing: exists = false
+            }
+            if exists, unlinkat(repository.value, "CURRENT", 0) != 0 { throw ioFailure() }
+            return
+        }
+        let parts = try snapshotRepoComponents(repoKey) + components(newest.snapshotID)
+        let directory = try traverse(root.directory.value, components: parts)
+        let info = try status(directory.value)
+        _ = try writeCurrentSnapshot(ExportRun(directory: directory, root: root, name: parts,
+                                               device: String(info.st_dev), inode: String(info.st_ino)))
+    }
+
+    private func cleanupMaintenanceDirectories(_ root: Root, keys: Set<String>) throws {
+        try validate(root)
+        let repos = try traverse(root.directory.value, components: ["_git_data", "repos"])
+        for key in keys {
+            let directory = try traverse(repos.value, components: [key])
+            if try directoryNames(directory.value).allSatisfy({ $0.hasPrefix(".") }) {
+                try removeSnapshotEntry(repos.value, name: key)
+            }
+        }
+        if try directoryNames(repos.value).allSatisfy({ $0.hasPrefix(".") }) {
+            let gitData = try traverse(root.directory.value, components: ["_git_data"])
+            try removeSnapshotEntry(gitData.value, name: "repos")
+        }
+    }
+
+    private func directoryNames(_ directory: Int32) throws -> [String] {
+        let copy = try traverse(directory, components: [])
+        let duplicate = dup(copy.value)
+        guard duplicate >= 0 else { throw ioFailure() }
+        guard let stream = fdopendir(duplicate) else { close(duplicate); throw ioFailure() }
+        defer { closedir(stream) }
+        var result: [String] = []
+        while true {
+            errno = 0
+            guard let entry = readdir(stream) else {
+                if errno != 0 { throw ioFailure() }
+                break
+            }
+            let name = withUnsafePointer(to: entry.pointee.d_name) { pointer in
+                pointer.withMemoryRebound(to: CChar.self, capacity: MemoryLayout.size(ofValue: entry.pointee.d_name)) {
+                    String(validatingCString: $0)
+                }
+            }
+            guard let name else { throw BridgeFailure("invalidFilenameEncoding") }
+            if name != ".", name != ".." { result.append(name) }
+        }
+        return result
     }
 
     private func snapshotRepoComponents(_ repoKey: String) throws -> [String] {

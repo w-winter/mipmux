@@ -7,6 +7,7 @@ const wireCodes = [
   'invalidExportHandle', 'outputChanged', 'invalidPath', 'publicationUncertain',
   'notFound', 'permissionDenied', 'symlink', 'alreadyExists', 'nativeIOFailed',
   'nativeOperationFailed', 'gitOutputUndecodable',
+  'unsupportedSnapshotState',
 ] as const;
 
 export const NativeWireFailureCode = Type.Enum(wireCodes);
