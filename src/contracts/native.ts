@@ -235,7 +235,13 @@ const IgnoreHierarchy = Type.Object({ kind: Type.Literal('queryIgnoreHierarchy')
   queries: Type.Array(Type.Object({ path: Type.String(), isDirectory: Type.Boolean() }, { additionalProperties: false })),
 }, { additionalProperties: false });
 
+export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRootPath: Type.String(), repoKey: Type.String(),
+  repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
+export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
 export const NativeOperation = Type.Union([
+  Type.Object({ kind: Type.Literal('revalidateGitTargets'), checkouts: Type.Array(NativeGitCheckout) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('electGitTarget'), roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String() }, { additionalProperties: false })),
+    paths: Type.Array(Type.String()) }, { additionalProperties: false }),
   NativeFileBlockInput,
   IgnoreCapture, IgnoreHierarchy,
   IgnoreQueryInput,
@@ -306,6 +312,12 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('gitTargetValidation'), valid: Type.Boolean() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('deferred') }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('unavailable'),
+    reason: Type.Enum(['nonGitSelection', 'ambiguousOwnership', 'emptySelection']), count: SafeCount }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('available'), checkouts: Type.Array(NativeGitCheckout, { minItems: 1 }),
+    primary: NativeGitCheckout }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('preparedClipboard'), text: Type.String(), preset: CapturedClipboardPreset }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('clipboard'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }, { additionalProperties: false }),

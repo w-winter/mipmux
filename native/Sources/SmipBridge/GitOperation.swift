@@ -4,6 +4,8 @@ enum GitOperation {
     case patch(GitPatchInput)
     case diff(GitDiffInput)
     case acquisition(GitDiffAcquisitionInput)
+    case target(GitTargetInput)
+    case targetRevalidation(GitTargetRevalidationInput)
 
     func render() throws -> [String: Any] {
         switch self {
@@ -12,6 +14,8 @@ enum GitOperation {
         case let .patch(input): input.render()
         case let .diff(input): try input.render()
         case let .acquisition(input): try input.render()
+        case let .target(input): try input.render()
+        case let .targetRevalidation(input): input.render()
         }
     }
 }

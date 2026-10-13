@@ -1,7 +1,7 @@
 import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { GitRequest } from '../contracts/git.js';
-import type { NativeResult } from '../contracts/native.js';
+import type { NativeResult, NativeGitCheckout } from '../contracts/native.js';
 import { descriptorGitMode } from '../contracts/patches.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { gitProcess } from '../patches/git-process.js';
@@ -65,7 +65,17 @@ async function resolveMainCompare(operation: WorkspaceOperation, owner: Reposito
 }
 
 export async function readDiff(operation: WorkspaceOperation, request: DiffRequest, encode: ResultEncoding) {
-  const owner = await resolveDiffRepository(operation, request.root, request.worktree);
+  if (request.root === null) throw new WorkspaceFailure('gitTargetRequired');
+  const owner = await resolveDiffRepository(operation, request.root, { kind: 'explicit', worktree: request.worktree });
+  return readRepositoryDiff(operation, request, owner, encode);
+}
+
+export async function readElectedDiff(operation: WorkspaceOperation, request: DiffRequest, checkout: NativeGitCheckout, encode: ResultEncoding) {
+  const owner = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
+  return readRepositoryDiff(operation, { ...request, root: checkout.root }, owner, encode);
+}
+
+async function readRepositoryDiff(operation: WorkspaceOperation, request: DiffRequest, owner: Repository, encode: ResultEncoding) {
   const preparation = { kind: 'prepareGitDiff' as const, compare: request.compare,
     paths: [...(request.path === null ? [] : [request.path]), ...request.paths], repoRootPath: owner.repository.worktree.canonicalPath,
     contextLines: request.contextLines, detectRenames: request.detectRenames };

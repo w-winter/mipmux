@@ -173,6 +173,21 @@ export class WorkspaceOperation {
     const captured = structuredClone(request);
     return this.#track(() => readGit(this, captured, encode));
   }
+  electGitTarget(paths: readonly string[]) {
+    const captured = [...paths];
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request({ kind: 'electGitTarget', paths: captured,
+        roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result;
+    });
+  }
+  revalidateGitTargets(input: Extract<NativeOperation, { kind: 'revalidateGitTargets' }>) {
+    const captured = structuredClone(input);
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(captured, this.signal)).result;
+    });
+  }
   openGitSourceAccess(identity: RootIdentity) {
     const captured = structuredClone(identity);
     return this.#track(async () => {

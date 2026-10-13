@@ -72,7 +72,7 @@ async function readShow(operation: WorkspaceOperation, request: Extract<GitReque
   const metadata = await operation.parseGitShowMetadata({ kind: 'parseGitShowMetadata', bytes: metadataBytes.toString('base64') });
   if (metadata.kind === 'gitShowError') throw new WorkspaceFailure('gitShowMalformed', { message: metadata.message });
   const revspec = oid + '^!';
-  const owner = await resolveDiffRepository(operation, request.root, null), exclusions: string[] = [];
+  const owner = await resolveDiffRepository(operation, request.root, { kind: 'explicit', worktree: null }), exclusions: string[] = [];
   const authorize = (paths: readonly string[]) => paths.filter(path => {
     if (owner.permits(path)) return true;
     exclusions.push(path); return false;

@@ -5089,6 +5089,96 @@
         "Capture numstat/name-status/body argument arrays rather than executing app processes; reuse retained command flags, including the established no-textconv restriction.",
         "Represent captured commands with a named struct; scoped SwiftLint cyclomatic exemption retains source diffArgs branches while CCCC remains enabled. Apply SwiftFormat layout."
       ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitWorktreeQueryModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "84d7011efb60066a209c369c812138f2af5c4948a8a6ffa669e259debce1be09",
+      "destination": "native/Sources/SmipBridge/RPCEGitWorktreeIdentity.swift",
+      "changes": [
+        "Retain repository/worktree identity models, hashing and the fresh Foundation ancestor resolver. Replace CryptoKit import with the installed swift-crypto Crypto module; omit unrelated worktree-list DTOs and instrumentation import."
+      ],
+      "sha256": "40cf89e5689d77b84e625b32f50c68219606ec8f0394ee4880150a147a6e9a11",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          7,
+          51
+        ],
+        [
+          214,
+          329
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitRepoDescriptor.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "30ae341006a5257bfa98897fb2e26f1c4a90fd815a9aee9cf9e0cabdf18ac4db",
+      "destination": "native/Sources/SmipBridge/RPCEGitRepoDescriptor.swift",
+      "changes": [
+        "Retain checkout key generation, descriptor identity, containment and ordering. Replace CryptoKit import with installed swift-crypto Crypto; add attribution and apply scoped SwiftFormat."
+      ],
+      "sha256": "0e2d62133fd4bec89120d208c3358da1505956360c9c03780076e7e1e70388f0",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          147
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/ReviewGitSelectedPathOwnershipResolver.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4243ff0af1a4e7f080e0dba25ceb1257dd4cad15ed73e23f7d4351f4f999b3f5",
+      "destination": "native/Sources/SmipBridge/RPCEGitSelectedPathOwnership.swift",
+      "changes": [
+        "Retain selected-file grouping, ownership checks, path issues and ordering. Supply existing native path/layout/model types instead of app module imports. The synchronous worker replaces the async VCSService singleton with the fresh retained GitWorktreeIdentityResolver starting at the selected file parent; no headless Jujutsu backend or application VCS cache is supplied. External job cancellation retires the native worker. Retain existing complexity checks.",
+        "Separate checkout grouping and ordered projection into addSelectedPath/makeCheckouts to meet the existing cognitive-complexity limit; retain source conditions, hashing, sorting, ordinal labels and fields."
+      ],
+      "sha256": "a6e36ac0dde9e46cd98ac1d6e666f159fcafbb20c5b13b542ba8beb591901d34",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1,
+          150
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/FrozenPromptGitReviewContext.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9ed4e5d9b6810c43af8e3dc68f4510ecabf0640f2f1b664bb656caf577db9e8f",
+      "destination": "native/Sources/SmipBridge/RPCEGitDisplayContext.swift",
+      "changes": [
+        "Retain logical/physical display-root values and normalization; bind headless roots directly rather than window/session projection."
+      ],
+      "sha256": "a361ec404ba1db06ada1460f12c415667fc3ec7c2f6ddf856b6787e71b65f992",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          200,
+          218
+        ]
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
+      "destination": "native/Sources/SmipBridge/RPCEGitDisplayLabels.swift",
+      "changes": [
+        "Retain checkout labels, relative-path formatting and privacy-safe unresolved-path labels. Native roots supply logical labels; omit coordinator/app service dependencies."
+      ],
+      "sha256": "c8aa646442ac0b792e5ca890dcceb0e8a18688acd9274cb9dcb9fbbeb1f7cbbb",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          462,
+          506
+        ]
+      ]
     }
   ],
   "dependencies": [

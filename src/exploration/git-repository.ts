@@ -8,6 +8,7 @@ import { gitProcess } from '../patches/git-process.js';
 import { contains, deniedAbsolutePath } from '../workspace/root-policy.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
+import type { NativeGitCheckout } from '../contracts/native.js';
 
 const pathValidator = Compile(RelativePath);
 export function gitText(bytes: Buffer): string {
@@ -16,7 +17,8 @@ export function gitText(bytes: Buffer): string {
 }
 
 /** Resolves a loaded checkout or an advertised worktree, then fences its captured identities. */
-export async function resolveDiffRepository(operation: WorkspaceOperation, rootName: string, worktree: string | null) {
+export async function resolveDiffRepository(operation: WorkspaceOperation, rootName: string,
+  location: { kind: 'explicit'; worktree: string | null } | { kind: 'elected'; checkout: NativeGitCheckout }) {
   const configured = operation.runtime.options.git;
   if (!configured) throw new WorkspaceFailure('gitNotConfigured');
   const root = operation.snapshot.roots.find(root => root.name === rootName);
@@ -35,7 +37,9 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
     return { worktree: await identity(['rev-parse', '--show-toplevel']), gitDirectory: await identity(['rev-parse', '--absolute-git-dir']),
       commonDirectory: await identity(['rev-parse', '--path-format=absolute', '--git-common-dir']) };
   };
-  const anchor = await identify(root.identity.canonicalPath);
+  const anchorPath = location.kind === 'elected' ? location.checkout.checkoutRootPath : root.identity.canonicalPath;
+  const worktree = location.kind === 'explicit' ? location.worktree : null;
+  const anchor = await identify(anchorPath);
   let repository = anchor;
   if (worktree !== null) {
     const path = await realpath(worktree);
@@ -56,7 +60,7 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
     return !deniedAbsolutePath(operation.declaration, join(repository.worktree.canonicalPath, path), join(anchor.worktree.canonicalPath, path));
   };
   const revalidate = async () => {
-    if (canonicalJSON(await identify(root.identity.canonicalPath)) !== canonicalJSON(anchor) ||
+    if (canonicalJSON(await identify(anchorPath)) !== canonicalJSON(anchor) ||
         canonicalJSON(await identify(repository.worktree.canonicalPath)) !== canonicalJSON(repository)) throw new WorkspaceFailure('gitRepositoryChanged');
     if (worktree !== null) {
       const listed = gitText(await run(anchor.worktree.canonicalPath, ['worktree', 'list', '--porcelain', '-z']))

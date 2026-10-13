@@ -13,7 +13,7 @@ export const GitRequest = Type.Union([
   Type.Object({ op: Type.Literal('show'), root: RootName, ref: Type.String({ pattern: '^[^\\u0000]*$' }),
     detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
     detectRenames: Type.Boolean({ default: false }), maxOutputBytes: output }, closed),
-  Type.Object({ op: Type.Literal('diff'), root: RootName, compare: Type.String({ pattern: '^[^\\u0000]*$', default: 'uncommitted' }),
+  Type.Object({ op: Type.Literal('diff'), root: Type.Union([RootName, Type.Null()], { default: null }), compare: Type.String({ pattern: '^[^\\u0000]*$', default: 'uncommitted' }),
     worktree: Type.Union([Type.String({ pattern: '^/[^\\u0000]*$' }), Type.Null()], { default: null }),
     path: Type.Union([Type.String(), Type.Null()], { default: null }), paths: Type.Array(Type.String(), { default: [] }),
     detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
@@ -29,7 +29,7 @@ export const GitInput = Type.Union([
   Type.Object({ op: Type.Literal('show'), root: RootName, ref: GitRequest.anyOf[3].properties.ref,
     detail: Type.Optional(GitRequest.anyOf[3].properties.detail), contextLines: Type.Optional(GitRequest.anyOf[3].properties.contextLines),
     detectRenames: Type.Optional(GitRequest.anyOf[3].properties.detectRenames) }, closed),
-  Type.Object({ op: Type.Literal('diff'), root: RootName,
+  Type.Object({ op: Type.Literal('diff'), root: Type.Optional(GitRequest.anyOf[4].properties.root),
     ...Type.Partial(Type.Omit(GitRequest.anyOf[4], ['op', 'root', 'maxOutputBytes'])).properties }, closed),
 ]);
 export const gitValidator = Compile(GitRequest);

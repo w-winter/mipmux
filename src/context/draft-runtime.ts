@@ -43,6 +43,9 @@ import { posix } from 'node:path';
 import { resolveSelectedCodemaps } from './codemap-readiness.js';
 import { descriptorGitMode } from '../contracts/patches.js';
 import { prepareRenderInput } from './final-tree.js';
+import { FrozenGitTarget } from './git-target.js';
+import type { GitRequest } from '../contracts/git.js';
+import { readElectedDiff } from '../exploration/git-diff.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -70,6 +73,7 @@ export class DraftRuntime {
     readonly operation: WorkspaceOperation,
     readonly request: ContextBuildRequest,
     private readonly onClosed: () => void,
+    private readonly gitTarget: FrozenGitTarget,
   ) {
     this.#codemapMode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
     this.#prompt = request.task;
@@ -101,7 +105,7 @@ export class DraftRuntime {
       new Set(request.documents.map((document) => document.id)).size !== request.documents.length ||
       new Set(request.patches.map((patch) => patch.id)).size !== request.patches.length
     ) throw new WorkspaceFailure('duplicateMaterial');
-    const draft = new DraftRuntime(operation, request, onClosed), admission = await operation.fork(signal);
+    const admission = await operation.fork(signal);
     const materials = new Map<string, Material>();
     try {
       for (const selection of request.requiredSources) {
@@ -127,6 +131,8 @@ export class DraftRuntime {
         const material = await acquirePatch(admission, patch);
         materials.set(material.record.id, material);
       }
+      const target = await FrozenGitTarget.capture(admission, materials);
+      const draft = new DraftRuntime(operation, request, onClosed, target);
       draft.#materials = await draft.#derive(admission, materials, draft.#codemapMode, draft.#materials, 0);
       signal.throwIfAborted();
       return draft;
@@ -145,6 +151,16 @@ export class DraftRuntime {
     this.#pending.add(work);
     void work.then(() => this.#pending.delete(work), () => this.#pending.delete(work));
     return work;
+  }
+  readImplicitGitDiff(input: Extract<GitRequest, { op: 'diff' }>, signal: AbortSignal, encode: ResultEncoding) {
+    return this.#track((async () => {
+      this.#check(signal, this.#revision);
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      try {
+        const checkout = await this.gitTarget.primary(operation);
+        return await readElectedDiff(operation, structuredClone(input), checkout, encode);
+      } finally { await operation.close(); }
+    })());
   }
   update(input: DraftUpdate, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!updateValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
