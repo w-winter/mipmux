@@ -174,6 +174,7 @@ enum Operation {
     case readGitSnapshotCurrent(NativeHandle, String)
     case writeGitSnapshotCurrent(NativeHandle)
     case readGitSnapshotFile(NativeHandle, String, String, String)
+    case resolveGitSnapshotComparison(NativeHandle, NativeHandle, String)
     case writeGitSnapshotFile(NativeHandle, String, Data)
     case writeExport(NativeHandle, String, Data)
     case readExport(NativeHandle, String)
@@ -233,6 +234,11 @@ enum Operation {
         case "readGitSnapshotCurrent":
             let fields = try WireObject(value, keys: ["kind", "root", "repoKey"])
             self = try .readGitSnapshotCurrent(NativeHandle(fields.value("root")), fields.string("repoKey"))
+        case "resolveGitSnapshotComparison":
+            let fields = try WireObject(value, keys: ["kind", "output", "repository", "compare"])
+            self = try .resolveGitSnapshotComparison(
+                NativeHandle(fields.value("output")), NativeHandle(fields.value("repository")), fields.string("compare")
+            )
         case "writeGitSnapshotCurrent":
             let fields = try WireObject(value, keys: ["kind", "run"])
             self = try .writeGitSnapshotCurrent(NativeHandle(fields.value("run")))

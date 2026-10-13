@@ -3067,7 +3067,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "56c59ce347338fafb693131945c808917ce7770a4feadc3f9602c82b7adb90bc",
       "destination": "native/Sources/SmipBridge/RPCEGitDiffCompareSpec.swift",
-      "sha256": "f3671fbc7d51214aa1e0cfdef26acf9cf0dc343e01f38429838ac684829ed519",
+      "sha256": "c1b8232b54be69b388b9ec89bd5c14642b7855bdf1e803466b1e3bd5d50a270a",
       "classification": "handwritten",
       "ranges": [
         [
@@ -3081,12 +3081,17 @@
         [
           190,
           212
+        ],
+        [
+          129,
+          150
         ]
       ],
       "changes": [
         "Internal visibility; retain source comparison variants, parser, raw/display strings and canonical encoder.",
-        "Use Encodable rather than the source persistence decoder. No persisted comparison input or legacy-reader path is admitted by the native dependency.",
-        "Retain the source parsing branch layout with a scoped SwiftLint cyclomatic exception; configured CCCC limits remain enabled."
+        "Retain the source parsing branch layout with a scoped SwiftLint cyclomatic exception; configured CCCC limits remain enabled.",
+        "Decode only the canonical kind/base/spec variant with required current-state fields; do not copy absent-base defaults or the legacy persisted-case decoder.",
+        "Pass resolved comparison variants through native acquisition without reinterpreting saved HEAD strings as user-entered syntax."
       ]
     },
     {
@@ -5411,6 +5416,34 @@
       "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
       "sha256": "93523e68fa6a93def3cbdb03040cb136d84fb5ff908e70ddae52256688a6c75f",
       "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotComparison.swift",
+      "sha256": "8152911bca8df09f4e8625c7b5bf96fe57b89235063311fa291b8565113c3894",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          837,
+          862
+        ],
+        [
+          865,
+          869
+        ],
+        [
+          892,
+          926
+        ]
+      ],
+      "changes": [
+        "Retain the pinned last/named manifest precedence,saved-HEAD conversion,comparison tuple,source diagnostics and snapshot-ID shape check.",
+        "The existing main-reference resolver runs before this kernel; no duplicate main-branch mechanism is copied.",
+        "Inject confined CURRENT/manifest reads and repo display metadata instead of app workspace/store owners; represent expected parameter failures as typed native results.",
+        "Retain the source result tuple with a scoped tuple lint exemption. No legacy namespace lookup or new source-policy fallback is added."
+      ]
     }
   ],
   "dependencies": [

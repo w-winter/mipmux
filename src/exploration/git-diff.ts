@@ -44,7 +44,6 @@ export async function runDiff(operation: WorkspaceOperation, owner: Repository, 
 }
 
 async function resolveMainCompare(operation: WorkspaceOperation, owner: Repository, comparison: DiffCommands['comparison']): Promise<string | null> {
-  if (comparison.kind === 'revspec' && comparison.spec.toLowerCase() === 'last') throw new WorkspaceFailure('gitSnapshotUnavailable');
   if (comparison.kind !== 'revspec' && comparison.kind !== 'uncommitted' && comparison.kind !== 'staged') return null;
   const baseName = comparison.kind === 'revspec' ? comparison.spec : comparison.base;
   if (!/^(main|trunk)$/i.test(baseName)) return null;
@@ -103,6 +102,11 @@ async function captureRepositoryDiff(operation: WorkspaceOperation, request: Dif
   let commands = await operation.gitDiffOperation(preparation);
   const resolved = await resolveMainCompare(operation, owner, commands.comparison);
   if (resolved !== null) commands = await operation.gitDiffOperation({ ...preparation, compare: resolved });
+  else {
+    const snapshot = await operation.resolveGitSnapshotComparison(owner.access.root('GitRepository').handle, request.compare);
+    if (snapshot.kind === 'gitSnapshotComparisonError') throw new WorkspaceFailure(snapshot.code, { message: snapshot.message });
+    commands = await operation.gitDiffOperation({ ...preparation, compare: snapshot.comparison });
+  }
   const reference = commands.comparison.kind === 'unstaged' ? null : commands.comparison.kind === 'revspec'
     ? commands.comparison.spec : commands.comparison.base;
   if (reference?.startsWith('-')) throw new WorkspaceFailure('invalidRequest');

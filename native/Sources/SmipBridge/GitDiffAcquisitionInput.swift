@@ -2,7 +2,7 @@ import Foundation
 
 struct GitDiffAcquisitionInput {
     private struct Arguments {
-        let compare: String
+        let compare: GitDiffCompareSpec
         let paths: [String]
         let root: String
         let contextLines: Int
@@ -33,7 +33,15 @@ struct GitDiffAcquisitionInput {
             guard let paths = try fields.value("paths") as? [String] else {
                 throw BridgeFailure("nativeProtocolError")
             }
-            work = try .arguments(Arguments(compare: fields.string("compare"), paths: paths,
+            let comparison = try fields.value("compare")
+            let compare: GitDiffCompareSpec
+            if let raw = comparison as? String {
+                compare = GitDiffCompareSpec.parse(raw)
+            } else {
+                compare = try JSONDecoder().decode(GitDiffCompareSpec.self,
+                                                  from: JSONSerialization.data(withJSONObject: comparison))
+            }
+            work = try .arguments(Arguments(compare: compare, paths: paths,
                                             root: fields.string("repoRootPath"),
                                             contextLines: fields.integer("contextLines"),
                                             detectRenames: fields.boolean("detectRenames")))
@@ -62,7 +70,7 @@ struct GitDiffAcquisitionInput {
         case let .untrackedPatch(text):
             return ["kind": "gitUntrackedPatch", "text": RPCEGitDiffCommands.normalizeBatchedUntrackedDiffPaths(text)]
         case let .arguments(input):
-            let compare = GitDiffCompareSpec.parse(input.compare)
+            let compare = input.compare
             let paths = input.paths.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
             let commands = RPCEGitDiffCommands().arguments(
                 compare: compare, contextLines: input.contextLines, detectRenames: input.detectRenames

@@ -1,8 +1,8 @@
 // Derived from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3.
-// Modified: internal visibility; retain parsing and canonical encoding only.
+// Modified: internal visibility; retain parsing and canonical coding with required current-state fields.
 import Foundation
 
-enum GitDiffCompareSpec: Sendable, Equatable, Encodable {
+enum GitDiffCompareSpec: Equatable, Codable {
     case uncommitted(base: String)
     case uncommittedMergeBase(base: String)
     case staged(base: String)
@@ -110,6 +110,18 @@ enum GitDiffCompareSpec: Sendable, Equatable, Encodable {
             "unstaged"
         case let .revspec(spec):
             spec
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        switch try container.decode(Kind.self, forKey: .kind) {
+        case .uncommitted: self = try .uncommitted(base: container.decode(String.self, forKey: .base))
+        case .uncommittedMergeBase: self = try .uncommittedMergeBase(base: container.decode(String.self, forKey: .base))
+        case .staged: self = try .staged(base: container.decode(String.self, forKey: .base))
+        case .stagedMergeBase: self = try .stagedMergeBase(base: container.decode(String.self, forKey: .base))
+        case .unstaged: self = .unstaged
+        case .revspec: self = try .revspec(container.decode(String.self, forKey: .spec))
         }
     }
 

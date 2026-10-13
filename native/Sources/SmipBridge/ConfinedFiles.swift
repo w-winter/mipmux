@@ -380,6 +380,49 @@ final class ConfinedFiles {
     func readGitSnapshotCurrent(_ handle: NativeHandle, repoKey: String) throws -> [String: Any] {
         let root = try lookupRoot(handle)
         guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        let id = try currentSnapshotID(root, repoKey: repoKey)
+        return ["kind": "gitSnapshotCurrent", "snapshotID": id as Any? ?? NSNull()]
+    }
+
+    func resolveGitSnapshotComparison(_ outputHandle: NativeHandle, repositoryHandle: NativeHandle,
+                                      compare: String) throws -> [String: Any] {
+        let output = try lookupRoot(outputHandle), repository = try sourceRoot(repositoryHandle)
+        guard output.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        let url = URL(fileURLWithPath: repository.identity.canonicalPath)
+        let rootPath = (url.path as NSString).standardizingPath
+        let repoKey = GitRepoDescriptor.makeRepoKey(for: rootPath, displayName: url.lastPathComponent)
+        let result: [String: Any]
+        do {
+            let resolved = try RPCEGitSnapshotComparison().resolveCompareSpec(
+                compare, displayName: url.lastPathComponent,
+                currentID: { try self.currentSnapshotID(output, repoKey: repoKey) },
+                manifest: { id in try self.readSnapshotManifest(output, repoKey: repoKey, id: id) }
+            )
+            result = try [
+                "kind": "gitSnapshotComparison",
+                "comparison": decodeWireJSON(JSONEncoder().encode(resolved.spec)),
+                "resolved": resolved.resolved,
+                "input": resolved.input as Any? ?? NSNull()
+            ]
+        } catch let failure as RPCEGitSnapshotComparison.Failure {
+            result = ["kind": "gitSnapshotComparisonError", "code": failure.code, "message": failure.message]
+        }
+        try validate(repository)
+        try validate(output)
+        return result
+    }
+
+    private func readSnapshotManifest(_ root: Root, repoKey: String, id: String) throws -> GitDiffSnapshotManifest? {
+        guard let normalized = GitDiffSnapshotStore.normalizeSnapshotID(id) else { throw BridgeFailure("invalidPath") }
+        let parts = try snapshotRepoComponents(repoKey) + components(normalized)
+        let parent = try traverse(root.directory.value, components: parts)
+        let bytes = try readSnapshotBytes(parent.value, name: "manifest.json")
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(GitDiffSnapshotManifest.self, from: bytes)
+    }
+
+    private func currentSnapshotID(_ root: Root, repoKey: String) throws -> String? {
         let repoParts = try snapshotRepoComponents(repoKey)
         let pointer: CapturedGitSnapshotPointer
         do {
@@ -398,13 +441,13 @@ final class ConfinedFiles {
                     exists = true
                 }
                 try validate(root)
-                return ["kind": "gitSnapshotCurrent", "snapshotID": exists ? normalized : NSNull()]
+                return exists ? normalized : nil
             }
         } catch let failure as BridgeFailure where failure.code == "notFound" {
             try validate(root)
         }
         try validate(root)
-        return ["kind": "gitSnapshotCurrent", "snapshotID": NSNull()]
+        return nil
     }
 
     func readGitSnapshotFile(

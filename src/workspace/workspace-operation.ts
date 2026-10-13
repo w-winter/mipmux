@@ -13,7 +13,7 @@ import { captureGitDiff } from '../exploration/git-diff.js';
 import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
-import type { NativeOperation } from '../contracts/native.js';
+import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import type { WorkspaceRuntime } from './workspace-runtime.js';
 import { capturedFile, completeFile } from './inventory-file.js';
@@ -201,6 +201,18 @@ export class WorkspaceOperation {
       const opened = await access.bridge.request({ kind: 'openRoots', roots: [{ name: 'GitRepository',
         absolutePath: captured.declaredPath, access: 'source', expected: captured }] }, this.signal);
       return new NativeAccess(access.bridge, opened.result.roots, this.signal);
+    });
+  }
+  resolveGitSnapshotComparison(repository: NativeHandle, compare: string) {
+    const captured = structuredClone(repository);
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess()), root = this.snapshot.outputRoot;
+      const opened = await access.bridge.request({ kind: 'openRoots', roots: [{ name: 'GitSnapshots', absolutePath: root.declaredPath,
+        access: 'output', expected: root }] }, this.signal);
+      const output = opened.result.roots[0];
+      if (!output) throw new WorkspaceFailure('nativeProtocolError');
+      return (await access.bridge.request({ kind: 'resolveGitSnapshotComparison', output: output.handle,
+        repository: captured, compare }, this.signal)).result;
     });
   }
   gitDiffOperation<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' }>>(input: O) {
