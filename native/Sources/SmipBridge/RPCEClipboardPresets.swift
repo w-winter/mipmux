@@ -1,9 +1,11 @@
 // Derived from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3 under Apache-2.0.
 import Foundation
 
-// Modified: retain the Standard/Review declarations and their referenced UUIDs.
+// Modified: retain the Standard/Plan/Review declarations and their referenced UUIDs.
 enum BuiltInCopyPresets {
+    private static let architectPromptId = UUID(uuidString: "8E81AAC2-79CE-4897-A59E-EFD81EEBB7E9")!
     private static let reviewPromptId = UUID(uuidString: "D7F1B2E4-3C5A-6B8D-CF8E-1F5D0E2A4C6B")!
+    private static let planUUID = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
     private static let standardUUID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
     private static let codeReviewUUID = UUID(uuidString: "66666666-6666-6666-6666-666666666666")!
     /// Standard preset - Default balanced configuration
@@ -22,6 +24,23 @@ enum BuiltInCopyPresets {
         codeMapUsage: .auto,
         gitInclusion: GitInclusion.none,
         storedPromptIds: [] // No stored prompts
+    )
+    /// Plan preset - Architecture & design
+    static let plan = CopyPreset(
+        id: planUUID,
+        name: "Plan",
+        builtInKind: .plan,
+        description: "Architecture design and implementation planning",
+        icon: "🏗️",
+        isBuiltIn: true,
+        includeFiles: true,
+        includeUserPrompt: true,
+        includeMetaPrompts: true,
+        includeFileTree: true,
+        fileTreeMode: .auto,
+        codeMapUsage: .auto,
+        gitInclusion: GitInclusion.none,
+        storedPromptIds: [architectPromptId] // Reference the [Architect] stored prompt
     )
     /// Code Review preset - Review with git diff
     static let codeReview = CopyPreset(

@@ -3,7 +3,7 @@ import Foundation
 struct PromptContextResolved { let storedPromptIds: [UUID]?; let includeMetaPrompts: Bool }
 struct CapturedStoredPrompt: Decodable { let id: UUID; let title: String; let content: String }
 
-enum ClipboardPresetKind: String, Decodable { case standard, codeReview }
+enum ClipboardPresetKind: String, Decodable { case standard, plan, codeReview }
 
 struct PreparedClipboardInput: Decodable {
     let duplicateUserInstructionsAtTop: Bool
@@ -35,7 +35,11 @@ struct PreparedClipboardOperation {
     }
 
     func render() throws -> [String: Any] {
-        let preset = input.copyPreset == .standard ? BuiltInCopyPresets.standard : BuiltInCopyPresets.codeReview
+        let preset = switch input.copyPreset {
+        case .standard: BuiltInCopyPresets.standard
+        case .plan: BuiltInCopyPresets.plan
+        case .codeReview: BuiltInCopyPresets.codeReview
+        }
         guard let includeFiles = preset.includeFiles, let includeUserPrompt = preset.includeUserPrompt,
               let includeMetaPrompts = preset.includeMetaPrompts, let promptIDs = preset.storedPromptIds else {
             throw BridgeFailure("nativeProtocolError")
