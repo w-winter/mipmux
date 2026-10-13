@@ -24,6 +24,11 @@ export type SourceSelection = Static<typeof SourceSelection>;
 /** Automatic mode derives one-hop related codemaps; manual mode retains explicit material only. */
 export const CodemapMode = Type.Enum(['automatic', 'manual']);
 export type CodemapMode = Static<typeof CodemapMode>;
+/** Mutable starting selection; required evidence is declared separately. */
+export const InitialSelection = Type.Union([
+  Type.Object({ codemapMode: Type.Literal('automatic'), sources: Type.Array(Type.Union([SourceSelection.anyOf[0], SourceSelection.anyOf[1]])) }, closed),
+  Type.Object({ codemapMode: Type.Literal('manual'), sources: Type.Array(SourceSelection) }, closed),
+]);
 const SuppliedDocument = Type.Object({
   kind: Type.Literal('suppliedDocument'),
   id: Type.String({ minLength: 1 }),
@@ -52,6 +57,7 @@ export const ContextBuildRequest = Type.Object({
   constraints: Type.String(),
   enhancementMode: PromptEnhancementMode,
   purpose: Type.Enum(['planning', 'review', 'investigation']),
+  initialSelection: InitialSelection,
   requiredSources: Type.Array(SourceSelection),
   documents: Type.Array(DocumentInput),
   patches: Type.Array(PatchInput),
@@ -141,7 +147,7 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(12),
+  schemaVersion: Type.Literal(13),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,

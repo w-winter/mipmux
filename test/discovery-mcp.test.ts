@@ -57,7 +57,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
   });
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
-    const job = client.build(workspace.id, 'mcp', { task: 'Inspect the ticket', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
+    const job = client.build(workspace.id, 'mcp', { task: 'Inspect the ticket', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
       budgetUnits: 10000 });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});

@@ -38,7 +38,7 @@ test('worktree, staged and commit patches for a declared subroot retain owning-c
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
     for (const comparison of comparisons) {
-      const draft = await workspace.createDraft({ duplicateUserInstructionsAtTop: false, copyPreset: 'standard', storedPrompts: [],
+      const draft = await workspace.createDraft({ initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard', storedPrompts: [],
         task: 'Inspect the declared source root.', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'kept.txt' } }], documents: [],
         patches: [{ kind: 'localPatch', id: 'changes', root: 'r', comparison, scope: { kind: 'all' } }],

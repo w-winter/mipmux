@@ -49,7 +49,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot }, new AbortController().signal);
     await client.refresh(workspace.id, new AbortController().signal);
     armed = true;
-    const request: ContextBuildRequest = { task: 'Inspect', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
+    const request: ContextBuildRequest = { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], budgetUnits: 10000, outputName: 'packet' };
     const job = client.build(workspace.id, 'held-read', request);
     await holding;

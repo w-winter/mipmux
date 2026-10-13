@@ -22,7 +22,7 @@ import { Compile } from 'typebox/compile';
 const signal = () => new AbortController().signal;
 const maxOutputBytes = 100000;
 const request: ContextBuildRequest = {
-  task: 'Inspect the selected implementation and its dependencies', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
+  task: 'Inspect the selected implementation and its dependencies', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
   budgetUnits: 100000,
 };
@@ -165,7 +165,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 12);
+    assert.equal(ready.manifest.schemaVersion, 13);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);

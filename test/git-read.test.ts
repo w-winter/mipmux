@@ -111,7 +111,7 @@ test('real scripted SDK scout can inspect Git through the allowed tool boundary 
   const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
   try {
     const workspace = await client.declare(f.spec, signal());
-    const job = client.build(workspace.id, 'git-scout', { task: 'Inspect history', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', purpose: 'investigation', enhancementMode: 'preserve',
+    const job = client.build(workspace.id, 'git-scout', { task: 'Inspect history', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', purpose: 'investigation', enhancementMode: 'preserve',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], budgetUnits: 10000, outputName: 'packet' });
     const terminal = await client.wait(job.jobId, 10000, signal(), () => {});
     assert.equal(terminal.state, 'ready', JSON.stringify(terminal)); assert.equal(terminal.localSettled, true);

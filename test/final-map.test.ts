@@ -22,7 +22,7 @@ async function fixture(Runtime: typeof SmipRuntime = SmipRuntime) {
   const client = runtime.createClient(null);
   const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
     { name: 's', absolutePath: join(directory, 's') }], exclusions: [], outputRoot: join(directory, 'out') }, signal);
-  const draft = await client.createDraft(workspace.id, { task: 'Inspect', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve',
+  const draft = await client.createDraft(workspace.id, { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve',
     purpose: 'investigation', requiredSources: [], documents: [], patches: [], budgetUnits: 100000,
     discoveryHints: [], outputName: 'packet' }, signal);
   return { directory, runtime, client, draft, signal };

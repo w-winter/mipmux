@@ -17,7 +17,7 @@ const mutationReply = Compile(Type.Object({ kind: Type.Literal('mutation'), revi
 const metadata = Compile(Type.Object({ kind: Type.Literal('metadata'), revision: Type.Integer(), items: Type.Array(Type.Object({ kind: Type.String() })) }));
 interface HeldSliceCalculation { signal: AbortSignal | null }
 
-const request = { task: 'Inspect selected source', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+const request = { task: 'Inspect selected source', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
   requiredSources: [], documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'packet' };
 
 async function hostFixture(prefix: string) {

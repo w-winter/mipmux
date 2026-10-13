@@ -71,7 +71,7 @@ export class DraftRuntime {
     readonly request: ContextBuildRequest,
     private readonly onClosed: () => void,
   ) {
-    this.#codemapMode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : 'automatic';
+    this.#codemapMode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
     this.#prompt = request.task;
   }
   get revision(): number {
@@ -97,6 +97,7 @@ export class DraftRuntime {
     if (
       new Set(request.requiredSources.map((selection) => sourceId(selection.source))).size !==
         request.requiredSources.length ||
+      new Set(request.initialSelection.sources.map((selection) => sourceId(selection.source))).size !== request.initialSelection.sources.length ||
       new Set(request.documents.map((document) => document.id)).size !== request.documents.length ||
       new Set(request.patches.map((patch) => patch.id)).size !== request.patches.length
     ) throw new WorkspaceFailure('duplicateMaterial');
@@ -106,6 +107,17 @@ export class DraftRuntime {
       for (const selection of request.requiredSources) {
         const material = await acquireSource(admission, { selectionOrigin: 'explicit', selection, required: true });
         materials.set(material.record.id, material);
+      }
+      for (const selection of request.initialSelection.sources) {
+        const existing = materials.get(sourceId(selection.source));
+        if (existing) {
+          if (existing.record.kind !== 'source' || canonicalJSON(existing.record.selection) !== canonicalJSON(selection)) {
+            throw new WorkspaceFailure('requiredMaterialMutation', { id: existing.record.id });
+          }
+        } else {
+          const material = await acquireSource(admission, { selectionOrigin: 'explicit', selection, required: false });
+          materials.set(material.record.id, material);
+        }
       }
       for (const document of request.documents) {
         const material = await acquireDocument(admission, document);

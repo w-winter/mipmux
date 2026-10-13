@@ -16,7 +16,7 @@ for (const [duplicateUserInstructionsAtTop, task] of [[false, 'Literal prompt\nð
     const signal = new AbortController().signal;
     try {
       const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(directory, 'out') }, signal);
-      const request = { duplicateUserInstructionsAtTop, copyPreset: 'standard' as const, storedPrompts: [], task, constraints: '',
+      const request = { initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop, copyPreset: 'standard' as const, storedPrompts: [], task, constraints: '',
         enhancementMode: 'preserve' as const, purpose: 'investigation' as const,
         requiredSources: [{ kind: 'full' as const, source: { root: 'r', path: 'source.txt' } }],
         documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'packet' };

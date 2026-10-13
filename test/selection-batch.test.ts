@@ -13,7 +13,7 @@ import { sourceId } from '../src/context/material-store.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
-const request = { task: 'Inspect sources', duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve' as const, purpose: 'investigation' as const,
+const request = { task: 'Inspect sources', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve' as const, purpose: 'investigation' as const,
   requiredSources: [], documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'packet' };
 const signal = () => new AbortController().signal;
 interface HeldBatchRead { signal: AbortSignal | null; armed: boolean }
