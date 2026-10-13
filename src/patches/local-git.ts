@@ -1,5 +1,5 @@
 import { realpath, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import { Compile } from 'typebox/compile';
 import { RelativePath, type RootIdentity } from '../contracts/workspace.js';
 import { descriptorGitMode, type GitMode, type PatchInput, type PatchReceipt } from '../contracts/patches.js';
@@ -61,9 +61,11 @@ export async function acquireLocalPatch(
     return text.slice(0, -1);
   };
   const worktree = await directoryIdentity(await line(['rev-parse', '--show-toplevel']));
-  if (
-    worktree.canonicalPath !== cwd || worktree.device !== root.identity.device || worktree.inode !== root.identity.inode
-  ) throw new WorkspaceFailure('gitRepositoryChanged');
+  const relativeRoot = relative(worktree.canonicalPath, cwd);
+  if (isAbsolute(relativeRoot) || relativeRoot === '..' || relativeRoot.startsWith('../')) {
+    throw new WorkspaceFailure('gitRepositoryChanged');
+  }
+  const repositoryPrefix = relativeRoot ? relativeRoot + '/' : '';
   const gitDirectory = await directoryIdentity(await line(['rev-parse', '--absolute-git-dir']));
   const headResult = await run(['rev-parse', '--verify', '--quiet', 'HEAD']);
   const head = headResult.code === 1 && !headResult.diagnostics && !headResult.bytes.length
@@ -100,11 +102,13 @@ export async function acquireLocalPatch(
       })
       : [];
   };
+  const rootEntries = (entries: readonly Entry[]) => entries.filter(entry => entry.path.startsWith(repositoryPrefix))
+    .map(entry => ({ ...entry, path: entry.path.slice(repositoryPrefix.length) }));
   const tree = async (oid: string | null) =>
-    oid === null ? [] : parse(await read(['ls-tree', '-rz', '--full-tree', oid]), false);
+    oid === null ? [] : rootEntries(parse(await read(['ls-tree', '-rz', '--full-tree', oid]), false));
   const baseEntries = await tree(base);
-  const indexBytes = input.comparison.kind === 'commits' ? null : await read(['ls-files', '--stage', '-z']);
-  const indexEntries = indexBytes === null ? [] : parse(indexBytes, true);
+  const indexBytes = input.comparison.kind === 'commits' ? null : await read(['ls-files', '--full-name', '--stage', '-z', '--', '.']);
+  const indexEntries = indexBytes === null ? [] : rootEntries(parse(indexBytes, true));
   const targets = input.comparison.kind === 'commits' ? await tree(target) : indexEntries;
   const baseByPath = new Map(baseEntries.map((entry) => [entry.path, entry]));
   const targetByPath = new Map(targets.map((entry) => [entry.path, entry]));
@@ -123,7 +127,7 @@ export async function acquireLocalPatch(
     policies: [],
     exclusions: [],
     repository: {
-      worktree: { ...worktree, declaredPath: root.identity.declaredPath },
+      worktree,
       gitDirectory,
       head,
       base,
@@ -182,7 +186,7 @@ export async function acquireLocalPatch(
         operation.runtime.supervisor,
         configured.executable,
         join(operation.runtime.options.cachePath, 'v1/work'),
-        path,
+        repositoryPrefix + path,
         before,
         after,
         operation.signal,
