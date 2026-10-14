@@ -10,6 +10,7 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import type { captureElectedGitDiff } from '../exploration/git-diff.js';
 import { NativeFailure } from '../native/bridge-client.js';
+import { captureGitWorktreeReply } from './git-worktree.js';
 
 type CapturedPublication = Awaited<ReturnType<typeof captureElectedGitDiff>> & { readonly checkout: NativeGitCheckout };
 const manifestMetadata = Compile(Type.Object({ generatedAt: Type.String() }));
@@ -27,6 +28,8 @@ export async function publishGitSnapshot(operation: WorkspaceOperation, captured
     const id = await access.bridge.request({ kind: 'resolveGitSnapshotID', root: access.root,
       repoKey: captured.checkout.repoKey, snapshotID: options.snapshotID }, signal);
     const metadata = await access.bridge.request({ kind: 'prepareGitPublicationMetadata', repoRoot: captured.checkout.checkoutRootPath }, signal);
+    const worktree = metadata.result.worktree === null ? { worktree: null, warning: null }
+      : await captureGitWorktreeReply(operation, access.bridge, captured.checkout, repository, metadata.result.worktree.mainWorktreeRoot, signal);
     const graph = await gitProcess(operation.runtime.supervisor, repository.executable, repository.repository.worktree.canonicalPath,
       metadata.result.graphArguments, signal, { kind: 'repository' });
     if (graph.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: graph.code });
@@ -64,7 +67,7 @@ export async function publishGitSnapshot(operation: WorkspaceOperation, captured
         manifest: manifest.bytes, availablePaths: observed.map(file => file.path),
         mapBytes: map ? map.bytes : null, compareDisplay: captured.commands.display, mode: options.mode,
         inlineMap: options.inlineMap, inlineMode: options.inlineMode, inlineMaxLines: options.inlineMaxLines,
-        autoSelectedPaths: [], worktree: null, warning: null }, signal);
+        autoSelectedPaths: [], ...worktree }, signal);
       if (projected.result.kind === 'gitArtifactProjectionError') throw new WorkspaceFailure('gitArtifactProjectionError', { message: projected.result.message });
       return { snapshotID: id.result.snapshotID, snapshotDir, checkout: captured.checkout,
         files: rendered.result.files, projection: projected.result };

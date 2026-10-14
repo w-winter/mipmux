@@ -6,6 +6,10 @@ import type { NativeFailureCode } from '../contracts/errors.js';
 
 type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
+  prepareGitWorktreeMainRoot: ['gitWorktreePlan', 'gitWorktreeListingError'],
+  resolveGitWorktreeConfig: ['gitWorktreeMainRoot'],
+  projectGitWorktreeListing: ['gitWorktreeListing', 'gitWorktreeListingError'],
+  renderGitWorktreeReply: ['gitWorktreeReply'],
   fingerprintGitDiff: ['gitDiffFingerprint'],
   beginGitSnapshot: ['gitSnapshotOpened'], writeGitSnapshotFile: ['gitSnapshotFileWritten'],
   resolveGitSnapshotID: ['gitSnapshotID'], prepareGitPublicationMetadata: ['gitPublicationMetadata'],

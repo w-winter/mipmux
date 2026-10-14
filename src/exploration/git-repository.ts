@@ -9,6 +9,7 @@ import { contains, deniedAbsolutePath } from '../workspace/root-policy.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import type { NativeGitCheckout } from '../contracts/native.js';
+import { resolveGitWorktreeListing, type ReadGitMetadata } from './git-worktrees.js';
 
 const pathValidator = Compile(RelativePath);
 export function gitText(bytes: Buffer): string {
@@ -40,12 +41,25 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
   const anchorPath = location.kind === 'elected' ? location.checkout.checkoutRootPath : root.identity.canonicalPath;
   const worktree = location.kind === 'explicit' ? location.worktree : null;
   const anchor = await identify(anchorPath);
+  const advertisedWorktrees = async () => {
+    const listing = gitText(await run(anchor.worktree.canonicalPath, ['worktree', 'list', '--porcelain', '-z']));
+    const read: ReadGitMetadata = async (directory, args) => {
+      try { return gitText(await run(directory, args)); }
+      catch (error) {
+        operation.signal.throwIfAborted();
+        if (!(error instanceof WorkspaceFailure && ['gitQueryFailed', 'gitFailed'].includes(error.code))) throw error;
+        return null;
+      }
+    };
+    const projected = await resolveGitWorktreeListing(input => operation.gitDiffOperation(input),
+      anchor.worktree.canonicalPath, listing, read);
+    if (projected.kind === 'gitWorktreeListingError') throw new WorkspaceFailure('gitProtocolError', { message: projected.message });
+    return Promise.all(projected.paths.map(path => realpath(path)));
+  };
   let repository = anchor;
   if (worktree !== null) {
     const path = await realpath(worktree);
-    const listed = gitText(await run(anchor.worktree.canonicalPath, ['worktree', 'list', '--porcelain', '-z']))
-      .split('\0').filter(field => field.startsWith('worktree ')).map(field => field.slice('worktree '.length));
-    const advertised = await Promise.all(listed.map(path => realpath(path)));
+    const advertised = await advertisedWorktrees();
     const loaded = operation.snapshot.roots.some(root => contains(root.identity.canonicalPath, path));
     const advertisingCheckoutLoaded = advertised.some(path => operation.snapshot.roots.some(root => contains(root.identity.canonicalPath, path)));
     if (!advertised.includes(path) || !loaded && !advertisingCheckoutLoaded) throw new WorkspaceFailure('gitRepositoryDenied');
@@ -63,8 +77,7 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
     if (canonicalJSON(await identify(anchorPath)) !== canonicalJSON(anchor) ||
         canonicalJSON(await identify(repository.worktree.canonicalPath)) !== canonicalJSON(repository)) throw new WorkspaceFailure('gitRepositoryChanged');
     if (worktree !== null) {
-      const listed = gitText(await run(anchor.worktree.canonicalPath, ['worktree', 'list', '--porcelain', '-z']))
-        .split('\0').filter(field => field.startsWith('worktree ')).map(field => field.slice('worktree '.length));
+      const listed = await advertisedWorktrees();
       if (!listed.includes(repository.worktree.canonicalPath)) throw new WorkspaceFailure('gitRepositoryChanged');
     }
   };

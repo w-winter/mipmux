@@ -305,6 +305,9 @@ enum Operation {
         case "revalidateGitTargets": return try .git(.targetRevalidation(GitTargetRevalidationInput(value)))
         case "serializeGitSnapshot": return try .git(.snapshot(GitSnapshotInput(value)))
         case "prepareGitPublicationMetadata": return try .git(.publicationMetadata(GitPublicationMetadataInput(value)))
+        case "prepareGitWorktreeMainRoot", "resolveGitWorktreeConfig",
+             "projectGitWorktreeListing", "renderGitWorktreeReply":
+            return try .git(.worktree(GitWorktreeInput(value)))
         case "projectGitArtifacts", "decorateGitArtifacts":
             return try .git(.artifacts(GitArtifactProjectionInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))

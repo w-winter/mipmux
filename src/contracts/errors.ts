@@ -7,6 +7,7 @@ const wireCodes = [
   'invalidExportHandle', 'outputChanged', 'invalidPath', 'publicationUncertain',
   'notFound', 'permissionDenied', 'symlink', 'alreadyExists', 'nativeIOFailed',
   'nativeOperationFailed', 'gitOutputUndecodable',
+  'gitRepositoryChanged',
   'unsupportedSnapshotState',
 ] as const;
 

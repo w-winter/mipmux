@@ -7,6 +7,7 @@ import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
 import { GitDiff, NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult, NativeGitChangedFile } from './git.js';
 import { NativeGitSnapshotInput } from './git-snapshot.js';
 import { NativeGitArtifactInput, NativeGitArtifactResult } from './git-artifact.js';
+import { NativeGitWorktreeInput, NativeGitWorktreeResult } from './git-worktree.js';
 import { NativeWireFailureCode } from './errors.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -239,6 +240,7 @@ export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRoot
   repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
 export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
 export const NativeOperation = Type.Union([
+  ...NativeGitWorktreeInput.anyOf,
   ...NativeGitArtifactInput.anyOf,
   Type.Object({ kind: Type.Literal('fingerprintGitDiff'), root: handle, compare: Type.String(), headSHA: Type.String(),
     baseRefSHA: Type.String(), status: base64 }, { additionalProperties: false }),
@@ -332,6 +334,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  ...NativeGitWorktreeResult.anyOf,
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotOpened'), run: handle, relativePath: Type.String(), snapshotID: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotID'), snapshotID: Type.String() }, { additionalProperties: false }),

@@ -5625,6 +5625,80 @@
         "Inject confined listing,deletion,metadata IO and directory cleanup instead of unrestricted FileManager paths. Preserve the source missing/corrupt metadata rebuild path and partial failure effects.",
         "Use named constants for source policy values and split IO-independent phases;source tuple and UI diagnostic-only fields are not part of the native response."
       ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitWorktreeQueryModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "84d7011efb60066a209c369c812138f2af5c4948a8a6ffa669e259debce1be09",
+      "destination": "native/Sources/SmipBridge/RPCEGitWorktreePorcelain.swift",
+      "sha256": "69c17d4cb8d6f544877c63bb7ff64264b43c3044e7abcfbbcc3d999931b6a707",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          331,
+          484
+        ]
+      ],
+      "changes": [
+        "Retain the original worktree porcelain record, parser and record builder with internal visibility. Add Codable to the record for the captured native transport; the runtime selects NUL-delimited porcelain."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+      "destination": "native/Sources/SmipBridge/RPCEGitWorktreeListing.swift",
+      "sha256": "73c7d5c0d3610e64ce6b719d710a1e04a5ffd4494a14ed17f32a88784a357833",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          154,
+          170
+        ],
+        [
+          8401,
+          8440
+        ],
+        [
+          8441,
+          8523
+        ],
+        [
+          8535,
+          8540
+        ],
+        [
+          8568,
+          8586
+        ]
+      ],
+      "changes": [
+        "Retain original non-bare filtering, normalized records, equivalent-alias collapse, layout equivalence and main-descriptor predicate. Project main-root and checkout paths rather than computing unused descriptor identity/display fields.",
+        "Git subprocess queries execute in TypeScript through the existing supervisor. The native resolver consumes successful config text and retains the original candidate-layout/common-directory proof. Logging uses structured host records."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/GitWorktreeInput.swift",
+      "sha256": "d6e25c64b04d9e98cced1c1503e8bca3a94fcb288fc9a9a9b11397979104b59f",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          126,
+          163
+        ],
+        [
+          230,
+          249
+        ]
+      ],
+      "changes": [
+        "Bind source-derived listing/config results and optional branch/HEAD text to the original WorktreeDTO. Trim with Foundation and retain seven-character HEAD prefixes.",
+        "Main-checkout query arguments derive from GitService.swift:8410-8413 at the pinned revision; unavailable listings retain the source known-main-root metadata behavior. Branch execution uses GitService.swift:3702-3732 and HEAD execution uses GitService.swift:2660-2670 through supervised TypeScript calls.",
+        "Replace unsupported repo_root aliases in routing text with the declared root and an absolute advertised worktree path. Wire parsing and typed listing diagnostics are headless boundary code."
+      ]
     }
   ],
   "dependencies": [

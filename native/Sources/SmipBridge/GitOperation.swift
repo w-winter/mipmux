@@ -9,6 +9,7 @@ enum GitOperation {
     case snapshot(GitSnapshotInput)
     case artifacts(GitArtifactProjectionInput)
     case publicationMetadata(GitPublicationMetadataInput)
+    case worktree(GitWorktreeInput)
 
     func render() throws -> [String: Any] {
         switch self {
@@ -22,6 +23,7 @@ enum GitOperation {
         case let .snapshot(input): try input.render()
         case let .artifacts(input): try input.render()
         case let .publicationMetadata(input): try input.render()
+        case let .worktree(input): try input.render()
         }
     }
 }
