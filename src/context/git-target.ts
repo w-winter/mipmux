@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { realpath } from 'node:fs/promises';
 import type { NativeResult, NativeGitCheckout } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, freeze, WorkspaceFailure } from '../workspace/values.js';
@@ -38,6 +39,16 @@ export class FrozenGitTarget {
 
   async publication(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>,
     selector: { readonly root: string | null; readonly worktree: string | null }): Promise<NativeGitCheckout> {
+    const checkouts = await this.publicationRepositories(operation, materials, selector);
+    if (this.resolution.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
+    if (selector.root === null && selector.worktree === null) return this.resolution.primary;
+    const checkout = checkouts[0];
+    if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
+    return checkout;
+  }
+
+  async publicationRepositories(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>,
+    selector: { readonly root: string | null; readonly worktree: string | null }): Promise<readonly NativeGitCheckout[]> {
     if (this.resolution.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
     await operation.validateRoots();
     await this.primary(operation);
@@ -52,11 +63,12 @@ export class FrozenGitTarget {
     }
     const valid = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: current.checkouts });
     if (!valid.valid) throw new WorkspaceFailure('gitRepositoryChanged');
-    if (selector.root === null && selector.worktree === null) return this.resolution.primary;
+    if (selector.root === null && selector.worktree === null) return this.resolution.checkouts;
     const requested = await resolveDiffRepository(operation, selector.root ?? this.resolution.primary.root,
       { kind: 'explicit', worktree: selector.worktree });
-    const checkout = this.resolution.checkouts.find(checkout => checkout.checkoutRootPath === requested.repository.worktree.canonicalPath);
+    const paths = await Promise.all(this.resolution.checkouts.map(checkout => realpath(checkout.checkoutRootPath)));
+    const checkout = this.resolution.checkouts.find((_, index) => paths[index] === requested.repository.worktree.canonicalPath);
     if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
-    return checkout;
+    return [checkout];
   }
 }

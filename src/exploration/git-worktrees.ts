@@ -1,7 +1,7 @@
 import type { NativeOperation } from '../contracts/native.js';
 import type { NativeReply } from '../native/bridge-client.js';
 
-type WorktreeOperation = Extract<NativeOperation, { kind: 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' }>;
+type WorktreeOperation = Extract<NativeOperation, { kind: 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' | 'renderGitWorktreeReply' }>;
 export type GitWorktreeProjection = <O extends WorktreeOperation>(input: O) => Promise<NativeReply<O['kind']>['result']>;
 export type ReadGitMetadata = (directory: string, args: readonly string[]) => Promise<string | null>;
 

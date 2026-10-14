@@ -59,7 +59,7 @@ test('artifact projection matches original replies, inline text, alias collision
     proof.push({ name: input.name, result });
   }
   const repos = outputs.multiRepoReply.repos.map(repo => {
-    if ('error' in repo) return repo;
+    if (!('diff' in repo)) return repo;
     const { primary_artifacts: _primary, ...value } = repo;
     return { ...value, warning: '  acquisition warning  ' };
   });

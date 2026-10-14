@@ -27,6 +27,7 @@ const repository = { repo_root: Type.String(), repo_key: Type.String(), repo_nam
 export const GitArtifactRepoReply = Type.Union([
   Type.Object({ ...repository, ...projected }, closed),
   Type.Object({ ...repository, error: Type.String(), warning: text }, closed),
+  Type.Object({ ...repository, empty_reason: Type.String(), worktree: Type.Optional(GitArtifactWorktree), warning: text }, closed),
 ]);
 export const GitArtifactReply = Type.Object({ op: Type.Literal('diff'), ...projected, primary_artifacts: primary }, closed);
 export const GitArtifactReposReply = Type.Object({ op: Type.Literal('diff'), repos: Type.Array(GitArtifactRepoReply),

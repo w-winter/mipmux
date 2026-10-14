@@ -47,6 +47,7 @@ test('published worktree replies retain attached/detached metadata and distingui
       const workspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.linked }], exclusions: [], outputRoot: f.output }, signal());
       const draft = await workspace.createDraft(f.request, signal());
       const published = await draft.publishGitSnapshot(f.diff, f.options, signal());
+      assert(published.kind === 'single');
       const reply = published.projection.reply, worktree = reply.worktree; assert(worktree);
       assert.equal(worktree.worktree_root, f.linked);
       assert.equal(worktree.main_worktree_root, f.main);
@@ -64,12 +65,14 @@ test('published worktree replies retain attached/detached metadata and distingui
       } finally { await operation.close(); }
       f.run(f.linked, ['checkout', '-q', '--detach']);
       const detached = await draft.publishGitSnapshot(f.diff, { ...f.options, snapshotID: 'detached' }, signal());
+      assert(detached.kind === 'single');
       assert.equal(detached.projection.reply.worktree?.worktree_branch, '');
       proof.push({ separateGitDirectory: separate, attached: reply, manifest: saved, detached: detached.projection.reply });
       await draft.close(); await workspace.close();
       const mainWorkspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.main }], exclusions: [], outputRoot: f.output }, signal());
       const mainDraft = await mainWorkspace.createDraft(f.request, signal());
       const canonical = await mainDraft.publishGitSnapshot(f.diff, { ...f.options, snapshotID: 'canonical' }, signal());
+      assert(canonical.kind === 'single');
       assert.equal(canonical.projection.reply.worktree, undefined); assert.equal(canonical.projection.reply.warning, undefined);
       await mainDraft.close(); await mainWorkspace.close();
     } finally { await f.runtime.close(); }
@@ -103,6 +106,7 @@ test('worktree metadata permits unavailable branch text and joins cancelled Git 
         assert.equal(held.length, 1);
       } else {
         const published = await pending;
+        assert(published.kind === 'single');
         assert.equal(published.projection.reply.worktree?.worktree_branch, undefined);
         assert.equal(published.projection.reply.worktree?.main_branch, undefined);
       }

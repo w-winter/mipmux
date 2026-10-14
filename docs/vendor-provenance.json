@@ -5699,6 +5699,37 @@
         "Main-checkout query arguments derive from GitService.swift:8410-8413 at the pinned revision; unavailable listings retain the source known-main-root metadata behavior. Branch execution uses GitService.swift:3702-3732 and HEAD execution uses GitService.swift:2660-2670 through supervised TypeScript calls.",
         "Replace unsupported repo_root aliases in routing text with the declared root and an absolute advertised worktree path. Wire parsing and typed listing diagnostics are headless boundary code."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/GitPublicationPlanInput.swift",
+      "sha256": "a606f41d3b0bd0b199b18e8b2b3d805bd6f5ed87562c9903a64186cbd4b7ee49",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          228,
+          228
+        ],
+        [
+          1149,
+          1150
+        ],
+        [
+          1190,
+          1234
+        ],
+        [
+          1526,
+          1554
+        ]
+      ],
+      "changes": [
+        "Retain nearest-containing-repository selection grouping, explicit-pathspec precedence and source skip reasons in captured repository order. Keep the observable maximum of three concurrent repository operations.",
+        "Emit a data-only plan for the existing TypeScript/native pipeline. Supervised acquisition, per-repository outcomes and ordered settlement follow the provider 1193-1308 and RepoPromptFoundation/Concurrency/BoundedOrderedConcurrentMap.swift. Snapshot writes and retention use the existing shared output-root mutation owner.",
+        "Preserve the source nested loop structure with scoped for_where suppression. Native plan inputs are already frozen/current admitted targets, not user-selected authority."
+      ]
     }
   ],
   "dependencies": [

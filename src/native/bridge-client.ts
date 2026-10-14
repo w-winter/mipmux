@@ -13,6 +13,7 @@ const resultKinds = {
   fingerprintGitDiff: ['gitDiffFingerprint'],
   beginGitSnapshot: ['gitSnapshotOpened'], writeGitSnapshotFile: ['gitSnapshotFileWritten'],
   resolveGitSnapshotID: ['gitSnapshotID'], prepareGitPublicationMetadata: ['gitPublicationMetadata'],
+  planGitPublication: ['gitPublicationPlan'],
   readGitSnapshotCurrent: ['gitSnapshotCurrent'], writeGitSnapshotCurrent: ['gitSnapshotCurrentWritten'],
   listGitSnapshots: ['gitSnapshots'], maintainGitSnapshots: ['gitSnapshotsMaintained'],
   resolveGitSnapshotComparison: ['gitSnapshotComparison', 'gitSnapshotComparisonError'],

@@ -13,13 +13,22 @@ import { NativeFailure } from '../native/bridge-client.js';
 import { captureGitWorktreeReply } from './git-worktree.js';
 
 type CapturedPublication = Awaited<ReturnType<typeof captureElectedGitDiff>> & { readonly checkout: NativeGitCheckout };
+type Repository = Awaited<ReturnType<typeof resolveDiffRepository>>;
 const manifestMetadata = Compile(Type.Object({ generatedAt: Type.String() }));
+
+export async function prepareGitPublicationMetadata(operation: WorkspaceOperation, checkout: NativeGitCheckout, repository: Repository) {
+  const metadata = await operation.gitDiffOperation({ kind: 'prepareGitPublicationMetadata', repoRoot: checkout.checkoutRootPath });
+  const worktree = metadata.worktree === null ? { worktree: null, warning: null }
+    : await captureGitWorktreeReply(operation, input => operation.gitDiffOperation(input), checkout, repository,
+      metadata.worktree.mainWorktreeRoot, operation.signal);
+  return { repository, metadata, worktree };
+}
 
 /** Writes ordered snapshot files, CURRENT and retention; later failures retain completed filesystem effects. */
 export async function publishGitSnapshot(operation: WorkspaceOperation, captured: CapturedPublication,
   request: Extract<GitRequest, { op: 'diff' }>, options: GitSnapshotPublicationOptions, ownerID: string,
-  admit: () => void) {
-  const repository = await resolveDiffRepository(operation, captured.checkout.root, { kind: 'elected', checkout: captured.checkout });
+  admit: () => void, prepared: Awaited<ReturnType<typeof prepareGitPublicationMetadata>>) {
+  const { repository, metadata, worktree } = prepared;
   if (canonicalJSON({ worktree: repository.repository.worktree, gitDirectory: repository.repository.gitDirectory }) !== canonicalJSON(captured.repository)) {
     throw new WorkspaceFailure('gitRepositoryChanged');
   }
@@ -27,18 +36,15 @@ export async function publishGitSnapshot(operation: WorkspaceOperation, captured
     admit();
     const id = await access.bridge.request({ kind: 'resolveGitSnapshotID', root: access.root,
       repoKey: captured.checkout.repoKey, snapshotID: options.snapshotID }, signal);
-    const metadata = await access.bridge.request({ kind: 'prepareGitPublicationMetadata', repoRoot: captured.checkout.checkoutRootPath }, signal);
-    const worktree = metadata.result.worktree === null ? { worktree: null, warning: null }
-      : await captureGitWorktreeReply(operation, access.bridge, captured.checkout, repository, metadata.result.worktree.mainWorktreeRoot, signal);
     const graph = await gitProcess(operation.runtime.supervisor, repository.executable, repository.repository.worktree.canonicalPath,
-      metadata.result.graphArguments, signal, { kind: 'repository' });
+      metadata.graphArguments, signal, { kind: 'repository' });
     if (graph.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: graph.code });
     await repository.revalidate();
     const rendered = await access.bridge.request({ kind: 'serializeGitSnapshot', input: { ...captured.content,
       snapshotID: id.result.snapshotID, repoKey: captured.checkout.repoKey, mode: options.mode,
       compare: captured.commands.display, compareInput: request.compare === captured.commands.display ? null : request.compare,
       contextLines: request.contextLines, detectRenames: request.detectRenames, commitGraph: gitText(graph.bytes).trim(),
-      repoRoot: captured.checkout.checkoutRootPath, tabID: ownerID, worktree: metadata.result.worktree } }, signal);
+      repoRoot: captured.checkout.checkoutRootPath, tabID: ownerID, worktree: metadata.worktree } }, signal);
     const opened = await access.bridge.request({ kind: 'beginGitSnapshot', root: access.root,
       repoKey: captured.checkout.repoKey, snapshotID: id.result.snapshotID }, signal);
     try {
@@ -69,7 +75,7 @@ export async function publishGitSnapshot(operation: WorkspaceOperation, captured
         inlineMap: options.inlineMap, inlineMode: options.inlineMode, inlineMaxLines: options.inlineMaxLines,
         autoSelectedPaths: [], ...worktree }, signal);
       if (projected.result.kind === 'gitArtifactProjectionError') throw new WorkspaceFailure('gitArtifactProjectionError', { message: projected.result.message });
-      return { snapshotID: id.result.snapshotID, snapshotDir, checkout: captured.checkout,
+      return { kind: 'single' as const, snapshotID: id.result.snapshotID, snapshotDir, checkout: captured.checkout,
         files: rendered.result.files, projection: projected.result };
     } finally {
       if (!access.bridge.retired) await access.bridge.request({ kind: 'finishGitSnapshot', run: opened.result.run }, new AbortController().signal);

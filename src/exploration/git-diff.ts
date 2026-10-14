@@ -103,6 +103,11 @@ export async function captureElectedGitDiff(operation: WorkspaceOperation, reque
 
 async function captureRepositoryDiff(operation: WorkspaceOperation, request: DiffRequest, owner: Repository, generateDiffText: boolean,
   selectedAbsolutePaths: readonly string[] | null) {
+  const commands = await prepareGitDiffComparison(operation, request, owner);
+  return capturePreparedGitDiff(operation, request, owner, commands, generateDiffText, selectedAbsolutePaths);
+}
+
+export async function prepareGitDiffComparison(operation: WorkspaceOperation, request: DiffRequest, owner: Repository) {
   const preparation = { kind: 'prepareGitDiff' as const, compare: request.compare,
     paths: [...(request.path === null ? [] : [request.path]), ...request.paths], repoRootPath: owner.repository.worktree.canonicalPath,
     contextLines: request.contextLines, detectRenames: request.detectRenames };
@@ -117,6 +122,12 @@ async function captureRepositoryDiff(operation: WorkspaceOperation, request: Dif
   const reference = commands.comparison.kind === 'unstaged' ? null : commands.comparison.kind === 'revspec'
     ? commands.comparison.spec : commands.comparison.base;
   if (reference?.startsWith('-')) throw new WorkspaceFailure('invalidRequest');
+  return commands;
+}
+
+export async function capturePreparedGitDiff(operation: WorkspaceOperation, request: DiffRequest, owner: Repository,
+  inputCommands: DiffCommands, generateDiffText: boolean, selectedAbsolutePaths: readonly string[] | null) {
+  let commands = inputCommands;
   const fingerprint = await captureGitFingerprint(operation, owner, commands);
   let selectedPaths: string[] | null = null;
   if (!commands.inputCount && selectedAbsolutePaths !== null) {

@@ -1,4 +1,3 @@
-import type { BridgeClient } from '../native/bridge-client.js';
 import type { NativeGitCheckout } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { gitProcess } from '../patches/git-process.js';
@@ -18,7 +17,7 @@ async function currentBranch(read: ReadGitMetadata, directory: string) {
   return null;
 }
 
-export async function captureGitWorktreeReply(operation: WorkspaceOperation, bridge: BridgeClient,
+export async function captureGitWorktreeReply(operation: WorkspaceOperation, project: GitWorktreeProjection,
   checkout: NativeGitCheckout, repository: Repository, knownMainRoot: string | null, signal: AbortSignal) {
   const read: ReadGitMetadata = async (directory, args) => {
     try {
@@ -39,7 +38,6 @@ export async function captureGitWorktreeReply(operation: WorkspaceOperation, bri
   const listing = await read(repoRoot, ['worktree', 'list', '--porcelain', '-z']);
   let mainRoot = knownMainRoot;
   if (listing !== null) {
-    const project: GitWorktreeProjection = async input => (await bridge.request(input, signal)).result;
     const projected = await resolveGitWorktreeListing(project, repoRoot, listing, read);
     if (projected.kind === 'gitWorktreeListing') mainRoot = projected.mainRoot ?? knownMainRoot;
     else process.stderr.write(JSON.stringify({ level: 'warning', event: 'gitWorktreeListingUnavailable',
@@ -52,8 +50,8 @@ export async function captureGitWorktreeReply(operation: WorkspaceOperation, bri
     mainBranch = await currentBranch(read, mainRoot); mainHead = await read(mainRoot, headArguments);
     await main.revalidate();
   }
-  const projected = await bridge.request({ kind: 'renderGitWorktreeReply', repoRoot, rootName: checkout.root,
-    mainRoot, branch, head, mainBranch, mainHead }, signal);
+  const projected = await project({ kind: 'renderGitWorktreeReply', repoRoot, rootName: checkout.root,
+    mainRoot, branch, head, mainBranch, mainHead });
   await repository.revalidate();
-  return { worktree: projected.result.worktree, warning: projected.result.warning };
+  return { worktree: projected.worktree, warning: projected.warning };
 }

@@ -46,7 +46,9 @@ import { prepareRenderInput } from './final-tree.js';
 import { FrozenGitTarget, selectedGitSourcePaths } from './git-target.js';
 import type { GitRequest } from '../contracts/git.js';
 import { readElectedDiff, captureElectedGitDiff } from '../exploration/git-diff.js';
-import { publishGitSnapshot } from './git-publication.js';
+import { publishGitSnapshot, prepareGitPublicationMetadata } from './git-publication.js';
+import { resolveDiffRepository } from '../exploration/git-repository.js';
+import { publishGitSnapshotBatch } from './git-publication-batch.js';
 import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
@@ -194,16 +196,28 @@ export class DraftRuntime {
     const revision = this.#revision, generation = this.#freezeGeneration;
     return this.#track((async () => {
       this.#check(signal, revision);
-      const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', capturedOptions.scope, signal);
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       const check = () => {
         this.#check(signal, revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
       };
       try {
-        const published = await publishGitSnapshot(operation, captured, request, capturedOptions, this.id, check);
+        const checkouts = await this.gitTarget.publicationRepositories(operation, this.#materials, request);
         check();
-        await this.gitTarget.publication(operation, this.#materials, request);
+        const publishSingle = async () => {
+          const checkout = checkouts[0];
+          if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
+          const repository = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
+          const prepared = await prepareGitPublicationMetadata(operation, checkout, repository);
+          const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', capturedOptions.scope, signal);
+          return publishGitSnapshot(operation, captured, request, capturedOptions, this.id, check, prepared);
+        };
+        const published = checkouts.length > 1
+          ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, this.#materials),
+            request, capturedOptions, this.id, check)
+          : await publishSingle();
+        check();
+        await this.gitTarget.publicationRepositories(operation, this.#materials, request);
         return published;
       } finally { await operation.close(); }
     })());
