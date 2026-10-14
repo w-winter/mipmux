@@ -3,6 +3,7 @@ import type { DraftRuntime } from '../context/draft-runtime.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { pageResult, type ResultEncoding } from '../exploration/output-budget.js';
 import type { GitRequest } from '../contracts/git.js';
+import type { ReadRequest } from '../contracts/exploration.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 
 export function scopedGitCall(input: GitRequest, draft: DraftRuntime | null, operation: WorkspaceOperation,
@@ -15,6 +16,13 @@ export function scopedGitCall(input: GitRequest, draft: DraftRuntime | null, ope
     ? draft.readImplicitGitDiff(input, signal, encode) : operation.readGit(input, encode);
 }
 
+export function scopedReadCall(input: ReadRequest, draft: DraftRuntime | null, operation: WorkspaceOperation,
+  signal: AbortSignal, encode: ResultEncoding) {
+  if (input.root !== null) return operation.readFile(input, encode);
+  if (!draft) throw new WorkspaceFailure('draftRequired');
+  return draft.readSelectedGitArtifact(input, signal, encode);
+}
+
 export async function scopedCall(call: DiscoveryCall, draft: DraftRuntime, operation: WorkspaceOperation,
   signal: AbortSignal, encode: ResultEncoding): Promise<unknown> {
   signal.throwIfAborted();
@@ -25,7 +33,7 @@ export async function scopedCall(call: DiscoveryCall, draft: DraftRuntime, opera
     case 'get_code_structure': return operation.getCodeStructure({ ...call.input, selection: draft.selectionProjection() }, encode);
     case 'file_search': return operation.fileSearch(call.input, encode);
     case 'git': return scopedGitCall(call.input, draft, operation, signal, encode);
-    case 'read_file': return operation.readFile(call.input, encode);
+    case 'read_file': return scopedReadCall(call.input, draft, operation, signal, encode);
     case 'draft_preview': return draft.preview(call.input, signal, encode);
     case 'draft_update': return draft.update(call.input, signal, encode);
     case 'draft_inspect': return draft.inspect(call.input, signal, encode);

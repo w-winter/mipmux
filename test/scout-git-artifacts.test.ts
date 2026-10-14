@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { renameSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
@@ -19,12 +19,16 @@ import type { NativeOperation } from '../src/contracts/native.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import Type from 'typebox';
 import { GitArtifactReposReply } from '../src/contracts/git-artifact.js';
+import { Continuation, readValidator, type ReadRequest } from '../src/contracts/exploration.js';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 
 const signal = () => new AbortController().signal;
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const replyValidator = Compile(GitArtifactReply);
+const readReplyValidator = Compile(Type.Object({ kind: Type.Literal('read'), content: Type.String(),
+  firstLine: Type.Integer(), lastLine: Type.Integer(), returnedLineCount: Type.Integer(),
+  continuation: Type.Union([Continuation, Type.Null()]) }));
 
 async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options)) {
   const base = await mkdtemp(join(tmpdir(), 'smip-scout-artifacts-')), root = join(base, 'root'), out = join(base, 'out');
@@ -126,9 +130,17 @@ test('failed or cancelled artifact replies retain publication and committed sele
 
 test('real Pi dispatch publishes and auto-selects Git artifacts into its completed packet', async () => {
   const f = await fixture();
-  const provider = await scriptedProvider((_summary, index) => index === 1
-    ? { kind: 'tool', name: 'git', input: { op: 'diff', artifacts: true, snapshot_id: 'pi', maxOutputBytes: 100000 }, stop: 'tool_use', tokens: 10 }
-    : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
+  const provider = await scriptedProvider((_summary, index) => {
+    if (index === 1) return { kind: 'tool', name: 'git', input: { op: 'diff', artifacts: true,
+      snapshot_id: 'pi', maxOutputBytes: 100000 }, stop: 'tool_use', tokens: 10 };
+    if (index === 2) {
+      const alias = JSON.stringify(provider.requests.at(-1)?.messages).match(/_git_data\/repos\/[^"\\]+\/MAP\.txt/)?.[0];
+      assert(alias);
+      return { kind: 'tool', name: 'read_file', input: { path: alias, start_line: 1, limit: 1,
+        maxOutputBytes: 100000 }, stop: 'tool_use', tokens: 10 };
+    }
+    return { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 };
+  });
   const runtime = new SmipRuntime({ ...f.options, cachePath: f.options.cachePath + '-pi' });
   const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
   try {
@@ -138,6 +150,7 @@ test('real Pi dispatch publishes and auto-selects Git artifacts into its complet
     assert.equal(terminal.state, 'ready', JSON.stringify(terminal)); assert.equal(terminal.localSettled, true);
     const returned = JSON.stringify(provider.requests.at(-1)?.messages);
     assert(!returned.includes('Invalid arguments')); assert(returned.includes('auto_selected'));
+    assert(returned.includes('returnedLineCount')); assert(returned.includes('# MAP.txt v1'));
     const packet = await verifyBundle(join(f.out, 'pi-packet'));
     assert.equal(packet.manifest.materials.filter(material => material.kind === 'gitMap').length, 1);
     assert.equal(packet.manifest.materials.filter(material => material.kind === 'gitPatch').length, 1);
@@ -204,8 +217,109 @@ test('MCP publication requires an owned draft and uses the same source commit an
     assert.deepEqual(reply.primary_artifacts.auto_selected, [reply.primary_artifacts.map]);
     const selected = await client.callTool({ name: 'manage_selection', arguments: { draftId, input: { op: 'get' } } });
     assert.equal(selected.isError, false); assert(JSON.stringify(selected.structuredContent).includes(reply.primary_artifacts.map));
-    await writeFile('test-output/scout-git-artifacts-mcp-proof.json', JSON.stringify({ denied, published, selected }, null, 2) + '\n');
+    const artifactRead = await client.callTool({ name: 'read_file', arguments: { workspaceId, draftId,
+      input: { path: reply.primary_artifacts.map, start_line: 1, limit: 1 } } });
+    assert.equal(artifactRead.isError, false, JSON.stringify(artifactRead));
+    assert.equal(readReplyValidator.Parse(artifactRead.structuredContent).content, '# MAP.txt v1\n');
+    const unownedRead = await client.callTool({ name: 'read_file', arguments: { workspaceId,
+      input: { path: reply.primary_artifacts.map } } });
+    assert.equal(unownedRead.isError, true); assert(JSON.stringify(unownedRead).includes('draftRequired'));
+    const other = identifier.Parse((await client.callTool({ name: 'draft_create', arguments: { workspaceId,
+      request: { ...f.request, outputName: 'other' } } })).structuredContent);
+    const unselectedRead = await client.callTool({ name: 'read_file', arguments: { workspaceId, draftId: other.id,
+      input: { path: reply.primary_artifacts.map } } });
+    assert.equal(unselectedRead.isError, true); assert(JSON.stringify(unselectedRead).includes('already be selected and authorized'));
+    await writeFile('test-output/scout-git-artifacts-mcp-proof.json', JSON.stringify({ denied, published, selected,
+      artifactRead, unownedRead, unselectedRead }, null, 2) + '\n');
   } finally { await client.close(); await f.runtime.close(); }
+});
+
+test('scout reads selected historical artifacts, not merely advertised aliases, with source ranges and paging', async () => {
+  const f = await fixture(), operation = await f.workspace.openOperation(signal());
+  const read = (path: string, settings: Partial<Omit<ReadRequest, 'root' | 'path'>> = {}, requestSignal = signal()) => scopedCall({ name: 'read_file',
+    input: readValidator.Parse(readValidator.Default({ root: null, path, maxOutputBytes: 100000, ...settings })) },
+  f.draft, operation, requestSignal, piToolResult);
+  const select = (op: 'add' | 'remove', path: string) => f.draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
+    op, paths: [path], maxOutputBytes: 100000 })), signal());
+  try {
+    const publication = replyValidator.Parse(await scopedCall({ name: 'git', input: f.publication({}) }, f.draft, operation, signal(), piToolResult));
+    const map = publication.primary_artifacts.map, patch = publication.primary_artifacts.all_patch;
+    const perFile = publication.primary_artifacts.per_file_patches?.[0]?.selection_path; assert(patch); assert(perFile);
+    const revision = f.draft.revision;
+    assert.equal(readReplyValidator.Parse(await read(map, { limit: 1 })).content, '# MAP.txt v1\n');
+    await assert.rejects(read(perFile), /gitArtifactReadDenied/);
+    await select('add', perFile); assert(readReplyValidator.Parse(await read(perFile)).content.includes('scout artifact change'));
+    await scopedCall({ name: 'git', input: f.publication({ snapshot_id: 'new' }) }, f.draft, operation, signal(), piToolResult);
+    await assert.rejects(f.draft.readGitArtifact(map, signal()), /gitArtifactNotAdvertised/);
+    assert.equal(readReplyValidator.Parse(await read(map, { limit: 1 })).content, '# MAP.txt v1\n');
+    await select('remove', perFile); await assert.rejects(read(perFile), /gitArtifactReadDenied/);
+    await assert.rejects(read(map.replace('MAP.txt', 'manifest.json')), /gitArtifactReadDenied/);
+    assert.throws(() => readValidator.Parse(readValidator.Default({ root: null, path: map.replace('MAP.txt', '../MAP.txt'), maxOutputBytes: 100000 })));
+    const text = 'first\r\nsecond\rthird\nlast';
+    await writeFile(join(f.out, patch), text);
+    const slice = readReplyValidator.Parse(await read(patch, { start_line: '2', limit: '2' }));
+    assert.equal(slice.content, 'second\rthird\n'); assert.equal(slice.firstLine, 2); assert.equal(slice.lastLine, 3);
+    assert.equal(readReplyValidator.Parse(await read(patch, { start_line: -1 })).content, 'last');
+    await assert.rejects(read(patch, { start_line: -1, limit: 1 }), /limitWithNegativeStart/);
+    const large = Array.from({ length: 30 }, (_, index) => index + ':' + 'content'.repeat(10) + '\n').join('');
+    await writeFile(join(f.out, patch), large);
+    let page = readReplyValidator.Parse(await read(patch, { maxOutputBytes: 2000 }));
+    assert(page.continuation); const first = page.continuation;
+    let combined = page.content;
+    while (page.continuation) {
+      page = readReplyValidator.Parse(await read(patch, { maxOutputBytes: 2000, continuation: page.continuation }));
+      combined += page.content;
+    }
+    assert.equal(combined, large);
+    await writeFile(join(f.out, patch), large + 'changed\n');
+    await assert.rejects(read(patch, { continuation: first }), /staleContinuation/);
+    const manifestPath = join(f.out, map.replace('MAP.txt', 'manifest.json')), manifest = await readFile(manifestPath, 'utf8');
+    await writeFile(manifestPath, JSON.stringify({ ...JSON.parse(manifest), repoKey: 'forged' }));
+    await assert.rejects(read(map), { code: 'gitArtifactReadDenied', details: {
+      message: "Cannot read '" + map + "'. Git-data artifacts must already be selected and authorized.",
+    } }); await writeFile(manifestPath, manifest);
+    const mapBody = await readFile(join(f.out, map), 'utf8');
+    await unlink(join(f.out, map)); await symlink(join(f.root, 'file.txt'), join(f.out, map));
+    await assert.rejects(read(map), { code: 'gitArtifactReadDenied', details: {
+      message: "Cannot read '" + map + "'. Git-data artifacts must already be selected and authorized.",
+    } });
+    await unlink(join(f.out, map)); await writeFile(join(f.out, map), mapBody);
+    const cancelled = new AbortController(); cancelled.abort(); await assert.rejects(read(map, {}, cancelled.signal), /aborted/i);
+    assert.equal(f.draft.revision, revision + 3);
+    await writeFile('test-output/scout-git-artifact-read-proof.json', JSON.stringify({ selectedHistoryReadable: true,
+      advertisedOnlyDenied: true, manifestDenied: true, forgedManifestDenied: true, symlinkDenied: true,
+      slice, pagedBody: combined, staleContinuationDenied: true, readsDidNotMutateSelection: true }, null, 2) + '\n');
+  } finally { await operation.close(); await f.runtime.close(); }
+});
+
+test('cancellation during selected-artifact authorization propagates instead of becoming a read denial', async () => {
+  const controller = new AbortController(); let interrupt = false;
+  const f = await fixture(options => {
+    class Runtime extends SmipRuntime {
+      override makeBridge() {
+        class Bridge extends BridgeClient {
+          override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+            if (interrupt && operation.kind === 'authorizeGitArtifact') {
+              interrupt = false; controller.abort(); throw new NativeFailure('rootChanged', null);
+            }
+            return super.request(operation, requestSignal);
+          }
+        }
+        return new Bridge({ executable: options.nativeExecutable, env: {}, supervisor: this.supervisor });
+      }
+    }
+    return new Runtime(options);
+  });
+  const operation = await f.workspace.openOperation(signal());
+  try {
+    const publication = replyValidator.Parse(await scopedCall({ name: 'git', input: f.publication({}) }, f.draft, operation, signal(), piToolResult));
+    const call = { name: 'read_file' as const, input: readValidator.Parse(readValidator.Default({ root: null,
+      path: publication.primary_artifacts.map, maxOutputBytes: 100000 })) };
+    interrupt = true;
+    await assert.rejects(scopedCall(call, f.draft, operation, controller.signal, piToolResult), /aborted/i);
+    assert.equal(readReplyValidator.Parse(await scopedCall(call, f.draft, operation, signal(), piToolResult)).content.startsWith('# MAP.txt v1'), true);
+    assert.equal(f.draft.revision, 1);
+  } finally { await operation.close(); await f.runtime.close(); }
 });
 
 test('implicit multi-repository scout publication auto-selects each ordered primary pair', async () => {

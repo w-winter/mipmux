@@ -4,10 +4,17 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { pageIdentity, pageOffset } from './continuation.js';
 import { pageResult, type ResultEncoding } from './output-budget.js';
+import type { SourceIdentity } from '../contracts/workspace.js';
 
 export async function readFile(operation: WorkspaceOperation, request: ReadRequest, encode?: ResultEncoding) {
   if (!readValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
+  if (request.root === null) throw new WorkspaceFailure('draftRequired');
   const source = await operation.readSource({ root: request.root, path: request.path });
+  return readFileReply(operation, request, source, encode);
+}
+
+export async function readFileReply(operation: WorkspaceOperation, request: ReadRequest,
+  source: { readonly text: string; readonly identity: SourceIdentity }, encode?: ResultEncoding) {
   const selection = await operation.sliceReadText({ kind: 'sliceReadText', text: source.text,
     start_line: request.start_line, offset: request.offset, limit: request.limit });
   if (selection.kind === 'readTextRangeError') throw new WorkspaceFailure(selection.code, { message: selection.message });

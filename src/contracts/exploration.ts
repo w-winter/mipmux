@@ -9,11 +9,15 @@ const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
 export const Continuation = Type.Object({ digest: SHA256, offset: SafeCount }, closed);
 export type Continuation = Static<typeof Continuation>;
 const page = { maxOutputBytes: positive, continuation: Type.Union([Continuation, Type.Null()], { default: null }) };
-export const ReadRequest = Type.Object({ root: RootName, path: RelativePath, ...page,
+const readOptions = { ...page,
   start_line: Type.Union(NativeReadArgument.anyOf, { default: null }),
   offset: Type.Union(NativeReadArgument.anyOf, { default: null }),
   limit: Type.Union(NativeReadArgument.anyOf, { default: null }),
-}, closed);
+};
+export const ReadRequest = Type.Union([
+  Type.Object({ root: RootName, path: RelativePath, ...readOptions }, closed),
+  Type.Object({ root: Type.Null({ default: null }), path: RelativePath, ...readOptions }, closed),
+]);
 export type ReadRequest = Static<typeof ReadRequest>;
 const selection = Type.Object({ draftId: Type.String({ minLength: 1 }), revision: SafeCount, sources: Type.Array(SourcePath) }, closed);
 const treeScope = Type.Union([Type.Object({ root: RootName, directory: DirectoryRef }, closed), Type.Null()], { default: null });
@@ -48,8 +52,12 @@ export const SearchRequest = Type.Union([
 export type SearchRequest = Static<typeof SearchRequest>;
 export const readValidator = Compile(ReadRequest), treeValidator = Compile(TreeRequest), structureValidator = Compile(StructureRequest), searchValidator = Compile(SearchRequest);
 
-export const ReadInput = Type.Object({ ...Type.Partial(Type.Omit(ReadRequest, ['root', 'path', 'maxOutputBytes'])).properties,
-  root: RootName, path: RelativePath }, closed);
+export const ReadInput = Type.Union([
+  Type.Object({ ...Type.Partial(Type.Omit(ReadRequest.anyOf[0], ['root', 'path', 'maxOutputBytes'])).properties,
+    root: RootName, path: RelativePath }, closed),
+  Type.Object({ ...Type.Partial(Type.Omit(ReadRequest.anyOf[1], ['path', 'maxOutputBytes'])).properties,
+    path: RelativePath }, closed),
+]);
 export const ScopedStructure = Type.Omit(StructureRequest, ['selection']);
 export const StructureInput = Type.Object({ ...Type.Partial(Type.Omit(ScopedStructure, ['maxOutputBytes', 'seeds'])).properties,
   seeds: Type.Optional(StructureRequest.properties.seeds.anyOf[0]) }, closed);
@@ -64,7 +72,7 @@ export function toolDescription(name: string): string {
   switch (name) {
     case 'get_file_tree': return 'Render the RPCE file tree. type=roots lists physical roots; type=files uses mode=auto, full, folders or selected. Defaults: files, auto mode, whole workspace, unlimited requested depth, first page. scope identifies a root and a root/descendant directory. maxDepth uses folder depth starting at zero and retains selected descendants. Selected mode requires an owned draft. Output pages preserve complete rendered lines; follow continuation for the remaining tree.';
     case 'git': return 'Inspect a declared root’s owning Git checkout with op=status, log, show, blame or diff. Log defaults to ten commits; log/blame paths are root-relative. Show accepts ref and summary/files/full detail. Diff defaults to uncommitted/summary, three context lines and detectRenames=false; compare also accepts staged, unstaged, base/merge-base forms, back:N, revision ranges and main/trunk. Diff path and paths are checkout-relative Git pathspecs; absolute paths are literal. One path upgrades summary to patches. Patches use a 300-line allowance; full retains complete hunks. Diff includes applicable untracked files and reports protected endpoints in exclusions. Optional worktree selects a freshly verified advertised same-repository checkout. With an owned draft, artifacts=true publishes snapshots and adds mutable MAP/whole-patch selection. Options: mode=quick/standard/deep, scope=all/selected, snapshot_id and inline={map,mode,max_lines}. Per-file aliases are advertised for manage_selection. Publication and selection effects remain after failed reply admission; use manage_selection get to recover state. Ordinary file tools remain declared-root scoped. Git configuration must be trusted because clean/process filters may execute programs. The complete reply must fit maxOutputBytes.';
-    case 'read_file': return 'Read a root-qualified file. Defaults to the whole file, first page. start_line is one-based; a negative start reads the last N lines and cannot be combined with limit. limit=0 returns no lines; a negative limit reads the remainder. Starts beyond EOF return empty content with a message. offset is the current start_line alias. Numeric strings are accepted; an integer offset takes priority over a string start_line. Complete line records retain CRLF, CR and LF; continuations never split a line.';
+    case 'read_file': return 'Read a root-qualified source file, or omit root to read an exact selected _git_data/... artifact alias from the owning draft. MCP artifact reads require draftId. Advertised per-file patches must be selected before reading; selected historical artifacts remain readable after publication grants change. Defaults to the whole file, first page. start_line is one-based; a negative start reads the last N lines and cannot be combined with limit. limit=0 returns no lines; a negative limit reads the remainder. Starts beyond EOF return empty content with a message. offset is the current start_line alias. Numeric strings are accepted; an integer offset takes priority over a string start_line. Complete line records retain CRLF, CR and LF; continuations never split a line.';
     case 'get_code_structure': return 'Inspect source-backed graph evidence and signatures. Omit seeds to inspect current selected full/sliced sources; MCP callers supply an owned draftId for that selection. Explicit seeds accept up to 256 file or directory selectors. Directory selectors use directory={kind:root} or {kind:descendant,path}. Defaults: no expansion, depth 1, signatures=true, size=medium. expand=uses, used_by or both traverses root-local relationships at depths 1-4. size=small, medium or large controls graph and signature limits; signatures=false returns graph evidence alone. Results include seed/index states, canonical edges, unresolved names and partial-output diagnostics. maxOutputBytes admits the complete reply; use a narrower query or larger cap when it cannot fit.';
     case 'file_search': return 'Search literal content with case-insensitive substring matching. Example input: {"query":{"text":"greet"}}. Explicit regex/glob kinds are supported; glob defaults to path search. Filters and context are optional.';
     case 'prompt': return 'Get the current literal prompt, replace it with op=set and text, append exact text with op=append, or clear with op=clear. Mutations require expectedRevision; get does not. Augment preserves original text at the start; Preserve leaves it unchanged. The resulting prompt is delivered verbatim in user_instructions.';

@@ -47,10 +47,10 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
       const request = gitValidator.Parse(gitValidator.Default({ ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }));
       return client().explore(input.workspaceId, { name: 'git', input: request }, ctx.mcpReq.signal, input.draftId ?? null, toolResult);
     });
-  register('read_file', Type.Object({ workspaceId: id, input: ReadInput, ...budget }, closed),
+  register('read_file', Type.Object({ workspaceId: id, input: ReadInput, draftId: Type.Optional(Type.Union([id, Type.Null()])), ...budget }, closed),
     (input, ctx) => {
       const request = readValidator.Parse(readValidator.Default({ ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }));
-      return client().explore(input.workspaceId, { name: 'read_file', input: request }, ctx.mcpReq.signal, null, toolResult);
+      return client().explore(input.workspaceId, { name: 'read_file', input: request }, ctx.mcpReq.signal, input.draftId ?? null, toolResult);
     });
   register('file_search', Type.Object({ workspaceId: id, input: SearchInput, ...budget }, closed),
     (input, ctx) => {

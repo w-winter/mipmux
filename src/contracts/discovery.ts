@@ -29,7 +29,7 @@ export const toolSchemas = { git: Type.Union(GitInput.anyOf.map(schema => Type.O
 ]),
   get_code_structure: Type.Object({ ...StructureInput.properties, maxOutputBytes: Positive }, closed),
   file_search: Type.Union(SearchInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))),
-  read_file: Type.Object({ ...ReadInput.properties, maxOutputBytes: Positive }, closed), draft_inspect: DraftInspection,
+  read_file: Type.Union(ReadInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))), draft_inspect: DraftInspection,
   draft_update: DraftUpdate, draft_preview: DraftPreview, draft_validate: ValidateRequest, prompt: PromptRequest,
   manage_selection: Type.Object({ ...SelectionInput.properties, maxOutputBytes: Positive }, closed) };
 export const DiscoveryCall = Type.Union([

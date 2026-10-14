@@ -53,15 +53,20 @@ import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
 import { registerPublishedGitArtifacts, readCatalogedGitArtifact, type CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
 import { acquireGitArtifact, refreshGitArtifactMaterials } from './git-artifact-material.js';
 import { decorateGitPublicationReply } from './git-publication-reply.js';
+import { ReadRequest } from '../contracts/exploration.js';
+import { readFileReply } from '../exploration/read.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
+const artifactReadValidator = Compile(ReadRequest.anyOf[1]);
 const gitArtifactEffectFailures = new Set(['revisionConflict', 'draftFrozen', 'gitRepositoryChanged', 'gitSelectionOwnershipChanged',
   'gitArtifactNotCataloged', 'gitArtifactUnauthorized', 'pathDenied', 'notFound', 'permissionDenied', 'symlink', 'nonRegularFile',
   'rootChanged', 'outputChanged', 'nativeIOFailed', 'invalidEncoding']);
+const gitArtifactReadFailures = new Set(['gitArtifactNotCataloged', 'gitArtifactUnauthorized', 'gitRepositoryChanged',
+  'pathDenied', 'notFound', 'permissionDenied', 'symlink', 'nonRegularFile', 'rootChanged', 'outputChanged', 'nativeIOFailed', 'invalidEncoding']);
 type SourceMutation = Exclude<SourceEdit, { kind: 'slices' }>;
 type SelectionReplyEntry = Static<typeof NativeSelectionReplyInput>['entries'][number];
 type SelectionReplyFile = Omit<Extract<SelectionReplyEntry, { kind: 'full' }>, 'kind'>;
@@ -324,6 +329,41 @@ export class DraftRuntime {
         this.#check(signal, this.#revision);
         if (grant !== this.#gitAdvertisements) throw new WorkspaceFailure('gitArtifactAdvertisementChanged');
         return result;
+      } finally { await operation.close(); }
+    })());
+  }
+  /** Reads captured selected aliases under historical artifact authority, independent of current insertion grants. */
+  readSelectedGitArtifact(input: Extract<ReadRequest, { root: null }>, signal: AbortSignal, encode: ResultEncoding) {
+    if (!artifactReadValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
+    const request = structuredClone(input);
+    return this.#track((async () => {
+      this.#check(signal, this.#revision);
+      const selected = this.#materials.get('gitArtifact:' + request.path);
+      const denied = new WorkspaceFailure('gitArtifactReadDenied', {
+        message: "Cannot read '" + request.path + "'. Git-data artifacts must already be selected and authorized.",
+      });
+      if (!selected || selected.availability !== 'settled' || (selected.record.kind !== 'gitMap' && selected.record.kind !== 'gitPatch')) {
+        throw denied;
+      }
+      const reference = selected.record.reference;
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      try {
+        let body: Awaited<ReturnType<typeof readCatalogedGitArtifact>>;
+        try {
+          const entry = operation.catalogedGitArtifact(reference.absolutePath);
+          if (!entry) throw new WorkspaceFailure('gitArtifactNotCataloged');
+          body = await readCatalogedGitArtifact(operation, { ...entry, ...reference });
+        } catch (error) {
+          operation.signal.throwIfAborted();
+          const code = failureCode(error);
+          if (!gitArtifactReadFailures.has(code)) throw error;
+          process.stderr.write(JSON.stringify({ level: 'warn', event: 'gitArtifactReadRejected', draftId: this.id,
+            alias: request.path, code }) + '\n');
+          throw denied;
+        }
+        const reply = await readFileReply(operation, request, body, encode);
+        this.#check(signal, this.#revision);
+        return reply;
       } finally { await operation.close(); }
     })());
   }
