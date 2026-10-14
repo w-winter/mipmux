@@ -21,6 +21,7 @@ const resultKinds = {
   serializeGitSnapshot: ['gitSnapshotBytes'],
   finishGitSnapshot: ['gitSnapshotFinished'],
   projectGitArtifacts: ['gitArtifacts', 'gitArtifactProjectionError'], decorateGitArtifacts: ['gitArtifactRepos'],
+  authorizeGitArtifact: ['gitArtifactAuthorization'],
   electGitTarget: ['gitTarget'],
   revalidateGitTargets: ['gitTargetValidation'],
   captureIgnoreInputs: ['ignoreInputs'], queryIgnoreHierarchy: ['ignoreHierarchy'],

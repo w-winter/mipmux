@@ -6,6 +6,35 @@
   },
   "files": [
     {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/SelectedGitDiffArtifactAuthorizationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "aefe541888bcb6628036438d1862969e2d8d00aa7a2b40807409d9f289fe8363",
+      "destination": "native/Sources/SmipBridge/GitArtifactAuthorizationInput.swift",
+      "sha256": "49020c8da4aa7acbc7b4cbacd997428f79f4802f5d4547c0ffaf6b4955215d45",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          297,
+          342
+        ],
+        [
+          475,
+          487
+        ],
+        [
+          500,
+          550
+        ],
+        [
+          683,
+          702
+        ]
+      ],
+      "changes": [
+        "Bind the source snapshot, manifest, creator UUID, linked layout and patch whitelist checks to the existing native wire. Reuse retained snapshot parsing and artifact-path policy. The host checks exact workspace catalog membership and revalidates frozen checkout identities before this operation. Canonical current publications require their creating UUID; no legacy or delegated artifact reader is introduced."
+      ]
+    },
+    {
       "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",

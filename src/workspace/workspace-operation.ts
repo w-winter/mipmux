@@ -3,7 +3,7 @@ import type { ReadRequest, TreeRequest, StructureRequest, SearchRequest } from '
 import type { BridgeClient } from '../native/bridge-client.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import { NativeAccess } from './source-access.js';
-import { RootPolicy, type PolicyDeclaration } from './root-policy.js';
+import { RootPolicy, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
 import { WorkspaceFailure } from './values.js';
 import { readFile } from '../exploration/read.js';
 import { getFileTree } from '../exploration/tree.js';
@@ -18,6 +18,8 @@ import type { RootIdentity } from '../contracts/workspace.js';
 import type { WorkspaceRuntime } from './workspace-runtime.js';
 import { capturedFile, completeFile } from './inventory-file.js';
 import { observe } from './observe.js';
+import type { CatalogedGitArtifact } from './git-artifact-catalog.js';
+import { join } from 'node:path';
 
 /** Pins one inventory and owns a separate bridge until close joins admitted operations. */
 export class WorkspaceOperation {
@@ -34,6 +36,31 @@ export class WorkspaceOperation {
     private readonly catalog: { kind: 'workspace'; owner: WorkspaceRuntime } | { kind: 'verification' }) { this.signal = AbortSignal.any([signal, this.#controller.signal]); }
   get snapshot(): InventorySnapshot {
     return this.catalog.kind === 'workspace' ? this.catalog.owner.registeredSnapshot(this.baseSnapshot) : this.baseSnapshot;
+  }
+  registerGitArtifact(entry: CatalogedGitArtifact): void {
+    this.#check();
+    if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
+    this.catalog.owner.registerGitArtifact(entry);
+  }
+  catalogedGitArtifact(path: string): CatalogedGitArtifact | null {
+    this.#check();
+    if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
+    return this.catalog.owner.catalogedGitArtifact(path);
+  }
+  readGitSnapshotFile(entry: Pick<CatalogedGitArtifact, 'checkout' | 'snapshotID' | 'path'>) {
+    const captured = structuredClone(entry);
+    return this.#track(() => {
+      const root = this.snapshot.outputRoot, denied = [...this.declaration.deniedAbsolutePaths];
+      const implicitOutputDeny = denied.indexOf(root.canonicalPath);
+      if (implicitOutputDeny < 0) throw new WorkspaceFailure('invalidOutputPolicy');
+      // Output capability waives only the implicit source-read deny; explicit credential duplicates remain denied.
+      denied.splice(implicitOutputDeny, 1);
+      const path = join(root.canonicalPath, '_git_data/repos', captured.checkout.repoKey, captured.snapshotID, captured.path);
+      if (deniedAbsolutePath({ ...this.declaration, deniedAbsolutePaths: denied }, path, path)) throw new WorkspaceFailure('pathDenied');
+      return this.runtime.mutateGitSnapshots(root, this.signal, async (signal, access) =>
+        (await access.bridge.request({ kind: 'readGitSnapshotFile', root: access.root,
+          repoKey: captured.checkout.repoKey, snapshotID: captured.snapshotID, path: captured.path }, signal)).result);
+    });
   }
   registerExplicitSource(source: SourcePath) {
     const captured = structuredClone(source);
@@ -215,7 +242,7 @@ export class WorkspaceOperation {
         repository: captured, compare }, this.signal)).result;
     });
   }
-  gitDiffOperation<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'normalizeGitSelectedPaths' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' | 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' | 'renderGitWorktreeReply' | 'planGitPublication' | 'prepareGitPublicationMetadata' | 'decorateGitArtifacts' }>>(input: O) {
+  gitDiffOperation<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'normalizeGitSelectedPaths' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' | 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' | 'renderGitWorktreeReply' | 'planGitPublication' | 'prepareGitPublicationMetadata' | 'decorateGitArtifacts' | 'authorizeGitArtifact' }>>(input: O) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(input, this.signal)).result;

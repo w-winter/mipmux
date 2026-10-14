@@ -311,6 +311,7 @@ enum Operation {
             return try .git(.worktree(GitWorktreeInput(value)))
         case "projectGitArtifacts", "decorateGitArtifacts":
             return try .git(.artifacts(GitArtifactProjectionInput(value)))
+        case "authorizeGitArtifact": return try .git(.artifactAuthorization(GitArtifactAuthorizationInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))
         case "parseSelectionInputs": return try .selection(.parse(SelectionInputParsing(value)))
         case "prepareSelection": return try .selection(.preparation(SelectionPreparationInput(value)))

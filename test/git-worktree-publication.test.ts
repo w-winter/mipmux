@@ -49,6 +49,7 @@ test('published worktree replies retain attached/detached metadata and distingui
       const published = await draft.publishGitSnapshot(f.diff, f.options, signal());
       assert(published.kind === 'single');
       const reply = published.projection.reply, worktree = reply.worktree; assert(worktree);
+      assert((await draft.readGitArtifact(published.projection.primarySelectionAliases[0]!, signal())).text.includes('WORKTREE'));
       assert.equal(worktree.worktree_root, f.linked);
       assert.equal(worktree.main_worktree_root, f.main);
       assert.equal(worktree.worktree_branch, 'feature'); assert.equal(worktree.main_branch, 'main');
@@ -66,6 +67,7 @@ test('published worktree replies retain attached/detached metadata and distingui
       f.run(f.linked, ['checkout', '-q', '--detach']);
       const detached = await draft.publishGitSnapshot(f.diff, { ...f.options, snapshotID: 'detached' }, signal());
       assert(detached.kind === 'single');
+      assert((await draft.readGitArtifact(detached.projection.primarySelectionAliases[1]!, signal())).text.includes('diff --git'));
       assert.equal(detached.projection.reply.worktree?.worktree_branch, '');
       proof.push({ separateGitDirectory: separate, attached: reply, manifest: saved, detached: detached.projection.reply });
       await draft.close(); await workspace.close();

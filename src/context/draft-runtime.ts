@@ -50,6 +50,7 @@ import { publishGitSnapshot, prepareGitPublicationMetadata } from './git-publica
 import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { publishGitSnapshotBatch } from './git-publication-batch.js';
 import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
+import { registerPublishedGitArtifacts, readCatalogedGitArtifact, type CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -74,6 +75,7 @@ export class DraftRuntime {
   #finalization: FinalizationOperation | null = null;
   #finalized: Promise<FinalizationResult> | null = null;
   #closing: Promise<void> | null = null;
+  #gitAdvertisements: ReadonlyMap<string, CatalogedGitArtifact> = new Map();
   private constructor(
     readonly operation: WorkspaceOperation,
     readonly request: ContextBuildRequest,
@@ -187,7 +189,7 @@ export class DraftRuntime {
       } finally { await operation.close(); }
     })());
   }
-  /** Writes a snapshot without mutating selection or installing artifact insertion authority. */
+  /** Publishes snapshots and replaces exact catalog-ready read grants. */
   publishGitSnapshot(input: Extract<GitRequest, { op: 'diff' }>, options: Static<typeof GitSnapshotPublicationOptions>, signal: AbortSignal) {
     const request = structuredClone(input), parsed = snapshotPublicationValidator.Parse(structuredClone(options));
     const id = parsed.snapshotID?.trim();
@@ -212,13 +214,57 @@ export class DraftRuntime {
           const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', capturedOptions.scope, signal);
           return publishGitSnapshot(operation, captured, request, capturedOptions, this.id, check, prepared);
         };
-        const published = checkouts.length > 1
+        let published = checkouts.length > 1
           ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, this.#materials),
             request, capturedOptions, this.id, check)
           : await publishSingle();
         check();
         await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+        const advertisements = new Map<string, CatalogedGitArtifact>(), readinessWarnings: Record<string, string> = {};
+        for (const item of published.kind === 'single' ? [published] : published.publications) {
+          const readiness = await registerPublishedGitArtifacts(operation, item, this.id);
+          for (const entry of readiness.ready) {
+            const alias = entry.artifact.clientAlias;
+            if (alias === null) throw new WorkspaceFailure('nativeProtocolError');
+            advertisements.set(alias, entry);
+          }
+          if (readiness.warning !== null) readinessWarnings[item.snapshotDir] = readiness.warning;
+        }
+        if (published.kind === 'single') {
+          const warning = [published.projection.reply.warning, readinessWarnings[published.snapshotDir]].filter(Boolean).join('\n');
+          if (warning) published = { ...published, projection: { ...published.projection, reply: { ...published.projection.reply, warning } } };
+        } else {
+          const manifests = Object.fromEntries(published.publications.map(item => {
+            const file = item.files.find(file => file.path === 'manifest.json');
+            if (!file) throw new WorkspaceFailure('nativeProtocolError');
+            return [item.snapshotDir, file.bytes];
+          }));
+          const projection = await operation.gitDiffOperation({ kind: 'decorateGitArtifacts', repos: published.projection.reply.repos,
+            manifests, autoSelectedPaths: [], readinessWarnings });
+          published = { ...published, projection };
+        }
+        check();
+        await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+        check();
+        this.#gitAdvertisements = advertisements;
+        process.stderr.write(JSON.stringify({ level: 'info', event: 'gitArtifactGrantsReplaced', draftId: this.id,
+          revision: this.#revision, aliases: advertisements.size }) + '\n');
         return published;
+      } finally { await operation.close(); }
+    })());
+  }
+  /** Exact current advertisement lookup. Replacing a grant while a read is pending invalidates that read. */
+  readGitArtifact(alias: string, signal: AbortSignal) {
+    return this.#track((async () => {
+      this.#check(signal, this.#revision);
+      const grant = this.#gitAdvertisements, entry = grant.get(alias);
+      if (!entry) throw new WorkspaceFailure('gitArtifactNotAdvertised');
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      try {
+        const result = await readCatalogedGitArtifact(operation, entry);
+        this.#check(signal, this.#revision);
+        if (grant !== this.#gitAdvertisements) throw new WorkspaceFailure('gitArtifactAdvertisementChanged');
+        return result;
       } finally { await operation.close(); }
     })());
   }

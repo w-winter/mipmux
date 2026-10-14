@@ -4,13 +4,14 @@ import { ArtifactStore } from './artifact-store.js';
 import { scanInventory } from './inventory.js';
 import { NativeAccess, type OpenRoot } from './source-access.js';
 import type { PolicyDeclaration } from './root-policy.js';
-import { canonicalJSON, WorkspaceFailure } from './values.js';
+import { canonicalJSON, freeze, WorkspaceFailure } from './values.js';
 import { entryKey, managedInventory, type ManagedRegistration } from './managed-inventory.js';
 import type { FileEntry } from './inventory-file.js';
 import { capturedFile, completeFile } from './inventory-file.js';
 import { RootPolicy } from './root-policy.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { failureCode } from '../runtime/tool-result.js';
+import type { CatalogedGitArtifact } from './git-artifact-catalog.js';
 
 interface CodemapDemand {
   readonly controller: AbortController;
@@ -31,10 +32,21 @@ export class WorkspaceRuntime {
   readonly #managed = new Map<string, ManagedRegistration>();
   readonly #managedViews = new WeakMap<InventorySnapshot, { revision: number; snapshot: InventorySnapshot }>();
   readonly #codemapDemands = new Map<string, CodemapDemand>();
+  readonly #gitArtifacts = new Map<string, CatalogedGitArtifact>();
   #managedRevision = 0;
   constructor(readonly key: string, readonly declaration: PolicyDeclaration, private roots: readonly OpenRoot[],
     private bridge: BridgeClient, readonly artifacts: ArtifactStore, readonly onClosed: () => void,
     readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal) {}
+
+  registerGitArtifact(entry: CatalogedGitArtifact): void {
+    this.#controller.signal.throwIfAborted();
+    this.#gitArtifacts.set(entry.artifact.absolutePath, freeze(structuredClone(entry)));
+  }
+
+  catalogedGitArtifact(path: string): CatalogedGitArtifact | null {
+    this.#controller.signal.throwIfAborted();
+    return this.#gitArtifacts.get(path) ?? null;
+  }
 
   registeredSnapshot(base: InventorySnapshot): InventorySnapshot {
     if (!this.#managed.size) return base;

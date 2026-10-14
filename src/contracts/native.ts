@@ -242,6 +242,8 @@ export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
 export const NativeOperation = Type.Union([
   ...NativeGitWorktreeInput.anyOf,
   ...NativeGitArtifactInput.anyOf,
+  Type.Object({ kind: Type.Literal('authorizeGitArtifact'), manifest: base64, snapshotDir: Type.String(),
+    path: RelativePath, ownerID: Type.String(), checkout: NativeGitCheckout }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('fingerprintGitDiff'), root: handle, compare: Type.String(), headSHA: Type.String(),
     baseRefSHA: Type.String(), status: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('beginGitSnapshot'), root: handle, repoKey: Type.String(), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
@@ -366,6 +368,7 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitSnapshotBytes'), files: Type.Array(Type.Object({ path: Type.String(), bytes: base64 }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotFinished') }, { additionalProperties: false }),
   ...NativeGitArtifactResult.anyOf,
+  Type.Object({ kind: Type.Literal('gitArtifactAuthorization'), authorized: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTargetValidation'), valid: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('deferred') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('unavailable'),
