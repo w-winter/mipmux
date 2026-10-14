@@ -51,6 +51,7 @@ import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { publishGitSnapshotBatch } from './git-publication-batch.js';
 import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
 import { registerPublishedGitArtifacts, readCatalogedGitArtifact, type CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
+import { refreshGitArtifactMaterials } from './git-artifact-material.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
@@ -341,14 +342,15 @@ export class DraftRuntime {
   }
   async #selectionReply(operation: WorkspaceOperation, request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
     invalid: readonly string[], revision: number, prompt: string) {
+    const observed = await refreshGitArtifactMaterials(operation, [...materials.values()]);
     const snapshot = operation.snapshot;
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: [...materials.values()] }, operation.signal));
+      prompt, codemapMode: mode, materials: observed }, operation.signal));
     const unmapped: string[] = [];
     const pending: string[] = [];
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
     const blocks: string[] = [];
-    for (const material of materials.values()) {
+    for (const material of observed) {
       const record = material.record;
       if (record.kind === 'gitMap' || record.kind === 'gitPatch') {
         const path = request.path_display === 'full' ? record.reference.absolutePath : record.reference.alias;
@@ -413,12 +415,13 @@ export class DraftRuntime {
       const { next, mode } = await this.#prepareSourceEdits(request.edits, current, request.expectedRevision, signal);
       this.#check(signal, request.expectedRevision);
       if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+      const observed = await this.#liveMaterials([...next.values()], signal);
       const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
-        codemapMode: mode, materials: [...next.values()] }, AbortSignal.any([signal, this.#cancel.signal])));
+        codemapMode: mode, materials: observed }, AbortSignal.any([signal, this.#cancel.signal])));
       this.#check(signal, request.expectedRevision);
       if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
       const result = { kind: 'preview' as const, draftId: this.id, revision: this.#revision, codemapMode: mode,
-        items: [...next.values()].map(material => materialMetadata(material.record)),
+        items: observed.map(material => materialMetadata(material.record)),
         measurement: rendered.measurement, costs: rendered.costs, diagnostics: rendered.diagnostics };
       const requiredBytes = serializedBytes(encode(result));
       if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
@@ -518,8 +521,9 @@ export class DraftRuntime {
     prompt: string, maxOutputBytes: number, encode: ResultEncoding,
     promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null, signal: AbortSignal) {
     const { changedIds, changed, revision } = this.#mutationChanges(current, next, mode, prompt);
+    const observed = await this.#liveMaterials([...next.values()], signal);
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
-      codemapMode: mode, materials: [...next.values()] }, AbortSignal.any([signal, this.#cancel.signal])));
+      codemapMode: mode, materials: observed }, AbortSignal.any([signal, this.#cancel.signal])));
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
     for (const id of changedIds) if (!next.has(id)) changedCosts.push({ id, bytes: 0, units: 0 });
@@ -600,6 +604,12 @@ export class DraftRuntime {
     if (!inspectionValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
     return this.#track(this.#inspect(structuredClone(input), signal, encode));
   }
+  async #liveMaterials(materials: readonly Material[], signal: AbortSignal): Promise<readonly Material[]> {
+    if (this.#state === 'terminal' || !materials.some(({ record }) => record.kind === 'gitMap' || record.kind === 'gitPatch')) return materials;
+    const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+    try { return await refreshGitArtifactMaterials(operation, materials); }
+    finally { await operation.close(); }
+  }
   async #inspect(input: DraftInspection, signal: AbortSignal, encode: ResultEncoding) {
     signal.throwIfAborted();
     const request = input;
@@ -607,8 +617,9 @@ export class DraftRuntime {
     if (request.view === 'material') {
       const material = this.#materials.get(request.materialId);
       if (!material) throw new WorkspaceFailure('materialUnavailable', { id: request.materialId });
-      const text = material.bodies.join('');
-      const digest = sha256(canonicalJSON({ id: this.id, material: material.record, text }));
+      const observed = (await this.#liveMaterials([material], signal))[0]!;
+      const text = observed.bodies.join('');
+      const digest = sha256(canonicalJSON({ id: this.id, material: observed.record, text }));
       return pageResult(
         prepareText(text).lines,
         pageOffset(continuation, digest),
@@ -624,8 +635,9 @@ export class DraftRuntime {
         encode,
       );
     }
-    const materials = [...this.#materials.values()], codemapMode = this.#codemapMode,
+    const captured = [...this.#materials.values()], codemapMode = this.#codemapMode,
       revision = this.#revision, state = this.#state, text = this.#prompt;
+    const materials = await this.#liveMaterials(captured, signal);
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
         codemapMode,
         request: this.request,
@@ -678,7 +690,8 @@ export class DraftRuntime {
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const tree = await initialFileTree(operation, selection);
-        return renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, input, operation.signal),
+        const materials = await refreshGitArtifactMaterials(operation, input.materials);
+        return renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, materials }, operation.signal),
           draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
       } finally { await operation.close(); }
     })());
@@ -686,9 +699,10 @@ export class DraftRuntime {
   validate(signal: AbortSignal) {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
-      const revision = this.#revision, materials = [...this.#materials.values()], prompt = this.#prompt, codemapMode = this.#codemapMode;
+      const revision = this.#revision, captured = [...this.#materials.values()], prompt = this.#prompt, codemapMode = this.#codemapMode;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
+        const materials = await refreshGitArtifactMaterials(operation, captured);
         await revalidateMaterials(operation, materials);
         const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
           codemapMode,
@@ -732,6 +746,7 @@ export class DraftRuntime {
       await this.close();
     };
     this.#finalized = operation.result.then(async (result) => {
+      this.#materials = new Map(operation.capturedMaterials.map(material => [material.record.id, material]));
       if (result.kind === 'blocked') {
         if (!this.#closing) {
           this.#state = 'editable';
@@ -743,6 +758,7 @@ export class DraftRuntime {
       await terminal();
       return result;
     }, async (error: unknown) => {
+      this.#materials = new Map(operation.capturedMaterials.map(material => [material.record.id, material]));
       await terminal();
       throw error;
     });

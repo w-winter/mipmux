@@ -7,6 +7,7 @@ import { renderBundle } from './render.js';
 import { prepareRenderInput } from './final-tree.js';
 import { revalidateMaterials } from './revalidate.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
+import { refreshGitArtifactMaterials } from './git-artifact-material.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -22,7 +23,10 @@ export type FinalizationResult =
 export class FinalizationOperation {
   readonly #cancel = new AbortController();
   #claimed = false;
+  #capturedMaterials: readonly Material[];
   readonly result: Promise<FinalizationResult>;
+  /** Last complete capture, initially the admission input; the returned array is a copy. */
+  get capturedMaterials(): readonly Material[] { return [...this.#capturedMaterials]; }
   constructor(
     operation: WorkspaceOperation,
     request: ContextBuildRequest,
@@ -33,6 +37,7 @@ export class FinalizationOperation {
     signal: AbortSignal,
     private readonly publishing: () => void = () => {},
   ) {
+    this.#capturedMaterials = materials;
     this.result = this.#run(
       operation,
       request,
@@ -61,6 +66,8 @@ export class FinalizationOperation {
     const operation = await owner.fork(signal);
     const bridge = owner.runtime.makeBridge();
     try {
+      materials = await refreshGitArtifactMaterials(operation, materials);
+      this.#capturedMaterials = materials;
       await revalidateMaterials(operation, materials);
       const { generation, ...inventory } = owner.snapshot;
       const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory }, signal);

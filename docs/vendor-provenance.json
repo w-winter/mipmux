@@ -15,11 +15,12 @@
         ]
       ],
       "changes": [
-        "Acquire authorized MAP as a native full-file block and selected patches as raw Git body material. Retain source ownership and stored-body identity with selected records, then revalidate the reference against current stored artifacts rather than current Git HEAD/status. Clipboard partitioning follows PromptPackagingService.swift:110-141,177-201,225-232,335-348. Source preset inclusion and automatic acquisition remain separate owners."
+        "Acquire authorized MAP as a native full-file block and selected patches as raw Git body material. Retain source ownership and stored-body identity with selected records, then revalidate the reference against current stored artifacts rather than current Git HEAD/status. Clipboard partitioning follows PromptPackagingService.swift:110-141,177-201,225-232,335-348. Source preset inclusion and automatic acquisition remain separate owners.",
+        "Live observations and export reacquire authorized catalog bodies, matching the source readExactCatalogFile path. Capture preserves one material per input and its order. Saved/current verification retains its captured-identity check; terminal inspection retains the final complete capture."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "aefe541888bcb6628036438d1862969e2d8d00aa7a2b40807409d9f289fe8363",
-      "sha256": "fe81ffada0e4564a700f2b9989f92908bdb31ef238e8d7b6d90e9d2dedacdeb1",
+      "sha256": "b263ab0c24bd9dadd1248fa3e4e252111ae3cf7592fcf6b30adc7228a3fac407",
       "classification": "handwritten"
     },
     {

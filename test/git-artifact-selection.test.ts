@@ -7,11 +7,14 @@ import { test } from 'node:test';
 import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { selectionValidator, type SelectionRequest } from '../src/contracts/selection.js';
+import type { RuntimeOptions } from '../src/runtime/smip-runtime.js';
+import type { NativeOperation } from '../src/contracts/native.js';
+import { BridgeClient } from '../src/native/bridge-client.js';
 
 const signal = () => new AbortController().signal;
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
-async function fixture() {
+async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options)) {
   const base = await mkdtemp(join(tmpdir(), 'smip-git-selection-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
@@ -23,7 +26,7 @@ async function fixture() {
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
     requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'),
+  const runtime = makeRuntime({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
@@ -107,4 +110,83 @@ test('selected patches preserve duplicate content, alias restrictions and commit
     assert(context.includes('<git_diff>\n' + body + '\n\n' + perFileBody + '\n</git_diff>'));
     await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
   } finally { await f.runtime.close(); }
+});
+
+test('live artifact observations and export reacquire overwritten snapshots while terminal inspection retains delivered bytes', async () => {
+  const f = await fixture();
+  try {
+    const first = await f.draft.publishGitSnapshot(f.diff, f.options, signal()); assert(first.kind === 'single');
+    const [map, patch] = first.projection.primarySelectionAliases; assert(map && patch);
+    await f.select({ op: 'set', paths: [map, patch], strict: true });
+    const initial = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+    await writeFile(join(f.root, 'file.txt'), 'replacement snapshot\n' + 'Additional evidence.\n'.repeat(200));
+    const overwritten = await f.draft.publishGitSnapshot(f.diff, f.options, signal()); assert(overwritten.kind === 'single');
+    const mapText = await readFile(join(f.out, map), 'utf8'), patchText = await readFile(join(f.out, patch), 'utf8');
+    const current = await f.select({ op: 'get', view: 'content' });
+    assert(current.blocks?.join('\n').includes(patchText)); assert(current.blocks?.join('\n').includes(mapText));
+    assert.equal(f.draft.revision, 1);
+    const material = await f.draft.inspect({ view: 'material', materialId: 'gitArtifact:' + patch,
+      maxOutputBytes: 100000, continuation: null }, signal());
+    assert('lines' in material); assert.equal(material.lines.map(line => line.text).join(''), patchText);
+    const costs = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+    assert('measurement' in costs && 'measurement' in initial); assert(costs.measurement.bytes > initial.measurement.bytes);
+    const preview = await f.draft.preview({ expectedRevision: 1, maxOutputBytes: 100000,
+      edits: [{ kind: 'remove', source: { root: 'r', path: 'file.txt' } }] }, signal());
+    assert.equal(preview.measurement.bytes, costs.measurement.bytes);
+    const validated = await f.draft.validate(signal()); assert.equal(validated.measurement.bytes, costs.measurement.bytes);
+    const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');
+    const delivered = await readFile(join(ready.directory, 'context.md'), 'utf8');
+    assert(delivered.includes('<git_diff>\n' + patchText + '\n</git_diff>'));
+    assert(delivered.includes('File: ' + map + '\n```txt\n' + mapText + '\n```'));
+    await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+    await writeFile(join(f.out, patch), 'changed after delivery\n');
+    const terminal = await f.draft.inspect({ view: 'material', materialId: 'gitArtifact:' + patch,
+      maxOutputBytes: 100000, continuation: null }, signal());
+    assert('lines' in terminal); assert.equal(terminal.lines.map(line => line.text).join(''), patchText);
+    await verifyBundle(ready.directory);
+    await assert.rejects(verifyCurrentBundle(ready.directory, f.runtime, signal()), /materialChanged/);
+    await writeFile('test-output/git-artifact-refresh-proof.json', JSON.stringify({ directory: ready.directory,
+      revision: f.draft.revision, mapText, patchText, bytes: ready.manifest.accounting.bytes,
+      terminalRetainsDeliveredBody: true, savedIntegritySurvivesExternalChanges: true, currentDetectsExternalChanges: true }, null, 2) + '\n');
+  } finally { await f.runtime.close(); }
+});
+
+test('artifact refresh cancellation and changed export inputs reject without publishing a packet', async () => {
+  for (const effect of ['cancelRefresh', 'changeAfterWrite'] as const) {
+    const controller = new AbortController();
+    let armed = false, alter: () => Promise<void> = async () => {};
+    const f = await fixture(options => {
+      class Runtime extends SmipRuntime {
+        override makeBridge() {
+          class Bridge extends BridgeClient {
+            override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+              if (armed && effect === 'cancelRefresh' && operation.kind === 'authorizeGitArtifact') {
+                armed = false; controller.abort();
+              }
+              const result = await super.request(operation, requestSignal);
+              if (armed && effect === 'changeAfterWrite' && operation.kind === 'writeExport') {
+                armed = false; await alter();
+              }
+              return result;
+            }
+          }
+          return new Bridge({ executable: options.nativeExecutable, env: {}, supervisor: this.supervisor });
+        }
+      }
+      return new Runtime(options);
+    });
+    try {
+      const published = await f.draft.publishGitSnapshot(f.diff, f.options, signal()); assert(published.kind === 'single');
+      const patch = published.projection.primarySelectionAliases[1]; assert(patch);
+      await f.select({ op: 'set', paths: [patch], strict: true });
+      alter = () => writeFile(join(f.out, patch), 'changed while exporting\n');
+      armed = true;
+      if (effect === 'cancelRefresh') {
+        const input = selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'content', maxOutputBytes: 100000 }));
+        await assert.rejects(f.draft.manageSelection(input, controller.signal), /cancelled|aborted/i);
+        assert.equal(f.draft.revision, 1); assert.equal((await f.select({ op: 'get' })).files[0]?.path, patch);
+      } else await assert.rejects(f.draft.finalize(signal()), /materialChanged/);
+      await assert.rejects(readFile(join(f.out, 'packet/manifest.json')), /ENOENT/);
+    } finally { await f.runtime.close(); }
+  }
 });
