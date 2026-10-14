@@ -65,6 +65,12 @@ export async function readCatalogedGitArtifact(operation: WorkspaceOperation, en
   const registered = operation.catalogedGitArtifact(entry.artifact.absolutePath);
   const manifestPath = entry.artifact.absolutePath.slice(0, -entry.path.length) + 'manifest.json';
   if (!registered || !operation.catalogedGitArtifact(manifestPath)) throw new WorkspaceFailure('gitArtifactNotCataloged');
+  return readAuthorizedGitArtifact(operation, entry);
+}
+
+/** Revalidates a retained artifact reference against current filesystem authority, including current checks of saved bundles. */
+export async function readAuthorizedGitArtifact(operation: WorkspaceOperation,
+  entry: Pick<CatalogedGitArtifact, 'ownerID' | 'checkout' | 'snapshotID' | 'snapshotDir' | 'path'>) {
   await operation.validateRoots();
   if (!(await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: [entry.checkout] })).valid) {
     throw new WorkspaceFailure('gitRepositoryChanged');

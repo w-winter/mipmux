@@ -14,8 +14,10 @@ function partitionMaterials(materials: readonly Material[]) {
   const codemaps = sorted.filter(material => material.record.kind === 'source' && material.record.selection.kind === 'codemap');
   const sources = sorted.filter(material => material.record.kind === 'source' && material.record.selection.kind !== 'codemap');
   const documents = sorted.filter(material => material.record.kind === 'document');
-  const patches = sorted.filter(material => material.record.kind === 'patch');
-  return { codemaps, contents: [...sources, ...documents], patches };
+  const maps = materials.filter(material => material.record.kind === 'gitMap');
+  const selectedPatches = materials.filter(material => material.record.kind === 'gitPatch');
+  const patches = [...selectedPatches, ...sorted.filter(material => material.record.kind === 'patch')];
+  return { codemaps, contents: [...maps, ...sources, ...documents], patches };
 }
 
 function contentBlock(material: Material): string {
@@ -92,7 +94,7 @@ export function parseClipboard(input: RenderInput) {
   };
   const framed = (material: Material) => {
     const block = material.sourceBlock;
-    if (!block || material.record.kind === 'patch') throw new WorkspaceFailure('invalidSourceBlock');
+    if (!block || material.record.kind === 'patch' || material.record.kind === 'gitPatch') throw new WorkspaceFailure('invalidSourceBlock');
     const frame = consume(block.text);
     const spans = block.bodySpans.map((span, index) => ({ offset: frame.offset + span.offset, length: span.length,
       sha256: sha256(material.bodies[index]!) }));

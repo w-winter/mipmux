@@ -30,6 +30,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     throw new WorkspaceFailure('invalidManifest');
   }
   if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
+  requireEqual(manifest.deniedAbsolutePaths.includes(manifest.inventory.outputRoot.canonicalPath), true);
   const inventoryPaths = new Set<string>();
   for (const entry of manifest.inventory.entries) {
     const id = sourceId(entry);
@@ -155,6 +156,24 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
       sourceBlock = parseSourceBlock(record, { text: decodedBody(bytes),
         bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
         bodies, new WorkspaceFailure('bundleIntegrityFailed'));
+    } else if (record.kind === 'gitMap' || record.kind === 'gitPatch') {
+      requireEqual(record.id, 'gitArtifact:' + record.reference.alias);
+      requireEqual(record.reference.alias, '_git_data/' + record.reference.snapshotDir + '/' + record.reference.path);
+      requireEqual(record.reference.snapshotDir, 'repos/' + record.reference.checkout.repoKey + '/' + record.reference.snapshotID);
+      requireEqual(record.reference.absolutePath.endsWith('/' + record.reference.alias), true);
+      requireEqual(bodies.length, 1); requireEqual(identity(bodies[0]!), record.identity);
+      if (record.kind === 'gitMap') {
+        requireEqual(record.reference.path, 'MAP.txt');
+        const frame = record.frame;
+        if (!frame) throw new WorkspaceFailure('bundleIntegrityFailed');
+        const bytes = context.subarray(frame.offset, frame.offset + frame.length);
+        requireEqual(identity(bytes), { byteCount: frame.length, sha256: frame.sha256 });
+        sourceBlock = parseSourceBlock(record, { text: decodedBody(bytes),
+          bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
+          bodies, new WorkspaceFailure('bundleIntegrityFailed'));
+      } else if (!record.reference.path.startsWith('diff/') || !/\.(patch|diff)$/iu.test(record.reference.path)) {
+        throw new WorkspaceFailure('bundleIntegrityFailed');
+      }
     } else {
       requireEqual(record.id, 'patch:' + record.receipt.input.id);
       requireEqual(bodies.length, 1);

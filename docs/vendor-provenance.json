@@ -6,6 +6,44 @@
   },
   "files": [
     {
+      "destination": "src/context/git-artifact-material.ts",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/SelectedGitDiffArtifactAuthorizationService.swift",
+      "ranges": [
+        [
+          201,
+          382
+        ]
+      ],
+      "changes": [
+        "Acquire authorized MAP as a native full-file block and selected patches as raw Git body material. Retain source ownership and stored-body identity with selected records, then revalidate the reference against current stored artifacts rather than current Git HEAD/status. Clipboard partitioning follows PromptPackagingService.swift:110-141,177-201,225-232,335-348. Source preset inclusion and automatic acquisition remain separate owners."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "aefe541888bcb6628036438d1862969e2d8d00aa7a2b40807409d9f289fe8363",
+      "sha256": "fe81ffada0e4564a700f2b9989f92908bdb31ef238e8d7b6d90e9d2dedacdeb1",
+      "classification": "handwritten"
+    },
+    {
+      "destination": "src/context/git-artifact-selection.ts",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPManageSelectionArtifactResolver.swift",
+      "ranges": [
+        [
+          64,
+          216
+        ],
+        [
+          219,
+          277
+        ]
+      ],
+      "changes": [
+        "Bind exact alias classification, full-only insertion/removal, slice diagnostics and historical removal to the draft grant and workspace catalog. Ordinary paths remain with the existing selection parser/resolver. The retained RPCESelectionTransitions full-file mutation applies authorized identities; no parallel mutable artifact selection is introduced."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9eabcee063a7bb5ba81a88f29814bc9b6e4f071f83bf460c33cb3e4ceef65151",
+      "sha256": "a23fff4b9894165df944e2563e31d54dc7ba952adaf9771c95b3677c88025cd9",
+      "classification": "handwritten"
+    },
+    {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/SelectedGitDiffArtifactAuthorizationService.swift",
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "aefe541888bcb6628036438d1862969e2d8d00aa7a2b40807409d9f289fe8363",

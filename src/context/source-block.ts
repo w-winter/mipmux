@@ -19,7 +19,7 @@ export function documentBlockPath(record: Extract<MaterialRecord, { kind: 'docum
 }
 
 /** Parses native source framing and proves each raw body occupies its declared byte span. */
-export function parseSourceBlock(record: Extract<MaterialRecord, { kind: 'source' | 'document' }>, block: SourceBlock,
+export function parseSourceBlock(record: Extract<MaterialRecord, { kind: 'source' | 'document' | 'gitMap' }>, block: SourceBlock,
   bodies: readonly string[], failure: WorkspaceFailure): SourceBlock {
   const bytes = Buffer.from(block.text);
   let cursor = 0, bodyIndex = 0;
@@ -34,11 +34,12 @@ export function parseSourceBlock(record: Extract<MaterialRecord, { kind: 'source
     if (!span || text === undefined || span.offset !== cursor || span.length !== Buffer.byteLength(text)) return reject();
     consume(text); bodyIndex++;
   };
-  const path = record.kind === 'document' ? documentBlockPath(record)
+  const path = record.kind === 'gitMap' ? { path: record.reference.alias, name: record.reference.path }
+    : record.kind === 'document' ? documentBlockPath(record)
     : { path: record.selection.source.root + '/' + record.selection.source.path, name: record.selection.source.path };
   const extension = posix.extname(path.name).slice(1), fence = '```' + extension;
   consume('File: ' + path.path + '\n');
-  if (record.kind === 'document' || record.selection.kind === 'full') {
+  if (record.kind !== 'source' || record.selection.kind === 'full') {
     consume(fence + '\n'); body(); consume('\n```');
   } else if (record.selection.kind === 'slices') {
     for (const [index, range] of record.normalized.entries()) {

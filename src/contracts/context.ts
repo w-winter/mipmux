@@ -1,12 +1,12 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { InventorySnapshot, SourcePath, Exclusion, DecoderPolicy, SourceDecoding } from './inventory.js';
-import { SafeCount, SHA256, SourceIdentity } from './workspace.js';
+import { SafeCount, SHA256, SourceIdentity, RelativePath } from './workspace.js';
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
 import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
-import { NativeFileTreeInput } from './native.js';
+import { NativeFileTreeInput, NativeGitCheckout } from './native.js';
 
 const closed = { additionalProperties: false };
 const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
@@ -114,6 +114,10 @@ const sourceRecord = {
   kind: Type.Literal('source'), id: Type.String(), identity: SourceIdentity,
   mode: Type.Enum(['100644', '100755']), spans: Type.Array(Span), frame: Type.Union([Span, Type.Null()]),
 };
+const gitArtifactReference = Type.Object({ ownerID: Type.String({ format: 'uuid' }), checkout: NativeGitCheckout,
+  snapshotID: RelativePath, snapshotDir: RelativePath, path: RelativePath, alias: RelativePath,
+  absolutePath: Type.String({ pattern: '^/[^\\u0000]*$' }) }, closed);
+const gitRecord = { id: Type.String(), reference: gitArtifactReference, identity: SourceIdentity, spans: Type.Array(Span) };
 export const MaterialRecord = Type.Union([
   Type.Object({ ...sourceRecord,
     selectionOrigin: Type.Literal('explicit'),
@@ -144,10 +148,12 @@ export const MaterialRecord = Type.Union([
     { kind: Type.Literal('patch'), id: Type.String(), receipt: PatchReceipt, spans: Type.Array(Span) },
     closed,
   ),
+  Type.Object({ ...gitRecord, kind: Type.Literal('gitMap'), frame: Type.Union([Span, Type.Null()]) }, closed),
+  Type.Object({ ...gitRecord, kind: Type.Literal('gitPatch') }, closed),
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(13),
+  schemaVersion: Type.Literal(14),
   codemapMode: CodemapMode,
   request: ContextBuildRequest,
   requestDigest: SHA256,

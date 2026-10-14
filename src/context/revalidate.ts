@@ -5,6 +5,7 @@ import { prepareText } from '../exploration/lines.js';
 import { acquireLocalPatch } from '../patches/local-git.js';
 import { descriptorGitMode } from '../contracts/patches.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
+import { revalidateGitArtifact } from './git-artifact-material.js';
 
 async function revalidateSource(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'source' }>, bodies: readonly string[]): Promise<void> {
   const source = record.selection.source;
@@ -46,6 +47,11 @@ export async function revalidateMaterials(
     }
     if (record.kind === 'document') {
       await revalidateDocument(operation, record, material.bodies);
+      continue;
+    }
+    if (record.kind === 'gitMap' || record.kind === 'gitPatch') {
+      if (canonicalJSON(identity(material.bodies.join(''))) !== canonicalJSON(record.identity)) throw new WorkspaceFailure('materialChanged');
+      await revalidateGitArtifact(operation, record);
       continue;
     }
     if (record.kind === 'patch') {

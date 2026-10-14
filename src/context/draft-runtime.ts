@@ -278,16 +278,18 @@ export class DraftRuntime {
     return this.#track((async () => {
       const revision = request.expectedRevision ?? this.#revision;
       this.#check(signal, revision);
-      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt;
+      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt,
+        grants = this.#gitAdvertisements;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
-        const prepared = await prepareSelection(operation, request, current, this.#codemapMode);
+        const prepared = await prepareSelection(operation, request, current, this.#codemapMode, grants);
         const next = request.op === 'get' ? current
           : await this.#prepareResolvedSelection(operation, prepared, current, revision);
         const candidate = this.#mutationChanges(current, next, prepared.mode, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
         this.#check(signal, revision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+        if (prepared.usesInsertionGrant && grants !== this.#gitAdvertisements) throw new WorkspaceFailure('gitArtifactAdvertisementChanged');
         if (isMutation && candidate.changed) {
           this.#commit(next, prepared.mode, this.#prompt, candidate.revision);
         }
@@ -307,7 +309,8 @@ export class DraftRuntime {
   }
   async #prepareResolvedSelection(operation: WorkspaceOperation, prepared: Awaited<ReturnType<typeof prepareSelection>>,
     current: ReadonlyMap<string, Material>, revision: number): Promise<ReadonlyMap<string, Material>> {
-    const explicit = new Map([...current].filter(([, material]) => material.record.kind !== 'source'));
+    const explicit = new Map([...current].filter(([, material]) => material.record.kind !== 'source'
+      && material.record.kind !== 'gitMap' && material.record.kind !== 'gitPatch'));
     for (const required of this.request.requiredSources) {
       if (!prepared.selections.some(selection => canonicalJSON(selection) === canonicalJSON(required))) {
         throw new WorkspaceFailure('requiredMaterialMutation', { id: sourceId(required.source) });
@@ -322,6 +325,7 @@ export class DraftRuntime {
         : await acquireSource(operation, { selectionOrigin: 'explicit', selection, required });
       explicit.set(id, material);
     }
+    for (const material of prepared.artifactMaterials) explicit.set(material.record.id, material);
     return this.#derive(operation, explicit, prepared.mode, current, revision);
   }
   #retainReadyCodemaps(pending: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>): void {
@@ -346,6 +350,17 @@ export class DraftRuntime {
     const blocks: string[] = [];
     for (const material of materials.values()) {
       const record = material.record;
+      if (record.kind === 'gitMap' || record.kind === 'gitPatch') {
+        const path = request.path_display === 'full' ? record.reference.absolutePath : record.reference.alias;
+        entries.push({ kind: 'full', path, tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
+          rootPath: '_git_data', pathWithinRoot: record.reference.snapshotDir + '/' + record.reference.path });
+        if (request.view === 'content') {
+          const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: path,
+            fileName: posix.basename(record.reference.path), content: material.bodies.join(''), ranges: null });
+          blocks.push(block.text);
+        }
+        continue;
+      }
       if (record.kind !== 'source') continue;
       const root = snapshot.roots.find(root => root.name === record.selection.source.root)!;
       const relative = snapshot.roots.length === 1 ? record.selection.source.path
@@ -574,6 +589,7 @@ export class DraftRuntime {
   }
   #clearSourceIntent(kind: 'clearSources' | 'clearCodemaps', explicit: Map<string, Material>): CodemapMode {
     for (const [id, { record }] of explicit) {
+      if (kind === 'clearSources' && (record.kind === 'gitMap' || record.kind === 'gitPatch')) explicit.delete(id);
       if (record.kind === 'source' && !record.required &&
           (kind === 'clearSources' || record.selection.kind === 'codemap')) explicit.delete(id);
     }

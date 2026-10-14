@@ -75,7 +75,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 13,
+        schemaVersion: 14,
         codemapMode,
         request,
         requestDigest: sha256(canonicalJSON(request)),

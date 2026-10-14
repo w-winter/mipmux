@@ -210,7 +210,7 @@ export class SmipRuntime {
     signal.throwIfAborted();
     const declaration = freeze({ roots:manifest.inventory.roots,outputRoot:manifest.inventory.outputRoot,exclusions:manifest.exclusions,
       ignoreSettings:this.options.ignoreSettings ?? null,
-      deniedAbsolutePaths:[...manifest.deniedAbsolutePaths.map(path=>resolve(path)),cache,manifest.inventory.outputRoot.canonicalPath,
+      deniedAbsolutePaths:[...manifest.deniedAbsolutePaths.map(path=>resolve(path)),cache,
         ...await protectedPaths(this.options.credentialPaths)] });
     // Zero has no discovery sequence meaning; this operation never publishes membership or pagination.
     const verificationOnlyGeneration = 0;

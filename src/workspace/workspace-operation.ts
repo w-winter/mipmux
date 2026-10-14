@@ -334,6 +334,12 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  transitionSelection(input: Extract<NativeOperation, { kind: 'transitionSelection' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   selectionHint(paths: readonly string[], operation: string) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());

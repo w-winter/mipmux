@@ -71,12 +71,12 @@ export async function verifyDeliveryMaterials(directory: string, fixture: Awaite
       } else assert(body.equals(Buffer.from(expected.get(item.record.selection.source.path)!)));
     } else if (item.record.kind === 'document') {
       assert(body.equals(Buffer.from(item.record.input.id === 'plan' ? fixture.plan : fixture.evidence)));
-    } else {
+    } else if (item.record.kind === 'patch') {
       assert(body.equals(Buffer.from(expectedPatch)));
       assert.deepEqual(item.record.receipt.coverage, ['deleted.txt', 'untracked.txt']);
       assert(body.toString().includes('-DELETED EVIDENCE')); assert(body.toString().includes('+UNTRACKED ADDITION'));
       assert.deepEqual(identity(body), item.record.receipt.identity);
-    }
+    } else assert.fail('Unexpected delivery material: ' + item.record.kind);
     verified.push({ id: item.record.id, ...identity(body) });
   }
   assert.equal(verified.length, 6);

@@ -5,6 +5,7 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, freeze, WorkspaceFailure } from '../workspace/values.js';
 import type { Material } from './material-store.js';
 import { resolveDiffRepository } from '../exploration/git-repository.js';
+import { readAuthorizedGitArtifact } from '../workspace/git-artifact-catalog.js';
 
 type Resolution = Extract<NativeResult, { kind: 'gitTarget' }>;
 
@@ -53,15 +54,25 @@ export class FrozenGitTarget {
     await operation.validateRoots();
     await this.primary(operation);
     const current = (await FrozenGitTarget.capture(operation, materials)).resolution;
-    if (current.state !== 'available') throw new WorkspaceFailure('gitSelectionOwnershipChanged');
+    const artifactCheckouts: NativeGitCheckout[] = [];
+    for (const { record } of materials.values()) {
+      if (record.kind !== 'gitMap' && record.kind !== 'gitPatch') continue;
+      if (!operation.catalogedGitArtifact(record.reference.absolutePath)) throw new WorkspaceFailure('gitSelectionOwnershipChanged');
+      await readAuthorizedGitArtifact(operation, record.reference);
+      artifactCheckouts.push(record.reference.checkout);
+    }
+    if (current.state !== 'available' && current.state !== 'deferred') throw new WorkspaceFailure('gitSelectionOwnershipChanged');
     const identityKey = (checkout: NativeGitCheckout) => canonicalJSON([
       checkout.repoKey, checkout.repositoryID, checkout.worktreeID, checkout.checkoutRootPath,
     ]);
+    const currentCheckouts = [...new Map([...(current.state === 'available' ? current.checkouts : []), ...artifactCheckouts]
+      .map(checkout => [identityKey(checkout), checkout])).values()];
+    if (!currentCheckouts.length) throw new WorkspaceFailure('gitSelectionOwnershipChanged');
     const original = new Set(this.resolution.checkouts.map(identityKey));
-    if (!current.checkouts.every(checkout => original.has(identityKey(checkout)))) {
+    if (!currentCheckouts.every(checkout => original.has(identityKey(checkout)))) {
       throw new WorkspaceFailure('gitSelectionOwnershipChanged');
     }
-    const valid = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: current.checkouts });
+    const valid = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: currentCheckouts });
     if (!valid.valid) throw new WorkspaceFailure('gitRepositoryChanged');
     if (selector.root === null && selector.worktree === null) return this.resolution.checkouts;
     const requested = await resolveDiffRepository(operation, selector.root ?? this.resolution.primary.root,
