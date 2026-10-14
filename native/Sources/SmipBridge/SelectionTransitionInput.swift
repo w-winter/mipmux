@@ -44,6 +44,11 @@ struct SelectionTransitionInput {
             result = try service.setPreResolvedFilePaths(base: selection,
                                                          absolutePaths: StoredSelection.paths(fields.value("paths")),
                                                          targetState: target)
+        } else if kind == "gitPublication" {
+            let fields = try WireObject(mutation, keys: ["kind", "contextSelection"])
+            result = try selectionForPrimaryGitArtifactCommit(latestSelection: selection,
+                                                              contextSelection: StoredSelection(wire: fields
+                                                                  .value("contextSelection")))
         } else {
             throw BridgeFailure("nativeProtocolError")
         }

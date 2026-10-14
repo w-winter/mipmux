@@ -84,6 +84,7 @@ export const NativeSelectionTransitionInput = Type.Object({ kind: Type.Literal('
     Type.Object({ kind: Type.Literal('fullFiles'), op: Type.Enum(['add', 'remove']), paths: Type.Array(canonicalSelectionPath) }, { additionalProperties: false }),
     Type.Object({ kind: Type.Literal('representation'), target: Type.Enum(['full', 'codemapOnly', 'unselected']),
       paths: Type.Array(canonicalSelectionPath) }, { additionalProperties: false }),
+    Type.Object({ kind: Type.Literal('gitPublication'), contextSelection: NativeSelectionState }, { additionalProperties: false }),
   ]) }, { additionalProperties: false });
 export const NativeSliceRangesInput = Type.Object({ kind: Type.Literal('calculateSliceRanges'),
   op: Type.Enum(['normalize', 'coalesce', 'subtract']), base: Type.Array(NativeSliceRange), ranges: Type.Array(NativeSliceRange),

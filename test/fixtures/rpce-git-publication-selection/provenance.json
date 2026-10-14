@@ -1,0 +1,39 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "sha256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/LineRange.swift",
+      "sha256": "e8afaad1d02399f09ecde16e1be74ae6fdd4dd0c44712d498f96ebec04788496"
+    },
+    {
+      "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
+      "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Utilities/WorkspacePathNormalizations.swift",
+      "sha256": "d77d7af8e1d933df0530b8bea19b603581889c98b217b8213564f5635a9ce3a1"
+    },
+    {
+      "path": "Sources/RepoPromptFoundation/Slices/SliceRangeMath.swift",
+      "sha256": "0b35698eb4c0dc02b88bffd382492bdacaf993d7f5c1c5d7d6576887bf554c73"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+TabContext.swift",
+      "sha256": "8cfa95c345e32a44f3b17652e6eadf69976c948a0aa1b33201db453e2baecce1"
+    }
+  ],
+  "generator": "scripts/generate-git-publication-selection-fixtures.mjs",
+  "generatorSHA256": "48f0e3bcd1e47dbe6b947728e635061c879b8cb3cc639dac7196244df7e19b2b",
+  "cases": 15,
+  "bindings": [
+    "Unchanged source merge and full-file transition bodies execute over canonical captured absolute paths.",
+    "Absent range descriptions are explicit null in the fixture wire format."
+  ],
+  "limits": [
+    "Pure selection merge only; live draft commits, Git acquisition, advertisement revision checks and finalization are separate integration responsibilities."
+  ]
+}
