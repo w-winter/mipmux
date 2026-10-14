@@ -865,6 +865,22 @@ export class DraftRuntime {
   cancelFinalization() {
     return this.#finalization?.cancel() ?? { kind: 'notFinalizing' as const };
   }
+  /** Joins owned work, then removes snapshots whose current manifest names this draft; ordinary close retains them. */
+  async dispose(signal: AbortSignal) {
+    signal.throwIfAborted();
+    const root = this.operation.snapshot.outputRoot;
+    await this.close();
+    signal.throwIfAborted();
+    return this.operation.runtime.mutateGitSnapshots(root, signal, async (combined, access) => {
+      const result = await access.bridge.request({ kind: 'maintainGitSnapshots', root: access.root,
+        action: { kind: 'closed', tabIDs: [this.id] } }, combined);
+      const outcome = result.result.outcome;
+      if (!('deleted' in outcome)) throw new WorkspaceFailure('nativeProtocolError');
+      process.stderr.write(JSON.stringify({ level: 'info', event: 'contextSnapshotsDisposed', draftId: this.id,
+        deletedSnapshots: outcome.deleted }) + '\n');
+      return { kind: 'disposed' as const, draftId: this.id, deletedSnapshots: outcome.deleted };
+    });
+  }
   close(): Promise<void> {
     this.#closing ??= (async () => {
       this.#cancel.abort();

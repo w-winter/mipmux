@@ -130,6 +130,19 @@ export class JobRegistry {
     job.abort.abort(); this.#publish(job, { state: 'cancelling' });
     return this.snapshot(id);
   }
+  async dispose(id: string, signal: AbortSignal) {
+    signal.throwIfAborted();
+    const job = this.#get(id);
+    this.cancel(id);
+    await job.work;
+    signal.throwIfAborted();
+    let deletedSnapshots = 0;
+    if (job.draft) {
+      deletedSnapshots = (await job.draft.dispose(signal)).deletedSnapshots;
+      job.draft = null;
+    }
+    return { kind: 'disposed' as const, jobId: id, deletedSnapshots };
+  }
   async wait(id: string, durationMs: number, signal: AbortSignal, progress: (snapshot: JobSnapshot) => void): Promise<JobSnapshot> {
     if (!Number.isSafeInteger(durationMs) || durationMs < 0 || durationMs > 2147483647) throw new WorkspaceFailure('invalidWaitDuration');
     signal.throwIfAborted();

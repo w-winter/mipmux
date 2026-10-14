@@ -96,6 +96,15 @@ export class ClientRuntime {
     const { draft } = this.#manual(id);
     return this.#track(signal, combined => draft.finalize(combined));
   }
+  /** Closes the manual draft and joins owner-scoped snapshot cleanup before forgetting its capability. */
+  disposeDraft(id: string, signal: AbortSignal) {
+    const { draft } = this.#manual(id);
+    return this.#track(signal, async combined => {
+      const result = await draft.dispose(combined);
+      this.#drafts.delete(id);
+      return result;
+    });
+  }
   explore(id: string, call: ExplorationCall, signal: AbortSignal,
     draftId: string | null = null, encode: ResultEncoding = identityEncoding) {
     const workspace = this.#workspace(id);
@@ -126,6 +135,10 @@ export class ClientRuntime {
     return this.#track(signal, combined => this.#jobs.wait(id, durationMs, combined, progress));
   }
   cancel(id: string) { this.#check(); return this.#jobs.cancel(id); }
+  /** Cancels or joins the job before disposing its draft snapshots; its terminal receipt and packet remain available. */
+  disposeJob(id: string, signal: AbortSignal) {
+    return this.#track(signal, combined => this.#jobs.dispose(id, combined));
+  }
   close(): Promise<void> {
     this.#closing ??= (async () => {
       this.#abort.abort();

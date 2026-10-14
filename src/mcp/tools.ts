@@ -79,10 +79,12 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
   register('draft_validate', Type.Object({ draftId: id, ...budget }, closed),
     (input, ctx) => client().validate(input.draftId, input.maxOutputBytes ?? defaultMaxOutputBytes, ctx.mcpReq.signal, toolResult));
   register('draft_finalize', Type.Object({ draftId: id }, closed), (input, ctx) => client().finalize(input.draftId, ctx.mcpReq.signal));
+  register('draft_dispose', Type.Object({ draftId: id }, closed), (input, ctx) => client().disposeDraft(input.draftId, ctx.mcpReq.signal));
   register('context_builder', Type.Object({ workspaceId: id, requestId: id, request: ContextBuildRequest }, closed),
     input => client().build(input.workspaceId, input.requestId, input.request));
   register('context_builder_result', Type.Object({ jobId: id }, closed), input => client().result(input.jobId));
   register('context_builder_cancel', Type.Object({ jobId: id }, closed), input => client().cancel(input.jobId));
+  register('context_builder_dispose', Type.Object({ jobId: id }, closed), (input, ctx) => client().disposeJob(input.jobId, ctx.mcpReq.signal));
   register('context_builder_wait', Type.Object({ jobId: id, durationMs: Type.Integer({ minimum: 0, maximum: 2147483647 }) }, closed),
     async (input, ctx) => {
       const progressToken = ctx.mcpReq._meta?.progressToken;

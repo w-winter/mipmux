@@ -10,6 +10,8 @@ Read the operator's `contextBudgetUnits` from the host configuration and set `re
 
 With MCP, call `workspace_declare` and save the returned ID. Call `context_builder` with that `workspaceId`, a caller-generated `requestId`, and the context request. Poll with `context_builder_wait` using the same job ID; a wait timeout is not a reason to submit another builder request. `context_builder_result` returns the current snapshot without consuming it. `context_builder_cancel` requests job cancellation; cancelling a wait affects only that observer.
 
+Call `context_builder_dispose` with the owning `jobId` when the job's Git snapshots are no longer needed. It joins job settlement and cleans up snapshots owned by that context. `draft_dispose` with `draftId` performs cleanup for a manual draft. Both report `deletedSnapshots` and retain saved packets; normal completion and disconnection retain snapshots. Keep the stored snapshots when current verification of selected Git evidence is still required. Saved packet integrity verification remains available after disposal.
+
 With the CLI, provide a JSON build file containing `workspace`, `requestId` and `request`, then capture the terminal receipt:
 
 ```sh
