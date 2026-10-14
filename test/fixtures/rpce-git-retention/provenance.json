@@ -39,7 +39,7 @@
       "sha256": "947658dcf11429e27c412fb23576f9fe6b2528a344eb868e44193d80a8d0e86a"
     }
   ],
-  "referenceSHA256": "d2af8d2c310009c690f39b7083c1004367f98de284fa38e937fa00056f5ca33e",
+  "referenceSHA256": "b6394a06ab4883a33776aaefb25c69c931218c76bc2b2008d65a25d0c72d8723",
   "adaptations": [
     "Remove package access and unavailable module imports for standalone compilation.",
     "Supply value-only diff inputs and inert repository descriptors; omit the unused primary-artifact ingress initializer.",

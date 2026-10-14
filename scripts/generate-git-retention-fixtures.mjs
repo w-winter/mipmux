@@ -34,13 +34,17 @@ const cases = [
     { repoKey: 'a', snapshotID: 'dated/only', generatedAt: clock, tabID: ownerA }] },
   { name: 'close-empty-owner-set', operation: { kind: 'closed', tabIDs: [] }, entries: rows(2) },
 ];
+const cacheOwner = { name: 'cache-owner', operation: { kind: 'cache-owner' },
+  entries: rows(24).map((row, index) => ({ ...row, snapshotID: 'seed-' + String(index).padStart(2, '0') })),
+  publications: [{ repoKey: 'a', snapshotID: 'new-24', generatedAt: clock + 1, tabID: null },
+    { repoKey: 'b', snapshotID: 'new-25', generatedAt: clock + 2, tabID: null }] };
 const adapter = `import Foundation
 struct GitRepoDescriptor { let repoKey: String; let rootPath: String }
 struct VCSUncommittedFile: Codable { let path: String; let status: String; let additions: Int?; let deletions: Int? }
 struct GitDiffEngine { struct GitDiffSnapshotBuildResult { let fingerprint: GitDiffFingerprint; let changedFiles: [VCSUncommittedFile]; let summary: (files: Int, insertions: Int, deletions: Int); let diffText: String?; let perFile: [String: String]? } }
 struct Entry: Decodable { let repoKey: String; let snapshotID: String; let generatedAt: Double; let tabID: UUID? }
 struct Operation: Decodable { let kind: String; let lastCleanupAt: Double?; let tabIDs: [UUID]? }
-struct Fixture: Decodable { let name: String; let entries: [Entry]; let operation: Operation }
+struct Fixture: Decodable { let name: String; let entries: [Entry]; let operation: Operation; let publications: [Entry]? }
 `;
 const main = `
 @main struct Runner { static func main() async throws {
@@ -52,7 +56,7 @@ const main = `
   try fm.createDirectory(at: root, withIntermediateDirectories: true)
   let fingerprint = GitDiffFingerprint(headSHA: String(repeating: "a", count: 40), baseRef: "HEAD", statusHash: "fixture", generatedAt: Date(timeIntervalSince1970: ${clock}))
   let content = GitDiffEngine.GitDiffSnapshotBuildResult(fingerprint: fingerprint, changedFiles: [], summary: (0, 0, 0), diffText: nil, perFile: nil)
-  for row in entry.entries {
+  func seed(_ row: Entry) throws {
    _ = try store.writeSnapshot(workspaceDirectory: root, repoKey: row.repoKey, snapshotID: row.snapshotID, mode: .quick, compareRaw: "uncommitted", compareInput: nil, scope: .all, requestedPaths: nil, fingerprint: fingerprint, contextLines: 3, detectRenames: false, inputs: content, commitGraph: "", tabID: row.tabID)
    let file = store.snapshotDir(workspaceDirectory: root, repoKey: row.repoKey, snapshotID: row.snapshotID).appendingPathComponent("manifest.json")
    guard var value = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any] else { fatalError("invalid source manifest") }
@@ -60,6 +64,7 @@ const main = `
    try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]).write(to: file)
    try store.writeCurrentSnapshotID(row.snapshotID, workspaceDirectory: root, repoKey: row.repoKey)
   }
+  for row in entry.entries { try seed(row) }
   var result: [String: Any] = [:]
   switch entry.operation.kind {
   case "published":
@@ -73,6 +78,18 @@ const main = `
   case "closed":
    let count = await GitDiffDataMaintenance.shared.deleteSnapshotsForTabs(workspaceDirectory: root, tabIDs: Set(entry.operation.tabIDs!))
    result = ["deleted": count]
+  case "cache-owner":
+   let state: [String: Any] = ["version": 2, "lastCleanupAt": ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: ${clock - 7 * 3600}))]
+   try JSONSerialization.data(withJSONObject: state).write(to: store.gitDataRoot(workspaceDirectory: root).appendingPathComponent("maintenance.json"))
+   _ = await GitDiffDataMaintenance.shared.runOnWorkspaceOpen(workspaceDirectory: root)
+   let indexURL = store.gitDataRoot(workspaceDirectory: root).appendingPathComponent("retention-index.json")
+   let oldIndex = try Data(contentsOf: indexURL)
+   guard let publications = entry.publications else { fatalError("missing publication sequence") }
+   for (index, row) in publications.enumerated() {
+    try seed(row)
+    await GitDiffDataMaintenance.shared.runAfterSnapshotPublish(workspaceDirectory: root, repoKey: row.repoKey, snapshotID: row.snapshotID, generatedAt: Date(timeIntervalSince1970: row.generatedAt))
+    if index == 0 { try oldIndex.write(to: indexURL) }
+   }
   default: fatalError("invalid fixture operation")
   }
   var remaining: [String] = [], pointers: [[String: Any]] = []
@@ -97,9 +114,11 @@ const scratch = mkdtempSync(join(tmpdir(), 'smip-retention-reference-'));
 try {
   writeFileSync(join(scratch, 'original.swift'), text);
   execFileSync('swiftc', ['-parse-as-library', join(scratch, 'original.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });
-  const expected = JSON.parse(execFileSync(join(scratch, 'reference'), [scratch], { input: JSON.stringify(cases) }));
+  const expected = JSON.parse(execFileSync(join(scratch, 'reference'), [scratch], { input: JSON.stringify([...cases, cacheOwner]) }));
   const directory = 'test/fixtures/rpce-git-retention'; mkdirSync(directory, { recursive: true });
   writeFileSync(join(directory, 'cases.json'), JSON.stringify(cases.map(entry => ({ ...entry, expected: expected.find(result => result.name === entry.name) })), null, 2) + '\n');
+  writeFileSync(join(directory, 'cache-owner.json'), JSON.stringify({ ...cacheOwner,
+    expected: expected.find(result => result.name === cacheOwner.name) }, null, 2) + '\n');
   writeFileSync(join(directory, 'provenance.json'), JSON.stringify({ sourceRevision: revision, clock, sources: [...sources,
     { source: layoutPath, sha256: createHash('sha256').update(layout).digest('hex') }].map(({ source, sha256 }) => ({ source, sha256 })),
     referenceSHA256: createHash('sha256').update(text).digest('hex'), adaptations: ['Remove package access and unavailable module imports for standalone compilation.',

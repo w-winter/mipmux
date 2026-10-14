@@ -491,6 +491,16 @@ final class ConfinedFiles {
         return ["kind": "gitSnapshotFileWritten", "identity": Extraction.identity(bytes).json]
     }
 
+    func finishGitSnapshot(_ handle: NativeHandle) throws -> [String: Any] {
+        guard handle.generation == generation,
+              let owned = runs[handle.id],
+              case let .gitSnapshot(run) = owned
+        else { throw BridgeFailure("invalidExportHandle") }
+        runs.removeValue(forKey: handle.id)
+        try run.directory.finish()
+        return ["kind": "gitSnapshotFinished"]
+    }
+
     func writeExport(_ handle: NativeHandle, filename: String, bytes: Data, publish: Bool) throws -> [String: Any] {
         let run = try lookupRun(handle)
         let file = try Descriptor(openat(run.directory.value, filename, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600))

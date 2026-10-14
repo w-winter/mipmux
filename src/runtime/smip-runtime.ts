@@ -4,7 +4,7 @@ import { BridgeClient } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
 import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
 import type { ContextBuildRequest } from '../contracts/context.js';
-import type { NativeOperation } from '../contracts/native.js';
+import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle } from '../context/verify.js';
 import { revalidateMaterials } from '../context/revalidate.js';
@@ -18,6 +18,9 @@ import { preparedClipboardInput } from '../context/clipboard.js';
 import { finalFileTreeInput } from '../context/final-tree.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import { observe } from '../workspace/observe.js';
+
+interface GitSnapshotMutationAccess { readonly bridge: BridgeClient; readonly root: NativeHandle }
+interface GitSnapshotMutationOwner { tail: Promise<void>; bridge: BridgeClient | null }
 
 export interface RuntimeOptions {
   /** User-owned maximum packet allowance in utf8-21-over-80-v1 units; larger request allowances are rejected. */
@@ -41,7 +44,7 @@ export class SmipRuntime {
   readonly #admissions = new Set<Promise<unknown>>();
   readonly #drafts = new Set<DraftRuntime>();
   readonly #clients = new Set<ClientRuntime>();
-  readonly #snapshotMutations = new Map<string, Promise<void>>();
+  readonly #snapshotMutations = new Map<string, GitSnapshotMutationOwner>();
   readonly #shutdown = new AbortController();
   #closing: Promise<void> | null = null;
   constructor(readonly options: RuntimeOptions) {
@@ -58,23 +61,41 @@ export class SmipRuntime {
   makeBridge(): BridgeClient {
     return new BridgeClient({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
   }
-  /** Serializes mutations of one captured output root. Queued cancellation releases its caller without bypassing earlier work. */
-  mutateGitSnapshots<T>(root: RootIdentity, signal: AbortSignal, mutation: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  /** Serializes one output root on its runtime-owned worker/cache. A new request reopens a retired worker against the same root identity. */
+  mutateGitSnapshots<T>(root: RootIdentity, signal: AbortSignal,
+    mutation: (signal: AbortSignal, access: GitSnapshotMutationAccess) => Promise<T>): Promise<T> {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const combined = AbortSignal.any([signal, this.#shutdown.signal]);
-    const key = canonicalJSON([root.canonicalPath, root.device, root.inode]);
-    const previous = this.#snapshotMutations.get(key) ?? Promise.resolve();
+    const identity = structuredClone(root);
+    const key = canonicalJSON([identity.canonicalPath, identity.device, identity.inode]);
+    let owner = this.#snapshotMutations.get(key);
+    if (!owner) {
+      owner = { tail: Promise.resolve(), bridge: null };
+      this.#snapshotMutations.set(key, owner);
+    }
+    const captured = owner, previous = captured.tail;
     process.stderr.write(JSON.stringify({ level: 'debug', event: 'snapshotMutationQueued', outputKey: sha256(key) }) + '\n');
     const work = (async () => {
       await observe(previous, combined);
       combined.throwIfAborted();
-      return mutation(combined);
+      if (captured.bridge?.retired) {
+        await captured.bridge.close();
+        captured.bridge = null;
+      }
+      const bridge = captured.bridge ??= this.makeBridge();
+      const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'GitSnapshots', absolutePath: identity.declaredPath,
+        access: 'output', expected: identity }] }, combined);
+      const output = opened.result.roots[0];
+      if (!output) throw new WorkspaceFailure('nativeProtocolError');
+      combined.throwIfAborted();
+      process.stderr.write(JSON.stringify({ level: 'debug', event: 'snapshotMutationAdmitted', outputKey: sha256(key),
+        generation: output.handle.generation }) + '\n');
+      return mutation(combined, { bridge, root: output.handle });
     })();
     const settled = Promise.allSettled([previous, work]).then(() => {});
-    this.#snapshotMutations.set(key, settled);
+    captured.tail = settled;
     this.#admissions.add(work);
     void work.then(() => this.#admissions.delete(work), () => this.#admissions.delete(work));
-    void settled.then(() => { if (this.#snapshotMutations.get(key) === settled) this.#snapshotMutations.delete(key); });
     return work;
   }
   /** Owns captured tree/clipboard rendering, including observations after workspace lease release. */
@@ -125,10 +146,10 @@ export class SmipRuntime {
       let owner = this.#owners.get(key);
       if (!owner) {
         await this.artifacts.readMembership(key);
-        owner = await this.mutateGitSnapshots(outputRoot.identity, signal, async combined => {
+        owner = await this.mutateGitSnapshots(outputRoot.identity, signal, async (combined, access) => {
           const existing = this.#owners.get(key);
           if (existing) return existing;
-          const maintenance = await bridge.request({ kind: 'maintainGitSnapshots', root: outputRoot.handle, action: { kind: 'opened' } }, combined);
+          const maintenance = await access.bridge.request({ kind: 'maintainGitSnapshots', root: access.root, action: { kind: 'opened' } }, combined);
           combined.throwIfAborted();
           process.stderr.write(JSON.stringify({ level: 'info', event: 'workspaceSnapshotMaintenanceCompleted', workspaceKey: key,
             outcome: maintenance.result.outcome }) + '\n');
@@ -235,6 +256,8 @@ export class SmipRuntime {
       results.push(...await Promise.allSettled([...this.#operations].map(operation => operation.close())));
       results.push(...await owners);
       results.push(...await Promise.allSettled([...this.#owners.values()].map(owner => owner.close())));
+      results.push(...await Promise.allSettled([...this.#snapshotMutations.values()].flatMap(owner => owner.bridge ? [owner.bridge.close()] : [])));
+      this.#snapshotMutations.clear();
       results.push(...await Promise.allSettled([this.supervisor.close()]));
       const failure = results.find(result => result.status === 'rejected');
       if (failure?.status === 'rejected') throw failure.reason;

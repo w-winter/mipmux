@@ -46,6 +46,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .readGitSnapshotFile(root, repoKey, snapshotID, path):
         try files.readGitSnapshotFile(root, repoKey: repoKey, snapshotID: snapshotID, path: path)
     case let .writeGitSnapshotFile(run, path, bytes): try files.writeGitSnapshotFile(run, path: path, bytes: bytes)
+    case let .finishGitSnapshot(run): try files.finishGitSnapshot(run)
     case let .writeExport(run, filename, bytes): try files.writeExport(
             run,
             filename: filename,

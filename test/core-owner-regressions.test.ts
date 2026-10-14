@@ -112,16 +112,18 @@ test('closing a shared extraction consumer does not join the producer', async ()
   const { base, spec, options } = await fixture();
   await mkdir(join(base, 'out-b'));
   const entered = barrier(), resume = barrier(), secondRead = barrier(), consumerClosed = barrier();
-  let reads = 0, extractions = 0, bridges = 0;
+  let reads = 0, extractions = 0;
   class Runtime extends SmipRuntime {
     override makeBridge() {
-      const consumer = ++bridges === 2;
+      let consumer = false;
       class Bridge extends BridgeClient {
         override async close() { await super.close(); if (consumer) consumerClosed.release(); }
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
           if (operation.kind === 'extract') { extractions++; entered.release(); await resume.promise; }
           const result = await super.request(operation, requestSignal);
-          if (operation.kind === 'readSource' && operation.path === 'model.swift' && ++reads === 2) secondRead.release();
+          if (operation.kind === 'readSource' && operation.path === 'model.swift' && ++reads === 2) {
+            consumer = true; secondRead.release();
+          }
           return result;
         }
       }

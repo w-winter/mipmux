@@ -163,11 +163,13 @@ test('terminal manual finalization releases the workspace lease while blocked dr
   for (const scenario of ['stale', 'cancel', 'publication'] as const) {
     const f = await fixture('terminal-lease-' + scenario + '-');
     const bridges: BridgeClient[] = [], entered = barrier(), resume = barrier();
+    const sourceBridges = new Set<BridgeClient>();
     let hold = false, fail = false;
     class Runtime extends SmipRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+            if (operation.kind === 'openRoots' && operation.roots.some(root => root.access === 'source')) sourceBridges.add(this);
             if (hold && operation.kind === 'readExport') { hold = false; entered.release(); await resume.promise; }
             if (fail && operation.kind === 'publishManifest') { fail = false; throw new NativeFailure('nativeIOFailed', 28); }
             return super.request(operation, requestSignal);
@@ -220,7 +222,7 @@ test('terminal manual finalization releases the workspace lease while blocked dr
       const validation = JSON.parse(JSON.stringify(await client.validate(sibling.id, 10000, signal())));
       assert.equal(validation.kind, 'validation');
       assert.equal((await client.finalize(sibling.id, signal())).kind, 'ready');
-      await Promise.all(bridges.map(bridge => bridge.closed));
+      await Promise.all([...sourceBridges].map(bridge => bridge.closed));
       await writeFile(join(f.base, 'terminal-lease-proof.json'), JSON.stringify({ scenario, bridges: bridges.length, owner }) + '\n');
       await client.close();
     } finally { resume.release(); await runtime.close(); }

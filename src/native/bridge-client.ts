@@ -13,6 +13,7 @@ const resultKinds = {
   resolveGitSnapshotComparison: ['gitSnapshotComparison', 'gitSnapshotComparisonError'],
   readGitSnapshotFile: ['gitSnapshotRead'],
   serializeGitSnapshot: ['gitSnapshotBytes'],
+  finishGitSnapshot: ['gitSnapshotFinished'],
   projectGitArtifacts: ['gitArtifacts', 'gitArtifactProjectionError'], decorateGitArtifacts: ['gitArtifactRepos'],
   electGitTarget: ['gitTarget'],
   revalidateGitTargets: ['gitTargetValidation'],

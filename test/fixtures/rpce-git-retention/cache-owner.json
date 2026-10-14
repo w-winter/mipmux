@@ -1,0 +1,209 @@
+{
+  "name": "cache-owner",
+  "operation": {
+    "kind": "cache-owner"
+  },
+  "entries": [
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-00",
+      "generatedAt": 1699999976,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-01",
+      "generatedAt": 1699999977,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-02",
+      "generatedAt": 1699999978,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-03",
+      "generatedAt": 1699999979,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-04",
+      "generatedAt": 1699999980,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-05",
+      "generatedAt": 1699999981,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-06",
+      "generatedAt": 1699999982,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-07",
+      "generatedAt": 1699999983,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-08",
+      "generatedAt": 1699999984,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-09",
+      "generatedAt": 1699999985,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-10",
+      "generatedAt": 1699999986,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-11",
+      "generatedAt": 1699999987,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-12",
+      "generatedAt": 1699999988,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-13",
+      "generatedAt": 1699999989,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-14",
+      "generatedAt": 1699999990,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-15",
+      "generatedAt": 1699999991,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-16",
+      "generatedAt": 1699999992,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-17",
+      "generatedAt": 1699999993,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-18",
+      "generatedAt": 1699999994,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-19",
+      "generatedAt": 1699999995,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-20",
+      "generatedAt": 1699999996,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-21",
+      "generatedAt": 1699999997,
+      "tabID": null
+    },
+    {
+      "repoKey": "a",
+      "snapshotID": "seed-22",
+      "generatedAt": 1699999998,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "seed-23",
+      "generatedAt": 1699999999,
+      "tabID": null
+    }
+  ],
+  "publications": [
+    {
+      "repoKey": "a",
+      "snapshotID": "new-24",
+      "generatedAt": 1700000001,
+      "tabID": null
+    },
+    {
+      "repoKey": "b",
+      "snapshotID": "new-25",
+      "generatedAt": 1700000002,
+      "tabID": null
+    }
+  ],
+  "expected": {
+    "name": "cache-owner",
+    "pointers": [
+      {
+        "link": "new-24",
+        "readCurrent": "new-24",
+        "repoKey": "a"
+      },
+      {
+        "link": "new-25",
+        "readCurrent": "new-25",
+        "repoKey": "b"
+      }
+    ],
+    "remaining": [
+      "a/new-24",
+      "a/seed-02",
+      "a/seed-04",
+      "a/seed-06",
+      "a/seed-08",
+      "a/seed-10",
+      "a/seed-12",
+      "a/seed-14",
+      "a/seed-16",
+      "a/seed-18",
+      "a/seed-20",
+      "a/seed-22",
+      "b/new-25",
+      "b/seed-01",
+      "b/seed-03",
+      "b/seed-05",
+      "b/seed-07",
+      "b/seed-09",
+      "b/seed-11",
+      "b/seed-13",
+      "b/seed-15",
+      "b/seed-17",
+      "b/seed-19",
+      "b/seed-21",
+      "b/seed-23"
+    ],
+    "result": {}
+  }
+}
