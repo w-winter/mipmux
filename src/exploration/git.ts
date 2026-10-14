@@ -11,6 +11,7 @@ import { resolveDiffRepository } from './git-repository.js';
 
 export async function readGit(operation: WorkspaceOperation, request: GitRequest, encode: ResultEncoding = identityEncoding) {
   if (!gitValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
+  if (request.op === 'diff' && request.artifacts) throw new WorkspaceFailure('draftRequired');
   if (request.op === 'diff') return readDiff(operation, request, encode);
   const configured = operation.runtime.options.git;
   if (!configured) throw new WorkspaceFailure('gitNotConfigured');

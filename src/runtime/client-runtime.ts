@@ -8,7 +8,7 @@ import type { DraftRuntime } from '../context/draft-runtime.js';
 import type { JobSnapshot } from '../contracts/jobs.js';
 import { JobRegistry } from './job-registry.js';
 import { WorkspaceFailure } from '../workspace/values.js';
-import { scopedCall } from '../discovery/scoped-tools.js';
+import { scopedCall, scopedGitCall } from '../discovery/scoped-tools.js';
 import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
 
 type ExplorationCall = Exclude<DiscoveryCall, { name: 'draft_inspect' | 'draft_update' | 'draft_validate' | 'draft_preview' | 'prompt' | 'manage_selection' }>;
@@ -111,7 +111,7 @@ export class ClientRuntime {
             return await operation.getFileTree({ ...call.input, selection: selected?.draft.selectionProjection() ?? null }, encode);
           }
           case 'get_code_structure': return await operation.getCodeStructure({ ...call.input, selection: selected?.draft.selectionProjection() ?? null }, encode);
-          case 'git': return await operation.readGit(call.input, encode);
+          case 'git': return await scopedGitCall(call.input, selected?.draft ?? null, operation, combined, encode);
           case 'read_file': return await operation.readFile(call.input, encode);
           case 'file_search': return await operation.fileSearch(call.input, encode);
         }

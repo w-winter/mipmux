@@ -6,6 +6,12 @@ const closed = { additionalProperties: false };
 export const NativeGitChangedFile = Type.Object({ path: Type.String(), status: Type.String(),
   additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) }, closed);
 const output = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
+const diff = { op: Type.Literal('diff'), root: Type.Union([RootName, Type.Null()], { default: null }),
+  compare: Type.String({ pattern: '^[^\\u0000]*$', default: 'uncommitted' }),
+  worktree: Type.Union([Type.String({ pattern: '^/[^\\u0000]*$' }), Type.Null()], { default: null }),
+  path: Type.Union([Type.String(), Type.Null()], { default: null }), paths: Type.Array(Type.String(), { default: [] }),
+  detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
+  detectRenames: Type.Boolean({ default: false }), maxOutputBytes: output };
 export const GitRequest = Type.Union([
   Type.Object({ op: Type.Literal('log'), root: RootName, count: Type.Integer({ default: 10 }),
     path: Type.Union([RelativePath, Type.Null()], { default: null }), maxOutputBytes: output }, closed),
@@ -15,11 +21,11 @@ export const GitRequest = Type.Union([
   Type.Object({ op: Type.Literal('show'), root: RootName, ref: Type.String({ pattern: '^[^\\u0000]*$' }),
     detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
     detectRenames: Type.Boolean({ default: false }), maxOutputBytes: output }, closed),
-  Type.Object({ op: Type.Literal('diff'), root: Type.Union([RootName, Type.Null()], { default: null }), compare: Type.String({ pattern: '^[^\\u0000]*$', default: 'uncommitted' }),
-    worktree: Type.Union([Type.String({ pattern: '^/[^\\u0000]*$' }), Type.Null()], { default: null }),
-    path: Type.Union([Type.String(), Type.Null()], { default: null }), paths: Type.Array(Type.String(), { default: [] }),
-    detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
-    detectRenames: Type.Boolean({ default: false }), maxOutputBytes: output }, closed),
+  Type.Object({ ...diff, artifacts: Type.Literal(false, { default: false }) }, closed),
+  Type.Object({ ...diff, artifacts: Type.Literal(true), mode: Type.String({ default: 'standard' }),
+    scope: Type.String({ default: 'all' }), snapshot_id: Type.Union([Type.String(), Type.Null()], { default: null }),
+    inline: Type.Object({ map: Type.Boolean({ default: true }), mode: Type.String({ default: 'brief' }),
+      max_lines: Type.Integer({ default: 120 }) }, { ...closed, default: {} }) }, closed),
 ]);
 export type GitRequest = Static<typeof GitRequest>;
 export const GitInput = Type.Union([
@@ -33,6 +39,8 @@ export const GitInput = Type.Union([
     detectRenames: Type.Optional(GitRequest.anyOf[3].properties.detectRenames) }, closed),
   Type.Object({ op: Type.Literal('diff'), root: Type.Optional(GitRequest.anyOf[4].properties.root),
     ...Type.Partial(Type.Omit(GitRequest.anyOf[4], ['op', 'root', 'maxOutputBytes'])).properties }, closed),
+  Type.Object({ ...Type.Partial(Type.Omit(GitRequest.anyOf[5], ['op', 'artifacts', 'maxOutputBytes'])).properties,
+    op: Type.Literal('diff'), artifacts: Type.Literal(true) }, closed),
 ]);
 export const gitValidator = Compile(GitRequest);
 export const NativeGitReadQuery = Type.Union([

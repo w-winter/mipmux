@@ -242,7 +242,7 @@ export class WorkspaceOperation {
         repository: captured, compare }, this.signal)).result;
     });
   }
-  gitDiffOperation<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'normalizeGitSelectedPaths' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' | 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' | 'renderGitWorktreeReply' | 'planGitPublication' | 'prepareGitPublicationMetadata' | 'decorateGitArtifacts' | 'authorizeGitArtifact' }>>(input: O) {
+  gitDiffOperation<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'normalizeGitSelectedPaths' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' | 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' | 'renderGitWorktreeReply' | 'planGitPublication' | 'prepareGitPublicationMetadata' | 'normalizeGitPublicationOptions' | 'decorateGitArtifacts' | 'authorizeGitArtifact' }>>(input: O) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(input, this.signal)).result;

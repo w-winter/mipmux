@@ -68,9 +68,9 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     assert(joins.length > 0);
     armed = false;
     const read = await client.explore(workspace.id, { name: 'read_file', input: { root: 'r', path: 'file.txt', start_line: null, offset: null, limit: null, maxOutputBytes: 2000, continuation: null } }, new AbortController().signal);
-    assert.equal(read.kind, 'read');
+    assert('kind' in read && read.kind === 'read');
     const searched = await client.explore(workspace.id, { name: 'file_search', input: search }, new AbortController().signal);
-    assert.equal(searched.kind, 'search');
+    assert('kind' in searched && searched.kind === 'search');
     await writeFile(join(provider.directory, 'retirement-proof.json'), JSON.stringify({ result, joins, otherOwnerUsable: true }));
   } finally { await runtime.close(); await provider.close(); }
 });

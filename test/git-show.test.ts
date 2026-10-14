@@ -93,12 +93,12 @@ test('cancelling show between Git phases joins its process and preserves workspa
     const workspace = await client.declare(f.spec, new AbortController().signal), controller = new AbortController();
     const input = { op: 'show' as const, root: 'r', ref: 'HEAD', detail: 'full', contextLines: 3, detectRenames: false, maxOutputBytes: 24000 };
     const initial = await client.explore(workspace.id, { name: 'git', input }, new AbortController().signal);
-    assert.equal(initial.kind, 'git'); armed = true;
+    assert('kind' in initial && initial.kind === 'git'); armed = true;
     const pending = client.explore(workspace.id, { name: 'git', input }, controller.signal);
     await holding; controller.abort(); await assert.rejects(pending, /cancelled|aborted/i);
     const joined = await Promise.all(held.map(child => child.closed)); assert.equal(joined.length, 1); armed = false;
     const usable = await client.explore(workspace.id, { name: 'git', input }, new AbortController().signal);
-    assert.equal(usable.kind, 'git');
+    assert('kind' in usable && usable.kind === 'git');
     await writeFile(join(f.base, 'cancel-receipt.json'), JSON.stringify({ joined, usable }, null, 2) + '\n');
   } finally { await runtime.close(); }
 });

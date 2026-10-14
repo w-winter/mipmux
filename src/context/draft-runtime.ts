@@ -51,13 +51,17 @@ import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { publishGitSnapshotBatch } from './git-publication-batch.js';
 import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
 import { registerPublishedGitArtifacts, readCatalogedGitArtifact, type CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
-import { refreshGitArtifactMaterials } from './git-artifact-material.js';
+import { acquireGitArtifact, refreshGitArtifactMaterials } from './git-artifact-material.js';
+import { decorateGitPublicationReply } from './git-publication-reply.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
+const gitArtifactEffectFailures = new Set(['revisionConflict', 'draftFrozen', 'gitRepositoryChanged', 'gitSelectionOwnershipChanged',
+  'gitArtifactNotCataloged', 'gitArtifactUnauthorized', 'pathDenied', 'notFound', 'permissionDenied', 'symlink', 'nonRegularFile',
+  'rootChanged', 'outputChanged', 'nativeIOFailed', 'invalidEncoding']);
 type SourceMutation = Exclude<SourceEdit, { kind: 'slices' }>;
 type SelectionReplyEntry = Static<typeof NativeSelectionReplyInput>['entries'][number];
 type SelectionReplyFile = Omit<Extract<SelectionReplyEntry, { kind: 'full' }>, 'kind'>;
@@ -192,65 +196,119 @@ export class DraftRuntime {
   }
   /** Publishes snapshots and replaces exact catalog-ready read grants. */
   publishGitSnapshot(input: Extract<GitRequest, { op: 'diff' }>, options: Static<typeof GitSnapshotPublicationOptions>, signal: AbortSignal) {
+    const revision = this.#revision, generation = this.#freezeGeneration;
+    return this.#track((async () => {
+      const prepared = await this.#prepareGitSnapshot(input, options, signal, revision, generation);
+      this.#check(signal, revision);
+      this.#installGitAdvertisements(prepared.advertisements);
+      return prepared.published;
+    })());
+  }
+  async #prepareGitSnapshot(input: Extract<GitRequest, { op: 'diff' }>, options: Static<typeof GitSnapshotPublicationOptions>,
+    signal: AbortSignal, revision: number, generation: number) {
     const request = structuredClone(input), parsed = snapshotPublicationValidator.Parse(structuredClone(options));
     const id = parsed.snapshotID?.trim();
     const capturedOptions = { ...parsed, snapshotID: id && id.toLowerCase() !== 'auto' ? id : null,
       inlineMode: parsed.inlineMode.toLowerCase(), inlineMaxLines: Math.max(1, parsed.inlineMaxLines) };
-    const revision = this.#revision, generation = this.#freezeGeneration;
+    this.#check(signal, revision);
+    const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+    const check = () => {
+      this.#check(signal, revision);
+      if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+    };
+    try {
+      const checkouts = await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+      check();
+      const publishSingle = async () => {
+        const checkout = checkouts[0];
+        if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
+        const repository = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
+        const prepared = await prepareGitPublicationMetadata(operation, checkout, repository);
+        const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', capturedOptions.scope, signal);
+        return publishGitSnapshot(operation, captured, request, capturedOptions, this.id, check, prepared);
+      };
+      let published = checkouts.length > 1
+        ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, this.#materials),
+          request, capturedOptions, this.id, check)
+        : await publishSingle();
+      check();
+      await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+      const advertisements = new Map<string, CatalogedGitArtifact>(), readinessWarnings: Record<string, string> = {};
+      for (const item of published.kind === 'single' ? [published] : published.publications) {
+        const readiness = await registerPublishedGitArtifacts(operation, item, this.id);
+        for (const entry of readiness.ready) {
+          const alias = entry.artifact.clientAlias;
+          if (alias === null) throw new WorkspaceFailure('nativeProtocolError');
+          advertisements.set(alias, entry);
+        }
+        if (readiness.warning !== null) readinessWarnings[item.snapshotDir] = readiness.warning;
+      }
+      published = await decorateGitPublicationReply(operation, published, [], readinessWarnings);
+      check();
+      await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+      check();
+      return { published, advertisements };
+    } finally { await operation.close(); }
+  }
+  #installGitAdvertisements(advertisements: ReadonlyMap<string, CatalogedGitArtifact>) {
+    this.#gitAdvertisements = advertisements;
+    process.stderr.write(JSON.stringify({ level: 'info', event: 'gitArtifactGrantsReplaced', draftId: this.id,
+      revision: this.#revision, aliases: advertisements.size }) + '\n');
+  }
+  /** Commits mutable primary selection before reply admission; insertion grants are installed only after encoding succeeds. */
+  publishGitArtifacts(input: Extract<GitRequest, { op: 'diff'; artifacts: true }>, signal: AbortSignal, encode: ResultEncoding) {
+    const request = structuredClone(input), revision = this.#revision, generation = this.#freezeGeneration;
     return this.#track((async () => {
       this.#check(signal, revision);
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
-      const check = () => {
-        this.#check(signal, revision);
-        if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-      };
       try {
-        const checkouts = await this.gitTarget.publicationRepositories(operation, this.#materials, request);
-        check();
-        const publishSingle = async () => {
-          const checkout = checkouts[0];
-          if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
-          const repository = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
-          const prepared = await prepareGitPublicationMetadata(operation, checkout, repository);
-          const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', capturedOptions.scope, signal);
-          return publishGitSnapshot(operation, captured, request, capturedOptions, this.id, check, prepared);
-        };
-        let published = checkouts.length > 1
-          ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, this.#materials),
-            request, capturedOptions, this.id, check)
-          : await publishSingle();
-        check();
-        await this.gitTarget.publicationRepositories(operation, this.#materials, request);
-        const advertisements = new Map<string, CatalogedGitArtifact>(), readinessWarnings: Record<string, string> = {};
-        for (const item of published.kind === 'single' ? [published] : published.publications) {
-          const readiness = await registerPublishedGitArtifacts(operation, item, this.id);
-          for (const entry of readiness.ready) {
-            const alias = entry.artifact.clientAlias;
-            if (alias === null) throw new WorkspaceFailure('nativeProtocolError');
-            advertisements.set(alias, entry);
+        const normalized = await operation.gitDiffOperation({ kind: 'normalizeGitPublicationOptions', mode: request.mode,
+          scope: request.scope, snapshotID: request.snapshot_id, inlineMap: request.inline.map,
+          inlineMode: request.inline.mode, inlineMaxLines: request.inline.max_lines });
+        if (normalized.kind === 'gitPublicationOptionsError') throw new WorkspaceFailure('invalidRequest', { message: normalized.message });
+        const prepared = await this.#prepareGitSnapshot(request, normalized.options, signal, revision, generation);
+        const next = new Map(this.#materials), autoSelected: string[] = [], commitWarnings: Record<string, string> = {};
+        let committedRevision = revision;
+        try {
+          for (const [alias, entry] of prepared.advertisements) {
+            if (entry.artifact.selectionDisposition !== 'primaryAutoSelect' || next.has('gitArtifact:' + alias)) continue;
+            const material = await acquireGitArtifact(operation, entry);
+            next.set(material.record.id, material); autoSelected.push(alias);
           }
-          if (readiness.warning !== null) readinessWarnings[item.snapshotDir] = readiness.warning;
+          this.#check(signal, revision);
+          if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+          committedRevision = revision + (autoSelected.length ? 1 : 0);
+          if (autoSelected.length) this.#commit(next, this.#codemapMode, this.#prompt, committedRevision);
+        } catch (error) {
+          operation.signal.throwIfAborted();
+          const code = failureCode(error);
+          if (!gitArtifactEffectFailures.has(code)) throw error;
+          autoSelected.length = 0; committedRevision = this.#revision;
+          for (const entry of prepared.advertisements.values()) if (entry.artifact.selectionDisposition === 'primaryAutoSelect') {
+            commitWarnings[entry.snapshotDir] = 'Git artifact readiness: cataloged primary artifacts could not be committed to the canonical draft selection (' + code + '); autoSelected was omitted.';
+          }
+          process.stderr.write(JSON.stringify({ level: 'warn', event: 'gitPrimaryArtifactCommitRejected', draftId: this.id, code }) + '\n');
         }
-        if (published.kind === 'single') {
-          const warning = [published.projection.reply.warning, readinessWarnings[published.snapshotDir]].filter(Boolean).join('\n');
-          if (warning) published = { ...published, projection: { ...published.projection, reply: { ...published.projection.reply, warning } } };
-        } else {
-          const manifests = Object.fromEntries(published.publications.map(item => {
-            const file = item.files.find(file => file.path === 'manifest.json');
-            if (!file) throw new WorkspaceFailure('nativeProtocolError');
-            return [item.snapshotDir, file.bytes];
-          }));
-          const projection = await operation.gitDiffOperation({ kind: 'decorateGitArtifacts', repos: published.projection.reply.repos,
-            manifests, autoSelectedPaths: [], readinessWarnings });
-          published = { ...published, projection };
+        const decorated = await decorateGitPublicationReply(operation, prepared.published, autoSelected, commitWarnings);
+        const reply = decorated.projection.reply;
+        operation.signal.throwIfAborted();
+        const requiredBytes = serializedBytes(encode(reply));
+        if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
+        try {
+          this.#check(signal, committedRevision);
+          if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+          await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+          this.#check(signal, committedRevision);
+          if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+          this.#installGitAdvertisements(prepared.advertisements);
+        } catch (error) {
+          operation.signal.throwIfAborted();
+          const code = failureCode(error);
+          if (!gitArtifactEffectFailures.has(code)) throw error;
+          this.#installGitAdvertisements(new Map());
+          process.stderr.write(JSON.stringify({ level: 'warn', event: 'gitArtifactGrantInstallationRejected', draftId: this.id, code }) + '\n');
         }
-        check();
-        await this.gitTarget.publicationRepositories(operation, this.#materials, request);
-        check();
-        this.#gitAdvertisements = advertisements;
-        process.stderr.write(JSON.stringify({ level: 'info', event: 'gitArtifactGrantsReplaced', draftId: this.id,
-          revision: this.#revision, aliases: advertisements.size }) + '\n');
-        return published;
+        return reply;
       } finally { await operation.close(); }
     })());
   }

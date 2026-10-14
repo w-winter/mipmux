@@ -14,6 +14,7 @@ const resultKinds = {
   beginGitSnapshot: ['gitSnapshotOpened'], writeGitSnapshotFile: ['gitSnapshotFileWritten'],
   resolveGitSnapshotID: ['gitSnapshotID'], prepareGitPublicationMetadata: ['gitPublicationMetadata'],
   planGitPublication: ['gitPublicationPlan'],
+  normalizeGitPublicationOptions: ['gitPublicationOptions', 'gitPublicationOptionsError'],
   readGitSnapshotCurrent: ['gitSnapshotCurrent'], writeGitSnapshotCurrent: ['gitSnapshotCurrentWritten'],
   listGitSnapshots: ['gitSnapshots'], maintainGitSnapshots: ['gitSnapshotsMaintained'],
   resolveGitSnapshotComparison: ['gitSnapshotComparison', 'gitSnapshotComparisonError'],

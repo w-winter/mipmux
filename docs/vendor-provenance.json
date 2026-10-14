@@ -6,6 +6,23 @@
   },
   "files": [
     {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "native/Sources/SmipBridge/GitPublicationOptionsInput.swift",
+      "sha256": "54b3eec06bf80a5a47f814f52b7561bad8bf86cdde10736390cc071274e27bb4",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1110,
+          1147
+        ]
+      ],
+      "changes": [
+        "Retain source mode/scope case normalization and diagnostics, snapshot override normalization and automatic-ID cases, inline defaults and minimum line count. Runtime schemas supply explicit values; the adapter reuses retained GitDiffPublishMode, GitDiffScope and snapshot-ID normalization."
+      ]
+    },
+    {
       "destination": "src/context/git-artifact-material.ts",
       "source": "Sources/RepoPrompt/Features/Prompt/Services/SelectedGitDiffArtifactAuthorizationService.swift",
       "ranges": [

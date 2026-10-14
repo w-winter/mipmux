@@ -143,14 +143,14 @@ test('cancelling a held Git process joins it and leaves the workspace usable', a
     const workspace = await client.declare(f.spec, signal()), controller = new AbortController();
     const query = { op: 'log' as const, root: 'r', count: 1, path: null, maxOutputBytes: 24000 };
     const initial = await client.explore(workspace.id, { name: 'git', input: query }, signal());
-    assert.equal(initial?.kind, 'git');
+    assert('kind' in initial && initial.kind === 'git');
     armed = true;
     const pending = client.explore(workspace.id, { name: 'git', input: query }, controller.signal);
     await holding; controller.abort(); await assert.rejects(pending, /aborted|cancelled/i);
     const joined = await Promise.all(held.map(process => process.closed)); assert.equal(joined.length, 1);
     armed = false;
     const usable = await client.explore(workspace.id, { name: 'git', input: query }, signal());
-    assert.equal(usable.kind, 'git');
+    assert('kind' in usable && usable.kind === 'git');
     await writeFile(join(f.base, 'cancel-receipt.json'), JSON.stringify({ joined, usable }, null, 2) + '\n');
   } finally { await runtime.close(); }
 });

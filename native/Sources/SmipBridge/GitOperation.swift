@@ -10,6 +10,7 @@ enum GitOperation {
     case artifacts(GitArtifactProjectionInput)
     case artifactAuthorization(GitArtifactAuthorizationInput)
     case publicationMetadata(GitPublicationMetadataInput)
+    case publicationOptions(GitPublicationOptionsInput)
     case worktree(GitWorktreeInput)
     case publicationPlan(GitPublicationPlanInput)
 
@@ -26,6 +27,7 @@ enum GitOperation {
         case let .artifacts(input): try input.render()
         case let .artifactAuthorization(input): try input.render()
         case let .publicationMetadata(input): try input.render()
+        case let .publicationOptions(input): try input.render()
         case let .worktree(input): try input.render()
         case let .publicationPlan(input): input.render()
         }

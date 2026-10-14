@@ -5,7 +5,7 @@ import { Compile } from 'typebox/compile';
 import { DirectoryRef, RelativePath, RootIdentity, RootName, SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { ArtifactKey, Projection, Base64, SyntaxOutcome } from './artifact.js';
 import { GitDiff, NativeGitReadQuery, NativeGitReadResult, NativeGitShowResult, NativeGitChangedFile } from './git.js';
-import { NativeGitSnapshotInput } from './git-snapshot.js';
+import { NativeGitSnapshotInput, GitSnapshotPublicationOptions } from './git-snapshot.js';
 import { NativeGitArtifactInput, NativeGitArtifactResult } from './git-artifact.js';
 import { NativeGitWorktreeInput, NativeGitWorktreeResult } from './git-worktree.js';
 import { NativeWireFailureCode } from './errors.js';
@@ -249,6 +249,9 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('beginGitSnapshot'), root: handle, repoKey: Type.String(), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('resolveGitSnapshotID'), root: handle, repoKey: Type.String(), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('prepareGitPublicationMetadata'), repoRoot: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('normalizeGitPublicationOptions'), mode: Type.String(), scope: Type.String(),
+    snapshotID: Type.Union([Type.String(), Type.Null()]), inlineMap: Type.Boolean(), inlineMode: Type.String(),
+    inlineMaxLines: Type.Integer() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('planGitPublication'), repositories: Type.Array(Type.String()), paths: Type.Array(Type.String()),
     pathspecs: Type.Array(Type.String()), scope: NativeGitSnapshotInput.properties.scope }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readGitSnapshotCurrent'), root: handle, repoKey: Type.String() }, { additionalProperties: false }),
@@ -344,6 +347,8 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitSnapshotID'), snapshotID: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitPublicationMetadata'), graphArguments: Type.Array(Type.String()),
     worktree: NativeGitSnapshotInput.properties.worktree }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitPublicationOptions'), options: GitSnapshotPublicationOptions }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitPublicationOptionsError'), message: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitPublicationPlan'), maxConcurrentRepositories: SafeCount,
     repositories: Type.Array(Type.Object({ path: Type.String(), name: Type.String(), selectedPaths: Type.Array(Type.String()),
       usesSelectedScope: Type.Boolean(), emptyReason: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false })) }, { additionalProperties: false }),
