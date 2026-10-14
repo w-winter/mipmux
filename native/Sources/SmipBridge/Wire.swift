@@ -179,6 +179,7 @@ enum Operation {
     case resolveGitSnapshotComparison(NativeHandle, NativeHandle, String)
     case writeGitSnapshotFile(NativeHandle, String, Data)
     case finishGitSnapshot(NativeHandle)
+    case resolveGitSnapshotID(NativeHandle, String, String?)
     case writeExport(NativeHandle, String, Data)
     case readExport(NativeHandle, String)
     case publishManifest(NativeHandle, Data)
@@ -237,6 +238,10 @@ enum Operation {
         case "readGitSnapshotCurrent":
             let fields = try WireObject(value, keys: ["kind", "root", "repoKey"])
             self = try .readGitSnapshotCurrent(NativeHandle(fields.value("root")), fields.string("repoKey"))
+        case "resolveGitSnapshotID":
+            let fields = try WireObject(value, keys: ["kind", "root", "repoKey", "snapshotID"])
+            self = try .resolveGitSnapshotID(NativeHandle(fields.value("root")), fields.string("repoKey"),
+                                            fields.value("snapshotID") is NSNull ? nil : fields.string("snapshotID"))
         case "listGitSnapshots":
             let fields = try WireObject(value, keys: ["kind", "root"])
             self = try .listGitSnapshots(NativeHandle(fields.value("root")))
@@ -299,6 +304,7 @@ enum Operation {
         case "electGitTarget": return try .git(.target(GitTargetInput(value)))
         case "revalidateGitTargets": return try .git(.targetRevalidation(GitTargetRevalidationInput(value)))
         case "serializeGitSnapshot": return try .git(.snapshot(GitSnapshotInput(value)))
+        case "prepareGitPublicationMetadata": return try .git(.publicationMetadata(GitPublicationMetadataInput(value)))
         case "projectGitArtifacts", "decorateGitArtifacts":
             return try .git(.artifacts(GitArtifactProjectionInput(value)))
         case "sliceReadText": return try .sliceReadText(ReadTextInput(value))

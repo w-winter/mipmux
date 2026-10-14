@@ -6,6 +6,40 @@
   },
   "files": [
     {
+      "source": "Sources/RepoPromptVCS/GitDiff/GitDiffSnapshotStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a1fd2198d135edd69c34aacfde69448d1ac78454f1022b17765ca93aaf0a92a8",
+      "destination": "native/Sources/SmipBridge/RPCEGitSnapshotWorktreeMetadata.swift",
+      "sha256": "01a31f48372cfebb52e2251490e3f38571ed46f08ca35513e4f6a029c00e0304",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          841,
+          857
+        ]
+      ],
+      "changes": [
+        "Retain linked-worktree layout/name/path derivation; express the all-nil tuple as absence and linked values as the existing native metadata record. Require the admitted checkout path."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "723fdaf0db275d8d5160bd2f8f3ba465ba186e3bee0969c2688947da275c63a1",
+      "destination": "native/Sources/SmipBridge/GitPublicationMetadataInput.swift",
+      "sha256": "1b47c707be46b3e4f1c75b30d2bc0229e42e4f7784c70db407aa5c7f8d655d21",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          4001,
+          4008
+        ]
+      ],
+      "changes": [
+        "Capture the source commit-graph arguments with the publisher's maxLines:20 policy; execute through the existing supervised Git process. Native metadata wire encoding is headless boundary code."
+      ]
+    },
+    {
       "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",

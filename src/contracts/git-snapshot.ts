@@ -17,3 +17,6 @@ export const NativeGitSnapshotInput = Type.Object({
 }, closed);
 export type GitSnapshotContent = Pick<Static<typeof NativeGitSnapshotInput>,
   'scope' | 'requestedPaths' | 'diffText' | 'perFile' | 'changedFiles' | 'summary' | 'fingerprint'>;
+export const GitSnapshotPublicationOptions = Type.Object({ mode: NativeGitSnapshotInput.properties.mode,
+  snapshotID: text, inlineMap: Type.Boolean(), inlineMode: Type.String(), inlineMaxLines: Type.Integer() }, closed);
+export type GitSnapshotPublicationOptions = Static<typeof GitSnapshotPublicationOptions>;

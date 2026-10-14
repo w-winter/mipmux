@@ -331,6 +331,22 @@ final class ConfinedFiles {
         return ["kind": "exportOpened", "run": NativeHandle(generation: generation, id: id).json]
     }
 
+    func resolveGitSnapshotID(_ handle: NativeHandle, repoKey: String, snapshotID: String?) throws -> [String: Any] {
+        let root = try lookupRoot(handle)
+        guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        let repoParts = try snapshotRepoComponents(repoKey)
+        let selected = try RPCEGitSnapshotNaming().resolveSnapshotID(override: snapshotID) { id in
+            do {
+                let repository = try traverse(root.directory.value, components: repoParts)
+                return try self.snapshotExists(repository.value, id: id)
+            } catch let failure as BridgeFailure where failure.code == "notFound" { return false }
+        }
+        guard let normalized = GitDiffSnapshotStore.normalizeSnapshotID(selected)
+        else { throw BridgeFailure("invalidPath") }
+        try validate(root)
+        return ["kind": "gitSnapshotID", "snapshotID": normalized]
+    }
+
     func beginGitSnapshot(_ handle: NativeHandle, repoKey: String, snapshotID: String?) throws -> [String: Any] {
         let root = try lookupRoot(handle)
         guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }

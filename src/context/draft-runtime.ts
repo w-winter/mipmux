@@ -46,11 +46,14 @@ import { prepareRenderInput } from './final-tree.js';
 import { FrozenGitTarget } from './git-target.js';
 import type { GitRequest } from '../contracts/git.js';
 import { readElectedDiff, captureElectedGitDiff } from '../exploration/git-diff.js';
+import { publishGitSnapshot } from './git-publication.js';
+import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
 
 const inferredSourceFailures = new Set(['sourceChanged', 'policyChanged', 'pathDenied', 'decodeFailed', 'binarySource',
   'notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed']);
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
+const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
 type SourceMutation = Exclude<SourceEdit, { kind: 'slices' }>;
 type SelectionReplyEntry = Static<typeof NativeSelectionReplyInput>['entries'][number];
 type SelectionReplyFile = Omit<Extract<SelectionReplyEntry, { kind: 'full' }>, 'kind'>;
@@ -177,6 +180,29 @@ export class DraftRuntime {
         this.#check(signal, revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         return { ...captured, checkout };
+      } finally { await operation.close(); }
+    })());
+  }
+  /** Writes a snapshot without mutating selection or installing artifact insertion authority. */
+  publishGitSnapshot(input: Extract<GitRequest, { op: 'diff' }>, options: Static<typeof GitSnapshotPublicationOptions>, signal: AbortSignal) {
+    const request = structuredClone(input), parsed = snapshotPublicationValidator.Parse(structuredClone(options));
+    const id = parsed.snapshotID?.trim();
+    const capturedOptions = { ...parsed, snapshotID: id && id.toLowerCase() !== 'auto' ? id : null,
+      inlineMode: parsed.inlineMode.toLowerCase(), inlineMaxLines: Math.max(1, parsed.inlineMaxLines) };
+    const revision = this.#revision, generation = this.#freezeGeneration;
+    return this.#track((async () => {
+      this.#check(signal, revision);
+      const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', signal);
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      const check = () => {
+        this.#check(signal, revision);
+        if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+      };
+      try {
+        const published = await publishGitSnapshot(operation, captured, request, capturedOptions, this.id, check);
+        check();
+        await this.gitTarget.publication(operation, this.#materials, request);
+        return published;
       } finally { await operation.close(); }
     })());
   }

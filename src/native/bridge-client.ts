@@ -8,6 +8,7 @@ type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
   fingerprintGitDiff: ['gitDiffFingerprint'],
   beginGitSnapshot: ['gitSnapshotOpened'], writeGitSnapshotFile: ['gitSnapshotFileWritten'],
+  resolveGitSnapshotID: ['gitSnapshotID'], prepareGitPublicationMetadata: ['gitPublicationMetadata'],
   readGitSnapshotCurrent: ['gitSnapshotCurrent'], writeGitSnapshotCurrent: ['gitSnapshotCurrentWritten'],
   listGitSnapshots: ['gitSnapshots'], maintainGitSnapshots: ['gitSnapshotsMaintained'],
   resolveGitSnapshotComparison: ['gitSnapshotComparison', 'gitSnapshotComparisonError'],

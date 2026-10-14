@@ -243,6 +243,8 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('fingerprintGitDiff'), root: handle, compare: Type.String(), headSHA: Type.String(),
     baseRefSHA: Type.String(), status: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('beginGitSnapshot'), root: handle, repoKey: Type.String(), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('resolveGitSnapshotID'), root: handle, repoKey: Type.String(), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('prepareGitPublicationMetadata'), repoRoot: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readGitSnapshotCurrent'), root: handle, repoKey: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('listGitSnapshots'), root: handle }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('maintainGitSnapshots'), root: handle, action: Type.Union([
@@ -331,6 +333,9 @@ export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotOpened'), run: handle, relativePath: Type.String(), snapshotID: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitSnapshotID'), snapshotID: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('gitPublicationMetadata'), graphArguments: Type.Array(Type.String()),
+    worktree: NativeGitSnapshotInput.properties.worktree }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotCurrent'), snapshotID: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshots'), snapshots: Type.Array(Type.Object({ repoKey: Type.String(), snapshotID: Type.String(),
     generatedAt: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false }),
