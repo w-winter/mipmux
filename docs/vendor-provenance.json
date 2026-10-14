@@ -3251,7 +3251,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
       "destination": "native/Sources/SmipBridge/GitDiffInput.swift",
-      "sha256": "fc69288ac296f72e32ac83de0661ce673582069340149199fa113388d44c7747",
+      "sha256": "a1b5ed0b7bb4b1d90aae4b914c1a4d8bcd1f99bea6205d433f2fcca18adbcd2c",
       "classification": "handwritten",
       "ranges": [
         [
@@ -3267,7 +3267,8 @@
         "Retain lowercase detail, single-path/single-repository summary upgrade and the source 300-line versus Int.max policy.",
         "Bind captured VCS files and per-file patches to the existing native projection; parse raw comparison input through the original source parser.",
         "This is a data-only dependency. Repository/snapshot resolution, pathspec acquisition, artifacts and public diff admission are not implemented by this boundary.",
-        "Route captured normalizeGitDiffPaths through the retained source pathspec helpers in the existing closed Git operation family."
+        "Route captured normalizeGitDiffPaths through the retained source pathspec helpers in the existing closed Git operation family.",
+        "normalizeGitSelectedPaths binds the retained GitDiffPathNormalization helpers to the selected-scope conversion and sorted/deduplicated requested paths in Sources/RepoPromptVCS/GitDiff/GitDiffEngine.swift:469-477 at the same pinned revision. It emits literal discovery pathspecs as in that engine:492-495; TypeScript applies its exact membership filter:828-841 before snapshot assembly."
       ]
     },
     {
@@ -5194,17 +5195,17 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "d77d7af8e1d933df0530b8bea19b603581889c98b217b8213564f5635a9ce3a1",
       "destination": "native/Sources/SmipBridge/RPCEGitDiffPathNormalization.swift",
-      "sha256": "0c1c9d80ff1486cbadf7d64432b0eeba569fd26defd92b2197d8164a9ed43dd4",
+      "sha256": "4583667306a1360543b6aa22900c2ed4b94594db9912c213c1bdbbaf2dcb0939",
       "classification": "handwritten",
       "ranges": [
         [
           78,
-          157
+          177
         ]
       ],
       "changes": [
-        "Retain original Git pathspec normalization with internal visibility; use the existing retained StandardizedPath dependency.",
-        "Omit unrelated selection/snapshot path helpers and replace the outer closing delimiter for the retained subset. Native inputs are captured pathspec lists, not access authority."
+        "Retain original Git pathspec and selected absolute-path normalization with internal visibility; use the existing retained StandardizedPath dependency.",
+        "Omit unrelated selection/snapshot path helpers and replace the outer closing delimiter for the retained subset. Native inputs are captured path lists, not access authority."
       ]
     },
     {
@@ -11254,6 +11255,12 @@
       "line": 3124,
       "source": "Sources/RepoPrompt/Infrastructure/VCS/GitService.swift",
       "destination": "native/Sources/SmipBridge/RPCEGitDiffCommands.swift"
+    },
+    {
+      "name": "gitRelativePaths",
+      "line": 159,
+      "source": "Sources/RepoPromptFoundation/Utilities/WorkspacePathNormalizations.swift",
+      "destination": "native/Sources/SmipBridge/RPCEGitDiffPathNormalization.swift"
     }
   ],
   "sourceCoverage": [

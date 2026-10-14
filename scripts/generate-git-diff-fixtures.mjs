@@ -29,7 +29,16 @@ enum EditFlowPerf {
 }
 ${sources[0].join('\n').replaceAll('public ', '')}
 ${sources[7].join('\n').replaceAll('package ', '')}
-${lines(6, 78, 157).replaceAll('package ', '')}
+${lines(6, 78, 177).replaceAll('package ', '')}
+}
+enum GitDiffScope { case all, selected }
+struct SelectedPaths {
+${lines(8, 824, 826).replaceAll('private ', '')}
+${lines(8, 844, 846).replaceAll('private ', '')}
+    func requestedPaths(scope: GitDiffScope, selectedAbsolutePaths: [String], repoURL: URL) -> [String]? {
+${lines(8, 469, 477)}
+        return requestedPaths
+    }
 }
 ${lines(3, 70, 96).replaceAll('public ', '')}
 ${sources[4].join('\n').replaceAll('package ', '').replace('import RepoPromptFileSystem\n', '')}
@@ -66,6 +75,14 @@ for entry in cases {
         let root = entry.input.repoRootPath!
         result = ["kind": "gitDiffPaths", "paths": GitDiffPathNormalization.gitPathspecs(from: paths, repoRootPath: root),
             "pathspecs": GitDiffPathNormalization.gitDiscoveryPathspecs(from: paths, repoRootPath: root)]
+    } else if entry.input.kind == "normalizeGitSelectedPaths" {
+        let paths = entry.input.paths!
+        let root = entry.input.repoRootPath!
+        let normalized = GitDiffPathNormalization.normalizedAbsolutePaths(paths)
+        let discoveryPaths = GitDiffPathNormalization.literalGitPathspecs(
+            GitDiffPathNormalization.gitRelativePaths(from: normalized, repoRootPath: root))
+        result = ["kind": "gitDiffPaths", "paths": SelectedPaths().requestedPaths(scope: .selected,
+            selectedAbsolutePaths: paths, repoURL: URL(fileURLWithPath: root)) ?? [], "pathspecs": discoveryPaths]
     } else {
         let pathCount = entry.input.pathspecCount!
         let isMultiRepo = entry.input.isMultiRepo!

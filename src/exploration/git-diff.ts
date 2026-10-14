@@ -79,7 +79,7 @@ export async function readElectedDiff(operation: WorkspaceOperation, request: Di
 async function readRepositoryDiff(operation: WorkspaceOperation, request: DiffRequest, owner: Repository, encode: ResultEncoding) {
   const captured = await captureRepositoryDiff(operation, request, owner,
     request.detail.toLowerCase() === 'patches' || request.detail.toLowerCase() === 'full' ||
-    [...(request.path === null ? [] : [request.path]), ...request.paths].filter(path => path.trim()).length === 1 && request.detail.toLowerCase() === 'summary');
+    [...(request.path === null ? [] : [request.path]), ...request.paths].filter(path => path.trim()).length === 1 && request.detail.toLowerCase() === 'summary', null);
   const projected = await operation.gitDiffOperation({ kind: 'projectGitDiff', compare: captured.commands.display, detail: request.detail,
     pathspecCount: captured.commands.inputCount, isMultiRepo: false, changedFiles: captured.content.changedFiles,
     perFilePatches: captured.content.perFile });
@@ -92,16 +92,17 @@ async function readRepositoryDiff(operation: WorkspaceOperation, request: DiffRe
 export async function captureGitDiff(operation: WorkspaceOperation, request: DiffRequest, generateDiffText: boolean) {
   if (request.root === null) throw new WorkspaceFailure('gitTargetRequired');
   const owner = await resolveDiffRepository(operation, request.root, { kind: 'explicit', worktree: request.worktree });
-  return captureRepositoryDiff(operation, request, owner, generateDiffText);
+  return captureRepositoryDiff(operation, request, owner, generateDiffText, null);
 }
 
 export async function captureElectedGitDiff(operation: WorkspaceOperation, request: DiffRequest,
-  checkout: NativeGitCheckout, generateDiffText: boolean) {
+  checkout: NativeGitCheckout, generateDiffText: boolean, selectedAbsolutePaths: readonly string[] | null) {
   const owner = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
-  return captureRepositoryDiff(operation, { ...request, root: checkout.root }, owner, generateDiffText);
+  return captureRepositoryDiff(operation, { ...request, root: checkout.root }, owner, generateDiffText, selectedAbsolutePaths);
 }
 
-async function captureRepositoryDiff(operation: WorkspaceOperation, request: DiffRequest, owner: Repository, generateDiffText: boolean) {
+async function captureRepositoryDiff(operation: WorkspaceOperation, request: DiffRequest, owner: Repository, generateDiffText: boolean,
+  selectedAbsolutePaths: readonly string[] | null) {
   const preparation = { kind: 'prepareGitDiff' as const, compare: request.compare,
     paths: [...(request.path === null ? [] : [request.path]), ...request.paths], repoRootPath: owner.repository.worktree.canonicalPath,
     contextLines: request.contextLines, detectRenames: request.detectRenames };
@@ -117,18 +118,26 @@ async function captureRepositoryDiff(operation: WorkspaceOperation, request: Dif
     ? commands.comparison.spec : commands.comparison.base;
   if (reference?.startsWith('-')) throw new WorkspaceFailure('invalidRequest');
   const fingerprint = await captureGitFingerprint(operation, owner, commands);
+  let selectedPaths: string[] | null = null;
+  if (!commands.inputCount && selectedAbsolutePaths !== null) {
+    const normalized = await operation.gitDiffOperation({ kind: 'normalizeGitSelectedPaths', paths: [...selectedAbsolutePaths],
+      repoRootPath: owner.repository.worktree.canonicalPath });
+    selectedPaths = normalized.paths;
+    commands = { ...commands, paths: normalized.paths, pathspecs: normalized.pathspecs };
+  }
   const exclusions: string[] = [];
   const authorize = (paths: readonly string[]) => paths.filter(path => {
     if (owner.permits(path)) return true;
     exclusions.push(path); return false;
   });
-  const { tracked, untracked } = await discoverPaths(operation, owner, commands, authorize, exclusions);
+  const { tracked, untracked } = selectedPaths?.length === 0 ? { tracked: [], untracked: [] }
+    : await discoverPaths(operation, owner, commands, authorize, exclusions);
   const workRoot = join(operation.runtime.options.cachePath, 'work'); await mkdir(workRoot, { recursive: true, mode: 0o700 });
   const scratch = await mkdtemp(join(workRoot, 'scout-diff-'));
   try {
     const live = await usesWorktree(operation, owner, commands.comparison);
     const content = await captureDiffContent(operation, owner, request, commands, { tracked, untracked }, scratch, live,
-      generateDiffText, fingerprint);
+      generateDiffText, fingerprint, selectedPaths);
     await owner.revalidate();
     const repository = { worktree: owner.repository.worktree, gitDirectory: owner.repository.gitDirectory };
     return { commands, content, repository, exclusions: [...new Set(exclusions)] };
@@ -137,19 +146,23 @@ async function captureRepositoryDiff(operation: WorkspaceOperation, request: Dif
 
 async function captureDiffContent(operation: WorkspaceOperation, owner: Repository, request: DiffRequest, commands: DiffCommands,
   paths: { tracked: string[]; untracked: string[] }, scratch: string, live: boolean, generateDiffText: boolean,
-  fingerprint: GitSnapshotContent['fingerprint']): Promise<GitSnapshotContent> {
+  fingerprint: GitSnapshotContent['fingerprint'], selectedPaths: readonly string[] | null): Promise<GitSnapshotContent> {
   const { tracked, untracked } = paths;
-  const materialized = await captureWorktree(operation, owner, scratch, live ? tracked : [], untracked);
+  const selected = selectedPaths === null ? null : new Set(selectedPaths);
+  const materialized = await captureWorktree(operation, owner, scratch, live ? tracked : [],
+    selected === null ? untracked : untracked.filter(path => selected.has(path)));
   const workingDirectory = live ? materialized.trackedRoot : owner.repository.worktree.canonicalPath;
   const numstat = tracked.length ? await runDiff(operation, owner, commands.numstat, tracked, true, workingDirectory) : '';
   const nameStatus = tracked.length ? await runDiff(operation, owner, commands.nameStatus, tracked, true, workingDirectory) : '';
   const stats = await operation.gitDiffOperation({ kind: 'parseGitDiffStats', numstat: Buffer.from(numstat).toString('base64'),
     nameStatus: Buffer.from(nameStatus).toString('base64'), untracked: materialized.untracked });
-  const changedFiles = commands.hasRelativeInputs || !commands.inputCount ? stats.files : stats.files.filter(file =>
+  const changedFiles = selected !== null ? stats.files.filter(file => selected.has(file.path))
+    : commands.hasRelativeInputs || !commands.inputCount ? stats.files : stats.files.filter(file =>
     commands.paths.some(path => file.path === path.replace(/\/$/, '') || file.path.startsWith(path.endsWith('/') ? path : path + '/')));
   let diffText: string | null = null;
   let patches: Record<string, string> | null = null;
-  if (changedFiles.length && generateDiffText) {
+  const captureBodies = selectedPaths === null ? !commands.inputCount || changedFiles.length > 0 : selectedPaths.length > 0;
+  if (captureBodies && generateDiffText) {
     const trackedPatch = tracked.length ? await runDiff(operation, owner, commands.patch, tracked, true, workingDirectory) : '';
     const untrackedPatch = await captureUntrackedPatch(operation, owner, materialized.untrackedRoot,
       changedFiles.some(file => file.status === '??'), scratch, request.contextLines);
@@ -160,7 +173,8 @@ async function captureDiffContent(operation: WorkspaceOperation, owner: Reposito
       patches = Object.fromEntries(parsed.files.map(file => [file.path, file.patch]));
     }
   }
-  return { fingerprint, scope: commands.inputCount ? 'selected' : 'all', requestedPaths: commands.inputCount ? commands.paths : null,
+  return { fingerprint, scope: selectedPaths !== null || commands.inputCount ? 'selected' : 'all',
+    requestedPaths: selectedPaths !== null ? selectedPaths.length ? [...selectedPaths] : null : commands.inputCount ? commands.paths : null,
     changedFiles, diffText, perFile: patches, summary: { files: changedFiles.length,
       insertions: changedFiles.reduce((count, file) => count + (file.additions ?? 0), 0),
       deletions: changedFiles.reduce((count, file) => count + (file.deletions ?? 0), 0) } };

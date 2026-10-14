@@ -1212,5 +1212,98 @@
         ":(literal)two.swift"
       ]
     }
+  },
+  {
+    "name": "selected_literal_duplicates",
+    "input": {
+      "kind": "normalizeGitSelectedPaths",
+      "paths": [
+        "/checkout/z[ab].txt",
+        "/checkout/a.txt",
+        "/checkout/a.txt"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "a.txt",
+        "z[ab].txt"
+      ],
+      "pathspecs": [
+        ":(literal)z[ab].txt",
+        ":(literal)a.txt",
+        ":(literal)a.txt"
+      ]
+    }
+  },
+  {
+    "name": "selected_unicode_canonical",
+    "input": {
+      "kind": "normalizeGitSelectedPaths",
+      "paths": [
+        "/checkout/café.swift",
+        "/checkout/café.swift",
+        "/checkout/資料.swift"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "café.swift",
+        "資料.swift"
+      ],
+      "pathspecs": [
+        ":(literal)café.swift",
+        ":(literal)café.swift",
+        ":(literal)資料.swift"
+      ]
+    }
+  },
+  {
+    "name": "selected_checkout_membership",
+    "input": {
+      "kind": "normalizeGitSelectedPaths",
+      "paths": [
+        "/checkout",
+        "/checkout/dir",
+        "/checkout/one/../two.swift",
+        "/checkout-other/a.txt",
+        "/elsewhere/a.txt"
+      ],
+      "repoRootPath": "/checkout"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "dir",
+        "two.swift"
+      ],
+      "pathspecs": [
+        ":(literal)dir",
+        ":(literal)two.swift"
+      ]
+    }
+  },
+  {
+    "name": "selected_filesystem_root",
+    "input": {
+      "kind": "normalizeGitSelectedPaths",
+      "paths": [
+        "/",
+        "/dir/file.swift"
+      ],
+      "repoRootPath": "/"
+    },
+    "expected": {
+      "kind": "gitDiffPaths",
+      "paths": [
+        "dir/file.swift"
+      ],
+      "pathspecs": [
+        ":(literal)dir/file.swift"
+      ]
+    }
   }
 ]

@@ -22,6 +22,7 @@ const resultKinds = {
   queryIgnoreRules: ['ignoreRules'],
   parseGitPatch: ['gitPatch'], parseGitComparison: ['gitComparison'], projectGitDiff: ['gitDiff'],
   normalizeGitDiffPaths: ['gitDiffPaths'],
+  normalizeGitSelectedPaths: ['gitDiffPaths'],
   prepareGitDiff: ['gitDiffArguments'], parseGitDiffStats: ['gitDiffStats'],
   normalizeGitUntrackedPatch: ['gitUntrackedPatch'],
   prepareGitShow: ['gitShowArguments', 'gitShowError'], parseGitShowMetadata: ['gitShowMetadata', 'gitShowError'], projectGitShow: ['gitShow'],

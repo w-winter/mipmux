@@ -74,9 +74,9 @@ test('draft publication persists complete source snapshots, CURRENT and projecte
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
     const draft = await workspace.createDraft(f.request, signal());
-    const captured = await draft.captureGitPublication(f.diff, true, signal());
+    const captured = await draft.captureGitPublication(f.diff, true, 'all', signal());
     for (const mode of ['quick', 'standard', 'deep'] as const) {
-      const publication = await draft.publishGitSnapshot(f.diff, { mode, snapshotID: mode,
+      const publication = await draft.publishGitSnapshot(f.diff, { mode, scope: 'all', snapshotID: mode,
         inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 }, signal());
       const directory = join(f.out, '_git_data', publication.snapshotDir);
       const saved = metadata.Parse(JSON.parse(await readFile(join(directory, 'manifest.json'), 'utf8')));
@@ -92,9 +92,9 @@ test('draft publication persists complete source snapshots, CURRENT and projecte
       if (mode === 'deep') assert((await readdir(join(directory, 'deep'))).includes('hunks.jsonl'));
       proof.push({ mode, publication, saved });
     }
-    const automatic = await draft.publishGitSnapshot(f.diff, { mode: 'standard', snapshotID: null,
+    const automatic = await draft.publishGitSnapshot(f.diff, { mode: 'standard', scope: 'all', snapshotID: null,
       inlineMap: false, inlineMode: 'brief', inlineMaxLines: 120 }, signal());
-    const collided = await draft.publishGitSnapshot(f.diff, { mode: 'standard', snapshotID: null,
+    const collided = await draft.publishGitSnapshot(f.diff, { mode: 'standard', scope: 'all', snapshotID: null,
       inlineMap: false, inlineMode: 'brief', inlineMaxLines: 120 }, signal());
     assert.notEqual(automatic.snapshotID, collided.snapshotID);
     await draft.close(); await workspace.close();
@@ -115,11 +115,58 @@ test('publication retains completed files on write, CURRENT and later revision/c
         await draft.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'prompt', op: 'append', text: '\nChanged' } }, signal());
       };
       arm();
-      await assert.rejects(draft.publishGitSnapshot(f.diff, { mode: 'standard', snapshotID,
+      await assert.rejects(draft.publishGitSnapshot(f.diff, { mode: 'standard', scope: 'all', snapshotID,
         inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 }, controller.signal),
       failure === 'revision' ? /revisionConflict/ : failure === 'cancel' ? /cancelled|aborted/i : /nativeIOFailed/);
       await assertRetainedFiles(f.out, snapshotID, failure);
       await draft.close(); await workspace.close();
     } finally { await runtime.close(); }
   }
+});
+
+test('selected publication uses full and sliced membership, literal paths and explicit-path precedence', async () => {
+  const f = await fixture();
+  await writeFile(join(f.root, 'slice.txt'), 'one\ntwo\nthree\n');
+  await writeFile(join(f.root, 'literal[ab].txt'), 'literal base\n');
+  await writeFile(join(f.root, 'literalb.txt'), 'glob base\n');
+  await writeFile(join(f.root, 'code.swift'), 'struct Example {}\n');
+  f.run(['add', '.']); f.run(['commit', '-qm', 'selection inputs']);
+  await writeFile(join(f.root, 'file.txt'), 'whole changed\n');
+  await writeFile(join(f.root, 'slice.txt'), 'one\nchanged two\nchanged three\n');
+  await writeFile(join(f.root, 'literal[ab].txt'), 'literal changed\n');
+  await writeFile(join(f.root, 'literalb.txt'), 'glob changed\n');
+  await writeFile(join(f.root, 'code.swift'), 'struct Example { let value = 1 }\n');
+  await writeFile(join(f.root, 'new[ab].txt'), 'new literal\n');
+  await writeFile(join(f.root, 'newb.txt'), 'new glob\n');
+  const runtime = new SmipRuntime(f.options);
+  try {
+    const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
+    const draft = await workspace.createDraft({ ...f.request, initialSelection: { codemapMode: 'manual', sources: [
+      { kind: 'full', source: { root: 'r', path: 'file.txt' } },
+      { kind: 'slices', source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: null }] },
+      { kind: 'full', source: { root: 'r', path: 'literal[ab].txt' } },
+      { kind: 'full', source: { root: 'r', path: 'new[ab].txt' } },
+      { kind: 'codemap', source: { root: 'r', path: 'code.swift' } },
+    ] } }, signal());
+    const options = { scope: 'selected' as const, mode: 'standard' as const, snapshotID: 'selected',
+      inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 };
+    const selected = await draft.publishGitSnapshot(f.diff, options, signal());
+    const selectedManifest = JSON.parse(await readFile(join(f.out, '_git_data', selected.snapshotDir, 'manifest.json'), 'utf8'));
+    assert.equal(selectedManifest.scope, 'selected');
+    assert.deepEqual(selectedManifest.requestedPaths, ['file.txt', 'literal[ab].txt', 'new[ab].txt', 'slice.txt']);
+    assert.equal(selected.projection.reply.summary.files, 4);
+    const patch = await readFile(join(f.out, '_git_data', selected.snapshotDir, 'diff/all.patch'), 'utf8');
+    assert(patch.includes('+changed three')); assert(patch.includes('+literal changed'));
+    assert(patch.includes('+new literal')); assert(!patch.includes('+new glob'));
+    assert(!patch.includes('+glob changed')); assert(!patch.includes('let value'));
+    const explicit = await draft.publishGitSnapshot({ ...f.diff, paths: ['literalb.txt'] }, { ...options, snapshotID: 'explicit' }, signal());
+    assert.equal(explicit.projection.reply.summary.files, 1);
+    assert.equal(await readFile(join(f.out, '_git_data', explicit.snapshotDir, 'index/selection.paths.txt'), 'utf8'), 'literalb.txt');
+    await draft.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'remove', source: { root: 'r', path: 'literal[ab].txt' } } }, signal());
+    const current = await draft.publishGitSnapshot(f.diff, { ...options, snapshotID: 'current-selection' }, signal());
+    assert.equal(current.projection.reply.summary.files, 3);
+    await writeFile('test-output/git-selected-publication-proof.json', JSON.stringify({ selected, selectedManifest, explicit, current,
+      slicedSourceUsesWholeDiff: true, codemapExcluded: true, literalNamesPreserved: true }, null, 2) + '\n');
+    await draft.close(); await workspace.close();
+  } finally { await runtime.close(); }
 });

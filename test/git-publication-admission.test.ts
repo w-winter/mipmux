@@ -36,31 +36,39 @@ test('publication capture admits current checkout subsets but refuses changed, e
     const draft = await workspace.createDraft(request([full('a'), full('b')], 'subset'), signal());
     try {
       await draft.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'remove', source: { root: 'b', path: 'file.txt' } } }, signal());
-      const captured = await draft.captureGitPublication(input, true, signal());
+      const captured = await draft.captureGitPublication(input, true, 'all', signal());
       assert(captured.content.diffText?.includes('changed a'));
-      await assert.rejects(draft.captureGitPublication({ ...input, root: 'c' }, true, signal()), /gitPublicationTargetDenied/);
+      await assert.rejects(draft.captureGitPublication({ ...input, root: 'c' }, true, 'all', signal()), /gitPublicationTargetDenied/);
       const cancelled = new AbortController(); cancelled.abort();
-      await assert.rejects(draft.captureGitPublication(input, true, cancelled.signal), /cancelled|aborted/i);
+      await assert.rejects(draft.captureGitPublication(input, true, 'all', cancelled.signal), /cancelled|aborted/i);
       await draft.update({ expectedRevision: 1, maxOutputBytes: 100000, mutation: { kind: 'upsert', selection: full('a', 'other.txt') } }, signal());
-      assert((await draft.captureGitPublication(input, true, signal())).content.diffText?.includes('changed a'));
+      assert((await draft.captureGitPublication(input, true, 'all', signal())).content.diffText?.includes('changed a'));
       await draft.update({ expectedRevision: 2, maxOutputBytes: 100000, mutation: { kind: 'upsert', selection: full('c') } }, signal());
-      await assert.rejects(draft.captureGitPublication(input, true, signal()), /gitSelectionOwnershipChanged/);
+      await assert.rejects(draft.captureGitPublication(input, true, 'all', signal()), /gitSelectionOwnershipChanged/);
     } finally { await draft.close(); }
+    const otherCheckout = await workspace.createDraft(request([full('a'), full('b')], 'empty-in-primary'), signal());
+    try {
+      await otherCheckout.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'remove', source: { root: 'a', path: 'file.txt' } } }, signal());
+      const captured = await otherCheckout.captureGitPublication(input, true, 'selected', signal());
+      assert.equal(captured.checkout.root, 'a'); assert.equal(captured.content.scope, 'selected');
+      assert.equal(captured.content.requestedPaths, null); assert.equal(captured.content.summary.files, 0);
+      assert.equal(captured.content.diffText, null); assert.equal(captured.content.perFile, null);
+    } finally { await otherCheckout.close(); }
     const empty = await workspace.createDraft(request([full('a')], 'empty'), signal());
     try {
       await empty.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'clearSources' } }, signal());
-      await assert.rejects(empty.captureGitPublication(input, true, signal()), /gitSelectionOwnershipChanged/);
+      await assert.rejects(empty.captureGitPublication(input, true, 'all', signal()), /gitSelectionOwnershipChanged/);
     } finally { await empty.close(); }
     const deferred = await workspace.createDraft(request([], 'deferred'), signal());
     try {
       await deferred.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'upsert', selection: full('a') } }, signal());
-      await assert.rejects(deferred.captureGitPublication(input, true, signal()), /gitTargetRequired/);
+      await assert.rejects(deferred.captureGitPublication(input, true, 'all', signal()), /gitTargetRequired/);
     } finally { await deferred.close(); }
     const stale = await workspace.createDraft(request([full('a'), full('b')], 'stale'), signal());
     try {
       await stale.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'remove', source: { root: 'b', path: 'file.txt' } } }, signal());
       await rename(join(base, 'b/.git'), join(base, 'removed-git'));
-      await assert.rejects(stale.captureGitPublication(input, true, signal()), /gitRepositoryChanged/);
+      await assert.rejects(stale.captureGitPublication(input, true, 'all', signal()), /gitRepositoryChanged/);
     } finally { await rename(join(base, 'removed-git'), join(base, 'b/.git')); await stale.close(); }
     await workspace.close();
     await writeFile('test-output/git-publication-admission-proof.json', JSON.stringify({ checkoutSubsetAccepted: true, newFilesInFrozenCheckoutAccepted: true,

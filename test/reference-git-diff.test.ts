@@ -9,6 +9,7 @@ import { NativeResult } from '../src/contracts/native.js';
 const input = Type.Union([
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }),
   Type.Object({ kind: Type.Literal('normalizeGitDiffPaths'), paths: Type.Array(Type.String()), repoRootPath: Type.String() }),
+  Type.Object({ kind: Type.Literal('normalizeGitSelectedPaths'), paths: Type.Array(Type.String()), repoRootPath: Type.String() }),
   Type.Object({ kind: Type.Literal('projectGitDiff'), compare: Type.String(), detail: Type.String(), pathspecCount: Type.Integer(),
     isMultiRepo: Type.Boolean(), changedFiles: Type.Array(Type.Object({ path: Type.String(), status: Type.String(),
       additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) })),

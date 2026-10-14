@@ -1,5 +1,5 @@
 // Derived from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3.
-// Modified: internal visibility; retain only Git pathspec normalization.
+// Modified: internal visibility; retain Git pathspec and selected-path normalization.
 import Foundation
 
 enum GitDiffPathNormalization {
@@ -79,6 +79,26 @@ enum GitDiffPathNormalization {
             let pathspec = StandardizedPath.relative(String(suffix))
             guard !pathspec.isEmpty else { continue }
             results.append(NormalizedGitPathspec(plain: pathspec, requiresLiteralMagic: true))
+        }
+        return results
+    }
+
+    static func gitRelativePaths(from absolutePaths: [String], repoRootPath: String) -> [String] {
+        let standardizedRoot = normalizedAbsolutePath(repoRootPath)
+        var results: [String] = []
+        results.reserveCapacity(absolutePaths.count)
+        for abs in absolutePaths {
+            let standardizedAbs = normalizedAbsolutePath(abs)
+            guard StandardizedPath.isDescendant(standardizedAbs, of: standardizedRoot) else { continue }
+            guard standardizedAbs != standardizedRoot else { continue }
+            let suffix: Substring = if standardizedRoot == "/" {
+                standardizedAbs.dropFirst()
+            } else {
+                standardizedAbs.dropFirst(standardizedRoot.count)
+            }
+            let relative = StandardizedPath.relative(String(suffix))
+            guard !relative.isEmpty else { continue }
+            results.append(relative)
         }
         return results
     }

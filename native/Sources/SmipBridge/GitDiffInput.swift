@@ -13,6 +13,7 @@ struct GitDiffInput {
     private enum Work {
         case comparison(String?)
         case paths([String], String)
+        case selectedPaths([String], String)
         case projection(Projection)
     }
 
@@ -32,6 +33,12 @@ struct GitDiffInput {
                 throw BridgeFailure("nativeProtocolError")
             }
             work = try .paths(paths, fields.string("repoRootPath"))
+        } else if kind == "normalizeGitSelectedPaths" {
+            let fields = try WireObject(value, keys: ["kind", "paths", "repoRootPath"])
+            guard let paths = try fields.value("paths") as? [String] else {
+                throw BridgeFailure("nativeProtocolError")
+            }
+            work = try .selectedPaths(paths, fields.string("repoRootPath"))
         } else {
             let fields = try WireObject(value, keys: [
                 "kind", "compare", "detail", "pathspecCount", "isMultiRepo", "changedFiles", "perFilePatches"
@@ -76,6 +83,11 @@ struct GitDiffInput {
             return ["kind": "gitDiffPaths",
                     "paths": GitDiffPathNormalization.gitPathspecs(from: paths, repoRootPath: root),
                     "pathspecs": GitDiffPathNormalization.gitDiscoveryPathspecs(from: paths, repoRootPath: root)]
+        case let .selectedPaths(paths, root):
+            let normalized = GitDiffPathNormalization.normalizedAbsolutePaths(paths)
+            let relative = GitDiffPathNormalization.gitRelativePaths(from: normalized, repoRootPath: root)
+            return ["kind": "gitDiffPaths", "paths": Array(Set(relative)).sorted(),
+                    "pathspecs": GitDiffPathNormalization.literalGitPathspecs(relative)]
         case let .projection(input):
             let effectiveDetail: String = if input.pathspecCount == 1, input.detail == "summary", !input.isMultiRepo {
                 "patches"

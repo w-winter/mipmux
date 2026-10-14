@@ -32,6 +32,10 @@
     {
       "path": "Sources/RepoPromptWorkspaceCore/StandardizedPath.swift",
       "sha256": "13e5c1a4981634dbf69731809938221ae3aeefb1215db52384fd42229ff3b239"
+    },
+    {
+      "path": "Sources/RepoPromptVCS/GitDiff/GitDiffEngine.swift",
+      "sha256": "c47d70a5656200a7a4cfca08e03d480a83e57cd573b8ac6210b3a97acaf198dc"
     }
   ],
   "bindings": [
@@ -40,8 +44,9 @@
     "Apply the original provider lowercase detail, single-path single-repository upgrade and 300-line versus Int.max policy before projecting.",
     "Reference inputs capture changed-file records and per-file patch dictionaries after Git acquisition. They do not establish repository/pathspec resolution, untracked reads, artifacts, source text formatting or public diff integration.",
     "The existing NSString literal-LF binding in production preserves Darwin outputs on Linux. No fixture patch bodies or output fields are normalized.",
-    "Compile original GitDiffPathNormalization methods with the original StandardizedPath dependency. Authored relative Git syntax remains raw; absolute-derived paths are normalized and literalized. Inputs are collected pathspecs, not workspace authorization proofs."
+    "Compile original GitDiffPathNormalization methods with the original StandardizedPath dependency. Authored relative Git syntax remains raw; absolute-derived paths are normalized and literalized. Inputs are collected pathspecs, not workspace authorization proofs.",
+    "Selected-path cases execute original GitDiffEngine requested-path preparation (469-477) and original normalization delegates (824-826, 844-846), with a URL parameter and scope enum supplied by the fixture adapter. Literal discovery pathspecs follow its 492-495 call; no path or output normalization is applied. These cases prove path preparation, not filesystem acquisition or selection authority."
   ],
-  "cases": 40,
-  "generatorSHA256": "ce2a69cda34b83ea7cbc93caf46338f0eb301fe763f11a39c55d18552df50b8f"
+  "cases": 44,
+  "generatorSHA256": "65e21344b907b3fbe9eeca4985fd1acd2a0553c21b71fab72a62716a8a166ba4"
 }

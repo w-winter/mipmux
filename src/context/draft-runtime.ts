@@ -43,7 +43,7 @@ import { posix } from 'node:path';
 import { resolveSelectedCodemaps } from './codemap-readiness.js';
 import { descriptorGitMode } from '../contracts/patches.js';
 import { prepareRenderInput } from './final-tree.js';
-import { FrozenGitTarget } from './git-target.js';
+import { FrozenGitTarget, selectedGitSourcePaths } from './git-target.js';
 import type { GitRequest } from '../contracts/git.js';
 import { readElectedDiff, captureElectedGitDiff } from '../exploration/git-diff.js';
 import { publishGitSnapshot } from './git-publication.js';
@@ -166,7 +166,8 @@ export class DraftRuntime {
     })());
   }
   /** Captures publication evidence only after frozen/current ownership admission and an unchanged draft revision. */
-  captureGitPublication(input: Extract<GitRequest, { op: 'diff' }>, generateDiffText: boolean, signal: AbortSignal) {
+  captureGitPublication(input: Extract<GitRequest, { op: 'diff' }>, generateDiffText: boolean,
+    scope: Static<typeof GitSnapshotPublicationOptions>['scope'], signal: AbortSignal) {
     const request = structuredClone(input), revision = this.#revision, current = this.#materials;
     return this.#track((async () => {
       this.#check(signal, revision);
@@ -176,7 +177,8 @@ export class DraftRuntime {
         const checkout = await this.gitTarget.publication(operation, current, request);
         this.#check(signal, revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-        const captured = await captureElectedGitDiff(operation, request, checkout, generateDiffText);
+        const paths = scope === 'selected' ? selectedGitSourcePaths(operation, current) : null;
+        const captured = await captureElectedGitDiff(operation, request, checkout, generateDiffText, paths);
         this.#check(signal, revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         return { ...captured, checkout };
@@ -192,7 +194,7 @@ export class DraftRuntime {
     const revision = this.#revision, generation = this.#freezeGeneration;
     return this.#track((async () => {
       this.#check(signal, revision);
-      const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', signal);
+      const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', capturedOptions.scope, signal);
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       const check = () => {
         this.#check(signal, revision);

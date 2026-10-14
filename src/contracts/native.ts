@@ -267,6 +267,7 @@ export const NativeOperation = Type.Union([
   NativeGitPatchInput,
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('normalizeGitDiffPaths'), paths: Type.Array(Type.String()), repoRootPath: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('normalizeGitSelectedPaths'), paths: Type.Array(Type.String()), repoRootPath: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('prepareGitDiff'), compare: Type.Union([Type.String(), NativeGitComparison]), paths: Type.Array(Type.String()), repoRootPath: Type.String(),
     contextLines: Type.Integer(), detectRenames: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('parseGitDiffStats'), numstat: base64, nameStatus: base64,

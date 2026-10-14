@@ -7,18 +7,22 @@ import { resolveDiffRepository } from '../exploration/git-repository.js';
 
 type Resolution = Extract<NativeResult, { kind: 'gitTarget' }>;
 
+export function selectedGitSourcePaths(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>): string[] {
+  const sources = [...materials.values()].flatMap(material => material.record.kind === 'source'
+    && material.record.selection.kind !== 'codemap' ? [material.record.selection] : []);
+  return ['full', 'slices'].flatMap(kind => sources.filter(source => source.kind === kind).map(source => {
+    const root = operation.snapshot.roots.find(root => root.name === source.source.root);
+    if (!root) throw new WorkspaceFailure('unknownRoot');
+    return join(root.identity.canonicalPath, source.source.path);
+  }));
+}
+
 /** Allows implicit Git reads only from the initially elected checkouts and revalidates all of them before each read. */
 export class FrozenGitTarget {
   private constructor(private readonly resolution: Resolution) {}
 
   static async capture(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>): Promise<FrozenGitTarget> {
-    const sources = [...materials.values()].flatMap(material => material.record.kind === 'source'
-      && material.record.selection.kind !== 'codemap' ? [material.record.selection] : []);
-    const paths = ['full', 'slices'].flatMap(kind => sources.filter(source => source.kind === kind).map(source => {
-      const root = operation.snapshot.roots.find(root => root.name === source.source.root);
-      if (!root) throw new WorkspaceFailure('unknownRoot');
-      return join(root.identity.canonicalPath, source.source.path);
-    }));
+    const paths = selectedGitSourcePaths(operation, materials);
     const resolution: Resolution = !paths.length ? { kind: 'gitTarget', state: 'deferred' }
       : operation.runtime.options.git === undefined ? { kind: 'gitTarget', state: 'unavailable', reason: 'nonGitSelection', count: paths.length }
       : await operation.electGitTarget(paths);
