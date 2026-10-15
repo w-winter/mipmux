@@ -140,3 +140,47 @@ enum RPCESearchPaths {
 }
 
 // swiftlint:enable identifier_name line_length
+
+// swiftlint:disable for_where
+extension RPCESearchPaths {
+    static func filterFiles(_ files: [SearchPathFile], options: SearchFilterOptions) -> [SearchPathFile] {
+        files.filter { file in
+            // Check include extensions
+            if !options.includeExtensions.isEmpty {
+                let fileExtension = "." + (file.fileExtension ?? "")
+                if !options.includeExtensions.contains(fileExtension) {
+                    return false
+                }
+            }
+
+            // Check exclude patterns
+            for excludePattern in options.excludePatterns {
+                if matchesPattern(file.relativePath, pattern: excludePattern) {
+                    return false
+                }
+            }
+
+            return true
+        }
+    }
+
+    private static func matchesPattern(_ path: String, pattern: String) -> Bool {
+        // Use wildmatch for patterns with wildcards
+        if pattern.contains("*") || pattern.contains("?") {
+            // Use wildmatch with appropriate flags
+            // NOTE: Only set WM_WILDSTAR (which implies PATHNAME) if pattern uses '**'.
+            // Otherwise we avoid PATHNAME so that '*' may match across '/'.
+            let flags: UInt32 = (pattern.contains("**") ? WM_WILDSTAR : 0) | WM_CASEFOLD
+            return pattern.withCString { patternC in
+                path.withCString { pathC in
+                    repo_wildmatch(patternC, pathC, flags) == WM_MATCH
+                }
+            }
+        }
+
+        // Literal substring match (case insensitive)
+        return path.lowercased().contains(pattern.lowercased())
+    }
+}
+
+// swiftlint:enable for_where

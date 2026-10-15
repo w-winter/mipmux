@@ -1,0 +1,90 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sha256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "blob": "78e65e09d5c36228050ae2746503e282b18af1c9",
+      "ranges": [
+        {
+          "start": 1214,
+          "end": 1233,
+          "sha256": "d06d4ca8993bcfae36d5390568cfb332bd51ac2bf10d076e48d4821e6c499583"
+        },
+        {
+          "start": 1236,
+          "end": 1252,
+          "sha256": "64a3592c3a3436f2128326f4bb90a466f07e48ed409d490143ef836b0f256755"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sha256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "blob": "78e65e09d5c36228050ae2746503e282b18af1c9",
+      "ranges": [
+        {
+          "start": 10,
+          "end": 12,
+          "sha256": "db40006ddece9dc191eb87a750d22568ccfe5c8aae899e110347e1ed26f72790"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/include/wildmatch.h",
+      "sha256": "68cb711360558617125e1cac2f4303c3210ba8eaa1ea4c4e9a123b6152ec530f",
+      "blob": "0fca9f5d39533776689b8b3776546d82928aca5a",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 82,
+          "sha256": "68cb711360558617125e1cac2f4303c3210ba8eaa1ea4c4e9a123b6152ec530f"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/include/repo_gitignore.h",
+      "sha256": "d174291b3003765b3e5e35265f49b0bd1827f1bf5bb12fb93a717f3dffd3342a",
+      "blob": "cf66f1ad1a66bb3392c53abf6dd7af0ebd9c2ab9",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 41,
+          "sha256": "d174291b3003765b3e5e35265f49b0bd1827f1bf5bb12fb93a717f3dffd3342a"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/src/wildmatch/wildmatch.c",
+      "sha256": "4e95d82efd3729b4f77aca02dbb33ba13478814070f10040374f3980973a94fa",
+      "blob": "bc4e0d25d7ed90e0f97b2de80b7c2e336c8cf5c0",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 314,
+          "sha256": "4e95d82efd3729b4f77aca02dbb33ba13478814070f10040374f3980973a94fa"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/src/wildmatch/repo_wildmatch_wrapper.c",
+      "sha256": "782b9cabbac07b5316fcfe039d1d4fb3aca00b20840efff8a9381d27c4fd0dc4",
+      "blob": "7f0d748f1751c1d33af7ac92204f2205af0e4bac",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 290,
+          "sha256": "4be5c85eaf3b6ae6022f5cd69fca7e3d636068ce267f1dd4e265044d56304eef"
+        }
+      ]
+    }
+  ],
+  "cases": 13,
+  "generatorSHA256": "153fa00e0c49677b08f3c0018e19c0cdb32953f2f41af3e3d0f1c261a0be4bfb",
+  "combinedSourceSHA256": "c8807a999b63aba0b3c4aa5c33274313123a5d62dcd174d5298a205dd1575154",
+  "bindings": [
+    "The original filterFiles and matchesPattern bodies execute unchanged with original wildmatch C and flags.",
+    "The synchronous namespace receives immutable descriptor fields and the two consumed SearchOptions fields. Extension extraction uses Foundation pathExtension as in the record-backed descriptor.",
+    "The driver projects retained descriptor indices into content-path order and a complete omitted-index partition. It does not execute path matching, physical discovery, acquisition, authority, content search or the original response DTO."
+  ]
+}

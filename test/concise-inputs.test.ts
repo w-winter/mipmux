@@ -51,7 +51,7 @@ test('concise MCP exploration matches explicit options and preserves validation,
       assert.deepEqual(result.structuredContent, (await call(name, explicit)).structuredContent);
       results.push({ name, concise, explicit, result });
     }
-    const regex = await call('file_search', { input: { query: { kind: 'regex', text: '^export', caseSensitive: true }, filters: { extensions: ['ts'] }, after: 1 } });
+    const regex = await call('file_search', { input: { query: { kind: 'regex', text: '^export', caseSensitive: true }, filters: { extensions: ['.ts'] }, after: 1 } });
     assert.equal(regex.isError, false, JSON.stringify(regex));
     assert.equal(record.Parse(regex.structuredContent).returnedMatchingLines, 1);
     const whitespace = await call('file_search', { input: { query: { text: ' greet ' } } });

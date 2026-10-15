@@ -6840,13 +6840,22 @@
         [
           3163,
           3166
+        ],
+        [
+          1214,
+          1233
+        ],
+        [
+          1236,
+          1252
         ]
       ],
       "changes": [
-        "Retain source glob alternatives, matching, relative/alias candidates and substring matching. Replace the desktop descriptor name with the immutable descriptor decoded from the wire and expose its plan/scan to the input adapter. Native PCRE2 and wildmatch owners are reused."
+        "Retain source glob alternatives, matching, relative/alias candidates and substring matching. Replace the desktop descriptor name with the immutable descriptor decoded from the wire and expose its plan/scan to the input adapter. Native PCRE2 and wildmatch owners are reused.",
+        "Retain the extension/exclusion predicates in the same native matcher. Only static visibility and descriptor/options type names change. Exact dotted extension comparison, relative-path literal substrings, case folding and wildmatch flag selection remain original."
       ],
       "classification": "retained",
-      "sha256": "b686a8b74084d3fd70a32e377d0731bc548c2a6259a7b928151e74ce5a45bbd5"
+      "sha256": "dc5b4a5a385e1a1f8302b8d8d2a24838c01fa5ef798ba1e7ee3f95636c948c8d"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6857,14 +6866,23 @@
         [
           2308,
           2351
+        ],
+        [
+          476,
+          479
+        ],
+        [
+          1214,
+          1233
         ]
       ],
       "changes": [
         "Parse captured admitted descriptors, compile primary valid path regexes, preserve path-suffix plans and source UTF-8 path-hit order, and apply the requested signed result limit. Content ordering uses the original Swift full-path comparison. Existing UTF-8 graph ordering is reused because it implements the same byte comparator.",
-        "Regex cache scheduling is omitted for this per-request adapter. Original regex repairs and regex-to-glob/literal substitution remain pending the named source-search-regex-recovery decision. Invalid primary regexes return a typed error; no silent substitution is added."
+        "Regex cache scheduling is omitted for this per-request adapter. Original regex repairs and regex-to-glob/literal substitution remain pending the named source-search-regex-recovery decision. Invalid primary regexes return a typed error; no silent substitution is added.",
+        "Decode the two consumed filter fields once. Supply Foundation filename-extension metadata, preserve original descriptor ordinals through filtering, and return retained/omitted index partitions. Filtering occurs before path collection and content acquisition."
       ],
       "classification": "handwritten",
-      "sha256": "53829f799f2b26e7bffa9e4a80e043efa60ca78ce49c382bb0dd540450867daf"
+      "sha256": "995f4a69f920457ff6a737f2a74d74d7d76ae31fcc84d2a586d72843654c8cb1"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6882,10 +6900,11 @@
         ]
       ],
       "changes": [
-        "Bind root aliases and captured physical paths to native pattern/matching owners. Validate the returned candidate permutation and unique in-range path indices once at the native boundary, then pass the resolved mode, content pattern, ordered admitted candidates and path membership to the existing content search."
+        "Bind root aliases and captured physical paths to native pattern/matching owners. Validate the returned candidate permutation and unique in-range path indices once at the native boundary, then pass the resolved mode, content pattern, ordered admitted candidates and path membership to the existing content search.",
+        "Forward extensions and exclusions to native filtering and validate one complete retained/omitted partition plus path-hit membership before constructing the ordered candidates."
       ],
       "classification": "handwritten",
-      "sha256": "df89e8a00d3494e61c861b727951aaff66132f9fdb241250d45b0c01a317ca20"
+      "sha256": "a8186a1f834f44b6ee2aeadd462cdeef43c0f1f0bc57a6f5126b7ad2d80628c4"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6911,7 +6930,28 @@
         "Apply independent limits for path and content results and the unlimited content branch for count-only requests to the existing authorized ripgrep adapter. The default of 50 and limitHit condition are from Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift:724,956-957; count-only limitHit=false is from lines880-895.",
         "Grouped replies retain occurrence counts as extra metadata alongside matching-line counts. Ripgrep still drains all matches after the semantic limit so its terminal summary can be verified; no early process cancellation or new transport is introduced. Source regex repair, specialized content scanning, filter equivalence and complete DTO correspondence are not established by this adapter."
       ],
-      "sha256": "3e1d5909540c1e0e86c958f0ad47e97a73029447d9f99f954691f748d3fe4b06"
+      "sha256": "f91933398f9efdcf76d61ad7fa21d250dbd783518dc93bdeb940143d719a57b7"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "test/fixtures/rpce-search-filters/cases.json",
+      "ranges": [
+        [
+          1214,
+          1233
+        ],
+        [
+          1236,
+          1252
+        ]
+      ],
+      "classification": "fixture",
+      "changes": [
+        "Thirteen outputs execute the original filter and wildcard bodies with original C code. The driver supplies immutable filename metadata and the two consumed option fields, then maps retained ordinals into source content ordering. Source hashes, exact compilation inputs and execution limits are recorded by the generator."
+      ],
+      "sha256": "5aadb28a273322b24d6aa8d9ab695ac6492bfd7d7f910447bb2d4b6bbdc1e66a"
     }
   ],
   "dependencies": [
@@ -12626,6 +12666,18 @@
       "line": 2615,
       "name": "candidatePaths",
       "destination": "native/Sources/SmipBridge/RPCESearchPaths.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "destination": "native/Sources/SmipBridge/RPCESearchPaths.swift",
+      "name": "filterFiles",
+      "line": 1214
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "destination": "native/Sources/SmipBridge/RPCESearchPaths.swift",
+      "name": "matchesPattern",
+      "line": 1236
     }
   ],
   "sourceCoverage": [

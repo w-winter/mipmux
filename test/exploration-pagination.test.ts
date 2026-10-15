@@ -43,7 +43,7 @@ test('real search modes and output continuations preserve complete counts and re
     if (count.kind !== 'search') assert.fail('Missing counts');
     assert.deepEqual(count.counts, full.counts); assert.deepEqual(count.files, []); assert.equal(count.truncated, false);
     const both = await operation.fileSearch({ ...query, mode: 'both', query: { kind: 'literal', text: 'a', caseSensitive: true, wholeWord: false },
-      filters: { ...query.filters, roots: ['r'], include: ['a.*'], extensions: ['txt'] } });
+      filters: { ...query.filters, roots: ['r'], include: ['a.*'], extensions: ['.txt'] } });
     if (both.kind !== 'search') assert.fail('Missing combined search');
     assert.deepEqual(both.files.map(file => file.path), ['a.txt']); assert.equal(both.files[0]?.pathMatch, true);
     assert.equal(both.counts.matchingLines, 4);

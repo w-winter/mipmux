@@ -34,9 +34,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     const filters = request.filters;
     return (!filters.roots.length || filters.roots.includes(entry.root)) &&
       (!filters.directories.length || filters.directories.some(directory => directory.root === entry.root && entry.path.startsWith(directory.path + '/'))) &&
-      (!filters.include.length || filters.include.some(glob => posix.matchesGlob(entry.path, glob))) &&
-      !filters.exclude.some(glob => posix.matchesGlob(entry.path, glob)) &&
-      (!filters.extensions.length || filters.extensions.includes(posix.extname(entry.path).slice(1)));
+      (!filters.include.length || filters.include.some(glob => posix.matchesGlob(entry.path, glob)));
   });
   const pattern = await prepareSearch(operation, request, admitted);
   const { candidates, matchedPaths } = pattern;

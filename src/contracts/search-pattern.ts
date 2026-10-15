@@ -16,9 +16,11 @@ export const NativeSearchPathsInput = Type.Object({ kind: Type.Literal('matchSea
   pattern: Type.String(), isRegex: Type.Boolean(), caseSensitive: Type.Boolean(),
   mode: Type.Enum(['path', 'content', 'both']),
   limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
+  filters: Type.Object({ extensions: Type.Array(Type.String()), exclude: Type.Array(Type.String()) }, closed),
   files: Type.Array(Type.Object({ root: RootName, path: RelativePath, rootPath: Type.String() }, closed)),
 }, closed);
 export const NativeSearchPathsResult = Type.Union([
-  Type.Object({ kind: Type.Literal('searchPaths'), order: Type.Array(SafeCount), matches: Type.Array(SafeCount) }, closed),
+  Type.Object({ kind: Type.Literal('searchPaths'), order: Type.Array(SafeCount), matches: Type.Array(SafeCount),
+    excluded: Type.Array(SafeCount) }, closed),
   Type.Object({ kind: Type.Literal('searchPathsError'), message: Type.String() }, closed),
 ]);

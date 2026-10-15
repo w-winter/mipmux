@@ -1,0 +1,1055 @@
+[
+  {
+    "name": "filters-0",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": []
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2,
+        5,
+        6,
+        1,
+        7,
+        4,
+        0,
+        3,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-1",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [
+          ".swift"
+        ],
+        "exclude": []
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        1,
+        2
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        5,
+        6,
+        7,
+        4,
+        0,
+        3,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-2",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [
+          ".SWIFT"
+        ],
+        "exclude": []
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        1
+      ]
+    }
+  },
+  {
+    "name": "filters-3",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [
+          "."
+        ],
+        "exclude": []
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2
+      ]
+    }
+  },
+  {
+    "name": "filters-4",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [
+          ".swift",
+          ".SWIFT"
+        ],
+        "exclude": []
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        2
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        5,
+        6,
+        1,
+        7,
+        4,
+        0,
+        3,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-5",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": [
+          "IGNORE"
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        3
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2,
+        5,
+        6,
+        1,
+        7,
+        4,
+        0,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-6",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": [
+          "drop*"
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        7
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2,
+        5,
+        6,
+        1,
+        4,
+        0,
+        3,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-7",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": [
+          "*.SWIFT"
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2
+      ]
+    }
+  },
+  {
+    "name": "filters-8",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": [
+          "[ab].swift"
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        5
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2,
+        6,
+        1,
+        7,
+        4,
+        0,
+        3,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-9",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": [
+          ""
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2,
+        5,
+        6,
+        1,
+        7,
+        4,
+        0,
+        3,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-10",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": [
+          "**/deep/**"
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        4
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2,
+        5,
+        6,
+        1,
+        7,
+        0,
+        3,
+        8
+      ]
+    }
+  },
+  {
+    "name": "filters-11",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [],
+        "exclude": [
+          "äTHER"
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        8
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        2,
+        5,
+        6,
+        1,
+        7,
+        4,
+        0,
+        3
+      ]
+    }
+  },
+  {
+    "name": "filters-12",
+    "input": {
+      "kind": "matchSearchPaths",
+      "files": [
+        {
+          "root": "r",
+          "path": "plain.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "caps.SWIFT",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "README",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "sub/Ignore.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "nested/deep/skip.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "[ab].swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "a.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "drop/inner.swift",
+          "rootPath": "/reference"
+        },
+        {
+          "root": "r",
+          "path": "Äther.swift",
+          "rootPath": "/reference"
+        }
+      ],
+      "filters": {
+        "extensions": [
+          ".swift"
+        ],
+        "exclude": [
+          "IGNORE",
+          "a.swift"
+        ]
+      },
+      "mode": "content",
+      "pattern": "needle",
+      "isRegex": false,
+      "caseSensitive": true,
+      "limit": 50
+    },
+    "expected": {
+      "excluded": [
+        1,
+        2,
+        3,
+        6
+      ],
+      "kind": "searchPaths",
+      "matches": [],
+      "order": [
+        5,
+        7,
+        4,
+        0,
+        8
+      ]
+    }
+  }
+]

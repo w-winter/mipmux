@@ -2,15 +2,24 @@ import Foundation
 import RepoPromptRegexCore
 
 struct SearchPathFile {
+    let ordinal: Int
     let alias: String
+    let relativePath: String
     let standardizedRelativePath: String
     let standardizedRootFolderPath: String
     let standardizedFullPath: String
 
-    init(_ value: Any) throws {
+    var fileExtension: String? {
+        let ext = ((relativePath as NSString).lastPathComponent as NSString).pathExtension
+        return ext.isEmpty ? nil : ext
+    }
+
+    init(_ value: Any, ordinal: Int) throws {
         let input = try WireObject(value, keys: ["root", "path", "rootPath"])
+        self.ordinal = ordinal
         alias = try input.string("root")
-        standardizedRelativePath = try StandardizedPath.relative(input.string("path"))
+        relativePath = try input.string("path")
+        standardizedRelativePath = StandardizedPath.relative(relativePath)
         standardizedRootFolderPath = try StandardizedPath.absolute(input.string("rootPath"))
         standardizedFullPath = StandardizedPath.join(
             standardizedRoot: standardizedRootFolderPath, standardizedRelativePath: standardizedRelativePath
@@ -18,8 +27,23 @@ struct SearchPathFile {
     }
 }
 
+struct SearchFilterOptions {
+    let includeExtensions: [String]
+    let excludePatterns: [String]
+
+    init(_ value: Any) throws {
+        let input = try WireObject(value, keys: ["extensions", "exclude"])
+        guard let extensions = try input.value("extensions") as? [String],
+              let exclude = try input.value("exclude") as? [String]
+        else { throw BridgeFailure("nativeProtocolError") }
+        includeExtensions = extensions
+        excludePatterns = exclude
+    }
+}
+
 struct SearchPathsInput {
     private let files: [SearchPathFile]
+    private let inputCount: Int
     private let mode: SearchMode
     private let pattern: String
     private let isRegex: Bool
@@ -28,12 +52,14 @@ struct SearchPathsInput {
 
     init(_ value: Any) throws {
         let input = try WireObject(value, keys: [
-            "kind", "files", "mode", "pattern", "isRegex", "caseSensitive", "limit"
+            "kind", "files", "mode", "pattern", "isRegex", "caseSensitive", "limit", "filters"
         ])
         guard let files = try input.value("files") as? [Any],
               let mode = try SearchMode(rawValue: input.string("mode")), mode != .auto
         else { throw BridgeFailure("nativeProtocolError") }
-        self.files = try files.map(SearchPathFile.init)
+        let descriptors = try files.enumerated().map { try SearchPathFile($0.element, ordinal: $0.offset) }
+        self.files = try RPCESearchPaths.filterFiles(descriptors, options: SearchFilterOptions(input.value("filters")))
+        inputCount = descriptors.count
         self.mode = mode
         pattern = try input.text("pattern")
         isRegex = try input.boolean("isRegex")
@@ -49,7 +75,10 @@ struct SearchPathsInput {
         }
         do {
             let matches = try matchingIndices(order: order)
-            return ["kind": "searchPaths", "order": order, "matches": matches]
+            let included = Set(files.map(\.ordinal))
+            let excluded = (0 ..< inputCount).filter { !included.contains($0) }
+            return ["kind": "searchPaths", "order": order.map { files[$0].ordinal },
+                    "matches": matches.map { files[$0].ordinal }, "excluded": excluded]
         } catch let error as PCRE2Error {
             return ["kind": "searchPathsError", "message":
                 RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern).localizedDescription]
