@@ -334,6 +334,7 @@ export class DraftRuntime {
           this.#check(signal, committedRevision);
           if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
           await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+          for (const entry of prepared.advertisements.values()) await readCatalogedGitArtifact(operation, entry);
           this.#check(signal, committedRevision);
           if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
           this.#installGitAdvertisements(prepared.advertisements);

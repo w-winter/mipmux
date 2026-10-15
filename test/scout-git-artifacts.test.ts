@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { renameSync } from 'node:fs';
+import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, readdir, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -89,7 +89,7 @@ test('scout publication commits mutable primary artifacts before reply encoding 
 });
 
 test('failed or cancelled artifact replies retain publication and committed selection but install no new grant', async () => {
-  for (const effect of ['cap', 'cancelEncoding', 'cancelGrant'] as const) {
+  for (const effect of ['cap', 'cancelEncoding', 'cancelGrant', 'cancelPerFileGrant'] as const) {
     const controller = new AbortController(); let encoded = false;
     const f = await fixture(options => {
       class Runtime extends SmipRuntime {
@@ -100,6 +100,10 @@ test('failed or cancelled artifact replies retain publication and committed sele
               if (operation.kind === 'normalizeGitPublicationOptions') this.publicationOwner = true;
               const result = await super.request(operation, requestSignal);
               if (effect === 'cancelGrant' && encoded && this.publicationOwner && operation.kind === 'revalidateGitTargets') {
+                controller.abort(); throw new NativeFailure('rootChanged', null);
+              }
+              if (effect === 'cancelPerFileGrant' && encoded && this.publicationOwner && operation.kind === 'authorizeGitArtifact' &&
+                operation.path.startsWith('diff/per-file/')) {
                 controller.abort(); throw new NativeFailure('rootChanged', null);
               }
               return result;
@@ -191,6 +195,37 @@ test('primary commit failure warns and later grant authorization failure retains
     await assert.rejects(f.draft.readGitArtifact(reply.primary_artifacts.map, signal()), /gitArtifactNotAdvertised/);
     assert((await readFile(join(f.out, reply.primary_artifacts.map), 'utf8')).includes('late'));
   } finally { await operation.close(); await f.runtime.close(); }
+});
+
+test('a per-file-only authorization change after encoding revokes the complete advertisement grant', async () => {
+  const f = await fixture(), operation = await f.workspace.openOperation(signal());
+  const manifest = Compile(Type.Object({ files: Type.Array(Type.Object({ gitPath: Type.String() })) }));
+  let original = '', manifestPath = '';
+  try {
+    const previous = replyValidator.Parse(await scopedCall({ name: 'git', input: f.publication({ snapshot_id: 'previous' }) },
+      f.draft, operation, signal(), piToolResult));
+    const published = replyValidator.Parse(await scopedCall({ name: 'git', input: f.publication({ snapshot_id: 'late-per-file' }) },
+      f.draft, operation, signal(), value => {
+        const result = replyValidator.Parse(value); assert(result.primary_artifacts.per_file_patches?.length);
+        manifestPath = join(f.out, '_git_data', result.snapshot_dir!, 'manifest.json');
+        original = readFileSync(manifestPath, 'utf8');
+        const changed = manifest.Parse(JSON.parse(original)); changed.files = [];
+        writeFileSync(manifestPath, JSON.stringify(changed));
+        return piToolResult(value);
+      }));
+    for (const alias of [previous.primary_artifacts.map, published.primary_artifacts.map, published.primary_artifacts.all_patch]) {
+      assert(alias); await assert.rejects(f.draft.readGitArtifact(alias, signal()), /gitArtifactNotAdvertised/);
+    }
+    assert.equal(f.draft.revision, 2);
+    const selected = await f.draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get',
+      maxOutputBytes: 100000 })), signal());
+    assert(selected.files.some(file => file.path === published.primary_artifacts.map));
+    await writeFile('test-output/scout-git-late-grant-proof.json', JSON.stringify({ published, selected,
+      perFileOnlyManifestChange: true, entireGrantRevoked: true, previousGrantRevoked: true, selectionRetained: true }, null, 2) + '\n');
+  } finally {
+    if (original) writeFileSync(manifestPath, original);
+    await operation.close(); await f.runtime.close();
+  }
 });
 
 test('MCP publication requires an owned draft and uses the same source commit and grant pipeline', async () => {
