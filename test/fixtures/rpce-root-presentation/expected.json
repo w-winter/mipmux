@@ -1,0 +1,11 @@
+[
+  {"name":"all-ready","pending":[],"roots":[{"rendered":["a/1.swift","a/2.swift","a/3.swift"],"root":"a","status":"ready"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":[]},
+  {"name":"no-symbols-first","pending":["a/2.swift","a/3.swift"],"roots":[{"file":"a/1.swift","reason":"noRenderableCodemap","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":["a/1.swift"]},
+  {"name":"no-symbols-middle","pending":["a/1.swift","a/3.swift"],"roots":[{"file":"a/2.swift","reason":"noRenderableCodemap","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":["a/2.swift"]},
+  {"name":"no-symbols-last","pending":["a/1.swift","a/2.swift"],"roots":[{"file":"a/3.swift","reason":"noRenderableCodemap","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":["a/3.swift"]},
+  {"name":"stale-middle","pending":["a/1.swift","a/2.swift","a/3.swift"],"roots":[{"file":"a/2.swift","reason":"staleCurrentness","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":[]},
+  {"name":"revoked-middle","pending":["a/1.swift","a/2.swift","a/3.swift"],"roots":[{"file":"a/2.swift","reason":"handleRevoked","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":[]},
+  {"name":"stale-on-revalidation","pending":["a/1.swift","a/2.swift","a/3.swift"],"roots":[{"file":"a/2.swift","reason":"staleCurrentness","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":[]},
+  {"name":"multiple-no-symbols","pending":["a/2.swift","a/3.swift"],"roots":[{"file":"a/1.swift","reason":"noRenderableCodemap","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":["a/1.swift"]},
+  {"name":"nonrenderable-stale","pending":["a/1.swift","a/2.swift","a/3.swift"],"roots":[{"file":"a/2.swift","reason":"staleCurrentness","rendered":[],"root":"a","status":"unavailable"},{"rendered":["b/h.swift"],"root":"b","status":"ready"}],"unmapped":[]}
+]

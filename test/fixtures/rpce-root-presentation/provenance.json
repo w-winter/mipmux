@@ -1,0 +1,292 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "gitBlob": "ec254e6ab5e5f525653bf7a5240946607e41a6ea",
+      "sha256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "ranges": [
+        {
+          "name": "freeze",
+          "startLine": 15004,
+          "endLine": 15178,
+          "sha256": "358a148f042efbb121a1089051f5b1320d318053ce0214e3d3f347b688cd6c61",
+          "compiled": false
+        },
+        {
+          "name": "render",
+          "startLine": 15180,
+          "endLine": 15253,
+          "sha256": "500640542e7d9e6b9a720ff0b81d23fd4f57e8c2fd8dd6746a883b77dca1845f",
+          "compiled": true
+        },
+        {
+          "name": "currentness",
+          "startLine": 16706,
+          "endLine": 16729,
+          "sha256": "b18d715e6f8bc7e02008c7f1e65d6604f92c69aa2a7358d0bd0be852082cee31",
+          "compiled": false
+        },
+        {
+          "name": "readyMatches",
+          "startLine": 16778,
+          "endLine": 16799,
+          "sha256": "97a23002cab50d42d693f1cee707631d3067d718c812063b94009ab79e83e4df",
+          "compiled": false
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationCoordinator.swift",
+      "gitBlob": "ab68d3a946220d4636d9dbf0e9c3fb1bf7a92370",
+      "sha256": "fe470879b8d7dc22dfb865c33b58129873eace7a530ab5d364718a016e98e7c2",
+      "ranges": [
+        {
+          "name": "grouping",
+          "startLine": 435,
+          "endLine": 458,
+          "sha256": "cf9aa2518b1c0118f5826621629f9afdad65ea7499ef3cb0eb02feb1b2669684",
+          "compiled": true
+        },
+        {
+          "name": "rootLoop",
+          "startLine": 460,
+          "endLine": 494,
+          "sha256": "b43aae066d3d272715126da1cfad8deada670c8ed6c937c06e99c2c7c9a4b871",
+          "compiled": true
+        },
+        {
+          "name": "coverage",
+          "startLine": 859,
+          "endLine": 880,
+          "sha256": "b7de31cfc26e88df09f97bbaf0cc2b0fe28b67c74aee0f34471079ad4d022834",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "gitBlob": "01ccfd30105b76e98289d16e1910d3e03ca44755",
+      "sha256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
+      "ranges": [
+        {
+          "name": "diagnosticModels",
+          "startLine": 310,
+          "endLine": 327,
+          "sha256": "b595bd48ba994890f7935ab61e713e550fb8dc53c283ec098023be74ad4a93c0",
+          "compiled": true
+        },
+        {
+          "name": "missingDiagnostics",
+          "startLine": 344,
+          "endLine": 373,
+          "sha256": "ade0ef67f9a6a6e0f531ec87b676fa41ab885d44983a7f1677c83f306c384ae4",
+          "compiled": true
+        },
+        {
+          "name": "missingClassifiers",
+          "startLine": 386,
+          "endLine": 487,
+          "sha256": "8562712d2c96c3b42f18207ba11a0a4ce8111f47abf2c09b0bda9ced0b043ff4",
+          "compiled": true
+        },
+        {
+          "name": "candidateClassifier",
+          "startLine": 489,
+          "endLine": 502,
+          "sha256": "bc27d280a6e1f7e1f6ad3806b881abb2d49d88dbf58cfaaa2c33bab402819aae",
+          "compiled": true
+        },
+        {
+          "name": "freezeClassifier",
+          "startLine": 591,
+          "endLine": 600,
+          "sha256": "f6974e2a35fa033301cece37f7452e610dc99eb121c3b13ea21b9c914b81a8d5",
+          "compiled": true
+        },
+        {
+          "name": "renderClassifier",
+          "startLine": 602,
+          "endLine": 613,
+          "sha256": "bce03b899c6937fbfcd3edf7d4c8d9cca58dbc0fdb935fbeb723717338a1c5ed",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapPresentationModels.swift",
+      "gitBlob": "0bc0008add4bd6f09a7ed74d5d561156ca67e614",
+      "sha256": "dd75c1a006878c78e6846b2cf7367b95798cd071dc9fc812ffacd246f0f9eab4",
+      "ranges": [
+        {
+          "name": "presentationModels",
+          "startLine": 35,
+          "endLine": 125,
+          "sha256": "c1fc80c480b49bad39e51d34820b515e29410a815fea90cf76dfa31411b626d3",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapArtifactDemandModels.swift",
+      "gitBlob": "02b7467173002b333d9a6f9e053736d0f09b5143",
+      "sha256": "f8b9ac62fc6c239cd83285e6dc91cf6072f58572b9d66099a5c4b4abe93cc17b",
+      "ranges": [
+        {
+          "name": "demandResult",
+          "startLine": 37,
+          "endLine": 41,
+          "sha256": "ed8b03e808c7719f81c8889236e85b0227621035d7b454d4ab113381c114bf2e",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapLiveOverlayModels.swift",
+      "gitBlob": "18ee82611beeb3900edd77c76d3113ee0bbeae88",
+      "sha256": "da7b3f215ee51c92be36002a5e502331b69bc86da4551c3ed821bb2797438595",
+      "ranges": [
+        {
+          "name": "artifactOutcomes",
+          "startLine": 110,
+          "endLine": 126,
+          "sha256": "03988ea2c09de2188f7783d1c5078c11d17c085ac9c87b6849030b71204d6ec4",
+          "compiled": true
+        },
+        {
+          "name": "handleAccess",
+          "startLine": 389,
+          "endLine": 426,
+          "sha256": "244d31b48cc7806eb6060176858ec936b2c2e448525e11acbd0b138bd3589093",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapOperationPresentationModels.swift",
+      "gitBlob": "a8d99930b4baa1980a61325cbaa675b3ee079b28",
+      "sha256": "a7167fd8d1267097a6dfcc61f975971a8c29485b529b7ed997113683daf6ab81",
+      "ranges": [
+        {
+          "name": "candidateIssues",
+          "startLine": 22,
+          "endLine": 27,
+          "sha256": "73af7f977cebe2a9300fd837fe7d4b9186217f2256bd8c714107f5bfbeeb572b",
+          "compiled": true
+        },
+        {
+          "name": "operationModels",
+          "startLine": 41,
+          "endLine": 80,
+          "sha256": "6af96caaead6a2df3f6c8e0272b5b582722b7033aa4d349cf70d4562de626c6a",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapArtifactModels.swift",
+      "gitBlob": "617ec6133b99d709c9be0cae99607f14b26a2fd8",
+      "sha256": "8225768e56e0bddd91fc9eebe0d7ea4851eedf522d69f3a34b2da9532da41e87",
+      "ranges": [
+        {
+          "name": "renderedCodemap",
+          "startLine": 500,
+          "endLine": 503,
+          "sha256": "8d70551b6489eb894c7702da4c3d3efdd04c128e7b6bcc7d7fd2d8e7c2a2cad3",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Features/CodeMap/CodeMapArtifactPresentationAdapter.swift",
+      "gitBlob": "bd345119248d65ef425d8bf2047cfffbf2d8ba0f",
+      "sha256": "01b4975af6923c123d753a1fa5d6117d4a1500d7892ea27ffe2e73ce246ef684",
+      "ranges": [
+        {
+          "name": "formatter",
+          "startLine": 11,
+          "endLine": 13,
+          "sha256": "32b7753e345972fce2c33031507a9b106551d8038405304176d35169f921815c",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
+      "gitBlob": "c259c810fd0873b29b6d9b50d531fa4e1512410d",
+      "sha256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b",
+      "ranges": [
+        {
+          "name": "tokenEstimator",
+          "startLine": 132,
+          "endLine": 142,
+          "sha256": "744e1631086c1310ce40d1f514a54bec709c7c2ce4e57881213deb4cbc43d23b",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "LICENSE",
+      "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "ranges": []
+    }
+  ],
+  "cases": 9,
+  "artifacts": [
+    {
+      "path": "generate.mjs",
+      "sha256": "468e1fc1abe26a1e5f2eb6a32cbcb0b6c2b9dca22f100094ee0fbafdb3038e84"
+    },
+    {
+      "path": "adapter.swift",
+      "sha256": "b1c2b49fc7c92b79de1475507ac7c28f0046f7b9f8391741ccd266609eeb4d82"
+    },
+    {
+      "path": "inputs.json",
+      "sha256": "e505064a6967600211b8833b5aea913ad6fa443abe7c609a7bdca9a9cf60591c"
+    },
+    {
+      "path": "receipt.md",
+      "sha256": "f03e6fc7aeab964c3dee922fa719e8891cd511f6286fd9ba3d547c2dcb78e52a"
+    },
+    {
+      "path": "original-bodies.swift.txt",
+      "sha256": "bbf69c7ec2f8e60a4028ef3b28f86018876f2a27aec7a974e48e9a81f4a3c8ad"
+    },
+    {
+      "path": "reference-only.swift.txt",
+      "sha256": "d14fc22f567859d605a5693540b91cea5ff26de36b78fea612dab733527a1e53"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "expected.json",
+      "sha256": "ef3a5194070893275c4dbafcadd1c0475993e1afb2a1152c0579853f290cd9de"
+    }
+  ],
+  "combinedCompilationSHA256": "5f6a19832137115eab861ed57c878403795a2e82585eaffb8d1d1d90cb93fd95",
+  "extraction": "Each range is verbatim, including indentation and final LF. Fixture declarations surround original ranges.",
+  "compiled": "Full root renderer; ready-result grouping and per-root freeze/render loop; handle key, outcome and renderer; missing-file diagnostics and render classifiers; formatter and token estimator; listed model declarations.",
+  "adapters": [
+    "Freeze constructs retained ready bundles from seeded entries and handles. Original freeze is reference-only.",
+    "Root epochs and artifact keys are string labels; tickets retain only file ID and root label; logical paths hold display labels.",
+    "Ready matching checks modeled entry and ticket equality instead of production identity, snapshots or generations.",
+    "Currentness is explicitly current, stale at first render check, or stale at the second check during final revalidation.",
+    "Handle state synchronously returns a seeded syntax outcome or throws for revoked access. There are no real locks or lease owners.",
+    "Only ready and readyNoSymbols can be decoded as input outcomes. Terminal syntax enum variants exist only to compile original outcome mapping.",
+    "Swift support is asserted by an adapter. Classifiers for automatic selection and issues from non-ready demands fail fast if reached.",
+    "Ownership and phase hooks are no-ops. Root ordering compares labels. Post-loop sorting, publication and MCP reply assembly are not executed."
+  ],
+  "limits": [
+    "No real cancellation, acquisition engine, security or root IO, authority or epoch validation, watchers, lease revocation, publication or app runtime is exercised.",
+    "Stale and revoked states are injected after modeled freeze admission, not produced by transitions in the production lifecycle.",
+    "No claim is made that oversize, decodeFailed or parseFailed terminal-unavailable artifacts enter a frozen ready bundle.",
+    "Bundle retention/metadata failures, key/outcome mismatch, and real concurrent invalidation are not exercised.",
+    "Pending and unmapped are outputs from the original classifier for missing supported files, not observed provider replies or retention guarantees."
+  ],
+  "normalization": "Emit ordered root labels, rendered display paths, render reason/file and missing-file diagnostics. Omit opaque bundle UUIDs, fixture artifact text/token counts, timings and compiler paths.",
+  "license": "Apache-2.0; LICENSE is copied byte-for-byte from the pinned checkout."
+}

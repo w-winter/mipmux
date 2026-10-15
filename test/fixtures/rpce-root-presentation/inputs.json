@@ -1,0 +1,353 @@
+[
+  {
+    "name": "all-ready",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "no-symbols-first",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "readyNoSymbols",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "no-symbols-middle",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "readyNoSymbols",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "no-symbols-last",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "readyNoSymbols",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "stale-middle",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "ready",
+            "currentness": "stale",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "revoked-middle",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "revoked"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "stale-on-revalidation",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "ready",
+            "currentness": "staleOnRevalidation",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "multiple-no-symbols",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "readyNoSymbols",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "readyNoSymbols",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "nonrenderable-stale",
+    "roots": [
+      {
+        "root": "a",
+        "files": [
+          {
+            "name": "1.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          },
+          {
+            "name": "2.swift",
+            "outcome": "readyNoSymbols",
+            "currentness": "stale",
+            "handle": "valid"
+          },
+          {
+            "name": "3.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      },
+      {
+        "root": "b",
+        "files": [
+          {
+            "name": "h.swift",
+            "outcome": "ready",
+            "currentness": "current",
+            "handle": "valid"
+          }
+        ]
+      }
+    ]
+  }
+]

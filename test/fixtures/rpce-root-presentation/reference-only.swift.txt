@@ -1,0 +1,227 @@
+// Uncompiled original source. These functions are replaced by the adapters in adapter.swift.
+// Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift:15004-15178
+    func freezeCodemapPresentation(
+        _ requests: [WorkspaceCodemapPresentationRequest]
+    ) -> WorkspaceCodemapPresentationFreezeDisposition {
+        #if DEBUG
+            codemapPresentationFreezeRequestCountForTesting += 1
+        #endif
+        guard !requests.isEmpty else {
+            return .unavailable(.emptyRequest)
+        }
+        let entryLimit = Self.maximumCodemapPresentationRequestsPerBundle
+        guard requests.count <= entryLimit else {
+            return .unavailable(.entryLimitExceeded(limit: entryLimit))
+        }
+
+        let rootEpoch = requests[0].ticket.rootEpoch
+        guard requests.allSatisfy({ $0.ticket.rootEpoch == rootEpoch }) else {
+            return .unavailable(.mixedRootEpoch)
+        }
+
+        var fileIDs = Set<UUID>()
+        for request in requests where !fileIDs.insert(request.ticket.fileID).inserted {
+            return .unavailable(.duplicateFileID(request.ticket.fileID))
+        }
+
+        guard let originalSession = codemapSessionsByRootEpoch[rootEpoch] else {
+            return .unavailable(.staleCurrentness)
+        }
+        let retainedLimit = Self.maximumRetainedCodemapPresentationRecordsPerRoot
+        guard originalSession.presentationRecordsByID.count < retainedLimit else {
+            return .unavailable(.retainedBundleLimitExceeded(limit: retainedLimit))
+        }
+
+        var pairs: [(
+            entry: WorkspaceCodemapFrozenPresentationEntry,
+            handle: WorkspaceCodemapLiveFrozenArtifactHandle
+        )] = []
+        pairs.reserveCapacity(requests.count)
+
+        for request in requests {
+            let ticket = request.ticket
+            guard codemapDemandIsCurrent(ticket),
+                  let demandRecord = codemapSessionsByRootEpoch[rootEpoch]?
+                  .demandsByFileID[ticket.fileID],
+                  codemapTicketsShareDemand(demandRecord.ticket, ticket)
+            else {
+                return .unavailable(.staleCurrentness)
+            }
+
+            let ready: WorkspaceCodemapArtifactDemandReady
+            switch demandRecord.result {
+            case let .pending(pendingTicket):
+                guard pendingTicket == ticket else {
+                    return .unavailable(.staleCurrentness)
+                }
+                return .unavailable(.pending(ticket))
+            case let .unavailable(reason):
+                return .unavailable(.demandUnavailable(ticket, reason))
+            case let .ready(currentReady):
+                ready = currentReady
+            }
+
+            guard codemapTicketsShareDemand(ready.ticket, ticket),
+                  ready.identity == demandRecord.identity,
+                  ready.identity.rootID == ticket.rootEpoch.rootID,
+                  ready.identity.rootLifetimeID == ticket.rootEpoch.rootLifetimeID,
+                  ready.identity.fileID == ticket.fileID,
+                  ready.snapshot.rootEpoch == ticket.rootEpoch,
+                  ready.snapshot.fileID == ticket.fileID,
+                  ready.snapshot.requestGeneration == ticket.requestGeneration
+            else {
+                return .unavailable(.staleCurrentness)
+            }
+            guard request.logicalPath.standardizedRelativePath ==
+                ready.identity.standardizedRelativePath,
+                request.logicalPath.standardizedRelativePath ==
+                ready.snapshot.standardizedRelativePath
+            else {
+                return .unavailable(.logicalPathMismatch(ticket.fileID))
+            }
+
+            let artifactKey: CodeMapArtifactKey
+            let outcome: WorkspaceCodemapLiveArtifactOutcome
+            do {
+                artifactKey = try ready.handle.artifactKey()
+                outcome = try ready.handle.outcome()
+            } catch {
+                return .unavailable(.handleRevoked(ticket.fileID))
+            }
+            guard artifactKey == ready.snapshot.artifactKey,
+                  outcome == ready.snapshot.outcome
+            else {
+                return .unavailable(.staleCurrentness)
+            }
+
+            pairs.append((
+                entry: WorkspaceCodemapFrozenPresentationEntry(
+                    ticket: ticket,
+                    logicalPath: request.logicalPath,
+                    artifactKey: artifactKey,
+                    outcome: outcome
+                ),
+                handle: ready.handle
+            ))
+        }
+
+        pairs.sort { lhs, rhs in
+            let lhsPath = lhs.entry.logicalPath.displayPath
+            let rhsPath = rhs.entry.logicalPath.displayPath
+            if lhsPath != rhsPath {
+                return lhsPath < rhsPath
+            }
+            return lhs.entry.ticket.fileID.uuidString < rhs.entry.ticket.fileID.uuidString
+        }
+
+        for pair in pairs {
+            let entry = pair.entry
+            guard codemapDemandIsCurrent(entry.ticket),
+                  let demandRecord = codemapSessionsByRootEpoch[rootEpoch]?
+                  .demandsByFileID[entry.ticket.fileID],
+                  case let .ready(ready) = demandRecord.result,
+                  codemapPresentationReadyMatches(
+                      ready,
+                      demandRecord: demandRecord,
+                      entry: entry
+                  )
+            else {
+                return .unavailable(.staleCurrentness)
+            }
+            do {
+                guard try pair.handle.artifactKey() == entry.artifactKey,
+                      try pair.handle.outcome() == entry.outcome
+                else {
+                    return .unavailable(.staleCurrentness)
+                }
+            } catch {
+                return .unavailable(.handleRevoked(entry.ticket.fileID))
+            }
+        }
+
+        guard var currentSession = codemapSessionsByRootEpoch[rootEpoch],
+              currentSession.authority == originalSession.authority,
+              currentSession.presentationRecordsByID.count < retainedLimit
+        else {
+            return .unavailable(.staleCurrentness)
+        }
+
+        let id = WorkspaceCodemapFrozenPresentationBundleID()
+        let entries = pairs.map(\.entry)
+        let handles = pairs.map(\.handle)
+        var callerHandles: [WorkspaceCodemapLiveFrozenArtifactHandle] = []
+        callerHandles.reserveCapacity(handles.count)
+        for (index, handle) in handles.enumerated() {
+            do {
+                try callerHandles.append(handle.retainingLease())
+            } catch {
+                return .unavailable(.handleRevoked(entries[index].ticket.fileID))
+            }
+        }
+        let record = CodemapPresentationRecord(
+            id: id,
+            rootEpoch: rootEpoch,
+            entries: entries,
+            handles: handles,
+            requestIDs: Set(entries.map(\.ticket.requestID))
+        )
+        let bundle = WorkspaceCodemapFrozenPresentationBundle(
+            id: id,
+            rootEpoch: rootEpoch,
+            entries: entries,
+            handles: callerHandles
+        )
+        currentSession.presentationRecordsByID[id] = record
+        codemapSessionsByRootEpoch[rootEpoch] = currentSession
+        return .ready(bundle)
+    }
+
+// Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift:16706-16729
+    private func codemapDemandIsCurrent(
+        _ ticket: WorkspaceCodemapArtifactDemandTicket
+    ) -> Bool {
+        guard ticket.requestGeneration > 0,
+              ticket.catalogGeneration > 0,
+              ticket.pathGeneration > 0,
+              ticket.ingressGeneration > 0,
+              ticket.requestGeneration == ticket.pathGeneration,
+              let session = codemapSessionsByRootEpoch[ticket.rootEpoch],
+              session.authority.catalogGeneration == ticket.catalogGeneration,
+              session.authority.ingressGeneration == ticket.ingressGeneration,
+              codemapAuthorityIsCurrent(session.authority),
+              let record = session.demandsByFileID[ticket.fileID],
+              codemapTicketsShareDemand(record.ticket, ticket),
+              (
+                  session.pathGenerationsByRelativePath[record.identity.standardizedRelativePath]
+                      ?? session.authority.ingressGeneration
+              ) == ticket.pathGeneration,
+              let state = rootStatesByID[ticket.rootEpoch.rootID],
+              state.fileIDsByRelativePath[record.identity.standardizedRelativePath] == ticket.fileID,
+              filesByID[ticket.fileID]?.rootID == ticket.rootEpoch.rootID
+        else { return false }
+        return true
+    }
+
+// Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift:16778-16799
+    private func codemapPresentationReadyMatches(
+        _ ready: WorkspaceCodemapArtifactDemandReady,
+        demandRecord: CodemapDemandRecord,
+        entry: WorkspaceCodemapFrozenPresentationEntry
+    ) -> Bool {
+        let ticket = entry.ticket
+        return codemapTicketsShareDemand(demandRecord.ticket, ticket) &&
+            codemapTicketsShareDemand(ready.ticket, ticket) &&
+            ready.identity == demandRecord.identity &&
+            ready.identity.rootID == ticket.rootEpoch.rootID &&
+            ready.identity.rootLifetimeID == ticket.rootEpoch.rootLifetimeID &&
+            ready.identity.fileID == ticket.fileID &&
+            ready.identity.standardizedRelativePath ==
+            entry.logicalPath.standardizedRelativePath &&
+            ready.snapshot.rootEpoch == ticket.rootEpoch &&
+            ready.snapshot.fileID == ticket.fileID &&
+            ready.snapshot.standardizedRelativePath ==
+            entry.logicalPath.standardizedRelativePath &&
+            ready.snapshot.requestGeneration == ticket.requestGeneration &&
+            ready.snapshot.artifactKey == entry.artifactKey &&
+            ready.snapshot.outcome == entry.outcome
+    }

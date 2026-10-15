@@ -2,8 +2,10 @@ import { performance } from 'node:perf_hooks';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { observe } from '../workspace/observe.js';
 import { acquireSource, type Material } from './material-store.js';
+import { descriptorGitMode } from '../contracts/patches.js';
+import { structureId } from '../workspace/structure-identity.js';
 import { failureCode } from '../runtime/tool-result.js';
-import { freeze, WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON, compareBytes, freeze, WorkspaceFailure } from '../workspace/values.js';
 
 // RPCE WorkspaceCodemapPresentationCoordinator's production readiness allowance.
 const codemapReadinessMilliseconds = 10000;
@@ -25,6 +27,49 @@ function reportStalePresentation(material: PendingPresentation, cause: string): 
   process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapPresentationStale',
     ...material.record.selection.source, cause }) + '\n');
   return true;
+}
+
+async function revalidateCodemapSource(operation: WorkspaceOperation, material: PendingPresentation): Promise<void> {
+  const current = await operation.readRawSource(material.record.selection.source);
+  if (canonicalJSON([current.identity, current.key, descriptorGitMode(current.fingerprint.mode)]) !==
+    canonicalJSON([material.record.identity, material.record.artifactKey, material.record.mode])) {
+    throw new WorkspaceFailure('sourceChanged', material.record.selection.source);
+  }
+}
+
+async function renderRootCodemaps(operation: WorkspaceOperation, requests: PendingPresentation[]): Promise<readonly Material[]> {
+  let serving = requests[0]!;
+  const root = operation.snapshot.roots.find(root => root.name === serving.record.selection.source.root)!;
+  requests.sort((left, right) => {
+    const leftPath = left.record.selection.source.path, rightPath = right.record.selection.source.path;
+    // Swift String ordering treats canonically equivalent paths equally before the file-ID tie-break.
+    return compareBytes(leftPath.normalize('NFC'), rightPath.normalize('NFC')) ||
+      compareBytes(structureId(root.identity, leftPath), structureId(root.identity, rightPath));
+  });
+  const rendered: Material[] = [];
+  try {
+    for (const material of requests) {
+      serving = material;
+      const complete = await acquireSource(operation, { selectionOrigin: 'explicit', selection: material.record.selection,
+        required: material.record.required });
+      if (!complete.bodies.length) {
+        await revalidateCodemapSource(operation, material);
+        process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapRootPresentationUnavailable',
+          ...material.record.selection.source, cause: 'noRenderableCodemap' }) + '\n');
+        return [complete];
+      }
+      rendered.push(complete);
+    }
+    for (const material of requests) {
+      serving = material;
+      await revalidateCodemapSource(operation, material);
+    }
+    return rendered;
+  } catch (error) {
+    operation.signal.throwIfAborted();
+    if (!reportStalePresentation(serving, failureCode(error))) throw error;
+    return [];
+  }
 }
 
 export async function resolveSelectedCodemaps(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>) {
@@ -74,7 +119,8 @@ export async function resolveSelectedCodemaps(operation: WorkspaceOperation, mat
           attempted: requests.length, limit: maximumCodemapPresentationEntriesPerRoot }) + '\n');
         continue;
       }
-      admitted.push(...requests);
+      const rendered = await renderRootCodemaps(operation, requests);
+      for (const material of rendered) ready.set(material.record.id, material);
     }
     for (const material of admitted) work.push((async () => {
       try {

@@ -1,0 +1,618 @@
+// Extracted from RepoPrompt CE. Original ranges are verbatim inside fixture wrappers.
+// Store, handle storage and runtime adapters are defined in adapter.swift. See receipt.md and LICENSE.
+struct WorkspaceCodemapPresentationRequest {
+    let ticket: WorkspaceCodemapArtifactDemandTicket
+    let logicalPath: WorkspaceCodemapLogicalPresentationPath
+}
+
+struct WorkspaceCodemapFrozenPresentationBundleID: Hashable {
+    private let rawValue: UUID
+
+    init(rawValue: UUID = UUID()) {
+        self.rawValue = rawValue
+    }
+}
+
+struct WorkspaceCodemapFrozenPresentationEntry: Equatable {
+    let ticket: WorkspaceCodemapArtifactDemandTicket
+    let logicalPath: WorkspaceCodemapLogicalPresentationPath
+    let artifactKey: CodeMapArtifactKey
+    let outcome: WorkspaceCodemapLiveArtifactOutcome
+}
+
+private final class WorkspaceCodemapPresentationLease: @unchecked Sendable {
+    let handles: [WorkspaceCodemapLiveFrozenArtifactHandle]
+
+    init(handles: [WorkspaceCodemapLiveFrozenArtifactHandle]) {
+        self.handles = handles
+    }
+}
+
+struct WorkspaceCodemapFrozenPresentationBundle {
+    let id: WorkspaceCodemapFrozenPresentationBundleID
+    let rootEpoch: WorkspaceCodemapRootEpoch
+    let entries: [WorkspaceCodemapFrozenPresentationEntry]
+
+    private let lease: WorkspaceCodemapPresentationLease
+
+    init(
+        id: WorkspaceCodemapFrozenPresentationBundleID = .init(),
+        rootEpoch: WorkspaceCodemapRootEpoch,
+        entries: [WorkspaceCodemapFrozenPresentationEntry],
+        handles: [WorkspaceCodemapLiveFrozenArtifactHandle]
+    ) {
+        precondition(entries.count == handles.count)
+        self.id = id
+        self.rootEpoch = rootEpoch
+        self.entries = entries
+        lease = WorkspaceCodemapPresentationLease(handles: handles)
+    }
+}
+
+struct WorkspaceCodemapRenderedPresentationEntry: Equatable {
+    let ticket: WorkspaceCodemapArtifactDemandTicket
+    let logicalPath: WorkspaceCodemapLogicalPresentationPath
+    let artifactKey: CodeMapArtifactKey
+    let outcome: WorkspaceCodemapLiveArtifactOutcome
+    let text: String
+    let tokenCount: Int
+}
+
+enum WorkspaceCodemapPresentationFreezeUnavailableReason: Equatable {
+    case emptyRequest
+    case entryLimitExceeded(limit: Int)
+    case retainedBundleLimitExceeded(limit: Int)
+    case duplicateFileID(UUID)
+    case mixedRootEpoch
+    case pending(WorkspaceCodemapArtifactDemandTicket)
+    case demandUnavailable(
+        WorkspaceCodemapArtifactDemandTicket,
+        WorkspaceCodemapArtifactDemandUnavailableReason
+    )
+    case logicalPathMismatch(UUID)
+    case staleCurrentness
+    case handleRevoked(UUID)
+}
+
+enum WorkspaceCodemapPresentationFreezeDisposition {
+    case ready(WorkspaceCodemapFrozenPresentationBundle)
+    case unavailable(WorkspaceCodemapPresentationFreezeUnavailableReason)
+}
+
+enum WorkspaceCodemapPresentationRenderUnavailableReason: Equatable {
+    case bundleNotRetained
+    case bundleMetadataMismatch
+    case staleCurrentness(WorkspaceCodemapArtifactDemandTicket)
+    case handleRevoked(UUID)
+    case noRenderableCodemap(UUID)
+}
+
+enum WorkspaceCodemapPresentationRenderDisposition {
+    case ready([WorkspaceCodemapRenderedPresentationEntry])
+    case unavailable(WorkspaceCodemapPresentationRenderUnavailableReason)
+}
+
+enum WorkspaceCodemapArtifactDemandResult {
+    case unavailable(WorkspaceCodemapArtifactDemandUnavailableReason)
+    case pending(WorkspaceCodemapArtifactDemandTicket)
+    case ready(WorkspaceCodemapArtifactDemandReady)
+}
+
+enum WorkspaceCodemapLiveArtifactOutcome: Equatable, Sendable {
+    case ready
+    case readyNoSymbols
+    case oversize
+    case decodeFailed
+    case parseFailed
+
+    init(_ outcome: CodeMapSyntaxArtifactOutcome) {
+        self = switch outcome {
+        case .ready: .ready
+        case .readyNoSymbols: .readyNoSymbols
+        case .oversize: .oversize
+        case .decodeFailed: .decodeFailed
+        case .parseFailed: .parseFailed
+        }
+    }
+}
+
+enum WorkspaceCodemapOperationCandidateIssue: Equatable {
+    case fileNotCataloged(UUID)
+    case fileOutsideRootScope(UUID)
+    case logicalPathUnavailable(UUID)
+    case incompleteRootSet(missingFileIDs: [UUID])
+}
+
+struct WorkspaceCodemapOperationRenderedEntry: Equatable {
+    let bundleID: WorkspaceCodemapFrozenPresentationBundleID
+    let fileID: UUID
+    let rootEpoch: WorkspaceCodemapRootEpoch
+    let artifactKey: CodeMapArtifactKey
+    let logicalPath: WorkspaceCodemapLogicalPresentationPath
+    let text: String
+    let tokenCount: Int
+}
+
+enum WorkspaceCodemapOperationIssue: Equatable {
+    case coordinationUnavailable
+    case cancelled
+    case candidate(WorkspaceCodemapOperationCandidateIssue)
+    case pending(fileID: UUID, ticket: WorkspaceCodemapArtifactDemandTicket)
+    case unavailable(fileID: UUID, reason: WorkspaceCodemapArtifactDemandUnavailableReason)
+    case automatic(WorkspaceCodemapAutomaticSelectionAggregateCoverage)
+    case freezeUnavailable(
+        rootEpoch: WorkspaceCodemapRootEpoch,
+        reason: WorkspaceCodemapPresentationFreezeUnavailableReason
+    )
+    case renderUnavailable(
+        rootEpoch: WorkspaceCodemapRootEpoch,
+        reason: WorkspaceCodemapPresentationRenderUnavailableReason
+    )
+    case publicationStale(WorkspaceCodemapOperationPublicationStaleReason)
+}
+
+enum WorkspaceCodemapOperationPresentationCoverage: Equatable {
+    case complete
+    case partial([WorkspaceCodemapOperationIssue])
+    case pending([WorkspaceCodemapOperationIssue])
+    case unavailable([WorkspaceCodemapOperationIssue])
+}
+
+struct WorkspaceCodemapOperationPresentationBundleReceipt: Equatable {
+    let bundleID: WorkspaceCodemapFrozenPresentationBundleID
+    let rootEpoch: WorkspaceCodemapRootEpoch
+    let entries: [WorkspaceCodemapFrozenPresentationEntry]
+}
+
+struct WorkspaceCodemapArtifactRenderedCodemap: Equatable {
+    let text: String
+    let tokenCount: Int
+}
+
+enum CodeMapAPIContentFormatter {
+    static func pathAndImportsBlock(displayPath: String, imports: [String]) -> String {
+        (["File: \(displayPath)", "Imports:"] + imports.map { "  - \($0)" }).joined(separator: "\n")
+    }
+
+}
+
+enum TokenCalculationService {
+    @inline(__always)
+    static func estimateTokens(for text: String) -> Int {
+        estimateTokens(utf8ByteCount: text.utf8.count)
+    }
+
+    /// Compute tokens from a known nonnegative UTF-8 byte count using the canonical heuristic.
+    @inline(__always)
+    static func estimateTokens(utf8ByteCount: Int) -> Int {
+        precondition(utf8ByteCount >= 0, "UTF-8 byte count must be nonnegative")
+        return Int((Double(utf8ByteCount) / 4.0) * 1.05)
+    }
+
+}
+
+extension WorkspaceCodemapLiveFrozenArtifactHandle {
+    func artifactKey() throws -> CodeMapArtifactKey {
+        guard let key = try state.withHandle(
+            fileID: fileID,
+            retainedLeaseOwner: retainedLeaseOwner,
+            { $0.key }
+        ) else {
+            throw WorkspaceCodemapLiveOverlayBundleAccessError.entryUnavailable
+        }
+        return key
+    }
+
+    func outcome() throws -> WorkspaceCodemapLiveArtifactOutcome {
+        guard let outcome = try state.withHandle(
+            fileID: fileID,
+            retainedLeaseOwner: retainedLeaseOwner,
+            { WorkspaceCodemapLiveArtifactOutcome($0.outcome) }
+        ) else {
+            throw WorkspaceCodemapLiveOverlayBundleAccessError.entryUnavailable
+        }
+        return outcome
+    }
+
+    func renderedCodemap(displayPath: String) throws -> WorkspaceCodemapArtifactRenderedCodemap? {
+        try state.withHandle(
+            fileID: fileID,
+            retainedLeaseOwner: retainedLeaseOwner
+        ) { handle in
+            guard case let .ready(artifact) = handle.outcome else { return nil }
+            let text = CodeMapAPIContentFormatter.pathAndImportsBlock(
+                displayPath: displayPath,
+                imports: artifact.imports
+            ) + artifact.apiDescription
+            return WorkspaceCodemapArtifactRenderedCodemap(
+                text: text,
+                tokenCount: TokenCalculationService.estimateTokens(for: text)
+            )
+        } ?? nil
+    }
+
+}
+
+extension FixtureStore {
+    func renderCodemapPresentation(
+        _ bundle: WorkspaceCodemapFrozenPresentationBundle
+    ) -> WorkspaceCodemapPresentationRenderDisposition {
+        guard let session = codemapSessionsByRootEpoch[bundle.rootEpoch],
+              let record = session.presentationRecordsByID[bundle.id]
+        else {
+            return .unavailable(.bundleNotRetained)
+        }
+        guard record.id == bundle.id,
+              record.rootEpoch == bundle.rootEpoch,
+              record.entries == bundle.entries,
+              record.entries.count == record.handles.count
+        else {
+            return .unavailable(.bundleMetadataMismatch)
+        }
+
+        var renderedEntries: [WorkspaceCodemapRenderedPresentationEntry] = []
+        renderedEntries.reserveCapacity(record.entries.count)
+
+        for (entry, handle) in zip(record.entries, record.handles) {
+            guard codemapDemandIsCurrent(entry.ticket),
+                  let demandRecord = codemapSessionsByRootEpoch[record.rootEpoch]?
+                  .demandsByFileID[entry.ticket.fileID],
+                  case let .ready(ready) = demandRecord.result,
+                  codemapPresentationReadyMatches(
+                      ready,
+                      demandRecord: demandRecord,
+                      entry: entry
+                  )
+            else {
+                return .unavailable(.staleCurrentness(entry.ticket))
+            }
+
+            do {
+                guard try handle.artifactKey() == entry.artifactKey,
+                      try handle.outcome() == entry.outcome
+                else {
+                    return .unavailable(.staleCurrentness(entry.ticket))
+                }
+                guard let rendered = try handle.renderedCodemap(
+                    displayPath: entry.logicalPath.displayPath
+                ) else {
+                    return .unavailable(.noRenderableCodemap(entry.ticket.fileID))
+                }
+                renderedEntries.append(WorkspaceCodemapRenderedPresentationEntry(
+                    ticket: entry.ticket,
+                    logicalPath: entry.logicalPath,
+                    artifactKey: entry.artifactKey,
+                    outcome: entry.outcome,
+                    text: rendered.text,
+                    tokenCount: rendered.tokenCount
+                ))
+            } catch {
+                return .unavailable(.handleRevoked(entry.ticket.fileID))
+            }
+        }
+
+        for (entry, handle) in zip(record.entries, record.handles) {
+            guard codemapDemandIsCurrent(entry.ticket) else {
+                return .unavailable(.staleCurrentness(entry.ticket))
+            }
+            do {
+                guard try handle.artifactKey() == entry.artifactKey,
+                      try handle.outcome() == entry.outcome
+                else {
+                    return .unavailable(.staleCurrentness(entry.ticket))
+                }
+            } catch {
+                return .unavailable(.handleRevoked(entry.ticket.fileID))
+            }
+        }
+
+        return .ready(renderedEntries)
+    }
+
+}
+
+struct OriginalCoordinator {
+    func run(
+        candidates: [FixtureCandidate], demandBatch: FixtureDemandBatch, store: FixtureStore
+    ) async throws -> WorkspaceCodemapOperationPresentation {
+        var issues: [WorkspaceCodemapOperationIssue] = []
+        let ownership = FixtureOwnership()
+        var requestsByRoot: [WorkspaceCodemapRootEpoch: [WorkspaceCodemapPresentationRequest]] = [:]
+        for candidate in candidates {
+            guard let result = demandBatch.resultsByFileID[candidate.fileID] else {
+                issues.append(.unavailable(fileID: candidate.fileID, reason: .registrationFailed))
+                continue
+            }
+            switch result {
+            case let .ready(ready):
+                guard ready.ticket.rootEpoch == candidate.rootEpoch else {
+                    issues.append(.unavailable(fileID: candidate.fileID, reason: .staleCurrentness))
+                    continue
+                }
+                requestsByRoot[candidate.rootEpoch, default: []].append(
+                    WorkspaceCodemapPresentationRequest(
+                        ticket: ready.ticket,
+                        logicalPath: candidate.logicalPath
+                    )
+                )
+            case let .pending(ticket):
+                issues.append(.pending(fileID: candidate.fileID, ticket: ticket))
+            case let .unavailable(reason):
+                issues.append(.unavailable(fileID: candidate.fileID, reason: reason))
+            }
+        }
+
+        var renderedEntries: [WorkspaceCodemapOperationRenderedEntry] = []
+        var bundleReceipts: [WorkspaceCodemapOperationPresentationBundleReceipt] = []
+        for rootEpoch in requestsByRoot.keys.sorted(by: workspaceCodemapRootEpochPrecedes) {
+            try Task.checkCancellation()
+            let requests = requestsByRoot[rootEpoch] ?? []
+            await structurePhaseDidChange(.freeze)
+            switch await store.freezeCodemapPresentation(requests) {
+            case let .unavailable(reason):
+                issues.append(.freezeUnavailable(rootEpoch: rootEpoch, reason: reason))
+            case let .ready(bundle):
+                await ownership.record(bundle)
+                await structurePhaseDidChange(.render)
+                switch await store.renderCodemapPresentation(bundle) {
+                case let .unavailable(reason):
+                    issues.append(.renderUnavailable(rootEpoch: rootEpoch, reason: reason))
+                case let .ready(rendered):
+                    bundleReceipts.append(WorkspaceCodemapOperationPresentationBundleReceipt(
+                        bundleID: bundle.id,
+                        rootEpoch: bundle.rootEpoch,
+                        entries: bundle.entries
+                    ))
+                    renderedEntries.append(contentsOf: rendered.map { entry in
+                        WorkspaceCodemapOperationRenderedEntry(
+                            bundleID: bundle.id,
+                            fileID: entry.ticket.fileID,
+                            rootEpoch: entry.ticket.rootEpoch,
+                            artifactKey: entry.artifactKey,
+                            logicalPath: entry.logicalPath,
+                            text: entry.text,
+                            tokenCount: entry.tokenCount
+                        )
+                    })
+                }
+            }
+        }
+
+        return WorkspaceCodemapOperationPresentation(
+            entries: renderedEntries, issues: issues,
+            coverage: coverage(for: renderedEntries, issues: issues), bundleReceipts: bundleReceipts
+        )
+    }
+
+    func structurePhaseDidChange(_ phase: FixturePhase) async {}
+
+    private func coverage(
+        for renderedEntries: [WorkspaceCodemapOperationRenderedEntry],
+        issues: [WorkspaceCodemapOperationIssue]
+    ) -> WorkspaceCodemapOperationPresentationCoverage {
+        guard !issues.isEmpty else { return .complete }
+        if !renderedEntries.isEmpty { return .partial(issues) }
+        if issues.contains(where: { issue in
+            if case .pending = issue { return true }
+            if case let .automatic(coverage) = issue {
+                switch coverage {
+                case .pending:
+                    return true
+                case .ok, .partial, .unavailable:
+                    return false
+                }
+            }
+            return false
+        }) {
+            return .pending(issues)
+        }
+        return .unavailable(issues)
+    }
+
+}
+
+enum OriginalSelectionCore {
+        struct CodemapPathDiagnostics: Equatable {
+            let pendingPaths: [String]
+            let unmappedPaths: [String]
+
+            var isEmpty: Bool {
+                pendingPaths.isEmpty && unmappedPaths.isEmpty
+            }
+        }
+
+        private enum MissingCodemapDisposition {
+            case pending
+            case unmapped
+        }
+
+        private enum CodemapIssueDisposition {
+            case pending
+            case unmapped(terminal: Bool)
+        }
+
+        static func missingCodemapDiagnostics(
+            for files: [WorkspaceFileRecord],
+            presentation: WorkspaceCodemapOperationPresentation,
+            displayPath: (WorkspaceFileRecord) async -> String
+        ) async -> CodemapPathDiagnostics {
+            let missingFiles = codemapDiagnosticFiles(files, presentation: presentation)
+            var pendingPaths: [String] = []
+            var unmappedPaths: [String] = []
+            var seenPending = Set<String>()
+            var seenUnmapped = Set<String>()
+
+            for file in missingFiles {
+                let path = await displayPath(file)
+                switch missingCodemapDisposition(for: file, presentation: presentation) {
+                case .pending:
+                    if seenPending.insert(path).inserted {
+                        pendingPaths.append(path)
+                    }
+                case .unmapped:
+                    if seenUnmapped.insert(path).inserted {
+                        unmappedPaths.append(path)
+                    }
+                }
+            }
+
+            return CodemapPathDiagnostics(
+                pendingPaths: pendingPaths,
+                unmappedPaths: unmappedPaths
+            )
+        }
+
+        private static func codemapDiagnosticFiles(
+            _ files: [WorkspaceFileRecord],
+            presentation: WorkspaceCodemapOperationPresentation
+        ) -> [WorkspaceFileRecord] {
+            var seen = Set<UUID>()
+            var missing: [WorkspaceFileRecord] = []
+            for file in files {
+                guard seen.insert(file.id).inserted else { continue }
+                guard presentation.renderedEntriesByFileID[file.id] == nil else { continue }
+                missing.append(file)
+            }
+            return missing
+        }
+
+        private static func missingCodemapDisposition(
+            for file: WorkspaceFileRecord,
+            presentation: WorkspaceCodemapOperationPresentation
+        ) -> MissingCodemapDisposition {
+            guard supportsCodemap(file) else { return .unmapped }
+
+            let issues = presentation.issues + coverageIssues(presentation.coverage)
+            var sawPending = false
+            var sawUnmapped = false
+            var sawTerminalUnmapped = false
+            for issue in issues {
+                guard let disposition = codemapDisposition(
+                    for: issue,
+                    fileID: file.id
+                ) else { continue }
+                switch disposition {
+                case .pending:
+                    sawPending = true
+                case let .unmapped(terminal):
+                    sawUnmapped = true
+                    sawTerminalUnmapped = sawTerminalUnmapped || terminal
+                }
+            }
+            if sawTerminalUnmapped { return .unmapped }
+            if sawPending { return .pending }
+            if sawUnmapped { return .unmapped }
+
+            if presentationCoverageIsIncomplete(presentation.coverage) || !issues.isEmpty {
+                return .pending
+            }
+
+            // A supported file absent from an otherwise empty/complete presentation is
+            // ambiguous in MCP's non-blocking path: CAS may not have produced a rendered
+            // bundle yet, or the codemap may not have been requested by the stale snapshot.
+            // Prefer a retryable/pending diagnostic over a final-looking unmapped result.
+            return .pending
+        }
+
+        private static func supportsCodemap(_ file: WorkspaceFileRecord) -> Bool {
+            let fileExtension = (file.name as NSString).pathExtension.lowercased()
+            guard !fileExtension.isEmpty else { return false }
+            return SyntaxManager.supportsCodeMap(fileExtension: fileExtension)
+        }
+
+        private static func coverageIssues(
+            _ coverage: WorkspaceCodemapOperationPresentationCoverage
+        ) -> [WorkspaceCodemapOperationIssue] {
+            switch coverage {
+            case .complete:
+                []
+            case let .partial(issues), let .pending(issues), let .unavailable(issues):
+                issues
+            }
+        }
+
+        private static func presentationCoverageIsIncomplete(
+            _ coverage: WorkspaceCodemapOperationPresentationCoverage
+        ) -> Bool {
+            switch coverage {
+            case .complete:
+                false
+            case .partial, .pending, .unavailable:
+                true
+            }
+        }
+
+        private static func codemapDisposition(
+            for issue: WorkspaceCodemapOperationIssue,
+            fileID: UUID
+        ) -> CodemapIssueDisposition? {
+            switch issue {
+            case .coordinationUnavailable, .cancelled, .publicationStale:
+                return .pending
+            case let .candidate(candidateIssue):
+                return candidateDisposition(candidateIssue, fileID: fileID)
+            case let .pending(pendingFileID, _):
+                return pendingFileID == fileID ? .pending : nil
+            case let .unavailable(unavailableFileID, reason):
+                guard unavailableFileID == fileID else { return nil }
+                return unavailableDisposition(reason)
+            case let .automatic(coverage):
+                return automaticCoverageDisposition(coverage, fileID: fileID)
+            case let .freezeUnavailable(_, reason):
+                return freezeUnavailableDisposition(reason)
+            case let .renderUnavailable(_, reason):
+                return renderUnavailableDisposition(reason, fileID: fileID)
+            }
+        }
+
+        private static func candidateDisposition(
+            _ issue: WorkspaceCodemapOperationCandidateIssue,
+            fileID: UUID
+        ) -> CodemapIssueDisposition? {
+            switch issue {
+            case let .fileNotCataloged(candidateFileID):
+                candidateFileID == fileID ? .pending : nil
+            case let .fileOutsideRootScope(candidateFileID),
+                 let .logicalPathUnavailable(candidateFileID):
+                candidateFileID == fileID ? .unmapped(terminal: true) : nil
+            case let .incompleteRootSet(missingFileIDs):
+                missingFileIDs.contains(fileID) ? .pending : nil
+            }
+        }
+
+        private static func freezeUnavailableDisposition(
+            _ reason: WorkspaceCodemapPresentationFreezeUnavailableReason
+        ) -> CodemapIssueDisposition {
+            switch reason {
+            case .emptyRequest, .entryLimitExceeded, .retainedBundleLimitExceeded,
+                 .duplicateFileID, .mixedRootEpoch, .pending, .demandUnavailable,
+                 .logicalPathMismatch, .staleCurrentness, .handleRevoked:
+                .pending
+            }
+        }
+
+        private static func renderUnavailableDisposition(
+            _ reason: WorkspaceCodemapPresentationRenderUnavailableReason,
+            fileID: UUID
+        ) -> CodemapIssueDisposition? {
+            switch reason {
+            case .bundleNotRetained, .bundleMetadataMismatch, .staleCurrentness,
+                 .handleRevoked:
+                .pending
+            case let .noRenderableCodemap(unavailableFileID):
+                unavailableFileID == fileID ? .unmapped(terminal: true) : nil
+            }
+        }
+
+    private static func unavailableDisposition(
+        _ reason: WorkspaceCodemapArtifactDemandUnavailableReason
+    ) -> CodemapIssueDisposition {
+        preconditionFailure("Only ready demand inputs are supported by this fixture")
+    }
+
+    private static func automaticCoverageDisposition(
+        _ coverage: WorkspaceCodemapAutomaticSelectionAggregateCoverage, fileID: UUID
+    ) -> CodemapIssueDisposition? {
+        preconditionFailure("Automatic selection is not an input to this fixture")
+    }
+}
