@@ -6119,7 +6119,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "5b06242915baad35b485548b6dabdb38e14ef957241b285a6aa4887ec697b14d",
+      "sha256": "8001915354cb68b6adc36e9d60c0f26d28f0fe1556f5258495b12bb7aeb58db9",
       "classification": "handwritten"
     },
     {
@@ -6931,9 +6931,10 @@
       "changes": [
         "Apply independent limits for path and content results and the unlimited content branch for count-only requests to the existing authorized ripgrep adapter. The default of 50 and limitHit condition are from Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift:724,956-957; count-only limitHit=false is from lines880-895.",
         "Grouped replies retain occurrence counts as extra metadata alongside matching-line counts. Ripgrep still drains all matches after the semantic limit so its terminal summary can be verified; no early process cancellation or new transport is introduced. Source regex repair, specialized content scanning, filter equivalence and complete DTO correspondence are not established by this adapter.",
-        "Consume the fully normalized native content pattern. Remove ripgrep word-mode interpretation; the native pattern owner defines word-boundary behavior."
+        "Consume the fully normalized native content pattern. Remove ripgrep word-mode interpretation; the native pattern owner defines word-boundary behavior.",
+        "Route plain literal matching to Foundation before per-file grouping; regex/fuzzy/whole-word requests retain the existing PCRE2 spool. Preserve one current decoded file, query limits and parent-owned settlement. The reported backend reflects the actual route."
       ],
-      "sha256": "7dac8f98a6ef8d00cfb587dd1fddc32fdd6098731a8cc3364fde364c2b000901"
+      "sha256": "342e1bc536458b8a3f3d6ddc77c77ff429adaa4a7a5234fcd75e932c475dd278"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6955,6 +6956,49 @@
         "Thirteen outputs execute the original filter and wildcard bodies with original C code. The driver supplies immutable filename metadata and the two consumed option fields, then maps retained ordinals into source content ordering. Source hashes, exact compilation inputs and execution limits are recorded by the generator."
       ],
       "sha256": "5aadb28a273322b24d6aa8d9ab695ac6492bfd7d7f910447bb2d4b6bbdc1e66a"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/LiteralSearchInput.swift",
+      "ranges": [
+        [
+          1814,
+          1870
+        ],
+        [
+          2021,
+          2028
+        ],
+        [
+          2098,
+          2112
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Normalize captured complete lines once and use the same comparison flags and range operation on NSString as the source plain-literal branch. Preserve case folding/canonical equivalence, line-level limits and count-only totals.",
+        "The caller supplies the already-established CR/LF line view. Counts of nonoverlapping occurrences are extra metadata from the same Foundation comparisons; the source itself reports matching lines. This adapter does not implement source acquisition, regex recovery or the full content scanner."
+      ],
+      "sha256": "9194d65478fc227716bc12da6ec6702f30c38ee44d5da8147d7216cd1d55f556"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "src/exploration/literal-search.ts",
+      "ranges": [
+        [
+          2098,
+          2112
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Pass the existing captured line view to the owned native worker. Validate ordered in-range hit indices and aggregate counts once before grouped presentation."
+      ],
+      "sha256": "45c7ca6a6f6c659f422487c9b66ac0a720464680e44dcc208344fa25372ad98a"
     }
   ],
   "dependencies": [

@@ -9,7 +9,7 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
-const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), files: Type.Array(Type.Object({
+const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), counts: Type.Object({ matchingLines: Type.Integer() }), files: Type.Array(Type.Object({
   lines: Type.Array(Type.Object({ number: Type.Integer(), matching: Type.Boolean() })),
 })) }));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String(), message: Type.String() }));
@@ -18,7 +18,8 @@ test('public file_search uses source pattern inference, trimming and literal fle
   const base = await mkdtemp(join(tmpdir(), 'smip-search-pattern-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'example.txt'), 'anchor\n^anchor$\nfunc()\nlet\tfoo.bar\nlet\tfooXbar\none\ttwo\none\t two\nend\\E\tvalue\nANCHOR\n' +
-    '++\na++b\n ++ \nleftover\nupright\nleft\nright\naleft\nrightward\ncafé\ncafétéria\ndécafé\néwordé\nword\nsword\n');
+    '++\na++b\n ++ \nleftover\nupright\nleft\nright\naleft\nrightward\ncafé\ncafétéria\ndécafé\néwordé\nword\nsword\n' +
+    'cafe\u0301 cafe\u0301\nCAFÉ\nStraße\n');
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
@@ -48,8 +49,11 @@ test('public file_search uses source pattern inference, trimming and literal fle
       { query: { kind: 'regex', text: 'left|right', wholeWord: true }, lines: [13, 14, 15, 16] },
       { query: { kind: 'regex', text: '(?:left|right)', wholeWord: true }, lines: [15, 16] },
       { query: { kind: 'literal', text: 'left', wholeWord: true }, lines: [15] },
-      { query: { kind: 'literal', text: 'café', wholeWord: true }, lines: [19] },
+      { query: { kind: 'literal', text: 'café', wholeWord: true }, lines: [19, 26] },
       { query: { kind: 'literal', text: 'word', wholeWord: true }, lines: [23] },
+      { query: { kind: 'literal', text: 'café' }, lines: [19, 20, 21, 25, 26] },
+      { query: { kind: 'literal', text: 'café', caseSensitive: true }, lines: [19, 20, 21, 25] },
+      { query: { kind: 'literal', text: 'STRASSE' }, lines: [27] },
     ];
     for (const item of cases) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
@@ -58,6 +62,13 @@ test('public file_search uses source pattern inference, trimming and literal fle
       const reply = searchReply.Parse(found.structuredContent);
       assert.deepEqual(reply.files.flatMap(file => file.lines.filter(line => line.matching).map(line => line.number)), item.lines, JSON.stringify(item.query));
       observations.push({ query: item.query, reply: found });
+      const counted = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
+        input: { mode: 'content', query: item.query, countOnly: true } } });
+      assert.equal(counted.isError, false, JSON.stringify(counted));
+      const totals = searchReply.Parse(counted.structuredContent);
+      assert.equal(totals.counts.matchingLines, item.lines.length, JSON.stringify(item.query));
+      assert.deepEqual(totals.files, []);
+      observations.push({ query: item.query, countOnly: counted });
     }
     const blank = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
       input: { query: { text: '\u0085 \r\n' } } } });

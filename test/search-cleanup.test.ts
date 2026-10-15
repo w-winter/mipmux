@@ -42,7 +42,7 @@ test('search scratch cleanup handles success, query failure, cancellation and pa
         syncBuiltinESMExports();
       }
       try {
-        const pending = operation.fileSearch({ mode: 'content', query: { kind: scenario === 'error' ? 'regex' : 'literal', text: scenario === 'error' ? '[' : 'needle', caseSensitive: true, wholeWord: false },
+        const pending = operation.fileSearch({ mode: 'content', query: { kind: 'regex', text: scenario === 'error' ? '[' : 'needle', caseSensitive: true, wholeWord: false },
           filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0, countOnly: false, maxResults: 50, maxOutputBytes: 10000, continuation: null });
         if (scenario === 'success') assert.equal((await pending).kind, 'search');
         else await assert.rejects(pending);

@@ -24,3 +24,13 @@ export const NativeSearchPathsResult = Type.Union([
     excluded: Type.Array(SafeCount) }, closed),
   Type.Object({ kind: Type.Literal('searchPathsError'), message: Type.String() }, closed),
 ]);
+export const NativeLiteralSearchInput = Type.Object({ kind: Type.Literal('scanLiteralLines'),
+  lines: Type.Array(Type.String()), pattern: Type.String({ minLength: 1 }), caseSensitive: Type.Boolean(),
+  countOnly: Type.Boolean(), limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
+}, closed);
+export const NativeLiteralSearchResult = Type.Object({ kind: Type.Literal('literalSearch'),
+  matchingLines: SafeCount, occurrences: SafeCount, matches: Type.Array(Type.Object({
+    number: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+    occurrences: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+  }, closed)),
+}, closed);

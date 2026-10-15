@@ -10,6 +10,7 @@ import { pageIdentity, pageOffset } from './continuation.js';
 import { pageResult, serializedBytes, type ResultEncoding } from './output-budget.js';
 import type { PreparedSearchPattern } from '../contracts/search-pattern.js';
 import { prepareSearch } from './search-query.js';
+import { scanLiteralContent } from './literal-search.js';
 
 export interface SearchFile {
   readonly root: string; readonly path: string; readonly identity: SourceIdentity;
@@ -51,19 +52,6 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   const directory = await mkdtemp(join(workRoot, 'search-'));
   let temporaryCount = 0;
   try {
-    for (const [index, candidate] of candidates.entries()) {
-      // Each candidate is revalidated even for count-only and path-only continuations.
-      if (pattern.mode === 'path') { await operation.readRawSource(candidate); continue; }
-      try {
-        const source = await operation.readSource(candidate);
-        const text = prepareText(source.text);
-        const path = join(directory, String(index).padStart(String(candidates.length).length, '0'));
-        await writeFile(path, text.searchText, { flag: 'wx', mode: 0o600 }); temporaryCount++;
-      } catch (error) {
-        if (!(error instanceof WorkspaceFailure) || !['binarySource', 'decodeFailed'].includes(error.code)) throw error;
-        limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
-      }
-    }
     const records: SearchFile[] = [];
     let current = 0, matchedFiles = 0, retainedBytes = 0, contentMatches = 0;
     let text: PreparedText | null = null;
@@ -96,7 +84,30 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       }
       current++; text = null; matching = new Set();
     };
-    if (pattern.mode !== 'path' && temporaryCount) {
+    for (const [index, candidate] of candidates.entries()) {
+      // Each candidate is revalidated even for count-only and path-only continuations.
+      if (pattern.mode === 'path') { await operation.readRawSource(candidate); continue; }
+      try {
+        const source = await operation.readSource(candidate);
+        const prepared = prepareText(source.text);
+        if (pattern.content.isRegex) {
+          const path = join(directory, String(index).padStart(String(candidates.length).length, '0'));
+          await writeFile(path, prepared.searchText, { flag: 'wx', mode: 0o600 }); temporaryCount++;
+        } else {
+          const found = await scanLiteralContent(operation, prepared, { pattern: pattern.content.text,
+            caseSensitive: request.query.caseSensitive, countOnly: request.countOnly, limit: request.maxResults - contentMatches });
+          matches[index]!.occurrences = found.occurrences;
+          matches[index]!.matchingLines = found.matchingLines;
+          contentMatches += found.matchingLines;
+          if (retain()) { text = prepared; matching = new Set(found.matches.map(match => match.number)); }
+        }
+      } catch (error) {
+        if (!(error instanceof WorkspaceFailure) || !['binarySource', 'decodeFailed'].includes(error.code)) throw error;
+        limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
+      }
+      if (!pattern.content.isRegex) flush();
+    }
+    if (pattern.mode !== 'path' && pattern.content.isRegex && temporaryCount) {
       await runRipgrep(operation.runtime.supervisor, executable, [...contentFlags, '--', '.'], directory, '', operation.signal, async match => {
         const filename = encodedText(match.path);
         if (!/^\.\/[0-9]+$/.test(filename)) throw new WorkspaceFailure('searchProtocolError');
@@ -116,7 +127,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
         }
       });
     }
-    if (pattern.mode === 'content' && !temporaryCount) {
+    if (pattern.mode === 'content' && pattern.content.isRegex && !temporaryCount) {
       await runRipgrep(operation.runtime.supervisor, executable, contentFlags, directory, '', operation.signal,
         () => { throw new WorkspaceFailure('searchProtocolError'); });
     }
@@ -125,7 +136,8 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     const counts = { occurrences: matches.reduce((sum, match) => sum + match.occurrences + match.pathOccurrences, 0),
       matchingLines: matches.reduce((sum, match) => sum + match.matchingLines, 0), matchedFiles };
     return pageResult(records, 0, maxOutputBytes, (files) => ({
-      kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest, engine: 'PCRE2',
+      kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
+      engine: pattern.mode === 'path' ? 'RPCE path' : pattern.content.isRegex ? 'PCRE2' : 'Foundation',
       newlineView: 'CRLF and CR become LF; all other decoded text is preserved', counts,
       limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),
       returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files, limitations,
