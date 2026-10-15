@@ -54,12 +54,15 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
     await writeFile(path, saved);
   }
 });
-test('official MCP negotiation and EOF create no workspace during probes; CLI inputs are explicit', async () => {
+test('official MCP probes accept disabled provider deadlines and create no workspace; CLI inputs are explicit', async t => {
   await mkdir('test-output', { recursive: true });
   const base = await mkdtemp(join(tmpdir(), 'smip-mcp-cli-'));
+  const provider = await scriptedProvider(() => { throw new Error('No discovery request permitted during probes'); });
+  t.after(() => provider.close());
+  provider.config.policy.retry.provider.timeoutMs = 0;
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
-    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
+    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
   try {
@@ -79,6 +82,7 @@ test('official MCP negotiation and EOF create no workspace during probes; CLI in
   const result = await promisify(execFile)(process.execPath, [command, 'verify', '--bundle', base, '--mode', 'integrity'], { cwd: '/' }).catch(error => error);
   assert.equal(result.code, 1); assert.equal(JSON.parse(result.stdout).kind, 'failed');
   assert(!result.stderr.includes('processSpawned'));
+  assert.equal(provider.requests.length, 0);
   await writeFile(join(base, 'receipt.json'), JSON.stringify({ listedTools: 18, eofCode: 0, integrityCode: result.code }));
 });
 

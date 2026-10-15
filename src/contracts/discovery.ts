@@ -52,7 +52,7 @@ export type DiscoveryCall = Static<typeof DiscoveryCall>;
 export const callValidator = Compile(DiscoveryCall);
 export const RecoveryPolicy = Type.Object({
   retry: Type.Object({ enabled: Type.Boolean(), maxRetries: SafeCount, baseDelayMs: SafeCount,
-    maxAgentDelayMs: SafeCount, provider: Type.Object({ timeoutMs: Positive, maxRetries: SafeCount,
+    maxAgentDelayMs: SafeCount, provider: Type.Object({ timeoutMs: SafeCount, maxRetries: SafeCount,
       maxRetryDelayMs: SafeCount }, closed) }, closed),
   compaction: Type.Object({ enabled: Type.Boolean(), reserveTokens: SafeCount, keepRecentTokens: SafeCount }, closed),
   transport: Type.Enum(['auto', 'sse', 'websocket', 'websocket-cached']),
