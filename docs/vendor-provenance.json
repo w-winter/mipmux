@@ -5906,7 +5906,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
       "destination": "src/workspace/structure-index.ts",
-      "sha256": "f18caec5c5631d6e5a7b78f4f34a8fc0327e20bdf9f22ee26a01a9b090409e37",
+      "sha256": "8c14941646363a85dba25449010397d9ea9b88ad38aac5456685eafbfcbaa723",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5928,7 +5928,8 @@
       ],
       "changes": [
         "Bind admitted discoverable identities to immutable inventory and shared headless UUID ordering. Source/root admission and shared budgets retain production defaults from Models/WorkspaceCodemapAutomaticSelectionModels.swift:315-391.",
-        "Reject a refused root without charging counters, retain useful later roots, then apply the existing1024-target demand gate from Selection/WorkspaceSelectionMutationService.swift:107-143. Return typed rejections rather than throwing or truncating accepted targets."
+        "Reject a refused root without charging counters, retain useful later roots, then apply the existing1024-target demand gate from Selection/WorkspaceSelectionMutationService.swift:107-143. Return typed rejections rather than throwing or truncating accepted targets.",
+        "Project admitted captured source slots into source aggregate coverage separately from query admission. Rejected roots spend no allowance and contribute no issues for individual source files; target-demand rejection has unavailable aggregate coverage."
       ]
     },
     {
@@ -6144,7 +6145,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "a82c1ef60815761670418645dda1501121c4d61d4588404ba5adf50e6b21dbbd",
+      "sha256": "bcd675b50d67e12140a93c5f8928e4a151d8097dceb788f1133f6eb25b44d48b",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6155,7 +6156,8 @@
       "changes": [
         "Bind collection of current replies to automatic reacquisition through the existing pinned graph and draft owner. Replace observed material membership and its complete acquisition capture together only while map identity, revision and freeze generation match. Preserve revision and surviving inspection order; cancellation is checked before publishing the observation. Other draft orchestration remains owned by the existing runtime.",
         "Match MCPSelectionToolProvider.swift:616-687 persistence before automatic target acquisition. Prepare explicit materials and pure candidate metadata first, then commit explicit intent with live pending state before native target reads. Acquisition owns a copied candidate map. Apply completed materials and outcomes only while their captured owner, revision and finalization generation remain current. Preview is hypothetical. For draft_update, admit its receipt before committing the mutation. Prepare Git candidates separately.",
-        "Validate represented source-root identities before selection serving in automatic and manual modes, including required codemaps and zero-target queries. Root serving is independent of graph eligibility; per-root failure aggregation and remaining epoch/readiness contracts are separate."
+        "Validate represented source-root identities before selection serving in automatic and manual modes, including required codemaps and zero-target queries. Root serving is independent of graph eligibility; per-root failure aggregation and remaining epoch/readiness contracts are separate.",
+        "Project captured source issues and target-acquisition failures into pending/unmapped selection paths in stable file-UUID order. Coverage of the captured graph is separate from delivered-body measurement and acquisition completion."
       ]
     },
     {
@@ -6177,6 +6179,28 @@
       ],
       "changes": [
         "Bind independent source-root authority to the existing native declared/canonical/device/inode capability. Admit requested roots once per operation, retain native handles, and use a fresh root check before captured graph serving. Native I/O revalidates cached capabilities. Existing protected paths and overlapping-root ignore checks remain at RootPolicy. No new graph or capability manager is introduced."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "src/workspace/automatic-source-coverage.ts",
+      "sha256": "b9fc03bbffdc9418b021db5b6f5233da3bb0df1f83b0b382a269a2accdc9f38f",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          13028,
+          13054
+        ],
+        [
+          13139,
+          13151
+        ]
+      ],
+      "changes": [
+        "Classify the same captured slots used by native structure and resident accounting. Current unfenced admitted roots bind pending/notIndexed/excluded source states; ready-no-symbols remains covered.",
+        "Retain root status with valid-receipt semantics and the original Models/WorkspaceCodemapAutomaticSelectionModels.swift:218-233 aggregate precedence, including all-ok before issue aggregation. Slot absence means unsupported in the current headless classifier; Source SelectionCore.swift:400-435,540-589 supplies pending/unmapped presentation. Stable UUIDs for roots and files determine issue ordering."
       ]
     }
   ],

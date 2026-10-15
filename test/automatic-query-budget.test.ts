@@ -18,6 +18,7 @@ test('automatic source and root limits reject the whole input before target dema
   assert.equal(index.resolveAutomaticCodemapTargets(seeds).targets.length, 1);
   assert.deepEqual(index.resolveAutomaticCodemapTargets([...seeds, extra]), {
     kind: 'queryBudget', targets: [], rejections: [{ kind: 'sourceLimit', attempted: 4097, limit: 4096 }],
+    coverage: { status: 'unavailable', sourceIssues: [] },
   });
   for (const count of [64, 65]) {
     const names = Array.from({ length: count }, (_, index) => 'r' + index);
@@ -27,7 +28,7 @@ test('automatic source and root limits reject the whole input before target dema
     const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets(seeds);
     if (count === 64) assert.equal(result.targets.length, count);
     else assert.deepEqual(result, { kind: 'queryBudget', targets: [],
-      rejections: [{ kind: 'rootLimit', attempted: 65, limit: 64 }] });
+      rejections: [{ kind: 'rootLimit', attempted: 65, limit: 64 }], coverage: { status: 'unavailable', sourceIssues: [] } });
   }
 });
 
@@ -40,7 +41,7 @@ test('resolution budgets count distinct source-to-target edges rather than globa
     if (count === 100) assert.equal(result.targets.length, count);
     else assert.deepEqual(result, { kind: 'queryBudget', targets: [], rejections: [
       { kind: 'resolutionLimit', root: 'r', attempted: 101000, limit: 100000 },
-    ] });
+    ], coverage: { status: 'unavailable', sourceIssues: [] } });
   }
 });
 
@@ -55,7 +56,7 @@ test('unresolved-reference budgets count each source while suppressing duplicate
     if (count === 100) assert.deepEqual(result.targets, [peer]);
     else assert.deepEqual(result, { kind: 'queryBudget', targets: [], rejections: [
       { kind: 'referenceFailureLimit', root: 'r', attempted: 101000, limit: 100000 },
-    ] });
+    ], coverage: { status: 'unavailable', sourceIssues: [] } });
   }
 });
 
@@ -80,7 +81,7 @@ test('shared query allocation uses root UUID order rather than root alias order'
   const snapshot = { roots, entries: [...seeds, ...peers, otherSeed, other] };
   const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets([...seeds, otherSeed]);
   assert.deepEqual(result, { kind: 'queryBudget', targets: peers.slice().sort((a, b) => Buffer.compare(Buffer.from(a.path), Buffer.from(b.path))),
-    rejections: [{ kind: 'resolutionLimit', root: 'r', attempted: 1, limit: 0 }] });
+    rejections: [{ kind: 'resolutionLimit', root: 'r', attempted: 1, limit: 0 }], coverage: { status: 'partial', sourceIssues: [] } });
 });
 
 test('source admission overflow preserves explicit files and a verifiable packet through the public workspace API', async () => {

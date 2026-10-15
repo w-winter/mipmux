@@ -4,12 +4,15 @@ import { structureId } from './structure-identity.js';
 import { automaticQueryBudget, resolveAutomaticRoot, type AutomaticRootBudgetReason } from './automatic-root-query.js';
 import { captureStructureFiles } from './structure-files.js';
 import { evaluateStructureResidency, type StructureResidency, type GraphRevocation } from './structure-residency.js';
+import { automaticRootCoverage, aggregateAutomaticCoverage, type AutomaticCoverage, type AutomaticRootCoverage } from './automatic-source-coverage.js';
 
 export type StructureFile = Extract<InventoryEntry, { kind: 'file' }>;
-type AutomaticCodemapTargets =
+type AutomaticQueryResult =
   | { readonly kind: 'ready'; readonly targets: readonly StructureFile[] }
   | { readonly kind: 'queryBudget'; readonly targets: readonly StructureFile[]; readonly rejections: readonly QueryRejection[] }
   | { readonly kind: 'targetDemandLimit'; readonly targets: readonly []; readonly attempted: number; readonly limit: number };
+/** Query admission is separate from source coverage; an admitted query can have pending sources. */
+export type AutomaticCodemapTargets = AutomaticQueryResult & { readonly coverage: AutomaticCoverage };
 type QueryRejection =
   | { readonly kind: 'sourceLimit' | 'rootLimit'; readonly attempted: number; readonly limit: number }
   | (AutomaticRootBudgetReason & { readonly root: string })
@@ -60,26 +63,36 @@ export class StructureIndex {
     const sourceCount = [...grouped.values()].reduce((sum, group) => sum + group.length, 0);
     if (sourceCount > maximumRawSourceCount) return { kind: 'queryBudget', targets: [], rejections: [
       { kind: 'sourceLimit', attempted: sourceCount, limit: maximumRawSourceCount },
-    ] };
+    ], coverage: aggregateAutomaticCoverage([]) };
     if (grouped.size > maximumRootCount) return { kind: 'queryBudget', targets: [], rejections: [
       { kind: 'rootLimit', attempted: grouped.size, limit: maximumRootCount },
-    ] };
+    ], coverage: aggregateAutomaticCoverage([]) };
     const ordered = [...grouped].sort(([left], [right]) => compareBytes(this.#roots.get(left)!.id, this.#roots.get(right)!.id));
     const remaining = { ...automaticQueryBudget }, targets: StructureFile[] = [], rejections: QueryRejection[] = [];
+    const coverageRoots: AutomaticRootCoverage[] = [];
     for (const [name, sources] of ordered) {
       const root = this.#roots.get(name)!;
       if (root.residency === null) root.residency = evaluateStructureResidency(captureStructureFiles(root.root, root.entries), root.definitions);
-      if (root.residency.kind === 'revoked') { rejections.push({ kind: 'graphRevoked', root: name, reason: root.residency.reason }); continue; }
+      if (root.residency.kind === 'revoked') {
+        rejections.push({ kind: 'graphRevoked', root: name, reason: root.residency.reason });
+        coverageRoots.push({ status: 'unavailable', sourceIssues: [], targetCount: 0 }); continue;
+      }
       const result = resolveAutomaticRoot({ seeds: sources, definitions: root.definitions, budget: remaining });
-      if (result.kind === 'budget') { rejections.push({ root: name, ...result.reason }); continue; }
+      if (result.kind === 'budget') {
+        rejections.push({ root: name, ...result.reason });
+        coverageRoots.push({ status: 'unavailable', sourceIssues: [], targetCount: 0 }); continue;
+      }
+      coverageRoots.push(automaticRootCoverage(root.root, captureStructureFiles(root.root, sources), result.targets.length));
       for (const target of result.targets) targets.push(target);
       remaining.targets -= result.counts.targets; remaining.resolutions -= result.counts.resolutions;
       remaining.referenceFailures -= result.counts.referenceFailures; remaining.bytes -= result.counts.bytes;
     }
     if (targets.length > maximumCandidateDemandCount) {
-      return { kind: 'targetDemandLimit', targets: [], attempted: targets.length, limit: maximumCandidateDemandCount };
+      return { kind: 'targetDemandLimit', targets: [], attempted: targets.length, limit: maximumCandidateDemandCount,
+        coverage: aggregateAutomaticCoverage([]) };
     }
-    return rejections.length ? { kind: 'queryBudget', targets, rejections } : { kind: 'ready', targets };
+    const coverage = aggregateAutomaticCoverage(coverageRoots);
+    return rejections.length ? { kind: 'queryBudget', targets, rejections, coverage } : { kind: 'ready', targets, coverage };
   }
 
   #groupSources(seeds: readonly SourcePath[]): Map<string, StructureFile[]> {
