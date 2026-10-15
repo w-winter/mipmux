@@ -12,6 +12,7 @@ struct PreparedClipboardInput: Decodable {
     let codemapBlocks: [String]
     let contentBlocks: [String]
     let fileTreeContent: String
+    let selectedGitDiffs: [String]
     let gitDiff: String?
     let metaInstructions: [CapturedMeta]
     let userInstructions: String
@@ -25,7 +26,7 @@ struct PreparedClipboardOperation {
         let raw = try object.value("input")
         _ = try WireObject(raw, keys: [
             "duplicateUserInstructionsAtTop", "copyPreset", "storedPrompts", "codemapBlocks", "contentBlocks",
-            "fileTreeContent", "gitDiff",
+            "fileTreeContent", "selectedGitDiffs", "gitDiff",
             "metaInstructions", "userInstructions"
         ])
         let data = try JSONSerialization.data(withJSONObject: raw)
@@ -41,23 +42,29 @@ struct PreparedClipboardOperation {
         case .codeReview: BuiltInCopyPresets.codeReview
         }
         guard let includeFiles = preset.includeFiles, let includeUserPrompt = preset.includeUserPrompt,
-              let includeMetaPrompts = preset.includeMetaPrompts, let promptIDs = preset.storedPromptIds else {
+              let includeMetaPrompts = preset.includeMetaPrompts, let promptIDs = preset.storedPromptIds,
+              let gitInclusion = preset.gitInclusion
+        else {
             throw BridgeFailure("nativeProtocolError")
         }
         let selection = ClipboardMetaSelection(storedPrompts: input.storedPrompts, metaInstructions: [])
         let metas = selection.metaInstructions(for: PromptContextResolved(
             storedPromptIds: promptIDs, includeMetaPrompts: includeMetaPrompts
         )) + input.metaInstructions.map { MetaInstruction(title: $0.title, content: $0.content) }
+        // Caller-required evidence is independent of the preset's optional selected-artifact policy.
+        let selectedDiffs = gitInclusion == .none ? [] : input.selectedGitDiffs
+        let gitDiff = (selectedDiffs + [input.gitDiff].compactMap(\.self)).joined(separator: "\n\n")
         let text = RPCEClipboardPackaging.generatePreparedClipboardContent(
             metaInstructions: metas, userInstructions: input.userInstructions, codemapBlocks: input.codemapBlocks,
-            contentBlocks: input.contentBlocks, fileTreeContent: input.fileTreeContent, gitDiff: input.gitDiff,
+            contentBlocks: input.contentBlocks, fileTreeContent: input.fileTreeContent, gitDiff: gitDiff,
             includeSavedPrompts: !metas.isEmpty, includeFiles: includeFiles, includeUserPrompt: includeUserPrompt,
             includeDatetimeInUserInstructions: false, promptSectionsOrder: PromptAssemblyBuilder.defaultSectionOrder,
             disabledPromptSections: [],
             duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: nil
         )
         return ["kind": "preparedClipboard", "text": text, "preset": [
-            "kind": input.copyPreset.rawValue, "includeMetaPrompts": includeMetaPrompts,
+            "kind": input.copyPreset.rawValue, "gitInclusion": gitInclusion.rawValue,
+            "includeMetaPrompts": includeMetaPrompts,
             "storedPromptIds": promptIDs.map { $0.uuidString.lowercased() }
         ]]
     }

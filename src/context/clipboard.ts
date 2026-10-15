@@ -16,8 +16,8 @@ function partitionMaterials(materials: readonly Material[]) {
   const documents = sorted.filter(material => material.record.kind === 'document');
   const maps = materials.filter(material => material.record.kind === 'gitMap');
   const selectedPatches = materials.filter(material => material.record.kind === 'gitPatch');
-  const patches = [...selectedPatches, ...sorted.filter(material => material.record.kind === 'patch')];
-  return { codemaps, contents: [...maps, ...sources, ...documents], patches };
+  const patches = sorted.filter(material => material.record.kind === 'patch');
+  return { codemaps, contents: [...maps, ...sources, ...documents], selectedPatches, patches };
 }
 
 function contentBlock(material: Material): string {
@@ -34,6 +34,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
     contentBlocks: materials.contents.map(contentBlock),
     fileTreeContent: input.fileTree.text,
+    selectedGitDiffs: materials.selectedPatches.flatMap(material => material.bodies),
     gitDiff: materials.patches.length ? materials.patches.flatMap(material => material.bodies).join('\n\n') : null,
     metaInstructions: input.request.constraints ? [{ title: 'Constraints', content: input.request.constraints }] : [],
     userInstructions: input.prompt,
@@ -79,6 +80,7 @@ function consumeMetaInstructions(input: RenderInput, consume: Consume) {
 /** Reads source-default clipboard framing; never substitutes a TypeScript rendering for native assembly. */
 export function parseClipboard(input: RenderInput) {
   const bytes = Buffer.from(input.clipboard), materials = partitionMaterials(input.materials);
+  const patches = [...(input.clipboardPreset.gitInclusion === 'none' ? [] : materials.selectedPatches), ...materials.patches];
   const records: MaterialRecord[] = [], costs: ItemCost[] = [];
   let cursor = 0;
   const consume = (text: string): Span => {
@@ -108,9 +110,9 @@ export function parseClipboard(input: RenderInput) {
     consumeMaterialBlocks(materials.contents, consume, framed);
     consume('\n</file_contents>\n');
   }
-  const gitDiff = materials.patches.flatMap(material => material.bodies).join('\n\n');
+  const gitDiff = patches.flatMap(material => material.bodies).join('\n\n');
   if (gitDiff) consume('<git_diff>\n');
-  consumeMaterialBlocks(materials.patches, consume, raw);
+  consumeMaterialBlocks(patches, consume, raw);
   if (gitDiff) consume('\n</git_diff>\n');
   consumeMetaInstructions(input, consume);
   if (input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n');

@@ -14,7 +14,8 @@ import { BridgeClient } from '../src/native/bridge-client.js';
 const signal = () => new AbortController().signal;
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
-async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options)) {
+async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options),
+  presentation: Pick<ContextBuildRequest, 'copyPreset' | 'patches'> = { copyPreset: 'codeReview', patches: [] }) {
   const base = await mkdtemp(join(tmpdir(), 'smip-git-selection-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
@@ -24,7 +25,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
   await writeFile(join(root, 'file.txt'), 'changed\n');
   const request: ContextBuildRequest = { task: 'Retain exact historical evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
+    requiredSources: [], documents: [], ...presentation, storedPrompts: [],
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const runtime = makeRuntime({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
@@ -37,6 +38,42 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
   const select = (input: Partial<SelectionRequest>) => draft.manageSelection(
     selectionValidator.Parse(selectionValidator.Default({ maxOutputBytes: 100000, view: 'files', ...input })), signal());
   return { root, out, runtime, workspace, draft, diff, options, run, select };
+}
+
+for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) {
+  for (const required of [false, true]) test(`${copyPreset} Git export respects inclusion ${required ? 'with' : 'without'} caller-required evidence`, async () => {
+    const requiredBody = 'CALLER REQUIRED PATCH\n';
+    const f = await fixture(undefined, { copyPreset, patches: required ? [{ kind: 'suppliedPatch', id: 'required', root: 'r',
+      text: requiredBody, origin: 'fixture', comparison: { kind: 'supplied', base: 'before', target: 'after' }, coverage: [], targets: [] }] : [] });
+    try {
+      const published = await f.draft.publishGitSnapshot(f.diff, f.options, signal()); assert(published.kind === 'single');
+      const [map, patch] = published.projection.primarySelectionAliases; assert(map && patch);
+      await f.select({ op: 'set', paths: [map, patch], strict: true });
+      const patchText = await readFile(join(f.out, patch), 'utf8');
+      const selection = await f.select({ op: 'get', view: 'content' });
+      assert(selection.blocks?.join('\n').includes(patchText));
+      const costs = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+      assert(costs.kind === 'costs');
+      const includesSelectedPatch = copyPreset === 'codeReview';
+      assert.equal(costs.items.some(cost => 'id' in cost && cost.id === 'gitArtifact:' + patch), includesSelectedPatch);
+      const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');
+      const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
+      const expectedDiff = [includesSelectedPatch ? patchText : '', required ? requiredBody : ''].filter(Boolean).join('\n\n');
+      assert.equal(context.includes('<git_diff>'), !!expectedDiff);
+      if (expectedDiff) assert(context.includes('<git_diff>\n' + expectedDiff + '\n</git_diff>'));
+      assert(context.includes('File: ' + map + '\n```txt\n' + await readFile(join(f.out, map), 'utf8') + '\n```'));
+      assert.equal(ready.manifest.materials.some(material => material.kind === 'gitPatch'), includesSelectedPatch);
+      assert.equal(ready.manifest.materials.some(material => material.kind === 'patch'), required);
+      assert.equal(costs.measurement.bytes, Buffer.byteLength(context));
+      assert.equal(costs.measurement.units, ready.manifest.accounting.units);
+      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+      const inspected = await f.draft.inspect({ view: 'material', materialId: 'gitArtifact:' + patch,
+        maxOutputBytes: 100000, continuation: null }, signal());
+      assert('lines' in inspected); assert.equal(inspected.lines.map(line => line.text).join(''), patchText);
+      await writeFile(`test-output/git-preset-${copyPreset}-${required}.json`, JSON.stringify({ directory: ready.directory,
+        selection: selection.files, includesSelectedPatch, required, costs, manifest: ready.manifest }, null, 2) + '\n');
+    } finally { await f.runtime.close(); }
+  });
 }
 
 test('mutable exact Git aliases retain historical export order, MAP framing and saved/current verification', async () => {

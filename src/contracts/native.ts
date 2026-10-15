@@ -62,7 +62,7 @@ export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('re
   duplicateUserInstructionsAtTop: Type.Boolean(),
   copyPreset: ClipboardPreset, storedPrompts: Type.Array(StoredPrompt),
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
-  gitDiff: snippetText, userInstructions: Type.String(),
+  selectedGitDiffs: Type.Array(Type.String()), gitDiff: snippetText, userInstructions: Type.String(),
   metaInstructions: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
 }, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePromptAssemblyInput = Type.Object({ kind: Type.Literal('renderPromptAssembly'),
