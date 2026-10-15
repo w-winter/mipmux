@@ -6882,10 +6882,11 @@
       "changes": [
         "Parse captured admitted descriptors, compile primary valid path regexes, preserve path-suffix plans and source UTF-8 path-hit order, and apply the requested signed result limit. Content ordering uses the original Swift full-path comparison. Existing UTF-8 graph ordering is reused because it implements the same byte comparator.",
         "Regex cache scheduling is omitted for this per-request adapter. Original regex repairs and regex-to-glob/literal substitution remain pending the named source-search-regex-recovery decision. Invalid primary regexes return a typed error; no silent substitution is added.",
-        "Decode the two consumed filter fields once. Supply Foundation filename-extension metadata, preserve original descriptor ordinals through filtering, and return retained/omitted index partitions. Filtering occurs before path collection and content acquisition."
+        "Decode the two consumed filter fields once. Supply Foundation filename-extension metadata, preserve original descriptor ordinals through filtering, and return retained/omitted index partitions. Filtering occurs before path collection and content acquisition.",
+        "Primary path regex compilation shares the retained native worker cache, following SearchMatch.swift856-862; path matching, authorization and ordering remain captured-query operations rather than cached results."
       ],
       "classification": "handwritten",
-      "sha256": "995f4a69f920457ff6a737f2a74d74d7d76ae31fcc84d2a586d72843654c8cb1"
+      "sha256": "5604b4a9bbbdefb85529c9ff5d9d9504ac1563ed0b6b4d4636ae35d02316ad51"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7077,9 +7078,9 @@
       "classification": "retained",
       "changes": [
         "Retain primary engine choices, same-query generic paths after specialized plans decline, full-buffer/line strategies, source byte and match policies, start-line projection and empty-match behavior. Remove diagnostics-only perf begin/end/counter assignments. Narrow the dispatcher to an already-compiled regex engine; literal matching remains under its existing owner.",
-        "Primary compilation calls the existing native compiler directly instead of query-changing repair. Patterns compile per file rather than using the source cache; final workload measurements must determine whether retaining the original cache is needed. Recovery remains pending its named decision."
+        "Primary compilation uses the retained worker-owned cache and existing native compiler, excluding query-changing repair pending its named decision. The cache key preserves every original compilation option."
       ],
-      "sha256": "5dabc8341a79779ae55601dd9543a3c8e5cb66d4e4e133dfcacd67df49a9e3c3"
+      "sha256": "cc8a73a54ea08f502d9eb9a998a452386cdd935096b7e84422218540b1b5a50a"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7118,11 +7119,30 @@
         ]
       ],
       "classification": "retained",
-      "sha256": "20717c69a7d77bd74e6b870b3b5ed3f7439d26ce1fbb2880523cb12bfdecd97e",
+      "sha256": "ba933dd5391f5bb62d4a21293f10b73f1af3bcdf5e0c483b80d6fb3af6ba6fbb",
       "changes": [
         "Retain the literal count-only fast path, Foundation count and collected scanner in the existing native search namespace. Remove only diagnostics-only perf begin/end/defer statements (1983-2011) and the perf count assignment (2013). Source branch order, same-query specialized-plan declines, logical lines, PCRE2 line match policy and limit semantics remain unchanged.",
-        "Resolve the existing fuzzy converter through RPCESearchPattern and call the installed native compiler directly in place of RegexCache. As with the raw-regex adapter, compilation remains per file; final workload measurements must determine whether importing the original cache lifetime is needed."
+        "Resolve the existing fuzzy converter through RPCESearchPattern and the original cache through RPCESearchRegexCache. Repeated literal/fuzzy/whole-word compilation follows the original key, bounds and cost policy."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegexCache.swift",
+      "ranges": [
+        [
+          24,
+          62
+        ]
+      ],
+      "classification": "retained",
+      "changes": [
+        "Retain the original cache box, key containing pattern/case/multiline/JIT mode, countLimit256, totalCostLimit16MiB and estimated cost max(16KiB,4*patternUTF8Bytes). Cache lifetime is the native worker process. Known compile failures are not cached.",
+        "Replace the source static actor NSCache with private lock-owned state for Swift6 checking. macOS14 uses OSAllocatedUnfairLock(uncheckedState:) because Foundation NSCache is not Sendable and Mutex requires a newer macOS deployment; the cache is freshly allocated, never aliased outside its lock, and withLock only returns an existing Sendable compiled regex. Linux uses Synchronization.Mutex. All accesses use the same platform lock with no suspension, callbacks or IO. The worker already serializes requests; this adds no cross-worker serialization. Remove the macOS-specific storage constructor when the deployment minimum supports the checked Mutex API.",
+        "The source builds a generic content engine once per query, while the native bridge scans one captured file per call. Reuse the source cache policy across those per-file calls, including primary generic compilation, to avoid repeating query-level compilation work. Only immutable compiled expressions are retained, never match results, paths, capabilities or source bytes."
+      ],
+      "sha256": "59bc67dd0a4330deac018961c0738238e044123bfb57b88737f6993f80abbb90"
     }
   ],
   "dependencies": [
@@ -12897,6 +12917,12 @@
       "line": 1974,
       "name": "scanLiteral",
       "destination": "native/Sources/SmipBridge/RPCESearchLiteral.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 37,
+      "name": "RPCESearchRegexCache",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegexCache.swift"
     }
   ],
   "sourceCoverage": [

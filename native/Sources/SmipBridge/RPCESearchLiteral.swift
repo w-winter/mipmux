@@ -17,7 +17,7 @@ extension RPCESearchRegex {
 
         if fuzzySpaceMatching, needle.contains(" ") {
             let fuzzyPattern = RPCESearchPattern.convertSpacesToFuzzyRegex(needle)
-            let regex = try RepoPromptPCRE2Adapter.compile(RepoPromptPCRE2CompileRequest(
+            let regex = try RPCESearchRegexCache.pcre2Regex(for: RepoPromptPCRE2CompileRequest(
                 pattern: fuzzyPattern,
                 caseInsensitive: caseInsensitive,
                 multilineAnchors: false
@@ -44,7 +44,7 @@ extension RPCESearchRegex {
 
         if wholeWord {
             let escaped = RepoPromptPCRE2Adapter.escapedLiteral(needle)
-            let regex = try RepoPromptPCRE2Adapter.compile(RepoPromptPCRE2CompileRequest(
+            let regex = try RPCESearchRegexCache.pcre2Regex(for: RepoPromptPCRE2CompileRequest(
                 pattern: "\\b\(escaped)\\b",
                 caseInsensitive: caseInsensitive,
                 multilineAnchors: false
@@ -154,7 +154,7 @@ extension RPCESearchRegex {
         let fuzzyRegex: PCRE2Regex? = try {
             guard fuzzySpaceMatching, needle.contains(" ") else { return nil }
             let fuzzyPattern = RPCESearchPattern.convertSpacesToFuzzyRegex(needle)
-            return try RepoPromptPCRE2Adapter.compile(RepoPromptPCRE2CompileRequest(
+            return try RPCESearchRegexCache.pcre2Regex(for: RepoPromptPCRE2CompileRequest(
                 pattern: fuzzyPattern,
                 caseInsensitive: caseInsensitive,
                 multilineAnchors: false
@@ -188,7 +188,7 @@ extension RPCESearchRegex {
             guard fuzzyRegex == nil, wholeWord else { return nil }
             let escaped = RepoPromptPCRE2Adapter.escapedLiteral(needle)
             let pattern = "\\b\(escaped)\\b"
-            return try RepoPromptPCRE2Adapter.compile(RepoPromptPCRE2CompileRequest(
+            return try RPCESearchRegexCache.pcre2Regex(for: RepoPromptPCRE2CompileRequest(
                 pattern: pattern,
                 caseInsensitive: caseInsensitive,
                 multilineAnchors: false

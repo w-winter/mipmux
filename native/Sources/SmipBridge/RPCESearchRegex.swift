@@ -41,7 +41,7 @@ extension RPCESearchRegex {
         }
 
         func compilePCRE2(_ candidate: String) throws -> PCRE2Regex {
-            try RepoPromptPCRE2Adapter.compile(pcre2CompileRequest(candidate))
+            try RPCESearchRegexCache.pcre2Regex(for: pcre2CompileRequest(candidate))
         }
 
         if !wholeWord,
@@ -88,7 +88,7 @@ extension RPCESearchRegex {
                     lineMatchCount: result.lineMatchCount
                 )
             }
-            let fallbackRegex = try RepoPromptPCRE2Adapter.compile(fallbackRequest)
+            let fallbackRegex = try RPCESearchRegexCache.pcre2Regex(for: fallbackRequest)
             return try scanPCRE2Regex(fallbackRegex, in: document, countOnly: countOnly, maxCollectedMatches: maxCollectedMatches)
         case let .anchoredDeclaration(plan, fallbackRegex):
             if let result = plan.scanMatchingLines(
@@ -124,7 +124,7 @@ extension RPCESearchRegex {
                 )
             }
             let escaped = RepoPromptPCRE2Adapter.escapedLiteral(literal.needle)
-            let fallback = try RepoPromptPCRE2Adapter.compile(RepoPromptPCRE2CompileRequest(
+            let fallback = try RPCESearchRegexCache.pcre2Regex(for: RepoPromptPCRE2CompileRequest(
                 pattern: "\\b\(escaped)\\b",
                 caseInsensitive: literal.caseInsensitive,
                 multilineAnchors: false
@@ -207,7 +207,6 @@ extension RPCESearchRegex {
     }
 
     // swiftlint:enable function_body_length line_length opening_brace
-    // ponytail: Patterns compile per file; reuse the source cache if workload measurements show material compile cost.
     // swiftlint:disable:next function_parameter_count
     static func run(
         text: String, pattern: String, caseInsensitive: Bool, wholeWord: Bool, countOnly: Bool, limit: Int

@@ -92,7 +92,7 @@ struct SearchPathsInput {
         let hasWildcards = pattern.contains("*") || pattern.contains("?")
         let useRegex = isRegex && !(hasWildcards && !RPCESearchPattern.containsRegexSyntax(pattern))
         let suffix = useRegex ? RepoPromptPCRE2Adapter.pathSuffixPattern(forRegex: pattern) : nil
-        let regex = try useRegex && suffix == nil ? RepoPromptPCRE2Adapter.compile(RepoPromptPCRE2CompileRequest(
+        let regex = try useRegex && suffix == nil ? RPCESearchRegexCache.pcre2Regex(for: RepoPromptPCRE2CompileRequest(
             pattern: pattern, caseInsensitive: caseInsensitive, multilineAnchors: false
         )) : nil
         let aliases = files.reduce(into: [String: String]()) { $0[$1.standardizedRootFolderPath] = $1.alias }
