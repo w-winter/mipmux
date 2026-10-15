@@ -1,13 +1,22 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { SmipRuntime } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
+import { selectionValidator } from '../src/contracts/selection.js';
+import { verifyBundle } from '../src/index.js';
+import Type from 'typebox';
+import { Compile } from 'typebox/compile';
 
-async function fixture(outcome: 'held' | 'failFirst' = 'held') {
+const readinessReferences = Compile(Type.Array(Type.Object({ name: Type.String(), waitMilliseconds: Type.Integer(),
+  statuses: Type.Array(Type.Enum(['ready', 'pending'])), afterPresentationRelease: Type.Array(Type.Object({ workCompleted: Type.Boolean() })) })));
+const referenceCases = readinessReferences.Parse(JSON.parse(await readFile('test/fixtures/rpce-readiness-observer/expected.json', 'utf8')));
+
+async function fixture(outcome: 'held' | 'failFirst' = 'held',
+  beforeRead: ((request: Extract<NativeOperation, { kind: 'readSource' }>) => Promise<void>) | null = null) {
   const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-codemap-demand-')));
   const root = join(base, 'source'), output = join(base, 'out');
   await mkdir(join(root, 'private'), { recursive: true }); await mkdir(output);
@@ -21,6 +30,7 @@ async function fixture(outcome: 'held' | 'failFirst' = 'held') {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
+          if (operation.kind === 'readSource' && beforeRead) await beforeRead(operation);
           if (operation.kind === 'extract') {
             extractions++; entered(); await held;
             if (outcome === 'failFirst' && extractions === 1) throw new Error('Fixture extraction failed');
@@ -121,4 +131,83 @@ test('runtime shutdown cancels and joins owned codemap demand before completing'
     f.release(); await closing; await rejected; await lease.release();
     await writeFile(join(f.base, 'shutdown-demand-receipt.json'), JSON.stringify({ joined, extractions: f.extractions() }, null, 2) + '\n');
   } finally { f.release(); await operation.close(); await f.owner.close(); await f.runtime.close(); }
+});
+
+test('a readiness deadline releases only the reply observer while another demand retainer remains pending', async () => {
+  await mkdir('test-output', { recursive: true });
+  const sourceReadinessMilliseconds = referenceCases.find(entry => entry.name === 'ready-completion')!.waitMilliseconds;
+  const reference = referenceCases.find(entry => entry.name === 'pending-deadline-with-independent-retainer')!;
+  const f = await fixture(), signal = new AbortController().signal, client = f.runtime.createClient(null);
+  const other = await f.owner.openOperation(signal);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.base, 'source') }], exclusions: [], outputRoot: join(f.base, 'out') }, signal);
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+      duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: 'deadline-observer' }, signal);
+    const retained = await other.requestExplicitCodemap(f.source);
+    await f.entering;
+    let releasedForFailure = false, underlyingComplete = false;
+    void retained.result.then(() => { underlyingComplete = true; }, () => {});
+    // Release the fixture after a second readiness window so the regressed join fails instead of hanging the suite.
+    timer = setTimeout(() => { releasedForFailure = true; f.release(); }, 2 * sourceReadinessMilliseconds);
+    const pending = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+      op: 'set', mode: 'codemap_only', paths: ['r/private/Hidden.swift'], view: 'content', maxOutputBytes: 30000,
+    })), signal);
+    assert.equal(releasedForFailure, false, 'A reply must not join another retainer after its readiness deadline');
+    const underlyingCompleteBeforeReply = underlyingComplete;
+    assert.equal(underlyingCompleteBeforeReply, reference.afterPresentationRelease[0]!.workCompleted);
+    assert.equal(pending.revision, 1); assert.equal(pending.measurement.complete, false);
+    assert.deepEqual(pending.code_structure?.pending_paths, ['private/Hidden.swift']);
+    assert.deepEqual(pending.code_structure?.pending_paths?.map(() => 'pending'), reference.statuses);
+    f.release();
+    await retained.result; await retained.release();
+    const completed = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+      op: 'get', view: 'content', maxOutputBytes: 30000,
+    })), signal);
+    assert.equal(completed.revision, 1); assert(completed.blocks?.some(block => block.includes('Hidden')));
+    const finalized = await client.finalize(draft.id, signal); assert.equal(finalized.kind, 'ready');
+    if (finalized.kind === 'ready') await verifyBundle(finalized.directory);
+    await writeFile('test-output/codemap-readiness-observer-proof.json', JSON.stringify({ pending, completed, finalized,
+      releasedForFailure, underlyingCompleteBeforeReply, extractions: f.extractions() }, null, 2) + '\n');
+  } finally {
+    if (timer !== null) clearTimeout(timer);
+    f.release(); await other.close(); await client.close(); await f.owner.close(); await f.runtime.close();
+  }
+});
+
+test('rendering an already-ready codemap may finish after the presentation readiness deadline', async () => {
+  await mkdir('test-output', { recursive: true });
+  const reference = referenceCases.find(entry => entry.name === 'ready-completion')!;
+  const sourceReadinessMilliseconds = reference.waitMilliseconds;
+  let armed = false, releaseRead!: () => void;
+  const heldRead = new Promise<void>(resolve => { releaseRead = resolve; });
+  const f = await fixture('held', async request => {
+    if (armed && request.path === 'private/Hidden.swift') { armed = false; await heldRead; }
+  });
+  const signal = new AbortController().signal, client = f.runtime.createClient(null);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.base, 'source') }], exclusions: [], outputRoot: join(f.base, 'out') }, signal);
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+      duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: 'ready-render' }, signal);
+    f.release();
+    await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+      op: 'set', mode: 'codemap_only', paths: [join(f.base, 'source', f.source.path)], view: 'content', maxOutputBytes: 30000,
+    })), signal);
+    armed = true;
+    timer = setTimeout(releaseRead, 2 * sourceReadinessMilliseconds);
+    const completed = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+      op: 'get', view: 'content', maxOutputBytes: 30000,
+    })), signal);
+    assert.equal(armed, false); assert.equal(completed.revision, 1);
+    assert.equal(completed.measurement.complete, true);
+    assert.deepEqual(completed.files.map(() => 'ready'), reference.statuses);
+    assert(completed.blocks?.some(block => block.includes('Hidden')));
+    await writeFile('test-output/codemap-ready-render-proof.json', JSON.stringify({ completed }, null, 2) + '\n');
+  } finally {
+    if (timer !== null) clearTimeout(timer);
+    releaseRead(); f.release(); await client.close(); await f.owner.close(); await f.runtime.close();
+  }
 });

@@ -1,0 +1,23 @@
+{
+  "productionWaitMilliseconds": 10000,
+  "cases": [
+    {
+      "name": "ready-completion",
+      "behavior": "ready",
+      "waitMilliseconds": 10000,
+      "files": ["Ready.swift"]
+    },
+    {
+      "name": "pending-only-deadline",
+      "behavior": "pendingDeadline",
+      "waitMilliseconds": 50,
+      "files": ["PendingA.swift", "PendingB.swift"]
+    },
+    {
+      "name": "pending-deadline-with-independent-retainer",
+      "behavior": "sharedPendingDeadline",
+      "waitMilliseconds": 50,
+      "files": ["Shared.swift"]
+    }
+  ]
+}

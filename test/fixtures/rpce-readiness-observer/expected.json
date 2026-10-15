@@ -1,0 +1,129 @@
+[
+  {
+    "afterPresentationRelease": [
+      {
+        "file": "Ready.swift",
+        "retainCount": 0,
+        "taskCancellationRequested": true,
+        "waiterCount": 0,
+        "workCompleted": true
+      }
+    ],
+    "beforeRelease": [
+      {
+        "file": "Ready.swift",
+        "retainCount": 1,
+        "taskCancellationRequested": false,
+        "waiterCount": 0,
+        "workCompleted": true
+      }
+    ],
+    "deadlineReached": false,
+    "defensiveRoundLimitReached": false,
+    "followup": {
+      "noIndependentOwner": {}
+    },
+    "name": "ready-completion",
+    "statuses": [
+      "ready"
+    ],
+    "waitMilliseconds": 10000
+  },
+  {
+    "afterPresentationRelease": [
+      {
+        "file": "PendingA.swift",
+        "retainCount": 0,
+        "taskCancellationRequested": true,
+        "waiterCount": 0,
+        "workCompleted": false
+      },
+      {
+        "file": "PendingB.swift",
+        "retainCount": 0,
+        "taskCancellationRequested": true,
+        "waiterCount": 0,
+        "workCompleted": false
+      }
+    ],
+    "beforeRelease": [
+      {
+        "file": "PendingA.swift",
+        "retainCount": 1,
+        "taskCancellationRequested": false,
+        "waiterCount": 0,
+        "workCompleted": false
+      },
+      {
+        "file": "PendingB.swift",
+        "retainCount": 1,
+        "taskCancellationRequested": false,
+        "waiterCount": 0,
+        "workCompleted": false
+      }
+    ],
+    "deadlineReached": true,
+    "defensiveRoundLimitReached": false,
+    "followup": {
+      "noIndependentOwner": {}
+    },
+    "name": "pending-only-deadline",
+    "statuses": [
+      "pending",
+      "pending"
+    ],
+    "waitMilliseconds": 50
+  },
+  {
+    "afterPresentationRelease": [
+      {
+        "file": "Shared.swift",
+        "retainCount": 1,
+        "taskCancellationRequested": false,
+        "waiterCount": 0,
+        "workCompleted": false
+      }
+    ],
+    "beforeRelease": [
+      {
+        "file": "Shared.swift",
+        "retainCount": 2,
+        "taskCancellationRequested": false,
+        "waiterCount": 0,
+        "workCompleted": false
+      }
+    ],
+    "deadlineReached": true,
+    "defensiveRoundLimitReached": false,
+    "followup": {
+      "independentlyRetainedWorkCompleted": {
+        "afterOwnerRelease": [
+          {
+            "file": "Shared.swift",
+            "retainCount": 0,
+            "taskCancellationRequested": true,
+            "waiterCount": 0,
+            "workCompleted": true
+          }
+        ],
+        "beforeOwnerRelease": [
+          {
+            "file": "Shared.swift",
+            "retainCount": 1,
+            "taskCancellationRequested": false,
+            "waiterCount": 0,
+            "workCompleted": true
+          }
+        ],
+        "statuses": [
+          "ready"
+        ]
+      }
+    },
+    "name": "pending-deadline-with-independent-retainer",
+    "statuses": [
+      "pending"
+    ],
+    "waitMilliseconds": 50
+  }
+]

@@ -6096,11 +6096,12 @@
       ],
       "changes": [
         "Bind stale-currentness presentation to sourceChanged and policyChanged results from confined demand acquisition. Keep captured membership pending, log the cause and allow later get to reacquire. Cancellation and other errors propagate. The existing operation retains and shared allowance of 10000 ms provide headless ownership and waiting.",
-        "Every selection reply reacquires optional explicit codemap presentation, including already-rendered materials, through the existing operation. DraftRuntime replaces the presentation only if it still owns the captured material. Readiness and body changes do not advance the selection revision."
+        "Every selection reply reacquires optional explicit codemap presentation, including already-rendered materials, through the existing operation. DraftRuntime replaces the presentation only if it still owns the captured material. Readiness and body changes do not advance the selection revision.",
+        "Observe each demand lease with the presentation readiness signal, following WorkspaceCodemapPresentationCoordinator.swift:666-794, and stop observer work before ownership release at849-857. Deadline expiry returns pending without joining an independent retainer; body acquisition for already-ready demands remains outside that readiness deadline. Cancellation and unexpected failures still propagate; owned cleanup remains joined. Original-body evidence is in test/fixtures/rpce-readiness-observer/."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "c76eeecafe4c9e0f04f30a28ed2b41cd91959d726727727cb9eebac225b33dfa",
+      "sha256": "7529979b22b11838019eee9c1ef0d320014ea4038f1ffc1756c95ecb74a8c0f5",
       "classification": "handwritten"
     },
     {

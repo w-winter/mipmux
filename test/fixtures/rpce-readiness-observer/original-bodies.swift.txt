@@ -1,0 +1,434 @@
+// Verbatim RPCE ranges inside fixture declarations. See receipt.md and provenance.json.
+import Foundation
+
+let workspaceCodemapProductionDemandWaitMilliseconds = 10000
+
+struct WorkspaceCodemapPresentationRequestPolicy: Equatable {
+    static let `default` = Self()
+
+    let maximumReadinessRounds: Int
+    let initialBackoffMilliseconds: Int
+    let maximumBackoffMilliseconds: Int
+    let maximumTotalWait: Duration
+    let maximumCandidateDemandCount: Int
+
+    init(
+        maximumReadinessRounds: Int = 4096,
+        initialBackoffMilliseconds: Int = 25,
+        maximumBackoffMilliseconds: Int = 250,
+        maximumTotalWait: Duration = .milliseconds(workspaceCodemapProductionDemandWaitMilliseconds),
+        maximumCandidateDemandCount: Int = 1024
+    ) {
+        precondition(maximumReadinessRounds > 0)
+        precondition(initialBackoffMilliseconds > 0)
+        precondition(maximumBackoffMilliseconds >= initialBackoffMilliseconds)
+        precondition(maximumTotalWait >= .zero)
+        precondition(maximumCandidateDemandCount > 0)
+        self.maximumReadinessRounds = maximumReadinessRounds
+        self.initialBackoffMilliseconds = initialBackoffMilliseconds
+        self.maximumBackoffMilliseconds = maximumBackoffMilliseconds
+        self.maximumTotalWait = maximumTotalWait
+        self.maximumCandidateDemandCount = maximumCandidateDemandCount
+    }
+
+    func candidateDemandLimitIssue(
+        attemptedCount: Int
+    ) -> WorkspaceCodemapAutomaticSelectionIssue? {
+        guard attemptedCount > maximumCandidateDemandCount else { return nil }
+        return .budget(.targetDemandLimit(
+            attempted: attemptedCount,
+            limit: maximumCandidateDemandCount
+        ))
+    }
+}
+
+struct WorkspaceCodemapPresentationWaiter {
+    let sleep: @Sendable (Duration) async throws -> Void
+
+    static let production = Self { duration in
+        try await Task.sleep(for: duration)
+    }
+}
+
+private actor WorkspaceCodemapOperationPresentationOwnership {
+    struct Resources {
+        let tickets: [WorkspaceCodemapArtifactDemandTicket]
+        let bundles: [WorkspaceCodemapFrozenPresentationBundle]
+    }
+
+    private var ticketsByRetainID: [UUID: WorkspaceCodemapArtifactDemandTicket] = [:]
+    private var bundlesByID: [
+        WorkspaceCodemapFrozenPresentationBundleID: WorkspaceCodemapFrozenPresentationBundle
+    ] = [:]
+    private var bundleIDsInAcquisitionOrder: [WorkspaceCodemapFrozenPresentationBundleID] = []
+
+    func record(_ ownedResult: WorkspaceCodemapArtifactDemandOwnedResult) {
+        switch ownedResult.ownership {
+        case let .created(ticket), let .joined(ticket):
+            ticketsByRetainID[ticket.retainID] = ticket
+        case .notAcquired:
+            break
+        }
+    }
+
+    func record(_ bundle: WorkspaceCodemapFrozenPresentationBundle) {
+        if bundlesByID[bundle.id] == nil {
+            bundleIDsInAcquisitionOrder.append(bundle.id)
+        }
+        bundlesByID[bundle.id] = bundle
+    }
+
+    func tickets() -> [WorkspaceCodemapArtifactDemandTicket] {
+        ticketsByRetainID.values.sorted { $0.retainID.uuidString < $1.retainID.uuidString }
+    }
+
+    func owns(_ ticket: WorkspaceCodemapArtifactDemandTicket) -> Bool {
+        ticketsByRetainID[ticket.retainID] == ticket
+    }
+
+    func replaceConsumed(
+        _ oldTicket: WorkspaceCodemapArtifactDemandTicket,
+        with result: WorkspaceCodemapArtifactDemandResult
+    ) {
+        ticketsByRetainID.removeValue(forKey: oldTicket.retainID)
+        let replacement: WorkspaceCodemapArtifactDemandTicket? = switch result {
+        case let .pending(ticket): ticket
+        case let .ready(ready): ready.ticket
+        case .unavailable: nil
+        }
+        if let replacement {
+            ticketsByRetainID[replacement.retainID] = replacement
+        }
+    }
+
+    func drain() -> Resources {
+        let resources = Resources(
+            tickets: ticketsByRetainID.values.sorted { $0.retainID.uuidString < $1.retainID.uuidString },
+            bundles: bundleIDsInAcquisitionOrder.compactMap { bundlesByID[$0] }
+        )
+        ticketsByRetainID.removeAll()
+        bundlesByID.removeAll()
+        bundleIDsInAcquisitionOrder.removeAll()
+        return resources
+    }
+}
+
+extension WorkspaceFileContextStore {
+    private final class CodemapDemandCompletion: @unchecked Sendable {
+        private struct Waiter {
+            let continuation: CheckedContinuation<Void, Never>
+            var deadlineTask: Task<Void, Never>?
+        }
+
+        private let lock = NSLock()
+        private var didComplete = false
+        private var waitersByID: [UUID: Waiter] = [:]
+
+        var waiterCount: Int {
+            lock.withLock { waitersByID.count }
+        }
+
+        func wait(until deadline: ContinuousClock.Instant) async {
+            let waiterID = UUID()
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { continuation in
+                    guard !Task.isCancelled, ContinuousClock.now < deadline else {
+                        continuation.resume()
+                        return
+                    }
+
+                    lock.lock()
+                    guard !didComplete else {
+                        lock.unlock()
+                        continuation.resume()
+                        return
+                    }
+                    waitersByID[waiterID] = Waiter(
+                        continuation: continuation,
+                        deadlineTask: nil
+                    )
+                    lock.unlock()
+
+                    let deadlineTask = Task { [weak self] in
+                        try? await Task.sleep(until: deadline, clock: .continuous)
+                        guard !Task.isCancelled else { return }
+                        self?.resume(waiterID)
+                    }
+                    lock.lock()
+                    if waitersByID[waiterID] != nil {
+                        waitersByID[waiterID]?.deadlineTask = deadlineTask
+                        lock.unlock()
+                    } else {
+                        lock.unlock()
+                        deadlineTask.cancel()
+                    }
+                    if Task.isCancelled {
+                        resume(waiterID)
+                    }
+                }
+            } onCancel: {
+                self.resume(waiterID)
+            }
+        }
+
+        func wait() async {
+            let waiterID = UUID()
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { continuation in
+                    guard !Task.isCancelled else {
+                        continuation.resume()
+                        return
+                    }
+
+                    lock.lock()
+                    guard !didComplete else {
+                        lock.unlock()
+                        continuation.resume()
+                        return
+                    }
+                    waitersByID[waiterID] = Waiter(
+                        continuation: continuation,
+                        deadlineTask: nil
+                    )
+                    lock.unlock()
+
+                    if Task.isCancelled {
+                        resume(waiterID)
+                    }
+                }
+            } onCancel: {
+                self.resume(waiterID)
+            }
+        }
+
+        func resolve() {
+            lock.lock()
+            guard !didComplete else {
+                lock.unlock()
+                return
+            }
+            didComplete = true
+            let waiters = Array(waitersByID.values)
+            waitersByID.removeAll()
+            lock.unlock()
+
+            for waiter in waiters {
+                waiter.deadlineTask?.cancel()
+                waiter.continuation.resume()
+            }
+        }
+
+        private func resume(_ waiterID: UUID) {
+            lock.lock()
+            let waiter = waitersByID.removeValue(forKey: waiterID)
+            lock.unlock()
+            waiter?.deadlineTask?.cancel()
+            waiter?.continuation.resume()
+        }
+    }
+}
+
+struct OriginalCoordinator {
+    let store: WorkspaceFileContextStore
+    let policy: WorkspaceCodemapPresentationRequestPolicy
+    let waiter: WorkspaceCodemapPresentationWaiter
+
+    private struct DemandBatch {
+        let resultsByFileID: [UUID: WorkspaceCodemapArtifactDemandResult]
+        let deadlineReached: Bool
+        let defensiveRoundLimitReached: Bool
+    }
+
+    private func demand(
+        fileIDs: [UUID],
+        priority: CodeMapArtifactBuildPriority,
+        ownership: WorkspaceCodemapOperationPresentationOwnership,
+        clock: ContinuousClock,
+        deadline: ContinuousClock.Instant
+    ) async throws -> DemandBatch {
+        var orderedFileIDs: [UUID] = []
+        var seen = Set<UUID>()
+        for fileID in fileIDs where seen.insert(fileID).inserted {
+            orderedFileIDs.append(fileID)
+        }
+        var results: [UUID: WorkspaceCodemapArtifactDemandResult] = [:]
+        var ticketsByFileID: [UUID: WorkspaceCodemapArtifactDemandTicket] = [:]
+        for fileID in orderedFileIDs {
+            try Task.checkCancellation()
+            let ownedResult = await store.requestCodemapArtifactWithOwnership(
+                forFileID: fileID,
+                priority: priority
+            )
+            await ownership.record(ownedResult)
+            results[fileID] = ownedResult.result
+            ticketsByFileID[fileID] = ticket(from: ownedResult.result)
+        }
+
+        for round in 0 ..< policy.maximumReadinessRounds {
+            try Task.checkCancellation()
+            var hasPending = false
+            var hasBusy = false
+            var pendingTickets: [(fileID: UUID, ticket: WorkspaceCodemapArtifactDemandTicket)] = []
+            var retryAfter: [Int] = []
+            for fileID in orderedFileIDs {
+                guard let current = results[fileID] else { continue }
+                switch current {
+                case let .pending(ticket):
+                    let refreshed = await store.codemapArtifactDemandStatus(ticket)
+                    results[fileID] = refreshed
+                    if case let .pending(refreshedTicket) = refreshed {
+                        hasPending = true
+                        pendingTickets.append((fileID, refreshedTicket))
+                    }
+                    if case let .unavailable(.busy(milliseconds)) = refreshed {
+                        hasPending = true
+                        hasBusy = true
+                        if let milliseconds { retryAfter.append(milliseconds) }
+                    }
+                case let .unavailable(.busy(milliseconds)):
+                    hasPending = true
+                    hasBusy = true
+                    if let milliseconds { retryAfter.append(milliseconds) }
+                case .ready, .unavailable:
+                    break
+                }
+            }
+            guard hasPending,
+                  round + 1 < policy.maximumReadinessRounds,
+                  clock.now < deadline
+            else { break }
+
+            if !pendingTickets.isEmpty, !hasBusy {
+                let firstCompletion: (fileID: UUID, result: WorkspaceCodemapArtifactDemandResult)? = try await withThrowingTaskGroup(
+                    of: (fileID: UUID, result: WorkspaceCodemapArtifactDemandResult).self
+                ) { group in
+                    for pending in pendingTickets {
+                        group.addTask {
+                            try Task.checkCancellation()
+                            let result = await store.waitForCodemapArtifactDemandChange(
+                                pending.ticket,
+                                deadline: deadline
+                            )
+                            try Task.checkCancellation()
+                            return (pending.fileID, result)
+                        }
+                    }
+                    guard let first = try await group.next() else { return nil }
+                    group.cancelAll()
+                    return first
+                }
+                if let firstCompletion {
+                    results[firstCompletion.fileID] = firstCompletion.result
+                }
+                continue
+            }
+
+            try await wait(
+                round: round,
+                suggestedMilliseconds: retryAfter,
+                clock: clock,
+                deadline: deadline
+            )
+            for fileID in orderedFileIDs {
+                guard case .unavailable(.busy) = results[fileID] else { continue }
+                if let existingTicket = ticketsByFileID[fileID],
+                   await ownership.owns(existingTicket)
+                {
+                    let retried = await store.retryBusyCodemapArtifactDemand(
+                        existingTicket,
+                        priority: priority
+                    )
+                    let oldStatus = await store.codemapArtifactDemandStatus(existingTicket)
+                    if case .unavailable(.staleCurrentness) = oldStatus {
+                        await ownership.replaceConsumed(existingTicket, with: retried)
+                        ticketsByFileID[fileID] = ticket(from: retried)
+                    }
+                    results[fileID] = retried
+                } else {
+                    let ownedResult = await store.requestCodemapArtifactWithOwnership(
+                        forFileID: fileID,
+                        priority: priority
+                    )
+                    await ownership.record(ownedResult)
+                    results[fileID] = ownedResult.result
+                    ticketsByFileID[fileID] = ticket(from: ownedResult.result)
+                }
+            }
+        }
+        let stillWaiting = results.values.contains { result in
+            switch result {
+            case .pending, .unavailable(.busy): true
+            case .ready, .unavailable: false
+            }
+        }
+        let deadlineReached = clock.now >= deadline
+        return DemandBatch(
+            resultsByFileID: results,
+            deadlineReached: deadlineReached,
+            defensiveRoundLimitReached: stillWaiting && !deadlineReached
+        )
+    }
+
+    private func ticket(
+        from result: WorkspaceCodemapArtifactDemandResult
+    ) -> WorkspaceCodemapArtifactDemandTicket? {
+        switch result {
+        case let .pending(ticket): ticket
+        case let .ready(ready): ready.ticket
+        case .unavailable: nil
+        }
+    }
+
+    private func wait(
+        round: Int,
+        suggestedMilliseconds: [Int],
+        clock: ContinuousClock,
+        deadline: ContinuousClock.Instant
+    ) async throws {
+        try Task.checkCancellation()
+        let exponential = policy.initialBackoffMilliseconds << min(round, 3)
+        let suggested = suggestedMilliseconds.max() ?? exponential
+        let milliseconds = min(
+            policy.maximumBackoffMilliseconds,
+            max(policy.initialBackoffMilliseconds, suggested)
+        )
+        let remaining = clock.now.duration(to: deadline)
+        guard remaining > .zero else { return }
+        try await waiter.sleep(min(.milliseconds(milliseconds), remaining))
+        try Task.checkCancellation()
+    }
+
+    private func release(_ ownership: WorkspaceCodemapOperationPresentationOwnership) async {
+        let resources = await ownership.drain()
+        for bundle in resources.bundles {
+            _ = await store.releaseCodemapPresentation(bundle)
+        }
+        for ticket in resources.tickets {
+            _ = await store.cancelCodemapArtifactDemand(ticket)
+        }
+    }
+
+    // Fixture entrypoint, not RPCE's withPresentation preparation, rendering or publication flow.
+    func observeFixture(fileIDs: [UUID]) async throws -> FixtureDemandBatch {
+        let ownership = WorkspaceCodemapOperationPresentationOwnership()
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: policy.maximumTotalWait)
+        do {
+            let batch = try await demand(
+                fileIDs: fileIDs, priority: .demand, ownership: ownership,
+                clock: clock, deadline: deadline
+            )
+            let beforeRelease = await store.observations(fileIDs)
+            await release(ownership)
+            return FixtureDemandBatch(
+                resultsByFileID: batch.resultsByFileID,
+                deadlineReached: batch.deadlineReached,
+                defensiveRoundLimitReached: batch.defensiveRoundLimitReached,
+                beforeRelease: beforeRelease
+            )
+        } catch {
+            await release(ownership)
+            throw error
+        }
+    }
+}

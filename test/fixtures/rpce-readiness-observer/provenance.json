@@ -1,0 +1,138 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationCoordinator.swift",
+      "gitBlob": "ab68d3a946220d4636d9dbf0e9c3fb1bf7a92370",
+      "sha256": "fe470879b8d7dc22dfb865c33b58129873eace7a530ab5d364718a016e98e7c2",
+      "ranges": [
+        {
+          "name": "policyAndWaiter",
+          "startLine": 3,
+          "endLine": 50,
+          "sha256": "53b115c6b00df86e034d6d08a27d457525a3a20ea30e2fb2715bb7320f4289b3",
+          "compiled": true
+        },
+        {
+          "name": "ownership",
+          "startLine": 52,
+          "endLine": 113,
+          "sha256": "ec137b8e7baf120ec0c1be69905591efc14be101a17f8fb13ab5607b34c73d9a",
+          "compiled": true
+        },
+        {
+          "name": "demandBatch",
+          "startLine": 142,
+          "endLine": 146,
+          "sha256": "cf26ff102612a57e145fc8caead722446aa7766a33e8f10d1400ae1555301f52",
+          "compiled": true
+        },
+        {
+          "name": "demand",
+          "startLine": 666,
+          "endLine": 794,
+          "sha256": "2dca56d2ee63ff969d08ba08a44a953e59d59b090398d9add0fe110ba0e6d690",
+          "compiled": true
+        },
+        {
+          "name": "ticket",
+          "startLine": 796,
+          "endLine": 804,
+          "sha256": "6e1cb018996a7164713488e180edbb19d815c4aeabfdaec517f097c60a368259",
+          "compiled": true
+        },
+        {
+          "name": "wait",
+          "startLine": 830,
+          "endLine": 847,
+          "sha256": "fe4cb69dc01f889bd57e1e8e58ee417ded554b5e3690147f5e37abd1e4fe5695",
+          "compiled": true
+        },
+        {
+          "name": "release",
+          "startLine": 849,
+          "endLine": 857,
+          "sha256": "63f54403bb353d25daabedeb3ead4dbfe0f41f24093d6718e635c6c0b3ff7d4f",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "gitBlob": "ec254e6ab5e5f525653bf7a5240946607e41a6ea",
+      "sha256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "ranges": [
+        {
+          "name": "completionLatch",
+          "startLine": 559,
+          "endLine": 670,
+          "sha256": "2f6b304fcae22dac17f89b3b88d33b65a0f78405e966b5b4982a67c6ee33b0dc",
+          "compiled": true
+        },
+        {
+          "name": "storeWaitReferenceOnly",
+          "startLine": 14483,
+          "endLine": 14502,
+          "sha256": "e37de8575bc0af982c97bddc5dc7794f29cf833c5a0b317730362f7dd0acc317",
+          "compiled": false
+        },
+        {
+          "name": "storeCancellationReferenceOnly",
+          "startLine": 15441,
+          "endLine": 15519,
+          "sha256": "9ae334facf4912b50a577db4e44868bbac6eb06a5d5d43c75dbe114d8f6f2189",
+          "compiled": false
+        }
+      ]
+    },
+    {
+      "path": "LICENSE",
+      "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "ranges": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "generate.mjs",
+      "sha256": "d557848818b64c1dc92fbc3d6398473acb38a96c5fa6d7e9baf5682039d387c9"
+    },
+    {
+      "path": "adapter.swift",
+      "sha256": "a71e916595faf54a3f229ce37a00adaebfb12f703437a7faa3f26e6b5a3ccb37"
+    },
+    {
+      "path": "inputs.json",
+      "sha256": "8a7630ed0d2979c2c505664174242f228f3bafa814c9b433b4e58cd9defb8359"
+    },
+    {
+      "path": "original-bodies.swift.txt",
+      "sha256": "6537d5df78f3ab90d749680f207bb66bc5c5c7ccdff0aae7d0420431de155d1d"
+    },
+    {
+      "path": "store-reference-only.swift.txt",
+      "sha256": "fa95ab7272fd66eac1f1bf773e4dcfe96675ef80a592d2192f589dfbea0278f5"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "expected.json",
+      "sha256": "0887072028a0906e82f72305758b7cff0b379069c9b83713a8d5e4ef62b54958"
+    }
+  ],
+  "combinedCompilationSHA256": "34af3a4e455abae24662998ec1608a9a91ae4edee84ae44026f453046914831b",
+  "cases": 3,
+  "productionWaitMilliseconds": 10000,
+  "injectedPendingWaitMilliseconds": 50,
+  "extraction": "Every recorded range is verbatim, including indentation and final LF. Fixture declarations surround the ranges.",
+  "scope": "Original coordinator policy, ownership actor, demand, ticket, wait and release bodies; original Store completion latch. Retainer removal is modeled, not original Store cancellation execution.",
+  "normalization": "Random retain UUIDs are not emitted. File labels and input order identify observations. No elapsed-time measurement is used as an end-to-end duration claim.",
+  "limits": [
+    "Store request, status, completion publication and retain cancellation are fixture adapters with gated tasks, not app code.",
+    "Store cancellation and cleanup at 15441-15519 and its wait API at 14483-14502 are retained as uncompiled reference excerpts.",
+    "No app execution or proof of MCP duration bounds, matching, currentness, busy/retry equivalence, rendering, freezing, root setup or engine cleanup.",
+    "The short injected policy exercises the original deadline algorithm; production remains 10000ms."
+  ]
+}

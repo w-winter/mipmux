@@ -1,0 +1,102 @@
+// Reference only: these original Store bodies are not compiled by this fixture.
+// Retain removal is modeled by adapter.swift; full Store cleanup is outside the execution scope.
+    func waitForCodemapArtifactDemandChange(
+        _ ticket: WorkspaceCodemapArtifactDemandTicket,
+        deadline: ContinuousClock.Instant
+    ) async -> WorkspaceCodemapArtifactDemandResult {
+        guard codemapDemandIsCurrent(ticket),
+              let record = codemapSessionsByRootEpoch[ticket.rootEpoch]?
+              .demandsByFileID[ticket.fileID],
+              codemapTicketsShareDemand(record.ticket, ticket),
+              record.retainIDs.contains(ticket.retainID)
+        else {
+            return .unavailable(.staleCurrentness)
+        }
+
+        let current = codemapDemandResult(record.result, for: ticket)
+        guard case .pending = current, record.task != nil else {
+            return current
+        }
+        await record.completion.wait(until: deadline)
+        return codemapArtifactDemandStatus(ticket)
+    }
+
+    func cancelCodemapArtifactDemand(
+        _ ticket: WorkspaceCodemapArtifactDemandTicket,
+        deadline: ContinuousClock.Instant? = nil
+    ) async -> Bool {
+        guard codemapDemandIsCurrent(ticket),
+              var session = codemapSessionsByRootEpoch[ticket.rootEpoch],
+              var record = session.demandsByFileID[ticket.fileID],
+              codemapTicketsShareDemand(record.ticket, ticket),
+              record.retainIDs.remove(ticket.retainID) != nil
+        else {
+            return false
+        }
+        if !record.retainIDs.isEmpty {
+            session.demandsByFileID[ticket.fileID] = record
+            codemapSessionsByRootEpoch[ticket.rootEpoch] = session
+            return true
+        }
+        if case .unavailable(.cancelled) = record.result {
+            return true
+        }
+        let shouldRevokeReadyArtifact = if case .ready = record.result {
+            true
+        } else {
+            false
+        }
+
+        record.task?.cancel()
+        let presentationIDs = session.presentationRecordsByID.compactMap { id, presentation in
+            presentation.requestIDs.contains(ticket.requestID) ? id : nil
+        }
+        for id in presentationIDs {
+            session.presentationRecordsByID.removeValue(forKey: id)
+        }
+        let retainedBundle = session.bundlesByRequestID.removeValue(forKey: ticket.requestID)
+        record.result = .unavailable(.cancelled)
+        record.task = nil
+        session.demandsByFileID[ticket.fileID] = record
+        codemapSessionsByRootEpoch[ticket.rootEpoch] = session
+        retainedBundle?.close()
+        let cleanupTask = Task { [weak self] in
+            await self?.finishCancelledCodemapArtifactDemand(
+                ticket,
+                record: record,
+                engine: session.engine,
+                shouldRevokeReadyArtifact: shouldRevokeReadyArtifact
+            )
+            return ()
+        }
+        _ = await waitForCodemapSharedTask(cleanupTask, deadline: deadline)
+        return true
+    }
+
+    private func finishCancelledCodemapArtifactDemand(
+        _ ticket: WorkspaceCodemapArtifactDemandTicket,
+        record: CodemapDemandRecord,
+        engine: WorkspaceCodemapBindingEngine?,
+        shouldRevokeReadyArtifact: Bool
+    ) async {
+        if let engine {
+            await codemapCancellationCleanupHook(ticket)
+            _ = await engine.cancel(owner: record.owner)
+            if shouldRevokeReadyArtifact {
+                _ = await engine.revokeReadyArtifact(
+                    rootEpoch: ticket.rootEpoch,
+                    fileID: ticket.fileID,
+                    requestGeneration: ticket.requestGeneration
+                )
+            }
+        }
+        if var currentSession = codemapSessionsByRootEpoch[ticket.rootEpoch],
+           let currentRecord = currentSession.demandsByFileID[ticket.fileID],
+           codemapTicketsShareDemand(currentRecord.ticket, ticket),
+           currentRecord.retainIDs.isEmpty,
+           case .unavailable(.cancelled) = currentRecord.result
+        {
+            currentSession.demandsByFileID.removeValue(forKey: ticket.fileID)
+            codemapSessionsByRootEpoch[ticket.rootEpoch] = currentSession
+        }
+    }
