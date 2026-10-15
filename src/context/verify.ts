@@ -83,7 +83,8 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     units: rendered.measurement.units,
     allowance: rendered.measurement.allowance,
   }, { bytes: manifest.accounting.bytes, units: manifest.accounting.units, allowance: manifest.accounting.allowance });
-  return { verified: { kind: 'verified' as const, manifest }, materials, fileTree, automaticGit, clipboard: decodedBody(context) };
+  return { verified: { kind: 'verified' as const, manifest }, materials, fileTree, automaticGit, clipboard: decodedBody(context),
+    comparisonText: rendered.comparisonText };
 }
 function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
   return readRegularFile(join(directory, filename), new WorkspaceFailure('nonRegularBundleFile', { component: filename }), signal);

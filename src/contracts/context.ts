@@ -54,6 +54,7 @@ export type PromptEnhancementMode = Static<typeof PromptEnhancementMode>;
 export const ContextBuildRequest = Type.Object({
   clarification: Type.Optional(Clarification),
   duplicateUserInstructionsAtTop: Type.Boolean(),
+  includeDatetimeInUserInstructions: Type.Optional(Type.Boolean()),
   promptSectionsOrder: Type.Optional(PromptSectionsOrder),
   copyPreset: ClipboardPreset,
   storedPrompts: Type.Array(StoredPrompt),

@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "8e4f1d583016e5719ad4389475b6dafe069846bfdda81f91f6967a378949ed66",
+      "sha256": "17d12a845d28a4b7d9420cfe540fc160a7293b55d281a8d82084a831930a5bb2",
       "classification": "handwritten",
       "ranges": [
         [
@@ -23,7 +23,8 @@
         "Use the bound MCP clipboard respectGitInclusion route only. No ordinary PromptVM includeBeforeGitInclusion mode is introduced. Saved verification accepts the exact source preset projection without a native process; current verification replays native packaging. Required patch bytes follow included selected patch bytes as the explicit headless binding.",
         "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
         "Invoke automatic preassembly lazily from native Review eligibility; capture native text and evidence separately from selected artifacts and required patches. Parse its span and relative body proofs for exact accounting and native-free saved integrity.",
-        "Parse the captured section order, including repetitions, against retained material blocks. The manifest records the first canonical body/frame/tree/automatic-Git spans. Every repeated occurrence must equal those bytes and the parser must consume the whole packet. Aggregate all occurrence bytes per logical material before estimating item units. This reuses the existing saved verification model without duplicate material identities or redundant frame tables."
+        "Parse the captured section order, including repetitions, against retained material blocks. The manifest records the first canonical body/frame/tree/automatic-Git spans. Every repeated occurrence must equal those bytes and the parser must consume the whole packet. Aggregate all occurrence bytes per logical material before estimating item units. This reuses the existing saved verification model without duplicate material identities or redundant frame tables.",
+        "Parse the numeric datetime shape from actual user-instruction headers and require every repeated header to retain the same value. Preserve those bytes for archived integrity and accounting. For current presentation comparison only, remove the parsed attribute-value spans; material and role text, including date-like tags inside evidence, remain exact. Native clock values can differ between export and current verification; the comparison uses parser-proven attribute spans to isolate that variation."
       ]
     },
     {
@@ -31,7 +32,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "native/Sources/SmipBridge/PreparedClipboardInput.swift",
-      "sha256": "20a7f850d848321f1e42bc08cf3b7c4d81ef2c6f332f9c8f3a8fb28189fa27f4",
+      "sha256": "497daca1d02c7aa05db423342fa96f01e55cd3cb0ca2dea8225a2b91f53bbd2a",
       "classification": "handwritten",
       "ranges": [
         [
@@ -43,7 +44,8 @@
         "Bind selected-artifact inclusion to the retained built-in preset gitInclusion using the bound MCP clipboard respectGitInclusion route (MCPServerViewModel+WorkspaceContext.swift278-345). Standard/Plan suppress selected patch bodies, not ordinary MAP blocks. Review includes selected patch bodies in captured selection order.",
         "Caller-required PatchInput bodies are a headless request contract, not source optional selected artifacts or replaceable supplied packaging text. They remain complete after optional selected patches for every preset. Return the exact preset Git mode with the saved meta projection. Native eligibility requests the lazy automatic provider only when Review has no nonblank selected patch text. Automatic preassembly text precedes independent required patch bodies.",
         "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
-        "Forward the captured promptSectionsOrder to the retained PromptAssemblyBuilder through RPCEClipboardPackaging. Include every configured repetition; no second rendering path is added."
+        "Forward the captured promptSectionsOrder to the retained PromptAssemblyBuilder through RPCEClipboardPackaging. Include every configured repetition; no second rendering path is added.",
+        "Forward the captured includeDatetimeInUserInstructions setting into the retained formatter in Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift:351-371, SHA256 22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb. The omitted request setting uses the source false default. The original DateFormatter and wall-clock call remain unchanged."
       ]
     },
     {

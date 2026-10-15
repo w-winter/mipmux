@@ -113,7 +113,7 @@ function materialDiagnostics(materials: readonly Material[], units: number, allo
 /** Renders exact material bodies and byte spans without I/O or ambient state. */
 export function renderBundle(input: RenderInput) {
   const materials = input.materials;
-  const { records, costs, fileTreeSpan, automaticGitSpan } = parseClipboard(input);
+  const { records, costs, fileTreeSpan, automaticGitSpan, comparisonText } = parseClipboard(input);
   const context = input.clipboard, offset = Buffer.byteLength(context), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
   const measurement: Measurement = {
@@ -158,7 +158,7 @@ export function renderBundle(input: RenderInput) {
         diagnostics,
       }),
     );
-  return { context, handoff, records, costs, measurement, diagnostics, fileTreeSpan, automaticGitSpan };
+  return { context, handoff, records, costs, measurement, diagnostics, fileTreeSpan, automaticGitSpan, comparisonText };
 }
 
 function packetMetadata(record: MaterialRecord) {

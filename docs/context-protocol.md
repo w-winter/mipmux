@@ -6,6 +6,8 @@ Set `enhancementMode` to `fullRewrite`, `augment` or `preserve`. Rewrite lets di
 
 Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `metaPrompts` and `userInstructions`. Include each name at least once. Repeated names include repeated complete sections; every copy counts toward the budget. Omit the field for the default order listed here.
 
+Set `includeDatetimeInUserInstructions` to true when the user-instruction headers should include the native local datetime. Omission or false uses plain headers. Saved verification retains the captured timestamp; current verification treats only the actual header datetime values as clock-dependent presentation data.
+
 With `codeReview`, nonblank selected patch artifacts supply the Git section. When none supplies text, smip computes a diff for selected full files and slices. Omit `reviewGitBase` or use `HEAD` to compare against captured HEAD; another ref compares against its merge base with captured HEAD. Comparison object IDs are frozen for every checkout before any diff is acquired. Request `patches` remain complete and follow the selected or automatic Git text.
 
 Supply `initialSelection: { codemapMode: "automatic", sources: [] }` for an empty automatic starting selection, or include known starting files/slices. Use manual mode for an explicit codemap selection or a manual selection with no codemaps. Discovery can remove or replace initial sources; only `requiredSources` pins immutable representations. Keep initial and required representations identical when they name the same source.

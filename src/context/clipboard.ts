@@ -33,6 +33,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
   const materials = partitionMaterials(input.materials);
   return { kind: 'renderPreparedClipboard', input: {
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop,
+    includeDatetimeInUserInstructions: input.request.includeDatetimeInUserInstructions ?? false,
     promptSectionsOrder: [...(input.request.promptSectionsOrder ?? defaultPromptSectionsOrder)],
     copyPreset: input.request.copyPreset, storedPrompts: input.request.storedPrompts,
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
@@ -105,6 +106,28 @@ function consumeGitDiff(input: RenderInput, patches: readonly Material[], consum
   return automaticSpan;
 }
 
+function readInstructionDatetime(bytes: Buffer, offset: number): string {
+  const end = bytes.indexOf('"', offset);
+  if (end < 0) throw new WorkspaceFailure('invalidClipboard');
+  const value = bytes.subarray(offset, end).toString('utf8');
+  if (!/^\p{Decimal_Number}{4,}-\p{Decimal_Number}{2}-\p{Decimal_Number}{2}T\p{Decimal_Number}{2}:\p{Decimal_Number}{2}$/u.test(value)) {
+    throw new WorkspaceFailure('invalidClipboard');
+  }
+  return value;
+}
+
+/** Uses only parser-proven header spans for clock-neutral comparison; material bytes remain exact. */
+function withoutDatetimeValues(bytes: Buffer, spans: readonly Span[]): string {
+  const parts: Buffer[] = [];
+  let cursor = 0;
+  for (const span of spans) {
+    parts.push(bytes.subarray(cursor, span.offset));
+    cursor = span.offset + span.length;
+  }
+  parts.push(bytes.subarray(cursor));
+  return Buffer.concat(parts).toString('utf8');
+}
+
 /** Parses every ordered occurrence against canonical material bytes and charges all repetitions. */
 export function parseClipboard(input: RenderInput) {
   const bytes = Buffer.from(input.clipboard), materials = partitionMaterials(input.materials);
@@ -113,6 +136,7 @@ export function parseClipboard(input: RenderInput) {
     : materials.selectedPatches.filter(material => includedGitDiffs.has(material.record.id));
   const patches = [...selectedPatches, ...materials.patches];
   const records = new Map<string, MaterialRecord>(), costs = new Map<string, number>();
+  const datetimeSpans: Span[] = [];
   const charge = (id: string, bytes: number) => { costs.set(id, (costs.get(id) ?? 0) + bytes); };
   let cursor = 0;
   const consume = (text: string): Span => {
@@ -152,7 +176,17 @@ export function parseClipboard(input: RenderInput) {
       if (span && !capturedSpans.has('gitDiff')) capturedSpans.set('gitDiff', span);
     },
     metaPrompts: () => { consumeMetaInstructions(input, consume); },
-    userInstructions: () => { if (input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n'); },
+    userInstructions: () => {
+      if (!input.prompt) return;
+      if (!input.request.includeDatetimeInUserInstructions) {
+        consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n'); return;
+      }
+      consume('<user_instructions date="');
+      const date = readInstructionDatetime(bytes, cursor), first = datetimeSpans[0];
+      if (first && date !== bytes.subarray(first.offset, first.offset + first.length).toString('utf8')) throw new WorkspaceFailure('invalidClipboard');
+      datetimeSpans.push(consume(date));
+      consume('">\n' + input.prompt + '\n</user_instructions>\n');
+    },
   } satisfies Record<PromptSection, () => void>;
   if (input.request.duplicateUserInstructionsAtTop) sections.userInstructions();
   for (const section of input.request.promptSectionsOrder ?? defaultPromptSectionsOrder) sections[section]();
@@ -160,5 +194,6 @@ export function parseClipboard(input: RenderInput) {
   if (!fileTreeSpan) throw new WorkspaceFailure('invalidClipboard');
   if (cursor !== bytes.length) throw new WorkspaceFailure('invalidClipboard');
   return { records: [...records.values()], costs: [...costs].map(([id, bytes]): ItemCost => ({ id, bytes, units: estimateUnits(bytes) })),
-    fileTreeSpan, automaticGitSpan: capturedSpans.get('gitDiff') ?? null };
+    fileTreeSpan, automaticGitSpan: capturedSpans.get('gitDiff') ?? null,
+    comparisonText: datetimeSpans.length ? withoutDatetimeValues(bytes, datetimeSpans) : input.clipboard };
 }

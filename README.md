@@ -145,6 +145,8 @@ try {
 
 Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `metaPrompts` and `userInstructions`. Each name must occur at least once; repeated names emit complete repeated sections. Omit the field to use that default order. Item costs aggregate repeated material bodies and file blocks. Complete-packet measurement includes all copies and wrappers.
 
+Set `includeDatetimeInUserInstructions` to true to add the native local datetime to each nonempty user-instruction block. The default is false. Repeated blocks share one timestamp, and its bytes count toward the budget. Saved packets retain that timestamp; current verification compares the remaining presentation independently of the clock.
+
 `copyPreset` selects `standard`, `plan` or `codeReview`. Standard includes ordinary context. Plan selects the saved architect prompt with ID `8e81aac2-79ce-4897-a59e-efd81eebb7e9`; Review selects ID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b`. Supply the complete matching role in `storedPrompts`, an array of `{ id, title, content }` entries.
 
 Review exports nonblank selected patch artifacts first. When none supplies text, it acquires a Git diff for the selected full files and slices. A slice includes its file's complete diff. The optional `reviewGitBase` sets the comparison: omission, blank text and case-insensitive `HEAD` compare the working tree against captured HEAD; another ref compares against its merge base with captured HEAD. Each checkout's comparison is frozen before diff acquisition. Configure `git.executable` for Git-backed selections. Partial repository or comparison failures appear as explicit diagnostics in the Git section. Caller-supplied `patches` remain complete and follow the selected or automatic Git text in every preset.

@@ -59,6 +59,7 @@ export const NativeClipboardInput = Type.Object({ kind: Type.Literal('renderClip
 }, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('renderPreparedClipboard'), input: Type.Object({
   duplicateUserInstructionsAtTop: Type.Boolean(),
+  includeDatetimeInUserInstructions: Type.Boolean(),
   promptSectionsOrder: Type.Array(promptSection),
   copyPreset: ClipboardPreset, storedPrompts: Type.Array(StoredPrompt),
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),

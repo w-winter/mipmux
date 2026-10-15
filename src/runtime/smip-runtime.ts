@@ -15,7 +15,7 @@ import { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import type { DiscoveryRunner } from '../discovery/runner.js';
 import { ClientRuntime } from './client-runtime.js';
-import { preparedClipboardInput } from '../context/clipboard.js';
+import { parseClipboard, preparedClipboardInput } from '../context/clipboard.js';
 import { finalFileTreeInput } from '../context/final-tree.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import { observe } from '../workspace/observe.js';
@@ -204,7 +204,7 @@ export class SmipRuntime {
   }
   async #verifyCurrentBundle(directory: string, signal: AbortSignal) {
     signal.throwIfAborted();
-    const { verified,materials,fileTree,automaticGit,clipboard: savedClipboard } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
+    const { verified,materials,fileTree,automaticGit,comparisonText: savedComparison } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
     validateWorkspaceSpec({ roots:manifest.inventory.roots.map(root=>({name:root.name,absolutePath:root.identity.declaredPath})),
       exclusions:manifest.exclusions,outputRoot:manifest.inventory.outputRoot.declaredPath });
     const cache = await this.#admitCache();
@@ -224,10 +224,18 @@ export class SmipRuntime {
       await revalidateAutomaticReviewGit(operation, manifest.request, materials, automaticGit);
       const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), signal);
       if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
-      const clipboard = await this.renderPresentation(preparedClipboardInput({ request: manifest.request, prompt: manifest.prompt,
+      const input = { request: manifest.request, prompt: manifest.prompt,
         inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree,
-        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, automaticGit }), signal);
-      if (canonicalJSON(manifest.clipboardPreset) !== canonicalJSON(clipboard.preset) || savedClipboard !== clipboard.text) throw new WorkspaceFailure('presentationChanged');
+        automaticAcquisition: { kind: 'settled' as const, outcomes: manifest.automaticCodemaps }, automaticGit };
+      const clipboard = await this.renderPresentation(preparedClipboardInput(input), signal);
+      let comparison: string;
+      try { comparison = parseClipboard({ ...input, clipboard: clipboard.text, clipboardPreset: clipboard.preset,
+        selectedGitDiffIds: clipboard.selectedGitDiffIds }).comparisonText; }
+      catch (error) {
+        if (error instanceof WorkspaceFailure && error.code === 'invalidClipboard') throw new WorkspaceFailure('presentationChanged');
+        throw error;
+      }
+      if (canonicalJSON(manifest.clipboardPreset) !== canonicalJSON(clipboard.preset) || savedComparison !== comparison) throw new WorkspaceFailure('presentationChanged');
       return {...verified,kind:'currentVerified' as const};
     } finally { await operation.close(); }
   }
