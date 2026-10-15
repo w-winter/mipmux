@@ -1,6 +1,6 @@
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest, type DraftRuntime } from '../src/index.js';
@@ -11,13 +11,13 @@ import { prepareClipboard } from '../src/context/clipboard.js';
 import { finalFileTreeInput } from '../src/context/final-tree.js';
 import { canonicalJSON } from '../src/workspace/values.js';
 import { inventoryDigest } from '../src/workspace/artifact-store.js';
-import { failureResult } from '../src/runtime/tool-result.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { selectionValidator } from '../src/contracts/selection.js';
 
 const signal = () => new AbortController().signal;
 const maxOutputBytes = 100000;
@@ -165,7 +165,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 14);
+    assert.equal(ready.manifest.schemaVersion, 15);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -259,20 +259,52 @@ test('automatic codemaps retain a dependency accepted by the source decoder even
   } finally { await f.runtime.close(); }
 });
 
-test('inferred failure identifies the dependency and commits no explicit or inferred material', async () => {
-  const f = await fixture();
-  try {
-    const draft = await f.workspace.createDraft(request, signal());
-    await writeFile(join(f.directory, 'r/SharedB.swift'), 'struct ChangedRecord {}\n');
-    await assert.rejects(draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'upsert', selection: fullSeed } }, signal()), error => {
-      assert.deepEqual(failureResult(error), { kind: 'error', code: 'automaticCodemapUnavailable', source: { root: 'r', path: 'SharedB.swift' }, cause: 'sourceChanged' });
-      return true;
+test('optional inferred acquisition failure retains ready targets and records verifiable partial membership', async t => {
+  for (const admission of [false, true]) for (const cause of ['sourceChanged', 'notFound'] as const) await t.test((admission ? 'required admission/' : 'upsert/') + cause, async () => {
+    let armed = false;
+    const f = await fixture(async (path, pinned) => {
+      if (armed && pinned && path === 'SharedB.swift') {
+        armed = false;
+        const path = join(f.directory, 'r/SharedB.swift');
+        if (cause === 'sourceChanged') await writeFile(path, 'struct ChangedRecord {}\n');
+        else await rename(path, path + '.saved');
+      }
     });
-    assert.equal(draft.revision, 0); assert.deepEqual((await sources(draft)), []);
-    await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'clearCodemaps' } }, signal());
-    await draft.update({ expectedRevision: 1, maxOutputBytes, mutation: { kind: 'upsert', selection: fullSeed } }, signal());
-    assert.equal((await sources(draft)).length, 1);
-  } finally { await f.runtime.close(); }
+    try {
+      const pinned = await f.workspace.openOperation(signal()); await pinned.close();
+      const draft = admission ? null : await f.workspace.createDraft(request, signal());
+      armed = true;
+      const selected = draft ?? await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
+      if (draft) await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'upsert', selection: fullSeed } }, signal());
+      assert.equal(selected.revision, admission ? 0 : 1);
+      assert.deepEqual((await sources(selected)).map(item => item.selection.source.path).sort(), ['Peer.swift', 'Seed.swift', 'SharedA.swift']);
+      const reply = await selected.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'files', maxOutputBytes })), signal());
+      const paths = cause === 'sourceChanged' ? reply.code_structure?.pending_paths : reply.code_structure?.unmapped_paths;
+      assert.deepEqual(paths, ['r/SharedB.swift']);
+      const ready = await selected.finalize(signal()); assert(ready.kind === 'ready');
+      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+      const captured = Compile(Type.Object({ automaticCodemaps: Type.Array(Type.Object({
+        source: Type.Object({ root: Type.String(), path: Type.String() }), identity: Type.Object({ sha256: Type.String(), byteCount: Type.Integer() }),
+        artifactKey: Type.Object({ digest: Type.String(), canonicalBase64: Type.String() }),
+        outcome: Type.Union([Type.Object({ kind: Type.Literal('ready') }), Type.Object({ kind: Type.Literal('unavailable'), cause: Type.String() })]),
+      })) })).Parse(ready.manifest);
+      assert.equal(captured.automaticCodemaps.length, 3);
+      assert.deepEqual(captured.automaticCodemaps.filter(item => item.outcome.kind === 'unavailable').map(item => ({ source: item.source, outcome: item.outcome })),
+        [{ source: { root: 'r', path: 'SharedB.swift' }, outcome: { kind: 'unavailable', cause } }]);
+      for (const scenario of ['missing', 'duplicate', 'wrong-identity', 'claimed-ready'] as const) {
+        const table = structuredClone(captured.automaticCodemaps), failed = table.find(item => item.outcome.kind === 'unavailable'); assert(failed);
+        if (scenario === 'missing') table.splice(table.indexOf(failed), 1);
+        else if (scenario === 'duplicate') table.push(failed);
+        else if (scenario === 'wrong-identity') failed.identity.sha256 = '0'.repeat(64);
+        else failed.outcome = { kind: 'ready' };
+        await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON({ ...ready.manifest, automaticCodemaps: table }));
+        await assert.rejects(verifyBundle(ready.directory), /bundleIntegrityFailed/);
+      }
+      await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON(ready.manifest));
+      await mkdir('test-output', { recursive: true });
+      await writeFile('test-output/automatic-partial-' + (admission ? 'admission' : 'upsert') + '-' + cause + '-proof.json', JSON.stringify({ ready, captured, reply }, null, 2) + '\n');
+    } finally { await f.runtime.close(); }
+  });
 });
 
 test('held inferred acquisition cannot commit across cancellation, close, competing revision or freeze', async t => {

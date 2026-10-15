@@ -51,8 +51,5 @@ export function failureResult(error: unknown) {
   if (error instanceof WorkspaceFailure && code === 'revisionConflict') {
     return { kind: 'error', code, revision: error.details.revision };
   }
-  if (error instanceof WorkspaceFailure && code === 'automaticCodemapUnavailable') {
-    return { kind: 'error', code, source: error.details.source, cause: error.details.cause };
-  }
   return { kind: 'error', code };
 }

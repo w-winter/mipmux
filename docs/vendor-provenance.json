@@ -6100,6 +6100,41 @@
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
       "sha256": "c76eeecafe4c9e0f04f30a28ed2b41cd91959d726727727cb9eebac225b33dfa",
       "classification": "handwritten"
+    },
+    {
+      "destination": "src/contracts/automatic-codemaps.ts",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapAutomaticSelectionModels.swift",
+      "ranges": [
+        [
+          125,
+          203
+        ]
+      ],
+      "changes": [
+        "Bind source per-target ready/unavailable results to captured source paths, raw identities and artifact keys. The closed expected-I/O codes come from the existing confined read boundary; schema-version15 persists a complete outcome table. Cancellation and invariant failures are not unavailable outcomes."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "d1610e1932afff29aa10eead766733e2f12156679659caa51f39529659877377",
+      "sha256": "29b1155a23686539b77fe3759e871ba8a7da2fdd3154629d99c4c9fb755218a8",
+      "classification": "handwritten"
+    },
+    {
+      "destination": "src/context/automatic-codemap-acquisition.ts",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Selection/WorkspaceSelectionMutationService.swift",
+      "ranges": [
+        [
+          1140,
+          1244
+        ]
+      ],
+      "changes": [
+        "Retain ready targets when expected target acquisition fails. Reacquire existing inferred material against pinned identity, record every canonical candidate and propagate cancellation or unexpected errors. The existing workspace/native read owner replaces tickets owned by the app for these settled captured targets.",
+        "Pending/unmapped presentation binds MCPServerViewModel+SelectionCore.swift:504-583: currentness/transient failures are pending; missing/security/non-regular/terminal-artifact failures are unmapped. Counts of acquisition outcomes are separate from root graph-query coverage. Source readiness waiting and graph-epoch revalidation remain separate contracts."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
+      "sha256": "ec68eba6fca7b113c840df248a7f062902fd3fc8536f5f733b68be5b87ec8fc1",
+      "classification": "handwritten"
     }
   ],
   "dependencies": [

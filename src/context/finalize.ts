@@ -8,6 +8,7 @@ import { prepareRenderInput } from './final-tree.js';
 import { revalidateMaterials } from './revalidate.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
 import { refreshGitArtifactMaterials } from './git-artifact-material.js';
+import type { AutomaticCodemapOutcome } from '../contracts/automatic-codemaps.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -33,6 +34,7 @@ export class FinalizationOperation {
     codemapMode: CodemapMode,
     prompt: string,
     materials: readonly Material[],
+    automaticCodemaps: readonly AutomaticCodemapOutcome[],
     revision: number,
     signal: AbortSignal,
     private readonly publishing: () => void = () => {},
@@ -44,6 +46,7 @@ export class FinalizationOperation {
       codemapMode,
       prompt,
       materials,
+      automaticCodemaps,
       revision,
       AbortSignal.any([signal, this.#cancel.signal, operation.signal]),
     );
@@ -59,6 +62,7 @@ export class FinalizationOperation {
     codemapMode: CodemapMode,
     prompt: string,
     materials: readonly Material[],
+    automaticCodemaps: readonly AutomaticCodemapOutcome[],
     revision: number,
     signal: AbortSignal,
   ): Promise<FinalizationResult> {
@@ -82,8 +86,9 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 14,
+        schemaVersion: 15,
         codemapMode,
+        automaticCodemaps: [...automaticCodemaps],
         request,
         requestDigest: sha256(canonicalJSON(request)),
         inventory,

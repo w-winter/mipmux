@@ -209,11 +209,21 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   const sources = materials.flatMap(material => material.record.kind === 'source' ? [material.record] : []);
   const explicit = sources.filter(record => record.selectionOrigin === 'explicit');
   const inferred = sources.filter(record => record.selectionOrigin === 'inferred').map(record => record.id).sort();
-  if (manifest.codemapMode === 'manual') requireEqual(inferred, []);
+  if (manifest.codemapMode === 'manual') {
+    requireEqual(inferred, []); requireEqual(manifest.automaticCodemaps, []);
+  }
   else {
     if (explicit.some(record => record.selection.kind === 'codemap')) throw new WorkspaceFailure('bundleIntegrityFailed');
     const seeds = explicit.map(record => record.selection.source);
-    const expected = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds).targets.map(sourceId).sort() : [];
+    const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds).targets : [];
+    const byId = new Map(candidates.map(candidate => [sourceId(candidate), candidate]));
+    requireEqual(manifest.automaticCodemaps.map(item => sourceId(item.source)).sort(), [...byId.keys()].sort());
+    for (const outcome of manifest.automaticCodemaps) {
+      const candidate = byId.get(sourceId(outcome.source));
+      if (candidate?.structural.kind !== 'artifact') throw new WorkspaceFailure('bundleIntegrityFailed');
+      requireEqual(outcome.identity, candidate.identity); requireEqual(outcome.artifactKey, candidate.structural.key);
+    }
+    const expected = manifest.automaticCodemaps.filter(item => item.outcome.kind === 'ready').map(item => sourceId(item.source)).sort();
     requireEqual(inferred, expected);
   }
   return materials;

@@ -7,6 +7,7 @@ import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
 import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
 import { NativeFileTreeInput, NativeGitCheckout } from './native.js';
+import { AutomaticCodemapOutcome } from './automatic-codemaps.js';
 
 const closed = { additionalProperties: false };
 const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
@@ -154,8 +155,9 @@ export const MaterialRecord = Type.Union([
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(14),
+  schemaVersion: Type.Literal(15),
   codemapMode: CodemapMode,
+  automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
   request: ContextBuildRequest,
   requestDigest: SHA256,
   inventory: Type.Omit(InventorySnapshot, ['generation']),
