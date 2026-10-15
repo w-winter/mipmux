@@ -5,20 +5,25 @@
 import Foundation
 
 enum StructureAdjacency {
+    // swiftlint:disable:next cyclomatic_complexity
     static func snapshot(
         slots: [UUID: WorkspaceCodemapGraphSlot],
         nodes: [UUID: WorkspaceCodemapGraphSnapshotNode],
         coverage: WorkspaceCodemapGraphCatalogCoverage
-    ) throws -> WorkspaceCodemapGraphCommittedSnapshot {
+    ) throws -> WorkspaceCodemapGraphCommittedSnapshot? {
         let graphPolicy = WorkspaceCodemapGraphPolicy.initial
-        var definitions: [String: [UUID]] = [:]
+        var definitions: [String: Set<UUID>] = [:]
+        var references: [String: Set<UUID>] = [:]
         for (fileID, node) in nodes {
             for name in node.contribution.sortedUniqueDefinitions {
-                definitions[name, default: []].append(fileID)
+                definitions[name, default: []].insert(fileID)
+            }
+            for name in node.contribution.sortedUniqueReferences {
+                references[name, default: []].insert(fileID)
             }
         }
         var outgoing: [UUID: [WorkspaceCodemapGraphEdgeEvidence]] = [:]
-        var reverse: [UUID: [WorkspaceCodemapGraphEdgeEvidence]] = [:]
+        var reverse: [UUID: [UUID: WorkspaceCodemapGraphEdgeEvidence]] = [:]
         var unresolved: [UUID: [WorkspaceCodemapGraphUnresolvedRecord]] = [:]
         let utf8Precedes = WorkspaceCodemapGraphOrdering.utf8Precedes
         for (source, node) in nodes {
@@ -61,10 +66,35 @@ enum StructureAdjacency {
                     ambiguous: count > 1
                 )
                 sourceEvidence.append(evidence)
-                reverse[target, default: []].append(evidence)
+                reverse[target, default: [:]][source] = evidence
             }
             outgoing[source] = sourceEvidence
             unresolved[source] = sourceUnresolved
+        }
+        let size: WorkspaceCodemapGraphSizeAccounting
+        switch RPCEGraphSizeAccounting.fullSize(
+            slots: slots, nodes: nodes, definitions: definitions, references: references,
+            outgoing: outgoing, reverse: reverse, unresolved: unresolved
+        ) {
+        case let .size(value): size = value
+        case .cancelled: throw CancellationError()
+        case .overflow:
+            FileHandle.standardError.write(Data(
+                "{\"level\":\"warn\",\"event\":\"codemapGraphAccountingOverflow\"}\n".utf8
+            ))
+            return nil
+        }
+        let limits = graphPolicy.graphSizePolicy
+        for (dimension, attempted, limit) in [
+            ("nodes", size.nodes, limits.maxNodes),
+            ("postings", size.postings, limits.maxPostings),
+            ("edges", size.edges, limits.maxEdges),
+            ("bytes", size.bytes, limits.maxBytes)
+        ] where attempted > limit {
+            let diagnostic = "{\"level\":\"warn\",\"event\":\"codemapGraphSizeRejected\","
+                + "\"dimension\":\"\(dimension)\",\"attempted\":\(attempted),\"limit\":\(limit)}\n"
+            FileHandle.standardError.write(Data(diagnostic.utf8))
+            return nil
         }
         return WorkspaceCodemapGraphCommittedSnapshot(
             slotsByFileID: slots, nodesByFileID: nodes, outgoingEdgesBySource: outgoing,

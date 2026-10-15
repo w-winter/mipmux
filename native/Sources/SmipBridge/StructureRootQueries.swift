@@ -43,18 +43,31 @@ enum StructureRootQueries {
                     issues: [.sizeLimit]
                 )
             } else {
-                let pinned = try pinnedSnapshot(input.root, inventoryDigest: inventoryDigest)
-                raw = try RPCEGraphTraversal(rootEpoch: input.root.epoch).traverse(WorkspaceCodemapGraphStructureQuery(
-                    seedFileIDs: rootSeedIDs, direction: direction, maximumDepth: maximumDepth,
-                    budget: WorkspaceCodemapGraphQueryBudget(
-                        maximumTokenCount: budget.maximumTokenCount,
-                        maximumNodeCount: remainingNodes,
-                        maximumEdgeCount: remainingEdges,
-                        maximumGraphByteCount: remainingBytes,
-                        graphEvidenceTokenCount: budget.graphEvidenceTokenCount,
-                        renderTokenCount: budget.renderTokenCount
+                if let pinned = try pinnedSnapshot(input.root, inventoryDigest: inventoryDigest) {
+                    raw = try RPCEGraphTraversal(rootEpoch: input.root.epoch).traverse(
+                        WorkspaceCodemapGraphStructureQuery(
+                            seedFileIDs: rootSeedIDs, direction: direction, maximumDepth: maximumDepth,
+                            budget: WorkspaceCodemapGraphQueryBudget(
+                                maximumTokenCount: budget.maximumTokenCount,
+                                maximumNodeCount: remainingNodes,
+                                maximumEdgeCount: remainingEdges,
+                                maximumGraphByteCount: remainingBytes,
+                                graphEvidenceTokenCount: budget.graphEvidenceTokenCount,
+                                renderTokenCount: budget.renderTokenCount
+                            )
+                        ),
+                        pinned: pinned
                     )
-                ), pinned: pinned)
+                } else {
+                    raw = WorkspaceCodemapGraphStructureRootResult(
+                        rootEpoch: input.root.epoch, status: .unavailable, coverage: nil, updatesPending: false,
+                        reconciling: false, receipt: nil,
+                        seeds: rootSeedIDs.map { WorkspaceCodemapGraphStructureSeed(
+                            fileID: $0, standardizedRelativePath: nil, state: .notIndexed
+                        ) },
+                        nodes: [], edges: [], unresolved: [], truncation: nil, issues: [.graphRevoked]
+                    )
+                }
             }
             let seedPaths = Dictionary(uniqueKeysWithValues: rootSeedIDs
                 .map { ($0, input.root.name + "/" + files[$0]!.path) })
@@ -79,15 +92,26 @@ enum StructureRootQueries {
     private static func pinnedSnapshot(
         _ input: StructureInput.Root,
         inventoryDigest: String
-    ) throws -> WorkspaceCodemapGraphPinnedSnapshot {
+    ) throws -> WorkspaceCodemapGraphPinnedSnapshot? {
         let coverage = WorkspaceCodemapGraphCatalogCoverage(
             supportedCount: UInt64(input.files.count(where: { $0.state != nil })),
             classifiedCount: UInt64(input.files
                 .count(where: { $0.state != nil && $0.state != .pending })),
             isComplete: input.complete && !input.files.contains(where: { $0.state == .pending })
         )
-        let slots = Dictionary(uniqueKeysWithValues: input.files.compactMap { file in
-            file.state.map { (file.id, WorkspaceCodemapGraphSlot(standardizedRelativePath: file.path, state: $0)) }
+        let slots = Dictionary(uniqueKeysWithValues: input.files.compactMap { file -> (
+            UUID,
+            WorkspaceCodemapGraphSlot
+        )? in
+            guard let state = file.state else { return nil }
+            let snapshotState: WorkspaceCodemapGraphSlotState = switch state {
+            case .pending: .pending
+            case .contributed: .contributed(file.contribution)
+            case .empty: .empty(file.contribution)
+            case .terminalArtifact: .terminalArtifact
+            case .terminalExcluded: .terminalExcluded
+            }
+            return (file.id, WorkspaceCodemapGraphSlot(standardizedRelativePath: file.path, state: snapshotState))
         })
         let nodes = Dictionary(uniqueKeysWithValues: input.files
             .filter { $0.state == .contributed || $0.state == .empty }.map {
@@ -100,7 +124,8 @@ enum StructureRootQueries {
                     )
                 )
             })
-        let snapshot = try StructureAdjacency.snapshot(slots: slots, nodes: nodes, coverage: coverage)
+        guard let snapshot = try StructureAdjacency.snapshot(slots: slots, nodes: nodes, coverage: coverage)
+        else { return nil }
         return WorkspaceCodemapGraphPinnedSnapshot(
             snapshot: snapshot,
             receipt: WorkspaceCodemapGraphSnapshotReceipt(inventoryDigest: inventoryDigest),

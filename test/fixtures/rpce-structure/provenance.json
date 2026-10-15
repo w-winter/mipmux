@@ -1,7 +1,7 @@
 {
   "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
   "cases": 25,
-  "generatorSHA256": "e01f83287f06349015f85e51d2897a5d8cd9cf5f76aeaddaedcf8844dce61137",
+  "generatorSHA256": "4eaac25013111ca3943e91b0fe161baa09f0f5e64ec26bfd08823cef88b7dc92",
   "generator": "Swift execution of RPCE traversal, ordering, query policy, issue/path mapping, DTO and reply assembly extracted directly from the pinned reference source.",
   "bindings": [
     "Immutable input snapshot/adjacency and root aggregation adapter shared with the bridge; this fixture establishes the retained algorithm/output bodies, not independent equivalence of the adapter.",
@@ -50,6 +50,10 @@
     {
       "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
       "sha256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapSelectionGraphIncrementalModels.swift",
+      "sha256": "df1082c67de5355c422ea7c5c8f73cb4a8e46dddc80e788359ceacd8af15d1a7"
     }
   ],
   "generatorScript": "scripts/generate-structure-fixtures.mjs",

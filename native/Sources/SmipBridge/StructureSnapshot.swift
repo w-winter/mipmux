@@ -31,9 +31,24 @@ enum StructureSlotState: String {
     case pending, contributed, empty, terminalArtifact, terminalExcluded
 }
 
+enum WorkspaceCodemapGraphSlotState {
+    case pending
+    case contributed(StructureContribution)
+    case empty(StructureContribution)
+    case terminalArtifact
+    case terminalExcluded
+
+    var contribution: StructureContribution? {
+        switch self {
+        case let .contributed(value), let .empty(value): value
+        case .pending, .terminalArtifact, .terminalExcluded: nil
+        }
+    }
+}
+
 struct WorkspaceCodemapGraphSlot {
     let standardizedRelativePath: String
-    let state: StructureSlotState
+    let state: WorkspaceCodemapGraphSlotState
 }
 
 struct StructureContribution {
@@ -65,12 +80,12 @@ struct WorkspaceCodemapGraphCommittedSnapshot {
     let slotsByFileID: [UUID: WorkspaceCodemapGraphSlot]
     let nodesByFileID: [UUID: WorkspaceCodemapGraphSnapshotNode]
     let outgoingEdgesBySource: [UUID: [WorkspaceCodemapGraphEdgeEvidence]]
-    let reverseEdgesByTarget: [UUID: [WorkspaceCodemapGraphEdgeEvidence]]
+    let reverseEdgesByTarget: [UUID: [UUID: WorkspaceCodemapGraphEdgeEvidence]]
     let unresolvedBySource: [UUID: [WorkspaceCodemapGraphUnresolvedRecord]]
     let coverage: WorkspaceCodemapGraphCatalogCoverage
 
     func reverseEdges(target: UUID) -> [WorkspaceCodemapGraphEdgeEvidence] {
-        reverseEdgesByTarget[target] ?? []
+        Array((reverseEdgesByTarget[target] ?? [:]).values)
     }
 }
 
