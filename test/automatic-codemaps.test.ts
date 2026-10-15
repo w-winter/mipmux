@@ -307,6 +307,51 @@ test('optional inferred acquisition failure retains ready targets and records ve
   });
 });
 
+test('automatic selection get retries unavailable targets without overwriting a newer selection', async t => {
+  for (const scenario of ['recover', 'concurrent-manual'] as const) await t.test(scenario, async () => {
+    let action: 'change' | 'hold' | 'none' = 'change';
+    let entered!: () => void, release!: () => void;
+    const entering = new Promise<void>(resolve => { entered = resolve; }), held = new Promise<void>(resolve => { release = resolve; });
+    const f = await fixture(async (path, pinned) => {
+      if (!pinned || path !== 'SharedB.swift') return;
+      if (action === 'change') {
+        action = 'none'; await writeFile(join(f.directory, 'r/SharedB.swift'), 'struct ChangedRecord {}\n');
+      } else if (action === 'hold') { action = 'none'; entered(); await held; }
+    });
+    try {
+      const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
+      assert.equal((await sources(draft)).length, 3);
+      await writeFile(join(f.directory, 'r/SharedB.swift'), f.files['SharedB.swift']);
+      action = scenario === 'concurrent-manual' ? 'hold' : 'none';
+      const work = draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'files', maxOutputBytes })), signal());
+      const replies: Awaited<typeof work>[] = [];
+      if (scenario === 'concurrent-manual') {
+        const rejected = assert.rejects(work, /revisionConflict/);
+        await Promise.race([entering, rejected]);
+        await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'clearCodemaps' } }, signal());
+        release(); await rejected;
+        assert.equal(draft.revision, 1); assert.equal((await sources(draft)).length, 1);
+      } else {
+        const reply = await work;
+        replies.push(reply);
+        assert.equal(reply.revision, 0); assert.equal(draft.revision, 0);
+        assert.equal((await sources(draft)).length, 4);
+        assert(reply.files.some(file => file.path.endsWith('SharedB.swift')));
+        await writeFile(join(f.directory, 'r/SharedB.swift'), 'struct ChangedAgain { let title: String }\n');
+        const unavailable = await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'files', maxOutputBytes })), signal());
+        replies.push(unavailable);
+        assert.equal(unavailable.revision, 0); assert.equal((await sources(draft)).length, 3);
+        assert(!unavailable.files.some(file => file.path.endsWith('SharedB.swift')));
+        assert.deepEqual(unavailable.code_structure?.pending_paths, ['r/SharedB.swift']);
+      }
+      const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
+      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+      await mkdir('test-output', { recursive: true });
+      await writeFile('test-output/automatic-get-' + scenario + '-proof.json', JSON.stringify({ scenario, ready, replies }, null, 2) + '\n');
+    } finally { release(); await f.runtime.close(); }
+  });
+});
+
 test('held inferred acquisition cannot commit across cancellation, close, competing revision or freeze', async t => {
   for (const scenario of ['cancel', 'close', 'revision', 'freeze'] as const) await t.test(scenario, async () => {
     let entered!: () => void, release!: () => void, armed = false;

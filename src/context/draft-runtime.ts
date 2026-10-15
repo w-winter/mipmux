@@ -417,7 +417,9 @@ export class DraftRuntime {
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const prepared = await prepareSelection(operation, request, current, selection, grants);
-        const derived = request.op === 'get' ? { materials: current, automaticCodemaps: this.#automaticCodemaps }
+        const derived = request.op === 'get' ? await this.#derive(operation,
+          new Map([...current].filter(([, material]) => material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit')),
+          prepared.mode, revision)
           : await this.#prepareResolvedSelection(operation, prepared, current, [current], revision);
         const next = derived.materials;
         const candidate = this.#mutationChanges(current, next, prepared.state, this.#prompt);
@@ -429,7 +431,9 @@ export class DraftRuntime {
           this.#commit(next, prepared.state, this.#prompt, candidate.revision, derived.automaticCodemaps);
         }
         const settled = await resolveSelectedCodemaps(operation, next);
-        if (request.op !== 'preview') this.#retainCodemapPresentation(next, settled);
+        operation.signal.throwIfAborted();
+        if (request.op === 'get') this.#retainRefreshedPresentation(current, settled, derived.automaticCodemaps, revision, freezeGeneration);
+        else if (request.op !== 'preview') this.#retainCodemapPresentation(next, settled);
         const reply = await this.#selectionReply(operation, request, settled, prepared.mode, prepared.invalid,
           isMutation ? candidate.revision : revision, prompt, derived.automaticCodemaps);
         operation.signal.throwIfAborted();
@@ -474,6 +478,14 @@ export class DraftRuntime {
       }
     }
     this.#materials = next;
+  }
+  #retainRefreshedPresentation(captured: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>,
+    outcomes: readonly AutomaticCodemapOutcome[], revision: number, generation: number): void {
+    if (this.#closing || this.#state !== 'editable' || this.#materials !== captured || this.#revision !== revision || this.#freezeGeneration !== generation) return;
+    const next = new Map(captured);
+    for (const id of next.keys()) if (!settled.has(id)) next.delete(id);
+    for (const [id, material] of settled) next.set(id, material);
+    this.#materials = next; this.#automaticCodemaps = outcomes;
   }
   #automaticPresentationPaths(snapshot: InventorySnapshot, display: SelectionRequest['path_display'], outcomes: readonly AutomaticCodemapOutcome[]) {
     const unmapped: string[] = [], pending: string[] = [];

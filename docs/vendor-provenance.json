@@ -6135,6 +6135,23 @@
       "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
       "sha256": "ec68eba6fca7b113c840df248a7f062902fd3fc8536f5f733b68be5b87ec8fc1",
       "classification": "handwritten"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionReply.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
+      "destination": "src/context/draft-runtime.ts",
+      "sha256": "79bf2381c81b878cf06a9534eef2a4621cf6f4e700925bad0cc60c7e5d9d2d20",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          677,
+          699
+        ]
+      ],
+      "changes": [
+        "Bind collection of current replies to automatic reacquisition through the existing pinned graph and draft owner. Replace observed material membership and its complete acquisition capture together only while map identity, revision and freeze generation match. Preserve revision and surviving inspection order; cancellation is checked before publishing the observation. Other draft orchestration remains owned by the existing runtime."
+      ]
     }
   ],
   "dependencies": [
