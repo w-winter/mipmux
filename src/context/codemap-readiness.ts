@@ -35,7 +35,7 @@ type AttemptCompletion<T> =
 
 function pendingPresentation(material: Material): PendingPresentation | null {
   const record = material.record;
-  if (record.kind !== 'source' || record.selectionOrigin !== 'explicit' || record.selection.kind !== 'codemap') return null;
+  if (record.kind !== 'source' || record.selection.kind !== 'codemap') return null;
   if (record.artifactKey === null) throw new WorkspaceFailure('invalidArtifact');
   return freeze({ availability: 'pendingCodemap', record: { ...record, selection: record.selection,
     normalized: [], artifactKey: record.artifactKey }, bodies: [], sourceBlock: null });
@@ -100,6 +100,8 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
   const retains: { readonly material: PendingPresentation;
     readonly lease: Awaited<ReturnType<WorkspaceOperation['requestExplicitCodemap']>> }[] = [];
   const requestsByRoot = new Map<string, PendingPresentation[]>();
+  const inferredByRoot = new Map<string, PendingPresentation[]>();
+  const presentations: (() => void)[] = [];
   const admitted: PendingPresentation[] = [];
   const work: Promise<void>[] = [];
   const readinessClosed = new AbortController();
@@ -109,6 +111,13 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
     for (const captured of materials.values()) {
       const material = pendingPresentation(captured);
       if (material === null) continue;
+      if (material.record.selectionOrigin === 'inferred') {
+        const root = material.record.selection.source.root;
+        let inferred = inferredByRoot.get(root);
+        if (!inferred) { inferred = []; inferredByRoot.set(root, inferred); }
+        inferred.push(material);
+        continue;
+      }
       ready.set(material.record.id, material);
       const lease = await operation.requestExplicitCodemap(material.record.selection.source);
       retains.push({ material, lease });
@@ -136,12 +145,20 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
       })());
     }
     await Promise.all(work);
-    for (const [root, requests] of requestsByRoot) {
+    for (const root of new Set([...requestsByRoot.keys(), ...inferredByRoot.keys()])) {
+      const requests = requestsByRoot.get(root) ?? [], inferred = inferredByRoot.get(root) ?? [];
       if (requests.length > maximumCodemapPresentationEntriesPerRoot) {
         process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapPresentationLimitExceeded', root,
           attempted: requests.length, limit: maximumCodemapPresentationEntriesPerRoot }) + '\n');
         continue;
       }
+      const release = operation.retainCodemapPresentation(root);
+      if (release === null) {
+        for (const material of inferred) ready.set(material.record.id, material);
+        continue;
+      }
+      presentations.push(release);
+      if (!requests.length) continue;
       const rendered = await renderRootCodemaps(operation, requests);
       if (rendered.currentness === 'stale') currentness = 'stale';
       for (const material of rendered.materials) ready.set(material.record.id, material);
@@ -162,6 +179,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
   } finally {
     readinessClosed.abort();
     if (timer !== null) clearTimeout(timer);
+    for (const release of presentations) release();
     await Promise.all(retains.map(({ lease }) => lease.release()));
     await Promise.allSettled(work);
   }
@@ -173,7 +191,7 @@ function incompletePublication(mode: CodemapMode, presentation: CollectedPresent
     if (material.record.kind !== 'source' || material.record.selection.kind !== 'codemap') materials.set(id, material);
     else {
       const pending = pendingPresentation(material);
-      if (pending) materials.set(id, pending);
+      if (pending?.record.selectionOrigin === 'explicit') materials.set(id, pending);
     }
   }
   return { materials, automaticAcquisition: mode === 'automatic'

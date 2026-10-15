@@ -6114,7 +6114,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "cbbb7c0ef40eb2a88414b99c1bbe055001515f015e644fdf6b1f4bfc231ec082",
+      "sha256": "f87d27adb8a4d696b062fe54b7b123cc137581ad976a62fc9191adbe94c1001a",
       "classification": "handwritten"
     },
     {
@@ -6142,13 +6142,14 @@
         "Bind stale-currentness presentation to sourceChanged and policyChanged results from confined demand acquisition. Keep captured membership pending, log the cause and allow later get to reacquire. Cancellation and other errors propagate. The existing operation retains and shared allowance of 10000 ms provide headless ownership and waiting.",
         "Every selection reply reacquires optional explicit codemap presentation, including already-rendered materials, through the existing operation. DraftRuntime replaces the presentation only if it still owns the captured material. Readiness and body changes do not advance the selection revision.",
         "Observe each demand lease with the presentation readiness signal, following WorkspaceCodemapPresentationCoordinator.swift:666-794, and stop observer work before ownership release at849-857. Deadline expiry returns pending without joining an independent retainer; body acquisition for already-ready demands remains outside that readiness deadline. Cancellation and unexpected failures still propagate; owned cleanup remains joined. Original-body evidence is in test/fixtures/rpce-readiness-observer/.",
-        "Group ready exact-selection requests by logical root before body rendering. Apply WorkspaceFileContextStore.swift:373,15002-15017 entry admission at 4096 and MCPServerViewModel+SelectionCore.swift:591-602 pending disposition on rejection. Ready-no-symbols outcomes count; terminal-unavailable artifacts do not. Required membership participates in the same count and remains required while pending; publication requires a complete presentation. Other roots remain eligible. No live bundle registry or desktop retention policy is introduced. Original-body evidence is in test/fixtures/rpce-presentation-limit/.",
+        "Group ready exact-selection requests by logical root before body rendering. Apply WorkspaceFileContextStore.swift:373,15002-15017 entry admission at 4096 and MCPServerViewModel+SelectionCore.swift:591-602 pending disposition on rejection. Ready-no-symbols outcomes count; terminal-unavailable artifacts do not. Required membership participates in the same count and remains required while pending; publication requires a complete presentation. Other roots remain eligible. Original-body evidence is in test/fixtures/rpce-presentation-limit/.",
         "Render ready exact requests as one staged batch per root, matching WorkspaceFileContextStore.swift:15109-15116,15180-15253 and coordinator460-494. Sort canonical paths with the existing headless file UUID tie-break. Return only the first nonrenderable file as terminal unmapped and keep its ready siblings pending; source/policy staleness discards the entire staged root. Captured raw identity, artifact key and executable mode are checked before classifying a nonrenderable result and after complete rendering. These native confined reads bind serving authority to the pinned snapshot rather than watcher-backed handles; they do not establish epoch/publication-retry equivalence. Original renderer, coordinator and diagnostic evidence is in test/fixtures/rpce-root-presentation/.",
-        "Bind Coordinator208-345,849-947 selection attempts with a nil requested count to the existing operation: one captured intent, two attempts sharing the monotonic source deadline, demand retained through assembly and confined publication checks, release before retry, and codemap-free incomplete publication on stale exhaustion. Automatic acquisition is repeated from captured targets; incomplete automatic observations use the existing pending acquisition state and withhold inferred materials. The native identity/key/mode checks bind immutable serving authority rather than reproducing watcher epochs or Store receipts. test/fixtures/rpce-presentation-retry/ executes original wrapper, classifier and ownership release under scripted clocks and receipts."
+        "Bind Coordinator208-345,849-947 selection attempts with a nil requested count to the existing operation: one captured intent, two attempts sharing the monotonic source deadline, demand retained through assembly and confined publication checks, release before retry, and codemap-free incomplete publication on stale exhaustion. Automatic acquisition is repeated from captured targets; incomplete automatic observations use the existing pending acquisition state and withhold inferred materials. The native identity/key/mode checks bind immutable serving authority rather than reproducing watcher epochs or Store receipts. test/fixtures/rpce-presentation-retry/ executes original wrapper, classifier and ownership release under scripted clocks and receipts.",
+        "Share WorkspaceFileContextStore.swift:372,15031-15034 retained-record admission across explicit and inferred ready roots. WorkspaceRuntime owns at most 64 root reservations; WorkspaceOperation and the presentation attempt release exact owned reservations after assembly and serving checks, including failure, cancellation and stale retry. Capacity rejection makes only that root pending and does not trigger a stale retry. Pending inferred material retains its acquired-artifact outcome but has no rendered bodies, preventing incomplete publication. Native confined checks remain the authority for pinned roots; watcher epoch and frozen Store handle equivalence are separate obligations."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "6a5d83ea94cbec149c0146091f4d5d953b1f203ce5ec78a0635b2120799509e0",
+      "sha256": "0fbdfccfbff008b7a177770f8958d4aafb58a5290700a3ba62dfa98cbfe3e9f0",
       "classification": "handwritten"
     },
     {
@@ -6384,8 +6385,20 @@
       "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
       "ranges": [
         [
+          372,
+          373
+        ],
+        [
           14381,
           14454
+        ],
+        [
+          15031,
+          15034
+        ],
+        [
+          15386,
+          15400
         ],
         [
           16801,
@@ -6394,10 +6407,11 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "e4ef72cc9f7bf43f2581e4674e10f5420aa3b23d691bfa03ef10dd094da36298",
+      "sha256": "0018c73e574c0aa35be1c26c81e46ff62724fd3a7d3593ce0c13f185abe27d13",
       "classification": "handwritten",
       "changes": [
-        "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework."
+        "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework.",
+        "WorkspaceFileContextStore.swift:372-373,15031-15034,15386-15400: Bind the number of retained presentations to the existing workspace owner, with an idempotent release for each reservation. Logical root aliases identify the already-pinned physical roots for the workspace lifetime. Operations and drafts share reservations, separately from artifact demands and the per-presentation entry limit."
       ]
     },
     {

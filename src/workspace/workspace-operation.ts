@@ -29,6 +29,7 @@ export class WorkspaceOperation {
   #bridge: BridgeClient | null = null;
   readonly #pending = new Set<Promise<unknown>>();
   readonly #codemapRetains = new Set<() => Promise<void>>();
+  readonly #codemapPresentations = new Set<() => void>();
   #closing: Promise<void> | null = null;
   constructor(private readonly baseSnapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
     signal: AbortSignal,
@@ -106,6 +107,15 @@ export class WorkspaceOperation {
       this.#codemapRetains.add(release);
       return { result: lease.result, release };
     });
+  }
+  retainCodemapPresentation(root: string): (() => void) | null {
+    this.#check();
+    if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
+    const retained = this.catalog.owner.retainCodemapPresentation(root);
+    if (retained === null) return null;
+    const release = () => { retained(); this.#codemapPresentations.delete(release); };
+    this.#codemapPresentations.add(release);
+    return release;
   }
   materializeExplicitSource(source: SourcePath) {
     return this.#track(async () => {
@@ -408,6 +418,7 @@ export class WorkspaceOperation {
   close(): Promise<void> {
     this.#closing ??= (async () => {
       this.cancel();
+      for (const release of this.#codemapPresentations) release();
       try { await Promise.all([...this.#codemapRetains].map(release => release())); await this.#bridge?.close(); }
       finally { await Promise.allSettled([...this.#pending]); await this.release(); }
     })();

@@ -19,6 +19,9 @@ interface CodemapDemand {
   readonly result: Promise<FileEntry>;
 }
 
+// RPCE WorkspaceFileContextStore's retained presentation records per root session.
+const maximumRetainedCodemapPresentationsPerRoot = 64;
+
 export class WorkspaceRuntime {
   readonly #controller = new AbortController();
   #references = 0;
@@ -32,6 +35,7 @@ export class WorkspaceRuntime {
   readonly #managed = new Map<string, ManagedRegistration>();
   readonly #managedViews = new WeakMap<InventorySnapshot, { revision: number; snapshot: InventorySnapshot }>();
   readonly #codemapDemands = new Map<string, CodemapDemand>();
+  readonly #codemapPresentations = new Map<string, Set<symbol>>();
   readonly #gitArtifacts = new Map<string, CatalogedGitArtifact>();
   #managedRevision = 0;
   constructor(readonly key: string, readonly declaration: PolicyDeclaration, private roots: readonly OpenRoot[],
@@ -104,6 +108,24 @@ export class WorkspaceRuntime {
         root: entry.root, path: entry.path }) + '\n');
     })();
     return { result: owned.result, release };
+  }
+
+  /** Returns an idempotent release for one root presentation, or null at capacity; closed workspaces reject admission. */
+  retainCodemapPresentation(root: string): (() => void) | null {
+    if (this.#closing) throw new WorkspaceFailure('workspaceClosed');
+    let records = this.#codemapPresentations.get(root);
+    if (records && records.size >= maximumRetainedCodemapPresentationsPerRoot) {
+      process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapRetainedPresentationLimitExceeded',
+        workspaceKey: this.key, root, limit: maximumRetainedCodemapPresentationsPerRoot }) + '\n');
+      return null;
+    }
+    if (!records) { records = new Set(); this.#codemapPresentations.set(root, records); }
+    const owned = records, record = Symbol();
+    owned.add(record);
+    return () => {
+      owned.delete(record);
+      if (!owned.size && this.#codemapPresentations.get(root) === owned) this.#codemapPresentations.delete(root);
+    };
   }
 
   async #refreshManaged(access: NativeAccess): Promise<void> {
@@ -238,6 +260,7 @@ export class WorkspaceRuntime {
       await this.bridge.close(); await this.#flight;
       await Promise.allSettled(demands.map(demand => demand.result));
       this.#codemapDemands.clear();
+      this.#codemapPresentations.clear();
       this.onClosed();
     })();
     return this.#closing;

@@ -16,7 +16,7 @@ export interface SettledMaterial {
 type CodemapSelection = Extract<SourceSelection, { kind: 'codemap' }>;
 interface PendingCodemapMaterial {
   readonly availability: 'pendingCodemap';
-  readonly record: Extract<MaterialRecord, { kind: 'source'; selectionOrigin: 'explicit' }> & {
+  readonly record: Extract<MaterialRecord, { kind: 'source' }> & {
     readonly selection: CodemapSelection;
     readonly normalized: []; readonly artifactKey: ArtifactKey;
   };
@@ -84,7 +84,7 @@ async function captureExplicitCodemap(operation: WorkspaceOperation, selection: 
   const source = await operation.readRawSource(selection.source);
   const entry = operation.snapshot.entries.find(entry => entry.root === selection.source.root && entry.path === selection.source.path);
   if (entry?.kind === 'file' && entry.structural.kind === 'pending' && !required) {
-    const fields: Omit<PendingCodemapMaterial['record'], 'decoding'> & { readonly required: false } = { kind: 'source', selectionOrigin: 'explicit', id: sourceId(selection.source),
+    const fields: Omit<Extract<PendingCodemapMaterial['record'], { selectionOrigin: 'explicit' }>, 'decoding'> & { readonly required: false } = { kind: 'source', selectionOrigin: 'explicit', id: sourceId(selection.source),
       required: false, selection, identity: source.identity, mode: descriptorGitMode(source.fingerprint.mode),
       normalized: [], artifactKey: entry.structural.key, spans: [], frame: null };
     const record = entry.decoding.kind === 'decoded' ? { ...fields, decoding: entry.decoding } : { ...fields, decoding: entry.decoding };
