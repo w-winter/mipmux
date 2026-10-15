@@ -6119,7 +6119,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "f87d27adb8a4d696b062fe54b7b123cc137581ad976a62fc9191adbe94c1001a",
+      "sha256": "6c984c7e92ad636558dd238f29d5460ec78a07d424c2212390aa7e48e44ef109",
       "classification": "handwritten"
     },
     {
@@ -6712,6 +6712,70 @@
         "Five deterministic outputs come from standalone compilation of the original struct, estimator and calculation, original makeTokenStats and original Codable TokenStats. The generator records every source range and hash; the driver supplies existing file-token totals without executing cache or acquisition code."
       ],
       "sha256": "437d50957c64aa68dd7c5db963ea884aa06801cfb9974375c1fdf26b0370e2e4"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RPCESearchPattern.swift",
+      "ranges": [
+        [
+          3072,
+          3159
+        ],
+        [
+          3172,
+          3177
+        ]
+      ],
+      "changes": [
+        "Retain the regex detector and flexible-space literal converter in a non-actor namespace. Expose the converter to the wire adapter and reuse the installed native regex toolkit and literal escaping. Preserve method bodies, branch order and source layout."
+      ],
+      "classification": "retained",
+      "sha256": "97911b075471a2eeea155689a52ac1e6b2f6b7914c9ff432d05e39f6310c13f3"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
+      "destination": "native/Sources/SmipBridge/SearchPatternInput.swift",
+      "ranges": [
+        [
+          711,
+          718
+        ],
+        [
+          755,
+          756
+        ]
+      ],
+      "changes": [
+        "Decode one current text-query shape. Apply the source trim, empty-pattern diagnostic and omitted-regex inference. Prepare separate path/content patterns; literal-space content uses the original fuzzy converter and bypasses whole-word matching as in SearchMatch.swift1764-1778 and2032-2075. Path searches ignore the whole-word flag.",
+        "This adapter prepares patterns only. Automatic mode routing, limits on results, path globbing and regex repairs remain separate conformance requirements."
+      ],
+      "classification": "handwritten",
+      "sha256": "3db7ade0a5177ceaa4a60a92a1d120b950d322888966de31caa0f6768e41ec6e"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "test/fixtures/rpce-search-pattern/cases.json",
+      "ranges": [
+        [
+          3072,
+          3159
+        ],
+        [
+          3172,
+          3177
+        ]
+      ],
+      "changes": [
+        "The generator compiles original inference, PCRE feature detection, flexible-space conversion and literal escaping. Its driver applies the provider trim/inference rules and selects path/content flags. These cases establish pattern preparation, not the complete search engine or result contract."
+      ],
+      "classification": "fixture",
+      "sha256": "abbdad17a113ba93cc153f29ae441e54adbd01e530a3b8b5dec80568f1b3e80c"
     }
   ],
   "dependencies": [
@@ -12378,6 +12442,18 @@
       "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
       "destination": "native/Sources/SmipBridge/RPCEAutomaticReviewGitRendering.swift",
       "line": 427
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "destination": "native/Sources/SmipBridge/RPCESearchPattern.swift",
+      "name": "containsRegexSyntax",
+      "line": 3072
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "destination": "native/Sources/SmipBridge/RPCESearchPattern.swift",
+      "name": "convertSpacesToFuzzyRegex",
+      "line": 3172
     }
   ],
   "sourceCoverage": [

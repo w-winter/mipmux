@@ -8,12 +8,18 @@ import { prepareText, type PreparedText } from './lines.js';
 import { runRipgrep, encodedText } from './ripgrep.js';
 import { pageIdentity, pageOffset } from './continuation.js';
 import { pageResult, serializedBytes, type ResultEncoding } from './output-budget.js';
+import type { PreparedSearchPattern } from '../contracts/search-pattern.js';
 
 export interface SearchFile {
   readonly root: string; readonly path: string; readonly identity: SourceIdentity;
   readonly pathMatch: boolean; readonly pathOccurrences: number; readonly occurrences: number;
   readonly matchingLines: number;
   readonly lines: readonly { number: number; text: string; matching: boolean }[];
+}
+
+function patternFlags(base: readonly string[], pattern: PreparedSearchPattern, caseSensitive: boolean): string[] {
+  return [...base, caseSensitive ? '--case-sensitive' : '--ignore-case',
+    ...(!pattern.isRegex ? ['--fixed-strings'] : []), ...(pattern.wholeWord ? ['--word-regexp'] : []), '-e', pattern.text];
 }
 
 export async function fileSearch(operation: WorkspaceOperation, request: SearchRequest, encode?: ResultEncoding) {
@@ -37,11 +43,13 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   const offset = pageOffset(continuation, digest);
   const matches = candidates.map(() => ({ pathOccurrences: 0, occurrences: 0, matchingLines: 0, lastLine: 0 }));
   const flags = ['--pcre2', '--json', '--no-config', '--encoding', 'none', '--no-ignore', '--hidden', '--threads', '1', '--sort', 'path'];
+  let pathFlags = flags, contentFlags = flags;
   if (request.query.kind !== 'glob') {
-    flags.push(request.query.caseSensitive ? '--case-sensitive' : '--ignore-case');
-    if (request.query.kind === 'literal') flags.push('--fixed-strings');
-    if (request.query.wholeWord) flags.push('--word-regexp');
-    flags.push('-e', request.query.text);
+    const pattern = await operation.prepareSearchPattern({ kind: 'prepareSearchPattern', text: request.query.text,
+      queryKind: request.query.kind, wholeWord: request.query.wholeWord });
+    if (pattern.kind === 'searchPatternError') throw new WorkspaceFailure('invalidSearchPattern', { message: pattern.message });
+    pathFlags = patternFlags(flags, pattern.path, request.query.caseSensitive);
+    contentFlags = patternFlags(flags, pattern.content, request.query.caseSensitive);
   }
   const limitations: { root: string; path: string; code: string }[] = [];
   const workRoot = join(operation.runtime.options.cachePath, 'v1/work');
@@ -66,7 +74,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       if (request.query.kind === 'glob') {
         candidates.forEach((candidate, index) => { if (posix.matchesGlob(candidate.path, request.query.text)) matches[index]!.pathOccurrences = 1; });
       } else {
-        await runRipgrep(operation.runtime.supervisor, executable, [...flags, '--null-data'], directory,
+        await runRipgrep(operation.runtime.supervisor, executable, [...pathFlags, '--null-data'], directory,
           candidates.map(candidate => candidate.path + '\0').join(''), operation.signal, match => {
             const found = matches[match.line_number - 1];
             if (!found) throw new WorkspaceFailure('searchProtocolError');
@@ -107,7 +115,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       current++; text = null; matching = new Set();
     };
     if (request.mode !== 'path' && temporaryCount) {
-      await runRipgrep(operation.runtime.supervisor, executable, [...flags, '--', '.'], directory, '', operation.signal, async match => {
+      await runRipgrep(operation.runtime.supervisor, executable, [...contentFlags, '--', '.'], directory, '', operation.signal, async match => {
         const filename = encodedText(match.path);
         if (!/^\.\/[0-9]+$/.test(filename)) throw new WorkspaceFailure('searchProtocolError');
         const index = Number(filename.slice(2));
@@ -124,7 +132,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       });
     }
     if (request.mode === 'content' && !temporaryCount) {
-      await runRipgrep(operation.runtime.supervisor, executable, flags, directory, '', operation.signal,
+      await runRipgrep(operation.runtime.supervisor, executable, contentFlags, directory, '', operation.signal,
         () => { throw new WorkspaceFailure('searchProtocolError'); });
     }
     while (current < candidates.length) flush();

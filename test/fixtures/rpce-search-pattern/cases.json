@@ -1,0 +1,776 @@
+[
+  {
+    "name": "inferred-0",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "needle",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "needle",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "needle",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-1",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": " \n^anchor$",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "^anchor$",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "^anchor$",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-2",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "func()",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "func()",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "func()",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-3",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "(foo|bar)",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "(foo|bar)",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "(foo|bar)",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-4",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "foo|bar",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "foo|bar",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "foo|bar",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-5",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "|foo",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "|foo",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "|foo",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-6",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "foo|",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "foo|",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "foo|",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-7",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": " | ",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "|",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "|",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-8",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "\\bword",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\bword",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "\\bword",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-9",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "\\w+",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\w+",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "\\w+",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-10",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "\\n",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\n",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "\\n",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-11",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "^$",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "^$",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "^$",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-12",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a.*b",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "a.*b",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "a.*b",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-13",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a.+b",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "a.+b",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "a.+b",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-14",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "[ab]",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "[ab]",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "[ab]",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-15",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "][",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "][",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "][",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-16",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a{2,3}",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "a{2,3}",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "a{2,3}",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-17",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a{,}",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "a{,}",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "a{,}",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-18",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a{٢}",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "a{٢}",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "a{٢}",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-19",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a{no}",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "a{no}",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "a{no}",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-20",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "^word",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "^word",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "^word",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-21",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "word$",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "word$",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "word$",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-22",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "(?i:word)",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "(?i:word)",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "(?i:word)",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-23",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "(?-i:word)",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "(?-i:word)",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "(?-i:word)",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-24",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "(?J:word)",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "(?J:word)",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "(?J:word)",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-25",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "(?i-:word)",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "(?i-:word)",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "(?i-:word)",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-26",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a+b",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "a+b",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "a+b",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-27",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "one  two",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\Qone\\E\\s+\\s+\\Qtwo\\E",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "one  two",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-28",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "let foo.bar",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\Qlet\\E\\s+\\Qfoo.bar\\E",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "let foo.bar",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "inferred-29",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": " \r\n",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "kind": "searchPatternError",
+      "message": "pattern cannot be empty; provide a non-empty search term. If you intend to enumerate files, use get_file_tree or specify a path mode with a wildcard like '*.swift'."
+    }
+  },
+  {
+    "name": "inferred-30",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "​",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "kind": "searchPatternError",
+      "message": "pattern cannot be empty; provide a non-empty search term. If you intend to enumerate files, use get_file_tree or specify a path mode with a wildcard like '*.swift'."
+    }
+  },
+  {
+    "name": "inferred-31",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "x\u0000y",
+      "queryKind": "auto",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "x\u0000y",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "x\u0000y",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "explicit-literal-regex-looking",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": " ^anchor$ ",
+      "queryKind": "literal",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": false,
+        "text": "^anchor$",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "^anchor$",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "literal-quote-terminator",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "end\\E value",
+      "queryKind": "literal",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\Qend\\E\\\\E\\Q\\E\\s+\\Qvalue\\E",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "end\\E value",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "explicit-regex-space",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": " one two ",
+      "queryKind": "regex",
+      "wholeWord": false
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "one two",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": true,
+        "text": "one two",
+        "wholeWord": false
+      }
+    }
+  },
+  {
+    "name": "fuzzy-space-ignores-whole-word",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "one two",
+      "queryKind": "literal",
+      "wholeWord": true
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\Qone\\E\\s+\\Qtwo\\E",
+        "wholeWord": false
+      },
+      "kind": "searchPattern",
+      "path": {
+        "isRegex": false,
+        "text": "one two",
+        "wholeWord": false
+      }
+    }
+  }
+]

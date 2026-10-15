@@ -41,7 +41,7 @@ test('concise MCP exploration matches explicit options and preserves validation,
       ['get_file_tree', {}, { input: { type: 'files', mode: 'auto', scope: null, maxDepth: null, continuation: null }, draftId: null }],
       ['read_file', { input: { root: 'r', path: 'greet.ts' } }, { input: { root: 'r', path: 'greet.ts', start_line: null, offset: null, limit: null, continuation: null } }],
       ['get_code_structure', { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }] } }, { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }], expand: 'none', depth: 1, signatures: true, size: 'medium' } }],
-      ['file_search', { input: { query: { text: 'GREET' } } }, { input: { query: { kind: 'literal', text: 'GREET', caseSensitive: false, wholeWord: false }, mode: 'content', filters, before: 0, after: 0, countOnly: false, continuation: null } }],
+      ['file_search', { input: { query: { text: 'GREET' } } }, { input: { query: { kind: 'auto', text: 'GREET', caseSensitive: false, wholeWord: false }, mode: 'content', filters, before: 0, after: 0, countOnly: false, continuation: null } }],
       ['file_search', { input: { query: { kind: 'glob', text: '*.ts' } } }, { input: { query: { kind: 'glob', text: '*.ts' }, mode: 'path', filters, before: 0, after: 0, countOnly: false, continuation: null } }],
     ];
     const results = [];
@@ -55,7 +55,7 @@ test('concise MCP exploration matches explicit options and preserves validation,
     assert.equal(regex.isError, false, JSON.stringify(regex));
     assert.equal(record.Parse(regex.structuredContent).returnedMatchingLines, 1);
     const whitespace = await call('file_search', { input: { query: { text: ' greet ' } } });
-    assert.equal(record.Parse(whitespace.structuredContent).returnedMatchingLines, 0);
+    assert.equal(record.Parse(whitespace.structuredContent).returnedMatchingLines, 1);
     const cap = await call('read_file', { input: { root: 'r', path: 'greet.ts' }, maxOutputBytes: 1 });
     assert.equal(record.Parse(cap.structuredContent).kind, 'outputBudgetTooSmall');
     for (const [name, args] of [
@@ -100,7 +100,7 @@ test('scout exploration normalizes concise inputs before crossing parent IPC', a
     assert.deepEqual(calls[0], { name: 'get_file_tree', input: { type: 'files', mode: 'auto', scope: null, maxDepth: null, continuation: null, maxOutputBytes: 3000 } });
     assert(calls[1]?.name === 'read_file'); assert.deepEqual(calls[1].input['start_line'], null);
     assert(calls[2]?.name === 'get_code_structure'); assert.equal(calls[2].input.depth, 1); assert.equal(calls[2].input.expand, 'none');
-    assert(calls[3]?.name === 'file_search'); assert.deepEqual(calls[3].input.query, { kind: 'literal', text: 'needle', caseSensitive: false, wholeWord: false });
+    assert(calls[3]?.name === 'file_search'); assert.deepEqual(calls[3].input.query, { kind: 'auto', text: 'needle', caseSensitive: false, wholeWord: false });
     assert(calls[4]?.name === 'file_search'); assert.equal(calls[4].input.mode, 'path');
     await writeFile(join(provider.directory, 'scout-inputs.json'), JSON.stringify(calls, null, 2));
   } finally { await supervisor.close(); await provider.close(); }

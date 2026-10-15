@@ -34,9 +34,9 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
     const path = await op.fileSearch({ ...query, mode: 'path', query: { ...query.query, text: 'é.txt', wholeWord: false } });
     assert.equal(path.kind, 'search');
     if (path.kind === 'search') assert.equal(path.counts.matchedFiles, 1);
-    const empty = await op.fileSearch({ ...query, query: { ...query.query, text: ' needle ' } });
-    if (empty.kind !== 'search') assert.fail('Missing search');
-    assert.equal(empty.counts.occurrences, 0);
+    const trimmed = await op.fileSearch({ ...query, query: { ...query.query, text: ' needle ' } });
+    if (trimmed.kind !== 'search') assert.fail('Missing search');
+    assert.equal(trimmed.counts.occurrences, 3);
     const tree = await op.getFileTree({ type: 'files', mode: 'full', scope: null, maxDepth: null, selection: null, maxOutputBytes: 10000, continuation: null });
     assert.equal(tree.kind, 'tree');
     const structure = await op.getCodeStructure({ seeds: [{ root: 'r', path: 'A.swift', kind: 'file' }], expand: 'both', depth: 4,

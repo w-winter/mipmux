@@ -1,0 +1,78 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sha256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "blob": "78e65e09d5c36228050ae2746503e282b18af1c9",
+      "ranges": [
+        {
+          "start": 3072,
+          "end": 3159,
+          "sha256": "aeb170a89607359d51f737ca76c4db24b09de7c13d0479ce420a172c5e2b25ec"
+        },
+        {
+          "start": 3172,
+          "end": 3177,
+          "sha256": "ad120f9867e7f35eb48414cddb0bb9b68edc32e1576824b801176c7fc973a43e"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptRegexCore/RegexToolkit.swift",
+      "sha256": "9d06ec10d75e717606b45caf78c3947127a58db6553d3d82ead1a5cd94d7a12f",
+      "blob": "6341839d0d2e550d5fe66e32db8a670c6664def5",
+      "ranges": [
+        {
+          "start": 378,
+          "end": 438,
+          "sha256": "9548fc7a7bc4b08d8f35ce6ddb9dd6c15c978cf640a979329099fe2254e06d54"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptRegexCore/SwiftPCRE2/PCRE2LiteralEscaping.swift",
+      "sha256": "bfc0d41696b99134db03eb14c49ea4c7f3ffb20bef8ae6393f347b2401361eec",
+      "blob": "9d5e5e93cc54527391ee7429555bc1c0a37df9de",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 14,
+          "sha256": "c0632a252ebfe5a4eb2dfe7b61d651b58f4a1fececd09e44dbf2eaaa70110fe3"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift",
+      "sha256": "ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e",
+      "blob": "19efd9377371c807fe05f30167e28df75a025c2d",
+      "ranges": [
+        {
+          "start": 137,
+          "end": 139,
+          "sha256": "96610e221b1c59e84660d01ee916a715233703426d1900a35f1666ec8b4f5b2c"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "sha256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
+      "blob": "28490c87429b61d151281e79d1c60d7b48ee84ef",
+      "ranges": [
+        {
+          "start": 711,
+          "end": 717,
+          "sha256": "3505ec3fbee97e97d0b8fd97cf668178354c5afa14602a4d9c04090dd9316e47"
+        }
+      ]
+    }
+  ],
+  "cases": 36,
+  "generatorSHA256": "6d47449f2946c05331fc442c483f35a80cc0d24ca0ae0f0e98c7e2cc2dcf6b02",
+  "combinedSourceSHA256": "52d6cb457ec2ff92e5d21273d2d50214c5e9cdf585a5d9fe29929d2310584adb",
+  "bindings": [
+    "Original regex detection, PCRE feature detection, literal escaping and flexible-space conversion execute verbatim.",
+    "The driver applies MCP trim/empty/inferred-regex rules and chooses fuzzy conversion only for non-regex patterns with spaces. The source literal fuzzy branch bypasses whole-word handling; path matching ignores whole-word.",
+    "This proves pattern preparation, not auto-mode routing, matching engines, regex repair, path globbing, filters or result limits."
+  ]
+}

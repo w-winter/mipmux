@@ -11,6 +11,7 @@ import { NativeGitWorktreeInput, NativeGitWorktreeResult } from './git-worktree.
 import { NativeWireFailureCode } from './errors.js';
 import { NativeAskUserInput, NativeAskUserResult } from './interaction.js';
 import { NativeTokenStatsInput, NativeTokenStatsResult } from './token-accounting.js';
+import { NativeSearchPatternInput, NativeSearchPatternResult } from './search-pattern.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
 export { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -264,6 +265,7 @@ const automaticReviewGitInput = Type.Union([
 ]);
 export const AutomaticReviewGitCompleteness = Type.Enum(['complete', 'partial', 'failed']);
 export const NativeOperation = Type.Union([
+  NativeSearchPatternInput,
   NativeTokenStatsInput,
   ...automaticReviewGitInput.anyOf,
   ...NativeGitWorktreeInput.anyOf,
@@ -368,6 +370,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  ...NativeSearchPatternResult.anyOf,
   NativeTokenStatsResult,
   ...NativeGitWorktreeResult.anyOf,
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),
