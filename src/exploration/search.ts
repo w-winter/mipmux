@@ -10,11 +10,11 @@ import { pageIdentity, pageOffset } from './continuation.js';
 import { pageResult, serializedBytes, type ResultEncoding } from './output-budget.js';
 import type { PreparedSearchPattern } from '../contracts/search-pattern.js';
 import { prepareSearch } from './search-query.js';
-import { scanLiteralContent } from './literal-search.js';
+import { scanLiteralContent, scanRegexContent } from './content-search.js';
 
 export interface SearchFile {
   readonly root: string; readonly path: string; readonly identity: SourceIdentity;
-  readonly pathMatch: boolean; readonly pathOccurrences: number; readonly occurrences: number;
+  readonly pathMatch: boolean;
   readonly matchingLines: number;
   readonly lines: readonly { number: number; text: string; matching: boolean }[];
 }
@@ -43,7 +43,8 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   const digest = pageIdentity(operation.snapshot, settings, candidates.map(entry => ({ root: entry.root, path: entry.path,
     identity: entry.identity })));
   const offset = pageOffset(continuation, digest);
-  const matches = candidates.map(file => ({ pathOccurrences: matchedPaths.has(file) ? 1 : 0, occurrences: 0, matchingLines: 0, lastLine: 0 }));
+  const matches = candidates.map(() => ({ matchingLines: 0, lastLine: 0 }));
+  const useRipgrep = !pattern.raw.isRegex && pattern.content.isRegex;
   const flags = ['--pcre2', '--json', '--no-config', '--encoding', 'none', '--no-ignore', '--hidden', '--threads', '1', '--sort', 'path'];
   const contentFlags = patternFlags(flags, pattern.content, request.query.caseSensitive);
   const limitations: { root: string; path: string; code: string }[] = [];
@@ -60,7 +61,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     const flush = () => {
       const candidate = candidates[current], match = matches[current];
       if (!candidate || !match) throw new WorkspaceFailure('searchProtocolError');
-      if (match.pathOccurrences || match.occurrences) {
+      if (matchedPaths.has(candidate) || match.matchingLines) {
         if (retain()) {
           const intervals: { start: number; end: number }[] = [];
           if (text) for (const line of matching) {
@@ -76,8 +77,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
             }
           }
           const record = { root: candidate.root, path: candidate.path, identity: candidate.identity,
-            pathMatch: match.pathOccurrences > 0, pathOccurrences: match.pathOccurrences,
-            occurrences: match.occurrences, matchingLines: match.matchingLines, lines };
+            pathMatch: matchedPaths.has(candidate), matchingLines: match.matchingLines, lines };
           retainedBytes += serializedBytes(record); records.push(record);
         }
         matchedFiles++;
@@ -90,24 +90,31 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       try {
         const source = await operation.readSource(candidate);
         const prepared = prepareText(source.text);
-        if (pattern.content.isRegex) {
+        if (useRipgrep) {
           const path = join(directory, String(index).padStart(String(candidates.length).length, '0'));
           await writeFile(path, prepared.searchText, { flag: 'wx', mode: 0o600 }); temporaryCount++;
         } else {
-          const found = await scanLiteralContent(operation, prepared, { pattern: pattern.content.text,
-            caseSensitive: request.query.caseSensitive, countOnly: request.countOnly, limit: request.maxResults - contentMatches });
-          matches[index]!.occurrences = found.occurrences;
+          const found = pattern.raw.isRegex
+            ? await scanRegexContent(operation, source.text, prepared.lines.length, { pattern: pattern.raw.text,
+              caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
+              countOnly: request.countOnly, limit: request.maxResults - contentMatches })
+            : await scanLiteralContent(operation, prepared, { pattern: pattern.content.text,
+              caseSensitive: request.query.caseSensitive, countOnly: request.countOnly, limit: request.maxResults - contentMatches });
           matches[index]!.matchingLines = found.matchingLines;
           contentMatches += found.matchingLines;
-          if (retain()) { text = prepared; matching = new Set(found.matches.map(match => match.number)); }
+          if (retain()) { text = prepared; matching = new Set(found.matches); }
         }
       } catch (error) {
         if (!(error instanceof WorkspaceFailure) || !['binarySource', 'decodeFailed'].includes(error.code)) throw error;
         limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
       }
-      if (!pattern.content.isRegex) flush();
+      if (!useRipgrep) flush();
     }
-    if (pattern.mode !== 'path' && pattern.content.isRegex && temporaryCount) {
+    if (pattern.mode !== 'path' && pattern.raw.isRegex && !candidates.length) {
+      await scanRegexContent(operation, '', 0, { pattern: pattern.raw.text, caseSensitive: request.query.caseSensitive,
+        wholeWord: request.query.kind !== 'glob' && request.query.wholeWord, countOnly: request.countOnly, limit: request.maxResults });
+    }
+    if (pattern.mode !== 'path' && useRipgrep && temporaryCount) {
       await runRipgrep(operation.runtime.supervisor, executable, [...contentFlags, '--', '.'], directory, '', operation.signal, async match => {
         const filename = encodedText(match.path);
         if (!/^\.\/[0-9]+$/.test(filename)) throw new WorkspaceFailure('searchProtocolError');
@@ -119,7 +126,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
         found.lastLine = match.line_number;
         if (!request.countOnly && contentMatches >= request.maxResults) return;
         contentMatches++;
-        found.occurrences += match.submatches.length; found.matchingLines++;
+        found.matchingLines++;
         if (retain()) {
           text ??= prepareText((await operation.readSource(candidates[index]!)).text);
           if (match.line_number > text.lines.length) throw new WorkspaceFailure('searchProtocolError');
@@ -127,18 +134,19 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
         }
       });
     }
-    if (pattern.mode === 'content' && pattern.content.isRegex && !temporaryCount) {
+    if (pattern.mode === 'content' && useRipgrep && !temporaryCount) {
       await runRipgrep(operation.runtime.supervisor, executable, contentFlags, directory, '', operation.signal,
         () => { throw new WorkspaceFailure('searchProtocolError'); });
     }
     while (current < candidates.length) flush();
     if (offset > matchedFiles) throw new WorkspaceFailure('invalidContinuation');
-    const counts = { occurrences: matches.reduce((sum, match) => sum + match.occurrences + match.pathOccurrences, 0),
-      matchingLines: matches.reduce((sum, match) => sum + match.matchingLines, 0), matchedFiles };
+    const matchingLines = matches.reduce((sum, match) => sum + match.matchingLines, 0);
+    const counts = { totalMatches: matchingLines + matchedPaths.size, matchingLines, pathMatches: matchedPaths.size, matchedFiles };
     return pageResult(records, 0, maxOutputBytes, (files) => ({
       kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
       engine: pattern.mode === 'path' ? 'RPCE path' : pattern.content.isRegex ? 'PCRE2' : 'Foundation',
-      newlineView: 'CRLF and CR become LF; all other decoded text is preserved', counts,
+      newlineView: pattern.raw.isRegex ? 'Original decoded text; CRLF, CR and LF define lines'
+        : 'CRLF and CR become LF; all other decoded text is preserved', counts,
       limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),
       returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files, limitations,
       truncated: !request.countOnly && offset + files.length < matchedFiles,

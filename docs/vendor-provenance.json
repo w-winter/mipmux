@@ -6119,7 +6119,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "8001915354cb68b6adc36e9d60c0f26d28f0fe1556f5258495b12bb7aeb58db9",
+      "sha256": "26950d80d137b2cf89008151c971847f9b27f9f5b425a38d352d701ec95a106d",
       "classification": "handwritten"
     },
     {
@@ -6906,7 +6906,7 @@
         "Forward extensions and exclusions to native filtering and validate one complete retained/omitted partition plus path-hit membership before constructing the ordered candidates."
       ],
       "classification": "handwritten",
-      "sha256": "a8186a1f834f44b6ee2aeadd462cdeef43c0f1f0bc57a6f5126b7ad2d80628c4"
+      "sha256": "6e9cbd3c88e369b26a718f8a716ea3de2497448cdf5c3b302560a8e9b5360e97"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6930,11 +6930,11 @@
       "classification": "handwritten",
       "changes": [
         "Apply independent limits for path and content results and the unlimited content branch for count-only requests to the existing authorized ripgrep adapter. The default of 50 and limitHit condition are from Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift:724,956-957; count-only limitHit=false is from lines880-895.",
-        "Grouped replies retain occurrence counts as extra metadata alongside matching-line counts. Ripgrep still drains all matches after the semantic limit so its terminal summary can be verified; no early process cancellation or new transport is introduced. Source regex repair, specialized content scanning, filter equivalence and complete DTO correspondence are not established by this adapter.",
+        "Grouped replies expose source path-hit and matching-line counts. Raw regex uses original decoded text with native start-line projection; literal-derived regex retains the current supervised transport.",
         "Consume the fully normalized native content pattern. Remove ripgrep word-mode interpretation; the native pattern owner defines word-boundary behavior.",
         "Route plain literal matching to Foundation before per-file grouping; regex/fuzzy/whole-word requests retain the existing PCRE2 spool. Preserve one current decoded file, query limits and parent-owned settlement. The reported backend reflects the actual route."
       ],
-      "sha256": "342e1bc536458b8a3f3d6ddc77c77ff429adaa4a7a5234fcd75e932c475dd278"
+      "sha256": "c09e6419b0bd15bbd4965c6eb9fe498db098a2a1fd8b61700093f3d2318b2532"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6979,26 +6979,122 @@
       "classification": "handwritten",
       "changes": [
         "Normalize captured complete lines once and use the same comparison flags and range operation on NSString as the source plain-literal branch. Preserve case folding/canonical equivalence, line-level limits and count-only totals.",
-        "The caller supplies the already-established CR/LF line view. Counts of nonoverlapping occurrences are extra metadata from the same Foundation comparisons; the source itself reports matching lines. This adapter does not implement source acquisition, regex recovery or the full content scanner."
+        "The caller supplies the established CR/LF line view. Return source matching-line totals and collected line numbers; this adapter does not implement source acquisition or query-changing recovery."
       ],
-      "sha256": "9194d65478fc227716bc12da6ec6702f30c38ee44d5da8147d7216cd1d55f556"
+      "sha256": "262c23909ad8279c85c7ebeeefe54b9e341695de4f20577ec59b9c461e7ed20b"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
-      "destination": "src/exploration/literal-search.ts",
+      "destination": "src/exploration/content-search.ts",
       "ranges": [
         [
           2098,
           2112
+        ],
+        [
+          2117,
+          2240
         ]
       ],
       "classification": "handwritten",
       "changes": [
-        "Pass the existing captured line view to the owned native worker. Validate ordered in-range hit indices and aggregate counts once before grouped presentation."
+        "Pass captured decoded content or the established literal line view to the native owners. Validate ordered in-range hit lines and source summary/collection semantics once before grouped presentation."
       ],
-      "sha256": "45c7ca6a6f6c659f422487c9b66ac0a720464680e44dcc208344fa25372ad98a"
+      "sha256": "257d44998809a255e29c778c84b80dddac3135a69aaabc4dfc239f1f7c72081b"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegexModels.swift",
+      "ranges": [
+        [
+          17,
+          22
+        ],
+        [
+          186,
+          204
+        ],
+        [
+          213,
+          306
+        ],
+        [
+          353,
+          363
+        ],
+        [
+          370,
+          377
+        ]
+      ],
+      "classification": "retained",
+      "changes": [
+        "Retain source regex-engine, summary, trait and raw CR/LF line-index bodies in one internal namespace. The document adapter supplies only text/index and the consumed source accessors; cache/presentation members are not imported."
+      ],
+      "sha256": "7f29e6d03ab3bc5cabac70c39341eb5432c0ad586eea6e94f0c15f02d364bd0a"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegex.swift",
+      "ranges": [
+        [
+          654,
+          663
+        ],
+        [
+          794,
+          846
+        ],
+        [
+          1305,
+          1311
+        ],
+        [
+          1890,
+          1958
+        ],
+        [
+          2117,
+          2187
+        ],
+        [
+          2189,
+          2240
+        ]
+      ],
+      "classification": "retained",
+      "changes": [
+        "Retain primary engine choices, same-query generic paths after specialized plans decline, full-buffer/line strategies, source byte and match policies, start-line projection and empty-match behavior. Remove diagnostics-only perf begin/end/counter assignments. Narrow the dispatcher to an already-compiled regex engine; literal matching remains under its existing owner.",
+        "Primary compilation calls the existing native compiler directly instead of query-changing repair. Patterns compile per file rather than using the source cache; final workload measurements must determine whether retaining the original cache is needed. Recovery remains pending its named decision."
+      ],
+      "sha256": "5dabc8341a79779ae55601dd9543a3c8e5cb66d4e4e133dfcacd67df49a9e3c3"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RegexSearchInput.swift",
+      "ranges": [
+        [
+          1298,
+          1340
+        ],
+        [
+          2117,
+          2240
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Decode raw captured content, original pattern/whole-word/case flags and collection policy. Return source matching-line counts and one-based hit lines; collected counts derive from delivered hits, while count-only preserves summary totals. Convert known regex failures into typed results."
+      ],
+      "sha256": "c0ddf75cf64f2cc765fedae97362f4a1f83dff3fc41004fec2f3fa64170fc271"
     }
   ],
   "dependencies": [
@@ -12725,6 +12821,36 @@
       "destination": "native/Sources/SmipBridge/RPCESearchPaths.swift",
       "name": "matchesPattern",
       "line": 1236
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 213,
+      "name": "SearchLineIndex",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegexModels.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 17,
+      "name": "RegexEngine",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegexModels.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 794,
+      "name": "compilePrimaryEngine",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegex.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 2117,
+      "name": "scanPCRE2Regex",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegex.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 2189,
+      "name": "scanPCRE2RegexLineByLine",
+      "destination": "native/Sources/SmipBridge/RPCESearchRegex.swift"
     }
   ],
   "sourceCoverage": [

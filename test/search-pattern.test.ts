@@ -19,7 +19,8 @@ test('public file_search uses source pattern inference, trimming and literal fle
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'example.txt'), 'anchor\n^anchor$\nfunc()\nlet\tfoo.bar\nlet\tfooXbar\none\ttwo\none\t two\nend\\E\tvalue\nANCHOR\n' +
     '++\na++b\n ++ \nleftover\nupright\nleft\nright\naleft\nrightward\ncafé\ncafétéria\ndécafé\néwordé\nword\nsword\n' +
-    'cafe\u0301 cafe\u0301\nCAFÉ\nStraße\n');
+    'cafe\u0301 cafe\u0301\nCAFÉ\nStraße\n' +
+    'multi-start\nmiddle\nmulti-end\ncrlf-start\r\nmiddle\r\ncrlf-end\r\ncr-start\rmiddle\rcr-end\r');
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
@@ -54,6 +55,9 @@ test('public file_search uses source pattern inference, trimming and literal fle
       { query: { kind: 'literal', text: 'café' }, lines: [19, 20, 21, 25, 26] },
       { query: { kind: 'literal', text: 'café', caseSensitive: true }, lines: [19, 20, 21, 25] },
       { query: { kind: 'literal', text: 'STRASSE' }, lines: [27] },
+      { query: { kind: 'regex', text: 'multi-start\\nmiddle' }, lines: [28] },
+      { query: { kind: 'regex', text: 'crlf-start\\r\\nmiddle' }, lines: [31] },
+      { query: { kind: 'regex', text: '(?=left)' }, lines: [] },
     ];
     for (const item of cases) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,

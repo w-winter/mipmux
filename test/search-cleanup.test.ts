@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import { SmipRuntime } from '../src/runtime/smip-runtime.js';
 import type { ProcessSpec } from '../src/runtime/process-supervisor.js';
 
-test('search scratch cleanup handles success, query failure, cancellation and partial writes while preserving siblings', async t => {
+test('literal-regex scratch cleanup handles success, query failure, cancellation and partial writes while preserving siblings', async t => {
   await fs.mkdir('test-output', { recursive: true });
   const base = await fs.mkdtemp(join(tmpdir(), 'smip-search-cleanup-'));
   const root = join(base, 'root'), out = join(base, 'out'), cache = join(base, 'cache');
@@ -42,7 +42,7 @@ test('search scratch cleanup handles success, query failure, cancellation and pa
         syncBuiltinESMExports();
       }
       try {
-        const pending = operation.fileSearch({ mode: 'content', query: { kind: 'regex', text: scenario === 'error' ? '[' : 'needle', caseSensitive: true, wholeWord: false },
+        const pending = operation.fileSearch({ mode: 'content', query: { kind: scenario === 'error' ? 'regex' : 'literal', text: scenario === 'error' ? '[' : 'needle', caseSensitive: true, wholeWord: true },
           filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0, countOnly: false, maxResults: 50, maxOutputBytes: 10000, continuation: null });
         if (scenario === 'success') assert.equal((await pending).kind, 'search');
         else await assert.rejects(pending);

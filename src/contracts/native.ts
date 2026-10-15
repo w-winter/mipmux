@@ -12,7 +12,7 @@ import { NativeWireFailureCode } from './errors.js';
 import { NativeAskUserInput, NativeAskUserResult } from './interaction.js';
 import { NativeTokenStatsInput, NativeTokenStatsResult } from './token-accounting.js';
 import { NativeSearchPatternInput, NativeSearchPatternResult, NativeSearchPathsInput, NativeSearchPathsResult,
-  NativeLiteralSearchInput, NativeLiteralSearchResult } from './search-pattern.js';
+  NativeLiteralSearchInput, NativeLiteralSearchResult, NativeRegexSearchInput, NativeRegexSearchResult } from './search-pattern.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
 export { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -269,6 +269,7 @@ export const NativeOperation = Type.Union([
   NativeSearchPatternInput,
   NativeSearchPathsInput,
   NativeLiteralSearchInput,
+  NativeRegexSearchInput,
   NativeTokenStatsInput,
   ...automaticReviewGitInput.anyOf,
   ...NativeGitWorktreeInput.anyOf,
@@ -376,6 +377,7 @@ export const NativeResult = Type.Union([
   ...NativeSearchPatternResult.anyOf,
   ...NativeSearchPathsResult.anyOf,
   NativeLiteralSearchResult,
+  ...NativeRegexSearchResult.anyOf,
   NativeTokenStatsResult,
   ...NativeGitWorktreeResult.anyOf,
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),

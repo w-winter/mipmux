@@ -23,7 +23,7 @@ test('real search modes and output continuations preserve complete counts and re
       maxResults: 50, maxOutputBytes: 10000, continuation: null } satisfies SearchRequest;
     const full = await operation.fileSearch(query);
     if (full.kind !== 'search') assert.fail('Missing search');
-    assert.equal(full.counts.matchingLines, 6); assert.equal(full.counts.occurrences, 6);
+    assert.equal(full.counts.matchingLines, 6); assert.equal(full.counts.totalMatches, 6);
     assert.equal(full.files[0]?.lines[0]?.text, 'café\r\n');
     const cap = serializedBytes({ ...full, files: full.files.slice(0, 1), returnedMatchingLines: 2,
       truncated: true, continuation: { digest: '0'.repeat(64), offset: 1 } });
@@ -53,10 +53,10 @@ test('real search modes and output continuations preserve complete counts and re
     assert.deepEqual(glob.files.map(file => file.path), ['a.txt', 'c.txt']);
     const punctuation = await operation.fileSearch({ ...query, query: { kind: 'literal', text: '++', caseSensitive: true, wholeWord: true } });
     if (punctuation.kind !== 'search') assert.fail('Missing punctuation match');
-    assert.equal(punctuation.counts.occurrences, 0);
+    assert.equal(punctuation.counts.totalMatches, 0);
     const regex = await operation.fileSearch({ ...query, query: { kind: 'regex', text: '(?<=x )café', caseSensitive: true, wholeWord: true } });
     if (regex.kind !== 'search') assert.fail('Missing regex match');
-    assert.equal(regex.counts.occurrences, 3);
+    assert.equal(regex.counts.totalMatches, 3);
     await assert.rejects(operation.fileSearch({ ...query, query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);
     await assert.rejects(operation.fileSearch({ ...query, filters: { ...query.filters, include: ['absent.*'] },
       query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);

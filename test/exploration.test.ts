@@ -27,7 +27,7 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
       countOnly: false, maxResults: 50, maxOutputBytes: 10000, continuation: null };
     const result = await op.fileSearch(query);
     if (result.kind !== 'search') assert.fail('Missing search');
-    assert.equal(result.counts.occurrences, 3); assert.equal(result.counts.matchingLines, 2);
+    assert.equal(result.counts.totalMatches, 2); assert.equal(result.counts.matchingLines, 2);
     assert.equal(result.counts.matchedFiles, 1);
     assert.equal(result.files[0]?.path, name);
     assert.deepEqual(result.files[0]?.lines.map(line => line.number), [2, 3, 4, 5]);
@@ -36,7 +36,7 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
     if (path.kind === 'search') assert.equal(path.counts.matchedFiles, 1);
     const trimmed = await op.fileSearch({ ...query, query: { ...query.query, text: ' needle ' } });
     if (trimmed.kind !== 'search') assert.fail('Missing search');
-    assert.equal(trimmed.counts.occurrences, 3);
+    assert.equal(trimmed.counts.totalMatches, 2);
     const tree = await op.getFileTree({ type: 'files', mode: 'full', scope: null, maxDepth: null, selection: null, maxOutputBytes: 10000, continuation: null });
     assert.equal(tree.kind, 'tree');
     const structure = await op.getCodeStructure({ seeds: [{ root: 'r', path: 'A.swift', kind: 'file' }], expand: 'both', depth: 4,

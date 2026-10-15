@@ -11,7 +11,7 @@ import { Compile } from 'typebox/compile';
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), counts: Type.Object({ matchingLines: Type.Integer() }),
   limitHit: Type.Optional(Type.Boolean()), files: Type.Array(Type.Object({ root: Type.String(), path: Type.String(),
-    pathMatch: Type.Boolean(), pathOccurrences: Type.Integer(), matchingLines: Type.Integer() })) }));
+    pathMatch: Type.Boolean(), matchingLines: Type.Integer() })) }));
 
 test('public search routes auto patterns and preserves native path candidates, physical ordering and result limits', async () => {
   const base = await mkdtemp(join(tmpdir(), 'smip-search-routing-'));
@@ -62,7 +62,7 @@ test('public search routes auto patterns and preserves native path candidates, p
       assert.equal(found.isError, false, JSON.stringify(found));
       const result = searchReply.Parse(found.structuredContent);
       assert.deepEqual(result.files.map(file => file.root + '/' + file.path), item.paths, JSON.stringify(item.input));
-      assert(result.files.every(file => file.pathMatch && file.pathOccurrences === 1));
+      assert(result.files.every(file => file.pathMatch));
       observations.push({ input: item.input, result });
     }
     for (const limit of [0, -1, 2, 50, 65, 66]) {

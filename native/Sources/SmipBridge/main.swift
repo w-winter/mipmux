@@ -24,6 +24,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .prepareSearchPattern(input): input.render()
     case let .matchSearchPaths(input): try input.render()
     case let .scanLiteralLines(input): try input.render()
+    case let .scanRegexContent(input): try input.render()
     case let .renderPreparedClipboard(input): try input.render()
     case let .renderClipboard(input): await input.render()
     case let .queryStructure(input): try input.render()

@@ -413,6 +413,12 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  scanRegexContent(input: Extract<NativeOperation, { kind: 'scanRegexContent' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   renderFileBlock(input: Extract<NativeOperation, { kind: 'renderFileBlock' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());

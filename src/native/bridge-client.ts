@@ -9,6 +9,7 @@ const resultKinds = {
   prepareSearchPattern: ['searchPattern', 'searchPatternError'],
   matchSearchPaths: ['searchPaths', 'searchPathsError'],
   scanLiteralLines: ['literalSearch'],
+  scanRegexContent: ['regexSearch', 'regexSearchError'],
   calculateTokenStats: ['tokenStats'],
   prepareGitWorktreeMainRoot: ['gitWorktreePlan', 'gitWorktreeListingError'],
   resolveGitWorktreeConfig: ['gitWorktreeMainRoot'],

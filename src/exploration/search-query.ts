@@ -25,7 +25,7 @@ export async function prepareSearch(operation: WorkspaceOperation, request: Sear
     partition.some(index => index >= candidates.length) || paths.matches.some(index => !included.has(index))) {
     throw new WorkspaceFailure('searchProtocolError');
   }
-  return { mode: pattern.mode, content: pattern.content,
+  return { mode: pattern.mode, raw: pattern.path, content: pattern.content,
     matchedPaths: new Set(paths.matches.map(index => candidates[index]!)),
     candidates: paths.order.map(index => candidates[index]!) };
 }

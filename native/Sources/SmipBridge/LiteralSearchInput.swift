@@ -20,28 +20,18 @@ struct LiteralSearchInput {
 
     func render() throws -> [String: Any] {
         let options: NSString.CompareOptions = caseSensitive ? [] : [.caseInsensitive]
-        var matches: [[String: Int]] = []
+        var matches: [Int] = []
         var matchingLines = 0
-        var occurrences = 0
         for (index, line) in lines.enumerated() {
             try Task.checkCancellation()
             if !countOnly, matchingLines >= limit { break }
             let text = line as NSString
-            var cursor = 0
-            var count = 0
-            while cursor < text.length {
-                let found = text.range(of: pattern, options: options,
-                                       range: NSRange(location: cursor, length: text.length - cursor))
-                if found.location == NSNotFound { break }
-                count += 1
-                cursor = NSMaxRange(found)
-            }
-            if count > 0 {
+            let found = text.range(of: pattern, options: options, range: NSRange(location: 0, length: text.length))
+            if found.location != NSNotFound {
                 matchingLines += 1
-                occurrences += count
-                if !countOnly { matches.append(["number": index + 1, "occurrences": count]) }
+                if !countOnly { matches.append(index + 1) }
             }
         }
-        return ["kind": "literalSearch", "matches": matches, "matchingLines": matchingLines, "occurrences": occurrences]
+        return ["kind": "literalSearch", "matches": matches, "matchingLines": matchingLines]
     }
 }

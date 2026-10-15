@@ -29,8 +29,14 @@ export const NativeLiteralSearchInput = Type.Object({ kind: Type.Literal('scanLi
   countOnly: Type.Boolean(), limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
 }, closed);
 export const NativeLiteralSearchResult = Type.Object({ kind: Type.Literal('literalSearch'),
-  matchingLines: SafeCount, occurrences: SafeCount, matches: Type.Array(Type.Object({
-    number: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
-    occurrences: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
-  }, closed)),
+  matchingLines: SafeCount, matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })),
 }, closed);
+export const NativeRegexSearchInput = Type.Object({ kind: Type.Literal('scanRegexContent'), text: Type.String(),
+  pattern: Type.String(), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean(), countOnly: Type.Boolean(),
+  limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
+}, closed);
+export const NativeRegexSearchResult = Type.Union([
+  Type.Object({ kind: Type.Literal('regexSearch'), matchingLines: SafeCount,
+    matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })) }, closed),
+  Type.Object({ kind: Type.Literal('regexSearchError'), message: Type.String() }, closed),
+]);
