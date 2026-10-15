@@ -48,7 +48,7 @@ async function resolveAlias(operation: WorkspaceOperation, alias: string, use: '
   }
 }
 
-function capturedArtifactSelection(current: ReadonlyMap<string, Material>) {
+export function capturedArtifactSelection(current: ReadonlyMap<string, Material>) {
   const known = new Map<string, GitArtifactMaterial>();
   const selectedAliases = new Map<string, GitArtifactMaterial>();
   for (const material of current.values()) {

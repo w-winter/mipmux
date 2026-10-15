@@ -11,13 +11,15 @@ import { NativeFailure } from '../native/bridge-client.js';
 import { contains } from '../workspace/root-policy.js';
 import type { CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
 import { resolveGitArtifactSelection } from './git-artifact-selection.js';
+import type { GitArtifactMaterial } from './git-artifact-material.js';
 
-type State = Extract<NativeOperation, { kind: 'prepareSelection' }>['selection'];
+export type SelectionState = Extract<NativeOperation, { kind: 'prepareSelection' }>['selection'];
 type Catalog = Extract<NativeOperation, { kind: 'prepareSelection' }>['catalog'];
 type Parsed = Extract<NativeResult, { kind: 'selectionInputs' }>;
-type RootBinding = InventorySnapshot['roots'][number] & { readonly selectionPath: string };
+export type RootBinding = InventorySnapshot['roots'][number] & { readonly selectionPath: string };
+export interface CanonicalSelection { readonly roots: readonly RootBinding[]; readonly state: SelectionState }
 type PathRequest = SelectionRequest & { readonly op: 'add' | 'remove' | 'promote' | 'demote' };
-interface SelectionPreparation { readonly state: State; readonly invalid: string[] }
+interface SelectionPreparation { readonly state: SelectionState; readonly invalid: string[] }
 
 function rootForPath(roots: readonly RootBinding[], path: string) {
   return roots.filter(root => contains(root.selectionPath, path))
@@ -26,8 +28,8 @@ function rootForPath(roots: readonly RootBinding[], path: string) {
 function relativePath(root: RootBinding, path: string): string {
   return path === root.selectionPath ? '' : path.slice(root.selectionPath === '/' ? 1 : root.selectionPath.length + 1);
 }
-function capturedState(roots: readonly RootBinding[], materials: ReadonlyMap<string, Material>, mode: CodemapMode): State {
-  const state: State = { selectedPaths: [], manualCodemapPaths: [], slices: {}, codemapAutoEnabled: mode === 'automatic' };
+export function capturedState(roots: readonly RootBinding[], materials: ReadonlyMap<string, Material>, mode: CodemapMode): SelectionState {
+  const state: SelectionState = { selectedPaths: [], manualCodemapPaths: [], slices: {}, codemapAutoEnabled: mode === 'automatic' };
   for (const { record } of materials.values()) {
     if (record.kind === 'gitMap' || record.kind === 'gitPatch') {
       state.selectedPaths.push(record.reference.absolutePath);
@@ -43,6 +45,16 @@ function capturedState(roots: readonly RootBinding[], materials: ReadonlyMap<str
     }
   }
   return state;
+}
+export async function captureSelection(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>, mode: CodemapMode): Promise<CanonicalSelection> {
+  const bindings = await operation.selectionPathBindings(operation.snapshot.roots.map(root => root.identity.canonicalPath));
+  const roots = operation.snapshot.roots.map((root, index) => ({ ...root, selectionPath: bindings[index]! }));
+  return { roots, state: capturedState(roots, materials, mode) };
+}
+export function selectionPath(roots: readonly RootBinding[], source: { readonly root: string; readonly path: string }): string {
+  const root = roots.find(root => root.name === source.root);
+  if (!root) throw new WorkspaceFailure('unknownRoot');
+  return posix.join(root.selectionPath, source.path);
 }
 function validateIngress(request: SelectionRequest, parsed: Parsed): void {
   if (request.op === 'get' || request.op === 'clear') return;
@@ -94,7 +106,7 @@ async function capturedCatalog(operation: WorkspaceOperation, roots: readonly Ro
       .map(entry => ({ path: entry.path, discoverable: entry.kind === 'directory' && entry.visibility === 'discoverable' })),
   })), materialization };
 }
-async function replaceSelection(operation: WorkspaceOperation, request: SelectionRequest, parsed: Parsed, state: State, catalog: Catalog,
+async function replaceSelection(operation: WorkspaceOperation, request: SelectionRequest, parsed: Parsed, state: SelectionState, catalog: Catalog,
   hasFullFileArtifactInputs: boolean) {
   const result = await operation.prepareSelection({ kind: 'prepareSelection', selection: state, catalog,
     mutation: { kind: 'set', mode: request.mode, paths: parsed.paths, slices: parsed.slices,
@@ -105,7 +117,7 @@ async function replaceSelection(operation: WorkspaceOperation, request: Selectio
   }
   return { state: result.selection, invalid: [...result.invalidPaths, ...result.codemapUnavailable] };
 }
-async function mutatePaths(operation: WorkspaceOperation, request: PathRequest, parsed: Parsed, state: State, catalog: Catalog) {
+async function mutatePaths(operation: WorkspaceOperation, request: PathRequest, parsed: Parsed, state: SelectionState, catalog: Catalog) {
   const invalid: string[] = [];
   if (!parsed.paths.length) return { state, invalid, resolved: false };
   const mutation = request.op === 'promote' || request.op === 'demote'
@@ -131,7 +143,7 @@ async function requireResolvedPaths(operation: WorkspaceOperation, request: Path
       : await operation.selectionHint(request.paths, request.op) });
   }
 }
-async function mutateSelection(operation: WorkspaceOperation, request: PathRequest, parsed: Parsed, state: State, catalog: Catalog,
+async function mutateSelection(operation: WorkspaceOperation, request: PathRequest, parsed: Parsed, state: SelectionState, catalog: Catalog,
   artifacts: Awaited<ReturnType<typeof resolveGitArtifactSelection>>) {
   const paths = await mutatePaths(operation, request, parsed, state, catalog);
   let next = paths.state, resolved = paths.resolved || artifacts.resolved.length > 0;
@@ -152,7 +164,7 @@ async function mutateSelection(operation: WorkspaceOperation, request: PathReque
   await requireResolvedPaths(operation, request, parsed, resolved, artifacts.invalid);
   return { state: next, invalid };
 }
-function selectedSources(roots: readonly RootBinding[], state: State, artifacts: ReadonlySet<string>): SourceSelection[] {
+function selectedSources(roots: readonly RootBinding[], state: SelectionState, artifacts: ReadonlySet<string>): SourceSelection[] {
   const source = (path: string) => {
     const root = rootForPath(roots, path);
     if (!root) throw new WorkspaceFailure('nativeProtocolError');
@@ -161,14 +173,19 @@ function selectedSources(roots: readonly RootBinding[], state: State, artifacts:
   const selections: SourceSelection[] = state.selectedPaths.filter(path => !artifacts.has(path)).map(path => state.slices[path]?.length
     ? { kind: 'slices', source: source(path), ranges: state.slices[path]! }
     : { kind: 'full', source: source(path) });
-  selections.push(...state.manualCodemapPaths.map(path => ({ kind: 'codemap' as const, source: source(path) })));
+  const selected = new Set(state.selectedPaths);
+  selections.push(...state.manualCodemapPaths.filter(path => !selected.has(path)).map(path => ({ kind: 'codemap' as const, source: source(path) })));
   return selections;
 }
+export function projectSelection(selection: CanonicalSelection, known: ReadonlyMap<string, GitArtifactMaterial>) {
+  const { roots, state } = selection;
+  return { state, selections: selectedSources(roots, state, new Set(known.keys())),
+    artifactMaterials: state.selectedPaths.flatMap(path => { const material = known.get(path); return material ? [material] : []; }),
+    mode: state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const };
+}
 export async function prepareSelection(operation: WorkspaceOperation, request: SelectionRequest,
-  materials: ReadonlyMap<string, Material>, mode: CodemapMode, grants: ReadonlyMap<string, CatalogedGitArtifact>) {
-  const bindings = await operation.selectionPathBindings(operation.snapshot.roots.map(root => root.identity.canonicalPath));
-  const roots = operation.snapshot.roots.map((root, index) => ({ ...root, selectionPath: bindings[index]! }));
-  const state = capturedState(roots, materials, mode);
+  materials: ReadonlyMap<string, Material>, selection: CanonicalSelection, grants: ReadonlyMap<string, CatalogedGitArtifact>) {
+  const { roots, state } = selection;
   const parsed = await operation.parseSelectionInputs({ kind: 'parseSelectionInputs', paths: request.paths, slices: request.slices });
   validateIngress(request, parsed);
   const artifacts = await resolveGitArtifactSelection(operation, request, parsed, materials, grants);
@@ -194,11 +211,8 @@ export async function prepareSelection(operation: WorkspaceOperation, request: S
   if (request.op === 'set' && invalid.length) throw new WorkspaceFailure('invalidSelection', { message: 'Invalid selection inputs: ' + invalid.join(', ') });
   const hintPaths = [...request.paths];
   for (const slice of parsed.slices) if (!hintPaths.includes(slice.path)) hintPaths.push(slice.path);
-  return { selections: selectedSources(roots, prepared.state, new Set(artifacts.known.keys())),
-    artifactMaterials: prepared.state.selectedPaths.flatMap(path => {
-      const material = artifacts.known.get(path); return material ? [material] : [];
-    }), usesInsertionGrant: request.op !== 'remove' && artifacts.resolved.length > 0,
-    mode: prepared.state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const,
+  return { ...projectSelection({ roots, state: prepared.state }, artifacts.known),
+    usesInsertionGrant: request.op !== 'remove' && artifacts.resolved.length > 0,
     invalid,
     hintPaths };
 }

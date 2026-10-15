@@ -54,11 +54,12 @@
         ]
       ],
       "changes": [
-        "Bind exact alias classification, full-only insertion/removal, slice diagnostics and historical removal to the draft grant and workspace catalog. Ordinary paths remain with the existing selection parser/resolver. The retained RPCESelectionTransitions full-file mutation applies authorized identities; no parallel mutable artifact selection is introduced."
+        "Bind exact alias classification, full-only insertion/removal, slice diagnostics and historical removal to the draft grant and workspace catalog. Ordinary paths remain with the existing selection parser/resolver. The retained RPCESelectionTransitions full-file mutation applies authorized identities; no parallel mutable artifact selection is introduced.",
+        "Expose the existing captured-artifact view for canonical Git-selection projection; alias resolution policy is unchanged."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "9eabcee063a7bb5ba81a88f29814bc9b6e4f071f83bf460c33cb3e4ceef65151",
-      "sha256": "a23fff4b9894165df944e2563e31d54dc7ba952adaf9771c95b3677c88025cd9",
+      "sha256": "8e2ef496b7bd8d3f9da12dbad1f20ce790c11eda253a031693bb9b2816d1448c",
       "classification": "handwritten"
     },
     {

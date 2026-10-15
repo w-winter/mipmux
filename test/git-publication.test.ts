@@ -106,7 +106,7 @@ test('draft publication persists complete source snapshots, CURRENT and projecte
   } finally { await runtime.close(); }
 });
 
-test('publication retains completed files on write, CURRENT and later revision/cancellation failure', async () => {
+test('publication retains completed files on I/O/cancellation failure and admits concurrent prompt edits', async () => {
   for (const failure of ['write', 'current', 'revision', 'cancel'] as const) {
     const snapshotID = failure + '-failure';
     const f = await fixture(), resume = { effect: async () => {} };
@@ -118,9 +118,14 @@ test('publication retains completed files on write, CURRENT and later revision/c
         await draft.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'prompt', op: 'append', text: '\nChanged' } }, signal());
       };
       arm();
-      await assert.rejects(draft.publishGitSnapshot(f.diff, { mode: 'standard', scope: 'all', snapshotID,
-        inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 }, controller.signal),
-      failure === 'revision' ? /revisionConflict/ : failure === 'cancel' ? /cancelled|aborted/i : /nativeIOFailed/);
+      const pending = draft.publishGitSnapshot(f.diff, { mode: 'standard', scope: 'all', snapshotID,
+        inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 }, controller.signal);
+      if (failure === 'revision') {
+        const published = await pending; assert.equal(published.kind, 'single');
+        assert.equal(draft.revision, 1);
+        assert.equal((await draft.prompt({ op: 'get', maxOutputBytes: 100000 }, signal())).prompt, 'Collect evidence\nChanged');
+        assert((await draft.readGitArtifact(published.projection.primarySelectionAliases[0]!, signal())).text.includes(snapshotID));
+      } else await assert.rejects(pending, failure === 'cancel' ? /cancelled|aborted/i : /nativeIOFailed/);
       await assertRetainedFiles(f.out, snapshotID, failure);
       await draft.close(); await workspace.close();
     } finally { await runtime.close(); }

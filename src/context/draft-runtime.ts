@@ -37,7 +37,9 @@ import { failureCode } from '../runtime/tool-result.js';
 import { Compile } from 'typebox/compile';
 import { initialFileTree } from '../exploration/tree.js';
 import { selectionValidator, type SelectionRequest } from '../contracts/selection.js';
-import { prepareSelection } from './selection-preparation.js';
+import { prepareSelection, captureSelection, projectSelection, type CanonicalSelection, type SelectionState } from './selection-preparation.js';
+import { prepareSourceEdits } from './draft-source-edits.js';
+import { capturedArtifactSelection } from './git-artifact-selection.js';
 import { estimateUnits } from './budget.js';
 import { posix } from 'node:path';
 import { resolveSelectedCodemaps } from './codemap-readiness.js';
@@ -51,7 +53,7 @@ import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { publishGitSnapshotBatch } from './git-publication-batch.js';
 import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
 import { registerPublishedGitArtifacts, readCatalogedGitArtifact, type CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
-import { acquireGitArtifact, refreshGitArtifactMaterials } from './git-artifact-material.js';
+import { acquireGitArtifact, refreshGitArtifactMaterials, type GitArtifactMaterial } from './git-artifact-material.js';
 import { decorateGitPublicationReply } from './git-publication-reply.js';
 import { ReadRequest } from '../contracts/exploration.js';
 import { readFileReply } from '../exploration/read.js';
@@ -67,14 +69,14 @@ const gitArtifactEffectFailures = new Set(['revisionConflict', 'draftFrozen', 'g
   'rootChanged', 'outputChanged', 'nativeIOFailed', 'invalidEncoding']);
 const gitArtifactReadFailures = new Set(['gitArtifactNotCataloged', 'gitArtifactUnauthorized', 'gitRepositoryChanged',
   'pathDenied', 'notFound', 'permissionDenied', 'symlink', 'nonRegularFile', 'rootChanged', 'outputChanged', 'nativeIOFailed', 'invalidEncoding']);
-type SourceMutation = Exclude<SourceEdit, { kind: 'slices' }>;
 type SelectionReplyEntry = Static<typeof NativeSelectionReplyInput>['entries'][number];
 type SelectionReplyFile = Omit<Extract<SelectionReplyEntry, { kind: 'full' }>, 'kind'>;
 
 export class DraftRuntime {
   readonly id = randomUUID();
   #materials: ReadonlyMap<string, Material> = new Map();
-  #codemapMode: CodemapMode;
+  #selection: CanonicalSelection;
+  get #codemapMode(): CodemapMode { return this.#selection.state.codemapAutoEnabled ? 'automatic' : 'manual'; }
   #structure: { readonly digest: string; readonly index: StructureIndex } | null = null;
   readonly #pending = new Set<Promise<unknown>>();
   readonly #cancel = new AbortController();
@@ -91,8 +93,9 @@ export class DraftRuntime {
     readonly request: ContextBuildRequest,
     private readonly onClosed: () => void,
     private readonly gitTarget: FrozenGitTarget,
+    selection: CanonicalSelection,
   ) {
-    this.#codemapMode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
+    this.#selection = freeze(selection);
     this.#prompt = request.task;
   }
   get revision(): number {
@@ -149,7 +152,8 @@ export class DraftRuntime {
         materials.set(material.record.id, material);
       }
       const target = await FrozenGitTarget.capture(admission, materials);
-      const draft = new DraftRuntime(operation, request, onClosed, target);
+      const mode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
+      const draft = new DraftRuntime(operation, request, onClosed, target, await captureSelection(admission, materials, mode));
       draft.#materials = await draft.#derive(admission, materials, draft.#codemapMode, draft.#materials, 0);
       signal.throwIfAborted();
       return draft;
@@ -179,21 +183,21 @@ export class DraftRuntime {
       } finally { await operation.close(); }
     })());
   }
-  /** Captures publication evidence only after frozen/current ownership admission and an unchanged draft revision. */
+  /** Captures paths once, retaining frozen ownership and lifecycle fences while later selection edits proceed. */
   captureGitPublication(input: Extract<GitRequest, { op: 'diff' }>, generateDiffText: boolean,
     scope: Static<typeof GitSnapshotPublicationOptions>['scope'], signal: AbortSignal) {
-    const request = structuredClone(input), revision = this.#revision, current = this.#materials;
+    const request = structuredClone(input), current = this.#materials;
     return this.#track((async () => {
-      this.#check(signal, revision);
+      this.#check(signal, this.#revision);
       const generation = this.#freezeGeneration;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const checkout = await this.gitTarget.publication(operation, current, request);
-        this.#check(signal, revision);
+        this.#check(signal, this.#revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         const paths = scope === 'selected' ? selectedGitSourcePaths(operation, current) : null;
         const captured = await captureElectedGitDiff(operation, request, checkout, generateDiffText, paths);
-        this.#check(signal, revision);
+        this.#check(signal, this.#revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         return { ...captured, checkout };
       } finally { await operation.close(); }
@@ -201,43 +205,45 @@ export class DraftRuntime {
   }
   /** Publishes snapshots and replaces exact catalog-ready read grants. */
   publishGitSnapshot(input: Extract<GitRequest, { op: 'diff' }>, options: Static<typeof GitSnapshotPublicationOptions>, signal: AbortSignal) {
-    const revision = this.#revision, generation = this.#freezeGeneration;
+    const current = this.#materials, generation = this.#freezeGeneration;
     return this.#track((async () => {
-      const prepared = await this.#prepareGitSnapshot(input, options, signal, revision, generation);
-      this.#check(signal, revision);
+      const prepared = await this.#prepareGitSnapshot(input, options, signal, current, generation);
+      this.#check(signal, this.#revision);
       this.#installGitAdvertisements(prepared.advertisements);
       return prepared.published;
     })());
   }
   async #prepareGitSnapshot(input: Extract<GitRequest, { op: 'diff' }>, options: Static<typeof GitSnapshotPublicationOptions>,
-    signal: AbortSignal, revision: number, generation: number) {
+    signal: AbortSignal, current: ReadonlyMap<string, Material>, generation: number) {
     const request = structuredClone(input), parsed = snapshotPublicationValidator.Parse(structuredClone(options));
     const id = parsed.snapshotID?.trim();
     const capturedOptions = { ...parsed, snapshotID: id && id.toLowerCase() !== 'auto' ? id : null,
       inlineMode: parsed.inlineMode.toLowerCase(), inlineMaxLines: Math.max(1, parsed.inlineMaxLines) };
-    this.#check(signal, revision);
+    this.#check(signal, this.#revision);
     const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
     const check = () => {
-      this.#check(signal, revision);
+      this.#check(signal, this.#revision);
       if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
     };
     try {
-      const checkouts = await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+      const checkouts = await this.gitTarget.publicationRepositories(operation, current, request);
       check();
       const publishSingle = async () => {
         const checkout = checkouts[0];
         if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
         const repository = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
         const prepared = await prepareGitPublicationMetadata(operation, checkout, repository);
-        const captured = await this.captureGitPublication(request, capturedOptions.mode !== 'quick', capturedOptions.scope, signal);
-        return publishGitSnapshot(operation, captured, request, capturedOptions, this.id, check, prepared);
+        const paths = capturedOptions.scope === 'selected' ? selectedGitSourcePaths(operation, current) : null;
+        const captured = await captureElectedGitDiff(operation, request, checkout, capturedOptions.mode !== 'quick', paths);
+        check();
+        return publishGitSnapshot(operation, { ...captured, checkout }, request, capturedOptions, this.id, check, prepared);
       };
       let published = checkouts.length > 1
-        ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, this.#materials),
+        ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, current),
           request, capturedOptions, this.id, check)
         : await publishSingle();
       check();
-      await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+      await this.gitTarget.publicationRepositories(operation, current, request);
       const advertisements = new Map<string, CatalogedGitArtifact>(), readinessWarnings: Record<string, string> = {};
       for (const item of published.kind === 'single' ? [published] : published.publications) {
         const readiness = await registerPublishedGitArtifacts(operation, item, this.id);
@@ -250,7 +256,7 @@ export class DraftRuntime {
       }
       published = await decorateGitPublicationReply(operation, published, [], readinessWarnings);
       check();
-      await this.gitTarget.publicationRepositories(operation, this.#materials, request);
+      await this.gitTarget.publicationRepositories(operation, current, request);
       check();
       return { published, advertisements };
     } finally { await operation.close(); }
@@ -260,9 +266,36 @@ export class DraftRuntime {
     process.stderr.write(JSON.stringify({ level: 'info', event: 'gitArtifactGrantsReplaced', draftId: this.id,
       revision: this.#revision, aliases: advertisements.size }) + '\n');
   }
+  async #commitGitSelection(operation: WorkspaceOperation, primary: ReadonlyMap<string, GitArtifactMaterial>,
+    captured: ReadonlyMap<string, Material>, capturedSelection: CanonicalSelection, generation: number) {
+    for (;;) {
+      this.#check(operation.signal, this.#revision);
+      if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+      const revision = this.#revision, latest = this.#materials, prompt = this.#prompt;
+      const merged = await operation.transitionSelection({ kind: 'transitionSelection', selection: this.#selection.state,
+        mutation: { kind: 'gitPublication', contextSelection: capturedSelection.state } });
+      const state = { ...merged.selection, selectedPaths: [...merged.selection.selectedPaths] };
+      const aliases: string[] = [];
+      for (const material of primary.values()) {
+        if (state.selectedPaths.includes(material.record.reference.absolutePath)) continue;
+        state.selectedPaths.push(material.record.reference.absolutePath); aliases.push(material.record.reference.alias);
+      }
+      const known = capturedArtifactSelection(new Map([...primary, ...captured, ...latest])).known;
+      const projection = projectSelection({ roots: capturedSelection.roots, state }, known);
+      const next = await this.#prepareResolvedSelection(operation, projection, latest, [latest, captured, primary], revision);
+      this.#check(operation.signal, this.#revision);
+      if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+      // Repeat only preparation when another edit commits during the native projection or acquisition.
+      if (revision !== this.#revision) continue;
+      const candidate = this.#mutationChanges(latest, next, state, prompt);
+      if (candidate.changed) this.#commit(next, state, prompt, candidate.revision);
+      return { revision: candidate.revision, aliases };
+    }
+  }
   /** Commits mutable primary selection before reply admission; insertion grants are installed only after encoding succeeds. */
   publishGitArtifacts(input: Extract<GitRequest, { op: 'diff'; artifacts: true }>, signal: AbortSignal, encode: ResultEncoding) {
-    const request = structuredClone(input), revision = this.#revision, generation = this.#freezeGeneration;
+    const request = structuredClone(input), revision = this.#revision, generation = this.#freezeGeneration,
+      captured = this.#materials, capturedSelection = this.#selection;
     return this.#track((async () => {
       this.#check(signal, revision);
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
@@ -271,19 +304,17 @@ export class DraftRuntime {
           scope: request.scope, snapshotID: request.snapshot_id, inlineMap: request.inline.map,
           inlineMode: request.inline.mode, inlineMaxLines: request.inline.max_lines });
         if (normalized.kind === 'gitPublicationOptionsError') throw new WorkspaceFailure('invalidRequest', { message: normalized.message });
-        const prepared = await this.#prepareGitSnapshot(request, normalized.options, signal, revision, generation);
-        const next = new Map(this.#materials), autoSelected: string[] = [], commitWarnings: Record<string, string> = {};
+        const prepared = await this.#prepareGitSnapshot(request, normalized.options, signal, captured, generation);
+        const primary = new Map<string, GitArtifactMaterial>(), autoSelected: string[] = [], commitWarnings: Record<string, string> = {};
         let committedRevision = revision;
         try {
-          for (const [alias, entry] of prepared.advertisements) {
-            if (entry.artifact.selectionDisposition !== 'primaryAutoSelect' || next.has('gitArtifact:' + alias)) continue;
+          for (const entry of prepared.advertisements.values()) {
+            if (entry.artifact.selectionDisposition !== 'primaryAutoSelect') continue;
             const material = await acquireGitArtifact(operation, entry);
-            next.set(material.record.id, material); autoSelected.push(alias);
+            primary.set(material.record.id, material);
           }
-          this.#check(signal, revision);
-          if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-          committedRevision = revision + (autoSelected.length ? 1 : 0);
-          if (autoSelected.length) this.#commit(next, this.#codemapMode, this.#prompt, committedRevision);
+          const committed = await this.#commitGitSelection(operation, primary, captured, capturedSelection, generation);
+          committedRevision = committed.revision; autoSelected.push(...committed.aliases);
         } catch (error) {
           operation.signal.throwIfAborted();
           const code = failureCode(error);
@@ -377,20 +408,20 @@ export class DraftRuntime {
     return this.#track((async () => {
       const revision = request.expectedRevision ?? this.#revision;
       this.#check(signal, revision);
-      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt,
+      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt, selection = this.#selection,
         grants = this.#gitAdvertisements;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
-        const prepared = await prepareSelection(operation, request, current, this.#codemapMode, grants);
+        const prepared = await prepareSelection(operation, request, current, selection, grants);
         const next = request.op === 'get' ? current
-          : await this.#prepareResolvedSelection(operation, prepared, current, revision);
-        const candidate = this.#mutationChanges(current, next, prepared.mode, this.#prompt);
+          : await this.#prepareResolvedSelection(operation, prepared, current, [current], revision);
+        const candidate = this.#mutationChanges(current, next, prepared.state, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
         this.#check(signal, revision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         if (prepared.usesInsertionGrant && grants !== this.#gitAdvertisements) throw new WorkspaceFailure('gitArtifactAdvertisementChanged');
         if (isMutation && candidate.changed) {
-          this.#commit(next, prepared.mode, this.#prompt, candidate.revision);
+          this.#commit(next, prepared.state, this.#prompt, candidate.revision);
         }
         const settled = await resolveSelectedCodemaps(operation, next);
         if (request.op !== 'preview') this.#retainReadyCodemaps(next, settled);
@@ -406,8 +437,8 @@ export class DraftRuntime {
       } finally { await operation.close(); }
     })());
   }
-  async #prepareResolvedSelection(operation: WorkspaceOperation, prepared: Awaited<ReturnType<typeof prepareSelection>>,
-    current: ReadonlyMap<string, Material>, revision: number): Promise<ReadonlyMap<string, Material>> {
+  async #prepareResolvedSelection(operation: WorkspaceOperation, prepared: ReturnType<typeof projectSelection>,
+    current: ReadonlyMap<string, Material>, candidates: readonly ReadonlyMap<string, Material>[], revision: number): Promise<ReadonlyMap<string, Material>> {
     const explicit = new Map([...current].filter(([, material]) => material.record.kind !== 'source'
       && material.record.kind !== 'gitMap' && material.record.kind !== 'gitPatch'));
     for (const required of this.request.requiredSources) {
@@ -416,10 +447,11 @@ export class DraftRuntime {
       }
     }
     for (const selection of prepared.selections) {
-      const id = sourceId(selection.source), existing = current.get(id);
+      const id = sourceId(selection.source);
+      const existing = candidates.map(candidate => candidate.get(id)).find(material => material?.record.kind === 'source'
+        && material.record.selectionOrigin === 'explicit' && canonicalJSON(material.record.selection) === canonicalJSON(selection));
       const required = this.request.requiredSources.some(required => sourceId(required.source) === id);
-      const material = existing?.record.kind === 'source' && existing.record.selectionOrigin === 'explicit'
-        && canonicalJSON(existing.record.selection) === canonicalJSON(selection) ? existing
+      const material = existing ? existing
         : selection.kind === 'codemap' && !required ? await prepareCodemapSelection(operation, selection)
         : await acquireSource(operation, { selectionOrigin: 'explicit', selection, required });
       explicit.set(id, material);
@@ -582,7 +614,7 @@ export class DraftRuntime {
     this.#check(signal, input.expectedRevision);
     const freezeGeneration = this.#freezeGeneration, current = this.#materials;
     const mutation = input.mutation;
-    let next: ReadonlyMap<string, Material> = current, mode = this.#codemapMode, prompt = this.#prompt;
+    let next: ReadonlyMap<string, Material> = current, state = this.#selection.state, prompt = this.#prompt;
     if (mutation.kind === 'addDocument') {
       const id = 'document:' + mutation.document.id;
       if (current.has(id)) throw new WorkspaceFailure('duplicateMaterial', { id });
@@ -593,32 +625,33 @@ export class DraftRuntime {
       prompt = mutation.op === 'clear' ? '' : mutation.op === 'append' ? prompt + mutation.text : mutation.text;
     } else {
       const edits = mutation.kind === 'batch' ? mutation.edits : [mutation];
-      ({ next, mode } = await this.#prepareSourceEdits(edits, current, input.expectedRevision, signal));
+      ({ next, state } = await this.#prepareSourceEdits(edits, current, input.expectedRevision, signal));
     }
     this.#check(signal, input.expectedRevision);
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-    const { changed, revision, result } = await this.#mutationReceipt(current, next, mode, prompt, input.maxOutputBytes, encode, promptResponse, signal);
+    const { changed, revision, result } = await this.#mutationReceipt(current, next, state, prompt, input.maxOutputBytes, encode, promptResponse, signal);
     this.#check(signal, input.expectedRevision);
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
     if (changed) {
-      this.#commit(next, mode, prompt, revision);
+      this.#commit(next, state, prompt, revision);
     }
     return freeze(result);
   }
-  #commit(next: ReadonlyMap<string, Material>, mode: CodemapMode, prompt: string, revision: number): void {
-    this.#materials = next; this.#codemapMode = mode; this.#prompt = prompt; this.#revision = revision;
+  #commit(next: ReadonlyMap<string, Material>, state: SelectionState, prompt: string, revision: number): void {
+    this.#materials = next; this.#selection = freeze({ roots: this.#selection.roots, state }); this.#prompt = prompt; this.#revision = revision;
   }
-  #mutationChanges(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode, prompt: string) {
+  #mutationChanges(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, state: SelectionState, prompt: string) {
     const changedIds = [...new Set([...current.keys(), ...next.keys()])].filter(id =>
       current.get(id) !== next.get(id) && canonicalJSON(current.get(id) ?? null) !== canonicalJSON(next.get(id) ?? null)).sort(compareBytes);
-    const changed = changedIds.length > 0 || mode !== this.#codemapMode || prompt !== this.#prompt;
+    const changed = changedIds.length > 0 || canonicalJSON(state) !== canonicalJSON(this.#selection.state) || prompt !== this.#prompt;
     const revision = this.#revision + (changed ? 1 : 0);
     return { changedIds, changed, revision };
   }
-  async #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, mode: CodemapMode,
+  async #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, state: SelectionState,
     prompt: string, maxOutputBytes: number, encode: ResultEncoding,
     promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null, signal: AbortSignal) {
-    const { changedIds, changed, revision } = this.#mutationChanges(current, next, mode, prompt);
+    const { changedIds, changed, revision } = this.#mutationChanges(current, next, state, prompt);
+    const mode = state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const;
     const observed = await this.#liveMaterials([...next.values()], signal);
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
       codemapMode: mode, materials: observed }, AbortSignal.any([signal, this.#cancel.signal])));
@@ -640,63 +673,13 @@ export class DraftRuntime {
     return { changed, revision, result };
   }
   async #prepareSourceEdits(edits: readonly SourceEdit[], current: ReadonlyMap<string, Material>, revision: number, signal: AbortSignal) {
-    const explicit = new Map([...current].filter(([, material]) =>
-      material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
-    let mode = this.#codemapMode;
+    const selection = this.#selection;
     const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
     try {
-      for (const edit of edits) {
-        operation.signal.throwIfAborted();
-        if (edit.kind === 'slices') {
-          await this.#prepareSliceSource(edit, explicit, mode, operation);
-        } else if (edit.kind === 'upsert' || edit.kind === 'remove') {
-          let required: boolean;
-          ({ required, mode } = this.#changeSourceIntent(edit, explicit, mode));
-          if (edit.kind === 'upsert') {
-            const prepared = await acquireSource(operation, { selectionOrigin: 'explicit', selection: edit.selection, required });
-            explicit.set(prepared.record.id, prepared);
-          }
-        } else mode = this.#clearSourceIntent(edit.kind, explicit);
-      }
+      const { explicit, state, mode } = await prepareSourceEdits(operation, edits, current, selection, this.request.requiredSources);
       const next = await this.#derive(operation, explicit, mode, current, revision);
-      return { next, mode };
+      return { next, state, mode };
     } finally { await operation.close(); }
-  }
-  async #prepareSliceSource(mutation: Extract<SourceEdit, { kind: 'slices' }>,
-    explicit: Map<string, Material>, mode: CodemapMode, operation: WorkspaceOperation): Promise<void> {
-    const id = sourceId(mutation.source);
-    const entry = operation.snapshot.entries.find(item => item.root === mutation.source.root && item.path === mutation.source.path);
-    if (entry?.kind !== 'file') throw new WorkspaceFailure('unavailableSource', mutation.source);
-    const selected = explicit.get(id);
-    const base = selected?.record.kind === 'source' && selected.record.selection.kind === 'slices' ? selected.record.selection.ranges : [];
-    const op = mutation.op === 'add' ? 'coalesce' : mutation.op === 'remove' && mutation.ranges.length ? 'subtract' : 'normalize';
-    const result = await operation.calculateSliceRanges({ kind: 'calculateSliceRanges', op, base, ranges: mutation.ranges });
-    if (!result.ranges.length && (selected?.record.kind !== 'source' || selected.record.selection.kind !== 'slices')) return;
-    const selection = result.ranges.length ? { kind: 'slices' as const, source: mutation.source, ranges: result.ranges }
-      : { kind: 'full' as const, source: mutation.source };
-    const { required } = this.#changeSourceIntent({ kind: 'upsert', selection }, explicit, mode);
-    const prepared = await acquireSource(operation, { selectionOrigin: 'explicit', selection, required });
-    explicit.set(id, prepared);
-  }
-  #changeSourceIntent(mutation: Extract<SourceMutation, { kind: 'upsert' | 'remove' }>, explicit: Map<string, Material>, mode: CodemapMode) {
-    const id = sourceId(mutation.kind === 'upsert' ? mutation.selection.source : mutation.source);
-    const selection = this.request.requiredSources.find(selection => sourceId(selection.source) === id);
-    const required = selection !== undefined;
-    if (selection && (mutation.kind === 'remove' || canonicalJSON(selection) !== canonicalJSON(mutation.selection))) {
-      throw new WorkspaceFailure('requiredMaterialMutation', { id });
-    }
-    if (mutation.kind === 'remove') explicit.delete(id);
-    else if (!required && mutation.selection.kind === 'codemap') mode = 'manual';
-    return { required, mode };
-  }
-  #clearSourceIntent(kind: 'clearSources' | 'clearCodemaps', explicit: Map<string, Material>): CodemapMode {
-    for (const [id, { record }] of explicit) {
-      if (kind === 'clearSources' && (record.kind === 'gitMap' || record.kind === 'gitPatch')) explicit.delete(id);
-      if (record.kind === 'source' && !record.required &&
-          (kind === 'clearSources' || record.selection.kind === 'codemap')) explicit.delete(id);
-    }
-    return kind === 'clearCodemaps' || this.request.requiredSources.some(selection => selection.kind === 'codemap')
-      ? 'manual' : 'automatic';
   }
   inspect(input: DraftInspection, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!inspectionValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
