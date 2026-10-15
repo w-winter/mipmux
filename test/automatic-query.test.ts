@@ -9,7 +9,8 @@ test('automatic query applies the RP candidate threshold before seed exclusion',
     const seed = structuralFile('r', 'seed.swift', ['Shared'], ['Shared']);
     const candidates = Array.from({ length: count - 1 }, (_, index) => structuralFile('r', `${index}.swift`, ['Shared'], []));
     const index = new StructureIndex({ entries: [seed, ...candidates] });
-    assert.equal(index.resolveAutomaticCodemapTargets([seed]).length, count === 4096 ? count - 1 : 0);
+    const selectedSeeds = [seed, ...candidates.slice(0, count - 1025)];
+    assert.equal(index.resolveAutomaticCodemapTargets(selectedSeeds).targets.length, count === 4096 ? 1024 : 0);
   }
 });
 
@@ -28,7 +29,7 @@ test('automatic membership matches a root-local normalized oracle and is indepen
       .map(file => file.root + '/' + file.path).sort();
     const index = new StructureIndex({ entries: files });
     const selected = index.resolveAutomaticCodemapTargets(seeds);
-    assert.deepEqual(selected.map(file => file.root + '/' + file.path).sort(), expected);
+    assert.deepEqual(selected.targets.map(file => file.root + '/' + file.path).sort(), expected);
     assert.deepEqual(index.resolveAutomaticCodemapTargets([...seeds].reverse()), selected);
   }));
 });

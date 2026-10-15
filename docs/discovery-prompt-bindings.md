@@ -52,6 +52,10 @@ Explicit structural queries apply RPCE's root-local resident limits before trave
 
 An oversized root or an accounting overflow returns the source `graph_revoked` issue with unavailable graph evidence. Other roots remain eligible under the shared output budget. Semantic small/medium/large output limits are separate from resident admission. `test/structure-resident-size.test.ts` tests the production threshold for nodes using native requests and retains a repeatable reply artifact; the original 25 structural reference cases cover unchanged traversal and presentation. Automatic-membership limits and watcher/currentness mappings require separate conformance evidence.
 
+## Automatic target demand
+
+`StructureIndex.resolveAutomaticCodemapTargets` applies the 1024-target cap from RPCE's default `WorkspaceCodemapAutomaticSelectionRequestPolicy`. The cap applies after root-local matching, whole-reference fanout suppression and selected-source exclusion. An oversized candidate set produces a typed `targetDemandLimit` result with no targets, rather than a truncated selection. The draft records the rejection and keeps its explicit selection; integrity checks on saved bundles use the same matcher without native execution. `test/automatic-demand-limit.test.ts` exercises overflow and the inclusive boundary through workspace admission, paged inspection, publication and saved verification.
+
 ## Selection transition reference
 
 The native `serializeGitSnapshot` operation returns an ordered list of relative artifact paths and base64-encoded bytes from RPCE's repo-scoped snapshot serializer. Quick mode produces manifest, MAP and summary indexes; standard mode adds full and per-file patches and changed-line indexes; deep mode adds hunk JSONL and detailed changed lines. Repeated paths retain the source's overwrite order. The serializer captures snapshot time and accepts the earlier acquisition fingerprint and checkout metadata as input. A caller receives the byte list for writing under its output authority.

@@ -2,10 +2,15 @@ import type { InventorySnapshot, InventoryEntry, SourcePath } from '../contracts
 import { compareBytes, canonicalJSON, WorkspaceFailure } from './values.js';
 
 export type StructureFile = Extract<InventoryEntry, { kind: 'file' }>;
+type AutomaticCodemapTargets =
+  | { readonly kind: 'ready'; readonly targets: readonly StructureFile[] }
+  | { readonly kind: 'targetDemandLimit'; readonly targets: readonly []; readonly attempted: number; readonly limit: number };
 const sourceKey = (file: SourcePath) => canonicalJSON({ root: file.root, path: file.path });
 const symbolKey = (root: string, name: string) => canonicalJSON([root, name.normalize('NFC')]);
 // RPCE's automatic matching suppresses a whole reference above this definition fanout.
 const automaticCandidateLimit = 4096;
+// RPCE's default WorkspaceCodemapAutomaticSelectionRequestPolicy caps target materialization.
+const maximumCandidateDemandCount = 1024;
 
 /** Root-local posting lists retain all syntactic candidates for a name. */
 export class StructureIndex {
@@ -27,7 +32,7 @@ export class StructureIndex {
   }
 
   /** One-hop, root-local targets, excluding seeds; common-name suppression precedes seed exclusion. */
-  resolveAutomaticCodemapTargets(seeds: readonly SourcePath[]): readonly StructureFile[] {
+  resolveAutomaticCodemapTargets(seeds: readonly SourcePath[]): AutomaticCodemapTargets {
     const seedKeys = new Set(seeds.map(sourceKey)), targets = new Map<string, StructureFile>();
     for (const symbol of this.#automaticReferenceNames(seedKeys)) {
       const candidates = this.#definitions.get(symbol) ?? [];
@@ -37,7 +42,10 @@ export class StructureIndex {
         if (!seedKeys.has(candidateKey)) targets.set(candidateKey, candidate);
       }
     }
-    return [...targets.values()].sort((a, b) => compareBytes(a.root, b.root) || compareBytes(a.path, b.path));
+    if (targets.size > maximumCandidateDemandCount) {
+      return { kind: 'targetDemandLimit', targets: [], attempted: targets.size, limit: maximumCandidateDemandCount };
+    }
+    return { kind: 'ready', targets: [...targets.values()].sort((a, b) => compareBytes(a.root, b.root) || compareBytes(a.path, b.path)) };
   }
 
   #automaticReferenceNames(seedKeys: ReadonlySet<string>): Set<string> {
