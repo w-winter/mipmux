@@ -1,6 +1,13 @@
 import Type, { type Static } from 'typebox';
 
 const closed = { additionalProperties: false };
+export const defaultPromptSectionsOrder = ['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions'] as const;
+export const PromptSection = Type.Enum(defaultPromptSectionsOrder);
+export type PromptSection = Static<typeof PromptSection>;
+/** Every source section must be present; repeated sections retain their configured positions. */
+export const PromptSectionsOrder = Type.Array(PromptSection, {
+  allOf: defaultPromptSectionsOrder.map(section => ({ contains: Type.Literal(section) })),
+});
 /** Clipboard presets retain source inclusion and saved-prompt choices; role bodies come from the caller catalog. */
 export const ClipboardPreset = Type.Enum(['standard', 'plan', 'codeReview']);
 export type ClipboardPreset = Static<typeof ClipboardPreset>;

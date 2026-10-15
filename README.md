@@ -141,7 +141,9 @@ try {
 }
 ```
 
-`duplicateUserInstructionsAtTop` adds the complete resulting prompt before the context sections when true. The ordinary final user-instruction section remains present; empty prompt text produces no user block. Set it to false for the source default. Both copies count toward the assembly budget.
+`duplicateUserInstructionsAtTop` adds the complete resulting prompt before the context sections when true. The ordered user-instruction sections remain present; empty prompt text produces no user block. Set it to false for the source default. Every copy counts toward the assembly budget.
+
+Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `metaPrompts` and `userInstructions`. Each name must occur at least once; repeated names emit complete repeated sections. Omit the field to use that default order. Item costs aggregate repeated material bodies and file blocks. Complete-packet measurement includes all copies and wrappers.
 
 `copyPreset` selects `standard`, `plan` or `codeReview`. Standard includes ordinary context. Plan selects the saved architect prompt with ID `8e81aac2-79ce-4897-a59e-efd81eebb7e9`; Review selects ID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b`. Supply the complete matching role in `storedPrompts`, an array of `{ id, title, content }` entries.
 

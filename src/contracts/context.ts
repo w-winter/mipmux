@@ -5,7 +5,7 @@ import { SafeCount, SHA256, SourceIdentity, RelativePath } from './workspace.js'
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
-import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
+import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset, PromptSectionsOrder } from './presentation.js';
 import { NativeFileTreeInput, NativeGitCheckout, AutomaticReviewGitCheckout, AutomaticReviewGitPathIssue, AutomaticReviewGitCompleteness } from './native.js';
 import { AutomaticCodemapOutcome } from './automatic-codemaps.js';
 import { Clarification } from './interaction.js';
@@ -54,6 +54,7 @@ export type PromptEnhancementMode = Static<typeof PromptEnhancementMode>;
 export const ContextBuildRequest = Type.Object({
   clarification: Type.Optional(Clarification),
   duplicateUserInstructionsAtTop: Type.Boolean(),
+  promptSectionsOrder: Type.Optional(PromptSectionsOrder),
   copyPreset: ClipboardPreset,
   storedPrompts: Type.Array(StoredPrompt),
   reviewGitBase: Type.Optional(Type.String({ pattern: '^[^\u0000]*$' })),

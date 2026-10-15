@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "aed19a796b36df6de885bf3a81af98bfa8ab9e73852af967cc3f739da909fd0c",
+      "sha256": "8e4f1d583016e5719ad4389475b6dafe069846bfdda81f91f6967a378949ed66",
       "classification": "handwritten",
       "ranges": [
         [
@@ -22,7 +22,8 @@
         "Partition authorized MAP blocks as ordinary file content and optional selected patches separately from immutable caller-required patches. Native preset resolution owns optional patch inclusion; parsing consumes the captured Git mode to record only delivered patch spans and costs. Draft membership and material inspection retain omitted selected patches.",
         "Use the bound MCP clipboard respectGitInclusion route only. No ordinary PromptVM includeBeforeGitInclusion mode is introduced. Saved verification accepts the exact source preset projection without a native process; current verification replays native packaging. Required patch bytes follow included selected patch bytes as the explicit headless binding.",
         "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
-        "Invoke automatic preassembly lazily from native Review eligibility; capture native text and evidence separately from selected artifacts and required patches. Parse its span and relative body proofs for exact accounting and native-free saved integrity."
+        "Invoke automatic preassembly lazily from native Review eligibility; capture native text and evidence separately from selected artifacts and required patches. Parse its span and relative body proofs for exact accounting and native-free saved integrity.",
+        "Parse the captured section order, including repetitions, against retained material blocks. The manifest records the first canonical body/frame/tree/automatic-Git spans. Every repeated occurrence must equal those bytes and the parser must consume the whole packet. Aggregate all occurrence bytes per logical material before estimating item units. This reuses the existing saved verification model without duplicate material identities or redundant frame tables."
       ]
     },
     {
@@ -30,7 +31,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "native/Sources/SmipBridge/PreparedClipboardInput.swift",
-      "sha256": "76bd0dfc29040d84c965cab72af83a8a41c8586ac7a7d39330994e1b3c2db602",
+      "sha256": "20a7f850d848321f1e42bc08cf3b7c4d81ef2c6f332f9c8f3a8fb28189fa27f4",
       "classification": "handwritten",
       "ranges": [
         [
@@ -41,7 +42,8 @@
       "changes": [
         "Bind selected-artifact inclusion to the retained built-in preset gitInclusion using the bound MCP clipboard respectGitInclusion route (MCPServerViewModel+WorkspaceContext.swift278-345). Standard/Plan suppress selected patch bodies, not ordinary MAP blocks. Review includes selected patch bodies in captured selection order.",
         "Caller-required PatchInput bodies are a headless request contract, not source optional selected artifacts or replaceable supplied packaging text. They remain complete after optional selected patches for every preset. Return the exact preset Git mode with the saved meta projection. Native eligibility requests the lazy automatic provider only when Review has no nonblank selected patch text. Automatic preassembly text precedes independent required patch bodies.",
-        "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered."
+        "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
+        "Forward the captured promptSectionsOrder to the retained PromptAssemblyBuilder through RPCEClipboardPackaging. Include every configured repetition; no second rendering path is added."
       ]
     },
     {
@@ -6603,6 +6605,28 @@
         "Bind the source nearest-marker walk to synchronous Foundation metadata in the existing native ownership operation. At each directory an available Jujutsu executable gives .jj precedence over a valid Git layout; a nearer Git checkout wins before an ancestor Jujutsu checkout. Automatic Review and election of initial Git targets share the resolver.",
         "Executable availability follows Sources/RepoPromptVCS/JJCommandRunner.swift:165-203, SHA256 4be8bb56f21e50129dc536ed551e4cea3eb46260d9adb6a3a9bca6c2e993c80e. Search the native process PATH and the source common installation directories using FileManager executable checks. The explicit native environment supplied by the host replaces discovery through a GUI login shell. Availability requires no subprocess and does not inspect command output.",
         "This mapping covers physical marker ownership. VCSService command-based discovery after the marker walk and its long-lived actor caches are not executed; their applicability under explicit headless capabilities remains unverified. The resolver observes metadata afresh for each native operation."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptDomainRuntime/ProviderContent/PromptAssemblyBuilder.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "551f40f968ca24f53f60cc73416174f226a7f4801b253ee6997e1ea5f7cef4eb",
+      "destination": "src/contracts/presentation.ts",
+      "sha256": "c21217c311f8510190d86acf4e4f100a37f08e17f58d90991e800ef662215d13",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          12,
+          13
+        ],
+        [
+          30,
+          32
+        ]
+      ],
+      "changes": [
+        "Use the section names and default order from RPCE in the shared TypeScript/native schema. The optional public promptSectionsOrder setting captures the effective order at build admission; omission selects the source default.",
+        "Require every section with JSON Schema contains checks while retaining repetitions, matching Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift:5445-5456, SHA256 142aea37ff038a9fd4805257a9706d64e091e0a62e3850493236c3bf91cc01b2. This is the effective ordered value, not raw persisted preference parsing."
       ]
     }
   ],

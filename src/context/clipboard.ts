@@ -7,6 +7,7 @@ import { compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits } from './budget.js';
 import { acquireAutomaticReviewGit, type AutomaticReviewGitSource } from './automatic-review-git.js';
 import { verifyAutomaticReviewGitCapture } from './automatic-review-git-integrity.js';
+import { defaultPromptSectionsOrder, type PromptSection } from '../contracts/presentation.js';
 
 type ClipboardInput = Extract<NativeOperation, { kind: 'renderPreparedClipboard' }>;
 type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds'>;
@@ -32,6 +33,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
   const materials = partitionMaterials(input.materials);
   return { kind: 'renderPreparedClipboard', input: {
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop,
+    promptSectionsOrder: [...(input.request.promptSectionsOrder ?? defaultPromptSectionsOrder)],
     copyPreset: input.request.copyPreset, storedPrompts: input.request.storedPrompts,
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
     contentBlocks: materials.contents.map(contentBlock),
@@ -88,14 +90,30 @@ function consumeMetaInstructions(input: RenderInput, consume: Consume) {
   for (const [index, meta] of metas.entries()) consume('<meta prompt ' + (index + 1) + ' = "' + meta.title + '">\n' + meta.content + '\n</meta prompt ' + (index + 1) + '>\n');
 }
 
-/** Reads source-default clipboard framing; never substitutes a TypeScript rendering for native assembly. */
+function consumeGitDiff(input: RenderInput, patches: readonly Material[], consume: Consume, raw: (material: Material) => void,
+  charge: (id: string, bytes: number) => void): Span | null {
+  const automaticText = input.automaticGit?.text ?? '';
+  const gitDiff = [automaticText, ...patches.flatMap(material => material.bodies)].filter(Boolean).join('\n\n');
+  if (gitDiff) consume('<git_diff>\n');
+  const automaticSpan = automaticText ? consume(automaticText) : null;
+  if (automaticSpan) {
+    charge('automaticReviewGit', automaticSpan.length);
+    if (patches.length) consume('\n\n');
+  }
+  consumeMaterialBlocks(patches, consume, raw);
+  if (gitDiff) consume('\n</git_diff>\n');
+  return automaticSpan;
+}
+
+/** Parses every ordered occurrence against canonical material bytes and charges all repetitions. */
 export function parseClipboard(input: RenderInput) {
   const bytes = Buffer.from(input.clipboard), materials = partitionMaterials(input.materials);
   const includedGitDiffs = new Set(input.selectedGitDiffIds);
   const selectedPatches = input.clipboardPreset.gitInclusion === 'none' ? []
     : materials.selectedPatches.filter(material => includedGitDiffs.has(material.record.id));
   const patches = [...selectedPatches, ...materials.patches];
-  const records: MaterialRecord[] = [], costs: ItemCost[] = [];
+  const records = new Map<string, MaterialRecord>(), costs = new Map<string, number>();
+  const charge = (id: string, bytes: number) => { costs.set(id, (costs.get(id) ?? 0) + bytes); };
   let cursor = 0;
   const consume = (text: string): Span => {
     const expected = Buffer.from(text), offset = cursor;
@@ -106,7 +124,8 @@ export function parseClipboard(input: RenderInput) {
   const raw = (material: Material) => {
     const spans = material.bodies.map(body => consume(body));
     const size = spans.reduce((sum, span) => sum + span.length, 0);
-    records.push({ ...material.record, spans }); costs.push({ id: material.record.id, bytes: size, units: estimateUnits(size) });
+    if (!records.has(material.record.id)) records.set(material.record.id, { ...material.record, spans });
+    charge(material.record.id, size);
   };
   const framed = (material: Material) => {
     const block = material.sourceBlock;
@@ -114,29 +133,32 @@ export function parseClipboard(input: RenderInput) {
     const frame = consume(block.text);
     const spans = block.bodySpans.map((span, index) => ({ offset: frame.offset + span.offset, length: span.length,
       sha256: sha256(material.bodies[index]!) }));
-    records.push({ ...material.record, frame, spans });
-    costs.push({ id: material.record.id, bytes: frame.length, units: estimateUnits(frame.length) });
+    if (!records.has(material.record.id)) records.set(material.record.id, { ...material.record, frame, spans });
+    charge(material.record.id, frame.length);
   };
-  if (input.request.duplicateUserInstructionsAtTop && input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n');
-  const fileTreeSpan = consumeFileMap(input.fileTree.text, materials.codemaps, consume, raw);
-  if (materials.contents.length) {
-    consume('<file_contents>\n');
-    consumeMaterialBlocks(materials.contents, consume, framed);
-    consume('\n</file_contents>\n');
-  }
   verifyAutomaticReviewGitCapture(input.automaticGit, input.clipboardPreset.gitInclusion === 'selected' && selectedPatches.length === 0);
-  const automaticText = input.automaticGit?.text ?? '';
-  const gitDiff = [automaticText, ...patches.flatMap(material => material.bodies)].filter(Boolean).join('\n\n');
-  if (gitDiff) consume('<git_diff>\n');
-  const automaticGitSpan = automaticText ? consume(automaticText) : null;
-  if (automaticGitSpan) {
-    costs.push({ id: 'automaticReviewGit', bytes: automaticGitSpan.length, units: estimateUnits(automaticGitSpan.length) });
-    if (patches.length) consume('\n\n');
-  }
-  consumeMaterialBlocks(patches, consume, raw);
-  if (gitDiff) consume('\n</git_diff>\n');
-  consumeMetaInstructions(input, consume);
-  if (input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n');
+  const capturedSpans = new Map<'fileMap' | 'gitDiff', Span>();
+  const sections = {
+    fileMap: () => {
+      const span = consumeFileMap(input.fileTree.text, materials.codemaps, consume, raw);
+      if (!capturedSpans.has('fileMap')) capturedSpans.set('fileMap', span);
+    },
+    fileContents: () => {
+      if (!materials.contents.length) return;
+      consume('<file_contents>\n'); consumeMaterialBlocks(materials.contents, consume, framed); consume('\n</file_contents>\n');
+    },
+    gitDiff: () => {
+      const span = consumeGitDiff(input, patches, consume, raw, charge);
+      if (span && !capturedSpans.has('gitDiff')) capturedSpans.set('gitDiff', span);
+    },
+    metaPrompts: () => { consumeMetaInstructions(input, consume); },
+    userInstructions: () => { if (input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n'); },
+  } satisfies Record<PromptSection, () => void>;
+  if (input.request.duplicateUserInstructionsAtTop) sections.userInstructions();
+  for (const section of input.request.promptSectionsOrder ?? defaultPromptSectionsOrder) sections[section]();
+  const fileTreeSpan = capturedSpans.get('fileMap');
+  if (!fileTreeSpan) throw new WorkspaceFailure('invalidClipboard');
   if (cursor !== bytes.length) throw new WorkspaceFailure('invalidClipboard');
-  return { records, costs, fileTreeSpan, automaticGitSpan };
+  return { records: [...records.values()], costs: [...costs].map(([id, bytes]): ItemCost => ({ id, bytes, units: estimateUnits(bytes) })),
+    fileTreeSpan, automaticGitSpan: capturedSpans.get('gitDiff') ?? null };
 }

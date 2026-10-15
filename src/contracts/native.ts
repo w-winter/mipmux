@@ -1,4 +1,4 @@
-import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
+import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset, PromptSection as promptSection } from './presentation.js';
 import { DecoderPolicy, IgnoreAuthority, IgnoreControl, IgnoreSettings } from './inventory.js';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -38,7 +38,6 @@ export const NativeFileTreeInput = Type.Object({ kind: Type.Literal('renderFileT
 export const NativeFileTreeResult = Type.Object({ kind: Type.Literal('fileTree'), tree: Type.String(), rootsCount: SafeCount,
   note: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false });
 export type NativeFileTreeResult = Static<typeof NativeFileTreeResult>;
-const promptSection = Type.Enum(['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions']);
 const snippetText = Type.Union([Type.String(), Type.Null()]);
 const clipboardLine = Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER });
 const clipboardRange = Type.Object({ start: clipboardLine, end: clipboardLine, description: snippetText }, { additionalProperties: false });
@@ -60,6 +59,7 @@ export const NativeClipboardInput = Type.Object({ kind: Type.Literal('renderClip
 }, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('renderPreparedClipboard'), input: Type.Object({
   duplicateUserInstructionsAtTop: Type.Boolean(),
+  promptSectionsOrder: Type.Array(promptSection),
   copyPreset: ClipboardPreset, storedPrompts: Type.Array(StoredPrompt),
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
   selectedGitDiffs: Type.Array(Type.Object({ id: Type.String(), text: Type.String() }, { additionalProperties: false })),

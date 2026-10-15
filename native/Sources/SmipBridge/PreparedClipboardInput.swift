@@ -8,6 +8,7 @@ enum ClipboardPresetKind: String, Decodable { case standard, plan, codeReview }
 
 struct PreparedClipboardInput: Decodable {
     let duplicateUserInstructionsAtTop: Bool
+    let promptSectionsOrder: [PromptSection]
     let copyPreset: ClipboardPresetKind
     let storedPrompts: [CapturedStoredPrompt]
     let codemapBlocks: [String]
@@ -27,7 +28,8 @@ struct PreparedClipboardOperation {
         let object = try WireObject(value, keys: ["kind", "input"])
         let raw = try object.value("input")
         _ = try WireObject(raw, keys: [
-            "duplicateUserInstructionsAtTop", "copyPreset", "storedPrompts", "codemapBlocks", "contentBlocks",
+            "duplicateUserInstructionsAtTop", "promptSectionsOrder", "copyPreset", "storedPrompts",
+            "codemapBlocks", "contentBlocks",
             "fileTreeContent", "selectedGitDiffs", "gitDiff", "automaticGitDiff",
             "metaInstructions", "userInstructions"
         ])
@@ -64,7 +66,7 @@ struct PreparedClipboardOperation {
             metaInstructions: metas, userInstructions: input.userInstructions, codemapBlocks: input.codemapBlocks,
             contentBlocks: input.contentBlocks, fileTreeContent: input.fileTreeContent, gitDiff: gitDiff,
             includeSavedPrompts: !metas.isEmpty, includeFiles: includeFiles, includeUserPrompt: includeUserPrompt,
-            includeDatetimeInUserInstructions: false, promptSectionsOrder: PromptAssemblyBuilder.defaultSectionOrder,
+            includeDatetimeInUserInstructions: false, promptSectionsOrder: input.promptSectionsOrder,
             disabledPromptSections: [],
             duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: nil
         )
