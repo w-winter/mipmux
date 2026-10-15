@@ -34,9 +34,9 @@ const inputs = [
   { name: 'literal-quote-terminator', input: { kind: 'prepareSearchPattern', text: 'end\\E value', queryKind: 'literal' } },
   { name: 'explicit-regex-space', input: { kind: 'prepareSearchPattern', text: ' one two ', queryKind: 'regex' } },
 ];
-for (const item of inputs) item.input.wholeWord = false;
+for (const item of inputs) { item.input.wholeWord = false; item.input.mode = 'content'; }
 inputs.push({ name: 'fuzzy-space-ignores-whole-word', input: {
-  kind: 'prepareSearchPattern', text: 'one two', queryKind: 'literal', wholeWord: true,
+  kind: 'prepareSearchPattern', text: 'one two', queryKind: 'literal', wholeWord: true, mode: 'content',
 } });
 const driver = `
 struct Input: Decodable { let text: String; let queryKind: String; let wholeWord: Bool }
@@ -46,7 +46,7 @@ let outputs = cases.map { item -> [String: Any] in
     let pattern = item.input.text.trimmingCharacters(in: .whitespacesAndNewlines)
     if pattern.isEmpty { return ["kind": "searchPatternError", "message": ${JSON.stringify(emptyMessage)}] }
     let isRegex = item.input.queryKind == "auto" ? FileSearchActor.containsRegexSyntax(pattern) : item.input.queryKind == "regex"
-    return ["kind": "searchPattern", "path": ["text": pattern, "isRegex": isRegex, "wholeWord": false],
+    return ["kind": "searchPattern", "mode": "content", "path": ["text": pattern, "isRegex": isRegex, "wholeWord": false],
             "content": FileSearchActor.contentPattern(pattern, isRegex: isRegex, wholeWord: item.input.wholeWord)]
 }
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: outputs, options: [.sortedKeys]))

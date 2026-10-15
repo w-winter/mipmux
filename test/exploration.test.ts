@@ -24,7 +24,7 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
     const op = await handle.openOperation(new AbortController().signal);
     const query = { mode: 'content' as const, query: { kind: 'literal' as const, text: 'needle', caseSensitive: true, wholeWord: true },
       filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 1, after: 1,
-      countOnly: false, maxOutputBytes: 10000, continuation: null };
+      countOnly: false, maxResults: 50, maxOutputBytes: 10000, continuation: null };
     const result = await op.fileSearch(query);
     if (result.kind !== 'search') assert.fail('Missing search');
     assert.equal(result.counts.occurrences, 3); assert.equal(result.counts.matchingLines, 2);

@@ -7,6 +7,7 @@ import type { NativeFailureCode } from '../contracts/errors.js';
 type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
   prepareSearchPattern: ['searchPattern', 'searchPatternError'],
+  matchSearchPaths: ['searchPaths', 'searchPathsError'],
   calculateTokenStats: ['tokenStats'],
   prepareGitWorktreeMainRoot: ['gitWorktreePlan', 'gitWorktreeListingError'],
   resolveGitWorktreeConfig: ['gitWorktreeMainRoot'],

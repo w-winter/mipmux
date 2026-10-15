@@ -68,8 +68,8 @@
     }
   ],
   "cases": 36,
-  "generatorSHA256": "6d47449f2946c05331fc442c483f35a80cc0d24ca0ae0f0e98c7e2cc2dcf6b02",
-  "combinedSourceSHA256": "52d6cb457ec2ff92e5d21273d2d50214c5e9cdf585a5d9fe29929d2310584adb",
+  "generatorSHA256": "9a83f69df2d5308dec274a3c21250c34f5b2cd07343056f9bce05df2a878b604",
+  "combinedSourceSHA256": "495ebecb4c93a9863d2b5c63d2ea8bb06f46c624b5fda53ea8aee30fdd44e5e6",
   "bindings": [
     "Original regex detection, PCRE feature detection, literal escaping and flexible-space conversion execute verbatim.",
     "The driver applies MCP trim/empty/inferred-regex rules and chooses fuzzy conversion only for non-regex patterns with spaces. The source literal fuzzy branch bypasses whole-word handling; path matching ignores whole-word.",

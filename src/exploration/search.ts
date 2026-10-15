@@ -9,6 +9,7 @@ import { runRipgrep, encodedText } from './ripgrep.js';
 import { pageIdentity, pageOffset } from './continuation.js';
 import { pageResult, serializedBytes, type ResultEncoding } from './output-budget.js';
 import type { PreparedSearchPattern } from '../contracts/search-pattern.js';
+import { prepareSearch } from './search-query.js';
 
 export interface SearchFile {
   readonly root: string; readonly path: string; readonly identity: SourceIdentity;
@@ -28,7 +29,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   if (!configured) throw new WorkspaceFailure('searchNotConfigured');
   const { executable } = configured;
   await runRipgrep(operation.runtime.supervisor, executable, ['--pcre2-version'], '/', '', operation.signal, () => {}, true);
-  const candidates = operation.snapshot.entries.filter(entry => entry.kind === 'file').filter(entry => {
+  const admitted = operation.snapshot.entries.filter(entry => entry.kind === 'file').filter(entry => {
     if (entry.visibility !== 'discoverable') return false;
     const filters = request.filters;
     return (!filters.roots.length || filters.roots.includes(entry.root)) &&
@@ -37,20 +38,15 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       !filters.exclude.some(glob => posix.matchesGlob(entry.path, glob)) &&
       (!filters.extensions.length || filters.extensions.includes(posix.extname(entry.path).slice(1)));
   });
+  const pattern = await prepareSearch(operation, request, admitted);
+  const { candidates, matchedPaths } = pattern;
   const { maxOutputBytes, continuation, ...settings } = request;
   const digest = pageIdentity(operation.snapshot, settings, candidates.map(entry => ({ root: entry.root, path: entry.path,
     identity: entry.identity })));
   const offset = pageOffset(continuation, digest);
-  const matches = candidates.map(() => ({ pathOccurrences: 0, occurrences: 0, matchingLines: 0, lastLine: 0 }));
+  const matches = candidates.map(file => ({ pathOccurrences: matchedPaths.has(file) ? 1 : 0, occurrences: 0, matchingLines: 0, lastLine: 0 }));
   const flags = ['--pcre2', '--json', '--no-config', '--encoding', 'none', '--no-ignore', '--hidden', '--threads', '1', '--sort', 'path'];
-  let pathFlags = flags, contentFlags = flags;
-  if (request.query.kind !== 'glob') {
-    const pattern = await operation.prepareSearchPattern({ kind: 'prepareSearchPattern', text: request.query.text,
-      queryKind: request.query.kind, wholeWord: request.query.wholeWord });
-    if (pattern.kind === 'searchPatternError') throw new WorkspaceFailure('invalidSearchPattern', { message: pattern.message });
-    pathFlags = patternFlags(flags, pattern.path, request.query.caseSensitive);
-    contentFlags = patternFlags(flags, pattern.content, request.query.caseSensitive);
-  }
+  const contentFlags = patternFlags(flags, pattern.content, request.query.caseSensitive);
   const limitations: { root: string; path: string; code: string }[] = [];
   const workRoot = join(operation.runtime.options.cachePath, 'v1/work');
   await mkdir(workRoot, { recursive: true, mode: 0o700 });
@@ -59,7 +55,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   try {
     for (const [index, candidate] of candidates.entries()) {
       // Each candidate is revalidated even for count-only and path-only continuations.
-      if (request.mode === 'path') { await operation.readRawSource(candidate); continue; }
+      if (pattern.mode === 'path') { await operation.readRawSource(candidate); continue; }
       try {
         const source = await operation.readSource(candidate);
         const text = prepareText(source.text);
@@ -70,20 +66,8 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
         limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
       }
     }
-    if (request.mode === 'path' || request.mode === 'both') {
-      if (request.query.kind === 'glob') {
-        candidates.forEach((candidate, index) => { if (posix.matchesGlob(candidate.path, request.query.text)) matches[index]!.pathOccurrences = 1; });
-      } else {
-        await runRipgrep(operation.runtime.supervisor, executable, [...pathFlags, '--null-data'], directory,
-          candidates.map(candidate => candidate.path + '\0').join(''), operation.signal, match => {
-            const found = matches[match.line_number - 1];
-            if (!found) throw new WorkspaceFailure('searchProtocolError');
-            found.pathOccurrences += match.submatches.length;
-          });
-      }
-    }
     const records: SearchFile[] = [];
-    let current = 0, matchedFiles = 0, retainedBytes = 0;
+    let current = 0, matchedFiles = 0, retainedBytes = 0, contentMatches = 0;
     let text: PreparedText | null = null;
     let matching = new Set<number>();
     const retain = () => !request.countOnly && matchedFiles >= offset && retainedBytes <= maxOutputBytes;
@@ -114,7 +98,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       }
       current++; text = null; matching = new Set();
     };
-    if (request.mode !== 'path' && temporaryCount) {
+    if (pattern.mode !== 'path' && temporaryCount) {
       await runRipgrep(operation.runtime.supervisor, executable, [...contentFlags, '--', '.'], directory, '', operation.signal, async match => {
         const filename = encodedText(match.path);
         if (!/^\.\/[0-9]+$/.test(filename)) throw new WorkspaceFailure('searchProtocolError');
@@ -123,7 +107,10 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
         while (current < index) flush();
         const found = matches[index]!;
         if (match.line_number <= found.lastLine) throw new WorkspaceFailure('searchProtocolError');
-        found.occurrences += match.submatches.length; found.matchingLines++; found.lastLine = match.line_number;
+        found.lastLine = match.line_number;
+        if (!request.countOnly && contentMatches >= request.maxResults) return;
+        contentMatches++;
+        found.occurrences += match.submatches.length; found.matchingLines++;
         if (retain()) {
           text ??= prepareText((await operation.readSource(candidates[index]!)).text);
           if (match.line_number > text.lines.length) throw new WorkspaceFailure('searchProtocolError');
@@ -131,7 +118,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
         }
       });
     }
-    if (request.mode === 'content' && !temporaryCount) {
+    if (pattern.mode === 'content' && !temporaryCount) {
       await runRipgrep(operation.runtime.supervisor, executable, contentFlags, directory, '', operation.signal,
         () => { throw new WorkspaceFailure('searchProtocolError'); });
     }
@@ -142,6 +129,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     return pageResult(records, 0, maxOutputBytes, (files) => ({
       kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest, engine: 'PCRE2',
       newlineView: 'CRLF and CR become LF; all other decoded text is preserved', counts,
+      limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),
       returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files, limitations,
       truncated: !request.countOnly && offset + files.length < matchedFiles,
       continuation: request.countOnly || offset + files.length === matchedFiles ? null : { digest, offset: offset + files.length },

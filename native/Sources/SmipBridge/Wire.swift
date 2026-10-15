@@ -163,6 +163,7 @@ enum Operation {
     case renderPromptAssembly(PromptAssemblyInput)
     case calculateTokenStats(TokenStatsInput)
     case prepareSearchPattern(SearchPatternInput)
+    case matchSearchPaths(SearchPathsInput)
     case renderPreparedClipboard(PreparedClipboardOperation)
     case renderClipboard(ClipboardOperation)
     case queryStructure(StructureInput)
@@ -336,6 +337,7 @@ enum Operation {
         case "renderPromptAssembly": return try .renderPromptAssembly(PromptAssemblyInput(value))
         case "calculateTokenStats": return try .calculateTokenStats(TokenStatsInput(value))
         case "prepareSearchPattern": return try .prepareSearchPattern(SearchPatternInput(value))
+        case "matchSearchPaths": return try .matchSearchPaths(SearchPathsInput(value))
         case "resolveAutomaticReviewGit", "renderAutomaticReviewGit":
             return try .git(.automaticReview(AutomaticReviewGitInput(value)))
         case "renderPreparedClipboard": return try .renderPreparedClipboard(PreparedClipboardOperation(value))

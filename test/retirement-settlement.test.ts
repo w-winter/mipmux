@@ -11,7 +11,7 @@ import { scriptedProvider } from './fixtures/scripted-provider.js';
 for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 'read' ? 'exit' : 'protocol failure'} retires and joins a real held ${boundary} before publishing the job terminal`, async t => {
   const search = { mode: 'content' as const, query: { kind: 'literal' as const, text: 'source', caseSensitive: true, wholeWord: false },
     filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0,
-    countOnly: false, maxOutputBytes: 2000, continuation: null };
+    countOnly: false, maxResults: 50, maxOutputBytes: 2000, continuation: null };
   const provider = await scriptedProvider(() => boundary === 'search' ? { kind: 'tool', name: 'file_search', input: search, stop: 'tool_use', tokens: 10 } : ({ kind: 'tool', name: 'read_file', input: {
     root: 'r', path: 'file.txt', start_line: null, offset: null, limit: null, maxOutputBytes: 2000, continuation: null,
   }, stop: 'tool_use', tokens: 10 }));

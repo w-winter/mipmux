@@ -41,8 +41,8 @@ test('concise MCP exploration matches explicit options and preserves validation,
       ['get_file_tree', {}, { input: { type: 'files', mode: 'auto', scope: null, maxDepth: null, continuation: null }, draftId: null }],
       ['read_file', { input: { root: 'r', path: 'greet.ts' } }, { input: { root: 'r', path: 'greet.ts', start_line: null, offset: null, limit: null, continuation: null } }],
       ['get_code_structure', { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }] } }, { input: { seeds: [{ root: 'r', path: 'greet.ts', kind: 'file' }], expand: 'none', depth: 1, signatures: true, size: 'medium' } }],
-      ['file_search', { input: { query: { text: 'GREET' } } }, { input: { query: { kind: 'auto', text: 'GREET', caseSensitive: false, wholeWord: false }, mode: 'content', filters, before: 0, after: 0, countOnly: false, continuation: null } }],
-      ['file_search', { input: { query: { kind: 'glob', text: '*.ts' } } }, { input: { query: { kind: 'glob', text: '*.ts' }, mode: 'path', filters, before: 0, after: 0, countOnly: false, continuation: null } }],
+      ['file_search', { input: { query: { text: 'GREET' } } }, { input: { query: { kind: 'auto', text: 'GREET', caseSensitive: false, wholeWord: false }, mode: 'auto', filters, before: 0, after: 0, countOnly: false, maxResults: 50, continuation: null } }],
+      ['file_search', { input: { query: { kind: 'glob', text: '*.ts' } } }, { input: { query: { kind: 'glob', text: '*.ts', caseSensitive: false }, mode: 'path', filters, before: 0, after: 0, countOnly: false, maxResults: 50, continuation: null } }],
     ];
     const results = [];
     for (const [name, concise, explicit] of pairs) {

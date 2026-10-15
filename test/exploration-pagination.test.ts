@@ -18,9 +18,9 @@ test('real search modes and output continuations preserve complete counts and re
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);
     const operation = await handle.openOperation(new AbortController().signal);
-    const query: SearchRequest = { mode: 'content', query: { kind: 'literal', text: 'CAFÉ', caseSensitive: false, wholeWord: true },
+    const query = { mode: 'content', query: { kind: 'literal', text: 'CAFÉ', caseSensitive: false, wholeWord: true },
       filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0, countOnly: false,
-      maxOutputBytes: 10000, continuation: null };
+      maxResults: 50, maxOutputBytes: 10000, continuation: null } satisfies SearchRequest;
     const full = await operation.fileSearch(query);
     if (full.kind !== 'search') assert.fail('Missing search');
     assert.equal(full.counts.matchingLines, 6); assert.equal(full.counts.occurrences, 6);
@@ -47,7 +47,7 @@ test('real search modes and output continuations preserve complete counts and re
     if (both.kind !== 'search') assert.fail('Missing combined search');
     assert.deepEqual(both.files.map(file => file.path), ['a.txt']); assert.equal(both.files[0]?.pathMatch, true);
     assert.equal(both.counts.matchingLines, 4);
-    const glob = await operation.fileSearch({ ...query, mode: 'path', query: { kind: 'glob', text: '*.txt' },
+    const glob = await operation.fileSearch({ ...query, mode: 'path', query: { kind: 'glob', text: '*.txt', caseSensitive: false },
       filters: { ...query.filters, exclude: ['b.*'] } });
     if (glob.kind !== 'search') assert.fail('Missing glob search');
     assert.deepEqual(glob.files.map(file => file.path), ['a.txt', 'c.txt']);

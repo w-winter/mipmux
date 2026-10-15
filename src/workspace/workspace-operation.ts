@@ -401,6 +401,12 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  matchSearchPaths(input: Extract<NativeOperation, { kind: 'matchSearchPaths' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   renderFileBlock(input: Extract<NativeOperation, { kind: 'renderFileBlock' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());

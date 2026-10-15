@@ -3,7 +3,7 @@ import { askUserDescription } from './interaction.js';
 import { Compile } from 'typebox/compile';
 import { SourcePath } from './inventory.js';
 import { NativeReadArgument } from './native.js';
-import { SearchPatternKind } from './search-pattern.js';
+import { SearchPatternKind, SearchMode } from './search-pattern.js';
 import { DirectoryRef, RelativePath, RootName, SafeCount, SHA256 } from './workspace.js';
 
 const closed = { additionalProperties: false };
@@ -46,10 +46,12 @@ const textQuery = Type.Object({ kind: SearchPatternKind, text: Type.String({ min
   caseSensitive: Type.Boolean({ default: false }), wholeWord: Type.Boolean({ default: false }) }, closed);
 const filters = Type.Object({ roots: Type.Array(RootName, { default: [] }), directories: Type.Array(SourcePath, { default: [] }),
   include: Type.Array(Type.String(), { default: [] }), exclude: Type.Array(Type.String(), { default: [] }), extensions: Type.Array(Type.String(), { default: [] }) }, { ...closed, default: {} });
-const search = { ...page, filters, before: Type.Integer({ ...SafeCount, default: 0 }), after: Type.Integer({ ...SafeCount, default: 0 }), countOnly: Type.Boolean({ default: false }) };
+const search = { ...page, filters, before: Type.Integer({ ...SafeCount, default: 0 }), after: Type.Integer({ ...SafeCount, default: 0 }), countOnly: Type.Boolean({ default: false }),
+  maxResults: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER, default: 50 }) };
 export const SearchRequest = Type.Union([
-  Type.Object({ ...search, mode: Type.Union([Type.Literal('path'), Type.Literal('content'), Type.Literal('both')], { default: 'content' }), query: textQuery }, closed),
-  Type.Object({ ...search, mode: Type.Literal('path', { default: 'path' }), query: Type.Object({ kind: Type.Literal('glob'), text: Type.String({ minLength: 1 }) }, closed) }, closed),
+  Type.Object({ ...search, mode: SearchMode, query: textQuery }, closed),
+  Type.Object({ ...search, mode: Type.Literal('path', { default: 'path' }), query: Type.Object({ kind: Type.Literal('glob'), text: Type.String({ minLength: 1 }),
+    caseSensitive: Type.Boolean({ default: false }) }, closed) }, closed),
 ]);
 export type SearchRequest = Static<typeof SearchRequest>;
 export const readValidator = Compile(ReadRequest), treeValidator = Compile(TreeRequest), structureValidator = Compile(StructureRequest), searchValidator = Compile(SearchRequest);
@@ -68,7 +70,10 @@ export const SearchInput = Type.Union([
     filters: Type.Optional(Type.Partial(filters, closed)),
     query: Type.Object({ ...Type.Partial(Type.Omit(textQuery, ['text'])).properties, text: textQuery.properties.text }, closed) }, closed),
   Type.Object({ ...Type.Partial(Type.Omit(SearchRequest.anyOf[1], ['maxOutputBytes'])).properties,
-    filters: Type.Optional(Type.Partial(filters, closed)), query: SearchRequest.anyOf[1].properties.query }, closed),
+    filters: Type.Optional(Type.Partial(filters, closed)), query: Type.Object({
+      ...SearchRequest.anyOf[1].properties.query.properties,
+      caseSensitive: Type.Optional(SearchRequest.anyOf[1].properties.query.properties.caseSensitive),
+    }, closed) }, closed),
 ]);
 export function toolDescription(name: string): string {
   switch (name) {
@@ -79,7 +84,7 @@ export function toolDescription(name: string): string {
     case 'git': return 'Inspect a declared root’s owning Git checkout with op=status, log, show, blame or diff. Log defaults to ten commits; log/blame paths are root-relative. Show accepts ref and summary/files/full detail. Diff defaults to uncommitted/summary, three context lines and detectRenames=false; compare also accepts staged, unstaged, base/merge-base forms, back:N, revision ranges and main/trunk. Diff path and paths are checkout-relative Git pathspecs; absolute paths are literal. One path upgrades summary to patches. Patches use a 300-line allowance; full retains complete hunks. Diff includes applicable untracked files and reports protected endpoints in exclusions. Optional worktree selects a freshly verified advertised same-repository checkout. With an owned draft, artifacts=true publishes snapshots and adds mutable MAP/whole-patch selection. Options: mode=quick/standard/deep, scope=all/selected, snapshot_id and inline={map,mode,max_lines}. Per-file aliases are advertised for manage_selection. Publication and selection effects remain after failed reply admission; use manage_selection get to recover state. Ordinary file tools remain declared-root scoped. Git configuration must be trusted because clean/process filters may execute programs. The complete reply must fit maxOutputBytes.';
     case 'read_file': return 'Read a root-qualified source file, or omit root to read an exact selected _git_data/... artifact alias from the owning draft. MCP artifact reads require draftId. Advertised per-file patches must be selected before reading; selected historical artifacts remain readable after publication grants change. Defaults to the whole file, first page. start_line is one-based; a negative start reads the last N lines and cannot be combined with limit. limit=0 returns no lines; a negative limit reads the remainder. Starts beyond EOF return empty content with a message. offset is the current start_line alias. Numeric strings are accepted; an integer offset takes priority over a string start_line. Complete line records retain CRLF, CR and LF; continuations never split a line.';
     case 'get_code_structure': return 'Inspect source-backed graph evidence and signatures. Omit seeds to inspect current selected full/sliced sources; MCP callers supply an owned draftId for that selection. Explicit seeds accept up to 256 file or directory selectors. Directory selectors use directory={kind:root} or {kind:descendant,path}. Defaults: no expansion, depth 1, signatures=true, size=medium. expand=uses, used_by or both traverses root-local relationships at depths 1-4. size=small, medium or large controls graph and signature limits; signatures=false returns graph evidence alone. Results include seed/index states, canonical edges, unresolved names and partial-output diagnostics. maxOutputBytes admits the complete reply; use a narrower query or larger cap when it cannot fit.';
-    case 'file_search': return 'Search content with case-insensitive matching. Example input: {"query":{"text":"greet"}}. Text patterns are trimmed; omitted kind infers regex syntax. Set kind=literal or regex to choose explicitly. Literal spaces match flexible whitespace, with wholeWord ignored for that branch. Glob defaults to path search. Filters and context are optional.';
+    case 'file_search': return 'Search paths/content with mode=auto (default), path, content or both. Example: {"query":{"text":"greet"}}. Auto mode uses RPCE pattern rules; omitted query.kind infers regex syntax. Explicit literal/regex kinds select interpretation; glob selects path mode. Matching is case-insensitive by default, including globs. Text patterns are trimmed. Literal content spaces match flexible whitespace and bypass wholeWord. Path candidates include relative and root-alias paths. maxResults defaults to 50 per stage; nonpositive values collect no results. Count-only scans all content matches and retains the path limit. maxOutputBytes pages the limited result set. Filters and context are optional.';
     case 'prompt': return 'Get the current literal prompt, replace it with op=set and text, append exact text with op=append, or clear with op=clear. Mutations require expectedRevision; get does not. Augment preserves original text at the start; Preserve leaves it unchanged. The resulting prompt is delivered verbatim in user_instructions.';
     case 'manage_selection': return 'Inspect or change selection using op=get, set, add, remove, preview, promote, demote or clear. Defaults: get, mode=full, strict=false, view=summary and relative path display. Views: summary, files, content, codemaps. paths accepts file/directory names, root aliases and absolute paths within declared roots; slices accepts described ranges or terminal #L ranges. Full add preserves existing slices; promote expands a file to full content. Codemap-only add and demote enter manual mode; promote preserves mode. Full removal retains manual codemaps. Set rejects invalid inputs; preview does not commit selection. Explicit file registration remains workspace-owned and can survive a rejected selection. Mutations check the owning revision before selection commits. Selection commits before reply rendering and maxOutputBytes admission; later cancellation or reply failure retains the committed state. Use get or draft_inspect to recover current state after a missing or failed reply.';
     case 'draft_preview': return 'Prepare an ordered source edit batch at expectedRevision without committing it. Returns candidate metadata, costs, diagnostics and complete-packet measurement at the unchanged revision. Required source constraints, cancellation and response caps apply.';

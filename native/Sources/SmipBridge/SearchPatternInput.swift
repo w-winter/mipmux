@@ -4,14 +4,19 @@ struct SearchPatternInput {
     private let pattern: String
     private let isRegex: Bool
     private let wholeWord: Bool
+    private let mode: SearchMode
 
     init(_ value: Any) throws {
-        let input = try WireObject(value, keys: ["kind", "text", "queryKind", "wholeWord"])
+        let input = try WireObject(value, keys: ["kind", "text", "queryKind", "wholeWord", "mode"])
         pattern = try input.text("text").trimmingCharacters(in: .whitespacesAndNewlines)
         let queryKind = try input.string("queryKind")
         guard ["auto", "literal", "regex"].contains(queryKind) else { throw BridgeFailure("nativeProtocolError") }
         isRegex = queryKind == "auto" ? RPCESearchPattern.containsRegexSyntax(pattern) : queryKind == "regex"
         wholeWord = try input.boolean("wholeWord")
+        guard let mode = try SearchMode(rawValue: input.string("mode")) else {
+            throw BridgeFailure("nativeProtocolError")
+        }
+        self.mode = mode
     }
 
     func render() -> [String: Any] {
@@ -22,7 +27,9 @@ struct SearchPatternInput {
             return ["kind": "searchPatternError", "message": message]
         }
         let fuzzy = !isRegex && pattern.contains(" ")
-        return ["kind": "searchPattern", "path": ["text": pattern, "isRegex": isRegex, "wholeWord": false],
+        let effectiveMode = mode == .auto ? RPCESearchPattern.inferredAutoMode(pattern) : mode
+        return ["kind": "searchPattern", "mode": effectiveMode.rawValue,
+                "path": ["text": pattern, "isRegex": isRegex, "wholeWord": false],
                 "content": ["text": fuzzy ? RPCESearchPattern.convertSpacesToFuzzyRegex(pattern) : pattern,
                             "isRegex": isRegex || fuzzy, "wholeWord": wholeWord && !fuzzy]]
     }

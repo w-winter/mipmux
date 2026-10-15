@@ -43,7 +43,7 @@ test('search scratch cleanup handles success, query failure, cancellation and pa
       }
       try {
         const pending = operation.fileSearch({ mode: 'content', query: { kind: scenario === 'error' ? 'regex' : 'literal', text: scenario === 'error' ? '[' : 'needle', caseSensitive: true, wholeWord: false },
-          filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0, countOnly: false, maxOutputBytes: 10000, continuation: null });
+          filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0, countOnly: false, maxResults: 50, maxOutputBytes: 10000, continuation: null });
         if (scenario === 'success') assert.equal((await pending).kind, 'search');
         else await assert.rejects(pending);
         if (scenario === 'cancel') { assert.equal(childClosed, true); assert.equal(scratchAtClose, true); }
