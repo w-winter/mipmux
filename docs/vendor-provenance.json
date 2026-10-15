@@ -6095,7 +6095,7 @@
         ],
         [
           651,
-          737
+          738
         ]
       ],
       "changes": [
@@ -6103,11 +6103,12 @@
         "Every selection reply reacquires optional explicit codemap presentation, including already-rendered materials, through the existing operation. DraftRuntime replaces the presentation only if it still owns the captured material. Readiness and body changes do not advance the selection revision.",
         "Observe each demand lease with the presentation readiness signal, following WorkspaceCodemapPresentationCoordinator.swift:666-794, and stop observer work before ownership release at849-857. Deadline expiry returns pending without joining an independent retainer; body acquisition for already-ready demands remains outside that readiness deadline. Cancellation and unexpected failures still propagate; owned cleanup remains joined. Original-body evidence is in test/fixtures/rpce-readiness-observer/.",
         "Group ready exact-selection requests by logical root before body rendering. Apply WorkspaceFileContextStore.swift:373,15002-15017 entry admission at 4096 and MCPServerViewModel+SelectionCore.swift:591-602 pending disposition on rejection. Ready-no-symbols outcomes count; terminal-unavailable artifacts do not. Required membership participates in the same count and remains required while pending; publication requires a complete presentation. Other roots remain eligible. No live bundle registry or desktop retention policy is introduced. Original-body evidence is in test/fixtures/rpce-presentation-limit/.",
-        "Render ready exact requests as one staged batch per root, matching WorkspaceFileContextStore.swift:15109-15116,15180-15253 and coordinator460-494. Sort canonical paths with the existing headless file UUID tie-break. Return only the first nonrenderable file as terminal unmapped and keep its ready siblings pending; source/policy staleness discards the entire staged root. Captured raw identity, artifact key and executable mode are checked before classifying a nonrenderable result and after complete rendering. These native confined reads bind serving authority to the pinned snapshot rather than watcher-backed handles; they do not establish epoch/publication-retry equivalence. Original renderer, coordinator and diagnostic evidence is in test/fixtures/rpce-root-presentation/."
+        "Render ready exact requests as one staged batch per root, matching WorkspaceFileContextStore.swift:15109-15116,15180-15253 and coordinator460-494. Sort canonical paths with the existing headless file UUID tie-break. Return only the first nonrenderable file as terminal unmapped and keep its ready siblings pending; source/policy staleness discards the entire staged root. Captured raw identity, artifact key and executable mode are checked before classifying a nonrenderable result and after complete rendering. These native confined reads bind serving authority to the pinned snapshot rather than watcher-backed handles; they do not establish epoch/publication-retry equivalence. Original renderer, coordinator and diagnostic evidence is in test/fixtures/rpce-root-presentation/.",
+        "Bind Coordinator208-345,849-947 selection attempts with a nil requested count to the existing operation: one captured intent, two attempts sharing the monotonic source deadline, demand retained through assembly and confined publication checks, release before retry, and codemap-free incomplete publication on stale exhaustion. Automatic acquisition is repeated from captured targets; incomplete automatic observations use the existing pending acquisition state and withhold inferred materials. The native identity/key/mode checks bind immutable serving authority rather than reproducing watcher epochs or Store receipts. test/fixtures/rpce-presentation-retry/ executes original wrapper, classifier and ownership release under scripted clocks and receipts."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "a2dfeca345ef863a361c10368bf8c00ab417ebceaa645f5cd25541b318f2f6a8",
+      "sha256": "6a5d83ea94cbec149c0146091f4d5d953b1f203ce5ec78a0635b2120799509e0",
       "classification": "handwritten"
     },
     {
@@ -6152,7 +6153,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "bcd675b50d67e12140a93c5f8928e4a151d8097dceb788f1133f6eb25b44d48b",
+      "sha256": "c537cd887ef8979246c7fbe2f898adcefa03b10f5233e00bcb94d82830e9e207",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6164,7 +6165,8 @@
         "Bind collection of current replies to automatic reacquisition through the existing pinned graph and draft owner. Replace observed material membership and its complete acquisition capture together only while map identity, revision and freeze generation match. Preserve revision and surviving inspection order; cancellation is checked before publishing the observation. Other draft orchestration remains owned by the existing runtime.",
         "Match MCPSelectionToolProvider.swift:616-687 persistence before automatic target acquisition. Prepare explicit materials and pure candidate metadata first, then commit explicit intent with live pending state before native target reads. Acquisition owns a copied candidate map. Apply completed materials and outcomes only while their captured owner, revision and finalization generation remain current. Preview is hypothetical. For draft_update, admit its receipt before committing the mutation. Prepare Git candidates separately.",
         "Validate represented source-root identities before selection serving in automatic and manual modes, including required codemaps and zero-target queries. Root serving is independent of graph eligibility; per-root failure aggregation and remaining epoch/readiness contracts are separate.",
-        "Project captured source issues and target-acquisition failures into pending/unmapped selection paths in stable file-UUID order. Coverage of the captured graph is separate from delivered-body measurement and acquisition completion."
+        "Project captured source issues and target-acquisition failures into pending/unmapped selection paths in stable file-UUID order. Coverage of the captured graph is separate from delivered-body measurement and acquisition completion.",
+        "Keep the captured selection and revision while the presentation wrapper repeats acquisition and reply assembly according to the source policy. Observation ownership advances only through this request's own retained maps, so a competing edit or finalization fence cannot be adopted by a retry. Public size/preview errors retain the source persistence-before-reply contract. Pending automatic publication uses the existing unresolved observation state and cannot be archived."
       ]
     },
     {

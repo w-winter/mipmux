@@ -1,0 +1,171 @@
+// Uncompiled original source for caller and adapter context.
+// Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationCoordinator.swift:347-354
+    private func makePresentation(
+        intent: WorkspaceCodemapOperationPresentationIntent,
+        rootScope: WorkspaceLookupRootScope,
+        logicalRootDisplayNamesByRootID: [UUID: String],
+        ownership: WorkspaceCodemapOperationPresentationOwnership,
+        clock: ContinuousClock,
+        deadline: ContinuousClock.Instant
+    ) async throws -> WorkspaceCodemapOperationPresentation {
+
+// Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationCoordinator.swift:495-532
+        renderedEntries.sort(by: renderedEntryPrecedes)
+        issues.sort { debugReflectionIssueSortKey($0) < debugReflectionIssueSortKey($1) }
+        let coverage = coverage(for: renderedEntries, issues: issues)
+        let receipt: WorkspaceCodemapOperationPresentationPublicationReceipt?
+        if renderedEntries.isEmpty, automaticReceipt == nil {
+            receipt = nil
+        } else {
+            let candidatesByFileID = Dictionary(
+                uniqueKeysWithValues: candidates.map { ($0.fileID, $0) }
+            )
+            let publishedCandidates = renderedEntries.compactMap { candidatesByFileID[$0.fileID] }
+            let validatedLogicalRootDisplayNames = Dictionary(
+                publishedCandidates.map { ($0.rootEpoch.rootID, $0.logicalPath.rootDisplayName) },
+                uniquingKeysWith: { current, _ in current }
+            )
+            let demandTickets = publicationTickets(
+                from: bundleReceipts,
+                publishedFileIDs: Set(renderedEntries.map(\.fileID))
+            )
+            receipt = WorkspaceCodemapOperationPresentationPublicationReceipt(
+                requestID: UUID(),
+                rootScope: rootScope,
+                logicalRootDisplayNamesByRootID: validatedLogicalRootDisplayNames,
+                completeRootSet: completeRootSet,
+                completeRootCatalogs: completeRootCatalogs,
+                candidates: publishedCandidates,
+                demandTickets: demandTickets,
+                bundles: bundleReceipts,
+                automaticReceipt: automaticReceipt
+            )
+        }
+        return WorkspaceCodemapOperationPresentation(
+            orderedEntries: renderedEntries,
+            coverage: coverage,
+            issues: issues,
+            publicationReceipt: receipt
+        )
+    }
+
+// Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift:651-738
+        static func withCollections<Value>(
+            from source: SelectionSource,
+            owner: MCPServerViewModel,
+            rootScope: WorkspaceLookupRootScope = .allLoaded,
+            contentPolicy: PromptContextAccountingContentPolicy = .loadContent,
+            lookupContext: WorkspaceLookupContext? = nil,
+            codemapPresentation: WorkspaceCodemapOperationPresentation? = nil,
+            issuePathDisplay: FilePathDisplay = .relative,
+            operation: (SelectionCollections) async throws -> Value
+        ) async throws -> Value {
+            let selection = await source.resolvedSelection()
+            let usage = await source.currentCodeMapUsage()
+            let store = await MainActor.run { owner.promptVM.workspaceFileContextStore }
+            let effectiveLookupContext = lookupContext ?? WorkspaceLookupContext(
+                rootScope: rootScope,
+                bindingProjection: nil
+            )
+            let rootDisplayNames = await effectiveLookupContext.logicalRootDisplayNamesByRootID(
+                store: store
+            )
+            func resolveCollections(
+                presentation: WorkspaceCodemapOperationPresentation
+            ) async throws -> Value {
+                let accounting = PromptContextAccountingService()
+                let resolution = await accounting.resolveEntries(
+                    selection: selection,
+                    store: store,
+                    rootScope: rootScope,
+                    profile: .uiAssisted,
+                    codeMapUsage: usage,
+                    codemapPresentation: presentation,
+                    contentPolicy: contentPolicy,
+                    codemapLogicalRootDisplayNamesByRootID: rootDisplayNames
+                )
+                let roots = await store.rootRefs(scope: rootScope)
+                let invalid = (resolution.missingPaths + resolution.invalidPaths).map { path in
+                    logicalIssuePath(
+                        path,
+                        roots: roots,
+                        rootDisplayNamesByRootID: rootDisplayNames,
+                        lookupContext: effectiveLookupContext,
+                        display: issuePathDisplay
+                    )
+                }.sorted(by: utf8Precedes)
+                let requestedCodemapFiles = await requestedCodemapFiles(
+                    selection: selection,
+                    usage: usage,
+                    resolution: resolution,
+                    store: store,
+                    rootScope: rootScope,
+                    profile: .uiAssisted
+                )
+                let collections = makeCollections(
+                    resolution: resolution,
+                    selection: selection,
+                    usage: usage,
+                    invalid: invalid,
+                    requestedCodemapFiles: requestedCodemapFiles
+                )
+                try Task.checkCancellation()
+                return try await operation(collections)
+            }
+            if let codemapPresentation {
+                return try await resolveCollections(presentation: codemapPresentation)
+            }
+            let plan = await WorkspaceCodemapPresentationIntentResolver.plan(
+                codeMapUsage: usage,
+                selection: selection,
+                store: store,
+                rootScope: rootScope,
+                profile: .uiAssisted
+            )
+            return try await WorkspaceCodemapPresentationCoordinator(
+                store: store,
+                policy: codemapPresentationPolicy
+            ).withPresentation(
+                for: plan.intent,
+                rootScope: rootScope,
+                logicalRootDisplayNamesByRootID: rootDisplayNames
+            ) { presentation in
+                try await resolveCollections(
+                    presentation: WorkspaceCodemapPresentationIntentResolver.merging(
+                        presentation,
+                        preflightIssues: plan.preflightIssues
+                    )
+                )
+            }
+        }
+
+// Sources/RepoPrompt/Features/AgentMode/Services/AgentContextExportResolver.swift:575-593
+            return try await coordinator.withPresentation(
+                prepareAttempt: {
+                    let attempt = await modelPresentationAttempt(
+                        source: source,
+                        store: store,
+                        codeMapUsage: codeMapUsage
+                    )
+                    return WorkspaceCodemapPresentationAttempt(
+                        context: attempt,
+                        intent: attempt.authority.presentationPlan.intent,
+                        rootScope: attempt.authority.rootScope,
+                        logicalRootDisplayNamesByRootID: attempt.authority.logicalRootDisplayNamesByRootID,
+                        requestedCodemapCount: requestedCodemapCount(
+                            for: attempt.authority.presentationPlan.intent,
+                            codeMapUsage: codeMapUsage
+                        )
+                    )
+                }
+            ) { attempt, presentation in
+
+// Sources/RepoPrompt/Features/AgentMode/Services/AgentContextExportResolver.swift:907-914
+    private static func requestedCodemapCount(
+        for intent: WorkspaceCodemapOperationPresentationIntent,
+        codeMapUsage: CodeMapUsage
+    ) -> Int? {
+        guard codeMapUsage == .selected else { return nil }
+        guard case let .exact(fileIDs, _) = intent else { return 0 }
+        return Set(fileIDs).count
+    }

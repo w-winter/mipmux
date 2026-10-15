@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { performance } from 'node:perf_hooks';
 import {
   type ContextBuildRequest,
   type CodemapMode,
@@ -45,7 +46,7 @@ import { prepareSourceEdits } from './draft-source-edits.js';
 import { capturedArtifactSelection } from './git-artifact-selection.js';
 import { estimateUnits } from './budget.js';
 import { posix } from 'node:path';
-import { resolveSelectedCodemaps } from './codemap-readiness.js';
+import { withCodemapPresentation } from './codemap-readiness.js';
 import { descriptorGitMode } from '../contracts/patches.js';
 import { prepareRenderInput } from './final-tree.js';
 import { FrozenGitTarget, selectedGitSourcePaths } from './git-target.js';
@@ -423,6 +424,7 @@ export class DraftRuntime {
         const explicit = request.op === 'get' ? explicitCurrent
           : await this.#prepareExplicitSelection(operation, prepared, current, [current]);
         await this.#validateSelectionRoots(operation, explicit);
+        const presentationStartedAt = performance.now();
         const resolution = this.#automaticCandidates(explicit, prepared.mode, revision), targets = resolution.targets;
         const candidate = this.#mutationChanges(explicitCurrent, explicit, prepared.state, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
@@ -434,24 +436,29 @@ export class DraftRuntime {
             : { kind: 'settled', outcomes: [] };
           this.#commit(explicit, prepared.state, this.#prompt, candidate.revision, acquisition);
         }
-        const observationOwner = isMutation && candidate.changed ? explicit : current;
+        // A retry can replace this request's view, but cannot adopt a competing writer's map.
+        let observationOwner: ReadonlyMap<string, Material> = isMutation && candidate.changed ? explicit : current;
         const replyRevision = isMutation ? candidate.revision : revision;
-        const derived = await acquireAutomaticCodemaps(operation, new Map(explicit), targets, { draftId: this.id, revision: replyRevision });
-        if (!isMutation) {
-          this.#check(signal, revision);
-          if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-        }
-        const settled = await resolveSelectedCodemaps(operation, derived.materials);
-        operation.signal.throwIfAborted();
-        if (request.op !== 'preview') this.#retainRefreshedPresentation(observationOwner, settled, derived.automaticCodemaps, replyRevision, freezeGeneration);
-        const reply = await this.#selectionReply(operation, request, settled, prepared.mode, prepared.invalid,
-          replyRevision, prompt, derived.automaticCodemaps, resolution.coverage);
-        operation.signal.throwIfAborted();
-        if (request.op === 'preview' && request.strict && !reply.files.length && !reply.file_slices?.length) {
-          throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
-        }
-        const requiredBytes = serializedBytes(encode(reply));
-        if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
+        const reply = await withCodemapPresentation(operation, prepared.mode, presentationStartedAt, async () => {
+          const derived = await acquireAutomaticCodemaps(operation, new Map(explicit), targets, { draftId: this.id, revision: replyRevision });
+          if (!isMutation) {
+            this.#check(signal, revision);
+            if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+          }
+          return derived;
+        }, async presentation => {
+          if (request.op !== 'preview') observationOwner = this.#retainRefreshedPresentation(observationOwner,
+            presentation.materials, presentation.automaticAcquisition, replyRevision, freezeGeneration);
+          const reply = await this.#selectionReply(operation, request, presentation.materials, prepared.mode, prepared.invalid,
+            replyRevision, prompt, presentation.automaticAcquisition, resolution.coverage);
+          operation.signal.throwIfAborted();
+          if (request.op === 'preview' && request.strict && !reply.files.length && !reply.file_slices?.length) {
+            throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
+          }
+          const requiredBytes = serializedBytes(encode(reply));
+          if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
+          return reply;
+        });
         return freeze(reply);
       } finally { await operation.close(); }
     })());
@@ -484,12 +491,13 @@ export class DraftRuntime {
     return explicit;
   }
   #retainRefreshedPresentation(captured: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>,
-    outcomes: readonly AutomaticCodemapOutcome[], revision: number, generation: number): void {
-    if (this.#closing || this.#state !== 'editable' || this.#materials !== captured || this.#revision !== revision || this.#freezeGeneration !== generation) return;
+    acquisition: AutomaticAcquisitionState, revision: number, generation: number): ReadonlyMap<string, Material> {
+    if (this.#closing || this.#state !== 'editable' || this.#materials !== captured || this.#revision !== revision || this.#freezeGeneration !== generation) return captured;
     const next = new Map(captured);
     for (const id of next.keys()) if (!settled.has(id)) next.delete(id);
     for (const [id, material] of settled) next.set(id, material);
-    this.#materials = next; this.#automaticAcquisition = { kind: 'settled', outcomes };
+    this.#materials = next; this.#automaticAcquisition = acquisition;
+    return next;
   }
   #automaticPresentationPaths(snapshot: InventorySnapshot, display: SelectionRequest['path_display'], outcomes: readonly AutomaticCodemapOutcome[],
     sourceIssues: readonly AutomaticSourceIssue[]) {
@@ -510,12 +518,13 @@ export class DraftRuntime {
     return { unmapped, pending };
   }
   async #selectionReply(operation: WorkspaceOperation, request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
-    invalid: readonly string[], revision: number, prompt: string, automaticCodemaps: readonly AutomaticCodemapOutcome[], coverage: AutomaticCoverage) {
+    invalid: readonly string[], revision: number, prompt: string, acquisition: AutomaticAcquisitionState, coverage: AutomaticCoverage) {
     const observed = await refreshGitArtifactMaterials(operation, [...materials.values()]);
     const snapshot = operation.snapshot;
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps } }, operation.signal));
-    const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display, automaticCodemaps, coverage.sourceIssues);
+      prompt, codemapMode: mode, materials: observed, automaticAcquisition: acquisition }, operation.signal));
+    const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display,
+      acquisition.kind === 'settled' ? acquisition.outcomes : [], acquisition.kind === 'settled' ? coverage.sourceIssues : []);
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
     const blocks: string[] = [];
     for (const material of observed) {

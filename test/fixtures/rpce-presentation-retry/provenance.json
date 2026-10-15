@@ -1,0 +1,255 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationCoordinator.swift",
+      "gitBlob": "ab68d3a946220d4636d9dbf0e9c3fb1bf7a92370",
+      "sha256": "fe470879b8d7dc22dfb865c33b58129873eace7a530ab5d364718a016e98e7c2",
+      "ranges": [
+        {
+          "name": "policyAndWaiter",
+          "startLine": 3,
+          "endLine": 50,
+          "compiled": true,
+          "sha256": "53b115c6b00df86e034d6d08a27d457525a3a20ea30e2fb2715bb7320f4289b3"
+        },
+        {
+          "name": "ownership",
+          "startLine": 52,
+          "endLine": 113,
+          "compiled": true,
+          "sha256": "ec137b8e7baf120ec0c1be69905591efc14be101a17f8fb13ab5607b34c73d9a"
+        },
+        {
+          "name": "attempt",
+          "startLine": 126,
+          "endLine": 132,
+          "compiled": true,
+          "sha256": "957d1435d7e902dfc919eb0731742e95cbc5fc80ed5dce2d0294f4e3a5095484"
+        },
+        {
+          "name": "intentWrapper",
+          "startLine": 208,
+          "endLine": 233,
+          "compiled": true,
+          "sha256": "2e8d1822b51f7916e8731fa72b5a42f128ea837e96afced7fa090d15c28e81b9"
+        },
+        {
+          "name": "attemptWrapper",
+          "startLine": 235,
+          "endLine": 345,
+          "compiled": true,
+          "sha256": "5e4fce3eb34bd61aee8082de7b9c69c93dd03fac52f27e1d793e4cb3c78344de"
+        },
+        {
+          "name": "release",
+          "startLine": 849,
+          "endLine": 857,
+          "compiled": true,
+          "sha256": "63f54403bb353d25daabedeb3ead4dbfe0f41f24093d6718e635c6c0b3ff7d4f"
+        },
+        {
+          "name": "coverage",
+          "startLine": 859,
+          "endLine": 880,
+          "compiled": true,
+          "sha256": "b7de31cfc26e88df09f97bbaf0cc2b0fe28b67c74aee0f34471079ad4d022834"
+        },
+        {
+          "name": "incomplete",
+          "startLine": 882,
+          "endLine": 892,
+          "compiled": true,
+          "sha256": "8f5106ba03a41f692f31b7bc4b63ad24a0b7a9e2fe2e70be89a9072cc6533905"
+        },
+        {
+          "name": "preservingPriorStale",
+          "startLine": 894,
+          "endLine": 916,
+          "compiled": true,
+          "sha256": "23be91eccc9c83d7ead96cb7b32dccc2fd6eb5109346dac9dcfbfcc846bce414"
+        },
+        {
+          "name": "retryableStale",
+          "startLine": 918,
+          "endLine": 947,
+          "compiled": true,
+          "sha256": "e28f47f5a4ec7fb3c23bf5924312141aa640d55e4e970ead82bef99cd543e810"
+        },
+        {
+          "name": "makePresentationSignature",
+          "startLine": 347,
+          "endLine": 354,
+          "compiled": false,
+          "sha256": "b30d80926725a38e1af194a5eab8545c38770fba8985bbc89042940386a2bd14"
+        },
+        {
+          "name": "receiptConstruction",
+          "startLine": 495,
+          "endLine": 532,
+          "compiled": false,
+          "sha256": "87d9e6bfb0b0b97d5f6181f7a1d50c41e814ab64a0082ac3e7897a6660336f5c"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapOperationPresentationModels.swift",
+      "gitBlob": "a8d99930b4baa1980a61325cbaa675b3ee079b28",
+      "sha256": "a7167fd8d1267097a6dfcc61f975971a8c29485b529b7ed997113683daf6ab81",
+      "ranges": [
+        {
+          "name": "operationModels",
+          "startLine": 4,
+          "endLine": 142,
+          "compiled": true,
+          "sha256": "50ade41ab92d1405210a0f6664287ae095e919514cfde052493db3722c4a6eeb"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapArtifactDemandModels.swift",
+      "gitBlob": "02b7467173002b333d9a6f9e053736d0f09b5143",
+      "sha256": "f8b9ac62fc6c239cd83285e6dc91cf6072f58572b9d66099a5c4b4abe93cc17b",
+      "ranges": [
+        {
+          "name": "ticket",
+          "startLine": 3,
+          "endLine": 12,
+          "compiled": true,
+          "sha256": "1b7bf50adc4c60adb6bfff23b72c26562a5975dd98c5b0b048cc104af4f8aa40"
+        },
+        {
+          "name": "demandResultAndOwnership",
+          "startLine": 37,
+          "endLine": 52,
+          "compiled": true,
+          "sha256": "f73f6d2b2ecbe1a45675d9365b02adfae0d91aa98c9ec486c7115440843a713f"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapPresentationModels.swift",
+      "gitBlob": "0bc0008add4bd6f09a7ed74d5d561156ca67e614",
+      "sha256": "dd75c1a006878c78e6846b2cf7367b95798cd071dc9fc812ffacd246f0f9eab4",
+      "ranges": [
+        {
+          "name": "freezeReasons",
+          "startLine": 93,
+          "endLine": 107,
+          "compiled": true,
+          "sha256": "82b597d60490434459d86725a5b1d2480bd02d57c5e0fdb380b9efde133fac9c"
+        },
+        {
+          "name": "renderReasons",
+          "startLine": 114,
+          "endLine": 120,
+          "compiled": true,
+          "sha256": "25524f28d7fc2812a0c05eeb35fa0760cba3f2d2089945f80929b78da0fad4df"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "gitBlob": "01ccfd30105b76e98289d16e1910d3e03ca44755",
+      "sha256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
+      "ranges": [
+        {
+          "name": "selectionCaller",
+          "startLine": 651,
+          "endLine": 738,
+          "compiled": false,
+          "sha256": "1d2c1a0f8207ec4aee7eb4a7e114be1405ab704bf7c0df9603f8d29f48424277"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Features/AgentMode/Services/AgentContextExportResolver.swift",
+      "gitBlob": "dbc716f01e74080e70f316a89fb3518dc2b43c4a",
+      "sha256": "138b9c5f837bd5c4f6db2b34b527742fcad18784cef01c56832f8b36ab4b8288",
+      "ranges": [
+        {
+          "name": "alternateExportCaller",
+          "startLine": 575,
+          "endLine": 593,
+          "compiled": false,
+          "sha256": "678cdae101a70d95de90fbfa2bdac919992755c6ba23caba545f696061a7f2f1"
+        },
+        {
+          "name": "alternateRequestedCount",
+          "startLine": 907,
+          "endLine": 914,
+          "compiled": false,
+          "sha256": "2130ea49728becdd8d1d4a51103ad915474ad327c700e16b7fd4e85fc4a53d99"
+        }
+      ]
+    },
+    {
+      "path": "LICENSE",
+      "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "ranges": []
+    }
+  ],
+  "cases": 12,
+  "artifacts": [
+    {
+      "path": "generate.mjs",
+      "sha256": "7500e8090fef83ef89ecc8a819958f50983e73cefeacd87c55023536c892ae87",
+      "gitBlob": "25521a8be7f2d2bf4337713e09ff90622c257993"
+    },
+    {
+      "path": "models.swift",
+      "sha256": "f8d70db0ebe70c29c5fea8d9f7ff3f0e47a5bf684ba54840b9180274aa87eff2",
+      "gitBlob": "6dfdf143715182f38b86168b0b635a3512f37d8f"
+    },
+    {
+      "path": "adapter.swift",
+      "sha256": "16f40abc1fb42076ec17fdc8e317d062a4ba5e10fc60d94a443ab7883c1e63ac",
+      "gitBlob": "43c2890c815e9768c223bcb42444f352313da284"
+    },
+    {
+      "path": "inputs.json",
+      "sha256": "129c4a099af06f7bf72448067f0d2bc13a8e59d2ea3505177f33f0e464f51d6c",
+      "gitBlob": "4965dfb3917989a932d7daa50c2dad120b747fd9"
+    },
+    {
+      "path": "receipt.md",
+      "sha256": "727cdbdcddd33fffd935c085931b3e05b2e983d69c3df19eacebcd23f4146041",
+      "gitBlob": "584e6c83218b6d2d4f4ffb625c611042c57f5015"
+    },
+    {
+      "path": "original-bodies.swift.txt",
+      "sha256": "5c8d5a296cb607acc42d3e3437d1447bccb8078968456fac867c93e5829a2d98",
+      "gitBlob": "2324da97d359ab40b58a6b80b20f50d2c76e2997"
+    },
+    {
+      "path": "reference-only.swift.txt",
+      "sha256": "18fda4d2f9820a6935a9d0949fb3d3b1345f63f080c9c8299ef338e91db54432",
+      "gitBlob": "b680bd35a760bb86849b76fb32f49143bff8eda2"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+    },
+    {
+      "path": "expected.json",
+      "sha256": "e2d8e207b86905a75075acf728e32c769fd14c70b268aaabed85ea5fd4967e10",
+      "gitBlob": "9ae364f0371ab75da57d1d88a685b1b49aacc35f"
+    }
+  ],
+  "combinedCompilationSHA256": "f6f7f7e45d62ccaf79756a79fe6aef5656a529728f791a4118ef050496153582",
+  "productionWaitMilliseconds": 10000,
+  "extraction": "Every recorded range is verbatim, including indentation and final LF. Fixture declarations surround compiled ranges.",
+  "clock": "A fixture-local ContinuousClock shadows Swift.ContinuousClock. Scripted waiter calls advance integer milliseconds; original wrapper policy remains default.",
+  "normalization": "UUIDs become attempt-local resource and receipt labels; output retains operation calls, return selection, readiness deadline and release order. Compiler paths, presentation IDs, text and token counts are omitted.",
+  "limits": [
+    "makePresentation, publication disposition and operation results are scripted adapters, not real rendering, Store validation or reply assembly.",
+    "SelectionCore and alternate export callers are uncompiled context. Actual selection, usage and plan resolution is not executed.",
+    "Store release calls remove fixture resource IDs; original ownership drain and coordinator release execute, not production Store cancellation or lease cleanup.",
+    "Clock and wait injection prove wrapper deadline reuse and retry gates, not production readiness waits or end-to-end MCP duration.",
+    "Only render staleCurrentness and noRenderableCodemap are input render issues; other original retry classifier branches compile but are not exercised.",
+    "No provider, app, project build, production/test edit, Git index operation or commit is part of generation."
+  ],
+  "license": "Apache-2.0; LICENSE is copied byte-for-byte from the pinned checkout."
+}

@@ -1,5 +1,8 @@
 import { performance } from 'node:perf_hooks';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
+import type { CodemapMode } from '../contracts/context.js';
+import type { AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
+import type { DerivedMaterials } from './automatic-codemap-acquisition.js';
 import { observe } from '../workspace/observe.js';
 import { acquireSource, type Material } from './material-store.js';
 import { descriptorGitMode } from '../contracts/patches.js';
@@ -9,10 +12,26 @@ import { canonicalJSON, compareBytes, freeze, WorkspaceFailure } from '../worksp
 
 // RPCE WorkspaceCodemapPresentationCoordinator's production readiness allowance.
 const codemapReadinessMilliseconds = 10000;
+const maximumPresentationAttempts = 2;
 // RPCE WorkspaceFileContextStore's frozen presentation admission, before rendering.
 const maximumCodemapPresentationEntriesPerRoot = 4096;
 
 type PendingPresentation = Extract<Material, { availability: 'pendingCodemap' }>;
+type SourceRecord = Extract<Material['record'], { kind: 'source' }>;
+type Currentness = 'current' | 'stale';
+
+export interface CodemapPresentation {
+  readonly materials: ReadonlyMap<string, Material>;
+  readonly automaticAcquisition: AutomaticAcquisitionState;
+}
+
+interface CollectedPresentation extends CodemapPresentation {
+  readonly automaticAcquisition: Extract<AutomaticAcquisitionState, { kind: 'settled' }>;
+}
+
+type AttemptCompletion<T> =
+  | { readonly kind: 'current'; readonly presentation: CollectedPresentation; readonly value: T }
+  | { readonly kind: 'stale'; readonly presentation: CollectedPresentation };
 
 function pendingPresentation(material: Material): PendingPresentation | null {
   const record = material.record;
@@ -22,22 +41,24 @@ function pendingPresentation(material: Material): PendingPresentation | null {
     normalized: [], artifactKey: record.artifactKey }, bodies: [], sourceBlock: null });
 }
 
-function reportStalePresentation(material: PendingPresentation, cause: string): boolean {
+function reportStalePresentation(record: SourceRecord, cause: string): boolean {
   if (cause !== 'sourceChanged' && cause !== 'policyChanged') return false;
   process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapPresentationStale',
-    ...material.record.selection.source, cause }) + '\n');
+    ...record.selection.source, cause }) + '\n');
   return true;
 }
 
-async function revalidateCodemapSource(operation: WorkspaceOperation, material: PendingPresentation): Promise<void> {
-  const current = await operation.readRawSource(material.record.selection.source);
-  if (canonicalJSON([current.identity, current.key, descriptorGitMode(current.fingerprint.mode)]) !==
-    canonicalJSON([material.record.identity, material.record.artifactKey, material.record.mode])) {
-    throw new WorkspaceFailure('sourceChanged', material.record.selection.source);
+async function revalidateSourceRecord(operation: WorkspaceOperation, record: SourceRecord): Promise<void> {
+  const current = await operation.readRawSource(record.selection.source);
+  if (canonicalJSON([current.identity, descriptorGitMode(current.fingerprint.mode)]) !== canonicalJSON([record.identity, record.mode]) ||
+    record.selection.kind === 'codemap' && canonicalJSON(current.key) !== canonicalJSON(record.artifactKey)) {
+    throw new WorkspaceFailure('sourceChanged', record.selection.source);
   }
 }
 
-async function renderRootCodemaps(operation: WorkspaceOperation, requests: PendingPresentation[]): Promise<readonly Material[]> {
+async function renderRootCodemaps(operation: WorkspaceOperation, requests: PendingPresentation[]): Promise<{
+  readonly currentness: Currentness; readonly materials: readonly Material[];
+}> {
   let serving = requests[0]!;
   const root = operation.snapshot.roots.find(root => root.name === serving.record.selection.source.root)!;
   requests.sort((left, right) => {
@@ -53,28 +74,29 @@ async function renderRootCodemaps(operation: WorkspaceOperation, requests: Pendi
       const complete = await acquireSource(operation, { selectionOrigin: 'explicit', selection: material.record.selection,
         required: material.record.required });
       if (!complete.bodies.length) {
-        await revalidateCodemapSource(operation, material);
+        await revalidateSourceRecord(operation, material.record);
         process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapRootPresentationUnavailable',
           ...material.record.selection.source, cause: 'noRenderableCodemap' }) + '\n');
-        return [complete];
+        return { currentness: 'current', materials: [complete] };
       }
       rendered.push(complete);
     }
     for (const material of requests) {
       serving = material;
-      await revalidateCodemapSource(operation, material);
+      await revalidateSourceRecord(operation, material.record);
     }
-    return rendered;
+    return { currentness: 'current', materials: rendered };
   } catch (error) {
     operation.signal.throwIfAborted();
-    if (!reportStalePresentation(serving, failureCode(error))) throw error;
-    return [];
+    if (!reportStalePresentation(serving.record, failureCode(error))) throw error;
+    return { currentness: 'stale', materials: [] };
   }
 }
 
-export async function resolveSelectedCodemaps(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>) {
-  const deadline = performance.now() + codemapReadinessMilliseconds;
+async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>, deadline: number,
+  complete: (materials: ReadonlyMap<string, Material>, currentness: Currentness) => Promise<T>): Promise<T> {
   const ready = new Map(materials);
+  let currentness: Currentness = 'current';
   const retains: { readonly material: PendingPresentation;
     readonly lease: Awaited<ReturnType<WorkspaceOperation['requestExplicitCodemap']>> }[] = [];
   const requestsByRoot = new Map<string, PendingPresentation[]>();
@@ -108,7 +130,8 @@ export async function resolveSelectedCodemaps(operation: WorkspaceOperation, mat
           operation.signal.throwIfAborted();
           const cause = failureCode(error);
           if (cause === 'cancelled' && readinessClosed.signal.aborted) return;
-          if (!reportStalePresentation(material, cause)) throw error;
+          if (!reportStalePresentation(material.record, cause)) throw error;
+          currentness = 'stale';
         }
       })());
     }
@@ -120,7 +143,8 @@ export async function resolveSelectedCodemaps(operation: WorkspaceOperation, mat
         continue;
       }
       const rendered = await renderRootCodemaps(operation, requests);
-      for (const material of rendered) ready.set(material.record.id, material);
+      if (rendered.currentness === 'stale') currentness = 'stale';
+      for (const material of rendered.materials) ready.set(material.record.id, material);
     }
     for (const material of admitted) work.push((async () => {
       try {
@@ -129,15 +153,72 @@ export async function resolveSelectedCodemaps(operation: WorkspaceOperation, mat
         ready.set(material.record.id, complete);
       } catch (error) {
         operation.signal.throwIfAborted();
-        if (!reportStalePresentation(material, failureCode(error))) throw error;
+        if (!reportStalePresentation(material.record, failureCode(error))) throw error;
+        currentness = 'stale';
       }
     })());
     await Promise.all(work);
-    return new Map(ready);
+    return await complete(new Map(ready), currentness);
   } finally {
     readinessClosed.abort();
     if (timer !== null) clearTimeout(timer);
     await Promise.all(retains.map(({ lease }) => lease.release()));
     await Promise.allSettled(work);
+  }
+}
+
+function incompletePublication(mode: CodemapMode, presentation: CollectedPresentation): CodemapPresentation {
+  const materials = new Map<string, Material>();
+  for (const [id, material] of presentation.materials) {
+    if (material.record.kind !== 'source' || material.record.selection.kind !== 'codemap') materials.set(id, material);
+    else {
+      const pending = pendingPresentation(material);
+      if (pending) materials.set(id, pending);
+    }
+  }
+  return { materials, automaticAcquisition: mode === 'automatic'
+    ? { kind: 'pending', candidateCount: presentation.automaticAcquisition.outcomes.length }
+    : presentation.automaticAcquisition };
+}
+
+async function publicationCurrentness(operation: WorkspaceOperation, mode: CodemapMode,
+  presentation: CodemapPresentation): Promise<Currentness> {
+  for (const material of presentation.materials.values()) {
+    const record = material.record;
+    if (record.kind !== 'source') continue;
+    if (record.selection.kind === 'codemap' && (material.availability !== 'settled' || !material.bodies.length)) continue;
+    if (record.selection.kind !== 'codemap' && mode !== 'automatic') continue;
+    try { await revalidateSourceRecord(operation, record); }
+    catch (error) {
+      operation.signal.throwIfAborted();
+      if (!reportStalePresentation(record, failureCode(error))) throw error;
+      return 'stale';
+    }
+  }
+  return 'current';
+}
+
+/** Shares a performance.now() start across two attempts; assembly and serving checks retain demand until release. Errors and cancellation propagate. */
+export async function withCodemapPresentation<T>(operation: WorkspaceOperation, mode: CodemapMode, startedAtMilliseconds: number,
+  prepare: () => Promise<DerivedMaterials>, render: (presentation: CodemapPresentation) => Promise<T>): Promise<T> {
+  const deadline = startedAtMilliseconds + codemapReadinessMilliseconds;
+  for (let attempt = 1; ; attempt++) {
+    operation.signal.throwIfAborted();
+    const derived = await prepare();
+    const completion = await withCodemapAttempt(operation, derived.materials, deadline, async (materials, currentness): Promise<AttemptCompletion<T>> => {
+      const presentation: CollectedPresentation = { materials, automaticAcquisition: { kind: 'settled', outcomes: derived.automaticCodemaps } };
+      const staleAcquisition = derived.automaticCodemaps.some(item => item.outcome.kind === 'unavailable' &&
+        (item.outcome.cause === 'sourceChanged' || item.outcome.cause === 'policyChanged'));
+      if (currentness === 'stale' || staleAcquisition) return { kind: 'stale', presentation };
+      const value = await render(presentation);
+      operation.signal.throwIfAborted();
+      if (await publicationCurrentness(operation, mode, presentation) === 'stale') return { kind: 'stale', presentation };
+      return { kind: 'current', presentation, value };
+    });
+    if (completion.kind === 'current') return completion.value;
+    if (attempt < maximumPresentationAttempts && performance.now() < deadline) continue;
+    const value = await render(incompletePublication(mode, completion.presentation));
+    operation.signal.throwIfAborted();
+    return value;
   }
 }

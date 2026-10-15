@@ -282,9 +282,11 @@ test('optional inferred acquisition failure retains ready targets and records ve
       if (draft) await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'upsert', selection: fullSeed } }, signal());
       assert.equal(selected.revision, admission ? 0 : 1);
       assert.deepEqual((await sources(selected)).map(item => item.selection.source.path).sort(), ['Peer.swift', 'Seed.swift', 'SharedA.swift']);
-      const reply = await selected.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'files', maxOutputBytes })), signal());
-      const paths = cause === 'sourceChanged' ? reply.code_structure?.pending_paths : reply.code_structure?.unmapped_paths;
-      assert.deepEqual(paths, ['r/SharedB.swift']);
+      // Historical acquisition evidence is distinct from selection-get stale-publication exhaustion.
+      const reply = cause === 'notFound' ? await selected.manageSelection(selectionValidator.Parse(selectionValidator.Default({
+        op: 'get', view: 'files', maxOutputBytes,
+      })), signal()) : null;
+      if (reply) assert.deepEqual(reply.code_structure?.unmapped_paths, ['r/SharedB.swift']);
       const ready = await selected.finalize(signal()); assert(ready.kind === 'ready');
       await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
       const captured = Compile(Type.Object({ automaticCodemaps: Type.Array(Type.Object({
@@ -344,9 +346,15 @@ test('automatic selection get retries unavailable targets without overwriting a 
         await writeFile(join(f.directory, 'r/SharedB.swift'), 'struct ChangedAgain { let title: String }\n');
         const unavailable = await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'files', maxOutputBytes })), signal());
         replies.push(unavailable);
-        assert.equal(unavailable.revision, 0); assert.equal((await sources(draft)).length, 3);
-        assert(!unavailable.files.some(file => file.path.endsWith('SharedB.swift')));
-        assert.deepEqual(unavailable.code_structure?.pending_paths, ['r/SharedB.swift']);
+        assert.equal(unavailable.revision, 0); assert.equal((await sources(draft)).length, 1);
+        assert.equal(unavailable.measurement.complete, false);
+        assert(!unavailable.files.some(file => file.render_mode === 'codemap'));
+        const blocked = await draft.finalize(signal()); assert.equal(blocked.kind, 'blocked');
+        await writeFile(join(f.directory, 'r/SharedB.swift'), f.files['SharedB.swift']);
+        const recovered = await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'files', maxOutputBytes })), signal());
+        replies.push(recovered);
+        assert.equal(recovered.revision, 0); assert.equal(recovered.measurement.complete, true);
+        assert.equal((await sources(draft)).length, 4);
       }
       const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
       await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
