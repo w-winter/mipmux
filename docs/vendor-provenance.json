@@ -6630,6 +6630,88 @@
         "Use the section names and default order from RPCE in the shared TypeScript/native schema. The optional public promptSectionsOrder setting captures the effective order at build admission; omission selects the source default.",
         "Require every section with JSON Schema contains checks while retaining repetitions, matching Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift:5445-5456, SHA256 142aea37ff038a9fd4805257a9706d64e091e0a62e3850493236c3bf91cc01b2. This is the effective ordered value, not raw persisted preference parsing."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b",
+      "destination": "native/Sources/SmipBridge/RPCETokenComponents.swift",
+      "ranges": [
+        [
+          53,
+          72
+        ],
+        [
+          230,
+          252
+        ]
+      ],
+      "changes": [
+        "Retain TokenComponentBreakdown and calculateComponentBreakdown in an extension of the existing executable-local estimator. No Combine actor or calculation task is imported.",
+        "Retain makeTokenStats from Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+TokenStats.swift:5-27, SHA256 cab7791c7b7feaa641063cc20b1c112919ce650ca26f312e2b0a739548524c41, in a non-actor namespace. Original optional component omission, duplicate-prompt accounting and DTO keys are preserved."
+      ],
+      "classification": "handwritten",
+      "sha256": "466fcf8c1f86352a38a95561f893ec172bb994bae84ffe2bfa52c7f3b0f8258b"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "destination": "src/contracts/token-accounting.ts",
+      "ranges": [
+        [
+          1489,
+          1535
+        ]
+      ],
+      "changes": [
+        "Represent the source TokenStats DTO as a closed TypeBox schema, separate from actual packet measurement. The native request supplies already-counted file categories and raw component strings; nullable texts retain explicit null."
+      ],
+      "classification": "handwritten",
+      "sha256": "c5be453fd5d110cf9dd8d15bdd3e0a3b7975c3ba7b03a51c7bb6d36d9951b264"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+TokenStats.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "cab7791c7b7feaa641063cc20b1c112919ce650ca26f312e2b0a739548524c41",
+      "destination": "native/Sources/SmipBridge/TokenStatsInput.swift",
+      "ranges": [
+        [
+          5,
+          27
+        ]
+      ],
+      "changes": [
+        "Decode captured normalized file totals and raw component texts once, call the retained calculation/projection, and encode the existing Codable DTO. Apply the bound workspace caller zero-to-nil handling for files_content/codemaps. Reject a total outside the existing JavaScript-safe wire count, independently of the user's context budget.",
+        "This is a portable arithmetic dependency. Source component acquisition, tab-cache freshness and scout response wiring are not established by this adapter."
+      ],
+      "classification": "handwritten",
+      "sha256": "f91f3ee7a8efb02b52715e8773a33529779d0c2d6fed9c5a58009aecc5fd9e22"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b",
+      "destination": "test/fixtures/rpce-token-stats/cases.json",
+      "ranges": [
+        [
+          53,
+          72
+        ],
+        [
+          131,
+          142
+        ],
+        [
+          230,
+          252
+        ]
+      ],
+      "classification": "fixture",
+      "changes": [
+        "Five deterministic outputs come from standalone compilation of the original struct, estimator and calculation, original makeTokenStats and original Codable TokenStats. The generator records every source range and hash; the driver supplies existing file-token totals without executing cache or acquisition code."
+      ],
+      "sha256": "437d50957c64aa68dd7c5db963ea884aa06801cfb9974375c1fdf26b0370e2e4"
     }
   ],
   "dependencies": [

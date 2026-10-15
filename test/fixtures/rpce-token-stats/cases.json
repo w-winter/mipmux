@@ -1,0 +1,137 @@
+[
+  {
+    "name": "empty-components",
+    "input": {
+      "kind": "calculateTokenStats",
+      "files": {
+        "fullTokens": 0,
+        "sliceTokens": 0,
+        "codemapTokens": 0
+      },
+      "promptText": "",
+      "selectedInstructionsText": "",
+      "fileTreeText": "",
+      "gitDiffText": null,
+      "metadataText": null,
+      "duplicateUserInstructionsAtTop": false
+    },
+    "expected": {
+      "kind": "tokenStats",
+      "tokenStats": {
+        "files": 0,
+        "total": 0
+      }
+    }
+  },
+  {
+    "name": "mixed-components-and-duplicate-prompt",
+    "input": {
+      "kind": "calculateTokenStats",
+      "files": {
+        "fullTokens": 10,
+        "sliceTokens": 3,
+        "codemapTokens": 7
+      },
+      "promptText": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "selectedInstructionsText": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+      "fileTreeText": "tttttttttttttttt",
+      "gitDiffText": "gggggggggggggggggggggggg",
+      "metadataText": "xxxxxxxx",
+      "duplicateUserInstructionsAtTop": true
+    },
+    "expected": {
+      "kind": "tokenStats",
+      "tokenStats": {
+        "codemaps": 7,
+        "file_tree": 4,
+        "files": 20,
+        "files_content": 13,
+        "git": 6,
+        "meta": 10,
+        "other": 2,
+        "prompt": 42,
+        "total": 84
+      }
+    }
+  },
+  {
+    "name": "unicode-and-small-components",
+    "input": {
+      "kind": "calculateTokenStats",
+      "files": {
+        "fullTokens": 0,
+        "sliceTokens": 0,
+        "codemapTokens": 0
+      },
+      "promptText": "\u0000λ🙂",
+      "selectedInstructionsText": "a\n\nb",
+      "fileTreeText": "λ\n",
+      "gitDiffText": "diff\n",
+      "metadataText": "\n",
+      "duplicateUserInstructionsAtTop": false
+    },
+    "expected": {
+      "kind": "tokenStats",
+      "tokenStats": {
+        "files": 0,
+        "git": 1,
+        "meta": 1,
+        "prompt": 1,
+        "total": 3
+      }
+    }
+  },
+  {
+    "name": "empty-optional-texts",
+    "input": {
+      "kind": "calculateTokenStats",
+      "files": {
+        "fullTokens": 1,
+        "sliceTokens": 0,
+        "codemapTokens": 0
+      },
+      "promptText": "",
+      "selectedInstructionsText": "",
+      "fileTreeText": "",
+      "gitDiffText": "",
+      "metadataText": "",
+      "duplicateUserInstructionsAtTop": true
+    },
+    "expected": {
+      "kind": "tokenStats",
+      "tokenStats": {
+        "files": 1,
+        "files_content": 1,
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "slice-and-codemap-totals",
+    "input": {
+      "kind": "calculateTokenStats",
+      "files": {
+        "fullTokens": 0,
+        "sliceTokens": 11,
+        "codemapTokens": 19
+      },
+      "promptText": "task\n",
+      "selectedInstructionsText": "role one\n\nrole two",
+      "fileTreeText": "",
+      "gitDiffText": null,
+      "metadataText": null,
+      "duplicateUserInstructionsAtTop": false
+    },
+    "expected": {
+      "kind": "tokenStats",
+      "tokenStats": {
+        "codemaps": 19,
+        "files": 30,
+        "files_content": 11,
+        "meta": 4,
+        "prompt": 1,
+        "total": 35
+      }
+    }
+  }
+]

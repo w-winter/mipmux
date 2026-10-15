@@ -1,0 +1,59 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/TokenAccounting/TokenCalculationService.swift",
+      "sha256": "e36ff5d3787f2bc9696c51ad81bfc717cb76ef0ea45bc619272cf0717a951d6b",
+      "blob": "c259c810fd0873b29b6d9b50d531fa4e1512410d",
+      "ranges": [
+        {
+          "start": 53,
+          "end": 72,
+          "sha256": "aff6f4d79edc353484aef3afb6d87fa523fe9e6b68e6e8ce33495ae30a930973"
+        },
+        {
+          "start": 131,
+          "end": 142,
+          "sha256": "0fbf30008c6b34c4e74b4d49e886fd8ddd02020ce2fe8c05ba874bd5b0780f79"
+        },
+        {
+          "start": 230,
+          "end": 252,
+          "sha256": "b607bc0309e9596801e8a79af1c5110347920a08b18b621cce1f817b9f95c517"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+TokenStats.swift",
+      "sha256": "cab7791c7b7feaa641063cc20b1c112919ce650ca26f312e2b0a739548524c41",
+      "blob": "b60985d245a0a44f29b974c449aeb82271388e34",
+      "ranges": [
+        {
+          "start": 5,
+          "end": 27,
+          "sha256": "24261a77c245e3cb409c1e181bf25511d536a7c30e8fb948bd55efec5856e3f3"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sha256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "blob": "236cbeeb8945598b8dd91c88d9b69f9f4a1fff2e",
+      "ranges": [
+        {
+          "start": 1489,
+          "end": 1535,
+          "sha256": "aadee6353ced4e6944b9be118fdc2399958616a81e54041ece8a01d4df425cf6"
+        }
+      ]
+    }
+  ],
+  "cases": 5,
+  "generatorSHA256": "d876a8c58bbe1ff61208368b9ab77549bfac917b78f4cd0781bbad4a44943b7a",
+  "combinedSourceSHA256": "f952276fafafdc1374a194753e88a5e4d4c2dea905d5b637773b862fe4055335",
+  "bindings": [
+    "Original component struct, estimator, calculation, makeTokenStats and Codable DTO execute verbatim in minimal namespaces.",
+    "The driver supplies already-counted full/slice/codemap totals and applies the workspace caller zero-to-nil projection.",
+    "No cache, filesystem acquisition, tree/Git collection, preset lookup, pending status or scout integration executes."
+  ]
+}

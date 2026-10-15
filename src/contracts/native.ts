@@ -10,6 +10,7 @@ import { NativeGitArtifactInput, NativeGitArtifactResult } from './git-artifact.
 import { NativeGitWorktreeInput, NativeGitWorktreeResult } from './git-worktree.js';
 import { NativeWireFailureCode } from './errors.js';
 import { NativeAskUserInput, NativeAskUserResult } from './interaction.js';
+import { NativeTokenStatsInput, NativeTokenStatsResult } from './token-accounting.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
 export { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -263,6 +264,7 @@ const automaticReviewGitInput = Type.Union([
 ]);
 export const AutomaticReviewGitCompleteness = Type.Enum(['complete', 'partial', 'failed']);
 export const NativeOperation = Type.Union([
+  NativeTokenStatsInput,
   ...automaticReviewGitInput.anyOf,
   ...NativeGitWorktreeInput.anyOf,
   ...NativeGitArtifactInput.anyOf,
@@ -366,6 +368,7 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  NativeTokenStatsResult,
   ...NativeGitWorktreeResult.anyOf,
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('gitSnapshotOpened'), run: handle, relativePath: Type.String(), snapshotID: Type.String() }, { additionalProperties: false }),

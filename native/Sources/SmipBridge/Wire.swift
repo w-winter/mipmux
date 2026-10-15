@@ -161,6 +161,7 @@ enum Operation {
     case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
     case renderPromptAssembly(PromptAssemblyInput)
+    case calculateTokenStats(TokenStatsInput)
     case renderPreparedClipboard(PreparedClipboardOperation)
     case renderClipboard(ClipboardOperation)
     case queryStructure(StructureInput)
@@ -332,6 +333,7 @@ enum Operation {
         switch kind {
         case "renderFileBlock": return try .renderFileBlock(FileBlockInput(value))
         case "renderPromptAssembly": return try .renderPromptAssembly(PromptAssemblyInput(value))
+        case "calculateTokenStats": return try .calculateTokenStats(TokenStatsInput(value))
         case "resolveAutomaticReviewGit", "renderAutomaticReviewGit":
             return try .git(.automaticReview(AutomaticReviewGitInput(value)))
         case "renderPreparedClipboard": return try .renderPreparedClipboard(PreparedClipboardOperation(value))
