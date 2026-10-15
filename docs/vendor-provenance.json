@@ -6086,14 +6086,19 @@
         [
           504,
           518
+        ],
+        [
+          651,
+          737
         ]
       ],
       "changes": [
-        "Bind stale-currentness presentation to sourceChanged and policyChanged results from confined demand acquisition. Keep captured membership pending, log the cause and allow later get to reacquire. Cancellation and other errors propagate. The existing operation retains and shared allowance of 10000 ms provide headless ownership and waiting."
+        "Bind stale-currentness presentation to sourceChanged and policyChanged results from confined demand acquisition. Keep captured membership pending, log the cause and allow later get to reacquire. Cancellation and other errors propagate. The existing operation retains and shared allowance of 10000 ms provide headless ownership and waiting.",
+        "Every selection reply reacquires optional explicit codemap presentation, including already-rendered materials, through the existing operation. DraftRuntime replaces the presentation only if it still owns the captured material. Readiness and body changes do not advance the selection revision."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "577352e754567837332a6a9c0016781aebdc309c124b7e03e2f9d0bda2a89357",
+      "sha256": "c76eeecafe4c9e0f04f30a28ed2b41cd91959d726727727cb9eebac225b33dfa",
       "classification": "handwritten"
     }
   ],

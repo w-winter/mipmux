@@ -427,7 +427,7 @@ export class DraftRuntime {
           this.#commit(next, prepared.state, this.#prompt, candidate.revision);
         }
         const settled = await resolveSelectedCodemaps(operation, next);
-        if (request.op !== 'preview') this.#retainReadyCodemaps(next, settled);
+        if (request.op !== 'preview') this.#retainCodemapPresentation(next, settled);
         const reply = await this.#selectionReply(operation, request, settled, prepared.mode, prepared.invalid,
           isMutation ? candidate.revision : revision, prompt);
         operation.signal.throwIfAborted();
@@ -462,12 +462,12 @@ export class DraftRuntime {
     for (const material of prepared.artifactMaterials) explicit.set(material.record.id, material);
     return this.#derive(operation, explicit, prepared.mode, current, revision);
   }
-  #retainReadyCodemaps(pending: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>): void {
+  #retainCodemapPresentation(pending: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>): void {
     if (this.#closing || this.#state !== 'editable') return;
     const next = new Map(this.#materials);
     for (const [id, material] of settled) {
       const previous = pending.get(id);
-      if (previous?.availability === 'pendingCodemap' && material.availability === 'settled' && next.get(id) === previous) {
+      if (previous && next.get(id) === previous) {
         next.set(id, material);
       }
     }

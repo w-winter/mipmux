@@ -3,9 +3,18 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { observe } from '../workspace/observe.js';
 import { acquireSource, type Material } from './material-store.js';
 import { failureCode } from '../runtime/tool-result.js';
+import { freeze, WorkspaceFailure } from '../workspace/values.js';
 
 // RPCE WorkspaceCodemapPresentationCoordinator's production readiness allowance.
 const codemapReadinessMilliseconds = 10000;
+
+function pendingPresentation(material: Material): Extract<Material, { availability: 'pendingCodemap' }> | null {
+  const record = material.record;
+  if (record.kind !== 'source' || record.selectionOrigin !== 'explicit' || record.required || record.selection.kind !== 'codemap') return null;
+  if (record.artifactKey === null) throw new WorkspaceFailure('invalidArtifact');
+  return freeze({ availability: 'pendingCodemap', record: { ...record, required: false, selection: record.selection,
+    normalized: [], artifactKey: record.artifactKey }, bodies: [], sourceBlock: null });
+}
 
 export async function resolveSelectedCodemaps(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>) {
   const deadline = performance.now() + codemapReadinessMilliseconds;
@@ -16,8 +25,10 @@ export async function resolveSelectedCodemaps(operation: WorkspaceOperation, mat
   const expired = new AbortController();
   let timer: ReturnType<typeof setTimeout> | null = null;
   try {
-    for (const material of materials.values()) {
-      if (material.availability !== 'pendingCodemap') continue;
+    for (const captured of materials.values()) {
+      const material = pendingPresentation(captured);
+      if (material === null) continue;
+      ready.set(material.record.id, material);
       const lease = await operation.requestExplicitCodemap(material.record.selection.source);
       retains.push({ material, lease });
     }

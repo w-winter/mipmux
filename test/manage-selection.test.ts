@@ -586,3 +586,28 @@ test('stale codemap completion reports pending committed membership and a later 
     } finally { await client.close(); await runtime.close(); }
   });
 });
+
+test('selection get revalidates an already rendered optional codemap before returning its body', async () => {
+  await mkdir('test-output', { recursive: true });
+  const f = await fixture(), path = join(f.root, 'private/Hidden.swift'), original = await readFile(path, 'utf8');
+  try {
+    const selected = await f.select({ op: 'set', mode: 'codemap_only', paths: [path], view: 'content' });
+    assert.equal(selected.isError, false, JSON.stringify(selected));
+    const initial = await f.inspect();
+    await writeFile(path, 'struct Replaced { let title: String }\n');
+    const stale = await f.select({ op: 'get', view: 'content' });
+    assert.equal(stale.isError, false, JSON.stringify(stale));
+    const pending = Compile(Type.Object({ revision: Type.Literal(initial.revision), files: Type.Array(Type.Unknown(), { maxItems: 0 }),
+      blocks: Type.Array(Type.String(), { maxItems: 0 }), code_structure: Type.Object({ pending_paths: Type.Array(Type.Literal('private/Hidden.swift'), { minItems: 1, maxItems: 1 }) }),
+      measurement: Type.Object({ complete: Type.Literal(false) }) })).Parse(stale.structuredContent);
+    assert.equal((await f.inspect()).revision, initial.revision);
+    await writeFile(path, original);
+    const restored = await f.select({ op: 'get', view: 'content' });
+    assert.equal(restored.isError, false, JSON.stringify(restored));
+    assert(JSON.stringify(restored.structuredContent).includes('ExplicitlyManaged'));
+    const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
+    assert.equal(finalized.isError, false, JSON.stringify(finalized));
+    const bundle = ready.Parse(finalized.structuredContent); await verifyBundle(bundle.directory);
+    await writeFile('test-output/codemap-get-currentness-proof.json', JSON.stringify({ selected, pending, restored, bundle }, null, 2) + '\n');
+  } finally { await f.client.close(); }
+});
