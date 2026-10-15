@@ -1,6 +1,7 @@
 import Type, { type Static, type TSchema } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { fromJsonSchema, type McpServer, type ServerContext } from '@modelcontextprotocol/server';
+import { fromJsonSchema, inputRequired, isInputRequiredResult, CLIENT_CAPABILITIES_META_KEY,
+  type McpServer, type ServerContext } from '@modelcontextprotocol/server';
 import { WorkspaceSpec } from '../contracts/inventory.js';
 import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from '../contracts/context.js';
 import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, ScopedStructure, toolDescription } from '../contracts/exploration.js';
@@ -10,8 +11,14 @@ import { Positive, TreeInput, ScopedTree } from '../contracts/discovery.js';
 import type { ClientRuntime } from '../runtime/client-runtime.js';
 import { toolResult, failureResult } from '../runtime/tool-result.js';
 import { WorkspaceFailure } from '../workspace/values.js';
+import { ClientQuestionResponse } from '../contracts/interaction.js';
+import { questionForm, sourceQuestionResponse } from './question-form.js';
 
 const closed = { additionalProperties: false }, id = Type.String({ minLength: 1 });
+const formCapability = Compile(Type.Object({ [CLIENT_CAPABILITIES_META_KEY]: Type.Object({
+  elicitation: Type.Object({ form: Type.Object({}) }),
+}) }));
+const questionResponses = Compile(Type.Record(Type.String(), ClientQuestionResponse));
 export function registerTools(server: McpServer, client: () => ClientRuntime, defaultMaxOutputBytes: number) {
   const budget = { maxOutputBytes: Type.Optional(Positive) };
   function register<S extends TSchema>(name: string, schema: S,
@@ -20,7 +27,8 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     server.registerTool(name, { description: toolDescription(name), inputSchema: fromJsonSchema(schema) }, async (input, context) => {
       try {
         if (!check.Check(input)) throw new WorkspaceFailure('invalidRequest');
-        return toolResult(await execute(input, context));
+        const result = await execute(input, context);
+        return isInputRequiredResult(result) ? result : toolResult(result);
       } catch (error) {
         return { ...toolResult(failureResult(error)), isError: true };
       }
@@ -81,16 +89,30 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
   register('draft_finalize', Type.Object({ draftId: id }, closed), (input, ctx) => client().finalize(input.draftId, ctx.mcpReq.signal));
   register('draft_dispose', Type.Object({ draftId: id }, closed), (input, ctx) => client().disposeDraft(input.draftId, ctx.mcpReq.signal));
   register('context_builder', Type.Object({ workspaceId: id, requestId: id, request: ContextBuildRequest }, closed),
-    input => client().build(input.workspaceId, input.requestId, input.request));
+    (input, ctx) => client().build(input.workspaceId, input.requestId, input.request,
+      formCapability.Check(ctx.mcpReq.envelope) ? 'form' : 'unavailable'));
   register('context_builder_result', Type.Object({ jobId: id }, closed), input => client().result(input.jobId));
   register('context_builder_cancel', Type.Object({ jobId: id }, closed), input => client().cancel(input.jobId));
   register('context_builder_dispose', Type.Object({ jobId: id }, closed), (input, ctx) => client().disposeJob(input.jobId, ctx.mcpReq.signal));
   register('context_builder_wait', Type.Object({ jobId: id, durationMs: Type.Integer({ minimum: 0, maximum: 2147483647 }) }, closed),
     async (input, ctx) => {
+      if (ctx.mcpReq.inputResponses !== undefined) {
+        if (!questionResponses.Check(ctx.mcpReq.inputResponses)) throw new WorkspaceFailure('invalidInteractionResponse');
+        const entries = Object.entries(ctx.mcpReq.inputResponses);
+        if (entries.length !== 1) throw new WorkspaceFailure('invalidInteractionResponse');
+        const [questionId, response] = entries[0]!;
+        const question = client().pendingQuestion(input.jobId);
+        if (!question || question.id !== questionId) throw new WorkspaceFailure('interactionNotCurrent');
+        client().answerQuestion(input.jobId, questionId, sourceQuestionResponse(question, response));
+      }
       const progressToken = ctx.mcpReq._meta?.progressToken;
-      return await client().wait(input.jobId, input.durationMs, ctx.mcpReq.signal, snapshot => {
+      const result = await client().wait(input.jobId, input.durationMs, ctx.mcpReq.signal, snapshot => {
         if (progressToken !== undefined) void ctx.mcpReq.notify({ method: 'notifications/progress',
           params: { progressToken, progress: snapshot.sequence, message: snapshot.state } }).catch(() => {});
       });
+      const question = client().pendingQuestion(input.jobId);
+      if (!question) return result;
+      if (!formCapability.Check(ctx.mcpReq.envelope)) throw new WorkspaceFailure('elicitationUnavailable');
+      return inputRequired({ inputRequests: { [question.id]: inputRequired.elicit(questionForm(question)) } });
     });
 }

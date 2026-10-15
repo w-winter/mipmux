@@ -23,7 +23,7 @@ export function scopedReadCall(input: ReadRequest, draft: DraftRuntime | null, o
   return draft.readSelectedGitArtifact(input, signal, encode);
 }
 
-export async function scopedCall(call: DiscoveryCall, draft: DraftRuntime, operation: WorkspaceOperation,
+export async function scopedCall(call: Exclude<DiscoveryCall, { name: 'ask_user' }>, draft: DraftRuntime, operation: WorkspaceOperation,
   signal: AbortSignal, encode: ResultEncoding): Promise<unknown> {
   signal.throwIfAborted();
   switch (call.name) {

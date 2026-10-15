@@ -37,7 +37,11 @@ test('local package audits resources and executes relocated library, native, CLI
   const command = join(packageRoot, 'dist/cli/main.js');
   writeFileSync(join(installed, 'import.mjs'), 'import {SmipRuntime, verifyBundle} from "smip"; if (typeof SmipRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
   execFileSync(process.execPath, [join(installed, 'import.mjs')], { cwd: '/' });
-  const provider = await scriptedProvider(() => ({ kind: 'text', text: 'Complete diagnostic', stop: 'end_turn', tokens: 10 }));
+  let requestInteraction = false, interactionCalls = 0;
+  const provider = await scriptedProvider(() => requestInteraction && interactionCalls++ === 0
+    ? { kind: 'tool', name: 'ask_user', input: { questions: [{ id: 'scope', question: 'Which context?', options: ['API', 'UI'],
+      allows_multiple: true, allows_custom: true }] }, stop: 'tool_use', tokens: 10 }
+    : { kind: 'text', text: 'Complete diagnostic', stop: 'end_turn', tokens: 10 });
   const prompt = join(directory, 'editable-discovery.md');
   const promptBytes = Buffer.from('# smip discovery v1\nRELOCATED_EDITABLE_PROMPT\n');
   writeFileSync(prompt, promptBytes);
@@ -52,7 +56,15 @@ test('local package audits resources and executes relocated library, native, CLI
   const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/smip'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
-  const client = new Client({ name: 'relocation-test', version: '1' });
+  const client = new Client({ name: 'relocation-test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } },
+    capabilities: { elicitation: { form: {} } } });
+  let questions = 0;
+  client.setRequestHandler('elicitation/create', async request => {
+    questions++;
+    assert.equal(request.params.mode, 'form');
+    return { action: 'accept', content: Object.fromEntries(Object.entries(request.params.requestedSchema.properties)
+      .map(([key, field]) => [key, field.type === 'array' ? ['API'] : 'installed custom context'])) };
+  });
   try {
     await client.connect(transport);
     const tools = await client.listTools();
@@ -90,8 +102,24 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(nativeTerminal.discovery.promptVersion, 'rpce-43a9c29');
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('Leave the prompt COMPLETELY unchanged'));
     assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('<current_prompt_content>'));
+    requestInteraction = true;
+    const workspaceId = Compile(Type.Object({ id: Type.String() })).Parse((await client.callTool({ name: 'workspace_declare',
+      arguments: { spec } })).structuredContent).id;
+    const jobId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
+      arguments: { workspaceId, requestId: 'interactive-relocation', request: {
+        task: 'Inspect', initialSelection: { codemapMode: 'manual', sources: [] }, duplicateUserInstructionsAtTop: false,
+        copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+        requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [],
+        discoveryHints: [], outputName: 'interactive-packet', budgetUnits: 10000, clarification: {},
+      } },
+    })).structuredContent).jobId;
+    const interactive = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true),
+      discovery: DiscoveryReceipt })).Parse((await client.callTool({ name: 'context_builder_wait',
+      arguments: { jobId, durationMs: 10000 } })).structuredContent);
+    assert.equal(questions, 1); assert.equal(interactive.discovery.promptVersion, 'custom-file-v1');
+    assert(JSON.stringify(provider.requests.at(-1)!.messages).includes('installed custom context'));
     writeFileSync(join(directory, 'relocation-receipt.json'), JSON.stringify({ installed, packageSHA256: receipt.sha256,
-      installLockSHA256, terminal, nativeTerminal }));
+      installLockSHA256, terminal, nativeTerminal, interactive }));
     mkdirSync(resolve('test-output'), { recursive: true });
     writeFileSync(resolve('test-output/group-e-relocation.json'), JSON.stringify({ directory, installed, receipt: join(directory, 'relocation-receipt.json') }));
   } finally { await client.close(); await provider.close(); }

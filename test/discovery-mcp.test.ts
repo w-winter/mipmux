@@ -76,7 +76,9 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
     for (const name of ['HOME', 'TMPDIR', 'PI_CODING_AGENT_DIR']) assert.equal(workerEnvironment[name], mcp.agentDirectory);
     await assert.rejects(access(join(ambientHome, '.pi')), { code: 'ENOENT' });
     assert.deepEqual(server.calls, ['read_ticket']);
-    for (const request of provider.requests) assert.deepEqual(request.tools.sort(), [...Object.keys(toolSchemas), 'mcp__controlled__read_ticket'].sort());
+    for (const request of provider.requests) assert.deepEqual(request.tools.sort(), [
+      ...Object.keys(toolSchemas).filter(name => name !== 'ask_user'), 'mcp__controlled__read_ticket',
+    ].sort());
     assert(JSON.stringify(provider.requests).includes('not found'));
     assert(!JSON.stringify({ result, requests: provider.requests }).includes('synthetic$!mcp-token'));
     await writeFile(join(provider.directory, 'transcript.json'), JSON.stringify({ requests: provider.requests, calls: server.calls }, null, 2));

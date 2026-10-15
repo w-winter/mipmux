@@ -8,6 +8,7 @@ import { Continuation } from './exploration.js';
 import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
 import { NativeFileTreeInput, NativeGitCheckout } from './native.js';
 import { AutomaticCodemapOutcome } from './automatic-codemaps.js';
+import { Clarification } from './interaction.js';
 
 const closed = { additionalProperties: false };
 const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
@@ -51,6 +52,7 @@ export type DocumentInput = Static<typeof DocumentInput>;
 export const PromptEnhancementMode = Type.Enum(['fullRewrite', 'augment', 'preserve']);
 export type PromptEnhancementMode = Static<typeof PromptEnhancementMode>;
 export const ContextBuildRequest = Type.Object({
+  clarification: Type.Optional(Clarification),
   duplicateUserInstructionsAtTop: Type.Boolean(),
   copyPreset: ClipboardPreset,
   storedPrompts: Type.Array(StoredPrompt),

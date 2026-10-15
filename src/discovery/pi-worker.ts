@@ -20,7 +20,8 @@ receive(process.stdin, value => {
     if (start) throw new Error('Duplicate start');
     start = value;
     const scope = { generation: value.generation, job: value.job };
-    const tools: ToolDefinition[] = Object.entries(toolSchemas).map(([name, parameters]) => ({
+    const tools: ToolDefinition[] = Object.entries(toolSchemas)
+      .filter(([name]) => name !== 'ask_user' || value.input.clarification !== undefined).map(([name, parameters]) => ({
       name, label: name, description: toolDescription(name), parameters,
       execute: async (_id, input, signal) => {
         controller.signal.throwIfAborted(); signal?.throwIfAborted();

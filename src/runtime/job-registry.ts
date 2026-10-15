@@ -9,6 +9,14 @@ import type { DiscoveryRunner } from '../discovery/runner.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall } from '../discovery/scoped-tools.js';
 import { cacheRecoveryTarget, failureCode } from './tool-result.js';
+import { defaultQuestionTimeoutSeconds, type AskUserRequest, type ClientQuestionResponse, type PendingQuestion } from '../contracts/interaction.js';
+import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
+
+type QuestionResponse = ClientQuestionResponse | { readonly action: 'timeout' };
+type QuestionState = { readonly kind: 'idle' } | { readonly kind: 'preparing' | 'answering'; readonly id: string } |
+  { readonly kind: 'pending'; readonly question: PendingQuestion; readonly respond: (response: ClientQuestionResponse) => boolean };
+// Node treats larger setTimeout delays as 1 ms; long source timeouts need segmented scheduling.
+const maximumTimerDelayMs = 2147483647;
 
 interface Job {
   readonly id: string;
@@ -19,6 +27,7 @@ interface Job {
   progress: DiscoveryEvent | null;
   status: JobTerminal | { state: JobPhase };
   draft: DraftRuntime | null;
+  question: QuestionState;
   work: Promise<void>;
 }
 
@@ -39,7 +48,7 @@ export class JobRegistry {
       return this.snapshot(previous.id);
     }
     const job: Job = { id: randomUUID(), digest, abort: new AbortController(), listeners: new Set(), sequence: 0,
-      progress: null, status: { state: 'accepted' }, draft: null, work: Promise.resolve() };
+      progress: null, status: { state: 'accepted' }, draft: null, question: { kind: 'idle' }, work: Promise.resolve() };
     this.#jobs.set(job.id, job); this.#requests.set(requestId, job);
     // createDraft retains the workspace and registers its barrier synchronously before start returns.
     job.work = this.#run(job, workspace, request, this.runner);
@@ -87,7 +96,8 @@ export class JobRegistry {
             const cancel = () => operation.cancel();
             combined.addEventListener('abort', cancel, { once: true });
             if (combined.aborted) cancel();
-            const work = scopedCall(call, draft, operation, combined, encode)
+            const work = (call.name === 'ask_user' ? this.#ask(job, request, call.input, operation, combined)
+              : scopedCall(call, draft, operation, combined, encode))
               .finally(() => combined.removeEventListener('abort', cancel));
             pending.add(work); void work.then(() => pending.delete(work), () => pending.delete(work));
             return work;
@@ -118,6 +128,73 @@ export class JobRegistry {
     for (const job of this.#jobs.values()) if (job.draft?.id === id) return job.draft;
     throw new WorkspaceFailure('unknownDraft');
   }
+  pendingQuestion(id: string): PendingQuestion | null {
+    const state = this.#get(id).question;
+    return state.kind === 'pending' ? freeze(structuredClone(state.question)) : null;
+  }
+  answerQuestion(id: string, questionId: string, response: ClientQuestionResponse): void {
+    const state = this.#get(id).question;
+    if (state.kind !== 'pending' || state.question.id !== questionId || !state.respond(freeze(structuredClone(response))))
+      throw new WorkspaceFailure('interactionNotCurrent');
+  }
+  async #ask(job: Job, request: ContextBuildRequest, input: AskUserRequest, operation: WorkspaceOperation, signal: AbortSignal) {
+    if (!request.clarification) throw new WorkspaceFailure('clarificationDisabled');
+    if (job.question.kind !== 'idle') throw new WorkspaceFailure('askUserAlreadyPending');
+    const id = randomUUID(), payload = freeze(structuredClone(input));
+    const defaultTimeoutSeconds = request.clarification.questionTimeoutSeconds ?? defaultQuestionTimeoutSeconds;
+    job.question = { kind: 'preparing', id };
+    try {
+      process.stderr.write(JSON.stringify({ level: 'debug', event: 'jobInteraction', jobId: job.id, questionId: id, action: 'preparing' }) + '\n');
+      const prepared = await operation.askUser({ kind: 'prepareAskUser', payload, defaultTimeoutSeconds });
+      if (prepared.kind === 'askUserInvalid') throw new WorkspaceFailure('invalidQuestion', { message: prepared.message });
+      signal.throwIfAborted();
+      const started = Date.now();
+      const response = await this.#awaitQuestion(job, { id, message: prepared.message,
+        requestedSchema: prepared.requestedSchema, fields: prepared.fields },
+        prepared.timeoutSeconds, signal);
+      signal.throwIfAborted();
+      if (response.action === 'cancel') throw new WorkspaceFailure('cancelled');
+      const result = await operation.askUser({ kind: 'answerAskUser', payload, defaultTimeoutSeconds,
+        action: response.action, content: response.action === 'accept' ? response.content ?? {} : {},
+        elapsedSeconds: Math.max(0, Math.floor((Date.now() - started) / 1000)) });
+      if (result.kind === 'askUserInvalid') throw new WorkspaceFailure('nativeProtocolError');
+      return result.response;
+    } finally { job.question = { kind: 'idle' }; }
+  }
+  #awaitQuestion(job: Job, question: PendingQuestion, timeoutSeconds: number, signal: AbortSignal): Promise<QuestionResponse> {
+    return new Promise(resolve => {
+      const deadline = performance.now() + timeoutSeconds * 1000;
+      let timer: ReturnType<typeof setTimeout>;
+      const finish = (response: QuestionResponse) => {
+        if (job.question.kind !== 'pending' || job.question.question.id !== question.id) return;
+        job.question = { kind: 'answering', id: question.id };
+        clearTimeout(timer); signal.removeEventListener('abort', abort);
+        this.#questionProgress(job, question.id, response.action);
+        resolve(response);
+      };
+      const expire = () => {
+        const remaining = deadline - performance.now();
+        if (remaining > 0) timer = setTimeout(expire, Math.min(remaining, maximumTimerDelayMs));
+        else finish({ action: 'timeout' });
+      };
+      const abort = () => finish({ action: 'cancel' });
+      timer = setTimeout(expire, Math.min(timeoutSeconds * 1000, maximumTimerDelayMs));
+      job.question = { kind: 'pending', question: freeze(structuredClone(question)), respond: response => {
+        const expired = performance.now() >= deadline;
+        finish(expired ? { action: 'timeout' } : response);
+        return !expired;
+      } };
+      signal.addEventListener('abort', abort, { once: true });
+      if (signal.aborted) abort();
+      else this.#questionProgress(job, question.id, 'pending');
+    });
+  }
+  #questionProgress(job: Job, questionId: string, action: QuestionResponse['action'] | 'pending'): void {
+    process.stderr.write(JSON.stringify({ level: 'info', event: 'jobInteraction', jobId: job.id, questionId, action }) + '\n');
+    job.progress = { kind: action === 'pending' ? 'awaitingUser' : 'userInteractionSettled', attempt: null, delayMs: null,
+      success: action === 'pending' ? null : action === 'accept', reason: action === 'pending' ? null : action };
+    this.#publish(job, job.status);
+  }
   cancel(id: string) {
     const job = this.#get(id);
     if (isTerminal(job.status)) return this.snapshot(id);
@@ -143,11 +220,12 @@ export class JobRegistry {
     if (!Number.isSafeInteger(durationMs) || durationMs < 0 || durationMs > 2147483647) throw new WorkspaceFailure('invalidWaitDuration');
     signal.throwIfAborted();
     const job = this.#get(id);
-    if (isTerminal(job.status) || durationMs === 0) return this.snapshot(id);
+    if (isTerminal(job.status) || job.question.kind === 'pending' || durationMs === 0) return this.snapshot(id);
     return new Promise((resolve, reject) => {
       const finish = () => { clearTimeout(timer); signal.removeEventListener('abort', abort); job.listeners.delete(listener); };
       const abort = () => { finish(); reject(new WorkspaceFailure('cancelled')); };
-      const listener = (snapshot: JobSnapshot) => { progress(snapshot); if (snapshot.localSettled) { finish(); resolve(snapshot); } };
+      const listener = (snapshot: JobSnapshot) => { progress(snapshot);
+        if (snapshot.localSettled || job.question.kind === 'pending') { finish(); resolve(snapshot); } };
       const timer = setTimeout(() => { finish(); resolve(this.snapshot(id)); }, durationMs);
       job.listeners.add(listener); signal.addEventListener('abort', abort, { once: true });
       void job.work.then(() => { finish(); resolve(this.snapshot(id)); });

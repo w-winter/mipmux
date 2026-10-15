@@ -27,6 +27,9 @@ export function bindDiscoveryPrompt(source: string): string {
     .replace('architectural clarity, symbol relationships, and taskname metadata', 'architectural clarity and symbol relationships')
     .replace(/\{"tool":"[^\n]+"args":\{[^\n]*\}\}/g, text => {
       const call = example.Parse(JSON.parse(text));
+      if (call.tool === 'ask_user') return JSON.stringify({ tool: call.tool, args: {
+        questions: [{ id: 'response', question: call.args.question, options: call.args.options }], context: call.args.context,
+      } });
       if (call.tool === 'workspace_context') {
         return JSON.stringify({ tool: 'draft_inspect', args: { view: 'include' in call.args ? 'costs' : 'metadata',
           maxOutputBytes: exampleOutputBytes, continuation: null } });

@@ -5,9 +5,11 @@ import { ReadRequest, TreeRequest, ScopedStructure, SearchRequest, ReadInput, St
 import { GitRequest, GitInput } from './git.js';
 import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from './context.js';
 import { SelectionInput, SelectionRequest } from './selection.js';
+import { AskUserRequest } from './interaction.js';
 
 const closed = { additionalProperties: false };
 export const DiscoveryInput = Type.Object({ tokenBudget: SafeCount, purpose: ContextBuildRequest.properties.purpose,
+  clarification: Type.Optional(Type.Object({ questionTimeoutSeconds: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }) }, closed)),
   enhancementMode: ContextBuildRequest.properties.enhancementMode,
   task: Type.String(), constraints: Type.String(), hints: Type.Array(Type.String()), roots: Type.Array(Type.String()),
   initialContext: Type.String({ minLength: 1 }), systemPrompt: Type.String(), message: Type.String() }, closed);
@@ -23,7 +25,7 @@ export const TreeInput = Type.Union([
   Type.Partial(Type.Omit(ScopedTree.anyOf[1], ['maxOutputBytes']), closed),
 ]);
 export const ValidateRequest = Type.Object({ maxOutputBytes: Positive }, closed);
-export const toolSchemas = { git: Type.Union(GitInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))), get_file_tree: Type.Union([
+export const toolSchemas = { ask_user: AskUserRequest, git: Type.Union(GitInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))), get_file_tree: Type.Union([
   Type.Object({ ...TreeInput.anyOf[0].properties, maxOutputBytes: Positive }, closed),
   Type.Object({ ...TreeInput.anyOf[1].properties, maxOutputBytes: Positive }, closed),
 ]),
@@ -33,6 +35,7 @@ export const toolSchemas = { git: Type.Union(GitInput.anyOf.map(schema => Type.O
   draft_update: DraftUpdate, draft_preview: DraftPreview, draft_validate: ValidateRequest, prompt: PromptRequest,
   manage_selection: Type.Object({ ...SelectionInput.properties, maxOutputBytes: Positive }, closed) };
 export const DiscoveryCall = Type.Union([
+  Type.Object({ name: Type.Literal('ask_user'), input: AskUserRequest }, closed),
   Type.Object({ name: Type.Literal('git'), input: GitRequest }, closed),
   Type.Object({ name: Type.Literal('get_file_tree'), input: ScopedTree }, closed),
   Type.Object({ name: Type.Literal('get_code_structure'), input: ScopedStructure }, closed),

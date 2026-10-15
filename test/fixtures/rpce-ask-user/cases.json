@@ -1,6 +1,39 @@
 [
   {
     "expected" : {
+      "fields" : [
+        {
+          "id" : "choice",
+          "optionLabels" : [
+            "A",
+            "B"
+          ],
+          "property" : {
+            "description" : "Which area?\nSource ownership",
+            "items" : {
+              "enum" : [
+                "A",
+                "B"
+              ],
+              "type" : "string"
+            },
+            "title" : "Which area?",
+            "type" : "array",
+            "uniqueItems" : true
+          }
+        },
+        {
+          "id" : "notes",
+          "optionLabels" : [
+
+          ],
+          "property" : {
+            "description" : "Anything else?",
+            "title" : "Anything else?",
+            "type" : "string"
+          }
+        }
+      ],
       "kind" : "askUserPrepared",
       "message" : "Review\n\nConfirm selection\n\nWhich area?\n\nAnything else?",
       "requestedSchema" : {
@@ -292,6 +325,20 @@
   },
   {
     "expected" : {
+      "fields" : [
+        {
+          "id" : "response",
+          "optionLabels" : [
+            "JWT",
+            "Session"
+          ],
+          "property" : {
+            "description" : "Which authentication?\nSuggested answers: JWT, Session",
+            "title" : "Which authentication?",
+            "type" : "string"
+          }
+        }
+      ],
       "kind" : "askUserPrepared",
       "message" : "Which authentication?",
       "requestedSchema" : {

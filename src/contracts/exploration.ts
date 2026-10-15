@@ -1,4 +1,5 @@
 import Type, { type Static } from 'typebox';
+import { askUserDescription } from './interaction.js';
 import { Compile } from 'typebox/compile';
 import { SourcePath } from './inventory.js';
 import { NativeReadArgument } from './native.js';
@@ -70,6 +71,7 @@ export const SearchInput = Type.Union([
 ]);
 export function toolDescription(name: string): string {
   switch (name) {
+    case 'ask_user': return askUserDescription;
     case 'draft_dispose': return 'Dispose an owned manual draft. Joins its work and deletes Git snapshots whose current manifest names that draft, then forgets the draft capability. Returns deletedSnapshots. Saved packets and snapshots owned by other contexts remain available. Normal finalization and connection shutdown retain snapshots.';
     case 'context_builder_dispose': return 'Dispose an owned context-builder job. Cancels discovery or waits for an in-progress publication to settle, then deletes Git snapshots whose current manifest names its draft. Returns deletedSnapshots. Terminal job receipts, request-id deduplication and saved packets remain available. Repeated disposal returns zero after cleanup. Normal completion and connection shutdown retain snapshots.';
     case 'get_file_tree': return 'Render the RPCE file tree. type=roots lists physical roots; type=files uses mode=auto, full, folders or selected. Defaults: files, auto mode, whole workspace, unlimited requested depth, first page. scope identifies a root and a root/descendant directory. maxDepth uses folder depth starting at zero and retains selected descendants. Selected mode requires an owned draft. Output pages preserve complete rendered lines; follow continuation for the remaining tree.';

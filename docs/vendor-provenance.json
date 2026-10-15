@@ -6074,7 +6074,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "7352e9fbc696268dfa8824164c6febe8a5aa34f843a48f66ad99ab4b5a1454b0",
+      "sha256": "2fe9eb628c2f49ee2ec6f0e37cd1711f6875bb52f4b5bc8243d9013b88db9b85",
       "classification": "handwritten"
     },
     {
@@ -6278,6 +6278,54 @@
         "Retain the structured question parser, value conversion, validation and empty-draft timeout behavior used by the source form elicitation path. Foundation JSON adapters replace MCP/app declarations; transport ownership is outside these pure bodies.",
         "The source single-question parser remains reachable from the reference discovery prompt example. The production MCP tool declaration and enabled job transport are separate integration work.",
         "Scoped declaration extraction and Swift formatting only; three bridge helpers are internal for native dispatch."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPAskUserToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "79706ebb2c4bee8b65c7d1c9b7f3c90eb7076125b1ffb4e3aba295bec7426dda",
+      "destination": "src/contracts/interaction.ts",
+      "sha256": "a5ab48a6b2797fc4485ba8ee1a9356cdf9329f63afc94b31393950b81e4193bb",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          95,
+          122
+        ],
+        [
+          125,
+          164
+        ],
+        [
+          327,
+          473
+        ]
+      ],
+      "changes": [
+        "Bind the source structured ask_user schema and full description to TypeBox and the existing native renderer. The build optionally enables form interaction and captures the source 300-second default; native parsing supplies per-question defaults and validation.",
+        "Headless description names the form and captured build timeout rather than a wizard card or global app preference. Normalized native fields accompany the original form schema for SDK field-name translation."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPAskUserElicitationBridge.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1120476059453aa4026363a8811c58e5575b274a704066e8969366af77bfbe76",
+      "destination": "src/mcp/question-form.ts",
+      "sha256": "bd2578e5998990452db228907aa54cc0789a4f083698d5d1a390486c0bb6c0d0",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          94,
+          163
+        ],
+        [
+          165,
+          225
+        ]
+      ],
+      "changes": [
+        "Adapt the MCP form transport to the installed SDK. Indexed keys prevent collisions; fixed-choice arrays use supported enums; multi-select questions with custom answers use a choices field and a custom-text field. Keep the original question IDs and answer ordering. Validate the original schema, including uniqueness, before converting responses in the native helper.",
+        "The current MCP SDK rejects free-text arrays and uniqueItems in form requests. The corresponding source schema is retained in the native result and used to validate reconstructed answers."
       ]
     }
   ],

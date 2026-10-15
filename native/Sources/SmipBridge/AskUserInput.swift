@@ -64,11 +64,16 @@ struct AskUserInput {
                 }
                 return try ["kind": "askUserAnswered", "response": value.json]
             }
+            let schema = MCPAskUserElicitationBridge.schema(from: payload, questions: questions)
             return try [
                 "kind": "askUserPrepared",
                 "message": MCPAskUserElicitationBridge.message(from: payload, questions: questions),
                 "timeoutSeconds": parsed.interaction.timeoutSeconds,
-                "requestedSchema": MCPAskUserElicitationBridge.schema(from: payload, questions: questions).json
+                "requestedSchema": schema.json,
+                "fields": questions.map { question in
+                    try ["id": question.id, "optionLabels": question.optionLabels,
+                         "property": schema.properties[question.id]!.json] as [String: Any]
+                }
             ]
         } catch let error as MCPError {
             return ["kind": "askUserInvalid", "message": error.localizedDescription]

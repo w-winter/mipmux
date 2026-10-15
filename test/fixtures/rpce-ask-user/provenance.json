@@ -63,7 +63,7 @@
     },
     {
       "path": "test/fixtures/rpce-ask-user/input-adapter.swift",
-      "sha256": "0fedaa3c1a792ad2cd27e0787c95bbab17ea5cb1560ebad726572c8e889ff6a9"
+      "sha256": "9c47a171af91b05d1461996499618dd226b111456b62e56816907201c4b45408"
     }
   ],
   "adaptations": [
@@ -71,8 +71,8 @@
     "Fixture timeouts have no submitted form draft. Cancellation, transport, capability admission and job ownership are outside this pure conversion fixture.",
     "The form input adapter reuses the retained RPCE-pinned MCP JSON decoder, including data-URL classification. Binary values are not emitted by the source form/answer conversion."
   ],
-  "generatorSHA256": "32d05930d577f1b8c137ff50aa1b55953cd4a3cf3d23686b643ecd64af1a461c",
-  "outputSHA256": "b8448983d0ef26f4d9797982892d3cafc769c9a7a2bc80bb062da5bea71767db",
+  "generatorSHA256": "86dbf5f37f4964b797a09b88ed868b22a48a80f525b3b0eef43bfb4a63f9fb51",
+  "outputSHA256": "b0729fdc2461327157e9a1eaeba482f43ea5893e5671a5244f4928ec3fc0c6f2",
   "valueDecoderSources": [
     {
       "path": "native/Sources/SmipBridge/RPCEMCPSelectionJSONValue.swift",

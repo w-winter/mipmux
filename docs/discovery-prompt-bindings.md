@@ -21,6 +21,14 @@ The native `renderDiscoveryMessage` operation uses `ContextBuilderAgentViewModel
 
 RPCE supplies the configured budget after its host-side 1500-unit reserve. Smip supplies `max(0, request.budgetUnits - 1500)` as `DiscoveryInput.tokenBudget`; complete-packet measurement uses `request.budgetUnits`. The prompt reads the scout budget rather than deriving a budget from a receiving model.
 
+## Clarification binding
+
+`ContextBuildRequest.clarification` selects the source's guidance for asking questions and requesting approval of the final selection. Its default timeout is 300 seconds. The worker exposes `ask_user` only for an enabled run; the default MCP setting is disabled. Operator policy can come from an explicit custom system prompt, while the request field controls tool admission. The source's single-question prompt example is mapped to the public structured `questions` schema with question ID `response`; question text, options and context retain their meaning.
+
+`AskUserInput.swift` reuses the original parser, question models and `MCPAskUserElicitationBridge` conversions. It also returns normalized question fields for the MCP boundary. The installed MCP SDK uses multi-round-trip `input_required` results and cannot encode the source's free-text arrays or `uniqueItems` constraint. `src/mcp/question-form.ts` maps fields to collision-free indexed transport keys. Fixed-choice arrays use the SDK's multi-select form, and multi-select questions with custom answers use separate choices and custom-text fields. Responses are reconstructed under the original question IDs and checked against the original schema, including uniqueness, before native answer conversion. No question or answer policy is inferred from rendered prompt text.
+
+`context_builder_wait` returns these forms. Job-owned deadlines, cancellation and response ownership apply across request retries. `test/clarification-mcp.test.ts` exercises real Pi dispatch and the current MCP protocol, including multi-select/custom answers, final approval, decline, timeout, form/job cancellation, client closure, capability diagnostics and cross-job response rejection. The test of the relocated package exercises enabled interaction through its installed MCP entry point and explicit custom prompt.
+
 ## Native bindings
 
 Every substantive difference belongs to one of these interface bindings. Discovery principles, selection priority, refinement order, slice guidance, emphasis, repetitions and anti-patterns otherwise retain the reference wording.

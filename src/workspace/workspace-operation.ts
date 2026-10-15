@@ -326,6 +326,13 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  askUser<O extends Extract<NativeOperation, { kind: 'prepareAskUser' | 'answerAskUser' }>>(input: O) {
+    const captured = structuredClone(input);
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(captured, this.signal)).result;
+    });
+  }
   calculateSliceRanges(input: Extract<NativeOperation, { kind: 'calculateSliceRanges' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());

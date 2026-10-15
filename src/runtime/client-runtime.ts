@@ -10,8 +10,9 @@ import { JobRegistry } from './job-registry.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall, scopedGitCall, scopedReadCall } from '../discovery/scoped-tools.js';
 import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
+import type { ClientQuestionResponse } from '../contracts/interaction.js';
 
-type ExplorationCall = Exclude<DiscoveryCall, { name: 'draft_inspect' | 'draft_update' | 'draft_validate' | 'draft_preview' | 'prompt' | 'manage_selection' }>;
+type ExplorationCall = Exclude<DiscoveryCall, { name: 'ask_user' | 'draft_inspect' | 'draft_update' | 'draft_validate' | 'draft_preview' | 'prompt' | 'manage_selection' }>;
 interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRuntime }
 
 /** A connected client's handles and drafts are capabilities only within this owner. */
@@ -127,8 +128,17 @@ export class ClientRuntime {
       } finally { await operation.close(); }
     });
   }
-  build(workspaceId: string, requestId: string, request: ContextBuildRequest) {
-    return this.#jobs.start(this.#workspace(workspaceId), workspaceId, requestId, request);
+  /** Enabled clarification requires the caller's form capability or throws elicitationUnavailable before admission. */
+  build(workspaceId: string, requestId: string, request: ContextBuildRequest, elicitation: 'form' | 'unavailable' = 'unavailable') {
+    const workspace = this.#workspace(workspaceId);
+    if (request.clarification && elicitation !== 'form') throw new WorkspaceFailure('elicitationUnavailable');
+    return this.#jobs.start(workspace, workspaceId, requestId, request);
+  }
+  /** Returns an owned job's current form, or null when no form is pending. */
+  pendingQuestion(id: string) { this.#check(); return this.#jobs.pendingQuestion(id); }
+  /** Consumes one current form response; stale or another job's question IDs fail before mutation. */
+  answerQuestion(id: string, questionId: string, response: ClientQuestionResponse) {
+    this.#check(); this.#jobs.answerQuestion(id, questionId, response);
   }
   result(id: string) { this.#check(); return this.#jobs.snapshot(id); }
   wait(id: string, durationMs: number, signal: AbortSignal, progress: (snapshot: JobSnapshot) => void) {
