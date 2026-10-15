@@ -19,6 +19,7 @@ export interface RenderInput {
   readonly fileTree: FinalFileTree;
   readonly clipboard: string;
   readonly clipboardPreset: CapturedClipboardPreset;
+  readonly selectedGitDiffIds: readonly string[];
 }
 export interface ItemCost {
   readonly id: string;

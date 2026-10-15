@@ -76,6 +76,35 @@ for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) {
   });
 }
 
+test('whitespace-only selected patches are omitted without losing inspection or required evidence', async () => {
+  for (const [body, required] of [[' \t\r\n', false], ['\u0085\u2028', true]] as const) {
+    const requiredBody = 'REQUIRED EVEN WITH EMPTY OPTIONAL PATCH\n';
+    const f = await fixture(undefined, { copyPreset: 'codeReview', patches: required ? [{ kind: 'suppliedPatch', id: 'required', root: 'r',
+      text: requiredBody, origin: 'fixture', comparison: { kind: 'supplied', base: 'before', target: 'after' }, coverage: [], targets: [] }] : [] });
+    try {
+      const published = await f.draft.publishGitSnapshot(f.diff, f.options, signal()); assert(published.kind === 'single');
+      const [map, patch] = published.projection.primarySelectionAliases; assert(map && patch);
+      await f.select({ op: 'set', paths: [map, patch], strict: true });
+      await writeFile(join(f.out, patch), body);
+      const costs = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+      assert(costs.kind === 'costs');
+      assert(!costs.items.some(cost => 'id' in cost && cost.id === 'gitArtifact:' + patch));
+      const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');
+      const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
+      assert.equal(context.includes('<git_diff>'), required);
+      if (required) assert(context.includes('<git_diff>\n' + requiredBody + '\n</git_diff>'));
+      assert(!ready.manifest.materials.some(material => material.kind === 'gitPatch'));
+      assert.equal(costs.measurement.bytes, Buffer.byteLength(context));
+      const inspected = await f.draft.inspect({ view: 'material', materialId: 'gitArtifact:' + patch,
+        maxOutputBytes: 100000, continuation: null }, signal());
+      assert('lines' in inspected); assert.equal(inspected.lines.map(line => line.text).join(''), body);
+      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+      await writeFile(`test-output/git-blank-patch-${required}.json`, JSON.stringify({ directory: ready.directory,
+        body, required, costs, manifest: ready.manifest }, null, 2) + '\n');
+    } finally { await f.runtime.close(); }
+  }
+});
+
 test('mutable exact Git aliases retain historical export order, MAP framing and saved/current verification', async () => {
   const f = await fixture();
   try {

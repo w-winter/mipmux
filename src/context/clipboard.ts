@@ -7,7 +7,7 @@ import { compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits } from './budget.js';
 
 type ClipboardInput = Extract<NativeOperation, { kind: 'renderPreparedClipboard' }>;
-type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset'>;
+type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds'>;
 
 function partitionMaterials(materials: readonly Material[]) {
   const sorted = [...materials].sort((a, b) => compareBytes(a.record.id, b.record.id));
@@ -34,7 +34,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
     contentBlocks: materials.contents.map(contentBlock),
     fileTreeContent: input.fileTree.text,
-    selectedGitDiffs: materials.selectedPatches.flatMap(material => material.bodies),
+    selectedGitDiffs: materials.selectedPatches.map(material => ({ id: material.record.id, text: material.bodies.join('') })),
     gitDiff: materials.patches.length ? materials.patches.flatMap(material => material.bodies).join('\n\n') : null,
     metaInstructions: input.request.constraints ? [{ title: 'Constraints', content: input.request.constraints }] : [],
     userInstructions: input.prompt,
@@ -43,7 +43,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
 
 export async function prepareClipboard(runtime: SmipRuntime, input: PacketInput, signal: AbortSignal): Promise<RenderInput> {
   const clipboard = await runtime.renderPresentation(preparedClipboardInput(input), signal);
-  return { ...input, clipboard: clipboard.text, clipboardPreset: clipboard.preset };
+  return { ...input, clipboard: clipboard.text, clipboardPreset: clipboard.preset, selectedGitDiffIds: clipboard.selectedGitDiffIds };
 }
 
 type Consume = (text: string) => Span;
@@ -80,7 +80,10 @@ function consumeMetaInstructions(input: RenderInput, consume: Consume) {
 /** Reads source-default clipboard framing; never substitutes a TypeScript rendering for native assembly. */
 export function parseClipboard(input: RenderInput) {
   const bytes = Buffer.from(input.clipboard), materials = partitionMaterials(input.materials);
-  const patches = [...(input.clipboardPreset.gitInclusion === 'none' ? [] : materials.selectedPatches), ...materials.patches];
+  const includedGitDiffs = new Set(input.selectedGitDiffIds);
+  const selectedPatches = input.clipboardPreset.gitInclusion === 'none' ? []
+    : materials.selectedPatches.filter(material => includedGitDiffs.has(material.record.id));
+  const patches = [...selectedPatches, ...materials.patches];
   const records: MaterialRecord[] = [], costs: ItemCost[] = [];
   let cursor = 0;
   const consume = (text: string): Span => {

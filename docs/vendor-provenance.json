@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "2e04e5d9795eb047bfd2f564cf035a0ebc2d301a4a39020ac2f395ca9b89cca1",
+      "sha256": "5da8e6b15a2d5a6b4ee4dccfb46f7f5d2f131d5660f72dc460f400b2d17cbfeb",
       "classification": "handwritten",
       "ranges": [
         [
@@ -20,7 +20,8 @@
       ],
       "changes": [
         "Partition authorized MAP blocks as ordinary file content and optional selected patches separately from immutable caller-required patches. Native preset resolution owns optional patch inclusion; parsing consumes the captured Git mode to record only delivered patch spans and costs. Draft membership and material inspection retain omitted selected patches.",
-        "Use the bound MCP clipboard respectGitInclusion route only. No ordinary PromptVM includeBeforeGitInclusion mode is introduced. Saved verification accepts the exact source preset projection without a native process; current verification replays native packaging. Required patch bytes follow included selected patch bytes as the explicit headless binding."
+        "Use the bound MCP clipboard respectGitInclusion route only. No ordinary PromptVM includeBeforeGitInclusion mode is introduced. Saved verification accepts the exact source preset projection without a native process; current verification replays native packaging. Required patch bytes follow included selected patch bytes as the explicit headless binding.",
+        "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered."
       ]
     },
     {
@@ -28,7 +29,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "native/Sources/SmipBridge/PreparedClipboardInput.swift",
-      "sha256": "1891915002e4b150a69eb99b6184e464412f7df00a25f17a1888574566acafc3",
+      "sha256": "ff6949ded3957478de40d1ad24fd76146a6ddcd461cfd5116100faed13505b85",
       "classification": "handwritten",
       "ranges": [
         [
@@ -38,7 +39,8 @@
       ],
       "changes": [
         "Bind selected-artifact inclusion to the retained built-in preset gitInclusion using the bound MCP clipboard respectGitInclusion route (MCPServerViewModel+WorkspaceContext.swift278-345). Standard/Plan suppress selected patch bodies, not ordinary MAP blocks. Review includes selected patch bodies in captured selection order.",
-        "Caller-required PatchInput bodies are a headless request contract, not source optional selected artifacts or replaceable supplied packaging text. They remain complete after optional selected patches for every preset. Return the exact preset Git mode with the saved meta projection. This adapter does not acquire automatic diffs for selected ordinary files."
+        "Caller-required PatchInput bodies are a headless request contract, not source optional selected artifacts or replaceable supplied packaging text. They remain complete after optional selected patches for every preset. Return the exact preset Git mode with the saved meta projection. This adapter does not acquire automatic diffs for selected ordinary files.",
+        "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered."
       ]
     },
     {

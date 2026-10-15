@@ -60,6 +60,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     fileTree,
     clipboard: decodedBody(context),
     clipboardPreset: manifest.clipboardPreset,
+    selectedGitDiffIds: materials.filter(material => material.record.kind === 'gitPatch').map(material => material.record.id),
   }); } catch (error) {
     if (!(error instanceof WorkspaceFailure && error.code === 'invalidClipboard')) throw error;
     throw new WorkspaceFailure('bundleIntegrityFailed');
