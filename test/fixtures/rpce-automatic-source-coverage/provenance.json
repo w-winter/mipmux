@@ -1,0 +1,148 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "gitBlob": "c24813ca8bba9cd0e7aba420aa4ef74a391b8d6b",
+      "sha256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "ranges": [
+        {
+          "name": "sourceSetup",
+          "startLine": 403,
+          "endLine": 408,
+          "sha256": "f4a94d58aeb233b6036b7f387e060fc768b2ebece16616ad8deafa35ccc877cd"
+        },
+        {
+          "name": "sourceClassification",
+          "startLine": 413,
+          "endLine": 450,
+          "sha256": "78ed7fb2aced9dc488716c11a245e5b17b1ae5da1cce51e68ed755cf5af054ce"
+        },
+        {
+          "name": "fileOrdering",
+          "startLine": 1752,
+          "endLine": 1770,
+          "sha256": "916abc1197e0052ccdde47944a77a0b9d94ec948711861bab106c77b1be653fc"
+        },
+        {
+          "name": "utf8OrderingDelegate",
+          "startLine": 1781,
+          "endLine": 1783,
+          "sha256": "49102a18d0815e779561aa1000cec16ba08f3c9bdab0fdc17f7001abc131c945"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "gitBlob": "ec254e6ab5e5f525653bf7a5240946607e41a6ea",
+      "sha256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "ranges": [
+        {
+          "name": "sourceIssues",
+          "startLine": 13036,
+          "endLine": 13053,
+          "sha256": "54f65e95fa2ee5ed899a3062c22b371fd6ed415c3168224eb9e082be498a5add"
+        },
+        {
+          "name": "rootStatus",
+          "startLine": 13133,
+          "endLine": 13144,
+          "sha256": "db7c8d304fff5b1a35ee83375e72107ce7da83e9547a17299dea94ec35888580"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapAutomaticSelectionModels.swift",
+      "gitBlob": "51b9c11741c1148eb611922d1c0aafff692bb03c",
+      "sha256": "d1610e1932afff29aa10eead766733e2f12156679659caa51f39529659877377",
+      "ranges": [
+        {
+          "name": "sourceTypes",
+          "startLine": 3,
+          "endLine": 42,
+          "sha256": "cc19aee9278f3ff0f2f1c65f62a04071e49a14da24d9dfaf91cfd2d5484d10c5"
+        },
+        {
+          "name": "budgetReasonType",
+          "startLine": 86,
+          "endLine": 97,
+          "sha256": "7372ead081dbdf6589304366fa3336ace252a409a8a49e9e5fa9ae43b5abadf2"
+        },
+        {
+          "name": "coverageTypes",
+          "startLine": 107,
+          "endLine": 160,
+          "sha256": "f3b152879e055759aef96f809c06e3932f56dd657c282cbecae60d5697717877"
+        },
+        {
+          "name": "rootAndAggregateResult",
+          "startLine": 179,
+          "endLine": 234,
+          "sha256": "1bc271b5e7fe29c356f9dc3f180a2ccc091e598cd581e6dd12e8f100f22a7046"
+        },
+        {
+          "name": "resultOrdering",
+          "startLine": 269,
+          "endLine": 295,
+          "sha256": "be34c52735631c37c4669cc736c8dde9d97b997fc8aa015b611cf8db93dc5cb4"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapGraphOrdering.swift",
+      "gitBlob": "cc600e4bdae95b9b8e606b1792d8a05a35d14e6d",
+      "sha256": "b0713cc8464c3b75aef17acc0b61166ff51520c0b88618c264e095eba2718594",
+      "ranges": [
+        {
+          "name": "graphOrdering",
+          "startLine": 1,
+          "endLine": 42,
+          "sha256": "b0713cc8464c3b75aef17acc0b61166ff51520c0b88618c264e095eba2718594"
+        }
+      ]
+    },
+    {
+      "path": "LICENSE",
+      "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "ranges": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "generate.mjs",
+      "sha256": "e040662bfa6eb0a4daec1345ba16bdc5d9315d80005d01ebe539691a12726d52"
+    },
+    {
+      "path": "adapter.swift",
+      "sha256": "3b1ddbbbb048f58ae6844b177d5a121a0527baabbff6a38ebceae3d155ce9360"
+    },
+    {
+      "path": "inputs.json",
+      "sha256": "d2a9bd4d6849cdf27bb92ba2393ed3b74d3fee432c84ca81fc8ea05b669b26d8"
+    },
+    {
+      "path": "original-bodies.swift",
+      "sha256": "6779725b6e24b94a8b4273431593e54e9180fc8bc9ad458af526165bd0db5b2c"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "expected.json",
+      "sha256": "fd3e9216a509b5d1a49e6cc7d39b2f1b9953f070d86f4ff208903c7043d110d5"
+    }
+  ],
+  "cases": 13,
+  "extraction": "All recorded source ranges are verbatim, including indentation and final LF. Only the surrounding declarations and loop closure are adapters.",
+  "normalization": "UUIDs are deterministic fixture identities. Output renders them as declared root labels and source/target paths after original sorting. No status, issue, path or ordering is removed.",
+  "scope": "Original selected-source classification, source-issue mapping, ready-root status conditional, result aggregation and ordering. Targets are supplied, not matched or counted by the graph.",
+  "limits": [
+    "No matching, edge traversal, budgets, byte accounting, catalog/slot validation, epochs, currentness, receipt revalidation, demand readiness, IO or app execution.",
+    "All classified source generations are zero and current; all sources are unfenced; graph freshness is current and reconciling is false.",
+    "Pending and unavailable graph roots are injected aggregate inputs, not executions of store graph-disposition branches.",
+    "Empty slots represent readyNoSymbols outcomes, but artifact-to-slot conversion is not executed.",
+    "Original Darwin ordering helper requires a macOS Swift toolchain in this extraction."
+  ]
+}

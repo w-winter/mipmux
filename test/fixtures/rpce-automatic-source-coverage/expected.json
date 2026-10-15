@@ -1,0 +1,599 @@
+[
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "status": "ok"
+      },
+      "issues": [],
+      "roots": [
+        {
+          "issues": [],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Selected.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "ok",
+          "targets": [
+            "src/Useful.swift"
+          ]
+        }
+      ],
+      "targets": [
+        {
+          "path": "src/Useful.swift",
+          "root": "alpha"
+        }
+      ]
+    },
+    "name": "contributed-covered"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "status": "ok"
+      },
+      "issues": [],
+      "roots": [
+        {
+          "issues": [],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Empty.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "ok",
+          "targets": []
+        }
+      ],
+      "targets": []
+    },
+    "name": "empty-readyNoSymbols-covered"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "sourcePending",
+            "path": "src/Pending.swift",
+            "root": "alpha"
+          }
+        ],
+        "status": "pending"
+      },
+      "issues": [
+        {
+          "kind": "sourcePending",
+          "path": "src/Pending.swift",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "sourcePending",
+              "path": "src/Pending.swift",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Pending.swift",
+              "requestGeneration": 0,
+              "state": "pending"
+            }
+          ],
+          "status": "pending",
+          "targets": []
+        }
+      ],
+      "targets": []
+    },
+    "name": "pending-source"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "sourceNotIndexed",
+            "path": "assets/Unsupported.bin",
+            "root": "alpha"
+          }
+        ],
+        "status": "pending"
+      },
+      "issues": [
+        {
+          "kind": "sourceNotIndexed",
+          "path": "assets/Unsupported.bin",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "sourceNotIndexed",
+              "path": "assets/Unsupported.bin",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "assets/Unsupported.bin",
+              "requestGeneration": 0,
+              "state": "notIndexed"
+            }
+          ],
+          "status": "pending",
+          "targets": []
+        }
+      ],
+      "targets": []
+    },
+    "name": "absent-unsupported-slot-sourceNotIndexed"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "status": "ok"
+      },
+      "issues": [
+        {
+          "kind": "sourceExcluded",
+          "path": "src/Oversize.swift",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "sourceExcluded",
+              "path": "src/Oversize.swift",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Oversize.swift",
+              "requestGeneration": 0,
+              "state": "excluded"
+            }
+          ],
+          "status": "ok",
+          "targets": []
+        }
+      ],
+      "targets": []
+    },
+    "name": "terminalArtifact-sourceExcluded"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "status": "ok"
+      },
+      "issues": [
+        {
+          "kind": "sourceExcluded",
+          "path": "src/Excluded.swift",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "sourceExcluded",
+              "path": "src/Excluded.swift",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Excluded.swift",
+              "requestGeneration": 0,
+              "state": "excluded"
+            }
+          ],
+          "status": "ok",
+          "targets": []
+        }
+      ],
+      "targets": []
+    },
+    "name": "terminalExcluded-only-no-targets-ok"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "sourceExcluded",
+            "path": "src/ZExcluded.swift",
+            "root": "alpha"
+          },
+          {
+            "kind": "sourcePending",
+            "path": "src/APending.swift",
+            "root": "alpha"
+          }
+        ],
+        "status": "pending"
+      },
+      "issues": [
+        {
+          "kind": "sourceExcluded",
+          "path": "src/ZExcluded.swift",
+          "root": "alpha"
+        },
+        {
+          "kind": "sourcePending",
+          "path": "src/APending.swift",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "sourceExcluded",
+              "path": "src/ZExcluded.swift",
+              "root": "alpha"
+            },
+            {
+              "kind": "sourcePending",
+              "path": "src/APending.swift",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/ZExcluded.swift",
+              "requestGeneration": 0,
+              "state": "excluded"
+            },
+            {
+              "path": "src/APending.swift",
+              "requestGeneration": 0,
+              "state": "pending"
+            }
+          ],
+          "status": "pending",
+          "targets": []
+        }
+      ],
+      "targets": []
+    },
+    "name": "mixed-pending-excluded-sources"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "sourceExcluded",
+            "path": "src/Excluded.swift",
+            "root": "alpha"
+          },
+          {
+            "kind": "sourcePending",
+            "path": "src/Pending.swift",
+            "root": "alpha"
+          }
+        ],
+        "status": "partial"
+      },
+      "issues": [
+        {
+          "kind": "sourceExcluded",
+          "path": "src/Excluded.swift",
+          "root": "alpha"
+        },
+        {
+          "kind": "sourcePending",
+          "path": "src/Pending.swift",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "sourceExcluded",
+              "path": "src/Excluded.swift",
+              "root": "alpha"
+            },
+            {
+              "kind": "sourcePending",
+              "path": "src/Pending.swift",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Pending.swift",
+              "requestGeneration": 0,
+              "state": "pending"
+            },
+            {
+              "path": "src/Excluded.swift",
+              "requestGeneration": 0,
+              "state": "excluded"
+            },
+            {
+              "path": "src/ACovered.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            },
+            {
+              "path": "src/ZCovered.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "partial",
+          "targets": [
+            "src/AUseful.swift",
+            "src/ZUseful.swift"
+          ]
+        }
+      ],
+      "targets": [
+        {
+          "path": "src/AUseful.swift",
+          "root": "alpha"
+        },
+        {
+          "path": "src/ZUseful.swift",
+          "root": "alpha"
+        }
+      ]
+    },
+    "name": "mixed-sources-with-useful-targets"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "sourcePending",
+            "path": "src/Pending.swift",
+            "root": "alpha"
+          }
+        ],
+        "status": "partial"
+      },
+      "issues": [
+        {
+          "kind": "sourcePending",
+          "path": "src/Pending.swift",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "sourcePending",
+              "path": "src/Pending.swift",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Pending.swift",
+              "requestGeneration": 0,
+              "state": "pending"
+            }
+          ],
+          "status": "pending",
+          "targets": []
+        },
+        {
+          "issues": [],
+          "root": "beta",
+          "sources": [
+            {
+              "path": "src/Healthy.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "ok",
+          "targets": [
+            "src/Useful.swift"
+          ]
+        }
+      ],
+      "targets": [
+        {
+          "path": "src/Useful.swift",
+          "root": "beta"
+        }
+      ]
+    },
+    "name": "mixed-roots-pending-source-useful-healthy-root"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "status": "ok"
+      },
+      "issues": [],
+      "roots": [
+        {
+          "issues": [],
+          "root": "alpha",
+          "sources": [
+            {
+              "path": "src/Covered.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "ok",
+          "targets": []
+        },
+        {
+          "issues": [],
+          "root": "beta",
+          "sources": [
+            {
+              "path": "src/Empty.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "ok",
+          "targets": []
+        }
+      ],
+      "targets": []
+    },
+    "name": "all-no-target-ok-roots"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "emptySources"
+          }
+        ],
+        "status": "unavailable"
+      },
+      "issues": [],
+      "roots": [],
+      "targets": []
+    },
+    "name": "no-roots"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "graphNotInitialized",
+            "root": "alpha"
+          }
+        ],
+        "status": "partial"
+      },
+      "issues": [
+        {
+          "kind": "graphNotInitialized",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "graphNotInitialized",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [],
+          "status": "pending",
+          "targets": []
+        },
+        {
+          "issues": [],
+          "root": "beta",
+          "sources": [
+            {
+              "path": "src/Healthy.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "ok",
+          "targets": [
+            "src/Useful.swift"
+          ]
+        }
+      ],
+      "targets": [
+        {
+          "path": "src/Useful.swift",
+          "root": "beta"
+        }
+      ]
+    },
+    "name": "pending-graph-root-useful-healthy-root"
+  },
+  {
+    "expected": {
+      "aggregateCoverage": {
+        "issues": [
+          {
+            "kind": "graphUnavailable",
+            "root": "alpha"
+          }
+        ],
+        "status": "partial"
+      },
+      "issues": [
+        {
+          "kind": "graphUnavailable",
+          "root": "alpha"
+        }
+      ],
+      "roots": [
+        {
+          "issues": [
+            {
+              "kind": "graphUnavailable",
+              "root": "alpha"
+            }
+          ],
+          "root": "alpha",
+          "sources": [],
+          "status": "unavailable",
+          "targets": []
+        },
+        {
+          "issues": [],
+          "root": "beta",
+          "sources": [
+            {
+              "path": "src/Healthy.swift",
+              "requestGeneration": 0,
+              "state": "covered"
+            }
+          ],
+          "status": "ok",
+          "targets": [
+            "src/Useful.swift"
+          ]
+        }
+      ],
+      "targets": [
+        {
+          "path": "src/Useful.swift",
+          "root": "beta"
+        }
+      ]
+    },
+    "name": "unavailable-graph-root-useful-healthy-root"
+  }
+]

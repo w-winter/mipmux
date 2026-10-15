@@ -1,0 +1,66 @@
+{
+  "rootLabels": ["alpha", "beta"],
+  "cases": [
+    {
+      "name": "contributed-covered",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "src/Selected.swift", "slot": "contributed"}], "targets": ["src/Useful.swift"]}]
+    },
+    {
+      "name": "empty-readyNoSymbols-covered",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "src/Empty.swift", "slot": "empty"}], "targets": []}]
+    },
+    {
+      "name": "pending-source",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "src/Pending.swift", "slot": "pending"}], "targets": []}]
+    },
+    {
+      "name": "absent-unsupported-slot-sourceNotIndexed",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "assets/Unsupported.bin", "slot": null}], "targets": []}]
+    },
+    {
+      "name": "terminalArtifact-sourceExcluded",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "src/Oversize.swift", "slot": "terminalArtifact"}], "targets": []}]
+    },
+    {
+      "name": "terminalExcluded-only-no-targets-ok",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "src/Excluded.swift", "slot": "terminalExcluded"}], "targets": []}]
+    },
+    {
+      "name": "mixed-pending-excluded-sources",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "src/ZExcluded.swift", "slot": "terminalExcluded"}, {"path": "src/APending.swift", "slot": "pending"}], "targets": []}]
+    },
+    {
+      "name": "mixed-sources-with-useful-targets",
+      "roots": [{"root": "alpha", "kind": "ready", "sources": [{"path": "src/ZCovered.swift", "slot": "contributed"}, {"path": "src/ACovered.swift", "slot": "contributed"}, {"path": "src/Pending.swift", "slot": "pending"}, {"path": "src/Excluded.swift", "slot": "terminalExcluded"}], "targets": ["src/ZUseful.swift", "src/AUseful.swift"]}]
+    },
+    {
+      "name": "mixed-roots-pending-source-useful-healthy-root",
+      "roots": [
+        {"root": "beta", "kind": "ready", "sources": [{"path": "src/Healthy.swift", "slot": "contributed"}], "targets": ["src/Useful.swift"]},
+        {"root": "alpha", "kind": "ready", "sources": [{"path": "src/Pending.swift", "slot": "pending"}], "targets": []}
+      ]
+    },
+    {
+      "name": "all-no-target-ok-roots",
+      "roots": [
+        {"root": "beta", "kind": "ready", "sources": [{"path": "src/Empty.swift", "slot": "empty"}], "targets": []},
+        {"root": "alpha", "kind": "ready", "sources": [{"path": "src/Covered.swift", "slot": "contributed"}], "targets": []}
+      ]
+    },
+    {"name": "no-roots", "roots": []},
+    {
+      "name": "pending-graph-root-useful-healthy-root",
+      "roots": [
+        {"root": "beta", "kind": "ready", "sources": [{"path": "src/Healthy.swift", "slot": "contributed"}], "targets": ["src/Useful.swift"]},
+        {"root": "alpha", "kind": "pendingAggregateInput", "sources": [], "targets": []}
+      ]
+    },
+    {
+      "name": "unavailable-graph-root-useful-healthy-root",
+      "roots": [
+        {"root": "beta", "kind": "ready", "sources": [{"path": "src/Healthy.swift", "slot": "contributed"}], "targets": ["src/Useful.swift"]},
+        {"root": "alpha", "kind": "unavailableAggregateInput", "sources": [], "targets": []}
+      ]
+    }
+  ]
+}
