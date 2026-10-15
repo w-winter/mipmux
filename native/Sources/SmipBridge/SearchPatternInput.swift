@@ -1,4 +1,5 @@
 import Foundation
+import RepoPromptRegexCore
 
 struct SearchPatternInput {
     private let pattern: String
@@ -27,10 +28,19 @@ struct SearchPatternInput {
             return ["kind": "searchPatternError", "message": message]
         }
         let fuzzy = !isRegex && pattern.contains(" ")
+        let bounded = wholeWord && !fuzzy
+        let contentPattern: String
+        if fuzzy {
+            contentPattern = RPCESearchPattern.convertSpacesToFuzzyRegex(pattern)
+        } else if bounded {
+            let candidate = isRegex ? pattern : RepoPromptPCRE2Adapter.escapedLiteral(pattern)
+            contentPattern = "\\b\(candidate)\\b"
+        } else {
+            contentPattern = pattern
+        }
         let effectiveMode = mode == .auto ? RPCESearchPattern.inferredAutoMode(pattern) : mode
         return ["kind": "searchPattern", "mode": effectiveMode.rawValue,
-                "path": ["text": pattern, "isRegex": isRegex, "wholeWord": false],
-                "content": ["text": fuzzy ? RPCESearchPattern.convertSpacesToFuzzyRegex(pattern) : pattern,
-                            "isRegex": isRegex || fuzzy, "wholeWord": wholeWord && !fuzzy]]
+                "path": ["text": pattern, "isRegex": isRegex],
+                "content": ["text": contentPattern, "isRegex": isRegex || fuzzy || bounded]]
     }
 }

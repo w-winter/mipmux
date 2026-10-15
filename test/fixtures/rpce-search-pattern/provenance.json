@@ -55,6 +55,18 @@
       ]
     },
     {
+      "path": "Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift",
+      "sha256": "ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e",
+      "blob": "19efd9377371c807fe05f30167e28df75a025c2d",
+      "ranges": [
+        {
+          "start": 301,
+          "end": 301,
+          "sha256": "289c82540dad799af7b03b38c1a01a6c473bb5571d38852d065658ef945c73c0"
+        }
+      ]
+    },
+    {
       "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
       "sha256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
       "blob": "28490c87429b61d151281e79d1c60d7b48ee84ef",
@@ -67,11 +79,11 @@
       ]
     }
   ],
-  "cases": 36,
-  "generatorSHA256": "9a83f69df2d5308dec274a3c21250c34f5b2cd07343056f9bce05df2a878b604",
-  "combinedSourceSHA256": "495ebecb4c93a9863d2b5c63d2ea8bb06f46c624b5fda53ea8aee30fdd44e5e6",
+  "cases": 43,
+  "generatorSHA256": "373a72b064a6048d2c5ae4fce485f887739c633fe7ff113a29ebe024f761e742",
+  "combinedSourceSHA256": "8aa53073927199bdf5f5c192a955b19134041abf8259f3a23de1e47328fb148b",
   "bindings": [
-    "Original regex detection, PCRE feature detection, literal escaping and flexible-space conversion execute verbatim.",
+    "Original regex detection, PCRE feature detection, literal escaping and flexible-space conversion execute verbatim. The original whole-word pattern expression executes in a minimal function without the enclosing compiler/repair routine.",
     "The driver applies MCP trim/empty/inferred-regex rules and chooses fuzzy conversion only for non-regex patterns with spaces. The source literal fuzzy branch bypasses whole-word handling; path matching ignores whole-word.",
     "This proves pattern preparation, not auto-mode routing, matching engines, regex repair, path globbing, filters or result limits."
   ]

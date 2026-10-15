@@ -53,7 +53,7 @@ test('real search modes and output continuations preserve complete counts and re
     assert.deepEqual(glob.files.map(file => file.path), ['a.txt', 'c.txt']);
     const punctuation = await operation.fileSearch({ ...query, query: { kind: 'literal', text: '++', caseSensitive: true, wholeWord: true } });
     if (punctuation.kind !== 'search') assert.fail('Missing punctuation match');
-    assert.equal(punctuation.counts.occurrences, 3);
+    assert.equal(punctuation.counts.occurrences, 0);
     const regex = await operation.fileSearch({ ...query, query: { kind: 'regex', text: '(?<=x )café', caseSensitive: true, wholeWord: true } });
     if (regex.kind !== 'search') assert.fail('Missing regex match');
     assert.equal(regex.counts.occurrences, 3);

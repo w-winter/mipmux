@@ -17,7 +17,8 @@ const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type
 test('public file_search uses source pattern inference, trimming and literal flexible spaces', async () => {
   const base = await mkdtemp(join(tmpdir(), 'smip-search-pattern-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
-  await writeFile(join(root, 'example.txt'), 'anchor\n^anchor$\nfunc()\nlet\tfoo.bar\nlet\tfooXbar\none\ttwo\none\t two\nend\\E\tvalue\nANCHOR\n');
+  await writeFile(join(root, 'example.txt'), 'anchor\n^anchor$\nfunc()\nlet\tfoo.bar\nlet\tfooXbar\none\ttwo\none\t two\nend\\E\tvalue\nANCHOR\n' +
+    '++\na++b\n ++ \nleftover\nupright\nleft\nright\naleft\nrightward\ncafé\ncafétéria\ndécafé\néwordé\nword\nsword\n');
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
@@ -42,6 +43,13 @@ test('public file_search uses source pattern inference, trimming and literal fle
       { query: { kind: 'literal', text: 'end\\E value' }, lines: [8] },
       { query: { kind: 'literal', text: 'ne tw', wholeWord: true }, lines: [6, 7] },
       { query: { kind: 'regex', text: '^anchor$', caseSensitive: true }, lines: [1] },
+      { query: { kind: 'literal', text: '++', wholeWord: true }, lines: [11] },
+      { query: { kind: 'literal', text: '++', wholeWord: false }, lines: [10, 11, 12] },
+      { query: { kind: 'regex', text: 'left|right', wholeWord: true }, lines: [13, 14, 15, 16] },
+      { query: { kind: 'regex', text: '(?:left|right)', wholeWord: true }, lines: [15, 16] },
+      { query: { kind: 'literal', text: 'left', wholeWord: true }, lines: [15] },
+      { query: { kind: 'literal', text: 'café', wholeWord: true }, lines: [19] },
+      { query: { kind: 'literal', text: 'word', wholeWord: true }, lines: [23] },
     ];
     for (const item of cases) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,

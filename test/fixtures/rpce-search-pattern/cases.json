@@ -11,15 +11,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "needle",
-        "wholeWord": false
+        "text": "needle"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "needle",
-        "wholeWord": false
+        "text": "needle"
       }
     }
   },
@@ -35,15 +33,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "^anchor$",
-        "wholeWord": false
+        "text": "^anchor$"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "^anchor$",
-        "wholeWord": false
+        "text": "^anchor$"
       }
     }
   },
@@ -59,15 +55,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "func()",
-        "wholeWord": false
+        "text": "func()"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "func()",
-        "wholeWord": false
+        "text": "func()"
       }
     }
   },
@@ -83,15 +77,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "(foo|bar)",
-        "wholeWord": false
+        "text": "(foo|bar)"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "(foo|bar)",
-        "wholeWord": false
+        "text": "(foo|bar)"
       }
     }
   },
@@ -107,15 +99,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "foo|bar",
-        "wholeWord": false
+        "text": "foo|bar"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "foo|bar",
-        "wholeWord": false
+        "text": "foo|bar"
       }
     }
   },
@@ -131,15 +121,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "|foo",
-        "wholeWord": false
+        "text": "|foo"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "|foo",
-        "wholeWord": false
+        "text": "|foo"
       }
     }
   },
@@ -155,15 +143,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "foo|",
-        "wholeWord": false
+        "text": "foo|"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "foo|",
-        "wholeWord": false
+        "text": "foo|"
       }
     }
   },
@@ -179,15 +165,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "|",
-        "wholeWord": false
+        "text": "|"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "|",
-        "wholeWord": false
+        "text": "|"
       }
     }
   },
@@ -203,15 +187,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "\\bword",
-        "wholeWord": false
+        "text": "\\bword"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "\\bword",
-        "wholeWord": false
+        "text": "\\bword"
       }
     }
   },
@@ -227,15 +209,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "\\w+",
-        "wholeWord": false
+        "text": "\\w+"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "\\w+",
-        "wholeWord": false
+        "text": "\\w+"
       }
     }
   },
@@ -251,15 +231,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "\\n",
-        "wholeWord": false
+        "text": "\\n"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "\\n",
-        "wholeWord": false
+        "text": "\\n"
       }
     }
   },
@@ -275,15 +253,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "^$",
-        "wholeWord": false
+        "text": "^$"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "^$",
-        "wholeWord": false
+        "text": "^$"
       }
     }
   },
@@ -299,15 +275,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "a.*b",
-        "wholeWord": false
+        "text": "a.*b"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "a.*b",
-        "wholeWord": false
+        "text": "a.*b"
       }
     }
   },
@@ -323,15 +297,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "a.+b",
-        "wholeWord": false
+        "text": "a.+b"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "a.+b",
-        "wholeWord": false
+        "text": "a.+b"
       }
     }
   },
@@ -347,15 +319,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "[ab]",
-        "wholeWord": false
+        "text": "[ab]"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "[ab]",
-        "wholeWord": false
+        "text": "[ab]"
       }
     }
   },
@@ -371,15 +341,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "][",
-        "wholeWord": false
+        "text": "]["
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "][",
-        "wholeWord": false
+        "text": "]["
       }
     }
   },
@@ -395,15 +363,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "a{2,3}",
-        "wholeWord": false
+        "text": "a{2,3}"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "a{2,3}",
-        "wholeWord": false
+        "text": "a{2,3}"
       }
     }
   },
@@ -419,15 +385,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "a{,}",
-        "wholeWord": false
+        "text": "a{,}"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "a{,}",
-        "wholeWord": false
+        "text": "a{,}"
       }
     }
   },
@@ -443,15 +407,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "a{٢}",
-        "wholeWord": false
+        "text": "a{٢}"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "a{٢}",
-        "wholeWord": false
+        "text": "a{٢}"
       }
     }
   },
@@ -467,15 +429,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "a{no}",
-        "wholeWord": false
+        "text": "a{no}"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "a{no}",
-        "wholeWord": false
+        "text": "a{no}"
       }
     }
   },
@@ -491,15 +451,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "^word",
-        "wholeWord": false
+        "text": "^word"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "^word",
-        "wholeWord": false
+        "text": "^word"
       }
     }
   },
@@ -515,15 +473,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "word$",
-        "wholeWord": false
+        "text": "word$"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "word$",
-        "wholeWord": false
+        "text": "word$"
       }
     }
   },
@@ -539,15 +495,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "(?i:word)",
-        "wholeWord": false
+        "text": "(?i:word)"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "(?i:word)",
-        "wholeWord": false
+        "text": "(?i:word)"
       }
     }
   },
@@ -563,15 +517,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "(?-i:word)",
-        "wholeWord": false
+        "text": "(?-i:word)"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "(?-i:word)",
-        "wholeWord": false
+        "text": "(?-i:word)"
       }
     }
   },
@@ -587,15 +539,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "(?J:word)",
-        "wholeWord": false
+        "text": "(?J:word)"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "(?J:word)",
-        "wholeWord": false
+        "text": "(?J:word)"
       }
     }
   },
@@ -611,15 +561,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "(?i-:word)",
-        "wholeWord": false
+        "text": "(?i-:word)"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "(?i-:word)",
-        "wholeWord": false
+        "text": "(?i-:word)"
       }
     }
   },
@@ -635,15 +583,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "a+b",
-        "wholeWord": false
+        "text": "a+b"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "a+b",
-        "wholeWord": false
+        "text": "a+b"
       }
     }
   },
@@ -659,15 +605,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "\\Qone\\E\\s+\\s+\\Qtwo\\E",
-        "wholeWord": false
+        "text": "\\Qone\\E\\s+\\s+\\Qtwo\\E"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "one  two",
-        "wholeWord": false
+        "text": "one  two"
       }
     }
   },
@@ -683,15 +627,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "\\Qlet\\E\\s+\\Qfoo.bar\\E",
-        "wholeWord": false
+        "text": "\\Qlet\\E\\s+\\Qfoo.bar\\E"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "let foo.bar",
-        "wholeWord": false
+        "text": "let foo.bar"
       }
     }
   },
@@ -735,15 +677,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "x\u0000y",
-        "wholeWord": false
+        "text": "x\u0000y"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "x\u0000y",
-        "wholeWord": false
+        "text": "x\u0000y"
       }
     }
   },
@@ -759,15 +699,13 @@
     "expected": {
       "content": {
         "isRegex": false,
-        "text": "^anchor$",
-        "wholeWord": false
+        "text": "^anchor$"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "^anchor$",
-        "wholeWord": false
+        "text": "^anchor$"
       }
     }
   },
@@ -783,15 +721,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "\\Qend\\E\\\\E\\Q\\E\\s+\\Qvalue\\E",
-        "wholeWord": false
+        "text": "\\Qend\\E\\\\E\\Q\\E\\s+\\Qvalue\\E"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "end\\E value",
-        "wholeWord": false
+        "text": "end\\E value"
       }
     }
   },
@@ -807,15 +743,13 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "one two",
-        "wholeWord": false
+        "text": "one two"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": true,
-        "text": "one two",
-        "wholeWord": false
+        "text": "one two"
       }
     }
   },
@@ -831,15 +765,167 @@
     "expected": {
       "content": {
         "isRegex": true,
-        "text": "\\Qone\\E\\s+\\Qtwo\\E",
-        "wholeWord": false
+        "text": "\\Qone\\E\\s+\\Qtwo\\E"
       },
       "kind": "searchPattern",
       "mode": "content",
       "path": {
         "isRegex": false,
-        "text": "one two",
-        "wholeWord": false
+        "text": "one two"
+      }
+    }
+  },
+  {
+    "name": "whole-word-literal-punctuation",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "++",
+      "queryKind": "literal",
+      "wholeWord": true,
+      "mode": "content"
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\b\\Q++\\E\\b"
+      },
+      "kind": "searchPattern",
+      "mode": "content",
+      "path": {
+        "isRegex": false,
+        "text": "++"
+      }
+    }
+  },
+  {
+    "name": "whole-word-regex-alternation",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "left|right",
+      "queryKind": "regex",
+      "wholeWord": true,
+      "mode": "content"
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\bleft|right\\b"
+      },
+      "kind": "searchPattern",
+      "mode": "content",
+      "path": {
+        "isRegex": true,
+        "text": "left|right"
+      }
+    }
+  },
+  {
+    "name": "whole-word-regex-grouped-alternation",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "(?:left|right)",
+      "queryKind": "regex",
+      "wholeWord": true,
+      "mode": "content"
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\b(?:left|right)\\b"
+      },
+      "kind": "searchPattern",
+      "mode": "content",
+      "path": {
+        "isRegex": true,
+        "text": "(?:left|right)"
+      }
+    }
+  },
+  {
+    "name": "whole-word-literal-identifier",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "left",
+      "queryKind": "literal",
+      "wholeWord": true,
+      "mode": "content"
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\b\\Qleft\\E\\b"
+      },
+      "kind": "searchPattern",
+      "mode": "content",
+      "path": {
+        "isRegex": false,
+        "text": "left"
+      }
+    }
+  },
+  {
+    "name": "whole-word-literal-unicode",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "café",
+      "queryKind": "literal",
+      "wholeWord": true,
+      "mode": "content"
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\b\\Qcafé\\E\\b"
+      },
+      "kind": "searchPattern",
+      "mode": "content",
+      "path": {
+        "isRegex": false,
+        "text": "café"
+      }
+    }
+  },
+  {
+    "name": "whole-word-literal-dot",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "a.b",
+      "queryKind": "literal",
+      "wholeWord": true,
+      "mode": "content"
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\b\\Qa.b\\E\\b"
+      },
+      "kind": "searchPattern",
+      "mode": "content",
+      "path": {
+        "isRegex": false,
+        "text": "a.b"
+      }
+    }
+  },
+  {
+    "name": "whole-word-regex-space",
+    "input": {
+      "kind": "prepareSearchPattern",
+      "text": "one two",
+      "queryKind": "regex",
+      "wholeWord": true,
+      "mode": "content"
+    },
+    "expected": {
+      "content": {
+        "isRegex": true,
+        "text": "\\bone two\\b"
+      },
+      "kind": "searchPattern",
+      "mode": "content",
+      "path": {
+        "isRegex": true,
+        "text": "one two"
       }
     }
   }

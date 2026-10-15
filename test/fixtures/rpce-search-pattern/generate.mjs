@@ -23,6 +23,7 @@ const actor = original('Sources/RepoPrompt/Features/Search/SearchMatch.swift', [
 const toolkit = original('Sources/RepoPromptRegexCore/RegexToolkit.swift', [[378, 438]]);
 const literal = original('Sources/RepoPromptRegexCore/SwiftPCRE2/PCRE2LiteralEscaping.swift', [[1, 14]]);
 const escape = original('Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift', [[137, 139]]);
+const boundary = original('Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift', [[301, 301]]);
 const provider = original('Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift', [[711, 717]]);
 const emptyMessage = provider.match(/MCPError\.invalidParams\("([^"]+)"\)/)[1];
 const inputs = [
@@ -38,6 +39,13 @@ for (const item of inputs) { item.input.wholeWord = false; item.input.mode = 'co
 inputs.push({ name: 'fuzzy-space-ignores-whole-word', input: {
   kind: 'prepareSearchPattern', text: 'one two', queryKind: 'literal', wholeWord: true, mode: 'content',
 } });
+for (const [name, text, queryKind] of [
+  ['literal-punctuation', '++', 'literal'], ['regex-alternation', 'left|right', 'regex'],
+  ['regex-grouped-alternation', '(?:left|right)', 'regex'], ['literal-identifier', 'left', 'literal'],
+  ['literal-unicode', 'café', 'literal'], ['literal-dot', 'a.b', 'literal'],
+  ['regex-space', 'one two', 'regex'],
+]) inputs.push({ name: 'whole-word-' + name, input: { kind: 'prepareSearchPattern', text, queryKind,
+  wholeWord: true, mode: 'content' } });
 const driver = `
 struct Input: Decodable { let text: String; let queryKind: String; let wholeWord: Bool }
 struct Case: Decodable { let name: String; let input: Input }
@@ -46,17 +54,23 @@ let outputs = cases.map { item -> [String: Any] in
     let pattern = item.input.text.trimmingCharacters(in: .whitespacesAndNewlines)
     if pattern.isEmpty { return ["kind": "searchPatternError", "message": ${JSON.stringify(emptyMessage)}] }
     let isRegex = item.input.queryKind == "auto" ? FileSearchActor.containsRegexSyntax(pattern) : item.input.queryKind == "regex"
-    return ["kind": "searchPattern", "mode": "content", "path": ["text": pattern, "isRegex": isRegex, "wholeWord": false],
+    return ["kind": "searchPattern", "mode": "content", "path": ["text": pattern, "isRegex": isRegex],
             "content": FileSearchActor.contentPattern(pattern, isRegex: isRegex, wholeWord: item.input.wholeWord)]
 }
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: outputs, options: [.sortedKeys]))
 `;
 const source = 'import Foundation\n' + literal + '\nenum RegexToolkit {\n' + toolkit + '\n}\nenum RepoPromptPCRE2Adapter {\n' +
   escape + '\n}\nenum FileSearchActor {\n' + actor + `
+    static func wordPattern(_ candidate: String, wholeWord: Bool) -> String {
+${boundary}
+        return effective
+    }
     static func contentPattern(_ pattern: String, isRegex: Bool, wholeWord: Bool) -> [String: Any] {
         let fuzzy = !isRegex && pattern.contains(" ")
-        return ["text": fuzzy ? convertSpacesToFuzzyRegex(pattern) : pattern, "isRegex": isRegex || fuzzy,
-                "wholeWord": wholeWord && !fuzzy]
+        if fuzzy { return ["text": convertSpacesToFuzzyRegex(pattern), "isRegex": true] }
+        let candidate = isRegex ? pattern : RepoPromptPCRE2Adapter.escapedLiteral(pattern)
+        return ["text": wholeWord ? wordPattern(candidate, wholeWord: true) : pattern,
+                "isRegex": isRegex || wholeWord]
     }
 }\n` + driver;
 const scratch = mkdtempSync(join(tmpdir(), 'rpce-search-pattern-'));
@@ -70,7 +84,7 @@ try {
 const cases = inputs.map((item, index) => ({ ...item, expected: outputs[index] }));
 const files = { 'cases.json': cases, 'provenance.json': { revision, sources, cases: cases.length,
   generatorSHA256: hash(readFileSync(fileURLToPath(import.meta.url))), combinedSourceSHA256: hash(source),
-  bindings: ['Original regex detection, PCRE feature detection, literal escaping and flexible-space conversion execute verbatim.',
+  bindings: ['Original regex detection, PCRE feature detection, literal escaping and flexible-space conversion execute verbatim. The original whole-word pattern expression executes in a minimal function without the enclosing compiler/repair routine.',
     'The driver applies MCP trim/empty/inferred-regex rules and chooses fuzzy conversion only for non-regex patterns with spaces. The source literal fuzzy branch bypasses whole-word handling; path matching ignores whole-word.',
     'This proves pattern preparation, not auto-mode routing, matching engines, regex repair, path globbing, filters or result limits.'] } };
 for (const [name, content] of Object.entries(files)) {

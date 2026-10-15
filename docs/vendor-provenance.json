@@ -6752,10 +6752,11 @@
       "changes": [
         "Decode one current text-query shape. Apply the source trim, empty-pattern diagnostic and omitted-regex inference. Prepare separate path/content patterns; literal-space content uses the original fuzzy converter and bypasses whole-word matching as in SearchMatch.swift1764-1778 and2032-2075. Path searches ignore the whole-word flag.",
         "This adapter prepares patterns only. Automatic mode routing, limits on results, path globbing and regex repairs remain separate conformance requirements.",
-        "Resolve the requested auto/path/content/both mode using the retained source heuristic. Public glob requests bind to literal interpretation and path mode."
+        "Resolve the requested auto/path/content/both mode using the retained source heuristic. Public glob requests bind to literal interpretation and path mode.",
+        "Normalize non-fuzzy whole-word content into a complete PCRE2 pattern. Literal input uses the existing quoted-literal owner; regex input retains its grouping. The wrapping expression is from Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift:301, range SHA256 289c82540dad799af7b03b38c1a01a6c473bb5571d38852d065658ef945c73c0, full-file SHA256 ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e. The literal branch agrees with SearchMatch.swift2067-2075."
       ],
       "classification": "handwritten",
-      "sha256": "3a077dac8a46aaf54bfbdf3614ebaf919249cc1f4c3699fce70891dd84af3ae6"
+      "sha256": "2dd6a28e4e8d02651c4a20b65d4e3b7cf6d74da362e0eaa24fc7b2de77a22d2f"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6773,10 +6774,11 @@
         ]
       ],
       "changes": [
-        "The generator compiles original inference, PCRE feature detection, flexible-space conversion and literal escaping. Its driver applies the provider trim/inference rules and selects path/content flags. These cases establish pattern preparation, not the complete search engine or result contract."
+        "The generator compiles original inference, PCRE feature detection, flexible-space conversion and literal escaping. Its driver applies the provider trim/inference rules and selects path/content flags. These cases establish pattern preparation, not the complete search engine or result contract.",
+        "The 43 cases include whole-word punctuation, Unicode, quoted literals and grouped/ungrouped alternatives. The exact original boundary expression executes in a minimal function; no compiler repair or source content scanner is executed."
       ],
       "classification": "fixture",
-      "sha256": "7d54ea2e740f7d227e4df3b77b2f9bb2e9f04ab3cc4ce2c0166616dd8e5cee97"
+      "sha256": "90a0c5f43d5ce231380a8d1b6dd815cd0518b94b8191923b69990e33ae5416e0"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6928,9 +6930,10 @@
       "classification": "handwritten",
       "changes": [
         "Apply independent limits for path and content results and the unlimited content branch for count-only requests to the existing authorized ripgrep adapter. The default of 50 and limitHit condition are from Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift:724,956-957; count-only limitHit=false is from lines880-895.",
-        "Grouped replies retain occurrence counts as extra metadata alongside matching-line counts. Ripgrep still drains all matches after the semantic limit so its terminal summary can be verified; no early process cancellation or new transport is introduced. Source regex repair, specialized content scanning, filter equivalence and complete DTO correspondence are not established by this adapter."
+        "Grouped replies retain occurrence counts as extra metadata alongside matching-line counts. Ripgrep still drains all matches after the semantic limit so its terminal summary can be verified; no early process cancellation or new transport is introduced. Source regex repair, specialized content scanning, filter equivalence and complete DTO correspondence are not established by this adapter.",
+        "Consume the fully normalized native content pattern. Remove ripgrep word-mode interpretation; the native pattern owner defines word-boundary behavior."
       ],
-      "sha256": "f91933398f9efdcf76d61ad7fa21d250dbd783518dc93bdeb940143d719a57b7"
+      "sha256": "7dac8f98a6ef8d00cfb587dd1fddc32fdd6098731a8cc3364fde364c2b000901"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",

@@ -4,7 +4,7 @@ import { RelativePath, RootName, SafeCount } from './workspace.js';
 const closed = { additionalProperties: false };
 export const SearchPatternKind = Type.Enum(['auto', 'literal', 'regex'], { default: 'auto' });
 export const SearchMode = Type.Enum(['auto', 'path', 'content', 'both'], { default: 'auto' });
-const pattern = Type.Object({ text: Type.String(), isRegex: Type.Boolean(), wholeWord: Type.Boolean() }, closed);
+const pattern = Type.Object({ text: Type.String(), isRegex: Type.Boolean() }, closed);
 export type PreparedSearchPattern = Static<typeof pattern>;
 export const NativeSearchPatternInput = Type.Object({ kind: Type.Literal('prepareSearchPattern'),
   text: Type.String(), queryKind: SearchPatternKind, wholeWord: Type.Boolean(), mode: SearchMode }, closed);

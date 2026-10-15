@@ -20,7 +20,7 @@ export interface SearchFile {
 
 function patternFlags(base: readonly string[], pattern: PreparedSearchPattern, caseSensitive: boolean): string[] {
   return [...base, caseSensitive ? '--case-sensitive' : '--ignore-case',
-    ...(!pattern.isRegex ? ['--fixed-strings'] : []), ...(pattern.wholeWord ? ['--word-regexp'] : []), '-e', pattern.text];
+    ...(!pattern.isRegex ? ['--fixed-strings'] : []), '-e', pattern.text];
 }
 
 export async function fileSearch(operation: WorkspaceOperation, request: SearchRequest, encode?: ResultEncoding) {
