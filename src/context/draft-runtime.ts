@@ -875,14 +875,16 @@ export class DraftRuntime {
     this.#check(signal, this.#revision);
     this.#state = 'frozen';
     this.#freezeGeneration++;
+    const mode = this.#codemapMode, revision = this.#revision;
+    const explicit = new Map([...this.#materials].filter(([, material]) => material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
     const operation = new FinalizationOperation(
       this.operation,
       this.request,
-      this.#codemapMode,
+      mode,
       this.#prompt,
-      [...this.#materials.values()],
-      this.#automaticAcquisition,
-      this.#revision,
+      { materials: this.#materials, automaticAcquisition: this.#automaticAcquisition },
+      operation => this.#derive(operation, new Map(explicit), mode, revision),
+      revision,
       signal,
       publishing,
     );
@@ -892,7 +894,8 @@ export class DraftRuntime {
       await this.close();
     };
     this.#finalized = operation.result.then(async (result) => {
-      this.#materials = new Map(operation.capturedMaterials.map(material => [material.record.id, material]));
+      const captured = operation.capturedPresentation;
+      this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;
       if (result.kind === 'blocked') {
         if (!this.#closing) {
           this.#state = 'editable';
@@ -904,7 +907,8 @@ export class DraftRuntime {
       await terminal();
       return result;
     }, async (error: unknown) => {
-      this.#materials = new Map(operation.capturedMaterials.map(material => [material.record.id, material]));
+      const captured = operation.capturedPresentation;
+      this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;
       await terminal();
       throw error;
     });

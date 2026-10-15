@@ -263,7 +263,7 @@ test('automatic codemaps retain a dependency accepted by the source decoder even
   } finally { await f.runtime.close(); }
 });
 
-test('optional inferred acquisition failure retains ready targets and records verifiable partial membership', async t => {
+test('final assembly distinguishes stale acquisition from terminal partial membership', async t => {
   for (const admission of [false, true]) for (const cause of ['sourceChanged', 'notFound'] as const) await t.test((admission ? 'required admission/' : 'upsert/') + cause, async () => {
     let armed = false;
     const f = await fixture(async (path, pinned) => {
@@ -287,6 +287,18 @@ test('optional inferred acquisition failure retains ready targets and records ve
         op: 'get', view: 'files', maxOutputBytes,
       })), signal()) : null;
       if (reply) assert.deepEqual(reply.code_structure?.unmapped_paths, ['r/SharedB.swift']);
+      if (cause === 'sourceChanged') {
+        const blocked = await selected.finalize(signal()); assert.equal(blocked.kind, 'blocked');
+        await writeFile(join(f.directory, 'r/SharedB.swift'), f.files['SharedB.swift']);
+        const recovered = await selected.finalize(signal()); assert.equal(recovered.kind, 'ready');
+        if (recovered.kind === 'ready') {
+          assert(recovered.manifest.automaticCodemaps.every(item => item.outcome.kind === 'ready'));
+          await verifyBundle(recovered.directory); await verifyCurrentBundle(recovered.directory, f.runtime, signal());
+        }
+        await mkdir('test-output', { recursive: true });
+        await writeFile('test-output/automatic-final-recovery-' + (admission ? 'admission' : 'upsert') + '-proof.json', JSON.stringify({ blocked, recovered }, null, 2) + '\n');
+        return;
+      }
       const ready = await selected.finalize(signal()); assert(ready.kind === 'ready');
       await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
       const captured = Compile(Type.Object({ automaticCodemaps: Type.Array(Type.Object({
@@ -390,9 +402,16 @@ test('manage selection persists explicit intent before automatic acquisition and
       if (scenario === 'cancel') abort.abort();
       else if (scenario === 'concurrent-manual') await draft.update({ expectedRevision: 1, maxOutputBytes, mutation: { kind: 'clearCodemaps' } }, signal());
       else if (scenario === 'freeze') {
-        const blocked = await draft.finalize(signal()); assert.equal(blocked.kind, 'blocked');
-        if (blocked.kind === 'blocked') assert.equal(blocked.measurement.complete, false);
-        observations.push(blocked);
+        const finalizing = draft.finalize(signal());
+        release();
+        const outcome = await observed;
+        const ready = await finalizing; assert.equal(ready.kind, 'ready');
+        assert.equal(draft.revision, 1); assert.equal((await sources(draft)).length, 4);
+        if (ready.kind === 'ready') { await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal()); }
+        observations.push(outcome, ready);
+        await mkdir('test-output', { recursive: true });
+        await writeFile('test-output/automatic-ordering-freeze-proof.json', JSON.stringify({ scenario, observations, ready }, null, 2) + '\n');
+        return;
       }
       release();
       const outcome = await observed;
@@ -401,7 +420,7 @@ test('manage selection persists explicit intent before automatic acquisition and
         assert.equal(outcome.code, scenario === 'cancel' ? 'cancelled' : 'outputBudgetTooSmall');
         observations.push(outcome);
       } else { assert(outcome.kind === 'reply'); assert.equal(outcome.reply.revision, 1); observations.push(outcome.reply); }
-      if (scenario === 'cancel' || scenario === 'freeze') {
+      if (scenario === 'cancel') {
         const unresolved = await draft.inspect({ view: 'metadata', maxOutputBytes, continuation: null }, signal());
         assert(unresolved.kind === 'metadata'); assert.equal(unresolved.measurement.complete, false);
         observations.push(unresolved);

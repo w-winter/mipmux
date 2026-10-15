@@ -1,14 +1,16 @@
 import { join } from 'node:path';
+import { performance } from 'node:perf_hooks';
 import type { CodemapMode, ContextBuildRequest, Manifest } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
-import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js';
-import { identity, type Material } from './material-store.js';
+import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { identity } from './material-store.js';
 import { renderBundle } from './render.js';
 import { prepareRenderInput } from './final-tree.js';
 import { revalidateMaterials } from './revalidate.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
 import { refreshGitArtifactMaterials } from './git-artifact-material.js';
-import type { AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
+import { withCodemapPresentation, type CodemapPresentation } from './codemap-readiness.js';
+import type { DerivedMaterials } from './automatic-codemap-acquisition.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -24,29 +26,30 @@ export type FinalizationResult =
 export class FinalizationOperation {
   readonly #cancel = new AbortController();
   #claimed = false;
-  #capturedMaterials: readonly Material[];
+  #capturedPresentation: CodemapPresentation;
   readonly result: Promise<FinalizationResult>;
-  /** Last complete capture, initially the admission input; the returned array is a copy. */
-  get capturedMaterials(): readonly Material[] { return [...this.#capturedMaterials]; }
+  /** Materials and acquisition state advance together; the returned material map is a copy. */
+  get capturedPresentation(): CodemapPresentation {
+    return { materials: new Map(this.#capturedPresentation.materials), automaticAcquisition: this.#capturedPresentation.automaticAcquisition };
+  }
   constructor(
     operation: WorkspaceOperation,
     request: ContextBuildRequest,
     codemapMode: CodemapMode,
     prompt: string,
-    materials: readonly Material[],
-    automaticAcquisition: AutomaticAcquisitionState,
+    initial: CodemapPresentation,
+    prepare: (operation: WorkspaceOperation) => Promise<DerivedMaterials>,
     revision: number,
     signal: AbortSignal,
     private readonly publishing: () => void = () => {},
   ) {
-    this.#capturedMaterials = materials;
+    this.#capturedPresentation = { materials: new Map(initial.materials), automaticAcquisition: freeze(initial.automaticAcquisition) };
     this.result = this.#run(
       operation,
       request,
       codemapMode,
       prompt,
-      materials,
-      automaticAcquisition,
+      prepare,
       revision,
       AbortSignal.any([signal, this.#cancel.signal, operation.signal]),
     );
@@ -61,8 +64,7 @@ export class FinalizationOperation {
     request: ContextBuildRequest,
     codemapMode: CodemapMode,
     prompt: string,
-    materials: readonly Material[],
-    automaticAcquisition: AutomaticAcquisitionState,
+    prepare: (operation: WorkspaceOperation) => Promise<DerivedMaterials>,
     revision: number,
     signal: AbortSignal,
   ): Promise<FinalizationResult> {
@@ -70,12 +72,17 @@ export class FinalizationOperation {
     const operation = await owner.fork(signal);
     const bridge = owner.runtime.makeBridge();
     try {
-      materials = await refreshGitArtifactMaterials(operation, materials);
-      this.#capturedMaterials = materials;
-      await revalidateMaterials(operation, materials);
-      const { generation, ...inventory } = owner.snapshot;
-      const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal);
-      const rendered = renderBundle(input);
+      const candidate = await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation), async presentation => {
+        const materials = await refreshGitArtifactMaterials(operation, [...presentation.materials.values()]);
+        const automaticAcquisition = presentation.automaticAcquisition;
+        this.#capturedPresentation = { materials: new Map(materials.map(material => [material.record.id, material])),
+          automaticAcquisition: freeze(automaticAcquisition) };
+        await revalidateMaterials(operation, materials);
+        const { generation, ...inventory } = operation.snapshot;
+        const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal);
+        return { materials, automaticAcquisition, inventory, input, rendered: renderBundle(input) };
+      });
+      const { materials, automaticAcquisition, inventory, input, rendered } = candidate;
       if (automaticAcquisition.kind === 'pending' || rendered.diagnostics.length) {
         return {
           kind: 'blocked',

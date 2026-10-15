@@ -6153,7 +6153,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "c537cd887ef8979246c7fbe2f898adcefa03b10f5233e00bcb94d82830e9e207",
+      "sha256": "210793495c64945ad667eb3f6615922475dd6caf69dcfee3dd4a6182817501e1",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6166,7 +6166,8 @@
         "Match MCPSelectionToolProvider.swift:616-687 persistence before automatic target acquisition. Prepare explicit materials and pure candidate metadata first, then commit explicit intent with live pending state before native target reads. Acquisition owns a copied candidate map. Apply completed materials and outcomes only while their captured owner, revision and finalization generation remain current. Preview is hypothetical. For draft_update, admit its receipt before committing the mutation. Prepare Git candidates separately.",
         "Validate represented source-root identities before selection serving in automatic and manual modes, including required codemaps and zero-target queries. Root serving is independent of graph eligibility; per-root failure aggregation and remaining epoch/readiness contracts are separate.",
         "Project captured source issues and target-acquisition failures into pending/unmapped selection paths in stable file-UUID order. Coverage of the captured graph is separate from delivered-body measurement and acquisition completion.",
-        "Keep the captured selection and revision while the presentation wrapper repeats acquisition and reply assembly according to the source policy. Observation ownership advances only through this request's own retained maps, so a competing edit or finalization fence cannot be adopted by a retry. Public size/preview errors retain the source persistence-before-reply contract. Pending automatic publication uses the existing unresolved observation state and cannot be archived."
+        "Keep the captured selection and revision while the presentation wrapper repeats acquisition and reply assembly according to the source policy. Observation ownership advances only through this request's own retained maps, so a competing edit or finalization fence cannot be adopted by a retry. Public size/preview errors retain the source persistence-before-reply contract. Pending automatic publication uses the existing unresolved observation state and cannot be archived.",
+        "Freeze explicit selection and mode for final assembly; pass the existing derive path as fresh acquisition for each presentation attempt. Adopt finalization materials and acquisition state as one observation on success or failure; canonical selection and revision stay owned by the draft."
       ]
     },
     {
@@ -6356,6 +6357,27 @@
       "classification": "handwritten",
       "changes": [
         "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework."
+      ]
+    },
+    {
+      "destination": "src/context/finalize.ts",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextPreAssemblyService.swift",
+      "ranges": [
+        [
+          236,
+          284
+        ],
+        [
+          308,
+          360
+        ]
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
+      "sha256": "eb70d1093987cc13ff36c3115391f91c7db3adf19843c0c74759fd293911b866",
+      "classification": "handwritten",
+      "changes": [
+        "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior."
       ]
     }
   ],

@@ -85,9 +85,6 @@ for (const mode of ['manual', 'automatic'] as const) for (const scenario of ['re
       if (scenario === 'render-persistent') assert.equal(f.invalidations(), maximumAttempts);
       f.disarm();
       await writeFile(join(f.base, 'a/f.swift'), sourceBody);
-      if (scenario !== 'render-transient') {
-        const blocked = await f.client.finalize(f.draft.id, f.signal); assert.equal(blocked.kind, 'blocked');
-      }
       const recovered = await f.get();
       assert.equal(recovered.revision, 0); assert.equal(recovered.measurement.complete, true);
       assert.equal(recovered.files.filter(file => file.render_mode === 'codemap').length, 2);

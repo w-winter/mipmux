@@ -446,8 +446,6 @@ test('cancellation during codemap extraction retains committed membership and ge
     abort.abort(); release(); await rejected;
     const state = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 30000 }, new AbortController().signal));
     assert(state.kind === 'metadata'); assert.equal(state.revision, 1);
-    const blocked = await client.finalize(draft.id, signal());
-    assert.equal(blocked.kind, 'blocked');
     const operation = await owner.openOperation(signal());
     try {
       assert.equal((await operation.readSource({ root: 'r', path: 'private/Hidden.swift' })).text,
@@ -459,7 +457,7 @@ test('cancellation during codemap extraction retains committed membership and ge
       const finalized = await client.finalize(draft.id, signal());
       assert.equal(finalized.kind, 'ready');
       if (finalized.kind === 'ready') await verifyBundle(finalized.directory);
-      await writeFile(join(f.base, 'cancel-registration-receipt.json'), JSON.stringify({ committed, state, blocked, resumed, finalized,
+      await writeFile(join(f.base, 'cancel-registration-receipt.json'), JSON.stringify({ committed, state, resumed, finalized,
         enumeration: operation.snapshot.enumeration }, null, 2) + '\n');
     } finally { await operation.close(); await owner.close(); await client.close(); }
   } finally { release(); await runtime.close(); }
