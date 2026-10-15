@@ -6068,11 +6068,12 @@
         ]
       ],
       "changes": [
-        "Bind ready-publication currentness to the existing owner of workspace demands. Revalidate confined raw bytes, artifact key, mode and applicable policy after extraction before completing the managed catalog. Native reads enforce root identity; no watcher ticket or app store is imported. The file also contains existing operation lifecycle, exploration and Git bindings."
+        "Bind ready-publication currentness to the existing owner of workspace demands. Revalidate confined raw bytes, artifact key, mode and applicable policy after extraction before completing the managed catalog. Native reads enforce root identity; no watcher ticket or app store is imported. The file also contains existing operation lifecycle, exploration and Git bindings.",
+        "Admit source capabilities per requested root; pure captured-value operations no longer trigger unrelated source admission. Validate all source roots at Git, tree and structure boundaries; include the output root for whole-workspace operations. Fresh single-root validation serves automatic graph queries."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "fd6fd27a96882edb09e7f440606edaa6102e58938f35ec7ef0a34622723e726b",
+      "sha256": "7352e9fbc696268dfa8824164c6febe8a5aa34f843a48f66ad99ab4b5a1454b0",
       "classification": "handwritten"
     },
     {
@@ -6143,7 +6144,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "55a23ccf3337caa120e19129c6e65533c6d20097ba6a69b3c2cc83e495203b04",
+      "sha256": "a82c1ef60815761670418645dda1501121c4d61d4588404ba5adf50e6b21dbbd",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6153,7 +6154,29 @@
       ],
       "changes": [
         "Bind collection of current replies to automatic reacquisition through the existing pinned graph and draft owner. Replace observed material membership and its complete acquisition capture together only while map identity, revision and freeze generation match. Preserve revision and surviving inspection order; cancellation is checked before publishing the observation. Other draft orchestration remains owned by the existing runtime.",
-        "Match MCPSelectionToolProvider.swift:616-687 persistence before automatic target acquisition. Prepare explicit materials and pure candidate metadata first, then commit explicit intent with live pending state before native target reads. Acquisition owns a copied candidate map. Apply completed materials and outcomes only while their captured owner, revision and finalization generation remain current. Preview is hypothetical. For draft_update, admit its receipt before committing the mutation. Prepare Git candidates separately."
+        "Match MCPSelectionToolProvider.swift:616-687 persistence before automatic target acquisition. Prepare explicit materials and pure candidate metadata first, then commit explicit intent with live pending state before native target reads. Acquisition owns a copied candidate map. Apply completed materials and outcomes only while their captured owner, revision and finalization generation remain current. Preview is hypothetical. For draft_update, admit its receipt before committing the mutation. Prepare Git candidates separately.",
+        "Validate represented source-root identities before selection serving in automatic and manual modes, including required codemaps and zero-target queries. Root serving is independent of graph eligibility; per-root failure aggregation and remaining epoch/readiness contracts are separate."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "src/workspace/source-access.ts",
+      "sha256": "eb4e4506a7b988755d64c3a966a0da52344c25b1e7bd78608aa711879b7c0cc2",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          12928,
+          12946
+        ],
+        [
+          13189,
+          13212
+        ]
+      ],
+      "changes": [
+        "Bind independent source-root authority to the existing native declared/canonical/device/inode capability. Admit requested roots once per operation, retain native handles, and use a fresh root check before captured graph serving. Native I/O revalidates cached capabilities. Existing protected paths and overlapping-root ignore checks remain at RootPolicy. No new graph or capability manager is introduced."
       ]
     }
   ],

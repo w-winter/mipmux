@@ -61,7 +61,7 @@ export class RootPolicy {
     const cached = directory ? this.#directories.get(key) : this.#roots.get(root);
     if (cached) return cached;
     const reply = await this.access.bridge.request({
-      kind: 'captureIgnoreInputs', root: this.access.root(root).handle,
+      kind: 'captureIgnoreInputs', root: (await this.access.openRoot(root)).handle,
       directory: directory ? { kind: 'descendant', path: directory } : { kind: 'root' },
       settings: this.declaration.ignoreSettings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths],
     }, this.access.signal);
@@ -89,7 +89,7 @@ export class RootPolicy {
         if (captured) directories.push({ path: ancestor, controls: captured.controls });
       }
       const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs, directories,
-        capture: { kind: 'captureIgnoreInputs', root: this.access.root(binding.root).handle, directory: { kind: 'root' },
+        capture: { kind: 'captureIgnoreInputs', root: (await this.access.openRoot(binding.root)).handle, directory: { kind: 'root' },
           settings: rootInputs.settings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths] },
         queries: [{ path: binding.path, isDirectory: directory }] }, this.access.signal);
       for (const captured of result.result.directories) {

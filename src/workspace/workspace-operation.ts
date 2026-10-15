@@ -115,11 +115,23 @@ export class WorkspaceOperation {
     });
   }
   fork(signal: AbortSignal): Promise<WorkspaceOperation> { this.#check(); return this.openPinned(signal); }
-  validateRoots() {
+  validateSourceRoot(name: string) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      await access.validateRoot(name);
+    });
+  }
+  validateSourceRoots() {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       await access.bridge.request({ kind: 'openRoots', roots: this.snapshot.roots.map(root => ({ name: root.name,
         absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity })) }, this.signal);
+    });
+  }
+  validateRoots() {
+    return this.#track(async () => {
+      await this.validateSourceRoots();
+      const access = await (this.#access ??= this.#openAccess());
       const output = this.snapshot.outputRoot;
       await access.bridge.request({ kind:'openRoots',roots:[{ name:'output',absolutePath:output.declaredPath,access:'output',expected:output }] },this.signal);
     });
@@ -162,10 +174,7 @@ export class WorkspaceOperation {
   }
   async #openAccess(): Promise<NativeAccess> {
     const bridge = this.runtime.makeBridge(); this.#bridge = bridge;
-    const opened = await bridge.request({ kind: 'openRoots', roots: this.snapshot.roots.map(root => ({ name: root.name,
-      absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity })) }, this.signal);
-
-    return new NativeAccess(bridge, opened.result.roots, this.signal);
+    return new NativeAccess(bridge, this.snapshot.roots, this.signal);
   }
   #check(): void {
     if (this.#closing) throw new WorkspaceFailure('operationClosed');
@@ -212,6 +221,7 @@ export class WorkspaceOperation {
   electGitTarget(paths: readonly string[]) {
     const captured = [...paths];
     return this.#track(async () => {
+      await this.validateSourceRoots();
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request({ kind: 'electGitTarget', paths: captured,
         roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result;
@@ -220,6 +230,7 @@ export class WorkspaceOperation {
   revalidateGitTargets(input: Extract<NativeOperation, { kind: 'revalidateGitTargets' }>) {
     const captured = structuredClone(input);
     return this.#track(async () => {
+      await this.validateSourceRoots();
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(captured, this.signal)).result;
     });
@@ -227,6 +238,7 @@ export class WorkspaceOperation {
   openGitSourceAccess(identity: RootIdentity) {
     const captured = structuredClone(identity);
     return this.#track(async () => {
+      await this.validateSourceRoots();
       const access = await (this.#access ??= this.#openAccess());
       const opened = await access.bridge.request({ kind: 'openRoots', roots: [{ name: 'GitRepository',
         absolutePath: captured.declaredPath, access: 'source', expected: captured }] }, this.signal);
@@ -299,6 +311,7 @@ export class WorkspaceOperation {
   }
   renderFileTree(input: Extract<NativeOperation, { kind: 'renderFileTree' }>) {
     return this.#track(async () => {
+      await this.validateSourceRoots();
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(input, this.signal)).result;
     });
@@ -370,6 +383,7 @@ export class WorkspaceOperation {
   }
   queryStructure(input: Extract<NativeOperation, { kind: 'queryStructure' }>) {
     return this.#track(async () => {
+      await this.validateSourceRoots();
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(input, this.signal)).result;
     });

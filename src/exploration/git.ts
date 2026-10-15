@@ -17,6 +17,7 @@ export async function readGit(operation: WorkspaceOperation, request: GitRequest
   if (!configured) throw new WorkspaceFailure('gitNotConfigured');
   const root = operation.snapshot.roots.find(root => root.name === request.root);
   if (!root) throw new WorkspaceFailure('unknownRoot');
+  await operation.validateSourceRoots();
   if ('path' in request && request.path !== null) await operation.authorizeComparisonPath({ root: request.root, path: request.path });
   const run = async (cwd: string, args: readonly string[]) => {
     const result = await gitProcess(operation.runtime.supervisor, configured.executable, cwd, args, operation.signal, { kind: 'repository' });

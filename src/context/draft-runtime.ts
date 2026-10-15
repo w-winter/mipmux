@@ -420,6 +420,7 @@ export class DraftRuntime {
         const explicitCurrent = new Map([...current].filter(([, material]) => material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
         const explicit = request.op === 'get' ? explicitCurrent
           : await this.#prepareExplicitSelection(operation, prepared, current, [current]);
+        await this.#validateSelectionRoots(operation, explicit);
         const targets = this.#automaticCandidates(explicit, prepared.mode, revision);
         const candidate = this.#mutationChanges(explicitCurrent, explicit, prepared.state, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
@@ -607,7 +608,13 @@ export class DraftRuntime {
   }
   async #derive(operation: WorkspaceOperation, explicit: Map<string, Material>, mode: CodemapMode,
     revision: number): Promise<DerivedMaterials> {
-    return acquireAutomaticCodemaps(operation, explicit, this.#automaticCandidates(explicit, mode, revision), { draftId: this.id, revision });
+    await this.#validateSelectionRoots(operation, explicit);
+    const targets = this.#automaticCandidates(explicit, mode, revision);
+    return acquireAutomaticCodemaps(operation, explicit, targets, { draftId: this.id, revision });
+  }
+  async #validateSelectionRoots(operation: WorkspaceOperation, explicit: ReadonlyMap<string, Material>): Promise<void> {
+    const roots = new Set([...explicit.values()].flatMap(({ record }) => record.kind === 'source' ? [record.selection.source.root] : []));
+    for (const root of roots) await operation.validateSourceRoot(root);
   }
   #automaticCandidates(explicit: ReadonlyMap<string, Material>, mode: CodemapMode, revision: number): readonly StructureFile[] {
     if (mode === 'manual') return [];

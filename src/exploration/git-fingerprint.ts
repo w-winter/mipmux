@@ -19,6 +19,6 @@ export async function captureGitFingerprint(operation: WorkspaceOperation, owner
   const baseRefSHA = comparison.kind === 'unstaged' || comparison.kind === 'revspec' || comparison.base === 'HEAD'
     ? headSHA : gitText(await run(['rev-parse', comparison.base])).trim();
   const status = comparison.kind === 'revspec' ? Buffer.alloc(0) : await run(['status', '--porcelain', '-z', '--untracked-files=all']);
-  return (await owner.access.bridge.request({ kind: 'fingerprintGitDiff', root: owner.access.root('GitRepository').handle,
+  return (await owner.access.bridge.request({ kind: 'fingerprintGitDiff', root: (await owner.access.openRoot('GitRepository')).handle,
     compare: commands.display, headSHA, baseRefSHA, status: status.toString('base64') }, operation.signal)).result.fingerprint;
 }

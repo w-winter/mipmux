@@ -5,18 +5,37 @@ import type { AdmittedRoot, SourcePath } from '../contracts/inventory.js';
 import { WorkspaceFailure } from './values.js';
 
 export interface OpenRoot extends AdmittedRoot { readonly handle: NativeHandle }
+/** Admits requested roots once per operation; native I/O rechecks each retained capability. */
 export class NativeAccess {
-  constructor(readonly bridge: BridgeClient, readonly roots: readonly OpenRoot[], readonly signal: AbortSignal) {}
-  root(name: string): OpenRoot {
+  readonly #opened = new Map<string, OpenRoot>();
+  constructor(readonly bridge: BridgeClient, readonly roots: readonly AdmittedRoot[], readonly signal: AbortSignal) {}
+  root(name: string): AdmittedRoot {
     const root = this.roots.find(root => root.name === name);
     if (!root) throw new WorkspaceFailure('unknownRoot', { root: name });
     return root;
   }
+  async openRoot(name: string): Promise<OpenRoot> {
+    const existing = this.#opened.get(name);
+    if (existing) return existing;
+    const root = this.root(name);
+    const opened = await this.#openRoot(root);
+    this.#opened.set(name, opened);
+    return opened;
+  }
+  /** Revalidates the physical root before serving captured graph data. */
+  async validateRoot(name: string): Promise<void> { await this.#openRoot(this.root(name)); }
+  async #openRoot(root: AdmittedRoot): Promise<OpenRoot> {
+    const opened = await this.bridge.request({ kind: 'openRoots', roots: [{ name: root.name,
+      absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity }] }, this.signal);
+    const capability = opened.result.roots[0];
+    if (!capability) throw new WorkspaceFailure('nativeProtocolError');
+    return capability;
+  }
   async list(root: string, directory: DirectoryRef) {
-    return (await this.bridge.request({ kind: 'listDirectory', root: this.root(root).handle, directory }, this.signal)).entries;
+    return (await this.bridge.request({ kind: 'listDirectory', root: (await this.openRoot(root)).handle, directory }, this.signal)).entries;
   }
   async read(source: SourcePath, expected: SourceIdentity | null) {
-    const reply = await this.bridge.request({ kind: 'readSource', root: this.root(source.root).handle, path: source.path, expected }, this.signal);
+    const reply = await this.bridge.request({ kind: 'readSource', root: (await this.openRoot(source.root)).handle, path: source.path, expected }, this.signal);
 
     return { bytes: reply.bytes, ...reply.result };
   }

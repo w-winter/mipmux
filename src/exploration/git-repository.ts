@@ -24,6 +24,7 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
   if (!configured) throw new WorkspaceFailure('gitNotConfigured');
   const root = operation.snapshot.roots.find(root => root.name === rootName);
   if (!root) throw new WorkspaceFailure('unknownRoot');
+  await operation.validateSourceRoots();
   const run = async (cwd: string, args: readonly string[]) => {
     const result = await gitProcess(operation.runtime.supervisor, configured.executable, cwd, args, operation.signal, { kind: 'repository' });
     if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });

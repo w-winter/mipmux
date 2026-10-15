@@ -115,7 +115,7 @@ export async function prepareGitDiffComparison(operation: WorkspaceOperation, re
   const resolved = await resolveMainCompare(operation, owner, commands.comparison);
   if (resolved !== null) commands = await operation.gitDiffOperation({ ...preparation, compare: resolved });
   else {
-    const snapshot = await operation.resolveGitSnapshotComparison(owner.access.root('GitRepository').handle, request.compare);
+    const snapshot = await operation.resolveGitSnapshotComparison((await owner.access.openRoot('GitRepository')).handle, request.compare);
     if (snapshot.kind === 'gitSnapshotComparisonError') throw new WorkspaceFailure(snapshot.code, { message: snapshot.message });
     commands = await operation.gitDiffOperation({ ...preparation, compare: snapshot.comparison });
   }
