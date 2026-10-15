@@ -1,0 +1,197 @@
+[
+  {
+    "expected": {
+      "counts": {
+        "bytes": 7590,
+        "referenceFailures": 0,
+        "resolutions": 100000,
+        "targets": 100
+      },
+      "kind": "ready",
+      "targets": [
+        "Peer0.swift",
+        "Peer1.swift",
+        "Peer10.swift",
+        "Peer11.swift",
+        "Peer12.swift",
+        "Peer13.swift",
+        "Peer14.swift",
+        "Peer15.swift",
+        "Peer16.swift",
+        "Peer17.swift",
+        "Peer18.swift",
+        "Peer19.swift",
+        "Peer2.swift",
+        "Peer20.swift",
+        "Peer21.swift",
+        "Peer22.swift",
+        "Peer23.swift",
+        "Peer24.swift",
+        "Peer25.swift",
+        "Peer26.swift",
+        "Peer27.swift",
+        "Peer28.swift",
+        "Peer29.swift",
+        "Peer3.swift",
+        "Peer30.swift",
+        "Peer31.swift",
+        "Peer32.swift",
+        "Peer33.swift",
+        "Peer34.swift",
+        "Peer35.swift",
+        "Peer36.swift",
+        "Peer37.swift",
+        "Peer38.swift",
+        "Peer39.swift",
+        "Peer4.swift",
+        "Peer40.swift",
+        "Peer41.swift",
+        "Peer42.swift",
+        "Peer43.swift",
+        "Peer44.swift",
+        "Peer45.swift",
+        "Peer46.swift",
+        "Peer47.swift",
+        "Peer48.swift",
+        "Peer49.swift",
+        "Peer5.swift",
+        "Peer50.swift",
+        "Peer51.swift",
+        "Peer52.swift",
+        "Peer53.swift",
+        "Peer54.swift",
+        "Peer55.swift",
+        "Peer56.swift",
+        "Peer57.swift",
+        "Peer58.swift",
+        "Peer59.swift",
+        "Peer6.swift",
+        "Peer60.swift",
+        "Peer61.swift",
+        "Peer62.swift",
+        "Peer63.swift",
+        "Peer64.swift",
+        "Peer65.swift",
+        "Peer66.swift",
+        "Peer67.swift",
+        "Peer68.swift",
+        "Peer69.swift",
+        "Peer7.swift",
+        "Peer70.swift",
+        "Peer71.swift",
+        "Peer72.swift",
+        "Peer73.swift",
+        "Peer74.swift",
+        "Peer75.swift",
+        "Peer76.swift",
+        "Peer77.swift",
+        "Peer78.swift",
+        "Peer79.swift",
+        "Peer8.swift",
+        "Peer80.swift",
+        "Peer81.swift",
+        "Peer82.swift",
+        "Peer83.swift",
+        "Peer84.swift",
+        "Peer85.swift",
+        "Peer86.swift",
+        "Peer87.swift",
+        "Peer88.swift",
+        "Peer89.swift",
+        "Peer9.swift",
+        "Peer90.swift",
+        "Peer91.swift",
+        "Peer92.swift",
+        "Peer93.swift",
+        "Peer94.swift",
+        "Peer95.swift",
+        "Peer96.swift",
+        "Peer97.swift",
+        "Peer98.swift",
+        "Peer99.swift"
+      ]
+    },
+    "name": "shared-resolution-boundary"
+  },
+  {
+    "expected": {
+      "kind": "budget",
+      "reason": {
+        "attempted": 101000,
+        "kind": "resolutionLimit",
+        "limit": 100000
+      }
+    },
+    "name": "shared-resolution-overflow"
+  },
+  {
+    "expected": {
+      "kind": "budget",
+      "reason": {
+        "attempted": 101000,
+        "kind": "referenceFailureLimit",
+        "limit": 100000
+      }
+    },
+    "name": "unresolved-per-source"
+  },
+  {
+    "expected": {
+      "kind": "budget",
+      "reason": {
+        "attempted": 1,
+        "kind": "resolutionLimit",
+        "limit": 0
+      }
+    },
+    "name": "selected-edge-counts"
+  },
+  {
+    "expected": {
+      "kind": "budget",
+      "reason": {
+        "attempted": 1,
+        "kind": "targetLimit",
+        "limit": 0
+      }
+    },
+    "name": "remaining-target-budget"
+  },
+  {
+    "expected": {
+      "counts": {
+        "bytes": 72,
+        "referenceFailures": 0,
+        "resolutions": 1,
+        "targets": 1
+      },
+      "kind": "ready",
+      "targets": [
+        "é.swift"
+      ]
+    },
+    "name": "utf8-byte-boundary"
+  },
+  {
+    "expected": {
+      "kind": "budget",
+      "reason": {
+        "attempted": 72,
+        "kind": "byteLimit",
+        "limit": 71
+      }
+    },
+    "name": "utf8-byte-overflow"
+  },
+  {
+    "expected": {
+      "kind": "budget",
+      "reason": {
+        "attempted": 1,
+        "kind": "referenceFailureLimit",
+        "limit": 0
+      }
+    },
+    "name": "too-common-is-a-reference-failure"
+  }
+]

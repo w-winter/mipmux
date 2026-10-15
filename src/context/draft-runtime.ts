@@ -593,6 +593,10 @@ export class DraftRuntime {
       process.stderr.write(JSON.stringify({ level: 'warn', event: 'automaticCodemapDemandRejected', draftId: this.id,
         revision, inventoryDigest: snapshot.inventoryDigest, attempted: resolution.attempted, limit: resolution.limit }) + '\n');
     }
+    if (resolution.kind === 'queryBudget') for (const rejection of resolution.rejections) {
+      process.stderr.write(JSON.stringify({ level: 'warn', event: 'automaticCodemapQueryRejected', draftId: this.id,
+        revision, inventoryDigest: snapshot.inventoryDigest, ...rejection }) + '\n');
+    }
     for (const target of resolution.targets) {
       const source = { root: target.root, path: target.path }, id = sourceId(source), existing = previous.get(id);
       if (existing?.record.kind === 'source' && existing.record.selectionOrigin === 'inferred') {

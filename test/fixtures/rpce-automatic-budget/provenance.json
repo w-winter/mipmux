@@ -1,0 +1,21 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "cases": 8,
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sha256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapAutomaticSelectionModels.swift",
+      "sha256": "d1610e1932afff29aa10eead766733e2f12156679659caa51f39529659877377"
+    }
+  ],
+  "generator": "scripts/generate-automatic-budget-fixtures.mjs",
+  "generatorSHA256": "8bf51d23c9886f9c0566d935b87323166f79d8fd079e99f25d68dd89bc016da9",
+  "input": "test/fixtures/automatic-root-cases.ts",
+  "inputSHA256": "9d541112ab131da57136add9be84c6b5baf91350f6085549342eebe9e5aac848",
+  "adapters": "test/fixtures/automatic-query-oracle.swift",
+  "adaptersSHA256": "7708c20c6c88a9634c62ddf2efb2cda995eff1bc9007ba5d11da00f8ea0843d5",
+  "scope": "Original automaticSelectionLatest body and ordering execute against settled captured adjacency. Adapters construct syntactic postings/edges; this proves root-query counting and budgets, not app currentness, matching or outer-store aggregation."
+}

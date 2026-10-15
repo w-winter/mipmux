@@ -1,15 +1,9 @@
 import { structureValidator, type StructureRequest } from '../contracts/exploration.js';
 import type { NativeStructureInput } from '../contracts/structure.js';
-import type { RootIdentity } from '../contracts/workspace.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
-import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { WorkspaceFailure } from '../workspace/values.js';
+import { structureId } from '../workspace/structure-identity.js';
 import { identityEncoding, serializedBytes, type ResultEncoding } from './output-budget.js';
-
-// Headless roots/files have no app UUID. Stable identities retain RPCE's UUID ordering and equality.
-function structureId(identity: RootIdentity, path: string | null): string {
-  const hex = sha256(canonicalJSON({ identity, path })).slice(0, 32);
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
 
 export async function getCodeStructure(operation: WorkspaceOperation, request: StructureRequest, encode?: ResultEncoding) {
   if (!structureValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');

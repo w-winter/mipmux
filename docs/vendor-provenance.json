@@ -5882,6 +5882,96 @@
         "WorkspaceCodemapGraphSizeAccounting is the original value declaration from Models/WorkspaceCodemapSelectionGraphIncrementalModels.swift:5-12. Slot contribution is modeled by the original contributed/empty associated-value cases in the snapshot binding.",
         "Keep copied function signatures and accounting guards with scoped SwiftLint exemptions; outer native query maps rejected candidates to source graph_revoked presentation."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "src/workspace/automatic-root-query.ts",
+      "sha256": "76e785e19327e63b3049cf818e9ea4992b4c03bd1b3b390c4bb25c6e196535af",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          386,
+          526
+        ]
+      ],
+      "changes": [
+        "Translate settled automaticSelectionLatest counting and ordered budget rejection into the pure headless matcher so saved verification needs no native executable. Distinct per-source targets count resolutions before seed exclusion; normalized missing/over-fanout names count failures.",
+        "Preserve resolution/reference-failure/target/byte rejection order, all-or-none root targets and64-byte-plus-UTF8-path materialized charges. Captured identities replace app fences/generations; full currentness remains a separate contract."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "src/workspace/structure-index.ts",
+      "sha256": "b5657a1a74644b491dd02280ff5e61fc64625801a936345ab1cfb2cf2f01044e",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          12632,
+          12662
+        ],
+        [
+          12801,
+          12859
+        ],
+        [
+          12948,
+          12964
+        ],
+        [
+          13125,
+          13180
+        ]
+      ],
+      "changes": [
+        "Bind admitted discoverable identities to immutable inventory and shared headless UUID ordering. Source/root admission and shared budgets retain production defaults from Models/WorkspaceCodemapAutomaticSelectionModels.swift:315-391.",
+        "Reject a refused root without charging counters, retain useful later roots, then apply the existing1024-target demand gate from Selection/WorkspaceSelectionMutationService.swift:107-143. Return typed rejections rather than throwing or truncating accepted targets."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "test/fixtures/rpce-automatic-budget/cases.json",
+      "sha256": "0ed749ac4039cb1c60348a0e24e7b6a4696c2b865627648d7981582be0acb363",
+      "classification": "fixture",
+      "ranges": [
+        [
+          386,
+          526
+        ],
+        [
+          1752,
+          1769
+        ]
+      ],
+      "changes": [
+        "Original Swift automaticSelectionLatest body and source ordering executed against fixture-only settled adjacency. Source/adapter/input hashes and scope limits are recorded in fixture provenance."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "test/fixtures/rpce-automatic-budget/provenance.json",
+      "sha256": "bc811408df5dc7fdca91d85a5693d57e1537fb8bade3850d9fa0c0bea073d22f",
+      "classification": "fixture",
+      "ranges": [
+        [
+          386,
+          526
+        ],
+        [
+          1752,
+          1769
+        ]
+      ],
+      "changes": [
+        "Original Swift automaticSelectionLatest body and source ordering executed against fixture-only settled adjacency. Source/adapter/input hashes and scope limits are recorded in fixture provenance."
+      ]
     }
   ],
   "dependencies": [
