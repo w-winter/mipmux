@@ -56,6 +56,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     inventory: manifest.inventory,
     prompt: manifest.prompt,
     materials,
+    automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
     fileTree,
     clipboard: decodedBody(context),
     clipboardPreset: manifest.clipboardPreset,

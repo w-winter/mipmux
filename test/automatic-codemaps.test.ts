@@ -18,6 +18,7 @@ import { scriptedProvider } from './fixtures/scripted-provider.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { selectionValidator } from '../src/contracts/selection.js';
+import { failureCode } from '../src/runtime/tool-result.js';
 
 const signal = () => new AbortController().signal;
 const maxOutputBytes = 100000;
@@ -193,6 +194,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
         }
       }
       const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
+        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
         codemapMode: manifest.codemapMode, materials,
         fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), text: saved.fileTree.text } }, signal()));
       manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), span: rendered.fileTreeSpan };
@@ -203,6 +205,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
       await assert.rejects(verifyBundle(ready.directory), /bundleIntegrityFailed/);
     }
     const restored = renderBundle(await prepareClipboard(f.runtime, { request: ready.manifest.request, inventory: ready.manifest.inventory,
+      automaticAcquisition: { kind: 'settled', outcomes: ready.manifest.automaticCodemaps },
       prompt: ready.manifest.prompt, codemapMode: ready.manifest.codemapMode, materials: saved.materials, fileTree: saved.fileTree }, signal()));
     await writeFile(join(ready.directory, 'context.md'), restored.context); await writeFile(join(ready.directory, 'handoff.md'), restored.handoff);
     await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON(ready.manifest));
@@ -230,6 +233,7 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
     manifest.inventory.inventoryDigest = inventoryDigest(manifest.inventory);
     const materials = saved.materials.filter(item => item.record.id !== sourceId(dependency));
     const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
+      automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
       codemapMode: manifest.codemapMode, materials,
       fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), text: saved.fileTree.text } }, signal()));
     manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), span: rendered.fileTreeSpan };
@@ -349,6 +353,63 @@ test('automatic selection get retries unavailable targets without overwriting a 
       await mkdir('test-output', { recursive: true });
       await writeFile('test-output/automatic-get-' + scenario + '-proof.json', JSON.stringify({ scenario, ready, replies }, null, 2) + '\n');
     } finally { release(); await f.runtime.close(); }
+  });
+});
+
+test('manage selection persists explicit intent before automatic acquisition and fences later presentation', async t => {
+  for (const scenario of ['complete', 'cancel', 'reply-cap', 'concurrent-manual', 'freeze'] as const) await t.test(scenario, async () => {
+    let armed = false, entered!: () => void, release!: () => void;
+    const entering = new Promise<void>(resolve => { entered = resolve; }), held = new Promise<void>(resolve => { release = resolve; });
+    const f = await fixture(async (path, pinned) => {
+      if (armed && pinned && path === 'SharedA.swift') { armed = false; entered(); await held; }
+    });
+    const abort = new AbortController();
+    const draft = await f.workspace.createDraft(request, signal()); armed = true;
+    const work = draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'set', paths: ['r/Seed.swift'],
+      view: 'files', maxOutputBytes: scenario === 'reply-cap' ? 1 : maxOutputBytes })), abort.signal);
+    const observed = (async () => {
+      try { return { kind: 'reply' as const, reply: await work }; }
+      catch (error) { return { kind: 'error' as const, code: failureCode(error) }; }
+    })();
+    try {
+      await Promise.race([entering, observed.then(() => { throw new Error('Automatic acquisition was not held'); })]);
+      assert.equal(draft.revision, 1);
+      assert.deepEqual((await sources(draft)).map(item => item.selection.source.path), ['Seed.swift']);
+      const pending = await draft.inspect({ view: 'metadata', maxOutputBytes, continuation: null }, signal());
+      assert(pending.kind === 'metadata'); assert.equal(pending.measurement.complete, false);
+      assert(pending.diagnostics.some(item => item.code === 'automaticCodemapsPending'));
+      const observations: unknown[] = [pending];
+      if (scenario === 'cancel') abort.abort();
+      else if (scenario === 'concurrent-manual') await draft.update({ expectedRevision: 1, maxOutputBytes, mutation: { kind: 'clearCodemaps' } }, signal());
+      else if (scenario === 'freeze') {
+        const blocked = await draft.finalize(signal()); assert.equal(blocked.kind, 'blocked');
+        if (blocked.kind === 'blocked') assert.equal(blocked.measurement.complete, false);
+        observations.push(blocked);
+      }
+      release();
+      const outcome = await observed;
+      if (scenario === 'cancel' || scenario === 'reply-cap') {
+        assert(outcome.kind === 'error');
+        assert.equal(outcome.code, scenario === 'cancel' ? 'cancelled' : 'outputBudgetTooSmall');
+        observations.push(outcome);
+      } else { assert(outcome.kind === 'reply'); assert.equal(outcome.reply.revision, 1); observations.push(outcome.reply); }
+      if (scenario === 'cancel' || scenario === 'freeze') {
+        const unresolved = await draft.inspect({ view: 'metadata', maxOutputBytes, continuation: null }, signal());
+        assert(unresolved.kind === 'metadata'); assert.equal(unresolved.measurement.complete, false);
+        observations.push(unresolved);
+      }
+      if (scenario === 'concurrent-manual') {
+        assert.equal(draft.revision, 2); assert.equal((await sources(draft)).length, 1);
+      } else {
+        assert.equal(draft.revision, 1);
+        await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'files', maxOutputBytes })), signal());
+        assert.equal((await sources(draft)).length, 4); assert.equal(draft.revision, 1);
+      }
+      const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
+      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+      await mkdir('test-output', { recursive: true });
+      await writeFile('test-output/automatic-ordering-' + scenario + '-proof.json', JSON.stringify({ scenario, observations, ready }, null, 2) + '\n');
+    } finally { release(); await observed; await f.runtime.close(); }
   });
 });
 

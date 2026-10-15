@@ -6111,11 +6111,12 @@
         ]
       ],
       "changes": [
-        "Bind source per-target ready/unavailable results to captured source paths, raw identities and artifact keys. The closed expected-I/O codes come from the existing confined read boundary; schema-version15 persists a complete outcome table. Cancellation and invariant failures are not unavailable outcomes."
+        "Bind source per-target ready/unavailable results to captured source paths, raw identities and artifact keys. The closed expected-I/O codes come from the existing confined read boundary; schema-version15 persists a complete outcome table. Cancellation and invariant failures are not unavailable outcomes.",
+        "Model unresolved automatic observation as a live pending state with candidate count, separate from settled archival outcomes. Pending does not promise retained work."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "d1610e1932afff29aa10eead766733e2f12156679659caa51f39529659877377",
-      "sha256": "29b1155a23686539b77fe3759e871ba8a7da2fdd3154629d99c4c9fb755218a8",
+      "sha256": "e511d47bffb7ebd219de7be6b9bc6524d26d8c9398d9e700143f651c39cd36a4",
       "classification": "handwritten"
     },
     {
@@ -6129,11 +6130,12 @@
       ],
       "changes": [
         "Retain ready targets when expected target acquisition fails. Reacquire existing inferred material against pinned identity, record every canonical candidate and propagate cancellation or unexpected errors. The existing workspace/native read owner replaces tickets owned by the app for these settled captured targets.",
-        "Pending/unmapped presentation binds MCPServerViewModel+SelectionCore.swift:504-583: currentness/transient failures are pending; missing/security/non-regular/terminal-artifact failures are unmapped. Counts of acquisition outcomes are separate from root graph-query coverage. Source readiness waiting and graph-epoch revalidation remain separate contracts."
+        "Pending/unmapped presentation binds MCPServerViewModel+SelectionCore.swift:504-583: currentness/transient failures are pending; missing/security/non-regular/terminal-artifact failures are unmapped. Counts of acquisition outcomes are separate from root graph-query coverage. Source readiness waiting and graph-epoch revalidation remain separate contracts.",
+        "Summarize pending observation separately from settled acquisition results; candidate count is known while material completeness remains unresolved."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
-      "sha256": "ec68eba6fca7b113c840df248a7f062902fd3fc8536f5f733b68be5b87ec8fc1",
+      "sha256": "dce4cb0a530cf845e1ddb63208a00e6d9c2f397c06af1fa05a74c9426d26f135",
       "classification": "handwritten"
     },
     {
@@ -6141,7 +6143,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "79bf2381c81b878cf06a9534eef2a4621cf6f4e700925bad0cc60c7e5d9d2d20",
+      "sha256": "55a23ccf3337caa120e19129c6e65533c6d20097ba6a69b3c2cc83e495203b04",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6150,7 +6152,8 @@
         ]
       ],
       "changes": [
-        "Bind collection of current replies to automatic reacquisition through the existing pinned graph and draft owner. Replace observed material membership and its complete acquisition capture together only while map identity, revision and freeze generation match. Preserve revision and surviving inspection order; cancellation is checked before publishing the observation. Other draft orchestration remains owned by the existing runtime."
+        "Bind collection of current replies to automatic reacquisition through the existing pinned graph and draft owner. Replace observed material membership and its complete acquisition capture together only while map identity, revision and freeze generation match. Preserve revision and surviving inspection order; cancellation is checked before publishing the observation. Other draft orchestration remains owned by the existing runtime.",
+        "Match MCPSelectionToolProvider.swift:616-687 persistence before automatic target acquisition. Prepare explicit materials and pure candidate metadata first, then commit explicit intent with live pending state before native target reads. Acquisition owns a copied candidate map. Apply completed materials and outcomes only while their captured owner, revision and finalization generation remain current. Preview is hypothetical. For draft_update, admit its receipt before committing the mutation. Prepare Git candidates separately."
       ]
     }
   ],

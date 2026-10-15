@@ -223,7 +223,8 @@ export class SmipRuntime {
       const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), signal);
       if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
       const clipboard = await this.renderPresentation(preparedClipboardInput({ request: manifest.request, prompt: manifest.prompt,
-        inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree }), signal);
+        inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree,
+        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps } }), signal);
       if (canonicalJSON(manifest.clipboardPreset) !== canonicalJSON(clipboard.preset) || savedClipboard !== clipboard.text) throw new WorkspaceFailure('presentationChanged');
       return {...verified,kind:'currentVerified' as const};
     } finally { await operation.close(); }

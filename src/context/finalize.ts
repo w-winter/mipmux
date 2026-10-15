@@ -8,7 +8,7 @@ import { prepareRenderInput } from './final-tree.js';
 import { revalidateMaterials } from './revalidate.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
 import { refreshGitArtifactMaterials } from './git-artifact-material.js';
-import type { AutomaticCodemapOutcome } from '../contracts/automatic-codemaps.js';
+import type { AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -34,7 +34,7 @@ export class FinalizationOperation {
     codemapMode: CodemapMode,
     prompt: string,
     materials: readonly Material[],
-    automaticCodemaps: readonly AutomaticCodemapOutcome[],
+    automaticAcquisition: AutomaticAcquisitionState,
     revision: number,
     signal: AbortSignal,
     private readonly publishing: () => void = () => {},
@@ -46,7 +46,7 @@ export class FinalizationOperation {
       codemapMode,
       prompt,
       materials,
-      automaticCodemaps,
+      automaticAcquisition,
       revision,
       AbortSignal.any([signal, this.#cancel.signal, operation.signal]),
     );
@@ -62,7 +62,7 @@ export class FinalizationOperation {
     codemapMode: CodemapMode,
     prompt: string,
     materials: readonly Material[],
-    automaticCodemaps: readonly AutomaticCodemapOutcome[],
+    automaticAcquisition: AutomaticAcquisitionState,
     revision: number,
     signal: AbortSignal,
   ): Promise<FinalizationResult> {
@@ -74,9 +74,9 @@ export class FinalizationOperation {
       this.#capturedMaterials = materials;
       await revalidateMaterials(operation, materials);
       const { generation, ...inventory } = owner.snapshot;
-      const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory }, signal);
+      const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal);
       const rendered = renderBundle(input);
-      if (rendered.diagnostics.length) {
+      if (automaticAcquisition.kind === 'pending' || rendered.diagnostics.length) {
         return {
           kind: 'blocked',
           revision,
@@ -88,7 +88,7 @@ export class FinalizationOperation {
       const manifest: Manifest = {
         schemaVersion: 15,
         codemapMode,
-        automaticCodemaps: [...automaticCodemaps],
+        automaticCodemaps: [...automaticAcquisition.outcomes],
         request,
         requestDigest: sha256(canonicalJSON(request)),
         inventory,

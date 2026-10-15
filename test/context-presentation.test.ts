@@ -51,6 +51,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
         return { ...material, sourceBlock: { ...material.sourceBlock, text } };
       });
       const forged = renderBundle(await prepareClipboard(runtime, { request: manifest.request, inventory: manifest.inventory, codemapMode: manifest.codemapMode,
+        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
         prompt: manifest.prompt, materials, fileTree: saved.fileTree }, signal));
       manifest.materials = forged.records;
       manifest.fileTree.span = forged.fileTreeSpan;
@@ -62,6 +63,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
       await assert.rejects(verifyBundle(result.directory), /bundleIntegrityFailed/);
     }
     const restored = renderBundle(await prepareClipboard(runtime, { request: result.manifest.request, inventory: result.manifest.inventory,
+      automaticAcquisition: { kind: 'settled', outcomes: result.manifest.automaticCodemaps },
       codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials, fileTree: saved.fileTree }, signal));
     await writeFile(join(result.directory, 'context.md'), restored.context);
     await writeFile(join(result.directory, 'handoff.md'), restored.handoff);

@@ -32,7 +32,7 @@ import { acquirePatch } from '../patches/patch-input.js';
 import { type ItemCost, materialMetadata, renderBundle, renderInitialContext } from './render.js';
 import { revalidateMaterials } from './revalidate.js';
 import { FinalizationOperation, type FinalizationResult } from './finalize.js';
-import { StructureIndex } from '../workspace/structure-index.js';
+import { StructureIndex, type StructureFile } from '../workspace/structure-index.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { Compile } from 'typebox/compile';
 import { initialFileTree } from '../exploration/tree.js';
@@ -58,7 +58,7 @@ import { acquireGitArtifact, refreshGitArtifactMaterials, type GitArtifactMateri
 import { decorateGitPublicationReply } from './git-publication-reply.js';
 import { ReadRequest } from '../contracts/exploration.js';
 import { readFileReply } from '../exploration/read.js';
-import type { AutomaticCodemapOutcome } from '../contracts/automatic-codemaps.js';
+import type { AutomaticCodemapOutcome, AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
 import { acquireAutomaticCodemaps, automaticAcquisitionSummary, automaticCodemapDisposition, type DerivedMaterials } from './automatic-codemap-acquisition.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
@@ -75,7 +75,7 @@ type SelectionReplyFile = Omit<Extract<SelectionReplyEntry, { kind: 'full' }>, '
 export class DraftRuntime {
   readonly id = randomUUID();
   #materials: ReadonlyMap<string, Material> = new Map();
-  #automaticCodemaps: readonly AutomaticCodemapOutcome[] = [];
+  #automaticAcquisition: AutomaticAcquisitionState = { kind: 'settled', outcomes: [] };
   #selection: CanonicalSelection;
   get #codemapMode(): CodemapMode { return this.#selection.state.codemapAutoEnabled ? 'automatic' : 'manual'; }
   #structure: { readonly digest: string; readonly index: StructureIndex } | null = null;
@@ -157,7 +157,7 @@ export class DraftRuntime {
       const mode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
       const draft = new DraftRuntime(operation, request, onClosed, target, await captureSelection(admission, materials, mode));
       const derived = await draft.#derive(admission, materials, draft.#codemapMode, 0);
-      draft.#materials = derived.materials; draft.#automaticCodemaps = derived.automaticCodemaps;
+      draft.#materials = derived.materials; draft.#automaticAcquisition = { kind: 'settled', outcomes: derived.automaticCodemaps };
       signal.throwIfAborted();
       return draft;
     } finally {
@@ -291,7 +291,7 @@ export class DraftRuntime {
       // Repeat only preparation when another edit commits during the native projection or acquisition.
       if (revision !== this.#revision) continue;
       const candidate = this.#mutationChanges(latest, next.materials, state, prompt);
-      if (candidate.changed) this.#commit(next.materials, state, prompt, candidate.revision, next.automaticCodemaps);
+      if (candidate.changed) this.#commit(next.materials, state, prompt, candidate.revision, { kind: 'settled', outcomes: next.automaticCodemaps });
       return { revision: candidate.revision, aliases };
     }
   }
@@ -417,25 +417,32 @@ export class DraftRuntime {
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const prepared = await prepareSelection(operation, request, current, selection, grants);
-        const derived = request.op === 'get' ? await this.#derive(operation,
-          new Map([...current].filter(([, material]) => material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit')),
-          prepared.mode, revision)
-          : await this.#prepareResolvedSelection(operation, prepared, current, [current], revision);
-        const next = derived.materials;
-        const candidate = this.#mutationChanges(current, next, prepared.state, this.#prompt);
+        const explicitCurrent = new Map([...current].filter(([, material]) => material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
+        const explicit = request.op === 'get' ? explicitCurrent
+          : await this.#prepareExplicitSelection(operation, prepared, current, [current]);
+        const targets = this.#automaticCandidates(explicit, prepared.mode, revision);
+        const candidate = this.#mutationChanges(explicitCurrent, explicit, prepared.state, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
         this.#check(signal, revision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         if (prepared.usesInsertionGrant && grants !== this.#gitAdvertisements) throw new WorkspaceFailure('gitArtifactAdvertisementChanged');
         if (isMutation && candidate.changed) {
-          this.#commit(next, prepared.state, this.#prompt, candidate.revision, derived.automaticCodemaps);
+          const acquisition: AutomaticAcquisitionState = targets.length ? { kind: 'pending', candidateCount: targets.length }
+            : { kind: 'settled', outcomes: [] };
+          this.#commit(explicit, prepared.state, this.#prompt, candidate.revision, acquisition);
         }
-        const settled = await resolveSelectedCodemaps(operation, next);
+        const observationOwner = isMutation && candidate.changed ? explicit : current;
+        const replyRevision = isMutation ? candidate.revision : revision;
+        const derived = await acquireAutomaticCodemaps(operation, new Map(explicit), targets, { draftId: this.id, revision: replyRevision });
+        if (!isMutation) {
+          this.#check(signal, revision);
+          if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
+        }
+        const settled = await resolveSelectedCodemaps(operation, derived.materials);
         operation.signal.throwIfAborted();
-        if (request.op === 'get') this.#retainRefreshedPresentation(current, settled, derived.automaticCodemaps, revision, freezeGeneration);
-        else if (request.op !== 'preview') this.#retainCodemapPresentation(next, settled);
+        if (request.op !== 'preview') this.#retainRefreshedPresentation(observationOwner, settled, derived.automaticCodemaps, replyRevision, freezeGeneration);
         const reply = await this.#selectionReply(operation, request, settled, prepared.mode, prepared.invalid,
-          isMutation ? candidate.revision : revision, prompt, derived.automaticCodemaps);
+          replyRevision, prompt, derived.automaticCodemaps);
         operation.signal.throwIfAborted();
         if (request.op === 'preview' && request.strict && !reply.files.length && !reply.file_slices?.length) {
           throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
@@ -448,6 +455,11 @@ export class DraftRuntime {
   }
   async #prepareResolvedSelection(operation: WorkspaceOperation, prepared: ReturnType<typeof projectSelection>,
     current: ReadonlyMap<string, Material>, candidates: readonly ReadonlyMap<string, Material>[], revision: number): Promise<DerivedMaterials> {
+    const explicit = await this.#prepareExplicitSelection(operation, prepared, current, candidates);
+    return this.#derive(operation, explicit, prepared.mode, revision);
+  }
+  async #prepareExplicitSelection(operation: WorkspaceOperation, prepared: ReturnType<typeof projectSelection>,
+    current: ReadonlyMap<string, Material>, candidates: readonly ReadonlyMap<string, Material>[]) {
     const explicit = new Map([...current].filter(([, material]) => material.record.kind !== 'source'
       && material.record.kind !== 'gitMap' && material.record.kind !== 'gitPatch'));
     for (const required of this.request.requiredSources) {
@@ -466,18 +478,7 @@ export class DraftRuntime {
       explicit.set(id, material);
     }
     for (const material of prepared.artifactMaterials) explicit.set(material.record.id, material);
-    return this.#derive(operation, explicit, prepared.mode, revision);
-  }
-  #retainCodemapPresentation(pending: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>): void {
-    if (this.#closing || this.#state !== 'editable') return;
-    const next = new Map(this.#materials);
-    for (const [id, material] of settled) {
-      const previous = pending.get(id);
-      if (previous && next.get(id) === previous) {
-        next.set(id, material);
-      }
-    }
-    this.#materials = next;
+    return explicit;
   }
   #retainRefreshedPresentation(captured: ReadonlyMap<string, Material>, settled: ReadonlyMap<string, Material>,
     outcomes: readonly AutomaticCodemapOutcome[], revision: number, generation: number): void {
@@ -485,7 +486,7 @@ export class DraftRuntime {
     const next = new Map(captured);
     for (const id of next.keys()) if (!settled.has(id)) next.delete(id);
     for (const [id, material] of settled) next.set(id, material);
-    this.#materials = next; this.#automaticCodemaps = outcomes;
+    this.#materials = next; this.#automaticAcquisition = { kind: 'settled', outcomes };
   }
   #automaticPresentationPaths(snapshot: InventorySnapshot, display: SelectionRequest['path_display'], outcomes: readonly AutomaticCodemapOutcome[]) {
     const unmapped: string[] = [], pending: string[] = [];
@@ -504,7 +505,7 @@ export class DraftRuntime {
     const observed = await refreshGitArtifactMaterials(operation, [...materials.values()]);
     const snapshot = operation.snapshot;
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: observed }, operation.signal));
+      prompt, codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps } }, operation.signal));
     const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display, automaticCodemaps);
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
     const blocks: string[] = [];
@@ -575,11 +576,11 @@ export class DraftRuntime {
       if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
       const observed = await this.#liveMaterials([...next.values()], signal);
       const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
-        codemapMode: mode, materials: observed }, AbortSignal.any([signal, this.#cancel.signal])));
+        codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps } }, AbortSignal.any([signal, this.#cancel.signal])));
       this.#check(signal, request.expectedRevision);
       if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
       const result = { kind: 'preview' as const, draftId: this.id, revision: this.#revision, codemapMode: mode,
-        automaticAcquisition: automaticAcquisitionSummary(automaticCodemaps),
+        automaticAcquisition: automaticAcquisitionSummary({ kind: 'settled', outcomes: automaticCodemaps }),
         items: observed.map(material => materialMetadata(material.record)),
         measurement: rendered.measurement, costs: rendered.costs, diagnostics: rendered.diagnostics };
       const requiredBytes = serializedBytes(encode(result));
@@ -606,10 +607,13 @@ export class DraftRuntime {
   }
   async #derive(operation: WorkspaceOperation, explicit: Map<string, Material>, mode: CodemapMode,
     revision: number): Promise<DerivedMaterials> {
-    if (mode === 'manual') return { materials: explicit, automaticCodemaps: [] };
+    return acquireAutomaticCodemaps(operation, explicit, this.#automaticCandidates(explicit, mode, revision), { draftId: this.id, revision });
+  }
+  #automaticCandidates(explicit: ReadonlyMap<string, Material>, mode: CodemapMode, revision: number): readonly StructureFile[] {
+    if (mode === 'manual') return [];
     const seeds = [...explicit.values()].flatMap(({ record }) =>
       record.kind === 'source' && record.selection.kind !== 'codemap' ? [record.selection.source] : []);
-    if (!seeds.length) return { materials: explicit, automaticCodemaps: [] };
+    if (!seeds.length) return [];
     const snapshot = this.operation.snapshot;
     if (this.#structure?.digest !== snapshot.inventoryDigest) {
       this.#structure = { digest: snapshot.inventoryDigest, index: new StructureIndex(snapshot) };
@@ -623,7 +627,7 @@ export class DraftRuntime {
       process.stderr.write(JSON.stringify({ level: 'warn', event: 'automaticCodemapQueryRejected', draftId: this.id,
         revision, inventoryDigest: snapshot.inventoryDigest, ...rejection }) + '\n');
     }
-    return acquireAutomaticCodemaps(operation, explicit, resolution.targets, { draftId: this.id, revision });
+    return resolution.targets;
   }
   async #update(input: DraftUpdate, signal: AbortSignal, encode: ResultEncoding,
     promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null = null) {
@@ -631,7 +635,7 @@ export class DraftRuntime {
     const freezeGeneration = this.#freezeGeneration, current = this.#materials;
     const mutation = input.mutation;
     let next: ReadonlyMap<string, Material> = current, state = this.#selection.state, prompt = this.#prompt;
-    let automaticCodemaps = this.#automaticCodemaps;
+    let automaticAcquisition = this.#automaticAcquisition;
     if (mutation.kind === 'addDocument') {
       const id = 'document:' + mutation.document.id;
       if (current.has(id)) throw new WorkspaceFailure('duplicateMaterial', { id });
@@ -642,21 +646,23 @@ export class DraftRuntime {
       prompt = mutation.op === 'clear' ? '' : mutation.op === 'append' ? prompt + mutation.text : mutation.text;
     } else {
       const edits = mutation.kind === 'batch' ? mutation.edits : [mutation];
-      ({ next, state, automaticCodemaps } = await this.#prepareSourceEdits(edits, current, input.expectedRevision, signal));
+      const prepared = await this.#prepareSourceEdits(edits, current, input.expectedRevision, signal);
+      next = prepared.next; state = prepared.state;
+      automaticAcquisition = { kind: 'settled', outcomes: prepared.automaticCodemaps };
     }
     this.#check(signal, input.expectedRevision);
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-    const { changed, revision, result } = await this.#mutationReceipt(current, next, state, prompt, input.maxOutputBytes, encode, promptResponse, signal, automaticCodemaps);
+    const { changed, revision, result } = await this.#mutationReceipt(current, next, state, prompt, input.maxOutputBytes, encode, promptResponse, signal, automaticAcquisition);
     this.#check(signal, input.expectedRevision);
     if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
     if (changed) {
-      this.#commit(next, state, prompt, revision, automaticCodemaps);
+      this.#commit(next, state, prompt, revision, automaticAcquisition);
     }
     return freeze(result);
   }
-  #commit(next: ReadonlyMap<string, Material>, state: SelectionState, prompt: string, revision: number, automaticCodemaps: readonly AutomaticCodemapOutcome[]): void {
+  #commit(next: ReadonlyMap<string, Material>, state: SelectionState, prompt: string, revision: number, automaticAcquisition: AutomaticAcquisitionState): void {
     this.#materials = next; this.#selection = freeze({ roots: this.#selection.roots, state }); this.#prompt = prompt; this.#revision = revision;
-    this.#automaticCodemaps = automaticCodemaps;
+    this.#automaticAcquisition = automaticAcquisition;
   }
   #mutationChanges(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, state: SelectionState, prompt: string) {
     const changedIds = [...new Set([...current.keys(), ...next.keys()])].filter(id =>
@@ -667,19 +673,19 @@ export class DraftRuntime {
   }
   async #mutationReceipt(current: ReadonlyMap<string, Material>, next: ReadonlyMap<string, Material>, state: SelectionState,
     prompt: string, maxOutputBytes: number, encode: ResultEncoding,
-    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null, signal: AbortSignal, automaticCodemaps: readonly AutomaticCodemapOutcome[]) {
+    promptResponse: { readonly op: 'set' | 'append' | 'clear'; readonly prompt: string } | null, signal: AbortSignal, automaticAcquisition: AutomaticAcquisitionState) {
     const { changedIds, changed, revision } = this.#mutationChanges(current, next, state, prompt);
     const mode = state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const;
     const observed = await this.#liveMaterials([...next.values()], signal);
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
-      codemapMode: mode, materials: observed }, AbortSignal.any([signal, this.#cancel.signal])));
+      codemapMode: mode, materials: observed, automaticAcquisition }, AbortSignal.any([signal, this.#cancel.signal])));
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
     for (const id of changedIds) if (!next.has(id)) changedCosts.push({ id, bytes: 0, units: 0 });
     changedCosts.sort((a, b) => compareBytes(a.id, b.id));
     const receipt = (costs: typeof changedCosts, incompleteDetails: boolean) => ({
       kind: 'mutation' as const, revision, codemapMode: mode, changedCosts: costs, incompleteDetails,
-      automaticAcquisition: automaticAcquisitionSummary(automaticCodemaps),
+      automaticAcquisition: automaticAcquisitionSummary(automaticAcquisition),
       measurement: rendered.measurement, diagnostics: rendered.diagnostics,
       costInspection: { draftId: this.id, revision },
     });
@@ -736,7 +742,7 @@ export class DraftRuntime {
       );
     }
     const captured = [...this.#materials.values()], codemapMode = this.#codemapMode,
-      revision = this.#revision, state = this.#state, text = this.#prompt;
+      revision = this.#revision, state = this.#state, text = this.#prompt, automaticAcquisition = this.#automaticAcquisition;
     const materials = await this.#liveMaterials(captured, signal);
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
         codemapMode,
@@ -744,6 +750,7 @@ export class DraftRuntime {
         inventory: this.operation.snapshot,
         prompt: text,
         materials,
+        automaticAcquisition,
       }, signal));
     const prompt = { kind: 'prompt' as const, prompt: text };
     const records: (ItemCost | ReturnType<typeof materialMetadata> | typeof prompt)[] = request.view === 'costs'
@@ -791,6 +798,7 @@ export class DraftRuntime {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
       const input = { request: this.request, inventory: this.operation.snapshot, materials: [...this.#materials.values()],
+        automaticAcquisition: this.#automaticAcquisition,
         prompt: this.#prompt, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision,
         contextBudgetUnits: this.operation.runtime.options.contextBudgetUnits };
       const selection = this.selectionProjection();
@@ -807,7 +815,8 @@ export class DraftRuntime {
   validate(signal: AbortSignal) {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
-      const revision = this.#revision, captured = [...this.#materials.values()], prompt = this.#prompt, codemapMode = this.#codemapMode;
+      const revision = this.#revision, captured = [...this.#materials.values()], prompt = this.#prompt, codemapMode = this.#codemapMode,
+        automaticAcquisition = this.#automaticAcquisition;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const materials = await refreshGitArtifactMaterials(operation, captured);
@@ -818,6 +827,7 @@ export class DraftRuntime {
           inventory: this.operation.snapshot,
           prompt,
           materials,
+          automaticAcquisition,
         }, operation.signal));
         return freeze({
           kind: 'validation' as const,
@@ -844,7 +854,7 @@ export class DraftRuntime {
       this.#codemapMode,
       this.#prompt,
       [...this.#materials.values()],
-      this.#automaticCodemaps,
+      this.#automaticAcquisition,
       this.#revision,
       signal,
       publishing,

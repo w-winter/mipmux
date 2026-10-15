@@ -19,3 +19,8 @@ export const AutomaticCodemapOutcome = Type.Object({
   ]),
 }, { additionalProperties: false });
 export type AutomaticCodemapOutcome = Static<typeof AutomaticCodemapOutcome>;
+
+/** Pending describes an unresolved observation; only settled outcomes can be archived. */
+export type AutomaticAcquisitionState =
+  | { readonly kind: 'pending'; readonly candidateCount: number }
+  | { readonly kind: 'settled'; readonly outcomes: readonly AutomaticCodemapOutcome[] };

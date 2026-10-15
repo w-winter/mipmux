@@ -1,6 +1,6 @@
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { StructureFile } from '../workspace/structure-index.js';
-import { type AutomaticCodemapOutcome, automaticCodemapFailure } from '../contracts/automatic-codemaps.js';
+import { type AutomaticCodemapOutcome, type AutomaticAcquisitionState, automaticCodemapFailure } from '../contracts/automatic-codemaps.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { freeze, WorkspaceFailure } from '../workspace/values.js';
 import { acquireSource, sourceId, type Material } from './material-store.js';
@@ -36,11 +36,13 @@ export async function acquireAutomaticCodemaps(operation: WorkspaceOperation, ex
   return { materials: explicit, automaticCodemaps: freeze(outcomes) };
 }
 
-export function automaticAcquisitionSummary(outcomes: readonly AutomaticCodemapOutcome[]) {
+export function automaticAcquisitionSummary(state: AutomaticAcquisitionState) {
+  if (state.kind === 'pending') return { status: 'pending' as const, candidateCount: state.candidateCount, readyCount: 0, unavailableCount: 0 };
+  const outcomes = state.outcomes;
   const unavailable = outcomes.filter(item => item.outcome.kind === 'unavailable').length;
   const readyCount = outcomes.length - unavailable;
   const status = unavailable === 0 ? 'ok' as const : readyCount === 0 ? 'unavailable' as const : 'partial' as const;
-  return { status, readyCount, unavailableCount: unavailable };
+  return { status, candidateCount: outcomes.length, readyCount, unavailableCount: unavailable };
 }
 
 export function automaticCodemapDisposition(item: AutomaticCodemapOutcome): 'pending' | 'unmapped' | null {

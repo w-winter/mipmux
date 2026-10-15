@@ -7,6 +7,7 @@ import type { FinalFileTree } from './final-tree.js';
 import { canonicalJSON } from '../workspace/values.js';
 import { parseClipboard } from './clipboard.js';
 import { estimateUnits, scoutTokenBudget } from './budget.js';
+import type { AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
 
 export interface RenderInput {
   readonly codemapMode: CodemapMode;
@@ -14,6 +15,7 @@ export interface RenderInput {
   readonly inventory: Omit<InventorySnapshot, 'generation'>;
   readonly prompt: string;
   readonly materials: readonly Material[];
+  readonly automaticAcquisition: AutomaticAcquisitionState;
   readonly fileTree: FinalFileTree;
   readonly clipboard: string;
   readonly clipboardPreset: CapturedClipboardPreset;
@@ -79,8 +81,11 @@ function sourceComparisonDiagnostic(source: Extract<MaterialRecord, { kind: 'sou
   } };
 }
 
-function materialDiagnostics(materials: readonly Material[], units: number, allowance: number): Diagnostic[] {
+function materialDiagnostics(materials: readonly Material[], units: number, allowance: number, automatic: AutomaticAcquisitionState): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
+  if (automatic.kind === 'pending') {
+    diagnostics.push({ code: 'automaticCodemapsPending', materialId: null, details: { candidateCount: automatic.candidateCount } });
+  }
   for (const material of materials) {
     if (material.availability === 'pendingCodemap') {
       diagnostics.push({ code: 'codemapPending', materialId: material.record.id, details: { source: material.record.selection.source } });
@@ -109,7 +114,7 @@ export function renderBundle(input: RenderInput) {
   const context = input.clipboard, offset = Buffer.byteLength(context), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
   const measurement: Measurement = {
-    complete: materials.every(material => material.availability === 'settled'),
+    complete: input.automaticAcquisition.kind === 'settled' && materials.every(material => material.availability === 'settled'),
     bytes: offset,
     units,
     allowance,
@@ -117,7 +122,7 @@ export function renderBundle(input: RenderInput) {
     excess: Math.max(0, units - allowance),
     fixedOverhead: { bytes: fixedBytes, units: estimateUnits(fixedBytes) },
   };
-  const diagnostics = materialDiagnostics(materials, units, allowance);
+  const diagnostics = materialDiagnostics(materials, units, allowance, input.automaticAcquisition);
   const handoff = '# Context handoff\n\n' +
     block(
       canonicalJSON({
