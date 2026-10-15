@@ -1,0 +1,115 @@
+// Extracted from RepoPrompt CE; fixture wrappers and a modeled success return are added.
+// Recorded original ranges are verbatim. See receipt.md, provenance.json and LICENSE.
+struct WorkspaceCodemapPresentationRequest {
+    let ticket: WorkspaceCodemapArtifactDemandTicket
+    let logicalPath: WorkspaceCodemapLogicalPresentationPath
+}
+
+enum WorkspaceCodemapArtifactDemandResult {
+    case unavailable(WorkspaceCodemapArtifactDemandUnavailableReason)
+    case pending(WorkspaceCodemapArtifactDemandTicket)
+    case ready(WorkspaceCodemapArtifactDemandReady)
+}
+
+enum WorkspaceCodemapPresentationFreezeUnavailableReason: Equatable {
+    case emptyRequest
+    case entryLimitExceeded(limit: Int)
+    case retainedBundleLimitExceeded(limit: Int)
+    case duplicateFileID(UUID)
+    case mixedRootEpoch
+    case pending(WorkspaceCodemapArtifactDemandTicket)
+    case demandUnavailable(
+        WorkspaceCodemapArtifactDemandTicket,
+        WorkspaceCodemapArtifactDemandUnavailableReason
+    )
+    case logicalPathMismatch(UUID)
+    case staleCurrentness
+    case handleRevoked(UUID)
+}
+
+enum WorkspaceCodemapPresentationFreezeDisposition {
+    case ready(WorkspaceCodemapFrozenPresentationBundle)
+    case unavailable(WorkspaceCodemapPresentationFreezeUnavailableReason)
+}
+
+struct OriginalEntryGuard {
+    private static let maximumCodemapPresentationRequestsPerBundle = 4096
+
+    func freezeCodemapPresentation(
+        _ requests: [WorkspaceCodemapPresentationRequest]
+    ) -> WorkspaceCodemapPresentationFreezeDisposition {
+        #if DEBUG
+            codemapPresentationFreezeRequestCountForTesting += 1
+        #endif
+        guard !requests.isEmpty else {
+            return .unavailable(.emptyRequest)
+        }
+        let entryLimit = Self.maximumCodemapPresentationRequestsPerBundle
+        guard requests.count <= entryLimit else {
+            return .unavailable(.entryLimitExceeded(limit: entryLimit))
+        }
+
+        // Fixture boundary: Store line 15018 and every later freeze check are unexecuted.
+        return .ready(WorkspaceCodemapFrozenPresentationBundle())
+    }
+}
+
+enum OriginalGrouping {
+    static func group(
+        candidates: [FixtureCandidate], demandBatch: FixtureDemandBatch
+    ) -> [WorkspaceCodemapRootEpoch: [WorkspaceCodemapPresentationRequest]] {
+        var issues: [FixtureIssue] = []
+        var requestsByRoot: [WorkspaceCodemapRootEpoch: [WorkspaceCodemapPresentationRequest]] = [:]
+        for candidate in candidates {
+            guard let result = demandBatch.resultsByFileID[candidate.fileID] else {
+                issues.append(.unavailable(fileID: candidate.fileID, reason: .registrationFailed))
+                continue
+            }
+            switch result {
+            case let .ready(ready):
+                guard ready.ticket.rootEpoch == candidate.rootEpoch else {
+                    issues.append(.unavailable(fileID: candidate.fileID, reason: .staleCurrentness))
+                    continue
+                }
+                requestsByRoot[candidate.rootEpoch, default: []].append(
+                    WorkspaceCodemapPresentationRequest(
+                        ticket: ready.ticket,
+                        logicalPath: candidate.logicalPath
+                    )
+                )
+            case let .pending(ticket):
+                issues.append(.pending(fileID: candidate.fileID, ticket: ticket))
+            case let .unavailable(reason):
+                issues.append(.unavailable(fileID: candidate.fileID, reason: reason))
+            }
+        }
+
+        precondition(issues.isEmpty, "Fixture inputs must be matching-root ready results")
+        return requestsByRoot
+    }
+}
+
+enum OriginalSelectionCore {
+        private enum CodemapIssueDisposition {
+            case pending
+            case unmapped(terminal: Bool)
+        }
+
+        private static func freezeUnavailableDisposition(
+            _ reason: WorkspaceCodemapPresentationFreezeUnavailableReason
+        ) -> CodemapIssueDisposition {
+            switch reason {
+            case .emptyRequest, .entryLimitExceeded, .retainedBundleLimitExceeded,
+                 .duplicateFileID, .mixedRootEpoch, .pending, .demandUnavailable,
+                 .logicalPathMismatch, .staleCurrentness, .handleRevoked:
+                .pending
+            }
+        }
+
+    static func fixtureClassification(_ reason: WorkspaceCodemapPresentationFreezeUnavailableReason) -> String {
+        switch freezeUnavailableDisposition(reason) {
+        case .pending: return "pending"
+        case let .unmapped(terminal): return terminal ? "terminalUnmapped" : "unmapped"
+        }
+    }
+}

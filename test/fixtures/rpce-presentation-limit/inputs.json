@@ -1,0 +1,44 @@
+{
+  "directGuardCases": [
+    { "name": "zero", "requestCount": 0 },
+    { "name": "one", "requestCount": 1 },
+    { "name": "at-limit", "requestCount": 4096 },
+    { "name": "over-limit", "requestCount": 4097 }
+  ],
+  "groupedReadyCases": [
+    { "name": "empty-candidates", "roots": [] },
+    {
+      "name": "two-roots-at-limit",
+      "roots": [
+        { "epoch": "a@1", "ready": 4096, "readyNoSymbols": 0 },
+        { "epoch": "b@1", "ready": 4096, "readyNoSymbols": 0 }
+      ]
+    },
+    {
+      "name": "over-limit-root-and-healthy-root",
+      "roots": [
+        { "epoch": "a@1", "ready": 4097, "readyNoSymbols": 0 },
+        { "epoch": "b@1", "ready": 1, "readyNoSymbols": 0 }
+      ]
+    },
+    {
+      "name": "at-limit-includes-nonrenderable-ready",
+      "roots": [
+        { "epoch": "a@1", "ready": 4095, "readyNoSymbols": 1 }
+      ]
+    },
+    {
+      "name": "nonrenderable-ready-crosses-limit",
+      "roots": [
+        { "epoch": "a@1", "ready": 4096, "readyNoSymbols": 1 },
+        { "epoch": "b@1", "ready": 1, "readyNoSymbols": 0 }
+      ]
+    },
+    {
+      "name": "only-nonrenderable-ready-over-limit",
+      "roots": [
+        { "epoch": "a@1", "ready": 0, "readyNoSymbols": 4097 }
+      ]
+    }
+  ]
+}

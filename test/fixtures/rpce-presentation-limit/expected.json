@@ -1,0 +1,155 @@
+{
+  "directGuardCases": [
+    {
+      "entryGuard": {
+        "reason": "emptyRequest",
+        "selectionIssueDisposition": "pending",
+        "status": "unavailable"
+      },
+      "name": "zero",
+      "requestCount": 0
+    },
+    {
+      "entryGuard": {
+        "status": "admittedToModeledSuccess"
+      },
+      "name": "one",
+      "requestCount": 1
+    },
+    {
+      "entryGuard": {
+        "status": "admittedToModeledSuccess"
+      },
+      "name": "at-limit",
+      "requestCount": 4096
+    },
+    {
+      "entryGuard": {
+        "limit": 4096,
+        "reason": "entryLimitExceeded",
+        "selectionIssueDisposition": "pending",
+        "status": "unavailable"
+      },
+      "name": "over-limit",
+      "requestCount": 4097
+    }
+  ],
+  "groupedReadyCases": [
+    {
+      "name": "empty-candidates",
+      "roots": [],
+      "totalReadyInputCount": 0
+    },
+    {
+      "name": "two-roots-at-limit",
+      "roots": [
+        {
+          "entryGuard": {
+            "status": "admittedToModeledSuccess"
+          },
+          "epoch": "a@1",
+          "freezeRequestCount": 4096,
+          "readyInputCount": 4096,
+          "readyNoSymbolsInputCount": 0
+        },
+        {
+          "entryGuard": {
+            "status": "admittedToModeledSuccess"
+          },
+          "epoch": "b@1",
+          "freezeRequestCount": 4096,
+          "readyInputCount": 4096,
+          "readyNoSymbolsInputCount": 0
+        }
+      ],
+      "totalReadyInputCount": 8192
+    },
+    {
+      "name": "over-limit-root-and-healthy-root",
+      "roots": [
+        {
+          "entryGuard": {
+            "limit": 4096,
+            "reason": "entryLimitExceeded",
+            "selectionIssueDisposition": "pending",
+            "status": "unavailable"
+          },
+          "epoch": "a@1",
+          "freezeRequestCount": 4097,
+          "readyInputCount": 4097,
+          "readyNoSymbolsInputCount": 0
+        },
+        {
+          "entryGuard": {
+            "status": "admittedToModeledSuccess"
+          },
+          "epoch": "b@1",
+          "freezeRequestCount": 1,
+          "readyInputCount": 1,
+          "readyNoSymbolsInputCount": 0
+        }
+      ],
+      "totalReadyInputCount": 4098
+    },
+    {
+      "name": "at-limit-includes-nonrenderable-ready",
+      "roots": [
+        {
+          "entryGuard": {
+            "status": "admittedToModeledSuccess"
+          },
+          "epoch": "a@1",
+          "freezeRequestCount": 4096,
+          "readyInputCount": 4095,
+          "readyNoSymbolsInputCount": 1
+        }
+      ],
+      "totalReadyInputCount": 4096
+    },
+    {
+      "name": "nonrenderable-ready-crosses-limit",
+      "roots": [
+        {
+          "entryGuard": {
+            "limit": 4096,
+            "reason": "entryLimitExceeded",
+            "selectionIssueDisposition": "pending",
+            "status": "unavailable"
+          },
+          "epoch": "a@1",
+          "freezeRequestCount": 4097,
+          "readyInputCount": 4096,
+          "readyNoSymbolsInputCount": 1
+        },
+        {
+          "entryGuard": {
+            "status": "admittedToModeledSuccess"
+          },
+          "epoch": "b@1",
+          "freezeRequestCount": 1,
+          "readyInputCount": 1,
+          "readyNoSymbolsInputCount": 0
+        }
+      ],
+      "totalReadyInputCount": 4098
+    },
+    {
+      "name": "only-nonrenderable-ready-over-limit",
+      "roots": [
+        {
+          "entryGuard": {
+            "limit": 4096,
+            "reason": "entryLimitExceeded",
+            "selectionIssueDisposition": "pending",
+            "status": "unavailable"
+          },
+          "epoch": "a@1",
+          "freezeRequestCount": 4097,
+          "readyInputCount": 0,
+          "readyNoSymbolsInputCount": 4097
+        }
+      ],
+      "totalReadyInputCount": 4097
+    }
+  ]
+}

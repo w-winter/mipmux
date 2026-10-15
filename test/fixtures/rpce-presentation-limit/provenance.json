@@ -1,0 +1,198 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "gitBlob": "ec254e6ab5e5f525653bf7a5240946607e41a6ea",
+      "sha256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "ranges": [
+        {
+          "name": "entryLimit",
+          "startLine": 373,
+          "endLine": 373,
+          "sha256": "ea9c58a441102c84731f0cb5d8459284e53a28738d3b62da0a26ae0c7ee7f596",
+          "compiled": true
+        },
+        {
+          "name": "entryGuardPrefix",
+          "startLine": 15004,
+          "endLine": 15016,
+          "sha256": "09420cb5a46ddd5aa29106fa1a6b1f774f2de1e3c8fab04c85f2c54f1a7d9899",
+          "compiled": true
+        },
+        {
+          "name": "freezeRemainder",
+          "startLine": 15018,
+          "endLine": 15178,
+          "sha256": "243e1f503f325aea53297f329ccc821d064adfd192f6c804439ede2454dc05ec",
+          "compiled": false
+        },
+        {
+          "name": "render",
+          "startLine": 15180,
+          "endLine": 15253,
+          "sha256": "500640542e7d9e6b9a720ff0b81d23fd4f57e8c2fd8dd6746a883b77dca1845f",
+          "compiled": false
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationCoordinator.swift",
+      "gitBlob": "ab68d3a946220d4636d9dbf0e9c3fb1bf7a92370",
+      "sha256": "fe470879b8d7dc22dfb865c33b58129873eace7a530ab5d364718a016e98e7c2",
+      "ranges": [
+        {
+          "name": "grouping",
+          "startLine": 435,
+          "endLine": 458,
+          "sha256": "cf9aa2518b1c0118f5826621629f9afdad65ea7499ef3cb0eb02feb1b2669684",
+          "compiled": true
+        },
+        {
+          "name": "rootFreezeRenderLoop",
+          "startLine": 462,
+          "endLine": 494,
+          "sha256": "941720659c9945535d757f2154992e4353845569b2af2c4771d6b24bcc2a7d38",
+          "compiled": false
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "gitBlob": "01ccfd30105b76e98289d16e1910d3e03ca44755",
+      "sha256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
+      "ranges": [
+        {
+          "name": "issueDisposition",
+          "startLine": 324,
+          "endLine": 327,
+          "sha256": "f5989c7d3a5172bb53c3271afa18760d59c32168b251c0149bbb4e655f754dce",
+          "compiled": true
+        },
+        {
+          "name": "freezeClassifier",
+          "startLine": 591,
+          "endLine": 600,
+          "sha256": "f6974e2a35fa033301cece37f7452e610dc99eb121c3b13ea21b9c914b81a8d5",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapPresentationModels.swift",
+      "gitBlob": "0bc0008add4bd6f09a7ed74d5d561156ca67e614",
+      "sha256": "dd75c1a006878c78e6846b2cf7367b95798cd071dc9fc812ffacd246f0f9eab4",
+      "ranges": [
+        {
+          "name": "request",
+          "startLine": 35,
+          "endLine": 38,
+          "sha256": "e1b19c8a9f2960962dc7be31523b9bf22bd178f2058de2f3bb24f5a7a6caf566",
+          "compiled": true
+        },
+        {
+          "name": "freezeDispositions",
+          "startLine": 93,
+          "endLine": 112,
+          "sha256": "fd00e6942894bd68a6e81eb64286dac9080fd086dd1fc0ca05b4409cd75dfd08",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapArtifactDemandModels.swift",
+      "gitBlob": "02b7467173002b333d9a6f9e053736d0f09b5143",
+      "sha256": "f8b9ac62fc6c239cd83285e6dc91cf6072f58572b9d66099a5c4b4abe93cc17b",
+      "ranges": [
+        {
+          "name": "demandResult",
+          "startLine": 37,
+          "endLine": 41,
+          "sha256": "ed8b03e808c7719f81c8889236e85b0227621035d7b454d4ab113381c114bf2e",
+          "compiled": true
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapLiveOverlayModels.swift",
+      "gitBlob": "18ee82611beeb3900edd77c76d3113ee0bbeae88",
+      "sha256": "da7b3f215ee51c92be36002a5e502331b69bc86da4551c3ed821bb2797438595",
+      "ranges": [
+        {
+          "name": "artifactOutcomes",
+          "startLine": 110,
+          "endLine": 126,
+          "sha256": "03988ea2c09de2188f7783d1c5078c11d17c085ac9c87b6849030b71204d6ec4",
+          "compiled": false
+        },
+        {
+          "name": "handleRenderer",
+          "startLine": 411,
+          "endLine": 426,
+          "sha256": "4a97889de8a23ccb36fa750e5146b1d7db9652923287ecef6762350f77cd2819",
+          "compiled": false
+        }
+      ]
+    },
+    {
+      "path": "LICENSE",
+      "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "ranges": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "generate.mjs",
+      "sha256": "9c666c204459492a48fbd0903d721309d4d36b141d81ae0cf5ffed0e4ddd62f8"
+    },
+    {
+      "path": "adapter.swift",
+      "sha256": "baedb59dbd7e5980e712e66fbf2cf4d0690fda268b1153a869b4ff4d04779332"
+    },
+    {
+      "path": "inputs.json",
+      "sha256": "569c555b82533ab52333c3f6a65d2118a9fb2a83000cbbe4ff28314694dd03cb"
+    },
+    {
+      "path": "receipt.md",
+      "sha256": "32f8e1529a8b77180c64039e6c7bcac52f4efd9d0b658e81656ca06fb07b64bc"
+    },
+    {
+      "path": "original-bodies.swift.txt",
+      "sha256": "7f66bc81d670ffb62d47f502ac9c7d929cecb72dda69d2d6468315c14cd399fb"
+    },
+    {
+      "path": "reference-only.swift.txt",
+      "sha256": "c4142213b58b85e2a7637071e0cce742084c6da5ffa7364daafabde0e52e753d"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "expected.json",
+      "sha256": "5270961e494dd85d75bf9fcc30574b61a5035312db095c83961da527ec76ad63"
+    }
+  ],
+  "combinedCompilationSHA256": "c5b69abfd6751e62b4d0f8c68e6fb4601440041e7f86ccc93cc5bdecb75d531c",
+  "cases": 10,
+  "extraction": "Recorded ranges retain original bytes, indentation and final LF; fixture declarations surround compiled ranges.",
+  "compiled": "Original 4096 constant, freeze entry guard prefix, ready-result grouping, request/result/freeze enums, and freeze-unavailable classifier.",
+  "boundary": "After Store line 15016, return an empty fixture ready bundle. Original freeze resumes at line 15018 and is not executed.",
+  "adapters": [
+    "Root epochs and logical paths are string labels; tickets contain only root epoch and deterministic file ID.",
+    "Ready results contain an injected outcome label instead of snapshots, handles, identity or leases.",
+    "The synchronous sorted root loop calls the original entry guard once per group; original async freeze/render loop is reference-only.",
+    "No DEBUG flag is passed, so the original testing-counter increment is excluded by its own conditional compilation."
+  ],
+  "limits": [
+    "Admitted means the entry guard passed into modeled success, not that a real bundle froze or rendered.",
+    "readyNoSymbols is injected as an already-ready demand result; its nonrenderability is supported by the uncompiled original handle renderer.",
+    "No execution of acquisition, currentness, duplicate/root checks, retained-record limits, retention, cancellation, rendering, publication or MCP reply assembly.",
+    "Pending is the original freeze-issue classifier output, not an observed provider response or retained-demand guarantee.",
+    "Healthy-root independence is grouping and entry-guard independence only; no end-to-end rendering claim is made."
+  ],
+  "normalization": "Only counts, case names and epoch labels are emitted. No per-request arrays, random IDs, timings or compiler paths appear in expected JSON.",
+  "license": "Apache-2.0; LICENSE is copied byte-for-byte from the pinned checkout."
+}
