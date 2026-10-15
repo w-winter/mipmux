@@ -10,18 +10,19 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "5da8e6b15a2d5a6b4ee4dccfb46f7f5d2f131d5660f72dc460f400b2d17cbfeb",
+      "sha256": "aed19a796b36df6de885bf3a81af98bfa8ab9e73852af967cc3f739da909fd0c",
       "classification": "handwritten",
       "ranges": [
         [
           604,
-          628
+          664
         ]
       ],
       "changes": [
         "Partition authorized MAP blocks as ordinary file content and optional selected patches separately from immutable caller-required patches. Native preset resolution owns optional patch inclusion; parsing consumes the captured Git mode to record only delivered patch spans and costs. Draft membership and material inspection retain omitted selected patches.",
         "Use the bound MCP clipboard respectGitInclusion route only. No ordinary PromptVM includeBeforeGitInclusion mode is introduced. Saved verification accepts the exact source preset projection without a native process; current verification replays native packaging. Required patch bytes follow included selected patch bytes as the explicit headless binding.",
-        "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered."
+        "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
+        "Invoke automatic preassembly lazily from native Review eligibility; capture native text and evidence separately from selected artifacts and required patches. Parse its span and relative body proofs for exact accounting and native-free saved integrity."
       ]
     },
     {
@@ -29,7 +30,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "native/Sources/SmipBridge/PreparedClipboardInput.swift",
-      "sha256": "ff6949ded3957478de40d1ad24fd76146a6ddcd461cfd5116100faed13505b85",
+      "sha256": "76bd0dfc29040d84c965cab72af83a8a41c8586ac7a7d39330994e1b3c2db602",
       "classification": "handwritten",
       "ranges": [
         [
@@ -39,7 +40,7 @@
       ],
       "changes": [
         "Bind selected-artifact inclusion to the retained built-in preset gitInclusion using the bound MCP clipboard respectGitInclusion route (MCPServerViewModel+WorkspaceContext.swift278-345). Standard/Plan suppress selected patch bodies, not ordinary MAP blocks. Review includes selected patch bodies in captured selection order.",
-        "Caller-required PatchInput bodies are a headless request contract, not source optional selected artifacts or replaceable supplied packaging text. They remain complete after optional selected patches for every preset. Return the exact preset Git mode with the saved meta projection. This adapter does not acquire automatic diffs for selected ordinary files.",
+        "Caller-required PatchInput bodies are a headless request contract, not source optional selected artifacts or replaceable supplied packaging text. They remain complete after optional selected patches for every preset. Return the exact preset Git mode with the saved meta projection. Native eligibility requests the lazy automatic provider only when Review has no nonblank selected patch text. Automatic preassembly text precedes independent required patch bodies.",
         "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered."
       ]
     },
@@ -6108,11 +6109,12 @@
       ],
       "changes": [
         "Bind ready-publication currentness to the existing owner of workspace demands. Revalidate confined raw bytes, artifact key, mode and applicable policy after extraction before completing the managed catalog. Native reads enforce root identity; no watcher ticket or app store is imported. The file also contains existing operation lifecycle, exploration and Git bindings.",
-        "Admit source capabilities per requested root; pure captured-value operations no longer trigger unrelated source admission. Validate all source roots at Git, tree and structure boundaries; include the output root for whole-workspace operations. Fresh single-root validation serves automatic graph queries."
+        "Admit source capabilities per requested root; pure captured-value operations no longer trigger unrelated source admission. Validate all source roots at Git, tree and structure boundaries; include the output root for whole-workspace operations. Fresh single-root validation serves automatic graph queries.",
+        "Bind automatic Review ownership resolution to the existing tracked operation, with source/output root checks before reading native metadata; retain partial ownership groups rather than reusing all-or-nothing initial target election."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "2fe9eb628c2f49ee2ec6f0e37cd1711f6875bb52f4b5bc8243d9013b88db9b85",
+      "sha256": "cbbb7c0ef40eb2a88414b99c1bbe055001515f015e644fdf6b1f4bfc231ec082",
       "classification": "handwritten"
     },
     {
@@ -6191,7 +6193,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "210793495c64945ad667eb3f6615922475dd6caf69dcfee3dd4a6182817501e1",
+      "sha256": "915ddd912d28da79225d87af36559e2db51349eeff12e94e554974553e0aa83d",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6205,7 +6207,8 @@
         "Validate represented source-root identities before selection serving in automatic and manual modes, including required codemaps and zero-target queries. Root serving is independent of graph eligibility; per-root failure aggregation and remaining epoch/readiness contracts are separate.",
         "Project captured source issues and target-acquisition failures into pending/unmapped selection paths in stable file-UUID order. Coverage of the captured graph is separate from delivered-body measurement and acquisition completion.",
         "Keep the captured selection and revision while the presentation wrapper repeats acquisition and reply assembly according to the source policy. Observation ownership advances only through this request's own retained maps, so a competing edit or finalization fence cannot be adopted by a retry. Public size/preview errors retain the source persistence-before-reply contract. Pending automatic publication uses the existing unresolved observation state and cannot be archived.",
-        "Freeze explicit selection and mode for final assembly; pass the existing derive path as fresh acquisition for each presentation attempt. Adopt finalization materials and acquisition state as one observation on success or failure; canonical selection and revision stay owned by the draft."
+        "Freeze explicit selection and mode for final assembly; pass the existing derive path as fresh acquisition for each presentation attempt. Adopt finalization materials and acquisition state as one observation on success or failure; canonical selection and revision stay owned by the draft.",
+        "Pass operation-owned automatic Git preassembly through live observations and retain the finalization capture for terminal inspection after the workspace lease is released."
       ]
     },
     {
@@ -6412,10 +6415,160 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "eb70d1093987cc13ff36c3115391f91c7db3adf19843c0c74759fd293911b866",
+      "sha256": "68acafc8250bf31dcc5c655eec640baa201f532d7fa30c99d30353461ebc6a0b",
       "classification": "handwritten",
       "changes": [
-        "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior."
+        "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
+        "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 16 and retain the capture for terminal inspection.",
+        "Expose the captured automatic Git observation through a read-only getter; only the finalization owner may replace it."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/FrozenPromptGitReviewContext.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9ed4e5d9b6810c43af8e3dc68f4510ecabf0640f2f1b664bb656caf577db9e8f",
+      "destination": "native/Sources/SmipBridge/RPCEReviewGitCompareIntent.swift",
+      "sha256": "fc47e11fc7de1b8d060ea803a6050ad06a2824dd1b9eadeae08d4a9f99306e4d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          27,
+          39
+        ]
+      ],
+      "changes": [
+        "Retain comparison intent and Foundation whitespace/case normalization unchanged. Headless optional reviewGitBase binds the captured selected-branch setting."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
+      "destination": "native/Sources/SmipBridge/RPCEAutomaticReviewGitRendering.swift",
+      "sha256": "5440b4be8a2518f83b7fd9f0d5e1a033c9f20f156fa7da2cfb0607bdd46b86a2",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          49,
+          52
+        ],
+        [
+          63,
+          73
+        ],
+        [
+          85,
+          93
+        ],
+        [
+          394,
+          459
+        ]
+      ],
+      "changes": [
+        "Retain checkout/outcome values, successful-outcome predicate and exact renderText/incompleteDiagnostics bodies. Omit unused outcome checkout projection and cancelled enum case because cancellation rejects the owning operation before rendering.",
+        "Move renderer into a standalone native value; add relative UTF-8 body spans to the existing assembly for saved integrity without duplicating patch bodies.",
+        "Compute body offsets from the complete header prefix UTF-8 length, including source-valid multiline/Unicode checkout labels.",
+        "Apply local brace formatting; comparison and emitted bytes are unchanged."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
+      "destination": "native/Sources/SmipBridge/AutomaticReviewGitInput.swift",
+      "sha256": "0595ca47b565c34e420e2e30b45efe8edd9d6ade8f2deccbe543ce49ee7af327",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          297,
+          303
+        ],
+        [
+          331,
+          351
+        ]
+      ],
+      "changes": [
+        "Use the existing helpers that resolve path ownership and format display labels, retaining valid checkout groups alongside path issues. Route Git reads through the root containing the first selected path, using Foundation-normalized root membership; the captured checkout identity remains the authority.",
+        "Normalize diff whitespace and derive completeness with source predicates; expose native rendering and body spans through strict wire operations. Wrong-typed comparison bases reject before ownership lookup.",
+        "Decode each wire outcome into a paired typed source outcome and normalized record before rendering; preserve row order and exact normalization without parallel-array mutation."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
+      "destination": "src/context/automatic-review-git.ts",
+      "sha256": "edb082b89b096c1baa95fbc4de37c33f4f021ee7e5c5381508c6cfe230077d38",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          216,
+          218
+        ],
+        [
+          231,
+          246
+        ],
+        [
+          256,
+          354
+        ]
+      ],
+      "changes": [
+        "Port discover-only orchestration into the existing TypeScript Git/process/capability owners. Resolve exact HEAD/ref commit IDs and merge-base before all working-tree captures; bypass Git-tool main/trunk shorthand by passing frozen object IDs to shared comparison preparation.",
+        "Retain per-checkout base/command outcomes, successful siblings and source-native rendering. Cancellation and headless root/security/worker failures reject rather than become source operational diagnostics.",
+        "Capture preassembly evidence, not selected artifacts or Git snapshots. Replay captured bases for final serving checks; compare current intent for current bundle verification.",
+        "Classify expected Git operational failures directly in each I/O catch after cancellation and root validation, preserving original errors for all other failure domains."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
+      "destination": "src/context/automatic-review-git-integrity.ts",
+      "sha256": "0eafe7aa3b103da01e4098d30e26da615a095c09494f933f9dbb86a2d798d351",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          331,
+          341
+        ],
+        [
+          394,
+          459
+        ]
+      ],
+      "changes": [
+        "Parse archived source framing, exact diagnostics, relative body spans and completeness without producing Git text or invoking native code. Require the provider observation for Review without nonblank selected patches.",
+        "Keep completeness checks, checkout sections and diagnostic grammar in distinct parser phases sharing one byte cursor. This is verification only, not a text renderer."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
+      "destination": "test/fixtures/rpce-automatic-review-git.json",
+      "sha256": "a397e94057e1f476418d7d80ce4afb5cf899f15b289da03ffffaa58d0a468255",
+      "classification": "fixture",
+      "ranges": [
+        [
+          175,
+          184
+        ],
+        [
+          216,
+          354
+        ],
+        [
+          394,
+          506
+        ]
+      ],
+      "changes": [
+        "Project the 28 noncancelled output cases from the independently executed 39-case original-source corpus. Preserve exact expected text, completeness and ordered outcome kinds; add compile-only synthetic checkout identities for the native wire.",
+        "Original corpus expected.json SHA-256 cb9b1259bbafa4244c32fb2ecfd19dd0c0dd3d726925e420498bc070ed6ebfe5. Corpus uses modeled repository/layout/diff I/O; fixture does not establish real backend election or Git subprocess fidelity."
       ]
     }
   ],
@@ -12053,6 +12206,36 @@
       "line": 159,
       "source": "Sources/RepoPromptFoundation/Utilities/WorkspacePathNormalizations.swift",
       "destination": "native/Sources/SmipBridge/RPCEGitDiffPathNormalization.swift"
+    },
+    {
+      "name": "ReviewGitCompareIntent",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/FrozenPromptGitReviewContext.swift",
+      "destination": "native/Sources/SmipBridge/RPCEReviewGitCompareIntent.swift",
+      "line": 27
+    },
+    {
+      "name": "ReviewGitCheckout",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEAutomaticReviewGitRendering.swift",
+      "line": 63
+    },
+    {
+      "name": "ReviewGitCheckoutOutcome",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEAutomaticReviewGitRendering.swift",
+      "line": 69
+    },
+    {
+      "name": "renderText",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEAutomaticReviewGitRendering.swift",
+      "line": 394
+    },
+    {
+      "name": "incompleteDiagnostics",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/AutomaticReviewGitDiffCoordinator.swift",
+      "destination": "native/Sources/SmipBridge/RPCEAutomaticReviewGitRendering.swift",
+      "line": 427
     }
   ],
   "sourceCoverage": [

@@ -2,7 +2,7 @@
 
 The Swift extractor, regex wrapper, C wrapper, and retained tests derive from [RepoPrompt CE](https://github.com/repoprompt/repoprompt-ce) revision `64b9352eec13e0252500d429f64ca9d1dd5e49fd`, licensed under Apache-2.0. The license is in `ThirdPartyLicenses/repoprompt-ce/LICENSE`. Modified files carry change notices, and `docs/vendor-provenance.json` records their source history.
 
-The native discovery prompt factory, discovery prompt, rendered references, question parsing and form conversion, selection reply DTOs, file-block formatting, slice assembly and policies for selection errors and projection derive from RepoPrompt CE revision `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3` under the same license. [Discovery prompt bindings](docs/discovery-prompt-bindings.md) records the rendering inputs and adaptations to smip's interfaces.
+The native discovery prompt factory, discovery prompt, rendered references, question parsing and form conversion, selection reply DTOs, file-block formatting, slice assembly, automatic Review Git comparison and rendering, and policies for selection errors and projection derive from RepoPrompt CE revision `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3` under the same license. [Discovery prompt bindings](docs/discovery-prompt-bindings.md) records the rendering inputs and adaptations to smip's interfaces. The [source mappings](docs/vendor-provenance.json) record the automatic Git coordinator port and saved-framing parser.
 
 PCRE2 10.49 is statically linked under BSD-3-Clause WITH PCRE2-exception. Its pinned SLJIT dependency uses BSD-2-Clause. Their complete texts are in `ThirdPartyLicenses/pcre2/LICENCE.md` and `ThirdPartyLicenses/sljit/LICENSE`.
 

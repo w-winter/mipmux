@@ -332,6 +332,8 @@ enum Operation {
         switch kind {
         case "renderFileBlock": return try .renderFileBlock(FileBlockInput(value))
         case "renderPromptAssembly": return try .renderPromptAssembly(PromptAssemblyInput(value))
+        case "resolveAutomaticReviewGit", "renderAutomaticReviewGit":
+            return try .git(.automaticReview(AutomaticReviewGitInput(value)))
         case "renderPreparedClipboard": return try .renderPreparedClipboard(PreparedClipboardOperation(value))
         case "renderClipboard": return try .renderClipboard(ClipboardOperation(value))
         case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))

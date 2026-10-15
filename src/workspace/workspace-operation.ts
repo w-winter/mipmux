@@ -227,6 +227,15 @@ export class WorkspaceOperation {
         roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result;
     });
   }
+  resolveAutomaticReviewGit(paths: readonly string[], base: string | null) {
+    const captured = [...paths];
+    return this.#track(async () => {
+      await this.validateRoots();
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request({ kind: 'resolveAutomaticReviewGit', paths: captured, base,
+        roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result;
+    });
+  }
   revalidateGitTargets(input: Extract<NativeOperation, { kind: 'revalidateGitTargets' }>) {
     const captured = structuredClone(input);
     return this.#track(async () => {

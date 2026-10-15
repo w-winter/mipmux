@@ -8,6 +8,7 @@ import { canonicalJSON } from '../workspace/values.js';
 import { parseClipboard } from './clipboard.js';
 import { estimateUnits, scoutTokenBudget } from './budget.js';
 import type { AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
+import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
 
 export interface RenderInput {
   readonly codemapMode: CodemapMode;
@@ -20,6 +21,7 @@ export interface RenderInput {
   readonly clipboard: string;
   readonly clipboardPreset: CapturedClipboardPreset;
   readonly selectedGitDiffIds: readonly string[];
+  readonly automaticGit: AutomaticReviewGitCapture | null;
 }
 export interface ItemCost {
   readonly id: string;
@@ -111,7 +113,7 @@ function materialDiagnostics(materials: readonly Material[], units: number, allo
 /** Renders exact material bodies and byte spans without I/O or ambient state. */
 export function renderBundle(input: RenderInput) {
   const materials = input.materials;
-  const { records, costs, fileTreeSpan } = parseClipboard(input);
+  const { records, costs, fileTreeSpan, automaticGitSpan } = parseClipboard(input);
   const context = input.clipboard, offset = Buffer.byteLength(context), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
   const measurement: Measurement = {
@@ -139,6 +141,7 @@ export function renderBundle(input: RenderInput) {
           entry.structural.record.outcome.kind !== 'ready'
         ),
         materials: records.map((record) => ({ ...packetMetadata(record), spans: record.spans })),
+        automaticGit: input.automaticGit === null ? null : { evidence: input.automaticGit.evidence, span: automaticGitSpan },
         context: {
           path: posix.join(input.inventory.outputRoot.declaredPath, input.request.outputName, 'context.md'),
           ...measurement,
@@ -155,7 +158,7 @@ export function renderBundle(input: RenderInput) {
         diagnostics,
       }),
     );
-  return { context, handoff, records, costs, measurement, diagnostics, fileTreeSpan };
+  return { context, handoff, records, costs, measurement, diagnostics, fileTreeSpan, automaticGitSpan };
 }
 
 function packetMetadata(record: MaterialRecord) {

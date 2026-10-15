@@ -1,0 +1,1193 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "referenceSHA256": "cb9b1259bbafa4244c32fb2ecfd19dd0c0dd3d726925e420498bc070ed6ebfe5",
+  "cases": [
+    {
+      "name": "intent-nil",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "intent-empty",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "intent-whitespace",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "intent-head",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "single-raw-text",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\n  RAW DIFF  \n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\n  RAW DIFF  \n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "merge-base-all-frozen-before-diff",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            },
+            "text": "\nDIFF Zeta\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Alpha =====\nDIFF Alpha\n===== END REPOPROMPT CHECKOUT DIFF: Alpha =====\n\n===== BEGIN REPOPROMPT CHECKOUT DIFF: Zeta =====\nDIFF Zeta\n===== END REPOPROMPT CHECKOUT DIFF: Zeta =====",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "head-all-frozen-before-diff",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            },
+            "text": "\nDIFF Zeta\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Alpha =====\nDIFF Alpha\n===== END REPOPROMPT CHECKOUT DIFF: Alpha =====\n\n===== BEGIN REPOPROMPT CHECKOUT DIFF: Zeta =====\nDIFF Zeta\n===== END REPOPROMPT CHECKOUT DIFF: Zeta =====",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "paths-deduplicated-and-sorted",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/a.swift",
+                "/fixture/a/z.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "no-changes-nil",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "noChanges",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": null,
+        "completeness": "complete",
+        "outcomeKinds": [
+          "noChanges"
+        ]
+      }
+    },
+    {
+      "name": "no-changes-empty",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "noChanges",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": null,
+        "completeness": "complete",
+        "outcomeKinds": [
+          "noChanges"
+        ]
+      }
+    },
+    {
+      "name": "no-changes-whitespace",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "noChanges",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": null,
+        "completeness": "complete",
+        "outcomeKinds": [
+          "noChanges"
+        ]
+      }
+    },
+    {
+      "name": "multiple-all-no-changes",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "noChanges",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          },
+          {
+            "kind": "noChanges",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            }
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": null,
+        "completeness": "complete",
+        "outcomeKinds": [
+          "noChanges",
+          "noChanges"
+        ]
+      }
+    },
+    {
+      "name": "multiple-diff-and-no-changes",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          },
+          {
+            "kind": "noChanges",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            }
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Alpha =====\nDIFF Alpha\n===== END REPOPROMPT CHECKOUT DIFF: Alpha =====",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff",
+          "noChanges"
+        ]
+      }
+    },
+    {
+      "name": "empty-discover",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": null,
+        "completeness": "complete",
+        "outcomeKinds": []
+      }
+    },
+    {
+      "name": "linked-checkouts-share-repository",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Linked",
+                "checkoutRootPath": "/fixture/linked",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Linked",
+              "selectedPaths": [
+                "/fixture/linked/file.swift"
+              ]
+            },
+            "text": "\nDIFF Linked\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Alpha =====\nDIFF Alpha\n===== END REPOPROMPT CHECKOUT DIFF: Alpha =====\n\n===== BEGIN REPOPROMPT CHECKOUT DIFF: Linked =====\nDIFF Linked\n===== END REPOPROMPT CHECKOUT DIFF: Linked =====",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "duplicate-labels-use-repo-key-order",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Same [1]",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Same [1]",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Same [2]",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Same [2]",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            },
+            "text": "\nDIFF Zeta\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Same [1] =====\nDIFF Alpha\n===== END REPOPROMPT CHECKOUT DIFF: Same [1] =====\n\n===== BEGIN REPOPROMPT CHECKOUT DIFF: Same [2] =====\nDIFF Zeta\n===== END REPOPROMPT CHECKOUT DIFF: Same [2] =====",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "nested-checkout-and-longest-display-root",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Nested",
+                "checkoutRootPath": "/fixture/a/nested",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Nested",
+              "selectedPaths": [
+                "/fixture/a/nested/file.swift"
+              ]
+            },
+            "text": "\nDIFF Nested\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Alpha =====\nDIFF Alpha\n===== END REPOPROMPT CHECKOUT DIFF: Alpha =====\n\n===== BEGIN REPOPROMPT CHECKOUT DIFF: Nested =====\nDIFF Nested\n===== END REPOPROMPT CHECKOUT DIFF: Nested =====",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "display-sanitizes-label",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha Beta",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha Beta",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "display-blank-label",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Workspace",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Workspace",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "display-no-root",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Checkout",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Checkout",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "\nDIFF Alpha\n\n",
+        "completeness": "complete",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "failure-head-partial",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "baseResolutionFailed",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            },
+            "text": "\nDIFF Zeta\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Zeta =====\nDIFF Zeta\n===== END REPOPROMPT CHECKOUT DIFF: Zeta =====\n\n===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Comparison base could not be resolved for checkout: Alpha\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "partial",
+        "outcomeKinds": [
+          "baseResolutionFailed",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "failure-ref-partial",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "baseResolutionFailed",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            },
+            "text": "\nDIFF Zeta\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Zeta =====\nDIFF Zeta\n===== END REPOPROMPT CHECKOUT DIFF: Zeta =====\n\n===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Comparison base could not be resolved for checkout: Alpha\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "partial",
+        "outcomeKinds": [
+          "baseResolutionFailed",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "failure-mergeBase-partial",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "baseResolutionFailed",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            },
+            "text": "\nDIFF Zeta\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Zeta =====\nDIFF Zeta\n===== END REPOPROMPT CHECKOUT DIFF: Zeta =====\n\n===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Comparison base could not be resolved for checkout: Alpha\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "partial",
+        "outcomeKinds": [
+          "baseResolutionFailed",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "failure-diff-partial",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "commandFailed",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          },
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            },
+            "text": "\nDIFF Zeta\n\n"
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Zeta =====\nDIFF Zeta\n===== END REPOPROMPT CHECKOUT DIFF: Zeta =====\n\n===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Git diff command failed for checkout: Alpha\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "partial",
+        "outcomeKinds": [
+          "commandFailed",
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "all-checkouts-fail",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "baseResolutionFailed",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          },
+          {
+            "kind": "commandFailed",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            }
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Comparison base could not be resolved for checkout: Alpha\n- Git diff command failed for checkout: Zeta\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "failed",
+        "outcomeKinds": [
+          "baseResolutionFailed",
+          "commandFailed"
+        ]
+      }
+    },
+    {
+      "name": "no-changes-still-successful-with-failure",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "noChanges",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            }
+          },
+          {
+            "kind": "baseResolutionFailed",
+            "checkout": {
+              "identity": {
+                "root": "Zeta",
+                "checkoutRootPath": "/fixture/z",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Zeta",
+              "selectedPaths": [
+                "/fixture/z/file.swift"
+              ]
+            }
+          }
+        ],
+        "pathIssues": []
+      },
+      "expected": {
+        "text": "===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Comparison base could not be resolved for checkout: Zeta\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "partial",
+        "outcomeKinds": [
+          "noChanges",
+          "baseResolutionFailed"
+        ]
+      }
+    },
+    {
+      "name": "path-issues-partial",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [
+          {
+            "kind": "diff",
+            "checkout": {
+              "identity": {
+                "root": "Alpha",
+                "checkoutRootPath": "/fixture/a",
+                "repoKey": "fixture",
+                "repositoryID": "fixture",
+                "worktreeID": "fixture",
+                "kind": "canonical"
+              },
+              "displayLabel": "Alpha",
+              "selectedPaths": [
+                "/fixture/a/file.swift"
+              ]
+            },
+            "text": "\nDIFF Alpha\n\n"
+          }
+        ],
+        "pathIssues": [
+          {
+            "displayPath": "Missing logical",
+            "kind": "unresolvedSelection"
+          },
+          {
+            "displayPath": "Selected path 2",
+            "kind": "unresolvedSelection"
+          },
+          {
+            "displayPath": "Selected path 2",
+            "kind": "noRepository"
+          },
+          {
+            "backend": "jujutsu",
+            "displayPath": "Selected path 3",
+            "kind": "unsupportedBackend"
+          },
+          {
+            "displayPath": "Selected path 4",
+            "kind": "invalidGitLayout"
+          },
+          {
+            "displayPath": "Selected path 5",
+            "kind": "invalidGitLayout"
+          },
+          {
+            "displayPath": "Alpha",
+            "kind": "invalidGitLayout"
+          },
+          {
+            "displayPath": "Selected path 7",
+            "kind": "invalidGitLayout"
+          }
+        ]
+      },
+      "expected": {
+        "text": "===== BEGIN REPOPROMPT CHECKOUT DIFF: Alpha =====\nDIFF Alpha\n===== END REPOPROMPT CHECKOUT DIFF: Alpha =====\n\n===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Selected path could not be resolved: Missing logical\n- Selected path could not be resolved: Selected path 2\n- No owning repository: Selected path 2\n- Unsupported repository backend (jujutsu): Selected path 3\n- Invalid Git checkout layout: Selected path 4\n- Invalid Git checkout layout: Selected path 5\n- Invalid Git checkout layout: Alpha\n- Invalid Git checkout layout: Selected path 7\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "partial",
+        "outcomeKinds": [
+          "diff"
+        ]
+      }
+    },
+    {
+      "name": "path-issues-only-failed",
+      "operation": {
+        "kind": "renderAutomaticReviewGit",
+        "outcomes": [],
+        "pathIssues": [
+          {
+            "displayPath": "missing",
+            "kind": "unresolvedSelection"
+          },
+          {
+            "displayPath": "Selected path 1",
+            "kind": "noRepository"
+          }
+        ]
+      },
+      "expected": {
+        "text": "===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n- Selected path could not be resolved: missing\n- No owning repository: Selected path 1\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====",
+        "completeness": "failed",
+        "outcomeKinds": []
+      }
+    }
+  ]
+}

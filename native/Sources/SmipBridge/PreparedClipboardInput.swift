@@ -15,6 +15,7 @@ struct PreparedClipboardInput: Decodable {
     let fileTreeContent: String
     let selectedGitDiffs: [CapturedSelectedGitDiff]
     let gitDiff: String?
+    let automaticGitDiff: String?
     let metaInstructions: [CapturedMeta]
     let userInstructions: String
 }
@@ -27,7 +28,7 @@ struct PreparedClipboardOperation {
         let raw = try object.value("input")
         _ = try WireObject(raw, keys: [
             "duplicateUserInstructionsAtTop", "copyPreset", "storedPrompts", "codemapBlocks", "contentBlocks",
-            "fileTreeContent", "selectedGitDiffs", "gitDiff",
+            "fileTreeContent", "selectedGitDiffs", "gitDiff", "automaticGitDiff",
             "metaInstructions", "userInstructions"
         ])
         let data = try JSONSerialization.data(withJSONObject: raw)
@@ -56,7 +57,9 @@ struct PreparedClipboardOperation {
         let selectedDiffs = gitInclusion == .none ? [] : input.selectedGitDiffs.filter {
             !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
-        let gitDiff = (selectedDiffs.map(\.text) + [input.gitDiff].compactMap(\.self)).joined(separator: "\n\n")
+        let needsAutomaticGit = gitInclusion == .selected && selectedDiffs.isEmpty
+        let optionalDiffs = needsAutomaticGit ? [input.automaticGitDiff].compactMap(\.self) : selectedDiffs.map(\.text)
+        let gitDiff = (optionalDiffs + [input.gitDiff].compactMap(\.self)).joined(separator: "\n\n")
         let text = RPCEClipboardPackaging.generatePreparedClipboardContent(
             metaInstructions: metas, userInstructions: input.userInstructions, codemapBlocks: input.codemapBlocks,
             contentBlocks: input.contentBlocks, fileTreeContent: input.fileTreeContent, gitDiff: gitDiff,
@@ -65,7 +68,8 @@ struct PreparedClipboardOperation {
             disabledPromptSections: [],
             duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: nil
         )
-        return ["kind": "preparedClipboard", "text": text, "selectedGitDiffIds": selectedDiffs.map(\.id), "preset": [
+        return ["kind": "preparedClipboard", "text": text, "selectedGitDiffIds": selectedDiffs.map(\.id),
+                "needsAutomaticGit": needsAutomaticGit, "preset": [
             "kind": input.copyPreset.rawValue, "gitInclusion": gitInclusion.rawValue,
             "includeMetaPrompts": includeMetaPrompts,
             "storedPromptIds": promptIDs.map { $0.uuidString.lowercased() }

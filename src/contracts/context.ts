@@ -6,7 +6,7 @@ import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
 import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset } from './presentation.js';
-import { NativeFileTreeInput, NativeGitCheckout } from './native.js';
+import { NativeFileTreeInput, NativeGitCheckout, AutomaticReviewGitCheckout, AutomaticReviewGitPathIssue, AutomaticReviewGitCompleteness } from './native.js';
 import { AutomaticCodemapOutcome } from './automatic-codemaps.js';
 import { Clarification } from './interaction.js';
 
@@ -56,6 +56,7 @@ export const ContextBuildRequest = Type.Object({
   duplicateUserInstructionsAtTop: Type.Boolean(),
   copyPreset: ClipboardPreset,
   storedPrompts: Type.Array(StoredPrompt),
+  reviewGitBase: Type.Optional(Type.String({ pattern: '^[^\u0000]*$' })),
   contextBuilderPrompts: Type.Optional(Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, closed))),
   task: Type.String(),
   constraints: Type.String(),
@@ -156,8 +157,18 @@ export const MaterialRecord = Type.Union([
   Type.Object({ ...gitRecord, kind: Type.Literal('gitPatch') }, closed),
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
+const gitCommit = Type.String({ pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' });
+const reviewComparison = Type.Object({ head: gitCommit, base: gitCommit }, closed);
+const capturedReviewCheckout = { checkout: AutomaticReviewGitCheckout };
+export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticReviewGitCompleteness,
+  pathIssues: Type.Array(AutomaticReviewGitPathIssue), outcomes: Type.Array(Type.Union([
+    Type.Object({ ...capturedReviewCheckout, kind: Type.Literal('diff'), comparison: reviewComparison, body: Span }, closed),
+    Type.Object({ ...capturedReviewCheckout, kind: Type.Enum(['noChanges', 'commandFailed']), comparison: reviewComparison }, closed),
+    Type.Object({ ...capturedReviewCheckout, kind: Type.Literal('baseResolutionFailed') }, closed),
+  ])) }, closed);
+export type AutomaticReviewGitEvidence = Static<typeof AutomaticReviewGitEvidence>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(15),
+  schemaVersion: Type.Literal(16),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
   request: ContextBuildRequest,
@@ -168,6 +179,7 @@ export const Manifest = Type.Object({
   prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
   clipboardPreset: CapturedClipboardPreset,
+  automaticGit: Type.Union([Type.Object({ evidence: AutomaticReviewGitEvidence, span: Type.Union([Span, Type.Null()]) }, closed), Type.Null()]),
   fileTree: Type.Object({ input: NativeFileTreeInput, span: Span }, closed),
   files: Type.Object({ context: SourceIdentity, handoff: SourceIdentity }, closed),
   accounting: Type.Object({

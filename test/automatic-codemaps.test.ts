@@ -166,7 +166,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 15);
+    assert.equal(ready.manifest.schemaVersion, 16);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -196,7 +196,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
       const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
         automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
         codemapMode: manifest.codemapMode, materials,
-        fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), text: saved.fileTree.text } }, signal()));
+        fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
       manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), span: rendered.fileTreeSpan };
       manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
       manifest.accounting.bytes = rendered.measurement.bytes; manifest.accounting.units = rendered.measurement.units;
@@ -206,7 +206,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     }
     const restored = renderBundle(await prepareClipboard(f.runtime, { request: ready.manifest.request, inventory: ready.manifest.inventory,
       automaticAcquisition: { kind: 'settled', outcomes: ready.manifest.automaticCodemaps },
-      prompt: ready.manifest.prompt, codemapMode: ready.manifest.codemapMode, materials: saved.materials, fileTree: saved.fileTree }, signal()));
+      prompt: ready.manifest.prompt, codemapMode: ready.manifest.codemapMode, materials: saved.materials, fileTree: saved.fileTree }, signal(), { kind: 'captured', capture: saved.automaticGit }));
     await writeFile(join(ready.directory, 'context.md'), restored.context); await writeFile(join(ready.directory, 'handoff.md'), restored.handoff);
     await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON(ready.manifest));
     await writeFile(join(f.directory, 'r/User.swift'), 'struct SharedRecord {}\n');
@@ -235,7 +235,7 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
     const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
       automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
       codemapMode: manifest.codemapMode, materials,
-      fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), text: saved.fileTree.text } }, signal()));
+      fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
     manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), span: rendered.fileTreeSpan };
     assert.deepEqual(rendered.diagnostics, []);
     manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };

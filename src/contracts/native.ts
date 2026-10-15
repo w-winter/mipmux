@@ -63,7 +63,7 @@ export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('re
   copyPreset: ClipboardPreset, storedPrompts: Type.Array(StoredPrompt),
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
   selectedGitDiffs: Type.Array(Type.Object({ id: Type.String(), text: Type.String() }, { additionalProperties: false })),
-  gitDiff: snippetText, userInstructions: Type.String(),
+  gitDiff: snippetText, automaticGitDiff: snippetText, userInstructions: Type.String(),
   metaInstructions: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
 }, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePromptAssemblyInput = Type.Object({ kind: Type.Literal('renderPromptAssembly'),
@@ -242,7 +242,27 @@ const IgnoreHierarchy = Type.Object({ kind: Type.Literal('queryIgnoreHierarchy')
 export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRootPath: Type.String(), repoKey: Type.String(),
   repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
 export type NativeGitCheckout = Static<typeof NativeGitCheckout>;
+export const AutomaticReviewGitCheckout = Type.Object({ identity: NativeGitCheckout, displayLabel: Type.String(),
+  selectedPaths: Type.Array(Type.String()) }, { additionalProperties: false });
+export const AutomaticReviewGitPathIssue = Type.Union([
+  Type.Object({ kind: Type.Enum(['unresolvedSelection', 'noRepository', 'invalidGitLayout']), displayPath: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('unsupportedBackend'), displayPath: Type.String(), backend: Type.Enum(['git', 'jujutsu']) }, { additionalProperties: false }),
+]);
+const reviewOutcome = { checkout: AutomaticReviewGitCheckout };
+export const AutomaticReviewGitOutcome = Type.Union([
+  Type.Object({ ...reviewOutcome, kind: Type.Literal('diff'), text: Type.String() }, { additionalProperties: false }),
+  Type.Object({ ...reviewOutcome, kind: Type.Enum(['noChanges', 'baseResolutionFailed', 'commandFailed']) }, { additionalProperties: false }),
+]);
+const automaticReviewGitInput = Type.Union([
+  Type.Object({ kind: Type.Literal('resolveAutomaticReviewGit'),
+    roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String() }, { additionalProperties: false })),
+    paths: Type.Array(Type.String()), base: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('renderAutomaticReviewGit'), outcomes: Type.Array(AutomaticReviewGitOutcome),
+    pathIssues: Type.Array(AutomaticReviewGitPathIssue) }, { additionalProperties: false }),
+]);
+export const AutomaticReviewGitCompleteness = Type.Enum(['complete', 'partial', 'failed']);
 export const NativeOperation = Type.Union([
+  ...automaticReviewGitInput.anyOf,
   ...NativeGitWorktreeInput.anyOf,
   ...NativeGitArtifactInput.anyOf,
   Type.Object({ kind: Type.Literal('authorizeGitArtifact'), manifest: base64, snapshotDir: Type.String(),
@@ -385,7 +405,11 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('available'), checkouts: Type.Array(NativeGitCheckout, { minItems: 1 }),
     primary: NativeGitCheckout }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('preparedClipboard'), text: Type.String(), preset: CapturedClipboardPreset,
-    selectedGitDiffIds: Type.Array(Type.String()) }, { additionalProperties: false }),
+    selectedGitDiffIds: Type.Array(Type.String()), needsAutomaticGit: Type.Boolean() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('automaticReviewGitPaths'), checkouts: Type.Array(AutomaticReviewGitCheckout),
+    pathIssues: Type.Array(AutomaticReviewGitPathIssue), base: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('automaticReviewGit'), text: snippetText, completeness: AutomaticReviewGitCompleteness,
+    outcomes: Type.Array(AutomaticReviewGitOutcome), bodySpans: Type.Array(Type.Object({ offset: SafeCount, length: SafeCount }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('clipboard'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }, { additionalProperties: false }),
   NativeFileBlockResult,

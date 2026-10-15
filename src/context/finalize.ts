@@ -11,6 +11,7 @@ import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
 import { refreshGitArtifactMaterials } from './git-artifact-material.js';
 import { withCodemapPresentation, type CodemapPresentation } from './codemap-readiness.js';
 import type { DerivedMaterials } from './automatic-codemap-acquisition.js';
+import { revalidateCapturedAutomaticReviewGit, type AutomaticReviewGitCapture } from './automatic-review-git.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -27,6 +28,8 @@ export class FinalizationOperation {
   readonly #cancel = new AbortController();
   #claimed = false;
   #capturedPresentation: CodemapPresentation;
+  #capturedAutomaticGit: AutomaticReviewGitCapture | null = null;
+  get capturedAutomaticGit(): AutomaticReviewGitCapture | null { return this.#capturedAutomaticGit; }
   readonly result: Promise<FinalizationResult>;
   /** Materials and acquisition state advance together; the returned material map is a copy. */
   get capturedPresentation(): CodemapPresentation {
@@ -79,7 +82,9 @@ export class FinalizationOperation {
           automaticAcquisition: freeze(automaticAcquisition) };
         await revalidateMaterials(operation, materials);
         const { generation, ...inventory } = operation.snapshot;
-        const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal);
+        const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal,
+          { kind: 'live', operation });
+        this.#capturedAutomaticGit = input.automaticGit;
         return { materials, automaticAcquisition, inventory, input, rendered: renderBundle(input) };
       });
       const { materials, automaticAcquisition, inventory, input, rendered } = candidate;
@@ -93,7 +98,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 15,
+        schemaVersion: 16,
         codemapMode,
         automaticCodemaps: [...automaticAcquisition.outcomes],
         request,
@@ -104,6 +109,7 @@ export class FinalizationOperation {
         prompt,
         materials: rendered.records,
         clipboardPreset: input.clipboardPreset,
+        automaticGit: input.automaticGit === null ? null : { evidence: input.automaticGit.evidence, span: rendered.automaticGitSpan },
         fileTree: { input: input.fileTree.input, span: rendered.fileTreeSpan },
         files: { context: identity(rendered.context), handoff: identity(rendered.handoff) },
         accounting: {
@@ -149,6 +155,7 @@ export class FinalizationOperation {
         }
       }
       await revalidateMaterials(operation, materials);
+      await revalidateCapturedAutomaticReviewGit(operation, input.automaticGit);
       signal.throwIfAborted();
       this.#claimed = true;
       this.publishing();

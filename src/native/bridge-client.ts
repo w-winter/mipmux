@@ -24,6 +24,8 @@ const resultKinds = {
   projectGitArtifacts: ['gitArtifacts', 'gitArtifactProjectionError'], decorateGitArtifacts: ['gitArtifactRepos'],
   authorizeGitArtifact: ['gitArtifactAuthorization'],
   electGitTarget: ['gitTarget'],
+  resolveAutomaticReviewGit: ['automaticReviewGitPaths'],
+  renderAutomaticReviewGit: ['automaticReviewGit'],
   revalidateGitTargets: ['gitTargetValidation'],
   captureIgnoreInputs: ['ignoreInputs'], queryIgnoreHierarchy: ['ignoreHierarchy'],
   queryIgnoreRules: ['ignoreRules'],

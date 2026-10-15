@@ -52,7 +52,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
       });
       const forged = renderBundle(await prepareClipboard(runtime, { request: manifest.request, inventory: manifest.inventory, codemapMode: manifest.codemapMode,
         automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
-        prompt: manifest.prompt, materials, fileTree: saved.fileTree }, signal));
+        prompt: manifest.prompt, materials, fileTree: saved.fileTree }, signal, { kind: 'captured', capture: saved.automaticGit }));
       manifest.materials = forged.records;
       manifest.fileTree.span = forged.fileTreeSpan;
       manifest.files = { context: identity(forged.context), handoff: identity(forged.handoff) };
@@ -64,7 +64,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
     }
     const restored = renderBundle(await prepareClipboard(runtime, { request: result.manifest.request, inventory: result.manifest.inventory,
       automaticAcquisition: { kind: 'settled', outcomes: result.manifest.automaticCodemaps },
-      codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials, fileTree: saved.fileTree }, signal));
+      codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials, fileTree: saved.fileTree }, signal, { kind: 'captured', capture: saved.automaticGit }));
     await writeFile(join(result.directory, 'context.md'), restored.context);
     await writeFile(join(result.directory, 'handoff.md'), restored.handoff);
     await writeFile(join(result.directory, 'manifest.json'), canonicalJSON(result.manifest));

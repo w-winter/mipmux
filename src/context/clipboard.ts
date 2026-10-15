@@ -5,6 +5,8 @@ import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import type { RenderInput, ItemCost } from './render.js';
 import { compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits } from './budget.js';
+import { acquireAutomaticReviewGit, type AutomaticReviewGitSource } from './automatic-review-git.js';
+import { verifyAutomaticReviewGitCapture } from './automatic-review-git-integrity.js';
 
 type ClipboardInput = Extract<NativeOperation, { kind: 'renderPreparedClipboard' }>;
 type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds'>;
@@ -36,14 +38,23 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
     fileTreeContent: input.fileTree.text,
     selectedGitDiffs: materials.selectedPatches.map(material => ({ id: material.record.id, text: material.bodies.join('') })),
     gitDiff: materials.patches.length ? materials.patches.flatMap(material => material.bodies).join('\n\n') : null,
+    automaticGitDiff: input.automaticGit?.text ?? null,
     metaInstructions: input.request.constraints ? [{ title: 'Constraints', content: input.request.constraints }] : [],
     userInstructions: input.prompt,
   } };
 }
 
-export async function prepareClipboard(runtime: SmipRuntime, input: PacketInput, signal: AbortSignal): Promise<RenderInput> {
-  const clipboard = await runtime.renderPresentation(preparedClipboardInput(input), signal);
-  return { ...input, clipboard: clipboard.text, clipboardPreset: clipboard.preset, selectedGitDiffIds: clipboard.selectedGitDiffIds };
+export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketInput, 'automaticGit'>,
+  signal: AbortSignal, source: AutomaticReviewGitSource): Promise<RenderInput> {
+  let automaticGit = source.kind === 'captured' ? source.capture : null;
+  let clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);
+  if (clipboard.needsAutomaticGit && source.kind === 'live') {
+    const operation = await source.operation.fork(signal);
+    try { automaticGit = await acquireAutomaticReviewGit(operation, input.request, input.materials); }
+    finally { await operation.close(); }
+    clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);
+  }
+  return { ...input, automaticGit, clipboard: clipboard.text, clipboardPreset: clipboard.preset, selectedGitDiffIds: clipboard.selectedGitDiffIds };
 }
 
 type Consume = (text: string) => Span;
@@ -113,12 +124,19 @@ export function parseClipboard(input: RenderInput) {
     consumeMaterialBlocks(materials.contents, consume, framed);
     consume('\n</file_contents>\n');
   }
-  const gitDiff = patches.flatMap(material => material.bodies).join('\n\n');
+  verifyAutomaticReviewGitCapture(input.automaticGit, input.clipboardPreset.gitInclusion === 'selected' && selectedPatches.length === 0);
+  const automaticText = input.automaticGit?.text ?? '';
+  const gitDiff = [automaticText, ...patches.flatMap(material => material.bodies)].filter(Boolean).join('\n\n');
   if (gitDiff) consume('<git_diff>\n');
+  const automaticGitSpan = automaticText ? consume(automaticText) : null;
+  if (automaticGitSpan) {
+    costs.push({ id: 'automaticReviewGit', bytes: automaticGitSpan.length, units: estimateUnits(automaticGitSpan.length) });
+    if (patches.length) consume('\n\n');
+  }
   consumeMaterialBlocks(patches, consume, raw);
   if (gitDiff) consume('\n</git_diff>\n');
   consumeMetaInstructions(input, consume);
   if (input.prompt) consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n');
   if (cursor !== bytes.length) throw new WorkspaceFailure('invalidClipboard');
-  return { records, costs, fileTreeSpan };
+  return { records, costs, fileTreeSpan, automaticGitSpan };
 }

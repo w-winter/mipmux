@@ -8,6 +8,7 @@ import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle } from '../context/verify.js';
 import { revalidateMaterials } from '../context/revalidate.js';
+import { revalidateAutomaticReviewGit } from '../context/automatic-review-git.js';
 import { ArtifactStore } from '../workspace/artifact-store.js';
 import { WorkspaceRuntime } from '../workspace/workspace-runtime.js';
 import { WorkspaceOperation } from '../workspace/workspace-operation.js';
@@ -99,7 +100,7 @@ export class SmipRuntime {
     return work;
   }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
-  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' }>>(input: O, signal: AbortSignal) {
+  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const work = (async () => {
@@ -203,7 +204,7 @@ export class SmipRuntime {
   }
   async #verifyCurrentBundle(directory: string, signal: AbortSignal) {
     signal.throwIfAborted();
-    const { verified,materials,fileTree,clipboard: savedClipboard } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
+    const { verified,materials,fileTree,automaticGit,clipboard: savedClipboard } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
     validateWorkspaceSpec({ roots:manifest.inventory.roots.map(root=>({name:root.name,absolutePath:root.identity.declaredPath})),
       exclusions:manifest.exclusions,outputRoot:manifest.inventory.outputRoot.declaredPath });
     const cache = await this.#admitCache();
@@ -220,11 +221,12 @@ export class SmipRuntime {
     this.#operations.add(operation);
     try {
       await revalidateMaterials(operation,materials);
+      await revalidateAutomaticReviewGit(operation, manifest.request, materials, automaticGit);
       const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), signal);
       if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
       const clipboard = await this.renderPresentation(preparedClipboardInput({ request: manifest.request, prompt: manifest.prompt,
         inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree,
-        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps } }), signal);
+        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, automaticGit }), signal);
       if (canonicalJSON(manifest.clipboardPreset) !== canonicalJSON(clipboard.preset) || savedClipboard !== clipboard.text) throw new WorkspaceFailure('presentationChanged');
       return {...verified,kind:'currentVerified' as const};
     } finally { await operation.close(); }

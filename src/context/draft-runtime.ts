@@ -63,6 +63,7 @@ import { ReadRequest } from '../contracts/exploration.js';
 import { readFileReply } from '../exploration/read.js';
 import type { AutomaticCodemapOutcome, AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
 import { acquireAutomaticCodemaps, automaticAcquisitionSummary, automaticCodemapDisposition, type DerivedMaterials } from './automatic-codemap-acquisition.js';
+import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
@@ -92,6 +93,7 @@ export class DraftRuntime {
   #finalized: Promise<FinalizationResult> | null = null;
   #closing: Promise<void> | null = null;
   #gitAdvertisements: ReadonlyMap<string, CatalogedGitArtifact> = new Map();
+  #automaticGit: AutomaticReviewGitCapture | null = null;
   private constructor(
     readonly operation: WorkspaceOperation,
     readonly request: ContextBuildRequest,
@@ -522,7 +524,7 @@ export class DraftRuntime {
     const observed = await refreshGitArtifactMaterials(operation, [...materials.values()]);
     const snapshot = operation.snapshot;
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: observed, automaticAcquisition: acquisition }, operation.signal));
+      prompt, codemapMode: mode, materials: observed, automaticAcquisition: acquisition }, operation.signal, { kind: 'live', operation }));
     const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display,
       acquisition.kind === 'settled' ? acquisition.outcomes : [], acquisition.kind === 'settled' ? coverage.sourceIssues : []);
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
@@ -594,7 +596,8 @@ export class DraftRuntime {
       if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
       const observed = await this.#liveMaterials([...next.values()], signal);
       const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
-        codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps } }, AbortSignal.any([signal, this.#cancel.signal])));
+        codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps } }, AbortSignal.any([signal, this.#cancel.signal]),
+        { kind: 'live', operation: this.operation }));
       this.#check(signal, request.expectedRevision);
       if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
       const result = { kind: 'preview' as const, draftId: this.id, revision: this.#revision, codemapMode: mode,
@@ -705,7 +708,7 @@ export class DraftRuntime {
     const mode = state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const;
     const observed = await this.#liveMaterials([...next.values()], signal);
     const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: this.operation.snapshot, prompt,
-      codemapMode: mode, materials: observed, automaticAcquisition }, AbortSignal.any([signal, this.#cancel.signal])));
+      codemapMode: mode, materials: observed, automaticAcquisition }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation: this.operation }));
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
     for (const id of changedIds) if (!next.has(id)) changedCosts.push({ id, bytes: 0, units: 0 });
@@ -778,7 +781,7 @@ export class DraftRuntime {
         prompt: text,
         materials,
         automaticAcquisition,
-      }, signal));
+      }, signal, state === 'terminal' ? { kind: 'captured', capture: this.#automaticGit } : { kind: 'live', operation: this.operation }));
     const prompt = { kind: 'prompt' as const, prompt: text };
     const records: (ItemCost | ReturnType<typeof materialMetadata> | typeof prompt)[] = request.view === 'costs'
       ? rendered.costs
@@ -833,7 +836,7 @@ export class DraftRuntime {
       try {
         const tree = await initialFileTree(operation, selection);
         const materials = await refreshGitArtifactMaterials(operation, input.materials);
-        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, materials }, operation.signal),
+        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, materials }, operation.signal, { kind: 'live', operation }),
           draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
         return { context, tree, prompt: input.prompt, roots: input.inventory.roots.map(root => root.name) };
       } finally { await operation.close(); }
@@ -855,7 +858,7 @@ export class DraftRuntime {
           prompt,
           materials,
           automaticAcquisition,
-        }, operation.signal));
+        }, operation.signal, { kind: 'live', operation }));
         return freeze({
           kind: 'validation' as const,
           codemapMode,
@@ -895,6 +898,7 @@ export class DraftRuntime {
     };
     this.#finalized = operation.result.then(async (result) => {
       const captured = operation.capturedPresentation;
+      this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;
       if (result.kind === 'blocked') {
         if (!this.#closing) {
@@ -908,6 +912,7 @@ export class DraftRuntime {
       return result;
     }, async (error: unknown) => {
       const captured = operation.capturedPresentation;
+      this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;
       await terminal();
       throw error;

@@ -10,12 +10,14 @@ import { selectionValidator, type SelectionRequest } from '../src/contracts/sele
 import type { RuntimeOptions } from '../src/runtime/smip-runtime.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
+import { identity } from '../src/context/material-store.js';
+import { canonicalJSON } from '../src/workspace/values.js';
 
 const signal = () => new AbortController().signal;
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
 async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options),
-  presentation: Pick<ContextBuildRequest, 'copyPreset' | 'patches'> = { copyPreset: 'codeReview', patches: [] }) {
+  presentation: Pick<ContextBuildRequest, 'copyPreset' | 'patches' | 'reviewGitBase'> = { copyPreset: 'codeReview', patches: [] }) {
   const base = await mkdtemp(join(tmpdir(), 'smip-git-selection-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
@@ -75,6 +77,203 @@ for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) {
     } finally { await f.runtime.close(); }
   });
 }
+
+for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) test(`${copyPreset} export acquires automatic Git evidence only for selected ordinary files`, async () => {
+  const f = await fixture(undefined, { copyPreset, patches: [] });
+  try {
+    await writeFile(join(f.root, 'unselected.txt'), 'unselected change\n');
+    const costs = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+    assert(costs.kind === 'costs');
+    const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');
+    const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
+    assert.equal(context.includes('<git_diff>'), copyPreset === 'codeReview');
+    if (copyPreset === 'codeReview') {
+      assert(context.includes('diff --git a/file.txt b/file.txt'));
+      assert(context.includes('-base\n+changed\n'));
+      assert(!context.includes('unselected change'));
+    }
+    assert.equal(costs.measurement.bytes, Buffer.byteLength(context));
+    await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+    await writeFile(`test-output/git-automatic-${copyPreset}.json`, JSON.stringify({ directory: ready.directory,
+      costs, manifest: ready.manifest }, null, 2) + '\n');
+  } finally { await f.runtime.close(); }
+});
+
+test('automatic Git uses merge-base intent and retains required patches independently', async () => {
+  const required = 'REQUIRED COMPARISON EVIDENCE\n';
+  const f = await fixture(undefined, { copyPreset: 'codeReview', reviewGitBase: ' topic-base ', patches: [{ kind: 'suppliedPatch',
+    id: 'required', root: 'r', text: required, origin: 'fixture', comparison: { kind: 'supplied', base: 'before', target: 'after' },
+    coverage: ['file.txt'], targets: [{ path: 'file.txt', identity: identity('changed\n'), mode: '100644' }] }] });
+  try {
+    f.run(['branch', 'topic-base']);
+    const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');
+    const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
+    const expected = f.run(['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=3', '--color=never', 'HEAD', '--', 'file.txt']);
+    assert(context.includes('<git_diff>\n' + expected + '\n\n' + required + '\n</git_diff>'));
+    await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+    const terminalBefore = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+    f.run(['add', '.']); f.run(['commit', '-qm', 'move comparison']); f.run(['branch', '-f', 'topic-base', 'HEAD']);
+    assert.deepEqual(await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal()), terminalBefore);
+    await verifyBundle(ready.directory);
+    await assert.rejects(verifyCurrentBundle(ready.directory, f.runtime, signal()), /automaticGitChanged/);
+  } finally { await f.runtime.close(); }
+});
+
+test('selected nonblank patches bypass automatic Git acquisition while blank patches permit it', async () => {
+  let acquisitions = 0;
+  const f = await fixture(options => {
+    class Runtime extends SmipRuntime {
+      override makeBridge() {
+        class Bridge extends BridgeClient {
+          override request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+            if (operation.kind === 'resolveAutomaticReviewGit') acquisitions++;
+            return super.request(operation, requestSignal);
+          }
+        }
+        return new Bridge({ executable: options.nativeExecutable, env: {}, supervisor: this.supervisor });
+      }
+    }
+    return new Runtime(options);
+  });
+  try {
+    const published = await f.draft.publishGitSnapshot(f.diff, f.options, signal()); assert(published.kind === 'single');
+    const patch = published.projection.primarySelectionAliases[1]; assert(patch);
+    await f.select({ op: 'add', paths: [patch], strict: true }); acquisitions = 0;
+    await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+    assert.equal(acquisitions, 0);
+    await writeFile(join(f.out, patch), '\u0085\u2028');
+    const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready'); assert(acquisitions > 0);
+    assert((await readFile(join(ready.directory, 'context.md'), 'utf8')).includes('-base\n+changed\n'));
+    assert(!ready.manifest.materials.some(material => material.kind === 'gitPatch'));
+    await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+  } finally { await f.runtime.close(); }
+});
+
+test('automatic Git cancellation never publishes partial diff text', async () => {
+  const controller = new AbortController(); let armed = false;
+  const f = await fixture(options => {
+    class Runtime extends SmipRuntime {
+      override makeBridge() {
+        class Bridge extends BridgeClient {
+          override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+            const result = await super.request(operation, requestSignal);
+            if (armed && operation.kind === 'fingerprintGitDiff') { armed = false; controller.abort(); }
+            return result;
+          }
+        }
+        return new Bridge({ executable: options.nativeExecutable, env: {}, supervisor: this.supervisor });
+      }
+    }
+    return new Runtime(options);
+  });
+  try {
+    armed = true;
+    await assert.rejects(f.draft.finalize(controller.signal), /cancelled|aborted/i);
+    await assert.rejects(readFile(join(f.out, 'packet/manifest.json')), /ENOENT/);
+  } finally { await f.runtime.close(); }
+});
+
+test('automatic Git retains valid checkout diffs beside non-repository selections and base failures', async () => {
+  for (const baseFailure of [false, true]) {
+    const presentation: Pick<ContextBuildRequest, 'copyPreset' | 'patches' | 'reviewGitBase'> = { copyPreset: 'codeReview', patches: [] };
+    if (baseFailure) presentation.reviewGitBase = 'only-first';
+    const f = await fixture(undefined, presentation);
+    try {
+      f.run(['branch', 'only-first']);
+      const other = join(f.root, '../other'); await mkdir(other); await writeFile(join(other, 'file.txt'), 'other\n');
+      if (baseFailure) {
+        execFileSync(git, ['init', '-q'], { cwd: other });
+        execFileSync(git, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'add', '.'], { cwd: other });
+        execFileSync(git, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'base'], { cwd: other });
+      }
+      const workspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'other', absolutePath: other }],
+        exclusions: [], outputRoot: f.out }, signal());
+      const draft = await workspace.createDraft({ ...f.draft.request, initialSelection: { codemapMode: 'manual', sources: [
+        { kind: 'full', source: { root: 'r', path: 'file.txt' } }, { kind: 'full', source: { root: 'other', path: 'file.txt' } },
+      ] } }, signal());
+      const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
+      assert.equal(ready.manifest.automaticGit?.evidence.completeness, 'partial');
+      const patch = f.run(['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=3', '--color=never', 'HEAD', '--', 'file.txt']);
+      const expected = '===== BEGIN REPOPROMPT CHECKOUT DIFF: r =====\n' + patch.trimEnd() +
+        '\n===== END REPOPROMPT CHECKOUT DIFF: r =====\n\n===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n' +
+        (baseFailure ? '- Comparison base could not be resolved for checkout: other' : '- No owning repository: other/file.txt') +
+        '\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====';
+      const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
+      assert(context.includes('<git_diff>\n' + expected + '\n</git_diff>'));
+      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+      await writeFile(`test-output/git-automatic-partial-${baseFailure}.json`, JSON.stringify({ directory: ready.directory,
+        automaticGit: ready.manifest.automaticGit, expected }, null, 2) + '\n');
+    } finally { await f.runtime.close(); }
+  }
+});
+
+test('automatic Git freezes every checkout before diff capture and publishes against those boundaries', async () => {
+  const prepared: string[] = []; let armed = false, firstCapture = true;
+  let advance: () => void = () => {};
+  const f = await fixture(options => {
+    class Runtime extends SmipRuntime {
+      override makeBridge() {
+        class Bridge extends BridgeClient {
+          override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+            const result = await super.request(operation, requestSignal);
+            if (armed && operation.kind === 'prepareGitDiff') prepared.push(operation.repoRootPath);
+            if (armed && firstCapture && operation.kind === 'fingerprintGitDiff') {
+              firstCapture = false; assert.equal(new Set(prepared).size, 2); advance();
+            }
+            return result;
+          }
+        }
+        return new Bridge({ executable: options.nativeExecutable, env: {}, supervisor: this.supervisor });
+      }
+    }
+    return new Runtime(options);
+  });
+  try {
+    const other = join(f.root, '../z'); await mkdir(other);
+    const run = (args: string[]) => execFileSync(git, args, { cwd: other, encoding: 'utf8' });
+    run(['init', '-q']); run(['config', 'user.name', 'Fixture']); run(['config', 'user.email', 'fixture@example.invalid']);
+    await writeFile(join(other, 'file.txt'), 'second base\n'); run(['add', '.']); run(['commit', '-qm', 'base']);
+    const secondBase = run(['rev-parse', 'HEAD']).trim();
+    await writeFile(join(other, 'file.txt'), 'second change\n');
+    advance = () => { run(['add', '.']); run(['commit', '-qm', 'advanced during first capture']); };
+    const workspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'z', absolutePath: other }],
+      exclusions: [], outputRoot: f.out }, signal());
+    const draft = await workspace.createDraft({ ...f.draft.request, initialSelection: { codemapMode: 'manual', sources: [
+      { kind: 'full', source: { root: 'r', path: 'file.txt' } }, { kind: 'full', source: { root: 'z', path: 'file.txt' } },
+    ] } }, signal());
+    armed = true;
+    const ready = await draft.finalize(signal()); assert(ready.kind === 'ready'); assert(!firstCapture);
+    const outcome = ready.manifest.automaticGit?.evidence.outcomes.find(outcome => outcome.checkout.identity.root === 'z');
+    assert(outcome && outcome.kind === 'diff'); assert.equal(outcome.comparison.base, secondBase);
+    assert((await readFile(join(ready.directory, 'context.md'), 'utf8')).includes('-second base\n+second change\n'));
+    await verifyBundle(ready.directory);
+    await assert.rejects(verifyCurrentBundle(ready.directory, f.runtime, signal()), /automaticGitChanged/);
+    await writeFile('test-output/git-automatic-frozen.json', JSON.stringify({ directory: ready.directory,
+      secondBase, automaticGit: ready.manifest.automaticGit }, null, 2) + '\n');
+  } finally { await f.runtime.close(); }
+});
+
+test('saved automatic Git rejects forged body proofs, completeness and missing provider observations', async () => {
+  const f = await fixture();
+  try {
+    const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready'); assert(ready.manifest.automaticGit);
+    const originalHandoff = await readFile(join(ready.directory, 'handoff.md'), 'utf8');
+    for (const mutation of ['bodyProof', 'completeness', 'missingObservation'] as const) {
+      const manifest = structuredClone(ready.manifest), automatic = manifest.automaticGit; assert(automatic);
+      if (mutation === 'bodyProof') {
+        const diff = automatic.evidence.outcomes.find(outcome => outcome.kind === 'diff'); assert(diff && diff.kind === 'diff');
+        diff.body.sha256 = '0'.repeat(64);
+      } else if (mutation === 'completeness') automatic.evidence.completeness = 'failed';
+      else manifest.automaticGit = null;
+      const handoff = originalHandoff.replace('"automaticGit":' + canonicalJSON(ready.manifest.automaticGit),
+        '"automaticGit":' + canonicalJSON(manifest.automaticGit));
+      manifest.files.handoff = identity(handoff);
+      await writeFile(join(ready.directory, 'handoff.md'), handoff);
+      await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON(manifest));
+      await assert.rejects(verifyBundle(ready.directory), /bundleIntegrityFailed/, mutation);
+    }
+  } finally { await f.runtime.close(); }
+});
 
 test('whitespace-only selected patches are omitted without losing inspection or required evidence', async () => {
   for (const [body, required] of [[' \t\r\n', false], ['\u0085\u2028', true]] as const) {

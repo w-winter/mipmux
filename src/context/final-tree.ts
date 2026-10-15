@@ -6,6 +6,7 @@ import type { Material } from './material-store.js';
 import { sourceId } from './material-store.js';
 import type { RenderInput } from './render.js';
 import { prepareClipboard } from './clipboard.js';
+import type { AutomaticReviewGitSource } from './automatic-review-git.js';
 
 type TreeInput = Extract<NativeOperation, { kind: 'renderFileTree' }>;
 export interface FinalFileTree {
@@ -49,8 +50,8 @@ export async function renderFinalFileTree(runtime: SmipRuntime, inventory: Omit<
   return { input, text: result.tree };
 }
 
-export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds'>,
-  signal: AbortSignal): Promise<RenderInput> {
+export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit'>,
+  signal: AbortSignal, gitSource: AutomaticReviewGitSource): Promise<RenderInput> {
   const fileTree = await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, signal);
-  return prepareClipboard(runtime, { ...input, fileTree }, signal);
+  return prepareClipboard(runtime, { ...input, fileTree }, signal, gitSource);
 }
