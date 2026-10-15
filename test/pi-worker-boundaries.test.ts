@@ -17,7 +17,7 @@ test('untrusted worker generations, late records and premature completion cannot
       }
       const supervisor = new Supervisor({ terminationGraceMs: 0 });
       try {
-        const result = await new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: [], hints: [] },
+        const result = await new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', roots: [], hints: [] },
           { call: async (_call, signal) => {
             calls++;
             await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }));

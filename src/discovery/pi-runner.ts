@@ -14,6 +14,7 @@ import { SHA256 } from '../contracts/workspace.js';
 import { completeDiscovery } from './completion.js';
 import { readRegularFile } from '../runtime/host-files.js';
 import { admitMcpConfiguration, type AdmittedMcp } from './mcp-config.js';
+import { bindDiscoveryPrompt } from './prompt-bindings.js';
 
 const dependencyValidator = Compile(Type.Object({ buildLockSHA256: SHA256 }, { additionalProperties: false }));
 
@@ -29,11 +30,20 @@ export class PiRunner implements DiscoveryRunner {
   async run(input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal,
     progress: (event: DiscoveryEvent) => void): Promise<DiscoveryOutcome> {
     signal.throwIfAborted();
-    const prompt = await readRegularFile(this.config.promptPath, new WorkspaceFailure('nonRegularDiscoveryPrompt'), signal);
-    let promptText: string;
-    try { promptText = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(prompt); }
-    catch { throw new WorkspaceFailure('invalidDiscoveryPrompt'); }
-    if (!promptText.startsWith('# smip discovery v1\n')) throw new WorkspaceFailure('invalidDiscoveryPrompt');
+    let prompt: Buffer, promptText: string, promptVersion: string;
+    if (this.config.prompt.kind === 'file') {
+      prompt = await readRegularFile(this.config.prompt.path, new WorkspaceFailure('nonRegularDiscoveryPrompt'), signal);
+      try { promptText = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(prompt); }
+      catch (cause) {
+        const failure = new WorkspaceFailure('invalidDiscoveryPrompt'); failure.cause = cause; throw failure;
+      }
+      // compat-ok: Explicit custom files require this single marker; no other format is accepted.
+      if (!promptText.startsWith('# smip discovery v1\n')) throw new WorkspaceFailure('invalidDiscoveryPrompt');
+      promptVersion = 'custom-file-v1';
+    } else {
+      promptText = bindDiscoveryPrompt(input.systemPrompt); prompt = Buffer.from(promptText);
+      promptVersion = 'rpce-43a9c29';
+    }
     let mcp: AdmittedMcp | null;
     try { mcp = this.config.mcp ? await admitMcpConfiguration(this.config.mcp, signal) : null; }
     catch (error) {
@@ -45,7 +55,7 @@ export class PiRunner implements DiscoveryRunner {
     if (!dependencyValidator.Check(dependency)) throw new WorkspaceFailure('invalidDependencyIdentity');
     const receipt: DiscoveryReceipt = {
       adapter: 'smip-pi-v1', sdk: '1.0.2', buildLockSHA256: dependency.buildLockSHA256,
-      promptVersion: 'discovery-v1', promptSHA256: sha256(prompt),
+      promptVersion, promptSHA256: sha256(prompt),
       requested: { provider: this.config.provider, model: this.config.model, thinking: this.config.thinking },
       effective: null, policy: structuredClone(this.config.policy), completions: [], events: [], prompt: 'notStarted',
       finalAssistant: null,

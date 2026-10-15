@@ -53,6 +53,7 @@ export const ContextBuildRequest = Type.Object({
   duplicateUserInstructionsAtTop: Type.Boolean(),
   copyPreset: ClipboardPreset,
   storedPrompts: Type.Array(StoredPrompt),
+  contextBuilderPrompts: Type.Optional(Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, closed))),
   task: Type.String(),
   constraints: Type.String(),
   enhancementMode: PromptEnhancementMode,

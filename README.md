@@ -206,7 +206,7 @@ Host configuration uses this shape. The numbers are example host choices, not mo
     "thinking": "medium",
     "authPath": "/private/smip/auth.json",
     "modelsPath": "/private/smip/models.json",
-    "promptPath": "/private/smip/discovery.md",
+    "prompt": { "kind": "rpce" },
     "mcp": null,
     "environment": {},
     "policy": {
@@ -227,7 +227,9 @@ Host configuration uses this shape. The numbers are example host choices, not mo
 }
 ```
 
-Set `discovery.promptPath` to the absolute path of an editable Markdown file beginning with `# smip discovery v1` followed by LF. For a source checkout, select the absolute path to `prompts/discovery-v1.md`. For an installed package, copy `dist/prompts/discovery-v1.md` from the package to a file you own, such as `/private/smip/discovery.md`, and select that path. Each job reads the file once and records its raw-byte SHA-256 as `promptSHA256`. Edits apply to the next job on the running server; an admitted job keeps its original prompt. Missing, nonregular, invalid UTF-8, or wrong-version prompt files fail before worker startup. Prompt instructions guide curation; tool permissions and bundle publication are controlled by the server.
+Set `discovery.prompt` to `{ "kind": "rpce" }` to use the native RepoPrompt CE discovery factory. Each job selects its Rewrite, Augment or Preserve branch, review guidance and language catalog using the captured request and Git target. The numeric budget includes one 1500-unit startup reserve. The scout receives the source startup sections: file map, current prompt, selected context-builder meta prompts, discovery instructions and budget metadata. A runtime observation supplies root routing, revisions, fixed constraints and evidence accounting.
+
+To supply your own system prompt, select `{ "kind": "file", "path": "/private/smip/discovery.md" }`. Create a regular UTF-8 Markdown file beginning with `# smip discovery v1` followed by LF. Each job reads it once and records its raw-byte SHA-256 as `promptSHA256`; `promptVersion` identifies custom-file or RPCE policy. Edits apply to the next job on the running server. Missing, nonregular, invalid UTF-8 or wrong-version files fail before worker startup. A custom file replaces the system policy; startup data and server-enforced permissions still apply.
 
 The worker reads the authorized authentication and model files; these paths and the host's configuration file are excluded from source discovery. The model file accepts a `providers` object with optional `baseUrl` and per-model `modelOverrides` containing `contextWindow` and `maxTokens`. Use `{ "providers": {} }` to select the bundled catalog explicitly. Other fields in model configuration and command-valued credentials are rejected. Supply the exact physical provider/model and supported thinking level; configuration errors require correction before another request.
 

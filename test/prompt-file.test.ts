@@ -12,7 +12,7 @@ import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
-const input: DiscoveryInput = { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: ['r'], hints: [] };
+const input: DiscoveryInput = { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', roots: ['r'], hints: [] };
 const digest = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 test('one runner snapshots configured prompt bytes per job and sees edits on the next job', async () => {
   let release!: () => void, entered!: () => void;
@@ -27,7 +27,7 @@ test('one runner snapshots configured prompt bytes per job and sees edits on the
   await writeFile(promptPath, first);
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   try {
-    const config = { ...provider.config, promptPath };
+    const config = { ...provider.config, prompt: { kind: 'file' as const, path: promptPath } };
     const runner = new PiRunner(config, supervisor);
     const running = runner.run(input, { call: async () => { entered(); await released; return { kind: 'ok' }; } }, new AbortController().signal, () => {});
     await boundary; await writeFile(promptPath, second); release();
@@ -51,7 +51,7 @@ test('prompt admission rejects invalid files before spawn and closes descriptors
   const promptPath = join(provider.directory, 'input.md');
   t.mock.method(supervisor, 'spawn', () => { throw Error('Unexpected spawn'); });
   try {
-    const relative = { ...provider.config, promptPath: 'relative.md' };
+    const relative = { ...provider.config, prompt: { kind: 'file' as const, path: 'relative.md' } };
     assert.throws(() => new PiRunner(relative, supervisor), /invalidDiscoveryConfiguration/);
     for (const [scenario, code] of [['missing', 'ENOENT'], ['version', 'invalidDiscoveryPrompt'],
       ['utf8', 'invalidDiscoveryPrompt'], ['directory', 'nonRegularDiscoveryPrompt'], ['fifo', 'nonRegularDiscoveryPrompt']] as const) {
@@ -62,7 +62,7 @@ test('prompt admission rejects invalid files before spawn and closes descriptors
       if (scenario === 'utf8') await writeFile(path, Buffer.concat([Buffer.from('# smip discovery v1\n'), Buffer.from([0xff])]));
       if (scenario === 'fifo') execFileSync('mkfifo', [path]);
       const selected = scenario === 'directory' ? provider.directory : path;
-      const config = { ...provider.config, promptPath: selected };
+      const config = { ...provider.config, prompt: { kind: 'file' as const, path: selected } };
       if (scenario === 'fifo') {
         const program = `import {PiRunner} from ${JSON.stringify(new URL('../src/discovery/pi-runner.js', import.meta.url).href)};
           import {ProcessSupervisor} from ${JSON.stringify(new URL('../src/runtime/process-supervisor.js', import.meta.url).href)};
@@ -96,7 +96,7 @@ test('prompt admission rejects invalid files before spawn and closes descriptors
     });
     syncBuiltinESMExports();
     try {
-      const config = { ...provider.config, promptPath };
+      const config = { ...provider.config, prompt: { kind: 'file' as const, path: promptPath } };
       await assert.rejects(new PiRunner(config, supervisor).run(input,
         { call: async () => { throw Error('Unexpected tool'); } }, abort.signal, () => {}), { name: 'AbortError' });
       assert.equal(acquired, 1); assert.equal(closed, acquired);

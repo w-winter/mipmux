@@ -56,12 +56,10 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     const firstMessage = Compile(Type.Object({ content: Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() }), { minItems: 1 }) }))
       .Parse(provider.requests[0]!.messages[0]);
     const input = inputs[0]!;
-    const prefix = input.initialContext + '\n\n## Assignment\n\n';
-    assert(firstMessage.content[0]!.text.startsWith(prefix), 'Initial context must be raw text, not an escaped JSON value');
-    const scoutInput: unknown = JSON.parse(firstMessage.content[0]!.text.slice(prefix.length));
-    assert.deepEqual(scoutInput, { purpose: request.purpose, task: request.task, constraints: request.constraints,
-      enhancementMode: request.enhancementMode, tokenBudget: request.budgetUnits - 1500,
-      hints: request.discoveryHints, roots: ['r'] });
+    assert.equal(firstMessage.content[0]!.text, input.message + '\n\n<smip_runtime>\n' + input.initialContext + '\n</smip_runtime>');
+    assert(input.message.includes('<current_prompt_content>\n' + request.task + '\n</current_prompt_content>'));
+    assert(input.initialContext.includes(request.constraints));
+    assert.equal(input.tokenBudget, request.budgetUnits - 1500);
     await verifyBundle(result.bundle.directory);
     const packet = await readFile(join(result.bundle.directory, 'context.md'), 'utf8');
     for (const text of [source.slice(1), report, request.task, request.constraints]) assert(packet.includes(text));
@@ -93,7 +91,7 @@ test('cancellation during blocked SDK preflight joins forced closure before any 
   await promisify(execFile)('mkfifo', [fifo]);
   provider.config.authPath = fifo;
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 }), abort = new AbortController();
-  const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', roots: [], hints: [] },
+  const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', roots: [], hints: [] },
     { call: async () => { throw new Error('No tool permitted'); } }, abort.signal, () => {});
   // Opening the writer proves that the child is blocked in the matching read, without a timing delay.
   const writer = await open(fifo, 'w');
@@ -129,7 +127,7 @@ test('discovery material paging measures the real Pi result and returns every co
       outputName: 'packet', budgetUnits: 10000 }, new AbortController().signal);
     const runner = new PiRunner(provider.config, runtime.supervisor);
     const returned: string[] = [];
-    const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] }, {
+    const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: ['r'] }, {
       call: async (call, _signal, encode) => {
         assert(call.name === 'draft_inspect');
         const page = await originalCall(draft.id, call.input, _signal, encode);
@@ -169,7 +167,7 @@ test('forced worker closure preserves observed preflight and waits for parent-ow
   const supervisor = new Supervisor({ terminationGraceMs: 0 }), abort = new AbortController();
   try {
     let finished = false;
-    const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: [] },
+    const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: [] },
       { call: async () => { entered(); await released; return { kind: 'metadata' }; } }, abort.signal, () => {});
     void work.then(() => { finished = true; });
     await entering; abort.abort(); await closure;
@@ -212,7 +210,7 @@ test('summary retry uses the same SDK stream observer, while incomplete output a
     if (scenario === 'clamping') provider.config.thinking = 'max';
     const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), abort = new AbortController();
     try {
-      const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] },
+      const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: ['r'] },
         { call: async () => { toolCalls++; return { kind: 'metadata', body: 'data '.repeat(1000) }; } }, abort.signal, () => {});
       if (scenario === 'cancel' || scenario === 'compactionCancel') { await started; abort.abort(); }
       const result = await work;

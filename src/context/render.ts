@@ -45,6 +45,7 @@ export function renderInitialContext(input: RenderInput & { readonly draftId: st
   const inferred = new Set(sources.filter(record => record.selectionOrigin === 'inferred').map(record => record.id));
   const metadata = {
     draftId: input.draftId, revision: input.revision, inventoryDigest: input.inventory.inventoryDigest, codemapMode: input.codemapMode,
+    constraints: input.request.constraints,
     roots: input.inventory.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })),
     contextBudgetUnits: input.contextBudgetUnits, tokenBudget: scoutTokenBudget(input.request.budgetUnits), accountingMethod: 'utf8-21-over-80-v1', measurement: rendered.measurement,
     explicitSources: sources.filter(record => record.selectionOrigin === 'explicit').map(record => ({ selection: record.selection, required: record.required })),

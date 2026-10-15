@@ -23,7 +23,7 @@ test('real isolated SDK has only scoped tools, observes same-model recovery and 
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   try {
     const runner = new PiRunner(provider.config, supervisor);
-    const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] },
+    const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: ['r'] },
       { call: async () => { throw new Error('Unexpected tool'); } }, new AbortController().signal, () => {});
     assert.equal(result.kind, 'complete');
     assert.equal(result.receipt.workerClosed, true);
@@ -78,7 +78,7 @@ test('SDK consumes the validated model snapshot and guards each locked credentia
     });
     syncBuiltinESMExports();
     try {
-      const result = await runPiSession(provider.config, { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', constraints: '', hints: [], roots: ['r'] }, [],
+      const result = await runPiSession(provider.config, { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: ['r'] }, [],
         '# smip discovery v1\n', null, new AbortController().signal, () => {}, fact => observations.push(fact));
       assert.equal(substituted, true);
       await assert.rejects(originalRead(marker), { code: 'ENOENT' });

@@ -98,8 +98,8 @@ export class SmipRuntime {
     void work.then(() => this.#admissions.delete(work), () => this.#admissions.delete(work));
     return work;
   }
-  /** Owns captured tree/clipboard rendering, including observations after workspace lease release. */
-  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' }>>(input: O, signal: AbortSignal) {
+  /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
+  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const work = (async () => {

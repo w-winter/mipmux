@@ -1,23 +1,23 @@
 # Discovery prompt source and bindings
 
-`prompts/discovery-v1.md` uses RepoPrompt CE's discovery wording and section order. `prompts/reference/rpce-discovery.md` is the rendered reference for comparing changes. Discovery uses the supplied numeric token budget; recipient compatibility is checked separately when delivering the finished packet.
+Discovery uses the native RPCE factory, followed by the tool/runtime substitutions in `src/discovery/prompt-bindings.ts`. `test/fixtures/rpce-discovery/` contains complete source-rendered mode references. Discovery uses the supplied numeric token budget; recipient compatibility is checked separately when delivering the finished packet. `discovery.prompt` chooses `{ "kind": "rpce" }` or an explicit `{ "kind": "file", "path": "/absolute/prompt.md" }` override. The chosen file's bytes identify operator policy rather than RPCE conformance.
 
 ## Reference rendering
 
 The reference was rendered from `Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift` at RPCE commit `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3`, Git blob `4943690a86bf880ce9f5cb085e2e4f57211175e5`. The renderer executed the source's `discoverPrompt`, `mcpDiscoverPrompt` and supporting review-guidance functions with these inputs:
 
-- `tokenBudget: 200000`, an illustrative rendering parameter; smip jobs supply `Assignment.tokenBudget` after the 1500-unit startup reserve.
+- `tokenBudget: 200000`, an illustrative rendering parameter in `prompts/reference/rpce-discovery.md`; jobs supply `DiscoveryInput.tokenBudget` after the 1500-unit startup reserve. The three mode fixtures use 198500.
 - `agentKind: .codexExec`, for the restricted-tool workflow.
 - `enhancementMode: .fullRewrite`, the default mode for composing the MCP handoff.
 - `allowClarifyingQuestions: false`, the MCP default.
-- `responseType: "review"`, with no restricted-review target or extra instructions. The static smip prompt applies this section when `Assignment.purpose` is `review`.
+- `responseType: "review"`, with no restricted-review target or extra instructions. Jobs bind purpose to review, plan or clarify and supply the original task for the source review-intent helper. The initial frozen Git target controls restricted-review guidance.
 - `__SUPPORTED_LANGUAGES__` as a placeholder for the catalog of supported languages at runtime. Smip reports structural coverage through `get_code_structure` results.
 
-Only external type/default/catalog definitions were supplied by the rendering harness; the prompt factory's policy text and branching were executed unchanged. The reference file retains the rendered punctuation and whitespace. The smip prompt uses spaced hyphens for em-dash punctuation.
+Only external type/default/catalog definitions were supplied by the reference renderer; the prompt factory's policy text and branching were executed unchanged. The source text retains its punctuation and whitespace. The language catalog in production comes from the retained syntax engine. Pi exposes scoped context tools and configured HTTP MCP tools, not provider-native shell/filesystem tools, so every Pi provider uses the restricted-tool branch.
 
 The native `renderDiscoveryPrompt` operation executes the extracted RPCE factory in `native/Sources/SmipBridge/RPCEContextBuilderPrompt.swift`. It takes an explicit budget, runtime, enhancement mode, review inputs and clarification settings, and returns the complete reference prompt. The language catalog comes from the retained native syntax engine. `test/fixtures/rpce-discovery/` contains source-rendered outputs for Rewrite, Augment and Preserve with an explicit catalog placeholder; the test normalizes only that catalog line.
 
-The native `renderDiscoveryMessage` operation uses `ContextBuilderAgentViewModel.makeUserMessage` and the selected-meta-prompt formatting from `ContextBuilderPromptsOverlay.swift` at the same reference revision. Its inputs are the file tree, current prompt, discovery instructions, ordered selected meta prompts and adjusted budget. The renderer includes these sections in the source order. Startup guidance describes full content, slices and codemaps according to each selected representation; the source sentence claiming automatic compression is replaced. `test/fixtures/rpce-discovery-message/` contains six outputs generated from the original Swift functions; `scripts/generate-discovery-message-fixtures.mjs` regenerates them from a checked reference checkout. The test permits only that sentence correction when comparing the complete message. This operation is a source-rendering boundary; the current Pi dispatch still uses the captured context and Assignment JSON.
+The native `renderDiscoveryMessage` operation uses `ContextBuilderAgentViewModel.makeUserMessage` and the selected-meta-prompt formatting from `ContextBuilderPromptsOverlay.swift` at the same reference revision. Its inputs are the file tree, current prompt, discovery instructions, ordered selected meta prompts and adjusted budget. The renderer includes these sections in the source order. Startup guidance describes full content, slices and codemaps according to each selected representation; the source sentence claiming automatic compression is replaced. `test/fixtures/rpce-discovery-message/` contains six outputs generated from the original Swift functions; `scripts/generate-discovery-message-fixtures.mjs` regenerates them from a checked reference checkout. The test permits only that sentence correction when comparing the complete message. Pi receives this message followed by the captured runtime observation in `smip_runtime`. Discovery hints are joined with two LF characters as discovery instructions. Optional `contextBuilderPrompts` supplies selected title/content pairs in storage order; export-preset `storedPrompts` is a separate input.
 
 RPCE supplies the configured budget after its host-side 1500-unit reserve. Smip supplies `max(0, request.budgetUnits - 1500)` as `DiscoveryInput.tokenBudget`; complete-packet measurement uses `request.budgetUnits`. The prompt reads the scout budget rather than deriving a budget from a receiving model.
 
@@ -27,13 +27,13 @@ Every substantive difference belongs to one of these interface bindings. Discove
 
 | Binding | Native representation | Reason |
 | --- | --- | --- |
-| Version and attribution | `# smip discovery v1` and the RPCE revision/license footer | `PiRunner` requires the version marker; attribution identifies the source. |
-| Captured state and assignment | `initialContext`, `Assignment.task`, `Assignment.constraints`, `Assignment.enhancementMode` and `Assignment.hints` | These are the actual scout inputs. The original request is retained as provenance; the resulting literal prompt is mutable. |
-| Numeric budget | “The supplied token budget,” bound to `Assignment.tokenBudget` | A static editable prompt serves jobs with different admitted budgets. |
+| Policy identity | Receipt `promptVersion` and `promptSHA256` | RPCE policy uses `rpce-43a9c29` and the bound text's digest. Custom policy uses `custom-file-v1` and the file's raw-byte digest; its admission requires `# smip discovery v1` followed by LF. |
+| Captured state and assignment | Source startup sections plus `initialContext` in `smip_runtime` | The original task remains literal current-prompt content. The observation supplies fixed constraints, routing, revision and evidence costs. Complete material bodies are available through tools. |
+| Numeric budget | Native factory and startup `tokenBudget` | Both receive the same allowance after one reserve. The packet retains its configured assembly ceiling. |
 | Tools and paths | Smip's exposed context tools, explicitly configured HTTP MCP tools, and separate `root`/`path` fields | Built-in shell and filesystem tools are unavailable. Smip workspace tools enforce root policy; HTTP MCP tools have separately authorized capabilities. |
 | File trees | Startup and tool trees share the native RPCE snapshot renderer; `scope` for root/directory selection and `maxDepth` for folder depth | The renderer retains mode, ordering, depth, selected-descendant, automatic-budget and marker behavior. Startup trees include the source legends; tool output paging preserves complete rendered lines. A plus marks an available codemap. |
 | Structural queries | Native RPCE traversal, semantic size limits, signature admission, DTO and text formatter; root-qualified file/directory seeds or captured full/sliced selection | Captured inventory supplies immutable adjacency and classified outcomes. Headless roots/files use stable UUID identities; desktop graph demand coordination is replaced by retained artifacts. Seed resolution retains source direct-file priority, physical-path deduplication and its 8192-plus-sentinel bound. |
-| Selection and cost inspection | `draft_inspect` metadata/costs with response caps and continuations; `draft_preview` for a prepared candidate | Inspection describes committed state. Preview returns candidate metadata, costs and diagnostics at the unchanged revision. |
+| Selection and cost inspection | Source `workspace_context` becomes `draft_inspect`; token examples use `view: "costs"`, state examples use `view: "metadata"` | Inspection uses response caps and continuations. `draft_preview` returns candidate metadata, costs and diagnostics at the unchanged revision. |
 | Source selection | `draft_update` source edits or an ordered atomic `batch`; `clearSources` restores the required baseline | One draft transaction owns preparation, inference from the final candidate and receipt admission. Required inputs remain fixed. |
 | Codemap operations | `clearCodemaps`, codemap upserts and full/slice promotion | Codemap upserts enter manual mode; full/slice upserts preserve mode. RP's prompt says promotion disables automation, but neither implementation does. |
 | Prompt operations | `prompt` with get, set, append and clear; revision and response-cap fields for mutations | Literal prompt state supports Rewrite, Augment and Preserve; the resulting text is delivered in `user_instructions`. |
@@ -42,7 +42,7 @@ Every substantive difference belongs to one of these interface bindings. Discove
 | Slice preview | `manage_selection` with `op: "preview"` | Native selection policies resolve files, folders and slices; the prepared reply is admitted without committing selection. Strict preview requires rendered files or slices. |
 | Final gate and settlement | `draft_validate`, followed by an acknowledgement; parent-owned verification/publication | The scout stores its handoff and selection; its final response is not the published packet. |
 | Unattainable required budget | Preserve required material, record the gap and return a blocking diagnostic | Immutable caller inputs can make the budget impossible; the scout cannot remove them to force success. |
-| Native tool constraints | Revisions, continuations, pinned-source recovery and complete MCP documents | These contracts are needed to operate the native tools and preserve the authority of the original assignment. |
+| Native tool constraints | Examples supply `maxOutputBytes`; prompt mutations require the latest `expectedRevision` | The runtime appendix identifies example revision zero as a placeholder and explains accounting, fixed constraints, final validation and parent publication. Git examples use `root` rather than `repo_root`. |
 
 The reference's approximate auto-codemap overhead guidance remains guidance followed by actual cost inspection. Its strict "must exceed" wording and non-strict `>=` checklist are both retained; neither introduces a runtime representation-ratio check.
 
@@ -64,13 +64,9 @@ The native `matchSelectionPath` operation executes RPCE's ordinary `PathMatcher.
 
 ## Checking edits
 
-Compare the complete files, rather than checking whether a summary mentions the same concepts:
+`test/reference-prompt.test.ts` compares the complete native mode outputs with the source fixtures, normalizing only the language catalog. `test/discovery-native-prompt.test.ts` compares the complete provider-bound policy after tool/runtime bindings and the SDK's working-directory suffix, compares the startup sections, and verifies the saved packet for all three modes. `test/prompt-file.test.ts` exercises custom-file snapshots, errors and cancellation. `test/package-local.test.ts` runs both choices from a relocated installed package.
 
-```sh
-git diff --no-index -- prompts/reference/rpce-discovery.md prompts/discovery-v1.md
-```
-
-Each changed span should correspond to a binding above. A policy change needs a source-backed reason and an explicit decision. Rephrasing, shortening or reorganizing the reference requires that same decision. The reference is a comparison artifact, while `scripts/build-resources.mjs` packages the native prompt used by discovery jobs.
+Each changed policy span must correspond to a binding above. A policy change needs a source-backed reason and an explicit decision. Rephrasing, shortening or reorganizing the reference requires that same decision. Native factory/startup failures stop admission. Failure to admit a chosen file stops that explicit choice.
 
 ## Captured selection candidates
 

@@ -22,6 +22,7 @@ export function selectedGitSourcePaths(operation: WorkspaceOperation, materials:
 /** Allows implicit Git reads only from the initially elected checkouts and revalidates all of them before each read. */
 export class FrozenGitTarget {
   private constructor(private readonly resolution: Resolution) {}
+  get restrictsGitToExplicitReadOnly(): boolean { return this.resolution.state !== 'available'; }
 
   static async capture(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>): Promise<FrozenGitTarget> {
     const paths = selectedGitSourcePaths(operation, materials);

@@ -8,6 +8,9 @@ import { test } from 'node:test';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import Type from 'typebox';
+import { Compile } from 'typebox/compile';
+import { DiscoveryReceipt } from '../src/contracts/discovery.js';
 
 test('local package audits resources and executes relocated library, native, CLI, MCP and discovery prompt', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'smip-package-'));
@@ -15,7 +18,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const receipt = JSON.parse(readFileSync(join(directory, 'inventory.json'), 'utf8'));
   const paths: string[] = receipt.files.map((file: { path: string }) => file.path);
   for (const path of ['dist/index.js', 'dist/index.d.ts', 'dist/cli/main.js', 'dist/discovery/pi-worker.js',
-    'dist/prompts/discovery-v1.md', 'dist/dependency-identity.json', `libexec/${process.platform}-${process.arch}/SmipBridge`,
+    'dist/dependency-identity.json', `libexec/${process.platform}-${process.arch}/SmipBridge`,
     'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
   assert(!paths.some(path => /(?:\.DS_Store|\.env|test-output|prompt-exports|node_modules|\.build)/u.test(path)));
   const bytes = readFileSync(join(directory, receipt.filename));
@@ -36,9 +39,9 @@ test('local package audits resources and executes relocated library, native, CLI
   execFileSync(process.execPath, [join(installed, 'import.mjs')], { cwd: '/' });
   const provider = await scriptedProvider(() => ({ kind: 'text', text: 'Complete diagnostic', stop: 'end_turn', tokens: 10 }));
   const prompt = join(directory, 'editable-discovery.md');
-  const promptBytes = Buffer.concat([readFileSync(join(packageRoot, 'dist/prompts/discovery-v1.md')), Buffer.from('\nRELOCATED_EDITABLE_PROMPT\n')]);
+  const promptBytes = Buffer.from('# smip discovery v1\nRELOCATED_EDITABLE_PROMPT\n');
   writeFileSync(prompt, promptBytes);
-  provider.config.promptPath = prompt;
+  provider.config.prompt = { kind: 'file', path: prompt };
   const root = join(directory, 'source'), output = join(directory, 'out');
   mkdirSync(root); mkdirSync(output); writeFileSync(join(root, 'model.swift'), 'struct Relocated { let title: String }\n');
   const config = join(directory, 'config.json'), specPath = join(directory, 'spec.json'), requestPath = join(directory, 'request.json');
@@ -69,7 +72,26 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(terminal.discovery.buildLockSHA256, receipt.buildLockSHA256);
     assert.equal(terminal.discovery.promptSHA256, createHash('sha256').update(promptBytes).digest('hex'));
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('RELOCATED_EDITABLE_PROMPT'));
-    writeFileSync(join(directory, 'relocation-receipt.json'), JSON.stringify({ installed, packageSHA256: receipt.sha256, installLockSHA256, terminal }));
+    provider.config.prompt = { kind: 'rpce' };
+    writeFileSync(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
+      terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null,
+      discovery: provider.config, defaultMaxOutputBytes: 10000 }));
+    writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'native-relocation', request: {
+      task: 'Inspect', initialSelection: { codemapMode: 'automatic', sources: [] }, duplicateUserInstructionsAtTop: false,
+      copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'native-packet', budgetUnits: 10000 } }));
+    const nativeResult = await new Promise<string>((resolveResult, reject) => {
+      execFile(process.execPath, [command, 'build', '--request', requestPath, '--config', config], { cwd: '/' }, (error, stdout) => {
+        if (error) reject(error); else resolveResult(stdout);
+      });
+    });
+    const nativeTerminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt })).Parse(JSON.parse(nativeResult));
+    assert.equal(nativeTerminal.state, 'ready'); assert(nativeTerminal.state === 'ready');
+    assert.equal(nativeTerminal.discovery.promptVersion, 'rpce-43a9c29');
+    assert(JSON.stringify(provider.requests.at(-1)?.system).includes('Leave the prompt COMPLETELY unchanged'));
+    assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('<current_prompt_content>'));
+    writeFileSync(join(directory, 'relocation-receipt.json'), JSON.stringify({ installed, packageSHA256: receipt.sha256,
+      installLockSHA256, terminal, nativeTerminal }));
     mkdirSync(resolve('test-output'), { recursive: true });
     writeFileSync(resolve('test-output/group-e-relocation.json'), JSON.stringify({ directory, installed, receipt: join(directory, 'relocation-receipt.json') }));
   } finally { await client.close(); await provider.close(); }

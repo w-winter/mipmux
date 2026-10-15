@@ -10,7 +10,7 @@ const closed = { additionalProperties: false };
 export const DiscoveryInput = Type.Object({ tokenBudget: SafeCount, purpose: ContextBuildRequest.properties.purpose,
   enhancementMode: ContextBuildRequest.properties.enhancementMode,
   task: Type.String(), constraints: Type.String(), hints: Type.Array(Type.String()), roots: Type.Array(Type.String()),
-  initialContext: Type.String({ minLength: 1 }) }, closed);
+  initialContext: Type.String({ minLength: 1 }), systemPrompt: Type.String(), message: Type.String() }, closed);
 type DiscoveryInputFields = Static<typeof DiscoveryInput>;
 export type DiscoveryInput = { readonly [K in keyof DiscoveryInputFields]: Readonly<DiscoveryInputFields[K]> };
 export const Positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });

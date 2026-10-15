@@ -36,6 +36,7 @@ import { StructureIndex } from '../workspace/structure-index.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { Compile } from 'typebox/compile';
 import { initialFileTree } from '../exploration/tree.js';
+import { prepareDiscoveryInput } from './discovery-input.js';
 import { selectionValidator, type SelectionRequest } from '../contracts/selection.js';
 import { prepareSelection, captureSelection, projectSelection, type CanonicalSelection, type SelectionState } from './selection-preparation.js';
 import { prepareSourceEdits } from './draft-source-edits.js';
@@ -114,6 +115,7 @@ export class DraftRuntime {
     strictText(request.task);
     strictText(request.constraints);
     request.discoveryHints.forEach(strictText);
+    request.contextBuilderPrompts?.forEach(prompt => { strictText(prompt.title); strictText(prompt.content); });
     const allowance = request.budgetUnits;
     if (allowance > operation.runtime.options.contextBudgetUnits) {
       throw new WorkspaceFailure('assemblyBudgetExceeded', { allowance, maximum: operation.runtime.options.contextBudgetUnits });
@@ -763,6 +765,13 @@ export class DraftRuntime {
   }
   /** Read-only observation at invocation; JobRegistry captures it after admission and before dispatch. */
   initialContext(signal: AbortSignal): Promise<string> {
+    return this.#initialObservation(signal).then(view => view.context);
+  }
+  discoveryInput(signal: AbortSignal) {
+    return this.#track((async () => prepareDiscoveryInput(this.operation.runtime, this.request,
+      await this.#initialObservation(signal), this.gitTarget.restrictsGitToExplicitReadOnly, signal))());
+  }
+  #initialObservation(signal: AbortSignal) {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
       const input = { request: this.request, inventory: this.operation.snapshot, materials: [...this.#materials.values()],
@@ -773,8 +782,9 @@ export class DraftRuntime {
       try {
         const tree = await initialFileTree(operation, selection);
         const materials = await refreshGitArtifactMaterials(operation, input.materials);
-        return renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, materials }, operation.signal),
+        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, materials }, operation.signal),
           draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
+        return { context, tree, prompt: input.prompt, roots: input.inventory.roots.map(root => root.name) };
       } finally { await operation.close(); }
     })());
   }
