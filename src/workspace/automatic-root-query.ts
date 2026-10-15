@@ -1,5 +1,6 @@
 import type { StructureFile } from './structure-index.js';
 import { compareBytes } from './values.js';
+import { resolveStructureEvidence } from './structure-evidence.js';
 
 export interface AutomaticQueryBudget {
   readonly targets: number;
@@ -19,23 +20,7 @@ type AutomaticRootResult =
   | { readonly kind: 'ready'; readonly targets: readonly StructureFile[]; readonly counts: AutomaticQueryBudget }
   | { readonly kind: 'budget'; readonly reason: AutomaticRootBudgetReason };
 
-const maximumDefinitionCandidates = 4096;
 const targetFixedBytes = 64;
-
-function sourceEvidence(seed: StructureFile, definitions: ReadonlyMap<string, readonly StructureFile[]>) {
-  const targets = new Map<string, StructureFile>();
-  let referenceFailures = 0;
-  if (seed.visibility === 'managedOnly' || seed.structural.kind !== 'artifact' || seed.structural.record.outcome.kind !== 'ready') {
-    return { targets: [], referenceFailures };
-  }
-  const names = new Set(seed.structural.record.outcome.artifact.referencedTypes.map(name => name.normalize('NFC')));
-  for (const name of names) {
-    const candidates = definitions.get(name) ?? [];
-    if (!candidates.length || candidates.length > maximumDefinitionCandidates) { referenceFailures++; continue; }
-    for (const candidate of candidates) targets.set(candidate.path, candidate);
-  }
-  return { targets: [...targets.values()], referenceFailures };
-}
 
 /** Queries unique admitted seeds in one root; returns the first budget rejection or all path-ordered targets. */
 export function resolveAutomaticRoot(input: { readonly seeds: readonly StructureFile[];
@@ -43,9 +28,10 @@ export function resolveAutomaticRoot(input: { readonly seeds: readonly Structure
   const selected = new Set(input.seeds.map(seed => seed.path)), targets = new Map<string, StructureFile>();
   let resolutions = 0, referenceFailures = 0;
   for (const seed of input.seeds) {
-    const evidence = sourceEvidence(seed, input.definitions);
-    resolutions += evidence.targets.length; referenceFailures += evidence.referenceFailures;
-    for (const target of evidence.targets) if (!selected.has(target.path)) targets.set(target.path, target);
+    if (seed.visibility === 'managedOnly' || seed.structural.kind !== 'artifact' || seed.structural.record.outcome.kind !== 'ready') continue;
+    const evidence = resolveStructureEvidence(seed.structural.record.outcome.artifact.referencedTypes, input.definitions);
+    resolutions += evidence.edges.length; referenceFailures += evidence.unresolved.length;
+    for (const { target } of evidence.edges) if (!selected.has(target.path)) targets.set(target.path, target);
   }
   if (resolutions > input.budget.resolutions) return { kind: 'budget', reason: {
     kind: 'resolutionLimit', attempted: resolutions, limit: input.budget.resolutions,

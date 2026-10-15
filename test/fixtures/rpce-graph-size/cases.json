@@ -1,0 +1,326 @@
+[
+  {
+    "name": "two source edges and frontier unresolved/r",
+    "input": {
+      "kind": "reference",
+      "case": "two source edges and frontier unresolved",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "3306",
+      "edges": "3",
+      "nodes": "3",
+      "postings": "7"
+    }
+  },
+  {
+    "name": "excluded seed/r",
+    "input": {
+      "kind": "reference",
+      "case": "excluded seed",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "202",
+      "edges": "0",
+      "nodes": "0",
+      "postings": "0"
+    }
+  },
+  {
+    "name": "terminal failure seed/r",
+    "input": {
+      "kind": "reference",
+      "case": "terminal failure seed",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "201",
+      "edges": "0",
+      "nodes": "0",
+      "postings": "0"
+    }
+  },
+  {
+    "name": "empty contribution is covered but has no signature/r",
+    "input": {
+      "kind": "reference",
+      "case": "empty contribution is covered but has no signature",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "406",
+      "edges": "0",
+      "nodes": "1",
+      "postings": "0"
+    }
+  },
+  {
+    "name": "pending seed/r",
+    "input": {
+      "kind": "reference",
+      "case": "pending seed",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "205",
+      "edges": "0",
+      "nodes": "0",
+      "postings": "0"
+    }
+  },
+  {
+    "name": "ambiguous grouped symbols/r",
+    "input": {
+      "kind": "reference",
+      "case": "ambiguous grouped symbols",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "2749",
+      "edges": "2",
+      "nodes": "3",
+      "postings": "6"
+    }
+  },
+  {
+    "name": "NFC case preserving root local matching/r",
+    "input": {
+      "kind": "reference",
+      "case": "NFC case preserving root local matching",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "1801",
+      "edges": "1",
+      "nodes": "2",
+      "postings": "4"
+    }
+  },
+  {
+    "name": "NFC case preserving root local matching/s",
+    "input": {
+      "kind": "reference",
+      "case": "NFC case preserving root local matching",
+      "root": "s"
+    },
+    "expected": {
+      "bytes": "554",
+      "edges": "0",
+      "nodes": "1",
+      "postings": "1"
+    }
+  },
+  {
+    "name": "small node cap/r",
+    "input": {
+      "kind": "reference",
+      "case": "small node cap",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "44804",
+      "edges": "50",
+      "nodes": "51",
+      "postings": "52"
+    }
+  },
+  {
+    "name": "medium node cap/r",
+    "input": {
+      "kind": "reference",
+      "case": "medium node cap",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "115364",
+      "edges": "130",
+      "nodes": "131",
+      "postings": "132"
+    }
+  },
+  {
+    "name": "large node cap/r",
+    "input": {
+      "kind": "reference",
+      "case": "large node cap",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "185924",
+      "edges": "210",
+      "nodes": "211",
+      "postings": "212"
+    }
+  },
+  {
+    "name": "signature size omits large seed and admits later smaller related file/r",
+    "input": {
+      "kind": "reference",
+      "case": "signature size omits large seed and admits later smaller related file",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "1585",
+      "edges": "1",
+      "nodes": "2",
+      "postings": "3"
+    }
+  },
+  {
+    "name": "cross root shared node budget follows UUID not label order/z",
+    "input": {
+      "kind": "reference",
+      "case": "cross root shared node budget follows UUID not label order",
+      "root": "z"
+    },
+    "expected": {
+      "bytes": "36762",
+      "edges": "41",
+      "nodes": "42",
+      "postings": "43"
+    }
+  },
+  {
+    "name": "cross root shared node budget follows UUID not label order/a",
+    "input": {
+      "kind": "reference",
+      "case": "cross root shared node budget follows UUID not label order",
+      "root": "a"
+    },
+    "expected": {
+      "bytes": "557",
+      "edges": "0",
+      "nodes": "1",
+      "postings": "1"
+    }
+  },
+  {
+    "name": "4096 exact candidates threshold/r",
+    "input": {
+      "kind": "reference",
+      "case": "4096 exact candidates threshold",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "3621570",
+      "edges": "4096",
+      "nodes": "4097",
+      "postings": "4098"
+    }
+  },
+  {
+    "name": "4097 exact candidates threshold/r",
+    "input": {
+      "kind": "reference",
+      "case": "4097 exact candidates threshold",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "2000144",
+      "edges": "0",
+      "nodes": "4098",
+      "postings": "4099"
+    }
+  },
+  {
+    "name": "unsupported extension has no graph slot/r",
+    "input": {
+      "kind": "reference",
+      "case": "unsupported extension has no graph slot",
+      "root": "r"
+    },
+    "expected": {
+      "bytes": "0",
+      "edges": "0",
+      "nodes": "0",
+      "postings": "0"
+    }
+  },
+  {
+    "name": "slot-states-and-unsupported",
+    "input": {
+      "kind": "inline",
+      "files": [
+        {
+          "path": "unsupported.txt",
+          "state": null,
+          "definitions": [],
+          "references": []
+        },
+        {
+          "path": "pending.swift",
+          "state": "pending",
+          "definitions": [],
+          "references": []
+        },
+        {
+          "path": "excluded.swift",
+          "state": "terminalExcluded",
+          "definitions": [],
+          "references": []
+        },
+        {
+          "path": "failed.swift",
+          "state": "terminalArtifact",
+          "definitions": [],
+          "references": []
+        },
+        {
+          "path": "empty.swift",
+          "state": "empty",
+          "definitions": [],
+          "references": []
+        }
+      ]
+    },
+    "expected": {
+      "bytes": "1021",
+      "edges": "0",
+      "nodes": "1",
+      "postings": "0"
+    }
+  },
+  {
+    "name": "normalized-postings-matched-symbols-and-both-directions",
+    "input": {
+      "kind": "inline",
+      "files": [
+        {
+          "path": "é.swift",
+          "state": "contributed",
+          "definitions": [
+            "T",
+            "T",
+            "Å",
+            "Å"
+          ],
+          "references": [
+            "T",
+            "Å",
+            "Missing",
+            "Missing"
+          ]
+        },
+        {
+          "path": "Peer.swift",
+          "state": "contributed",
+          "definitions": [
+            "T",
+            "Å"
+          ],
+          "references": [
+            "Å",
+            "OtherMissing"
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "bytes": "3621",
+      "edges": "4",
+      "nodes": "2",
+      "postings": "9"
+    }
+  }
+]

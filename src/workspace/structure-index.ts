@@ -2,6 +2,8 @@ import type { InventorySnapshot, InventoryEntry, SourcePath } from '../contracts
 import { compareBytes, canonicalJSON, WorkspaceFailure } from './values.js';
 import { structureId } from './structure-identity.js';
 import { automaticQueryBudget, resolveAutomaticRoot, type AutomaticRootBudgetReason } from './automatic-root-query.js';
+import { captureStructureFiles } from './structure-files.js';
+import { evaluateStructureResidency, type StructureResidency, type GraphRevocation } from './structure-residency.js';
 
 export type StructureFile = Extract<InventoryEntry, { kind: 'file' }>;
 type AutomaticCodemapTargets =
@@ -10,8 +12,15 @@ type AutomaticCodemapTargets =
   | { readonly kind: 'targetDemandLimit'; readonly targets: readonly []; readonly attempted: number; readonly limit: number };
 type QueryRejection =
   | { readonly kind: 'sourceLimit' | 'rootLimit'; readonly attempted: number; readonly limit: number }
-  | (AutomaticRootBudgetReason & { readonly root: string });
-interface RootCandidates { readonly id: string; readonly definitions: Map<string, StructureFile[]> }
+  | (AutomaticRootBudgetReason & { readonly root: string })
+  | { readonly kind: 'graphRevoked'; readonly root: string; readonly reason: GraphRevocation };
+interface RootCandidates {
+  readonly id: string;
+  readonly root: InventorySnapshot['roots'][number];
+  readonly entries: InventoryEntry[];
+  readonly definitions: Map<string, StructureFile[]>;
+  residency: StructureResidency | null;
+}
 const sourceKey = (file: SourcePath) => canonicalJSON({ root: file.root, path: file.path });
 const maximumRawSourceCount = 4096;
 const maximumRootCount = 64;
@@ -23,20 +32,25 @@ export class StructureIndex {
   readonly #files = new Map<string, StructureFile>();
   readonly #roots = new Map<string, RootCandidates>();
   constructor(snapshot: Pick<InventorySnapshot, 'entries' | 'roots'>) {
-    for (const root of snapshot.roots) this.#roots.set(root.name, { id: structureId(root.identity, null), definitions: new Map() });
+    for (const root of snapshot.roots) this.#roots.set(root.name, { id: structureId(root.identity, null), root,
+      entries: [], definitions: new Map(), residency: null });
     for (const entry of snapshot.entries) {
-      if (entry.kind !== 'file') continue;
+      if (entry.kind !== 'file' && entry.kind !== 'acquisitionFailed') continue;
       const root = this.#roots.get(entry.root);
       if (!root) throw new WorkspaceFailure('unknownRoot');
-      this.#files.set(sourceKey(entry), entry);
-      if (entry.visibility === 'managedOnly' || entry.structural.kind !== 'artifact') continue;
-      const record = entry.structural.record;
-      if (record.outcome.kind !== 'ready' || !record.projection) continue;
-      for (const name of new Set(record.projection.definedTypeNames.map(name => name.normalize('NFC')))) {
-        const list = root.definitions.get(name) ?? [];
-        list.push(entry); root.definitions.set(name, list);
-      }
+      root.entries.push(entry);
+      if (entry.kind === 'file') this.#indexFile(root, entry);
+    }
+  }
 
+  #indexFile(root: RootCandidates, file: StructureFile): void {
+    this.#files.set(sourceKey(file), file);
+    if (file.visibility === 'managedOnly' || file.structural.kind !== 'artifact') return;
+    const record = file.structural.record;
+    if (record.outcome.kind !== 'ready' || !record.projection) return;
+    for (const name of new Set(record.projection.definedTypeNames.map(name => name.normalize('NFC')))) {
+      const list = root.definitions.get(name) ?? [];
+      list.push(file); root.definitions.set(name, list);
     }
   }
 
@@ -54,6 +68,8 @@ export class StructureIndex {
     const remaining = { ...automaticQueryBudget }, targets: StructureFile[] = [], rejections: QueryRejection[] = [];
     for (const [name, sources] of ordered) {
       const root = this.#roots.get(name)!;
+      if (root.residency === null) root.residency = evaluateStructureResidency(captureStructureFiles(root.root, root.entries), root.definitions);
+      if (root.residency.kind === 'revoked') { rejections.push({ kind: 'graphRevoked', root: name, reason: root.residency.reason }); continue; }
       const result = resolveAutomaticRoot({ seeds: sources, definitions: root.definitions, budget: remaining });
       if (result.kind === 'budget') { rejections.push({ root: name, ...result.reason }); continue; }
       for (const target of result.targets) targets.push(target);

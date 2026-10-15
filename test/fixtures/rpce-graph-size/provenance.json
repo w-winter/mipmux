@@ -1,0 +1,45 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "cases": 19,
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sha256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Models/WorkspaceCodemapSelectionGraphIncrementalModels.swift",
+      "sha256": "df1082c67de5355c422ea7c5c8f73cb4a8e46dddc80e788359ceacd8af15d1a7"
+    }
+  ],
+  "bindings": [
+    {
+      "path": "native/Sources/SmipBridge/StructureSnapshot.swift",
+      "sha256": "88a8a25cd6bf83456270d5d3e42f766c6dd4b4f1940c75bc340e5b0ca79e7c1f"
+    },
+    {
+      "path": "native/Sources/SmipBridge/StructureAdjacency.swift",
+      "sha256": "94c4ebd602e9ec733aaa20ea812b3df18c8b32ea4c134059ffab0877b5d077a9"
+    },
+    {
+      "path": "native/Sources/SmipBridge/RPCEGraphPolicy.swift",
+      "sha256": "d61674bf5e37eef22c3a6516deefa9f77e5e278e429625886c831b3da29f2754"
+    },
+    {
+      "path": "native/Sources/SmipBridge/RPCEGraphSizePolicy.swift",
+      "sha256": "4df9b3fe554f70a95723d9507e96e3c64142352e40783930c1d542a7c0b0a1fe"
+    },
+    {
+      "path": "native/Sources/SmipBridge/RPCEGraphOrdering.swift",
+      "sha256": "3fae8e334d3bb18d8b608b1e91faf6699d7870c194ef251858936adf9624c262"
+    },
+    {
+      "path": "test/fixtures/graph-size-oracle.swift",
+      "sha256": "065d56f9d9ead73918f2b23c322b9a3a59215f3a7be9227d4b9de4cafe3132ef"
+    }
+  ],
+  "generator": "scripts/generate-graph-size-fixtures.mjs",
+  "generatorSHA256": "c011b8bbd580aea9b8dfb37109599898e4556e9e82ec94a8d86e915b609fe0dd",
+  "input": "test/fixtures/rpce-structure/cases.json",
+  "inputSHA256": "fa86b6c936f44ae237bf8ec26db86ce63cb3b1dbb165021fdf463972f63fa713",
+  "scope": "Original fullSize and checked arithmetic run on captured immutable declarations and the retained adjacency adapter; prices/counts are independent of the TypeScript accountant, not proof of app currentness."
+}

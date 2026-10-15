@@ -5888,7 +5888,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
       "destination": "src/workspace/automatic-root-query.ts",
-      "sha256": "76e785e19327e63b3049cf818e9ea4992b4c03bd1b3b390c4bb25c6e196535af",
+      "sha256": "58830a96637f8dbc84ca988de82ca03b5915b393988beee12fc5f7b04c529cbe",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5906,7 +5906,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
       "destination": "src/workspace/structure-index.ts",
-      "sha256": "b5657a1a74644b491dd02280ff5e61fc64625801a936345ab1cfb2cf2f01044e",
+      "sha256": "f18caec5c5631d6e5a7b78f4f34a8fc0327e20bdf9f22ee26a01a9b090409e37",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5971,6 +5971,91 @@
       ],
       "changes": [
         "Original Swift automaticSelectionLatest body and source ordering executed against fixture-only settled adjacency. Source/adapter/input hashes and scope limits are recorded in fixture provenance."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "src/workspace/structure-evidence.ts",
+      "sha256": "c226610dbfff45d6c69df0266e4177d82176835664b7cd3326deeeb8a5d9982b",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1411,
+          1486
+        ]
+      ],
+      "changes": [
+        "Share the existing root-local normalized matching across automatic query and resident accounting, retaining per-target matched names and missing/too-common references. One complete reference is suppressed above4096definition candidates."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "src/workspace/structure-residency.ts",
+      "sha256": "2e327ce786826c10905a493d49e77cadef90e5e85cc7c0bc776969ef84d8ca08",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          1540,
+          1544
+        ],
+        [
+          1610,
+          1715
+        ],
+        [
+          1729,
+          1751
+        ]
+      ],
+      "changes": [
+        "Translate original fullSize logical prices and unsigned64-bit arithmetic into native-free bigint accounting. Charge slot/node contributions, union postings plus ledger overhead, both adjacency directions plus edge ledger and unresolved records.",
+        "Use production100000-node/2000000-posting/1000000-edge/192MiB limits in source order. Shared captured slots and matching supply the same facts as native explicit queries; resident revocation is separate from query output budgets."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "test/fixtures/rpce-graph-size/cases.json",
+      "sha256": "e4e00e9f117c5df0ceffca4b723b0595b46a40b786fedf110c389d8bb552e1be",
+      "classification": "fixture",
+      "ranges": [
+        [
+          1610,
+          1715
+        ],
+        [
+          1729,
+          1751
+        ]
+      ],
+      "changes": [
+        "Execute original fullSize and checked arithmetic against captured immutable declarations and retained adjacency. Source/binding hashes and scope limits are recorded in fixture provenance."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceCodemapSelectionGraph.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
+      "destination": "test/fixtures/rpce-graph-size/provenance.json",
+      "sha256": "8996d7ad5a673bc99183a9179bb97dac0de2c8a63935b77d22f6ce7f828b347e",
+      "classification": "fixture",
+      "ranges": [
+        [
+          1610,
+          1715
+        ],
+        [
+          1729,
+          1751
+        ]
+      ],
+      "changes": [
+        "Execute original fullSize and checked arithmetic against captured immutable declarations and retained adjacency. Source/binding hashes and scope limits are recorded in fixture provenance."
       ]
     }
   ],
