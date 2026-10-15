@@ -20,12 +20,21 @@ struct SearchPatternInput {
         self.mode = mode
     }
 
-    func render() -> [String: Any] {
+    func render() throws -> [String: Any] {
         guard !pattern.isEmpty else {
             let message = "pattern cannot be empty; provide a non-empty search term. " +
                 "If you intend to enumerate files, use get_file_tree or specify a path mode " +
                 "with a wildcard like '*.swift'."
             return ["kind": "searchPatternError", "message": message]
+        }
+        let effectiveMode = mode == .auto ? RPCESearchPattern.inferredAutoMode(pattern) : mode
+        if effectiveMode != .path {
+            do {
+                try RegexToolkit.validateComplexity(pattern, isRegex: isRegex)
+            } catch let error as RegexPatternFailure {
+                return ["kind": "searchContentPatternError", "mode": effectiveMode.rawValue,
+                        "path": ["text": pattern, "isRegex": isRegex], "message": error.localizedDescription]
+            }
         }
         let fuzzy = !isRegex && pattern.contains(" ")
         let bounded = wholeWord && !fuzzy
@@ -38,7 +47,6 @@ struct SearchPatternInput {
         } else {
             contentPattern = pattern
         }
-        let effectiveMode = mode == .auto ? RPCESearchPattern.inferredAutoMode(pattern) : mode
         return ["kind": "searchPattern", "mode": effectiveMode.rawValue,
                 "path": ["text": pattern, "isRegex": isRegex],
                 "content": ["text": contentPattern, "isRegex": isRegex || fuzzy || bounded]]

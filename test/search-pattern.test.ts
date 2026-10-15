@@ -80,6 +80,30 @@ test('public file_search uses source pattern inference, trimming and literal fle
     assert.deepEqual(errorReply.Parse(blank.structuredContent), { kind: 'error', code: 'invalidSearchPattern',
       message: "pattern cannot be empty; provide a non-empty search term. If you intend to enumerate files, use get_file_tree or specify a path mode with a wildcard like '*.swift'." });
     observations.push({ blank });
+    const admissionCases = [
+      { mode: 'content', text: 'a'.repeat(2000), wholeWord: false, rejected: false },
+      { mode: 'content', text: 'a'.repeat(2001), wholeWord: false, rejected: true },
+      { mode: 'content', text: 'a'.repeat(2000), wholeWord: true, rejected: false },
+      { mode: 'content', text: 'a'.repeat(2001), wholeWord: true, rejected: true },
+      { mode: 'content', text: 'a'.repeat(1998) + ' b', wholeWord: false, rejected: false },
+      { mode: 'content', text: 'a'.repeat(1999) + ' b', wholeWord: false, rejected: true },
+      { mode: 'content', text: 'e\u0301'.repeat(2000), wholeWord: false, rejected: false },
+      { mode: 'content', text: 'e\u0301'.repeat(2001), wholeWord: false, rejected: true },
+      { mode: 'path', text: 'a'.repeat(2001), wholeWord: false, rejected: false },
+      { mode: 'both', text: 'a'.repeat(2001), wholeWord: false, rejected: false },
+    ];
+    for (const item of admissionCases) for (const countOnly of [false, true]) {
+      const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
+        input: { mode: item.mode, query: { kind: 'literal', text: item.text, wholeWord: item.wholeWord }, countOnly } } });
+      assert.equal(found.isError, item.rejected, JSON.stringify({ item, countOnly, found }));
+      if (item.rejected) {
+        assert.deepEqual(errorReply.Parse(found.structuredContent), { kind: 'error', code: 'invalidSearchPattern',
+          message: 'Search pattern was rejected because it is either excessively large or shaped in a way that is known to cause catastrophic back-tracking in the regex engine.  Please simplify the pattern or rewrite it using non-nested quantifiers.' });
+      } else {
+        assert.equal(searchReply.Parse(found.structuredContent).counts.matchingLines, 0);
+      }
+      observations.push({ admission: item, countOnly, reply: found });
+    }
     await mkdir('test-output', { recursive: true });
     await writeFile('test-output/search-pattern-public.json', JSON.stringify(observations, null, 2) + '\n');
   } finally { await client.close(); }

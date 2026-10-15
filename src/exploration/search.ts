@@ -44,9 +44,10 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     identity: entry.identity })));
   const offset = pageOffset(continuation, digest);
   const matches = candidates.map(() => ({ matchingLines: 0, lastLine: 0 }));
-  const useRipgrep = !pattern.raw.isRegex && pattern.content.isRegex;
+  const contentPattern = pattern.content.kind === 'ready' ? pattern.content.pattern : null;
+  const useRipgrep = contentPattern !== null && !pattern.raw.isRegex && contentPattern.isRegex;
   const flags = ['--pcre2', '--json', '--no-config', '--encoding', 'none', '--no-ignore', '--hidden', '--threads', '1', '--sort', 'path'];
-  const contentFlags = patternFlags(flags, pattern.content, request.query.caseSensitive);
+  const contentFlags = contentPattern === null ? [] : patternFlags(flags, contentPattern, request.query.caseSensitive);
   const limitations: { root: string; path: string; code: string }[] = [];
   const workRoot = join(operation.runtime.options.cachePath, 'v1/work');
   await mkdir(workRoot, { recursive: true, mode: 0o700 });
@@ -86,7 +87,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     };
     for (const [index, candidate] of candidates.entries()) {
       // Each candidate is revalidated even for count-only and path-only continuations.
-      if (pattern.mode === 'path') { await operation.readRawSource(candidate); continue; }
+      if (pattern.mode === 'path' || pattern.content.kind === 'failed') { await operation.readRawSource(candidate); continue; }
       try {
         const source = await operation.readSource(candidate);
         const prepared = prepareText(source.text);
@@ -98,7 +99,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
             ? await scanRegexContent(operation, source.text, prepared.lines.length, { pattern: pattern.raw.text,
               caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
               countOnly: request.countOnly, limit: request.maxResults - contentMatches })
-            : await scanLiteralContent(operation, prepared, { pattern: pattern.content.text,
+            : await scanLiteralContent(operation, prepared, { pattern: pattern.content.pattern.text,
               caseSensitive: request.query.caseSensitive, countOnly: request.countOnly, limit: request.maxResults - contentMatches });
           matches[index]!.matchingLines = found.matchingLines;
           contentMatches += found.matchingLines;
@@ -110,7 +111,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
       }
       if (!useRipgrep) flush();
     }
-    if (pattern.mode !== 'path' && pattern.raw.isRegex && !candidates.length) {
+    if (pattern.mode !== 'path' && pattern.content.kind === 'ready' && pattern.raw.isRegex && !candidates.length) {
       await scanRegexContent(operation, '', 0, { pattern: pattern.raw.text, caseSensitive: request.query.caseSensitive,
         wholeWord: request.query.kind !== 'glob' && request.query.wholeWord, countOnly: request.countOnly, limit: request.maxResults });
     }
@@ -144,7 +145,7 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     const counts = { totalMatches: matchingLines + matchedPaths.size, matchingLines, pathMatches: matchedPaths.size, matchedFiles };
     return pageResult(records, 0, maxOutputBytes, (files) => ({
       kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
-      engine: pattern.mode === 'path' ? 'RPCE path' : pattern.content.isRegex ? 'PCRE2' : 'Foundation',
+      engine: pattern.mode === 'path' ? 'RPCE path' : pattern.raw.isRegex || contentPattern?.isRegex === true ? 'PCRE2' : 'Foundation',
       newlineView: pattern.raw.isRegex ? 'Original decoded text; CRLF, CR and LF define lines'
         : 'CRLF and CR become LF; all other decoded text is preserved', counts,
       limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),

@@ -10,6 +10,8 @@ export const NativeSearchPatternInput = Type.Object({ kind: Type.Literal('prepar
   text: Type.String(), queryKind: SearchPatternKind, wholeWord: Type.Boolean(), mode: SearchMode }, closed);
 export const NativeSearchPatternResult = Type.Union([
   Type.Object({ kind: Type.Literal('searchPattern'), mode: Type.Enum(['path', 'content', 'both']), path: pattern, content: pattern }, closed),
+  Type.Object({ kind: Type.Literal('searchContentPatternError'), mode: Type.Enum(['content', 'both']),
+    path: pattern, message: Type.String() }, closed),
   Type.Object({ kind: Type.Literal('searchPatternError'), message: Type.String() }, closed),
 ]);
 export const NativeSearchPathsInput = Type.Object({ kind: Type.Literal('matchSearchPaths'),

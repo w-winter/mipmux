@@ -6753,10 +6753,11 @@
         "Decode one current text-query shape. Apply the source trim, empty-pattern diagnostic and omitted-regex inference. Prepare separate path/content patterns; literal-space content uses the original fuzzy converter and bypasses whole-word matching as in SearchMatch.swift1764-1778 and2032-2075. Path searches ignore the whole-word flag.",
         "This adapter prepares patterns only. Automatic mode routing, limits on results, path globbing and regex repairs remain separate conformance requirements.",
         "Resolve the requested auto/path/content/both mode using the retained source heuristic. Public glob requests bind to literal interpretation and path mode.",
-        "Normalize non-fuzzy whole-word content into a complete PCRE2 pattern. Literal input uses the existing quoted-literal owner; regex input retains its grouping. The wrapping expression is from Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift:301, range SHA256 289c82540dad799af7b03b38c1a01a6c473bb5571d38852d065658ef945c73c0, full-file SHA256 ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e. The literal branch agrees with SearchMatch.swift2067-2075."
+        "Normalize non-fuzzy whole-word content into a complete PCRE2 pattern. Literal input uses the existing quoted-literal owner; regex input retains its grouping. The wrapping expression is from Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift:301, range SHA256 289c82540dad799af7b03b38c1a01a6c473bb5571d38852d065658ef945c73c0, full-file SHA256 ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e. The literal branch agrees with SearchMatch.swift2067-2075.",
+        "Apply the existing RegexToolkit.validateComplexity to the original trimmed content pattern before flexible-space or whole-word preparation, following SearchMatch.swift1298-1299. Retain the content-phase failure separately so content-only requests return the native diagnostic as invalidSearchPattern, while both-mode requests keep their path phase, following SearchMatch.swift2803-2876. The source MCP DTO omits phase errors; this adapter also omits a rejected content phase from a successful both-mode reply. Path-only preparation does not apply content admission."
       ],
       "classification": "handwritten",
-      "sha256": "2dd6a28e4e8d02651c4a20b65d4e3b7cf6d74da362e0eaa24fc7b2de77a22d2f"
+      "sha256": "179a90c682d9884bd6b67518631eccd271b786469449acfa404f56109ec5d989"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6906,7 +6907,7 @@
         "Forward extensions and exclusions to native filtering and validate one complete retained/omitted partition plus path-hit membership before constructing the ordered candidates."
       ],
       "classification": "handwritten",
-      "sha256": "6e9cbd3c88e369b26a718f8a716ea3de2497448cdf5c3b302560a8e9b5360e97"
+      "sha256": "b8c41353cb9e41f5ebbbc624714929abdb43d3763472968829e34a34557e01bd"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6934,7 +6935,7 @@
         "Consume the fully normalized native content pattern. Remove ripgrep word-mode interpretation; the native pattern owner defines word-boundary behavior.",
         "Route plain literal matching to Foundation before per-file grouping; regex/fuzzy/whole-word requests retain the existing PCRE2 spool. Preserve one current decoded file, query limits and parent-owned settlement. The reported backend reflects the actual route."
       ],
-      "sha256": "c09e6419b0bd15bbd4965c6eb9fe498db098a2a1fd8b61700093f3d2318b2532"
+      "sha256": "9265ac8906ae387f68dd2901df1f2ae07f488e93a68edbcac3738b079bcfb3d5"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",

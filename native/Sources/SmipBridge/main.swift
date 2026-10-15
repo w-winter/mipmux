@@ -21,7 +21,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .renderFileTree(input): input.render()
     case let .renderPromptAssembly(input): input.render()
     case let .calculateTokenStats(input): try input.render()
-    case let .prepareSearchPattern(input): input.render()
+    case let .prepareSearchPattern(input): try input.render()
     case let .matchSearchPaths(input): try input.render()
     case let .scanLiteralLines(input): try input.render()
     case let .scanRegexContent(input): try input.render()
