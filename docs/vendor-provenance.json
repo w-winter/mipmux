@@ -5406,9 +5406,10 @@
       "destination": "native/Sources/SmipBridge/RPCEGitSelectedPathOwnership.swift",
       "changes": [
         "Retain selected-file grouping, ownership checks, path issues and ordering. Supply existing native path/layout/model types instead of app module imports. The synchronous worker replaces the async VCSService singleton with the fresh retained GitWorktreeIdentityResolver starting at the selected file parent; no headless Jujutsu backend or application VCS cache is supplied. External job cancellation retires the native worker. Retain existing complexity checks.",
-        "Separate checkout grouping and ordered projection into addSelectedPath/makeCheckouts to meet the existing cognitive-complexity limit; retain source conditions, hashing, sorting, ordinal labels and fields."
+        "Separate checkout grouping and ordered projection into addSelectedPath/makeCheckouts to meet the existing cognitive-complexity limit; retain source conditions, hashing, sorting, ordinal labels and fields.",
+        "Use SelectedPathVCSResolver for the live VCS dependency instead of constructing a Git-only result. Keep source unsupportedBackend diagnostics for Jujutsu and retain the existing layout, identity and display-label logic."
       ],
-      "sha256": "a6e36ac0dde9e46cd98ac1d6e666f159fcafbb20c5b13b542ba8beb591901d34",
+      "sha256": "20f5c04ce5d7755fb5be0917c24e4b89edab3d434d9b42ce68c7a2997fb3bc13",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6583,6 +6584,25 @@
       "changes": [
         "Project the 28 noncancelled output cases from the independently executed 39-case original-source corpus. Preserve exact expected text, completeness and ordered outcome kinds; add compile-only synthetic checkout identities for the native wire.",
         "Original corpus expected.json SHA-256 cb9b1259bbafa4244c32fb2ecfd19dd0c0dd3d726925e420498bc070ed6ebfe5. Corpus uses modeled repository/layout/diff I/O; fixture does not establish real backend election or Git subprocess fidelity."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/VCS/VCSService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "6e88cabbb685d929f42fc3c0bbdaeb078f99b16aae80c1bdbe950a98e3dee272",
+      "destination": "native/Sources/SmipBridge/SelectedPathVCSResolver.swift",
+      "sha256": "0c59db94abd45359aca00cdbda9f6ff22cb92cac3ea31bdfe98a09b27a106c99",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          269,
+          325
+        ]
+      ],
+      "changes": [
+        "Bind the source nearest-marker walk to synchronous Foundation metadata in the existing native ownership operation. At each directory an available Jujutsu executable gives .jj precedence over a valid Git layout; a nearer Git checkout wins before an ancestor Jujutsu checkout. Automatic Review and election of initial Git targets share the resolver.",
+        "Executable availability follows Sources/RepoPromptVCS/JJCommandRunner.swift:165-203, SHA256 4be8bb56f21e50129dc536ed551e4cea3eb46260d9adb6a3a9bca6c2e993c80e. Search the native process PATH and the source common installation directories using FileManager executable checks. The explicit native environment supplied by the host replaces discovery through a GUI login shell. Availability requires no subprocess and does not inspect command output.",
+        "This mapping covers physical marker ownership. VCSService command-based discovery after the marker walk and its long-lived actor caches are not executed; their applicability under explicit headless capabilities remains unverified. The resolver observes metadata afresh for each native operation."
       ]
     }
   ],

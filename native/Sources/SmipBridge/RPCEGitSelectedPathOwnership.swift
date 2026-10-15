@@ -26,12 +26,9 @@ struct ReviewGitSelectedPathOwnershipResolver {
         var resolveLayout: @Sendable (URL) -> GitRepositoryLayout?
 
         static func live() -> Dependencies {
-            Dependencies(
-                resolveRepo: { path in
-                    guard let identity = GitWorktreeIdentityResolver
-                        .resolve(atWorkTreeRoot: path.deletingLastPathComponent()) else { return nil }
-                    return VCSResolvedRepo(rootURL: URL(fileURLWithPath: identity.worktreeRootPath), backendKind: .git)
-                },
+            let resolver = SelectedPathVCSResolver()
+            return Dependencies(
+                resolveRepo: { resolver.resolve(from: $0) },
                 resolveLayout: { GitRepositoryLayoutResolver.resolve(atWorkTreeRoot: $0) }
             )
         }
