@@ -6931,11 +6931,12 @@
       "classification": "handwritten",
       "changes": [
         "Apply independent limits for path and content results and the unlimited content branch for count-only requests to the existing authorized ripgrep adapter. The default of 50 and limitHit condition are from Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift:724,956-957; count-only limitHit=false is from lines880-895.",
-        "Grouped replies expose source path-hit and matching-line counts. Raw regex uses original decoded text with native start-line projection; literal-derived regex retains the current supervised transport.",
+        "Grouped replies expose source path-hit and matching-line counts. Both native literal and raw regex scanners receive original decoded text. Matching requires no temporary ordinal files or secondary matching process; per-candidate source/policy revalidation and grouped context retain their existing owners.",
         "Consume the fully normalized native content pattern. Remove ripgrep word-mode interpretation; the native pattern owner defines word-boundary behavior.",
-        "Route plain literal matching to Foundation before per-file grouping; regex/fuzzy/whole-word requests retain the existing PCRE2 spool. Preserve one current decoded file, query limits and parent-owned settlement. The reported backend reflects the actual route."
+        "Route plain literal matching to Foundation before per-file grouping; regex/fuzzy/whole-word requests retain the existing PCRE2 spool. Preserve one current decoded file, query limits and parent-owned settlement. The reported backend reflects the actual route.",
+        "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged."
       ],
-      "sha256": "9265ac8906ae387f68dd2901df1f2ae07f488e93a68edbcac3738b079bcfb3d5"
+      "sha256": "c77f5b8e05084348dc0d0fedf6f3511d8e46f0ea403a7da0c7af33ed8124fdc9"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6965,24 +6966,23 @@
       "destination": "native/Sources/SmipBridge/LiteralSearchInput.swift",
       "ranges": [
         [
-          1814,
+          1298,
+          1299
+        ],
+        [
+          1753,
           1870
         ],
         [
-          2021,
-          2028
-        ],
-        [
-          2098,
-          2112
+          1974,
+          2113
         ]
       ],
       "classification": "handwritten",
       "changes": [
-        "Normalize captured complete lines once and use the same comparison flags and range operation on NSString as the source plain-literal branch. Preserve case folding/canonical equivalence, line-level limits and count-only totals.",
-        "The caller supplies the established CR/LF line view. Return source matching-line totals and collected line numbers; this adapter does not implement source acquisition or query-changing recovery."
+        "Decode captured original text and explicit literal/whole-word/case/collection flags. Validate the source pattern policy and invoke the retained count-only path or collected literal scanner. Return one-based Source hit lines, original count-only summary totals and typed known regex diagnostics. The MCP binding enables fuzzy-space matching when spaces are present; it exposes no independent fuzzy toggle."
       ],
-      "sha256": "262c23909ad8279c85c7ebeeefe54b9e341695de4f20577ec59b9c461e7ed20b"
+      "sha256": "445f088efad70cbcbf5af5f924aa2b2be8132694b4b6d2654b7b9964e31e1bf8"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7001,9 +7001,9 @@
       ],
       "classification": "handwritten",
       "changes": [
-        "Pass captured decoded content or the established literal line view to the native owners. Validate ordered in-range hit lines and source summary/collection semantics once before grouped presentation."
+        "Pass captured original decoded text and raw query flags to native literal and regex owners. Validate ordered in-range hit lines and source summary/collection semantics once before grouped presentation."
       ],
-      "sha256": "257d44998809a255e29c778c84b80dddac3135a69aaabc4dfc239f1f7c72081b"
+      "sha256": "0622d30bb3ae15ec4a5ccb676d99445f7986f85155e696c362be0bc048d89088"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7030,13 +7030,18 @@
         [
           370,
           377
+        ],
+        [
+          339,
+          348
         ]
       ],
       "classification": "retained",
       "changes": [
-        "Retain source regex-engine, summary, trait and raw CR/LF line-index bodies in one internal namespace. The document adapter supplies only text/index and the consumed source accessors; cache/presentation members are not imported."
+        "Retain source regex-engine, summary, trait and raw CR/LF line-index bodies in one internal namespace. The document adapter supplies only text/index and the consumed source accessors; cache/presentation members are not imported.",
+        "Expose the consumed Foundation nsText view from captured text for the retained literal scanner."
       ],
-      "sha256": "7f29e6d03ab3bc5cabac70c39341eb5432c0ad586eea6e94f0c15f02d364bd0a"
+      "sha256": "33c865052b3be94ee64d4ee623d4f2af00e3d25e405af64eb32d6774690acc49"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7096,6 +7101,28 @@
         "Decode raw captured content, original pattern/whole-word/case flags and collection policy. Return source matching-line counts and one-based hit lines; collected counts derive from delivered hits, while count-only preserves summary totals. Convert known regex failures into typed results."
       ],
       "sha256": "c0ddf75cf64f2cc765fedae97362f4a1f83dff3fc41004fec2f3fa64170fc271"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RPCESearchLiteral.swift",
+      "ranges": [
+        [
+          1753,
+          1870
+        ],
+        [
+          1974,
+          2113
+        ]
+      ],
+      "classification": "retained",
+      "sha256": "20717c69a7d77bd74e6b870b3b5ed3f7439d26ce1fbb2880523cb12bfdecd97e",
+      "changes": [
+        "Retain the literal count-only fast path, Foundation count and collected scanner in the existing native search namespace. Remove only diagnostics-only perf begin/end/defer statements (1983-2011) and the perf count assignment (2013). Source branch order, same-query specialized-plan declines, logical lines, PCRE2 line match policy and limit semantics remain unchanged.",
+        "Resolve the existing fuzzy converter through RPCESearchPattern and call the installed native compiler directly in place of RegexCache. As with the raw-regex adapter, compilation remains per file; final workload measurements must determine whether importing the original cache lifetime is needed."
+      ]
     }
   ],
   "dependencies": [
@@ -12852,6 +12879,24 @@
       "line": 2189,
       "name": "scanPCRE2RegexLineByLine",
       "destination": "native/Sources/SmipBridge/RPCESearchRegex.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 1753,
+      "name": "scanLiteralCountOnlyFastPath",
+      "destination": "native/Sources/SmipBridge/RPCESearchLiteral.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 1814,
+      "name": "countLiteralMatchingLines",
+      "destination": "native/Sources/SmipBridge/RPCESearchLiteral.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 1974,
+      "name": "scanLiteral",
+      "destination": "native/Sources/SmipBridge/RPCESearchLiteral.swift"
     }
   ],
   "sourceCoverage": [

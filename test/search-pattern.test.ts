@@ -20,7 +20,8 @@ test('public file_search uses source pattern inference, trimming and literal fle
   await writeFile(join(root, 'example.txt'), 'anchor\n^anchor$\nfunc()\nlet\tfoo.bar\nlet\tfooXbar\none\ttwo\none\t two\nend\\E\tvalue\nANCHOR\n' +
     '++\na++b\n ++ \nleftover\nupright\nleft\nright\naleft\nrightward\ncafé\ncafétéria\ndécafé\néwordé\nword\nsword\n' +
     'cafe\u0301 cafe\u0301\nCAFÉ\nStraße\n' +
-    'multi-start\nmiddle\nmulti-end\ncrlf-start\r\nmiddle\r\ncrlf-end\r\ncr-start\rmiddle\rcr-end\r');
+    'multi-start\nmiddle\nmulti-end\ncrlf-start\r\nmiddle\r\ncrlf-end\r\ncr-start\rmiddle\rcr-end\r' +
+    'nul\0spaced\tneedle\n');
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
@@ -58,6 +59,8 @@ test('public file_search uses source pattern inference, trimming and literal fle
       { query: { kind: 'regex', text: 'multi-start\\nmiddle' }, lines: [28] },
       { query: { kind: 'regex', text: 'crlf-start\\r\\nmiddle' }, lines: [31] },
       { query: { kind: 'regex', text: '(?=left)' }, lines: [] },
+      { query: { kind: 'literal', text: 'spaced needle' }, lines: [37] },
+      { query: { kind: 'literal', text: 'needle', wholeWord: true }, lines: [37] },
     ];
     for (const item of cases) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,

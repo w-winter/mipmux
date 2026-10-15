@@ -29,11 +29,10 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
   let entered!: () => void;
   const holding = new Promise<void>(resolve => { entered = resolve; });
   t.mock.method(runtime.supervisor, 'spawn', (spec: ProcessSpec) => {
-    if (armed && ((boundary === 'read' && spec.executable === nativeExecutable) ||
-      (boundary === 'search' && spec.executable === rg && !spec.args.includes('--pcre2-version')))) {
+    if (armed && spec.executable === nativeExecutable) {
       const process = spawn({ ...spec, executable: globalThis.process.execPath,
-        args: [resolve(`test/fixtures/held-${boundary === 'read' ? 'native' : 'search'}-proxy.mjs`), ...spec.args],
-        env: { ...spec.env, SMIP_NATIVE: nativeExecutable, SMIP_RG: rg } });
+        args: [resolve('test/fixtures/held-native-proxy.mjs'), ...spec.args],
+        env: { ...spec.env, SMIP_NATIVE: nativeExecutable, SMIP_HELD_OPERATION: boundary === 'read' ? 'readSource' : 'scanLiteralLines' } });
       held.push(process);
       let stderr = '';
       process.child.stderr.on('data', bytes => { stderr += bytes.toString(); if (stderr.includes(boundary === 'read' ? 'SMIP_READ_HELD' : 'SMIP_SEARCH_HELD')) entered(); });

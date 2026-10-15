@@ -129,6 +129,10 @@ enum RPCESearchRegex {
     struct SearchDocument {
         let text: String
         let lineIndex: SearchLineIndex
+        var nsText: NSString {
+            text as NSString
+        }
+
         var lineRanges: [NSRange] {
             lineIndex.lineRanges
         }

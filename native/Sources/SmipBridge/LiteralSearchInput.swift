@@ -1,37 +1,46 @@
 import Foundation
+import RepoPromptRegexCore
 
 struct LiteralSearchInput {
-    private let lines: [String]
+    private let text: String
     private let pattern: String
     private let caseSensitive: Bool
+    private let wholeWord: Bool
     private let countOnly: Bool
     private let limit: Int
 
     init(_ value: Any) throws {
-        let input = try WireObject(value, keys: ["kind", "lines", "pattern", "caseSensitive", "countOnly", "limit"])
-        guard let lines = try input.value("lines") as? [String] else { throw BridgeFailure("nativeProtocolError") }
-        self.lines = lines
+        let input = try WireObject(value, keys: [
+            "kind", "text", "pattern", "caseSensitive", "wholeWord", "countOnly", "limit"
+        ])
+        text = try input.text("text")
         pattern = try input.text("pattern")
         guard !pattern.isEmpty else { throw BridgeFailure("nativeProtocolError") }
         caseSensitive = try input.boolean("caseSensitive")
+        wholeWord = try input.boolean("wholeWord")
         countOnly = try input.boolean("countOnly")
         limit = try input.integer("limit")
     }
 
     func render() throws -> [String: Any] {
-        let options: NSString.CompareOptions = caseSensitive ? [] : [.caseInsensitive]
-        var matches: [Int] = []
-        var matchingLines = 0
-        for (index, line) in lines.enumerated() {
+        do {
+            try RegexToolkit.validateComplexity(pattern, isRegex: false)
             try Task.checkCancellation()
-            if !countOnly, matchingLines >= limit { break }
-            let text = line as NSString
-            let found = text.range(of: pattern, options: options, range: NSRange(location: 0, length: text.length))
-            if found.location != NSNotFound {
-                matchingLines += 1
-                if !countOnly { matches.append(index + 1) }
-            }
+            let counted = countOnly ? try RPCESearchRegex.scanLiteralCountOnlyFastPath(
+                pattern, in: text, caseInsensitive: !caseSensitive, wholeWord: wholeWord, fuzzySpaceMatching: true
+            ) : nil
+            let result = try counted ?? RPCESearchRegex.scanLiteral(
+                pattern, in: RPCESearchRegex.SearchDocument(text: text, lineIndex: .init(content: text)),
+                caseInsensitive: !caseSensitive, wholeWord: wholeWord, fuzzySpaceMatching: true,
+                countOnly: countOnly, maxCollectedMatches: countOnly ? nil : max(0, limit)
+            )
+            return ["kind": "literalSearch", "matches": result.hits.map { $0.lineNumber + 1 },
+                    "matchingLines": countOnly ? result.lineMatchCount : result.hits.count]
+        } catch let error as RegexPatternFailure {
+            return ["kind": "literalSearchError", "message": error.localizedDescription]
+        } catch let error as PCRE2Error {
+            return ["kind": "literalSearchError", "message":
+                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern).localizedDescription]
         }
-        return ["kind": "literalSearch", "matches": matches, "matchingLines": matchingLines]
     }
 }

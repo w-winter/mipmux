@@ -1,9 +1,8 @@
 import type { NativeOperation, NativeResult } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { WorkspaceFailure } from '../workspace/values.js';
-import type { PreparedText } from './lines.js';
 
-type LiteralContentQuery = Omit<Extract<NativeOperation, { kind: 'scanLiteralLines' }>, 'kind' | 'lines'>;
+type LiteralContentQuery = Omit<Extract<NativeOperation, { kind: 'scanLiteralLines' }>, 'kind' | 'text'>;
 type RegexContentQuery = Omit<Extract<NativeOperation, { kind: 'scanRegexContent' }>, 'kind' | 'text'>;
 type ContentMatches = Pick<Extract<NativeResult, { kind: 'literalSearch' }>, 'matchingLines' | 'matches'>;
 
@@ -21,10 +20,10 @@ function validateMatches(result: ContentMatches, lineCount: number, countOnly: b
   }
 }
 
-export async function scanLiteralContent(operation: WorkspaceOperation, text: PreparedText, query: LiteralContentQuery) {
-  const lines = text.searchText.split('\n').slice(0, text.lines.length);
-  const result = await operation.scanLiteralLines({ kind: 'scanLiteralLines', lines, ...query });
-  validateMatches(result, lines.length, query.countOnly);
+export async function scanLiteralContent(operation: WorkspaceOperation, text: string, lineCount: number, query: LiteralContentQuery) {
+  const result = await operation.scanLiteralLines({ kind: 'scanLiteralLines', text, ...query });
+  if (result.kind === 'literalSearchError') throw new WorkspaceFailure('searchFailed', { message: result.message });
+  validateMatches(result, lineCount, query.countOnly);
   return result;
 }
 

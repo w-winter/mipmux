@@ -8,7 +8,7 @@ type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
   prepareSearchPattern: ['searchPattern', 'searchContentPatternError', 'searchPatternError'],
   matchSearchPaths: ['searchPaths', 'searchPathsError'],
-  scanLiteralLines: ['literalSearch'],
+  scanLiteralLines: ['literalSearch', 'literalSearchError'],
   scanRegexContent: ['regexSearch', 'regexSearchError'],
   calculateTokenStats: ['tokenStats'],
   prepareGitWorktreeMainRoot: ['gitWorktreePlan', 'gitWorktreeListingError'],

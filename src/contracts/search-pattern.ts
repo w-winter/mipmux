@@ -27,12 +27,12 @@ export const NativeSearchPathsResult = Type.Union([
   Type.Object({ kind: Type.Literal('searchPathsError'), message: Type.String() }, closed),
 ]);
 export const NativeLiteralSearchInput = Type.Object({ kind: Type.Literal('scanLiteralLines'),
-  lines: Type.Array(Type.String()), pattern: Type.String({ minLength: 1 }), caseSensitive: Type.Boolean(),
+  text: Type.String(), pattern: Type.String({ minLength: 1 }), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean(),
   countOnly: Type.Boolean(), limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
 }, closed);
-export const NativeLiteralSearchResult = Type.Object({ kind: Type.Literal('literalSearch'),
+export const NativeLiteralSearchResult = Type.Union([Type.Object({ kind: Type.Literal('literalSearch'),
   matchingLines: SafeCount, matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })),
-}, closed);
+}, closed), Type.Object({ kind: Type.Literal('literalSearchError'), message: Type.String() }, closed)]);
 export const NativeRegexSearchInput = Type.Object({ kind: Type.Literal('scanRegexContent'), text: Type.String(),
   pattern: Type.String(), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean(), countOnly: Type.Boolean(),
   limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),

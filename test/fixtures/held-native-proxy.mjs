@@ -2,6 +2,8 @@
 import { spawn } from 'node:child_process';
 
 const child = spawn(process.env.SMIP_NATIVE, process.argv.slice(2), { stdio: 'pipe', env: process.env });
+const operation = process.env.SMIP_HELD_OPERATION;
+if (!['readSource', 'scanLiteralLines'].includes(operation)) throw new Error('Missing held native operation');
 let input = '', output = '';
 const held = new Set();
 process.stdin.on('data', bytes => {
@@ -10,7 +12,7 @@ process.stdin.on('data', bytes => {
   while ((newline = input.indexOf('\n')) !== -1) {
     const line = input.slice(0, newline); input = input.slice(newline + 1);
     const request = JSON.parse(line);
-    if (request.operation.kind === 'readSource' && request.operation.path === 'file.txt') held.add(request.requestId);
+    if (request.operation.kind === operation && (operation !== 'readSource' || request.operation.path === 'file.txt')) held.add(request.requestId);
     child.stdin.write(line + '\n');
   }
 });
@@ -22,7 +24,9 @@ child.stdout.on('data', bytes => {
     const line = output.slice(0, newline); output = output.slice(newline + 1);
     const frame = JSON.parse(line);
     if (held.has(frame.requestId)) {
-      if (frame.result?.kind === 'sourceComplete') process.stderr.write('SMIP_READ_HELD\n');
+      if (frame.result?.kind === (operation === 'readSource' ? 'sourceComplete' : 'literalSearch')) {
+        process.stderr.write(operation === 'readSource' ? 'SMIP_READ_HELD\n' : 'SMIP_SEARCH_HELD\n');
+      }
     }
     else process.stdout.write(line + '\n');
   }
