@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
@@ -534,4 +534,55 @@ test('the source readiness deadline reports pending codemaps and a later get com
     if (finalized.kind === 'ready') await verifyBundle(finalized.directory);
     await writeFile(join(f.base, 'codemap-deadline-receipt.json'), JSON.stringify({ pending, completed, finalized }, null, 2) + '\n');
   } finally { if (timer !== null) clearTimeout(timer); release(); await client.close(); await runtime.close(); }
+});
+
+test('stale codemap completion reports pending committed membership and a later get reacquires current presentation', async t => {
+  await mkdir('test-output', { recursive: true });
+  for (const scenario of ['source', 'mode', 'policy'] as const) await t.test(scenario, async () => {
+    const f = await fixture(); await f.client.close();
+    const path = join(f.root, 'private/Hidden.swift'), original = await readFile(path, 'utf8');
+    const control = join(f.root, '.repo_ignore'), originalControl = await readFile(control, 'utf8');
+    let armed = false, extractions = 0;
+    class Runtime extends SmipRuntime {
+      override makeBridge() {
+        class Bridge extends BridgeClient {
+          override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
+            const result = await super.request(operation, signal);
+            if (armed && operation.kind === 'extract') {
+              armed = false; extractions++;
+              if (scenario === 'source') await writeFile(path, 'struct Replaced { let title: String }\n');
+              else if (scenario === 'mode') await chmod(path, 0o755);
+              else await writeFile(control, originalControl + 'zone/\n');
+            }
+            return result;
+          }
+        }
+        return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
+      }
+    }
+    const runtime = new Runtime({ cachePath: join(f.base, 'currentness-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    const signal = () => new AbortController().signal;
+    const client = runtime.createClient(null);
+    try {
+      const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output }, signal());
+      const draft = await client.createDraft(workspace.id, { task: 'Inspect', initialSelection: { codemapMode: 'automatic', sources: [] },
+        duplicateUserInstructionsAtTop: false, copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve',
+        purpose: 'investigation', requiredSources: [], documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'currentness' }, signal());
+      armed = true;
+      const pending = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+        op: 'set', mode: 'codemap_only', paths: [path], view: 'content', maxOutputBytes: 30000 })), signal());
+      assert.equal(pending.revision, 1); assert.deepEqual(pending.files, []); assert.deepEqual(pending.blocks, []);
+      assert.deepEqual(pending.code_structure, { file_count: 0, content: '', pending_paths: ['private/Hidden.swift'] });
+      assert.equal(pending.measurement.complete, false);
+      await writeFile(path, original); await chmod(path, 0o644); await writeFile(control, originalControl);
+      const completed = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
+        op: 'get', view: 'content', maxOutputBytes: 30000 })), signal());
+      assert.equal(completed.revision, 1); assert(completed.blocks?.some(body => body.includes('ExplicitlyManaged')));
+      assert.equal(extractions, 1);
+      const finalized = await client.finalize(draft.id, signal()); assert.equal(finalized.kind, 'ready');
+      if (finalized.kind === 'ready') { await verifyBundle(finalized.directory); await verifyCurrentBundle(finalized.directory, runtime, signal()); }
+      await writeFile(join('test-output', 'codemap-currentness-' + scenario + '-proof.json'), JSON.stringify({ scenario, pending, completed, finalized, extractions }, null, 2) + '\n');
+    } finally { await client.close(); await runtime.close(); }
+  });
 });

@@ -4,7 +4,7 @@ import type { BridgeClient } from '../native/bridge-client.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import { NativeAccess } from './source-access.js';
 import { RootPolicy, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
-import { WorkspaceFailure } from './values.js';
+import { canonicalJSON, WorkspaceFailure } from './values.js';
 import { readFile } from '../exploration/read.js';
 import { getFileTree } from '../exploration/tree.js';
 import { getCodeStructure } from '../exploration/structure.js';
@@ -94,6 +94,9 @@ export class WorkspaceOperation {
           const access = await (operation.#access ??= operation.#openAccess());
           const acquired = await operation.readRawSource(captured);
           const complete = await completeFile(access, entry, acquired, this.runtime.artifacts, () => owner.retain(), owner.artifactBuildSignal);
+          const current = await operation.readRawSource(captured);
+          if (canonicalJSON([current.identity, current.key, current.fingerprint.mode]) !==
+            canonicalJSON([acquired.identity, acquired.key, acquired.fingerprint.mode])) throw new WorkspaceFailure('sourceChanged', captured);
           signal.throwIfAborted();
           owner.completeExplicitFile(complete);
           return complete;

@@ -92,6 +92,22 @@ test('failed native codemap demand releases its flight and a later request retri
   } finally { f.release(); await operation.close(); await f.owner.close(); await f.runtime.close(); }
 });
 
+test('source changes during extraction cannot publish a ready codemap into the managed catalog', async () => {
+  await mkdir('test-output', { recursive: true });
+  const f = await fixture();
+  const operation = await f.owner.openOperation(new AbortController().signal);
+  try {
+    const lease = await operation.requestExplicitCodemap(f.source);
+    await Promise.race([f.entering, lease.result.then(() => { throw new Error('Demand settled before extraction'); })]);
+    await writeFile(join(f.base, 'source', f.source.path), 'struct Replaced { let title: String }\n');
+    const rejected = assert.rejects(lease.result, /sourceChanged/);
+    f.release(); await rejected; await lease.release();
+    const registered = operation.snapshot.entries.find(entry => entry.root === f.source.root && entry.path === f.source.path);
+    assert(registered?.kind === 'file'); assert.equal(registered.structural.kind, 'pending');
+    await writeFile('test-output/stale-demand-proof.json', JSON.stringify({ registered, extractions: f.extractions() }, null, 2) + '\n');
+  } finally { f.release(); await operation.close(); await f.owner.close(); await f.runtime.close(); }
+});
+
 test('runtime shutdown cancels and joins owned codemap demand before completing', async () => {
   const f = await fixture();
   const operation = await f.owner.openOperation(new AbortController().signal);

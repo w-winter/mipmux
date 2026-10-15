@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { observe } from '../workspace/observe.js';
 import { acquireSource, type Material } from './material-store.js';
+import { failureCode } from '../runtime/tool-result.js';
 
 // RPCE WorkspaceCodemapPresentationCoordinator's production readiness allowance.
 const codemapReadinessMilliseconds = 10000;
@@ -23,9 +24,17 @@ export async function resolveSelectedCodemaps(operation: WorkspaceOperation, mat
     operation.signal.throwIfAborted();
     for (const { material, lease } of retains) {
       work.push((async () => {
-        await lease.result;
-        const complete = await acquireSource(operation, { selectionOrigin: 'explicit', selection: material.record.selection, required: false });
-        ready.set(material.record.id, complete);
+        try {
+          await lease.result;
+          const complete = await acquireSource(operation, { selectionOrigin: 'explicit', selection: material.record.selection, required: false });
+          ready.set(material.record.id, complete);
+        } catch (error) {
+          operation.signal.throwIfAborted();
+          const cause = failureCode(error);
+          if (cause !== 'sourceChanged' && cause !== 'policyChanged') throw error;
+          process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapPresentationStale',
+            ...material.record.selection.source, cause }) + '\n');
+        }
       })());
     }
     timer = setTimeout(() => expired.abort(), Math.max(0, deadline - performance.now()));

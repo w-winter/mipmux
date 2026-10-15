@@ -6057,6 +6057,44 @@
       "changes": [
         "Execute original fullSize and checked arithmetic against captured immutable declarations and retained adjacency. Source/binding hashes and scope limits are recorded in fixture provenance."
       ]
+    },
+    {
+      "destination": "src/workspace/workspace-operation.ts",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "ranges": [
+        [
+          16008,
+          16082
+        ]
+      ],
+      "changes": [
+        "Bind ready-publication currentness to the existing owner of workspace demands. Revalidate confined raw bytes, artifact key, mode and applicable policy after extraction before completing the managed catalog. Native reads enforce root identity; no watcher ticket or app store is imported. The file also contains existing operation lifecycle, exploration and Git bindings."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "sha256": "fd6fd27a96882edb09e7f440606edaa6102e58938f35ec7ef0a34622723e726b",
+      "classification": "handwritten"
+    },
+    {
+      "destination": "src/context/codemap-readiness.ts",
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionCore.swift",
+      "ranges": [
+        [
+          400,
+          435
+        ],
+        [
+          504,
+          518
+        ]
+      ],
+      "changes": [
+        "Bind stale-currentness presentation to sourceChanged and policyChanged results from confined demand acquisition. Keep captured membership pending, log the cause and allow later get to reacquire. Cancellation and other errors propagate. The existing operation retains and shared allowance of 10000 ms provide headless ownership and waiting."
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
+      "sha256": "577352e754567837332a6a9c0016781aebdc309c124b7e03e2f9d0bda2a89357",
+      "classification": "handwritten"
     }
   ],
   "dependencies": [
