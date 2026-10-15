@@ -83,6 +83,7 @@ export class WorkspaceRuntime {
       demand = { controller, retains: new Set(), result };
       this.#codemapDemands.set(key, demand);
       void result.catch(error => {
+        if (this.#codemapDemands.get(key)?.result === result) this.#codemapDemands.delete(key);
         const cause = failureCode(error);
         process.stderr.write(JSON.stringify({ level: cause === 'cancelled' ? 'debug' : 'error', event: 'codemapDemandFailed',
           workspaceKey: this.key, root: entry.root, path: entry.path, cause }) + '\n');

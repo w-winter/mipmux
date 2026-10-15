@@ -6336,6 +6336,27 @@
         "Adapt the MCP form transport to the installed SDK. Indexed keys prevent collisions; fixed-choice arrays use supported enums; multi-select questions with custom answers use a choices field and a custom-text field. Keep the original question IDs and answer ordering. Validate the original schema, including uniqueness, before converting responses in the native helper.",
         "The current MCP SDK rejects free-text arrays and uniqueItems in form requests. The corresponding source schema is retained in the native result and used to validate reconstructed answers."
       ]
+    },
+    {
+      "destination": "src/workspace/workspace-runtime.ts",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "ranges": [
+        [
+          14381,
+          14454
+        ],
+        [
+          16801,
+          16815
+        ]
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "sha256": "e4ef72cc9f7bf43f2581e4674e10f5420aa3b23d691bfa03ef10dd094da36298",
+      "classification": "handwritten",
+      "changes": [
+        "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework."
+      ]
     }
   ],
   "dependencies": [

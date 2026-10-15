@@ -102,6 +102,28 @@ test('failed native codemap demand releases its flight and a later request retri
   } finally { f.release(); await operation.close(); await f.owner.close(); await f.runtime.close(); }
 });
 
+test('a failed shared demand admits a fresh request before the previous retainer releases', async () => {
+  await mkdir('test-output', { recursive: true });
+  const f = await fixture('failFirst'), signal = new AbortController().signal;
+  const first = await f.owner.openOperation(signal), joined = await f.owner.openOperation(signal), next = await f.owner.openOperation(signal);
+  try {
+    const original = await first.requestExplicitCodemap(f.source);
+    const originalFailure = assert.rejects(original.result, /Fixture extraction failed/);
+    await f.entering;
+    const shared = await joined.requestExplicitCodemap(f.source);
+    const sharedFailure = assert.rejects(shared.result, /Fixture extraction failed/);
+    f.release(); await originalFailure; await sharedFailure;
+    await shared.release(); await joined.close();
+    const retry = await next.requestExplicitCodemap(f.source);
+    await original.release(); await first.close();
+    const result = await retry.result; await retry.release();
+    assert.equal(f.extractions(), 2);
+    assert.equal(result.structural.kind, 'artifact');
+    if (result.structural.kind === 'artifact') assert.equal(result.structural.record.outcome.kind, 'ready');
+    await writeFile('test-output/failed-shared-demand-retry-proof.json', JSON.stringify({ result, extractions: f.extractions() }, null, 2) + '\n');
+  } finally { f.release(); await first.close(); await joined.close(); await next.close(); await f.owner.close(); await f.runtime.close(); }
+});
+
 test('source changes during extraction cannot publish a ready codemap into the managed catalog', async () => {
   await mkdir('test-output', { recursive: true });
   const f = await fixture();
