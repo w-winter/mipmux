@@ -9,6 +9,7 @@ import { NativeGitSnapshotInput, GitSnapshotPublicationOptions } from './git-sna
 import { NativeGitArtifactInput, NativeGitArtifactResult } from './git-artifact.js';
 import { NativeGitWorktreeInput, NativeGitWorktreeResult } from './git-worktree.js';
 import { NativeWireFailureCode } from './errors.js';
+import { NativeAskUserInput, NativeAskUserResult } from './interaction.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
 export { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -294,6 +295,7 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('prepareGitRead'), query: NativeGitReadQuery }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('projectGitRead'), query: NativeGitReadQuery, bytes: base64 }, { additionalProperties: false }),
   NativeReadTextInput,
+  ...NativeAskUserInput.anyOf,
   NativeSelectionInputParsingRequest,
   SelectionPathBindingsInput,
   SelectionHintInput,
@@ -424,6 +426,7 @@ export const NativeResult = Type.Union([
   NativeStructureResult,
   Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('discoveryMessage'), text: Type.String() }, { additionalProperties: false }),
+  ...NativeAskUserResult.anyOf,
   Type.Object({ kind: Type.Literal('description'), decoderPolicy: DecoderPolicy,
     regexEngineFingerprint: SHA256,
     engine: Type.Object({ version: Type.String(), unicode: Type.String(), jitPolicy: Type.Union([Type.Literal('disabled'), Type.Literal('auto'), Type.Literal('required')]), jitCapability: Type.Boolean(), jitExecution: Type.Union([Type.Literal('disabled'), Type.Literal('compiled'), Type.Literal('unavailable')]) }, { additionalProperties: false }),

@@ -6202,6 +6202,83 @@
         "Classify the same captured slots used by native structure and resident accounting. Current unfenced admitted roots bind pending/notIndexed/excluded source states; ready-no-symbols remains covered.",
         "Retain root status with valid-receipt semantics and the original Models/WorkspaceCodemapAutomaticSelectionModels.swift:218-233 aggregate precedence, including all-ok before issue aggregation. Slot absence means unsupported in the current headless classifier; Source SelectionCore.swift:400-435,540-589 supplies pending/unmapped presentation. Stable UUIDs for roots and files determine issue ordering."
       ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/AgentMode/Models/UserInteractionModels.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "e12b6718e09ab7e034e96d6def3567a3ddca058ecbc3ee104776469449c3d567",
+      "destination": "native/Sources/SmipBridge/RPCEAskUserModels.swift",
+      "sha256": "92416b9c127313ec8382e2a9d924ce8a7226c552c76ab95d0d711521f6fa58f9",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          84,
+          322
+        ],
+        [
+          324,
+          328
+        ],
+        [
+          448,
+          455
+        ],
+        [
+          469,
+          493
+        ]
+      ],
+      "changes": [
+        "Retain the structured question parser, value conversion, validation and empty-draft timeout behavior used by the source form elicitation path. Foundation JSON adapters replace MCP/app declarations; transport ownership is outside these pure bodies.",
+        "The source single-question parser remains reachable from the reference discovery prompt example. The production MCP tool declaration and enabled job transport are separate integration work.",
+        "Scoped declaration extraction and Swift formatting only; three bridge helpers are internal for native dispatch."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPAskUserToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "79706ebb2c4bee8b65c7d1c9b7f3c90eb7076125b1ffb4e3aba295bec7426dda",
+      "destination": "native/Sources/SmipBridge/RPCEAskUserParser.swift",
+      "sha256": "8f693dc126e11b96678bc11fd0cbc628c4069b4d1d689ff811c49388ab8b6f47",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          327,
+          473
+        ]
+      ],
+      "changes": [
+        "Retain the structured question parser, value conversion, validation and empty-draft timeout behavior used by the source form elicitation path. Foundation JSON adapters replace MCP/app declarations; transport ownership is outside these pure bodies.",
+        "The source single-question parser remains reachable from the reference discovery prompt example. The production MCP tool declaration and enabled job transport are separate integration work.",
+        "Scoped declaration extraction and Swift formatting only; three bridge helpers are internal for native dispatch."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPAskUserElicitationBridge.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "1120476059453aa4026363a8811c58e5575b274a704066e8969366af77bfbe76",
+      "destination": "native/Sources/SmipBridge/RPCEAskUserElicitation.swift",
+      "sha256": "729e4d06b8b6f0bba3cfc766bdee69a81a9114f76da28bc1b198d001f6f5fe16",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          9,
+          16
+        ],
+        [
+          80,
+          92
+        ],
+        [
+          94,
+          225
+        ]
+      ],
+      "changes": [
+        "Retain the structured question parser, value conversion, validation and empty-draft timeout behavior used by the source form elicitation path. Foundation JSON adapters replace MCP/app declarations; transport ownership is outside these pure bodies.",
+        "The source single-question parser remains reachable from the reference discovery prompt example. The production MCP tool declaration and enabled job transport are separate integration work.",
+        "Scoped declaration extraction and Swift formatting only; three bridge helpers are internal for native dispatch."
+      ]
     }
   ],
   "dependencies": [

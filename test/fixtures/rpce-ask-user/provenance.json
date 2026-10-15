@@ -1,0 +1,75 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/AgentMode/Models/UserInteractionModels.swift",
+      "ranges": [
+        [
+          84,
+          322
+        ],
+        [
+          324,
+          328
+        ],
+        [
+          448,
+          455
+        ],
+        [
+          469,
+          493
+        ]
+      ],
+      "sha256": "e12b6718e09ab7e034e96d6def3567a3ddca058ecbc3ee104776469449c3d567"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPAskUserToolProvider.swift",
+      "ranges": [
+        [
+          327,
+          473
+        ]
+      ],
+      "sha256": "79706ebb2c4bee8b65c7d1c9b7f3c90eb7076125b1ffb4e3aba295bec7426dda"
+    },
+    {
+      "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPAskUserElicitationBridge.swift",
+      "ranges": [
+        [
+          9,
+          16
+        ],
+        [
+          80,
+          92
+        ],
+        [
+          94,
+          225
+        ]
+      ],
+      "sha256": "1120476059453aa4026363a8811c58e5575b274a704066e8969366af77bfbe76"
+    }
+  ],
+  "adapters": [
+    {
+      "path": "test/fixtures/rpce-ask-user/wire-adapter.swift",
+      "sha256": "7425e391258d494283d417a1bda75ff34304068c696e8aca5c7dfc7a667d88d1"
+    },
+    {
+      "path": "native/Sources/SmipBridge/AskUserValue.swift",
+      "sha256": "eb3a49f9e12208caa717ceedd7b7ca3cf326dc784c4b5fc166621ca3aff4851a"
+    },
+    {
+      "path": "native/Sources/SmipBridge/AskUserInput.swift",
+      "sha256": "0070e373372c436a5a7888d5e2eac086a843cb82ecb3cb25588764259671442c"
+    }
+  ],
+  "adaptations": [
+    "Foundation JSON value and restricted form-schema adapters replace MCP library types. Original parser/model/form and answer bodies are retained. Three conversion functions are internal for the native wire wrapper.",
+    "Fixture timeouts have no submitted form draft. Cancellation, transport, capability admission and job ownership are outside this pure conversion fixture."
+  ],
+  "generatorSHA256": "6c4e0a8c66a55e7712f1c43d19a39517c6309c687b1fb6f0e62dd792ac27de44",
+  "outputSHA256": "58155b6798032b898da7d5e10c39fb23bbbcdc1bd549f8210756190ecd5cd275"
+}

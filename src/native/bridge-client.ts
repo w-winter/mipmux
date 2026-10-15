@@ -42,6 +42,8 @@ const resultKinds = {
   publishManifest: ['manifestPublished'],
   renderDiscoveryPrompt: ['discoveryPrompt'],
   renderDiscoveryMessage: ['discoveryMessage'],
+  prepareAskUser: ['askUserPrepared', 'askUserInvalid'],
+  answerAskUser: ['askUserAnswered', 'askUserInvalid'],
   renderFileTree: ['fileTree'],
   renderPromptAssembly: ['promptAssembly'],
   renderClipboard: ['clipboard'],

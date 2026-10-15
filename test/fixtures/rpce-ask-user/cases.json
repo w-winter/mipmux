@@ -1,0 +1,473 @@
+[
+  {
+    "expected" : {
+      "kind" : "askUserPrepared",
+      "message" : "Review\n\nConfirm selection\n\nWhich area?\n\nAnything else?",
+      "requestedSchema" : {
+        "description" : "Confirm selection",
+        "properties" : {
+          "choice" : {
+            "description" : "Which area?\nSource ownership",
+            "items" : {
+              "enum" : [
+                "A",
+                "B"
+              ],
+              "type" : "string"
+            },
+            "title" : "Which area?",
+            "type" : "array",
+            "uniqueItems" : true
+          },
+          "notes" : {
+            "description" : "Anything else?",
+            "title" : "Anything else?",
+            "type" : "string"
+          }
+        },
+        "title" : "Review",
+        "type" : "object"
+      },
+      "timeoutSeconds" : 300
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "context" : " Confirm selection ",
+        "questions" : [
+          {
+            "allows_custom" : false,
+            "allows_multiple" : true,
+            "context" : " Source ownership ",
+            "id" : "choice",
+            "options" : [
+              " A ",
+              {
+                "description" : " Second ",
+                "label" : " B "
+              }
+            ],
+            "question" : " Which area? "
+          },
+          {
+            "id" : "notes",
+            "question" : "Anything else?"
+          }
+        ],
+        "title" : " Review "
+      }
+    },
+    "name" : "structured-form"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserAnswered",
+      "response" : {
+        "answers" : {
+          "q" : {
+            "answers" : [
+              "API"
+            ],
+            "custom_response" : null,
+            "selected_options" : [
+              "API"
+            ],
+            "skipped" : false
+          }
+        },
+        "elapsed_seconds" : 7,
+        "skipped" : false,
+        "timed_out" : false
+      }
+    },
+    "input" : {
+      "action" : "accept",
+      "content" : {
+        "q" : " API "
+      },
+      "defaultTimeoutSeconds" : 300,
+      "elapsedSeconds" : 7,
+      "kind" : "answerAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "options" : [
+              "API",
+              "UI"
+            ],
+            "question" : "Focus?"
+          }
+        ]
+      }
+    },
+    "name" : "accept"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserAnswered",
+      "response" : {
+        "answers" : {
+          "q" : {
+            "answers" : [
+
+            ],
+            "custom_response" : null,
+            "selected_options" : [
+
+            ],
+            "skipped" : true
+          }
+        },
+        "elapsed_seconds" : 7,
+        "skipped" : true,
+        "timed_out" : false
+      }
+    },
+    "input" : {
+      "action" : "decline",
+      "content" : {
+        "q" : " API "
+      },
+      "defaultTimeoutSeconds" : 300,
+      "elapsedSeconds" : 7,
+      "kind" : "answerAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "options" : [
+              "API",
+              "UI"
+            ],
+            "question" : "Focus?"
+          }
+        ]
+      }
+    },
+    "name" : "decline"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserAnswered",
+      "response" : {
+        "answers" : {
+          "q" : {
+            "answers" : [
+
+            ],
+            "custom_response" : null,
+            "selected_options" : [
+
+            ],
+            "skipped" : false
+          }
+        },
+        "elapsed_seconds" : 7,
+        "skipped" : false,
+        "timed_out" : true
+      }
+    },
+    "input" : {
+      "action" : "timeout",
+      "content" : {
+        "q" : " API "
+      },
+      "defaultTimeoutSeconds" : 300,
+      "elapsedSeconds" : 7,
+      "kind" : "answerAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "options" : [
+              "API",
+              "UI"
+            ],
+            "question" : "Focus?"
+          }
+        ]
+      }
+    },
+    "name" : "timeout"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserAnswered",
+      "response" : {
+        "answers" : {
+          "q" : {
+            "answers" : [
+              "API",
+              "custom",
+              "UI"
+            ],
+            "custom_response" : "custom",
+            "selected_options" : [
+              "API",
+              "UI"
+            ],
+            "skipped" : false
+          }
+        },
+        "elapsed_seconds" : 0,
+        "skipped" : false,
+        "timed_out" : false
+      }
+    },
+    "input" : {
+      "action" : "accept",
+      "content" : {
+        "q" : [
+          " API ",
+          "",
+          "custom",
+          " UI ",
+          23
+        ]
+      },
+      "defaultTimeoutSeconds" : 300,
+      "elapsedSeconds" : 0,
+      "kind" : "answerAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "allows_multiple" : true,
+            "id" : "q",
+            "options" : [
+              "API",
+              "UI"
+            ],
+            "question" : "What matters?"
+          }
+        ]
+      }
+    },
+    "name" : "multiple-and-custom"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserAnswered",
+      "response" : {
+        "answers" : {
+          "q" : {
+            "answers" : [
+
+            ],
+            "custom_response" : null,
+            "selected_options" : [
+
+            ],
+            "skipped" : true
+          }
+        },
+        "elapsed_seconds" : 1,
+        "skipped" : false,
+        "timed_out" : false
+      }
+    },
+    "input" : {
+      "action" : "accept",
+      "content" : {
+
+      },
+      "defaultTimeoutSeconds" : 300,
+      "elapsedSeconds" : 1,
+      "kind" : "answerAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "options" : [
+              "API",
+              "UI"
+            ],
+            "question" : "Focus?"
+          }
+        ]
+      }
+    },
+    "name" : "accepted-omission"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserPrepared",
+      "message" : "Which authentication?",
+      "requestedSchema" : {
+        "properties" : {
+          "response" : {
+            "description" : "Which authentication?\nSuggested answers: JWT, Session",
+            "title" : "Which authentication?",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "timeoutSeconds" : 12
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "options" : [
+          "JWT",
+          "Session"
+        ],
+        "question" : "Which authentication?",
+        "timeout_seconds" : 12
+      }
+    },
+    "name" : "source-prompt-example"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "ask_user requires at least one question."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "questions" : [
+
+        ]
+      }
+    },
+    "name" : "empty-questions"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "ask_user question id 'q' is duplicated."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "question" : "One?"
+          },
+          {
+            "id" : " q ",
+            "question" : "Two?"
+          }
+        ]
+      }
+    },
+    "name" : "duplicate-id"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "ask_user question 'q' has duplicate option label 'API'."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "options" : [
+              "API",
+              " API "
+            ],
+            "question" : "One?"
+          }
+        ]
+      }
+    },
+    "name" : "duplicate-option"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "ask_user question 'q' has no options and does not allow custom responses."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "allows_custom" : false,
+            "id" : "q",
+            "question" : "One?"
+          }
+        ]
+      }
+    },
+    "name" : "no-possible-answer"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "questions[0].allows_multiple must be a boolean."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "allows_multiple" : "yes",
+            "id" : "q",
+            "question" : "One?"
+          }
+        ]
+      }
+    },
+    "name" : "bad-boolean"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "timeout_seconds must be a positive integer."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "options" : [
+              "API",
+              "UI"
+            ],
+            "question" : "Focus?"
+          }
+        ],
+        "timeout_seconds" : 0
+      }
+    },
+    "name" : "bad-timeout"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "ask_user accepts either structured questions or legacy question/options/multi_select, not both."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "question" : "Legacy?",
+        "questions" : [
+          {
+            "id" : "q",
+            "options" : [
+              "API",
+              "UI"
+            ],
+            "question" : "Focus?"
+          }
+        ]
+      }
+    },
+    "name" : "mixed-request-shapes"
+  }
+]

@@ -153,6 +153,7 @@ enum Operation {
     case describe
     case selection(SelectionOperation)
     case renderDiscoveryPrompt(DiscoveryPromptInput)
+    case askUser(AskUserInput)
     case git(GitOperation)
     case ignore(IgnoreOperation)
     case sliceReadText(ReadTextInput)
@@ -335,6 +336,7 @@ enum Operation {
         case "renderClipboard": return try .renderClipboard(ClipboardOperation(value))
         case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))
         case "renderDiscoveryPrompt": return try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
+        case "prepareAskUser", "answerAskUser": return try .askUser(AskUserInput(value))
         default: throw BridgeFailure("nativeProtocolError")
         }
     }
