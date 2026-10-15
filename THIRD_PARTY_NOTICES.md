@@ -18,7 +18,7 @@ Pi coding-agent, AI and agent-core 1.0.2 run isolated discovery sessions under t
 
 The Model Context Protocol server and client 2.3.0 use Apache-2.0, copied to `ThirdPartyLicenses/mcp/LICENSE`. The server supplies stdio negotiation, schema-based tool registration and request cancellation; the client is a test dependency for interoperability checks. Resolved dependencies are identified in the npm lockfile and retain their respective notices in their packages.
 
-The selection input parser retains JSON value and data-URL decoding from RPCE's pinned Swift MCP SDK revision `5716de85a976a8f70dedc9cb000e50aaa0d8cc5b`. These functions preserve the reference parser's typed numeric/string access and data-URL classification. The upstream mixed Apache-2.0/MIT licensing notice is copied to `ThirdPartyLicenses/swift-mcp/LICENSE`; source ranges and adaptations are recorded in `docs/vendor-provenance.json`.
+The selection and question input parsers retain JSON value and data-URL decoding from RPCE's pinned Swift MCP SDK revision `5716de85a976a8f70dedc9cb000e50aaa0d8cc5b`. These functions preserve the reference parser's typed numeric/string access and data-URL classification. The upstream mixed Apache-2.0/MIT licensing notice is copied to `ThirdPartyLicenses/swift-mcp/LICENSE`; source ranges and adaptations are recorded in `docs/vendor-provenance.json`.
 
 The native ignore compiler and rule snapshots derive from RepoPrompt CE revision `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3`. Their bundled wildmatch implementation and header retain their separate BSD notices in `ThirdPartyLicenses/wildmatch/`. This product includes software developed by the University of California, Berkeley and its contributors.
 

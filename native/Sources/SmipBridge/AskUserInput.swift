@@ -33,7 +33,7 @@ struct AskUserInput {
         }
     }
 
-    func render() -> [String: Any] {
+    func render() throws -> [String: Any] {
         do {
             let parsed = try MCPAskUserToolProvider.parseAskUserInteraction(
                 args: payload,
@@ -62,15 +62,17 @@ struct AskUserInput {
                     if parsed.includeLegacyResponse { result["response"] = NSNull() }
                     return ["kind": "askUserAnswered", "response": result]
                 }
-                return ["kind": "askUserAnswered", "response": value.json]
+                return try ["kind": "askUserAnswered", "response": value.json]
             }
-            return [
+            return try [
                 "kind": "askUserPrepared",
                 "message": MCPAskUserElicitationBridge.message(from: payload, questions: questions),
                 "timeoutSeconds": parsed.interaction.timeoutSeconds,
                 "requestedSchema": MCPAskUserElicitationBridge.schema(from: payload, questions: questions).json
             ]
-        } catch {
+        } catch let error as MCPError {
+            return ["kind": "askUserInvalid", "message": error.localizedDescription]
+        } catch let error as AgentAskUserValidationError {
             return ["kind": "askUserInvalid", "message": error.localizedDescription]
         }
     }

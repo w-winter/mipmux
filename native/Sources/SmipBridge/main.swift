@@ -16,7 +16,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .renderFileBlock(input): input.render()
     case let .selection(input): try await input.render()
     case let .renderDiscoveryPrompt(input): input.render()
-    case let .askUser(input): input.render()
+    case let .askUser(input): try input.render()
     case let .renderDiscoveryMessage(input): input.render()
     case let .renderFileTree(input): input.render()
     case let .renderPromptAssembly(input): input.render()

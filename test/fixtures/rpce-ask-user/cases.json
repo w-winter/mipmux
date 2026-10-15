@@ -469,5 +469,64 @@
       }
     },
     "name" : "mixed-request-shapes"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserInvalid",
+      "message" : "questions[0].question is required."
+    },
+    "input" : {
+      "defaultTimeoutSeconds" : 300,
+      "kind" : "prepareAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "question" : "data:text/plain;base64,SGVsbG8="
+          }
+        ]
+      }
+    },
+    "name" : "data-url-question-is-not-text"
+  },
+  {
+    "expected" : {
+      "kind" : "askUserAnswered",
+      "response" : {
+        "answers" : {
+          "q" : {
+            "answers" : [
+
+            ],
+            "custom_response" : null,
+            "selected_options" : [
+
+            ],
+            "skipped" : true
+          }
+        },
+        "elapsed_seconds" : 1,
+        "skipped" : false,
+        "timed_out" : false
+      }
+    },
+    "input" : {
+      "action" : "accept",
+      "content" : {
+        "q" : "data:text/plain;base64,SGVsbG8="
+      },
+      "defaultTimeoutSeconds" : 300,
+      "elapsedSeconds" : 1,
+      "kind" : "answerAskUser",
+      "payload" : {
+        "questions" : [
+          {
+            "id" : "q",
+            "question" : "Focus?"
+          }
+        ]
+      }
+    },
+    "name" : "data-url-answer-is-not-text"
   }
 ]

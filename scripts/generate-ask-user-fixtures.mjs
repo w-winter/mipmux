@@ -26,11 +26,17 @@ const adapter = provenance.adapters.map(entry => {
   assert.equal(hash(bytes), entry.sha256, 'Modified reference adapter: ' + entry.path);
   return bytes.toString();
 });
+const decoder = provenance.valueDecoderSources.map(entry => {
+  const bytes = readFileSync(entry.path);
+  assert.equal(hash(bytes), entry.sha256, 'Modified retained MCP decoder: ' + entry.path);
+  return bytes.toString();
+}).join('\n');
 const bridge = sources[2].replace('private static func questions(', 'static func questions(')
   .replace('private static func skippedResponse(', 'static func skippedResponse(')
   .replace('private static func message(', 'static func message(');
 const text = `import Foundation
 ${adapter[0]}
+${decoder}
 ${adapter[1]}
 ${sources[0]}
 enum MCPAskUserToolProvider {

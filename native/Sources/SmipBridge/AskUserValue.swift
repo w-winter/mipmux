@@ -1,57 +1,31 @@
-import CoreFoundation
 import Foundation
 
-indirect enum Value {
-    case string(String), int(Int), double(Double), bool(Bool), array([Value]), object([String: Value]), null
+typealias Value = SelectionJSONValue
 
+extension SelectionJSONValue {
     init(_ raw: Any) throws {
-        switch raw {
-        case is NSNull: self = .null
-        case let value as String: self = .string(value)
-        case let value as NSNumber:
-            if CFGetTypeID(value) == CFBooleanGetTypeID() {
-                self = .bool(value.boolValue)
-            } else if value.doubleValue >= Double(Int.min), value.doubleValue < Double(Int.max),
-                      value.doubleValue == Double(value.intValue) {
-                self = .int(value.intValue)
-            } else {
-                self = .double(value.doubleValue)
-            }
-        case let values as [Any]: self = try .array(values.map(Value.init))
-        case let values as [String: Any]: self = try .object(values.mapValues(Value.init))
-        default: throw BridgeFailure("nativeProtocolError")
-        }
-    }
-
-    var stringValue: String? {
-        if case let .string(value) = self { value } else { nil }
-    }
-
-    var intValue: Int? {
-        if case let .int(value) = self { value } else { nil }
+        self = try JSONDecoder().decode(
+            Self.self,
+            from: JSONSerialization.data(withJSONObject: raw, options: [.fragmentsAllowed])
+        )
     }
 
     var boolValue: Bool? {
         if case let .bool(value) = self { value } else { nil }
     }
 
-    var arrayValue: [Value]? {
-        if case let .array(value) = self { value } else { nil }
-    }
-
-    var objectValue: [String: Value]? {
-        if case let .object(value) = self { value } else { nil }
-    }
-
     var json: Any {
-        switch self {
-        case let .string(value): value
-        case let .int(value): value
-        case let .double(value): value
-        case let .bool(value): value
-        case let .array(value): value.map(\.json)
-        case let .object(value): value.mapValues(\.json)
-        case .null: NSNull()
+        get throws {
+            switch self {
+            case let .string(value): value
+            case let .int(value): value
+            case let .double(value): value
+            case let .bool(value): value
+            case let .array(value): try value.map { try $0.json }
+            case let .object(value): try value.mapValues { try $0.json }
+            case .null: NSNull()
+            case .data: throw BridgeFailure("nativeProtocolError")
+            }
         }
     }
 }
@@ -73,11 +47,13 @@ enum Elicitation {
         let required: [String]?
 
         var json: [String: Any] {
-            var result: [String: Any] = ["type": "object", "properties": properties.mapValues(\.json)]
-            if let title { result["title"] = title }
-            if let description { result["description"] = description }
-            if let required { result["required"] = required }
-            return result
+            get throws {
+                var result: [String: Any] = try ["type": "object", "properties": properties.mapValues { try $0.json }]
+                if let title { result["title"] = title }
+                if let description { result["description"] = description }
+                if let required { result["required"] = required }
+                return result
+            }
         }
     }
 }
