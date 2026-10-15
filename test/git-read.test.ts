@@ -57,7 +57,7 @@ test('public Git log/blame use the nearest owning checkout, retain source fields
     `"${process.execPath}" "${resolve('test/fixtures/git-textconv-probe.mjs')}" "${converterMarker}"`]);
   const before = await readFile(join(f.repo, '.git/index'));
   const config = join(f.base, 'config.json');
-  await writeFile(config, JSON.stringify({ ...f.options, search: null, discovery: null, defaultMaxOutputBytes: 24000 }));
+  await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 24000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'git-source', version: '1' });
@@ -174,7 +174,7 @@ test('public Git status returns coherent source categories for a subdirectory ro
     '"' + process.execPath + '" "' + resolve('test/fixtures/git-fsmonitor-probe.mjs') + '" "' + fsmonitorMarker + '"']);
   const before = await readFile(join(f.repo, '.git/index'));
   const config = join(f.base, 'config.json');
-  await writeFile(config, JSON.stringify({ ...f.options, search: null, discovery: null, defaultMaxOutputBytes: 24000 }));
+  await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 24000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});

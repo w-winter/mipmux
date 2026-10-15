@@ -10,8 +10,7 @@ test('dense overlapping context emits each source line once with linear selectio
   const base = await mkdtemp(join(tmpdir(), 'smip-search-context-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') } });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const measurements: { lines: number; numericSetInsertions: number; durationMs: number }[] = [];
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);

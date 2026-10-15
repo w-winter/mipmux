@@ -47,7 +47,7 @@ async function createFixture(scenario: Scenario, t: TestContext) {
   const configPath = join(provider.directory, 'config.json');
   await writeFile(configPath, JSON.stringify({ cachePath: join(provider.directory, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    terminationGraceMs: 100, contextBudgetUnits: 200000, credentialPaths: [], search: null, git: null,
+    terminationGraceMs: 100, contextBudgetUnits: 200000, credentialPaths: [], git: null,
     discovery: { ...provider.config, prompt: { kind: 'rpce' } }, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', configPath], cwd: '/', stderr: 'pipe' });

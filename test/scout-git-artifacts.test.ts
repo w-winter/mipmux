@@ -230,7 +230,7 @@ test('a per-file-only authorization change after encoding revokes the complete a
 
 test('MCP publication requires an owned draft and uses the same source commit and grant pipeline', async () => {
   const f = await fixture(), config = join(f.out, '../host.json');
-  await writeFile(config, JSON.stringify({ ...f.options, search: null, discovery: null, defaultMaxOutputBytes: 100000 }));
+  await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'scout-artifact-mcp', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
     cwd: '/', stderr: 'pipe' });

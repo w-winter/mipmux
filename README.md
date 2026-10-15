@@ -14,16 +14,13 @@ node scripts/build-native.mjs test
 npm run verify:vendor
 npm run typecheck
 npm run build
-node test/linux/setup-search.mjs
 node scripts/build-native.mjs build --configuration release
 npm test
 ```
 
 Run native commands through `scripts/build-native.mjs`. It supplies SwiftPM's explicit `--pkg-config-path`, verifies the private dependency files, checks the linked executable, and writes `linkage.json` beside the executable. A mismatched or interrupted dependency build fails with its directory path for inspection and explicit removal before rebuilding.
 
-The search tests require Cargo/Rust 1.93.0 and an audited ripgrep executable. `test/linux/setup-search.mjs` prepares the test prerequisite on macOS or Linux beneath the ignored `.smip-work/test-ripgrep/` directory, linking the private PCRE2 10.49 archive. It records source, lockfile, executable, dependency, linkage, and toolchain identities in `receipt.json` there, and runs the PCRE2 Rust binding tests, including JIT matching. `SMIP_TEST_RG` selects an explicit test executable; otherwise tests use that prepared location.
-
-Ripgrep 15.2.0's `--pcre2-version` prints the Rust bindings' 10.45 constants even when linked to PCRE2 10.49. The prerequisite receipt retains that output verbatim and records the linked engine through build evidence. Production hosts must supply an audited executable. Preflight checks whether the configured executable supports PCRE2; the build audit establishes which dependency it uses.
+Search uses the native executable's Foundation and statically linked PCRE2 matching implementations. The native dependency receipt and linkage checks identify the engine used by both extraction and search.
 
 The native executable is `native/.build/<platform>-<architecture>/<configuration>/SmipBridge`, with Node's platform and architecture names, such as `darwin-arm64` and `linux-arm64`. Its first argument is a process-generation identifier. Requests and responses use JSON Lines on stdin/stdout; each request includes that generation, wire version 1, and a request ID.
 
@@ -47,11 +44,11 @@ npm run package:local -- /var/tmp/smip-local-package
 
 The command builds TypeScript and the native release executable, verifies source history, and packs the runtime files and notices through npm. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. That digest identifies the package-lock.json used to build smip; installed dependency graphs have their own lockfiles and audit results. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
 
-Install the resulting `.tgz` with `npm install --ignore-scripts /absolute/path/smip-0.1.0.tgz`. The installed CLI is available as `smip`. Set `nativeExecutable` in the host configuration to the installed package's absolute `libexec/<platform>-<architecture>/SmipBridge` path. Cache, source roots, output, search, Git, and authentication paths remain explicit host inputs. The package includes the discovery prompt and dependency identity beside its compiled modules.
+Install the resulting `.tgz` with `npm install --ignore-scripts /absolute/path/smip-0.1.0.tgz`. The installed CLI is available as `smip`. Set `nativeExecutable` in the host configuration to the installed package's absolute `libexec/<platform>-<architecture>/SmipBridge` path. Cache, source roots, output, Git, and authentication paths remain explicit host inputs. The package includes the discovery prompt and dependency identity beside its compiled modules.
 
 ## Workspace API
 
-Importing `smip` starts no processes and creates no storage. Construct `SmipRuntime` with absolute cache/native paths, explicit native environment, credential-file exclusions, and a termination grace. Add `search: { executable }` to enable search. The cache directory must be private; source roots and the output directory must already exist.
+Importing `smip` starts no processes and creates no storage. Construct `SmipRuntime` with absolute cache/native paths, explicit native environment, credential-file exclusions, and a termination grace. Search uses the configured native executable. The cache directory must be private; source roots and the output directory must already exist.
 
 ```ts
 import { SmipRuntime } from 'smip';
@@ -193,7 +190,7 @@ The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; membership targets name workspace inventory records. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateMembership(key)` for membership. Each method removes only its named record.
 
-Host configuration uses this shape. The numbers are example host choices, not model-derived limits. `search` and `git` can each be null or `{ "executable": "/absolute/path" }`. Set `discovery` to null for model-free use.
+Host configuration uses this shape. The numbers are example host choices, not model-derived limits. `git` can be null or `{ "executable": "/absolute/path" }`. Set `discovery` to null for model-free use.
 
 ```json
 {
@@ -202,7 +199,6 @@ Host configuration uses this shape. The numbers are example host choices, not mo
   "nativeEnvironment": { "REPOPROMPT_PCRE2_JIT": "auto" },
   "terminationGraceMs": 1000,
   "credentialPaths": [],
-  "search": null,
   "git": null,
   "defaultMaxOutputBytes": 12000,
   "contextBudgetUnits": 200000,
@@ -277,7 +273,7 @@ Git queries use the configured Git executable. Call `git` with `input: { op: "st
 
 Use `input: { op: "diff", root: "repo", compare: "uncommitted", detail: "full" }` to inspect changes across the owning checkout. Staged, unstaged, revision and merge-base comparisons are supported. Optional `path`/`paths` accept checkout-relative Git globs and exclusions or absolute literal paths. Optional `worktree` selects an advertised same-repository checkout after identity checks. Protected endpoints are omitted and listed in `exclusions`; ordinary file tools remain scoped to declared roots. Diff compares captured source bytes in a private worktree. Git configuration must be trusted because clean/process filters may execute programs.
 
-Reads default to the whole file. Structure requires `seeds` and defaults to `expand: "none"` and depth 1. Search defaults to literal content, case-insensitive substring matching, no filters, zero surrounding context, and snippets rather than count-only output. Use `query.kind: "regex"` for PCRE2 or `query.kind: "glob"` for path globs; glob searches default to path mode. Omit `continuation` for the first page.
+Reads default to the whole file. Structure requires `seeds` and defaults to `expand: "none"` and depth 1. Search defaults to automatic mode and regex inference, case-insensitive matching, no filters, zero surrounding context, and snippets rather than count-only output. Use `query.kind: "literal"` to select literal interpretation, `query.kind: "regex"` for PCRE2 or `query.kind: "glob"` for path globs; glob searches select path mode. Omit `continuation` for the first page.
 
 Local patch inputs can use a declared root below its owning Git checkout. Comparison scope and receipt paths are relative to that declared root, while patch headers retain the checkout-relative prefix needed by `git apply`. Only files beneath the declared root participate in the comparison.
 

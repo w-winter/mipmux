@@ -29,7 +29,7 @@ test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap ma
   await writeFile(join(other, 'zone/wrong-root.txt'), 'Other root\n');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-    nativeEnvironment: {}, terminationGraceMs: 100, credentialPaths: [], search: null, git: null,
+    nativeEnvironment: {}, terminationGraceMs: 100, credentialPaths: [], git: null,
     discovery: null, defaultMaxOutputBytes: 12000 }));
   const client = new Client({ name: 'tree-port', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,

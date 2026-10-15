@@ -52,7 +52,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output };
   writeFileSync(specPath, JSON.stringify(spec));
   writeFileSync(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
-    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
+    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/smip'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
@@ -86,7 +86,7 @@ test('local package audits resources and executes relocated library, native, CLI
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('RELOCATED_EDITABLE_PROMPT'));
     provider.config.prompt = { kind: 'rpce' };
     writeFileSync(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
-      terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null,
+      terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null,
       discovery: provider.config, defaultMaxOutputBytes: 10000 }));
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'native-relocation', request: {
       task: 'Inspect', initialSelection: { codemapMode: 'automatic', sources: [] }, duplicateUserInstructionsAtTop: false,

@@ -57,7 +57,7 @@ for (const scenario of ['timeout', 'abort'] as const) {
       if (typeof callback === 'function') callback(); return true;
     });
     const host = serveSmipStdio({ cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-      nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, search: null, git: null, discovery: null, defaultMaxOutputBytes: 12000 });
+      nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: 12000 });
     let id = 0;
     const call = async (name: string, args: unknown) => {
       const requestId = ++id, result = new Promise<unknown>(resolve => responses.set(requestId, resolve));

@@ -29,7 +29,7 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
   const artifactKey = entry.structural.key.digest, membershipKey = inventory.workspaceKey;
   const artifactPath = join(options.cachePath, 'v1/artifacts', artifactKey.slice(0, 2), artifactKey + '.json');
   const membershipPath = join(options.cachePath, 'v1/workspaces', membershipKey, 'membership.json');
-  await writeFile(config, JSON.stringify({ ...options, search: null, git: null, discovery: null, defaultMaxOutputBytes: 10000 }));
+  await writeFile(config, JSON.stringify({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000 }));
   for (const kind of ['artifact', 'membership'] as const) {
     const key = kind === 'artifact' ? artifactKey : membershipKey;
     const path = kind === 'artifact' ? artifactPath : membershipPath;
@@ -59,7 +59,7 @@ test('official MCP negotiation and EOF create no workspace during probes; CLI in
   const base = await mkdtemp(join(tmpdir(), 'smip-mcp-cli-'));
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
-    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
+    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
   try {
@@ -92,7 +92,7 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
   const config = join(provider.directory, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(provider.directory, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: provider.config, defaultMaxOutputBytes: 2000 }));
+    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 2000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'test', version: '1' });
   const diagnostics: Buffer[] = []; transport.stderr?.on('data', chunk => diagnostics.push(Buffer.from(chunk)));

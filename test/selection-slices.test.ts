@@ -33,7 +33,7 @@ async function hostFixture(prefix: string) {
 
 test('public MCP slice mutations coalesce descriptions, subtract ranges and restore full content when the last slice is removed', async () => {
   const f = await hostFixture('selection-slices-'), config = join(f.base, 'host.json');
-  await writeFile(config, JSON.stringify({ ...f.options, search: null, git: null, discovery: null, defaultMaxOutputBytes: 20000 }));
+  await writeFile(config, JSON.stringify({ ...f.options, git: null, discovery: null, defaultMaxOutputBytes: 20000 }));
   const client = new Client({ name: 'selection-slices', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

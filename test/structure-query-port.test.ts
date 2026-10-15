@@ -29,7 +29,7 @@ test('public structural query exposes source graph evidence with signatures disa
   await writeFile(join(root, 'Shared.swift'), 'struct SharedRecord {\n let value: Int\n}\n');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    terminationGraceMs: 100, credentialPaths: [], search: null, git: null, discovery: null, defaultMaxOutputBytes: 30000 }));
+    terminationGraceMs: 100, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 30000 }));
   const client = new Client({ name: 'structure-query-port', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

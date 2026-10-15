@@ -6930,13 +6930,13 @@
       ],
       "classification": "handwritten",
       "changes": [
-        "Apply independent limits for path and content results and the unlimited content branch for count-only requests to the existing authorized ripgrep adapter. The default of 50 and limitHit condition are from Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift:724,956-957; count-only limitHit=false is from lines880-895.",
+        "Apply independent limits for path and content results and unlimited content counts to the authorized native scanners. The default of 50 and limitHit condition are from Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift:724,956-957; count-only limitHit=false is from lines880-895.",
         "Grouped replies expose source path-hit and matching-line counts. Both native literal and raw regex scanners receive original decoded text. Matching requires no temporary ordinal files or secondary matching process; per-candidate source/policy revalidation and grouped context retain their existing owners.",
-        "Consume the fully normalized native content pattern. Remove ripgrep word-mode interpretation; the native pattern owner defines word-boundary behavior.",
-        "Route plain literal matching to Foundation before per-file grouping; regex/fuzzy/whole-word requests retain the existing PCRE2 spool. Preserve one current decoded file, query limits and parent-owned settlement. The reported backend reflects the actual route.",
+        "The native scanner owns literal flexible-space and whole-word matching. The preparation result identifies the strategy; matching receives original decoded text, the raw pattern and query flags.",
+        "Run all matching through the existing native worker and its pinned Foundation/PCRE2 implementation. The host configuration has one nativeExecutable owner; it contains no separate search executable or optional search gate. Preserve one current decoded file, query limits and parent-owned settlement.",
         "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged."
       ],
-      "sha256": "c77f5b8e05084348dc0d0fedf6f3511d8e46f0ea403a7da0c7af33ed8124fdc9"
+      "sha256": "92b0758d37d08f73f4fd96e30673f1cc15c108e2a17dee15f7f4d4cc94492e1c"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",

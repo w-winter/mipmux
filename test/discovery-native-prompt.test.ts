@@ -39,7 +39,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
     const discovery = { ...provider.config, prompt: { kind: 'rpce' } };
     const config = hostValidator.Parse({ cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-      contextBudgetUnits: 200000, terminationGraceMs: 100, discovery, search: null, git: { executable: git }, defaultMaxOutputBytes: 100000 });
+      contextBudgetUnits: 200000, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000 });
     const { runtime, client } = compose(config, null);
     try {
       const signal = new AbortController().signal;

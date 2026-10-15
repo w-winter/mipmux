@@ -11,7 +11,6 @@ import type { DiscoveryRunner } from '../src/discovery/runner.js';
 
 const signal = () => new AbortController().signal;
 const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
-const rg = process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg');
 const handoff = { clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] };
 function barrier() {
   let release!: () => void;
@@ -43,7 +42,7 @@ test('an absent credential beneath an independently symlinked parent stays denie
   await writeFile(join(f.root, 'config/public.txt'), 'admitted');
   await symlink(join(f.root, 'config'), join(f.base, 'credential-dir'));
   const credential = join(f.base, 'credential-dir/auth.json');
-  const options = { ...f.options, credentialPaths: [credential], search: { executable: rg } };
+  const options = { ...f.options, credentialPaths: [credential] };
   const filters = { roots: [], directories: [], include: [], exclude: [], extensions: [] };
   const runtime = new SmipRuntime(options);
   try {

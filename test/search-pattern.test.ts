@@ -26,9 +26,9 @@ test('public file_search uses source pattern inference, trimming and literal fle
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
-    search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') },
     defaultMaxOutputBytes: 12000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
+    cwd: '/', env: { PATH: base }, stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'source-search-pattern', version: '1' });
   const observations: unknown[] = [];

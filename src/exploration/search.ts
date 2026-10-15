@@ -4,7 +4,6 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { SourceIdentity } from '../contracts/workspace.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { prepareText, type PreparedText } from './lines.js';
-import { runRipgrep } from './ripgrep.js';
 import { pageIdentity, pageOffset } from './continuation.js';
 import { pageResult, serializedBytes, type ResultEncoding } from './output-budget.js';
 import { prepareSearch } from './search-query.js';
@@ -36,10 +35,6 @@ function matchedContext(text: PreparedText, matching: ReadonlySet<number>, befor
 
 export async function fileSearch(operation: WorkspaceOperation, request: SearchRequest, encode?: ResultEncoding) {
   if (!searchValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
-  const configured = operation.runtime.options.search;
-  if (!configured) throw new WorkspaceFailure('searchNotConfigured');
-  const { executable } = configured;
-  await runRipgrep(operation.runtime.supervisor, executable, ['--pcre2-version'], '/', '', operation.signal, () => {}, true);
   const admitted = operation.snapshot.entries.filter(entry => entry.kind === 'file').filter(entry => {
     if (entry.visibility !== 'discoverable') return false;
     const filters = request.filters;

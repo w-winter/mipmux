@@ -13,8 +13,7 @@ test('real search modes and output continuations preserve complete counts and re
   const root = join(base, 'root'); await mkdir(root); await mkdir(join(base, 'out'));
   for (const name of ['a.txt', 'b.txt', 'c.txt']) await writeFile(join(root, name), '\uFEFFcafé\r\n ++ \rx café x\ncaféteria\nlast');
   const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
-    search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') } });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);
     const operation = await handle.openOperation(new AbortController().signal);

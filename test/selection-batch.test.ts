@@ -123,7 +123,7 @@ test('cancelled second batch acquisition cannot commit the first prepared source
 
 test('public MCP preview prepares the complete batch without changing the committed draft', async () => {
   const f = await fixture(), config = join(f.base, 'host.json');
-  await writeFile(config, JSON.stringify({ ...f.options, search: null, git: null, discovery: null, defaultMaxOutputBytes: 20000 }));
+  await writeFile(config, JSON.stringify({ ...f.options, git: null, discovery: null, defaultMaxOutputBytes: 20000 }));
   const client = new Client({ name: 'batch-preview', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

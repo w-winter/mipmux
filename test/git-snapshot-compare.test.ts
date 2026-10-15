@@ -58,7 +58,7 @@ test('public snapshot comparisons use only the saved HEAD, precede named refs an
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, terminationGraceMs: 100,
     credentialPaths: repos.map(entry => join(entry.repo, 'denied.txt')), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-    nativeEnvironment: {}, git: { executable: git }, search: null, discovery: null, defaultMaxOutputBytes: 100000 }));
+    nativeEnvironment: {}, git: { executable: git }, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'snapshot-compare', version: '1' }), proof: unknown[] = [];
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});

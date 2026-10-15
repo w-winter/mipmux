@@ -16,7 +16,7 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
   const options = { cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     contextBudgetUnits };
-  const { runtime } = compose({ ...options, search: null, git: null, discovery: null, defaultMaxOutputBytes: 10000 }, null);
+  const { runtime } = compose({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000 }, null);
   const signal = new AbortController().signal;
   let calls = 0;
   const runner: DiscoveryRunner = { run: async () => { calls++; throw new Error('Unexpected discovery dispatch'); } };

@@ -14,7 +14,7 @@ import { SmipRuntime } from '../src/runtime/smip-runtime.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
 const config = { cachePath: '/unavailable/cache', nativeExecutable: '/unavailable/native', nativeEnvironment: {}, terminationGraceMs: 100,
-  contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: null, defaultMaxOutputBytes: 12000 };
+  contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 };
 const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
 for (const scenario of ['subscription', 'existing', 'progress', 'outputError', 'cleanupError'] as const) {
   test(`production stdio joins application and cancels ${scenario} output without closing shared stdout`, async t => {

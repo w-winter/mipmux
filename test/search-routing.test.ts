@@ -33,7 +33,6 @@ test('public search routes auto patterns and preserves native path candidates, p
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
-    search: { executable: process.env.SMIP_TEST_RG ?? resolve('.smip-work/test-ripgrep/ripgrep-e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/target/release/rg') },
     defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});

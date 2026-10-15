@@ -25,7 +25,7 @@ test('MCP admission retains mutable initial selection and manual mode separately
   const config = join(base, 'host.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, search: null, git: null,
+    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

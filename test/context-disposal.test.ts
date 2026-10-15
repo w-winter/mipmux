@@ -103,7 +103,7 @@ test('MCP job disposal joins real Pi discovery before owner cleanup and retains 
       ? { kind: 'tool', name: 'git', input: { op: 'diff', artifacts: true, snapshot_id: 'job', maxOutputBytes: 100000 }, stop: 'tool_use', tokens: 10 }
       : finish ? { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 } : { kind: 'hold', entered });
     const config = join(f.base, 'config.json');
-    await writeFile(config, JSON.stringify({ ...f.options, discovery: provider.config, search: null, defaultMaxOutputBytes: 100000 }));
+    await writeFile(config, JSON.stringify({ ...f.options, discovery: provider.config, defaultMaxOutputBytes: 100000 }));
     const client = new Client({ name: 'context-job-disposal', version: '1' });
     const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
       cwd: '/', stderr: 'pipe' });
@@ -135,7 +135,7 @@ test('MCP job disposal joins real Pi discovery before owner cleanup and retains 
 
 test('MCP draft_dispose performs owner cleanup after finalization and workspace closure', async () => {
   const f = await fixture(), config = join(f.base, 'config.json');
-  await writeFile(config, JSON.stringify({ ...f.options, discovery: null, search: null, defaultMaxOutputBytes: 100000 }));
+  await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'context-disposal', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
     cwd: '/', stderr: 'pipe' });

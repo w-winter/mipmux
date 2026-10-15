@@ -15,7 +15,7 @@ const executable = Type.Object({ executable: absolute }, closed);
 export const HostConfig = Type.Object({ ignoreSettings: Type.Optional(IgnoreSettings), cachePath: absolute, nativeExecutable: absolute,
   nativeEnvironment: Type.Record(Type.String(), Type.String()),
   terminationGraceMs: Type.Integer({ minimum: 0, maximum: 2147483647 }),
-  credentialPaths: Type.Array(absolute), search: Type.Union([executable, Type.Null()]),
+  credentialPaths: Type.Array(absolute),
   git: Type.Union([executable, Type.Null()]), discovery: Type.Union([PiConfig, Type.Null()]),
   defaultMaxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   contextBudgetUnits: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
@@ -40,7 +40,6 @@ export function compose(config: HostConfig, configurationPath: string | null) {
       ...(config.discovery ? [config.discovery.authPath, config.discovery.modelsPath,
         ...(config.discovery.mcp ? mcpProtectedPaths(config.discovery.mcp) : [])] : [])],
   };
-  if (config.search) Object.assign(runtimeOptions, { search: config.search });
   if (config.git) Object.assign(runtimeOptions, { git: config.git });
   if (config.ignoreSettings) Object.assign(runtimeOptions, { ignoreSettings: config.ignoreSettings });
   const runtime = new SmipRuntime(runtimeOptions);

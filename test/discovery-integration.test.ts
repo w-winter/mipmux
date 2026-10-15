@@ -73,7 +73,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     await writeFile(join(provider.directory, 'terminal-receipt.json'), JSON.stringify(result, null, 2));
     ordinary = 0;
     const configPath = join(provider.directory, 'cli-config.json'), requestPath = join(provider.directory, 'cli-request.json');
-    await writeFile(configPath, JSON.stringify({ ...runtime.options, search: null, git: null,
+    await writeFile(configPath, JSON.stringify({ ...runtime.options, git: null,
       defaultMaxOutputBytes: 10000, discovery: provider.config }));
     await writeFile(requestPath, JSON.stringify({ workspace: { roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] },
       requestId: 'cli', request: { ...request, outputName: 'cli-packet' } }));

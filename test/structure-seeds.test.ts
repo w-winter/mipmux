@@ -23,7 +23,7 @@ test('public structural seeds use owned selection, whole roots, direct-file prio
   await writeFile(join(root, 'readme.txt'), 'Source fixture\n');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    terminationGraceMs: 100, credentialPaths: [], search: null, git: null, discovery: null, defaultMaxOutputBytes: 50000 }));
+    terminationGraceMs: 100, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 50000 }));
   const client = new Client({ name: 'structure-seeds', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

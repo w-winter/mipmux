@@ -48,7 +48,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
   const discovery = { ...provider.config, prompt: { kind: 'rpce' as const }, mcp };
   const { runtime, client } = compose({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    discovery, search: null, git: null, defaultMaxOutputBytes: 10000 }, null);
+    discovery, git: null, defaultMaxOutputBytes: 10000 }, null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let workerEnvironment: Readonly<Record<string, string>> | null = null;
   t.mock.method(runtime.supervisor, 'spawn', (spec: Parameters<typeof spawn>[0]) => {

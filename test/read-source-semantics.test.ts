@@ -32,7 +32,7 @@ test('public MCP read_file executes source bounds and retains exact text and dia
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], search: null, git: null, discovery: null,
+    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});

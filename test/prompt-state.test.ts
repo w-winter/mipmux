@@ -27,7 +27,7 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
   await writeFile(join(root, 'source.txt'), 'EXACT SOURCE\n');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, search: null, git: null,
+    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 10000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

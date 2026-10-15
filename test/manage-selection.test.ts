@@ -35,7 +35,7 @@ async function fixture() {
   await writeFile(join(root, 'private/Hidden.swift'), 'struct ExplicitlyManaged {\n  let value: Int\n}\n');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, search: null, git: null,
+    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 30000 }));
   const client = new Client({ name: 'source-selection', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,

@@ -33,7 +33,6 @@ export interface RuntimeOptions {
   readonly credentialPaths: readonly string[];
   /** Omission selects the retained RPCE defaults; explicit values are captured per workspace. */
   readonly ignoreSettings?: IgnoreSettings;
-  readonly search?: { readonly executable: string };
   readonly git?: { readonly executable: string };
 }
 
@@ -53,7 +52,7 @@ export class SmipRuntime {
     if (!Number.isSafeInteger(options.contextBudgetUnits) || options.contextBudgetUnits < 1) {
       throw new WorkspaceFailure('invalidContextBudget');
     }
-    for (const path of [options.cachePath, options.nativeExecutable, ...options.credentialPaths, ...(options.search ? [options.search.executable] : []), ...(options.git ? [options.git.executable] : [])]) {
+    for (const path of [options.cachePath, options.nativeExecutable, ...options.credentialPaths, ...(options.git ? [options.git.executable] : [])]) {
       if (!isAbsolute(path)) throw new WorkspaceFailure('absoluteConfigurationRequired');
     }
     this.supervisor = new ProcessSupervisor({ terminationGraceMs: options.terminationGraceMs });
