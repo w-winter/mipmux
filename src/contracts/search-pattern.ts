@@ -46,6 +46,12 @@ export const NativeRegexCompilationResult = Type.Union([
   Type.Object({ kind: Type.Literal('regexCompilation'), correction }, closed),
   Type.Object({ kind: Type.Literal('regexSearchError'), message: Type.String() }, closed),
 ]);
+export const NativeSearchRecoveryInput = Type.Object({ kind: Type.Literal('prepareSearchRecovery'),
+  pattern: Type.String(), isRegex: Type.Boolean() }, closed);
+export const NativeSearchRecoveryResult = Type.Object({ kind: Type.Literal('searchRecovery'),
+  attempts: Type.Array(Type.Object({ kind: Type.Enum(['literal', 'compressedRegex', 'normalizedRegex', 'quotedRegex']),
+    pattern: Type.String() }, closed)),
+  warning: Type.String() }, closed);
 export const NativeRegexSearchResult = Type.Union([
   Type.Object({ kind: Type.Literal('regexSearch'), matchingLines: SafeCount,
     matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })) }, closed),

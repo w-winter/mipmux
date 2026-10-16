@@ -167,6 +167,7 @@ enum Operation {
     case scanLiteralLines(LiteralSearchInput)
     case scanRegexContent(RegexSearchInput)
     case compileRegexContent(RegexCompilationInput)
+    case prepareSearchRecovery(SearchRecoveryInput)
     case renderPreparedClipboard(PreparedClipboardOperation)
     case renderClipboard(ClipboardOperation)
     case queryStructure(StructureInput)
@@ -344,6 +345,7 @@ enum Operation {
         case "scanLiteralLines": return try .scanLiteralLines(LiteralSearchInput(value))
         case "scanRegexContent": return try .scanRegexContent(RegexSearchInput(value))
         case "compileRegexContent": return try .compileRegexContent(RegexCompilationInput(value))
+        case "prepareSearchRecovery": return try .prepareSearchRecovery(SearchRecoveryInput(value))
         case "resolveAutomaticReviewGit", "renderAutomaticReviewGit":
             return try .git(.automaticReview(AutomaticReviewGitInput(value)))
         case "renderPreparedClipboard": return try .renderPreparedClipboard(PreparedClipboardOperation(value))

@@ -11,6 +11,7 @@ const resultKinds = {
   scanLiteralLines: ['literalSearch', 'literalSearchError'],
   scanRegexContent: ['regexSearch', 'regexSearchError'],
   compileRegexContent: ['regexCompilation', 'regexSearchError'],
+  prepareSearchRecovery: ['searchRecovery'],
   calculateTokenStats: ['tokenStats'],
   prepareGitWorktreeMainRoot: ['gitWorktreePlan', 'gitWorktreeListingError'],
   resolveGitWorktreeConfig: ['gitWorktreeMainRoot'],

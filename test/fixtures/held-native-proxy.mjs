@@ -12,7 +12,8 @@ process.stdin.on('data', bytes => {
   while ((newline = input.indexOf('\n')) !== -1) {
     const line = input.slice(0, newline); input = input.slice(newline + 1);
     const request = JSON.parse(line);
-    if (request.operation.kind === operation && (operation !== 'readSource' || request.operation.path === 'file.txt')) held.add(request.requestId);
+    if (request.operation.kind === operation && (operation === 'readSource'
+      ? request.operation.path === 'file.txt' : request.operation.pattern === process.env.SMIP_HELD_PATTERN)) held.add(request.requestId);
     child.stdin.write(line + '\n');
   }
 });

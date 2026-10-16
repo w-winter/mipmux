@@ -6121,7 +6121,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "25f73a12a29c5830346fb46ffb93419febc0fbf1a31dfce68f6fb2bd4bcc3e33",
+      "sha256": "a12dfeabf5a0760d7ecb733ae65869afbe23f08da0b454d2c0d45413e679b2e3",
       "classification": "handwritten"
     },
     {
@@ -6945,7 +6945,7 @@
         "Run all matching through the existing native worker and its pinned Foundation/PCRE2 implementation. The host configuration has one nativeExecutable owner; it contains no separate search executable or optional search gate. Preserve one current decoded file, query limits and parent-owned settlement.",
         "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged."
       ],
-      "sha256": "b308f6e73d4c148effd1e9590c37ffb8759b70f16d8a870493eb1e40da68dfbc"
+      "sha256": "cb6e00191e0b1f248d98e4a43e02e6f7d68406f223baa4f7ad6f29b6eebff4f7"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7202,6 +7202,53 @@
         "Retain the original literal/regex correction-warning formatter in a native namespace;only visibility and the namespace differ."
       ],
       "sha256": "1b6f83d30067ca9b2b0c96d311d107c3c381677ea270efd72d464a69a47cf6f1"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/SearchRecoveryInput.swift",
+      "ranges": [
+        [
+          700,
+          771
+        ],
+        [
+          1042,
+          1174
+        ]
+      ],
+      "classification": "retained",
+      "changes": [
+        "Retain the original literal and regex over-escape predicates, literal de-escaping and guarded literal repair. Resolve compression through the identical installed RegexCore helper. Preserve original candidate order and derive every candidate from the original query.",
+        "Return the ordered candidate descriptors and source warning over the existing native bridge after a zero-count primary pass. Pure normalization is prepared with the candidate list; matching and query-wide short-circuiting remain sequential in the host. No source text or compiled-expression handle is transferred.",
+        "MCP binds the source default allowLiteralUnescapeFallback=true. The original source false option is not a new headless request toggle."
+      ],
+      "sha256": "d456a1b76889bff2525cf561436075b39ff54945d9d848f9cff9ec846954c375"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "src/exploration/search-pass.ts",
+      "ranges": [
+        [
+          1042,
+          1174
+        ],
+        [
+          1280,
+          1469
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Execute each candidate as a whole query over the originally filtered and ordered file set, using the existing native scanners. Reuse the bounded page-prefix collector, count-only traversal, exact source identity checks and line context. The original file collector moved from search.ts so retries share the same path rather than a separate implementation.",
+        "Only aggregate content counts admit recovery; a file with no matches cannot trigger a retry while another primary file matched. A literal retry replaces the primary result even at zero. Regex retries return the first positive result or the original primary, with sticky compilation correction and exact native warning. Keep original path results fixed across content retries.",
+        "The source normalized-stage catch suppresses callback errors. The headless binding suppresses only typed searchFailed pattern failures there: filesystem authority, protocol and cancellation failures propagate through the existing operation owner. This retains required fail-closed root/credential boundaries and local tool retirement instead of running another native request after cancellation. Compressed and quoted failures propagate.",
+        "Raw source bytes are revalidated and decoded for every attempted pass. No document collection, retry-result cache, alternate search backend, or new resource limit is introduced."
+      ],
+      "sha256": "00996be95e5f549de59ebb46b6479b8774462289fa055c7e219d34a880eece44"
     }
   ],
   "dependencies": [
@@ -12994,6 +13041,36 @@
       "line": 609,
       "name": "searchAutoCorrectionWarning",
       "destination": "native/Sources/SmipBridge/RPCESearchWarning.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 700,
+      "name": "regexMeta",
+      "destination": "native/Sources/SmipBridge/SearchRecoveryInput.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 703,
+      "name": "looksOverEscapedLiteral",
+      "destination": "native/Sources/SmipBridge/SearchRecoveryInput.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 722,
+      "name": "unescapeLiteralRegexEscapes",
+      "destination": "native/Sources/SmipBridge/SearchRecoveryInput.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 739,
+      "name": "repairedLiteralPattern",
+      "destination": "native/Sources/SmipBridge/SearchRecoveryInput.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 758,
+      "name": "looksOverEscapedRegex",
+      "destination": "native/Sources/SmipBridge/SearchRecoveryInput.swift"
     }
   ],
   "sourceCoverage": [

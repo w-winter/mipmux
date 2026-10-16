@@ -17,7 +17,8 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
   }, stop: 'tool_use', tokens: 10 }));
   provider.config.policy.compaction.enabled = false;
   const root = join(provider.directory, 'root'), outputRoot = join(provider.directory, 'out');
-  await mkdir(root); await mkdir(outputRoot); await writeFile(join(root, 'file.txt'), 'source\n');
+  if (boundary === 'search') search.query = { kind: 'literal', text: 'source\\(', caseSensitive: true, wholeWord: false };
+  await mkdir(root); await mkdir(outputRoot); await writeFile(join(root, 'file.txt'), boundary === 'search' ? 'source(\n' : 'source\n');
   const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
   const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable, nativeEnvironment: {}, terminationGraceMs: 100 });
@@ -31,7 +32,8 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     if (armed && spec.executable === nativeExecutable) {
       const process = spawn({ ...spec, executable: globalThis.process.execPath,
         args: [resolve('test/fixtures/held-native-proxy.mjs'), ...spec.args],
-        env: { ...spec.env, SMIP_NATIVE: nativeExecutable, SMIP_HELD_OPERATION: boundary === 'read' ? 'readSource' : 'scanLiteralLines' } });
+        env: { ...spec.env, SMIP_NATIVE: nativeExecutable, SMIP_HELD_OPERATION: boundary === 'read' ? 'readSource' : 'scanLiteralLines',
+          SMIP_HELD_PATTERN: 'source(' } });
       held.push(process);
       let stderr = '';
       process.child.stderr.on('data', bytes => { stderr += bytes.toString(); if (stderr.includes(boundary === 'read' ? 'SMIP_READ_HELD' : 'SMIP_SEARCH_HELD')) entered(); });
