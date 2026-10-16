@@ -92,21 +92,23 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
     }
     flush();
   }
-  if (pattern.mode !== 'path' && pattern.content.kind === 'ready' && pattern.raw.isRegex && !candidates.length) {
-    await scanRegexContent(operation, '', 0, { pattern: pattern.raw.text, caseSensitive: request.query.caseSensitive,
-      wholeWord: request.query.kind !== 'glob' && request.query.wholeWord, countOnly: request.countOnly, limit: request.maxResults });
-  }
   while (current < candidates.length) flush();
   if (offset > matchedFiles) throw new WorkspaceFailure('invalidContinuation');
   const matchingLines = matches.reduce((sum, match) => sum + match.matchingLines, 0);
   const counts = { totalMatches: matchingLines + matchedPaths.size, matchingLines, pathMatches: matchedPaths.size, matchedFiles };
-  return pageResult(records, 0, maxOutputBytes, (files) => ({
-    kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
-    engine: pattern.mode === 'path' ? 'RPCE path' : pattern.raw.isRegex || contentPattern?.isRegex === true ? 'PCRE2' : 'Foundation',
-    newlineView: 'Original decoded text; CRLF, CR and LF define lines', counts,
-    limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),
-    returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files, limitations,
-    truncated: !request.countOnly && offset + files.length < matchedFiles,
-    continuation: request.countOnly || offset + files.length === matchedFiles ? null : { digest, offset: offset + files.length },
-}), encode);
+  return pageResult(records, 0, maxOutputBytes, (files) => {
+    const result = {
+      kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
+      engine: pattern.mode === 'path' ? 'RPCE path' : pattern.raw.isRegex || contentPattern?.isRegex === true ? 'PCRE2' : 'Foundation',
+      newlineView: 'Original decoded text; CRLF, CR and LF define lines', counts,
+      limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),
+      returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files, limitations,
+      truncated: !request.countOnly && offset + files.length < matchedFiles,
+      continuation: request.countOnly || offset + files.length === matchedFiles ? null : { digest, offset: offset + files.length },
+    };
+    if (pattern.content.kind === 'ready' && pattern.content.correction.kind === 'corrected') {
+      return { ...result, warning: pattern.content.correction.warning };
+    }
+    return result;
+  }, encode);
 }

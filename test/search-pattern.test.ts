@@ -13,6 +13,7 @@ const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), counts: 
   lines: Type.Array(Type.Object({ number: Type.Integer(), matching: Type.Boolean() })),
 })) }));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String(), message: Type.String() }));
+const correctionReply = Compile(Type.Object({ warning: Type.String() }));
 
 test('public file_search uses source pattern inference, trimming and literal flexible spaces', async () => {
   const base = await mkdtemp(join(tmpdir(), 'smip-search-pattern-'));
@@ -21,7 +22,7 @@ test('public file_search uses source pattern inference, trimming and literal fle
     '++\na++b\n ++ \nleftover\nupright\nleft\nright\naleft\nrightward\ncafé\ncafétéria\ndécafé\néwordé\nword\nsword\n' +
     'cafe\u0301 cafe\u0301\nCAFÉ\nStraße\n' +
     'multi-start\nmiddle\nmulti-end\ncrlf-start\r\nmiddle\r\ncrlf-end\r\ncr-start\rmiddle\rcr-end\r' +
-    'nul\0spaced\tneedle\n');
+    'nul\0spaced\tneedle\nfunc)\n');
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
@@ -76,6 +77,22 @@ test('public file_search uses source pattern inference, trimming and literal fle
       assert.equal(totals.counts.matchingLines, item.lines.length, JSON.stringify(item.query));
       assert.deepEqual(totals.files, []);
       observations.push({ query: item.query, countOnly: counted });
+    }
+    const repairCases = [
+      { pattern: '^func\\\\(', lines: [3] },
+      { pattern: '^func(', lines: [3] },
+      { pattern: '^func)', lines: [38] },
+    ];
+    for (const item of repairCases) for (const countOnly of [false, true]) {
+      const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
+        input: { mode: 'content', query: { kind: 'regex', text: item.pattern }, countOnly } } });
+      assert.equal(found.isError, false, JSON.stringify(found));
+      const result = searchReply.Parse(found.structuredContent);
+      assert.equal(result.counts.matchingLines, item.lines.length);
+      assert.deepEqual(result.files.flatMap(file => file.lines.filter(line => line.matching).map(line => line.number)), countOnly ? [] : item.lines);
+      assert.equal(correctionReply.Parse(found.structuredContent).warning,
+        'The content-search pattern was auto-corrected before running. Results may reflect a repaired or escaped version of the requested regex rather than the exact pattern you entered.');
+      observations.push({ repairedPattern: item.pattern, countOnly, reply: found });
     }
     const blank = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
       input: { query: { text: '\u0085 \r\n' } } } });

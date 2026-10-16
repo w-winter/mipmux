@@ -295,11 +295,12 @@ package enum RepoPromptPCRE2Adapter {
         caseInsensitive: Bool,
         wholeWord: Bool,
         multilineAnchors: Bool,
-        jitMode: PCRE2JITMode? = nil
+        jitMode: PCRE2JITMode? = nil,
+        compile: (RepoPromptPCRE2CompileRequest) throws -> PCRE2Regex
     ) throws -> RepoPromptPCRE2CompileResult {
         func compileCandidate(_ candidate: String) throws -> RepoPromptPCRE2CompileResult {
             let effective = wholeWord ? "\\b\(candidate)\\b" : candidate
-            let regex = try RepoPromptPCRE2Adapter.compile(RepoPromptPCRE2CompileRequest(
+            let regex = try compile(RepoPromptPCRE2CompileRequest(
                 pattern: effective,
                 caseInsensitive: caseInsensitive,
                 multilineAnchors: multilineAnchors || effective.contains("^") || effective.contains("$"),
@@ -359,7 +360,8 @@ package enum RepoPromptPCRE2Adapter {
             caseInsensitive: caseInsensitive,
             wholeWord: wholeWord,
             multilineAnchors: multilineAnchors,
-            jitMode: jitMode
+            jitMode: jitMode,
+            compile: compile
         ).regex
     }
 }

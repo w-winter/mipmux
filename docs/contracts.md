@@ -150,6 +150,8 @@ Glob queries select path mode and default to case-insensitive matching; `query.c
 
 Path regex compilation tries the supplied pattern, compressed doubled escapes before metacharacters, and RPCE's normalized pattern in that order. If compilation still fails, path matching applies glob or literal-substring rules to the original pattern. Path compilation keeps anchors bound to the complete candidate path, including paths containing newlines.
 
+Content regexes use RPCE's compile-repair sequence before file acquisition. A repaired compilation returns the source `warning` text with the results, including zero-match results. In `both` mode, a content-compilation failure leaves path results available.
+
 `filters.extensions` accepts exact dotted extensions such as `.swift` and `.SWIFT`; `.` selects files with no extension. Exclusions without `*` or `?` are case-insensitive substrings of the relative path. Empty exclusions leave all files eligible. Other exclusions use native wildmatch: `*` can cross directory separators, and `**` enables globstar behavior. An exclusion such as `[ab].swift` is literal because it contains neither `*` nor `?`. These filter rules are independent of `query.caseSensitive`.
 
 `maxResults` defaults to 50 and independently limits path hits and matching lines within file contents. Nonpositive values collect no hits. Count-only requests scan all matching lines within file contents while retaining the path limit. `limitHit` indicates that a collected stage reached its query limit; count-only replies set it to false. Response-size pagination operates on the limited result set, so following a continuation does not raise the query limit.

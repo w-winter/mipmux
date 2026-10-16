@@ -37,6 +37,15 @@ export const NativeRegexSearchInput = Type.Object({ kind: Type.Literal('scanRege
   pattern: Type.String(), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean(), countOnly: Type.Boolean(),
   limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
 }, closed);
+const correction = Type.Union([Type.Object({ kind: Type.Literal('unchanged') }, closed),
+  Type.Object({ kind: Type.Literal('corrected'), warning: Type.String() }, closed)]);
+export type SearchCorrection = Static<typeof correction>;
+export const NativeRegexCompilationInput = Type.Object({ kind: Type.Literal('compileRegexContent'),
+  pattern: Type.String(), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean() }, closed);
+export const NativeRegexCompilationResult = Type.Union([
+  Type.Object({ kind: Type.Literal('regexCompilation'), correction }, closed),
+  Type.Object({ kind: Type.Literal('regexSearchError'), message: Type.String() }, closed),
+]);
 export const NativeRegexSearchResult = Type.Union([
   Type.Object({ kind: Type.Literal('regexSearch'), matchingLines: SafeCount,
     matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })) }, closed),

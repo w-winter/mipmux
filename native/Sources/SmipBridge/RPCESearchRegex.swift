@@ -15,10 +15,11 @@ extension RPCESearchRegex {
     /// slow on large buffers because each C match call is synchronous and cannot be
     /// interrupted by cooperative cancellation.
     private static let maxPCRE2FullScanBytes = 1_000_000 // 1 MB
-    private static func compilePrimaryEngine(
+    static func compilePrimaryEngine(
         pattern: String,
         caseInsensitive: Bool,
-        wholeWord: Bool
+        wholeWord: Bool,
+        wasAutoCorrected: inout Bool?
     ) throws -> RegexEngine {
         let multilineAnchors = pattern.contains("^") || pattern.contains("$")
 
@@ -56,7 +57,17 @@ extension RPCESearchRegex {
             return .asciiMarker(asciiMarker, pcre2CompileRequest(pattern))
         }
 
-        return try .pcre2(compilePCRE2(pattern))
+        let result = try RepoPromptPCRE2Adapter.compileSearchRegexWithRepairsResult(
+            pattern: pattern,
+            caseInsensitive: caseInsensitive,
+            wholeWord: wholeWord,
+            multilineAnchors: multilineAnchors,
+            compile: RPCESearchRegexCache.pcre2Regex
+        )
+        if result.wasRepaired {
+            wasAutoCorrected = true
+        }
+        return .pcre2(result.regex)
     }
 
     private static func scan(engine: RegexEngine, in document: SearchDocument, countOnly: Bool,
@@ -221,7 +232,9 @@ extension RPCESearchRegex {
                 pattern, caseInsensitive: caseInsensitive
             )
         )
-        let engine = try compilePrimaryEngine(pattern: pattern, caseInsensitive: caseInsensitive, wholeWord: wholeWord)
+        var wasAutoCorrected: Bool?
+        let engine = try compilePrimaryEngine(pattern: pattern, caseInsensitive: caseInsensitive, wholeWord: wholeWord,
+                                              wasAutoCorrected: &wasAutoCorrected)
         return try scan(engine: engine, in: document, countOnly: countOnly,
                         maxCollectedMatches: countOnly ? nil : max(0, limit), regexTraits: traits)
     }

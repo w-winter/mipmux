@@ -10,6 +10,7 @@ const resultKinds = {
   matchSearchPaths: ['searchPaths', 'searchPathsError'],
   scanLiteralLines: ['literalSearch', 'literalSearchError'],
   scanRegexContent: ['regexSearch', 'regexSearchError'],
+  compileRegexContent: ['regexCompilation', 'regexSearchError'],
   calculateTokenStats: ['tokenStats'],
   prepareGitWorktreeMainRoot: ['gitWorktreePlan', 'gitWorktreeListingError'],
   resolveGitWorktreeConfig: ['gitWorktreeMainRoot'],

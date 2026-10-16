@@ -2,9 +2,9 @@ import type { SearchRequest } from '../contracts/exploration.js';
 import type { InventoryEntry } from '../contracts/inventory.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { WorkspaceFailure } from '../workspace/values.js';
-import type { PreparedSearchPattern } from '../contracts/search-pattern.js';
+import type { PreparedSearchPattern, SearchCorrection } from '../contracts/search-pattern.js';
 
-type ContentPreparation = { readonly kind: 'ready'; readonly pattern: PreparedSearchPattern }
+type ContentPreparation = { readonly kind: 'ready'; readonly pattern: PreparedSearchPattern; readonly correction: SearchCorrection }
   | { readonly kind: 'failed' };
 
 export async function prepareSearch(operation: WorkspaceOperation, request: SearchRequest,
@@ -32,8 +32,21 @@ export async function prepareSearch(operation: WorkspaceOperation, request: Sear
     partition.some(index => index >= candidates.length) || paths.matches.some(index => !included.has(index))) {
     throw new WorkspaceFailure('searchProtocolError');
   }
-  const content: ContentPreparation = pattern.kind === 'searchContentPatternError'
-    ? { kind: 'failed' } : { kind: 'ready', pattern: pattern.content };
+  let content: ContentPreparation;
+  if (pattern.kind === 'searchContentPatternError') {
+    content = { kind: 'failed' };
+  } else if (pattern.mode !== 'path' && pattern.path.isRegex) {
+    const compiled = await operation.compileRegexContent({ kind: 'compileRegexContent', pattern: pattern.path.text,
+      caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord });
+    if (compiled.kind === 'regexSearchError') {
+      if (pattern.mode === 'content') throw new WorkspaceFailure('searchFailed', { message: compiled.message });
+      content = { kind: 'failed' };
+    } else {
+      content = { kind: 'ready', pattern: pattern.content, correction: compiled.correction };
+    }
+  } else {
+    content = { kind: 'ready', pattern: pattern.content, correction: { kind: 'unchanged' } };
+  }
   return { mode: pattern.mode, raw: pattern.path, content,
     matchedPaths: new Set(paths.matches.map(index => candidates[index]!)),
     candidates: paths.order.map(index => candidates[index]!) };

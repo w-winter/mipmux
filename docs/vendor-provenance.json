@@ -680,8 +680,10 @@
       "source": "Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift",
       "sourceSHA256": "ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e",
       "destination": "native/Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift",
-      "changes": [],
-      "sha256": "ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e",
+      "changes": [
+        "Add one required synchronous compiler dependency to compileSearchRegexWithRepairsResult. The candidate order, normalization, option construction, repair flag and error conversion are unchanged. Its original convenience wrapper passes the existing compiler;the per-file native bridge passes the retained cache. This avoids a second repair implementation and preserves cached compilation despite the headless call granularity."
+      ],
+      "sha256": "b8c2d576de31d644b1cd914be900a3dd9ad05c75e7aa5336f63942f85ecf0a34",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6119,7 +6121,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "26950d80d137b2cf89008151c971847f9b27f9f5b425a38d352d701ec95a106d",
+      "sha256": "25f73a12a29c5830346fb46ffb93419febc0fbf1a31dfce68f6fb2bd4bcc3e33",
       "classification": "handwritten"
     },
     {
@@ -6910,10 +6912,11 @@
       ],
       "changes": [
         "Bind root aliases and captured physical paths to native pattern/matching owners. Validate the returned candidate permutation and unique in-range path indices once at the native boundary, then pass the resolved mode, content pattern, ordered admitted candidates and path membership to the existing content search.",
-        "Forward extensions and exclusions to native filtering and validate one complete retained/omitted partition plus path-hit membership before constructing the ordered candidates."
+        "Forward extensions and exclusions to native filtering and validate one complete retained/omitted partition plus path-hit membership before constructing the ordered candidates.",
+        "Compile raw content regex once at query preparation before source acquisition. Normalize known compile failures into the existing ready/failed content phase;content-only fails while both-mode can serve its path phase. Carry the native correction proof to output rather than re-deciding warnings per file."
       ],
       "classification": "handwritten",
-      "sha256": "b8c41353cb9e41f5ebbbc624714929abdb43d3763472968829e34a34557e01bd"
+      "sha256": "a45704e72c0c4752d61421a6931c80ed3d9357a7020ce2fcf33f67e0aef36108"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6942,7 +6945,7 @@
         "Run all matching through the existing native worker and its pinned Foundation/PCRE2 implementation. The host configuration has one nativeExecutable owner; it contains no separate search executable or optional search gate. Preserve one current decoded file, query limits and parent-owned settlement.",
         "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged."
       ],
-      "sha256": "92b0758d37d08f73f4fd96e30673f1cc15c108e2a17dee15f7f4d4cc94492e1c"
+      "sha256": "b308f6e73d4c148effd1e9590c37ffb8759b70f16d8a870493eb1e40da68dfbc"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7083,9 +7086,9 @@
       "classification": "retained",
       "changes": [
         "Retain primary engine choices, same-query generic paths after specialized plans decline, full-buffer/line strategies, source byte and match policies, start-line projection and empty-match behavior. Remove diagnostics-only perf begin/end/counter assignments. Narrow the dispatcher to an already-compiled regex engine; literal matching remains under its existing owner.",
-        "Primary compilation uses the retained worker-owned cache and existing native compiler, excluding query-changing repair pending its named decision. The cache key preserves every original compilation option."
+        "Retain compileEngine repair/result handling and its source auto-correction flag. The core helper receives the retained cache as its compiler dependency;all original compilation options and engine-selection branches remain unchanged. Query-wide no-match correction is a separate operation."
       ],
-      "sha256": "cc8a73a54ea08f502d9eb9a998a452386cdd935096b7e84422218540b1b5a50a"
+      "sha256": "bd97309f418922ba894e2491ad86246392855d5a869d94c82a38271cf0699f07"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7165,6 +7168,40 @@
         "Retain the original ordered path-only compile/repair/error construction in the existing path-search namespace, with multilineAnchors=false for every candidate. Resolve the original static cache through RPCESearchRegexCache and reuse the installed RegexCore compression helper, whose metacharacter set and character loop match SearchMatch.swift772-789."
       ],
       "sha256": "2b9efcb9f69d08b749d6b04774135214324a5c76be64a7824bc8a4ed398163a2"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RegexCompilationInput.swift",
+      "ranges": [
+        [
+          1298,
+          1340
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Parse raw pattern and explicit case/word options, apply source complexity admission and compile through the retained engine factory. Return correction proof or a typed known pattern failure, without running a matcher."
+      ],
+      "sha256": "d60ac33dbf88e260e5e9c7565ab3169d7a0082a81896e2e78cd2fadcb57b7254"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/StoreBackedWorkspaceSearch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "98a2e79aee76df6340de517c97d336fe59f9b4edb3b2e8313cb014e90a5950b5",
+      "destination": "native/Sources/SmipBridge/RPCESearchWarning.swift",
+      "ranges": [
+        [
+          609,
+          614
+        ]
+      ],
+      "classification": "retained",
+      "changes": [
+        "Retain the original literal/regex correction-warning formatter in a native namespace;only visibility and the namespace differ."
+      ],
+      "sha256": "1b6f83d30067ca9b2b0c96d311d107c3c381677ea270efd72d464a69a47cf6f1"
     }
   ],
   "dependencies": [
@@ -12951,6 +12988,12 @@
       "line": 851,
       "name": "compilePathRegex",
       "destination": "native/Sources/SmipBridge/RPCESearchPathCompilation.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/StoreBackedWorkspaceSearch.swift",
+      "line": 609,
+      "name": "searchAutoCorrectionWarning",
+      "destination": "native/Sources/SmipBridge/RPCESearchWarning.swift"
     }
   ],
   "sourceCoverage": [
