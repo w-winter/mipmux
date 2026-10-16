@@ -30,7 +30,7 @@ struct SearchScopeFilterInput {
                 "visited": result.visitedSnapshotCount, "cancelled": result.cancelled]
     }
 
-    private static func clause(_ value: Any) throws -> SearchPathClause {
+    static func clause(_ value: Any) throws -> SearchPathClause {
         guard let fields = value as? [String: Any], let kind = fields["kind"] as? String
         else { throw BridgeFailure("nativeProtocolError") }
         switch kind {

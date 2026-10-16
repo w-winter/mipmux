@@ -103,6 +103,17 @@ struct WorkspacePathLookupRequest {
     let userPath: String; let profile: PathLocateProfile; let rootScope: WorkspaceLookupRootScope
 }
 
-struct WorkspacePathLookupResult { let file: WorkspaceFileRecord?; let folder: WorkspaceFolderRecord? }
+struct WorkspacePathLocation {
+    let rootID: UUID
+    let rootPath: String
+    let correctedPath: String
+}
+
+struct WorkspacePathLookupResult {
+    let input: String
+    let location: WorkspacePathLocation
+    let file: WorkspaceFileRecord?
+    let folder: WorkspaceFolderRecord?
+}
 
 // swiftlint:enable type_name

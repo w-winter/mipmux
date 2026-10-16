@@ -112,6 +112,21 @@ export const NativeSelectionCandidatesResult = Type.Object({ kind: Type.Literal(
   candidates: Type.Array(Type.Object({ rootId: Type.String({ format: 'uuid' }), path: RelativePath }, { additionalProperties: false })),
   resolvedMap: Type.Record(Type.String(), Type.String()), invalidPaths: Type.Array(Type.String()), codemapUnavailable: Type.Array(Type.String()),
 }, { additionalProperties: false });
+const parsedSearchScope = Type.Object({
+  spec: Type.Object({ caseInsensitive: Type.Boolean(), clauses: NativeSearchScopeInput.properties.clauses }, { additionalProperties: false }),
+  issues: Type.Array(Type.String()),
+  freshnessRootRefs: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), name: Type.String(), path: Type.String() }, { additionalProperties: false })),
+  exactClauses: Type.Array(Type.Object({ clauseIndex: SafeCount, rootID: Type.String({ format: 'uuid' }), relativePath: Type.String(),
+    missingClauses: NativeSearchScopeInput.properties.clauses }, { additionalProperties: false })),
+}, { additionalProperties: false });
+/** Parses or refreshes scope metadata from captured catalogs; the caller establishes filesystem freshness. */
+export const NativeSearchScopeResolutionInput = Type.Union([
+  Type.Object({ kind: Type.Literal('parseSearchScope'), roots: NativeSelectionCandidatesInput.properties.roots,
+    paths: Type.Array(Type.String()), caseInsensitive: Type.Boolean() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('refreshSearchScope'), roots: NativeSelectionCandidatesInput.properties.roots,
+    scope: parsedSearchScope }, { additionalProperties: false }),
+]);
+export const NativeSearchScopeParsingResult = Type.Object({ kind: Type.Literal('searchScopeParsed'), scope: parsedSearchScope }, { additionalProperties: false });
 export const NativeSelectionPathMutationInput = Type.Object({ kind: Type.Literal('mutateSelectionPaths'),
   selection: NativeSelectionState,
   catalog: Type.Object({ roots: NativeSelectionCandidatesInput.properties.roots,
@@ -275,6 +290,7 @@ export const NativeOperation = Type.Union([
   NativeRegexCompilationInput,
   NativeSearchRecoveryInput,
   NativeSearchScopeInput,
+  ...NativeSearchScopeResolutionInput.anyOf,
   NativeTokenStatsInput,
   ...automaticReviewGitInput.anyOf,
   ...NativeGitWorktreeInput.anyOf,
@@ -386,6 +402,7 @@ export const NativeResult = Type.Union([
   ...NativeRegexCompilationResult.anyOf,
   NativeSearchRecoveryResult,
   NativeSearchScopeResult,
+  NativeSearchScopeParsingResult,
   NativeTokenStatsResult,
   ...NativeGitWorktreeResult.anyOf,
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),

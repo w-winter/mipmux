@@ -150,7 +150,11 @@ struct SelectionCatalog {
             relativePath: relative
         )
         guard file != nil || folder != nil else { return nil }
-        return WorkspacePathLookupResult(file: file, folder: folder)
+        return WorkspacePathLookupResult(input: request.userPath,
+                                         location: WorkspacePathLocation(rootID: root.id,
+                                                                         rootPath: root.standardizedFullPath,
+                                                                         correctedPath: relative),
+                                         file: file, folder: folder)
     }
 }
 
