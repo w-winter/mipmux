@@ -6877,16 +6877,21 @@
         [
           1214,
           1233
+        ],
+        [
+          2313,
+          2345
         ]
       ],
       "changes": [
         "Parse captured admitted descriptors, compile primary valid path regexes, preserve path-suffix plans and source UTF-8 path-hit order, and apply the requested signed result limit. Content ordering uses the original Swift full-path comparison. Existing UTF-8 graph ordering is reused because it implements the same byte comparator.",
         "Regex cache scheduling is omitted for this per-request adapter. Original regex repairs and regex-to-glob/literal substitution remain pending the named source-search-regex-recovery decision. Invalid primary regexes return a typed error; no silent substitution is added.",
         "Decode the two consumed filter fields once. Supply Foundation filename-extension metadata, preserve original descriptor ordinals through filtering, and return retained/omitted index partitions. Filtering occurs before path collection and content acquisition.",
-        "Primary path regex compilation shares the retained native worker cache, following SearchMatch.swift856-862; path matching, authorization and ordering remain captured-query operations rather than cached results."
+        "Primary path regex compilation shares the retained native worker cache, following SearchMatch.swift856-862; path matching, authorization and ordering remain captured-query operations rather than cached results.",
+        "Execute the original path preparation recovery: try the retained path compiler, then select the original glob/literal strategy when no regex/suffix plan is available. Preserve original pattern, sorting, signed early exits and per-descriptor matching. No content auto-correction warning is invented for path recovery."
       ],
       "classification": "handwritten",
-      "sha256": "5604b4a9bbbdefb85529c9ff5d9d9504ac1563ed0b6b4d4636ae35d02316ad51"
+      "sha256": "6e8656f1aef6a1bb9245a0c2b07e43eb306b30b62ab2903950c72c24974b9a09"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7143,6 +7148,23 @@
         "The source builds a generic content engine once per query, while the native bridge scans one captured file per call. Reuse the source cache policy across those per-file calls, including primary generic compilation, to avoid repeating query-level compilation work. Only immutable compiled expressions are retained, never match results, paths, capabilities or source bytes."
       ],
       "sha256": "59bc67dd0a4330deac018961c0738238e044123bfb57b88737f6993f80abbb90"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "native/Sources/SmipBridge/RPCESearchPathCompilation.swift",
+      "ranges": [
+        [
+          851,
+          895
+        ]
+      ],
+      "classification": "retained",
+      "changes": [
+        "Retain the original ordered path-only compile/repair/error construction in the existing path-search namespace, with multilineAnchors=false for every candidate. Resolve the original static cache through RPCESearchRegexCache and reuse the installed RegexCore compression helper, whose metacharacter set and character loop match SearchMatch.swift772-789."
+      ],
+      "sha256": "2b9efcb9f69d08b749d6b04774135214324a5c76be64a7824bc8a4ed398163a2"
     }
   ],
   "dependencies": [
@@ -12923,6 +12945,12 @@
       "line": 37,
       "name": "RPCESearchRegexCache",
       "destination": "native/Sources/SmipBridge/RPCESearchRegexCache.swift"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "line": 851,
+      "name": "compilePathRegex",
+      "destination": "native/Sources/SmipBridge/RPCESearchPathCompilation.swift"
     }
   ],
   "sourceCoverage": [

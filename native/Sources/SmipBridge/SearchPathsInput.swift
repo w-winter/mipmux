@@ -90,11 +90,15 @@ struct SearchPathsInput {
     private func matchingIndices(order: [Int]) throws -> [Int] {
         guard mode != .content, !pattern.isEmpty, !files.isEmpty, limit > 0 else { return [] }
         let hasWildcards = pattern.contains("*") || pattern.contains("?")
-        let useRegex = isRegex && !(hasWildcards && !RPCESearchPattern.containsRegexSyntax(pattern))
+        var useRegex = isRegex && !(hasWildcards && !RPCESearchPattern.containsRegexSyntax(pattern))
         let suffix = useRegex ? RepoPromptPCRE2Adapter.pathSuffixPattern(forRegex: pattern) : nil
-        let regex = try useRegex && suffix == nil ? RPCESearchRegexCache.pcre2Regex(for: RepoPromptPCRE2CompileRequest(
-            pattern: pattern, caseInsensitive: caseInsensitive, multilineAnchors: false
-        )) : nil
+        let regex: PCRE2Regex? = {
+            guard useRegex, suffix == nil else { return nil }
+            return try? RPCESearchPaths.compilePathRegex(pattern: pattern, caseInsensitive: caseInsensitive)
+        }()
+        if isRegex, useRegex, regex == nil, suffix == nil {
+            useRegex = false
+        }
         let aliases = files.reduce(into: [String: String]()) { $0[$1.standardizedRootFolderPath] = $1.alias }
         let plan = SearchPathScanPlan(trimmedPattern: pattern, regex: regex, pathSuffixPattern: suffix,
                                       caseInsensitive: caseInsensitive, isRegex: useRegex, aliasByRootPath: aliases)

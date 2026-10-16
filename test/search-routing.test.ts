@@ -24,6 +24,8 @@ test('public search routes auto patterns and preserves native path candidates, p
     { root: z, path: 'Foo.swift', text: '' }, { root: z, path: 'src/BAR.SWIFT', text: '' },
     { root: z, path: 'docs/foofoo.txt', text: '' }, { root: z, path: 'line\nending.txt', text: '' },
     { root: z, path: '👩‍💻.txt', text: '' },
+    { root: a, path: 'docs/open(.txt', text: '' }, { root: a, path: 'docs/close).txt', text: '' },
+    { root: a, path: 'docs/[abc.txt', text: '' },
   ];
   for (const file of files) {
     await mkdir(join(file.root, file.path, '..'), { recursive: true });
@@ -55,6 +57,12 @@ test('public search routes auto patterns and preserves native path candidates, p
       { input: { mode: 'path', query: { kind: 'literal', text: 'foo' } }, paths: ['zAlias/Foo.swift', 'zAlias/nested/Foo.swift', 'zAlias/src/Foo.swift.more', 'aAlias/Foo.swift', 'aAlias/docs/foofoo.txt'] },
       { input: { mode: 'path', query: { kind: 'literal', text: basename(base) } }, paths: [] },
       { input: { query: { text: '👩‍💻' } }, paths: ['aAlias/👩‍💻.txt'] },
+      { input: { mode: 'path', query: { kind: 'regex', text: '^docs/open\\\\(' } }, paths: ['zAlias/docs/open(.txt'] },
+      { input: { mode: 'path', query: { kind: 'regex', text: '^docs/open(' } }, paths: ['zAlias/docs/open(.txt'] },
+      { input: { mode: 'path', query: { kind: 'regex', text: '^docs/close)\\.txt$' } }, paths: ['zAlias/docs/close).txt'] },
+      { input: { mode: 'path', query: { kind: 'regex', text: '[abc' } }, paths: ['zAlias/docs/[abc.txt'] },
+      { input: { mode: 'path', query: { kind: 'regex', text: '^[*' } }, paths: [] },
+      { input: { mode: 'path', query: { kind: 'regex', text: '^ending' } }, paths: [] },
     ];
     for (const item of cases) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id, input: item.input } });
