@@ -52,6 +52,18 @@ export const NativeSearchRecoveryResult = Type.Object({ kind: Type.Literal('sear
   attempts: Type.Array(Type.Object({ kind: Type.Enum(['literal', 'compressedRegex', 'normalizedRegex', 'quotedRegex']),
     pattern: Type.String() }, closed)),
   warning: Type.String() }, closed);
+const restrictedRootPath = Type.Union([Type.String(), Type.Null()]);
+export const NativeSearchScopeInput = Type.Object({ kind: Type.Literal('filterSearchScope'),
+  snapshots: Type.Array(Type.Object({ standardizedFullPath: Type.String(), standardizedRelativePath: Type.String(),
+    standardizedRootPath: Type.String(), clientDisplayPath: Type.String() }, closed)),
+  caseInsensitive: Type.Boolean(), clauses: Type.Array(Type.Union([
+    Type.Object({ kind: Type.Literal('exactFile'), absPath: Type.String(), relPath: Type.String(), restrictedRootPath }, closed),
+    Type.Object({ kind: Type.Literal('exactFolder'), absLower: Type.String(), relLower: Type.String(), restrictedRootPath }, closed),
+    Type.Object({ kind: Type.Literal('glob'), pattern: Type.String(), restrictedRootPath }, closed),
+    Type.Object({ kind: Type.Literal('prefix'), candidateLower: Type.String() }, closed),
+  ])) }, closed);
+export const NativeSearchScopeResult = Type.Object({ kind: Type.Literal('searchScopeFiltered'),
+  indices: Type.Array(SafeCount), visited: SafeCount, cancelled: Type.Boolean() }, closed);
 export const NativeRegexSearchResult = Type.Union([
   Type.Object({ kind: Type.Literal('regexSearch'), matchingLines: SafeCount,
     matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })) }, closed),

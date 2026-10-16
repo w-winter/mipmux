@@ -12,6 +12,7 @@ const resultKinds = {
   scanRegexContent: ['regexSearch', 'regexSearchError'],
   compileRegexContent: ['regexCompilation', 'regexSearchError'],
   prepareSearchRecovery: ['searchRecovery'],
+  filterSearchScope: ['searchScopeFiltered'],
   calculateTokenStats: ['tokenStats'],
   prepareGitWorktreeMainRoot: ['gitWorktreePlan', 'gitWorktreeListingError'],
   resolveGitWorktreeConfig: ['gitWorktreeMainRoot'],

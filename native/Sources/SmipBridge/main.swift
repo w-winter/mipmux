@@ -27,6 +27,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .scanRegexContent(input): try input.render()
     case let .compileRegexContent(input): try input.render()
     case let .prepareSearchRecovery(input): input.render()
+    case let .filterSearchScope(input): input.render()
     case let .renderPreparedClipboard(input): try input.render()
     case let .renderClipboard(input): await input.render()
     case let .queryStructure(input): try input.render()

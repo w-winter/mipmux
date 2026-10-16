@@ -1,0 +1,3502 @@
+[
+  {
+    "name": "clause-0-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/File.swift",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        5
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-1-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/absent",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-2-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/absent",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/s"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-3-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/café.swift",
+          "relPath": "src/café.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-4-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src",
+          "relLower": "src",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-5-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src/",
+          "relLower": "src/",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-6-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-7-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "**/*.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-8-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "Alpha/src/*",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-9-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "/r/src/*",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        5,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-10-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "src/[Ff]*.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-11-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "SRC/*.SWIFT",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-12-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "Nested/*",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        5
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-13-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-14-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "src"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        4,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-15-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "alpha/src"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-16-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "/r/src"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-17-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": ""
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-18-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "/"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-19-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "src/file.swift"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-20-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "srcish"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        2
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "or-deduplicated-false",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/File.swift",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src",
+          "relLower": "src",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/File.swift",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": false
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-0-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/File.swift",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        5
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-1-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/absent",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-2-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/absent",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/s"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-3-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/café.swift",
+          "relPath": "src/café.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-4-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src",
+          "relLower": "src",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-5-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src/",
+          "relLower": "src/",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-6-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-7-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "**/*.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-8-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "Alpha/src/*",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-9-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "/r/src/*",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-10-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "src/[Ff]*.swift",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-11-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "SRC/*.SWIFT",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        4,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-12-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "Nested/*",
+          "restrictedRootPath": null
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        5
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-13-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-14-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "src"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        4,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-15-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "alpha/src"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-16-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "/r/src"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-17-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": ""
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-18-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "/"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-19-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "src/file.swift"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        4
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "clause-20-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "prefix",
+          "candidateLower": "srcish"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        2
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "or-deduplicated-true",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/File.swift",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src",
+          "relLower": "src",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/File.swift",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/r"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "no-clauses",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/nested/other.swift",
+          "standardizedRelativePath": "src/nested/other.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/nested/other.swift"
+        },
+        {
+          "standardizedFullPath": "/r/srcish/File.swift",
+          "standardizedRelativePath": "srcish/File.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/srcish/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/Readme.md",
+          "standardizedRelativePath": "Readme.md",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/Readme.md"
+        },
+        {
+          "standardizedFullPath": "/s/src/File.swift",
+          "standardizedRelativePath": "src/File.swift",
+          "standardizedRootPath": "/s",
+          "clientDisplayPath": "Beta/src/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/File.swift",
+          "standardizedRelativePath": "File.swift",
+          "standardizedRootPath": "/r/src",
+          "clientDisplayPath": "Nested/File.swift"
+        },
+        {
+          "standardizedFullPath": "/r/SRC/café.swift",
+          "standardizedRelativePath": "SRC/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/SRC/café.swift"
+        },
+        {
+          "standardizedFullPath": "/r/src/café.swift",
+          "standardizedRelativePath": "src/café.swift",
+          "standardizedRootPath": "/r",
+          "clientDisplayPath": "Alpha/src/café.swift"
+        }
+      ],
+      "clauses": [],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [],
+      "kind": "searchScopeFiltered",
+      "visited": 8
+    }
+  },
+  {
+    "name": "no-snapshots",
+    "input": {
+      "kind": "filterSearchScope",
+      "snapshots": [],
+      "clauses": [
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/File.swift",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "exactFile",
+          "absPath": "/absent",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "exactFile",
+          "absPath": "/absent",
+          "relPath": "src/File.swift",
+          "restrictedRootPath": "/s"
+        },
+        {
+          "kind": "exactFile",
+          "absPath": "/r/src/café.swift",
+          "relPath": "src/café.swift",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src",
+          "relLower": "src",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "exactFolder",
+          "absLower": "/r/src/",
+          "relLower": "src/",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "**/*.swift",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "Alpha/src/*",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "/r/src/*",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "src/[Ff]*.swift",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "SRC/*.SWIFT",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "Nested/*",
+          "restrictedRootPath": null
+        },
+        {
+          "kind": "glob",
+          "pattern": "*.swift",
+          "restrictedRootPath": "/r"
+        },
+        {
+          "kind": "prefix",
+          "candidateLower": "src"
+        },
+        {
+          "kind": "prefix",
+          "candidateLower": "alpha/src"
+        },
+        {
+          "kind": "prefix",
+          "candidateLower": "/r/src"
+        },
+        {
+          "kind": "prefix",
+          "candidateLower": ""
+        },
+        {
+          "kind": "prefix",
+          "candidateLower": "/"
+        },
+        {
+          "kind": "prefix",
+          "candidateLower": "src/file.swift"
+        },
+        {
+          "kind": "prefix",
+          "candidateLower": "srcish"
+        }
+      ],
+      "caseInsensitive": true
+    },
+    "expected": {
+      "cancelled": false,
+      "indices": [],
+      "kind": "searchScopeFiltered",
+      "visited": 0
+    }
+  }
+]

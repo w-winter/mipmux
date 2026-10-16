@@ -1,0 +1,88 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "sources": [
+    {
+      "path": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
+      "sha256": "f32cace65c16ee4afc9e5068070543573be9e1040c268407cd2c5f808331838b",
+      "blob": "0f690add6cfe3a722c32e474e38a65db74e47810",
+      "ranges": [
+        {
+          "start": 5,
+          "end": 22,
+          "sha256": "dcceecd62ed3d35c9b1a2949d73653f6dbd7acf228c1373a95f73105afb500a0"
+        },
+        {
+          "start": 34,
+          "end": 51,
+          "sha256": "83f33f5fe09b4a8cb544c31368092b7a4cfd8119fa33ac732805fc9536738576"
+        },
+        {
+          "start": 58,
+          "end": 87,
+          "sha256": "cef806d9de034c1b4b80a12d4c62a5c6f36210b13c5b7175d97be61d3c20f495"
+        },
+        {
+          "start": 117,
+          "end": 221,
+          "sha256": "0cb9f39074a42e2e8f3e4b4f0f0c877c3426966ed54c6ac4e9ad6eb0556e2d25"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/include/wildmatch.h",
+      "sha256": "68cb711360558617125e1cac2f4303c3210ba8eaa1ea4c4e9a123b6152ec530f",
+      "blob": "0fca9f5d39533776689b8b3776546d82928aca5a",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 82,
+          "sha256": "68cb711360558617125e1cac2f4303c3210ba8eaa1ea4c4e9a123b6152ec530f"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/include/repo_gitignore.h",
+      "sha256": "d174291b3003765b3e5e35265f49b0bd1827f1bf5bb12fb93a717f3dffd3342a",
+      "blob": "cf66f1ad1a66bb3392c53abf6dd7af0ebd9c2ab9",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 41,
+          "sha256": "d174291b3003765b3e5e35265f49b0bd1827f1bf5bb12fb93a717f3dffd3342a"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/src/wildmatch/wildmatch.c",
+      "sha256": "4e95d82efd3729b4f77aca02dbb33ba13478814070f10040374f3980973a94fa",
+      "blob": "bc4e0d25d7ed90e0f97b2de80b7c2e336c8cf5c0",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 314,
+          "sha256": "4e95d82efd3729b4f77aca02dbb33ba13478814070f10040374f3980973a94fa"
+        }
+      ]
+    },
+    {
+      "path": "Sources/RepoPromptC/src/wildmatch/repo_wildmatch_wrapper.c",
+      "sha256": "782b9cabbac07b5316fcfe039d1d4fb3aca00b20840efff8a9381d27c4fd0dc4",
+      "blob": "7f0d748f1751c1d33af7ac92204f2205af0e4bac",
+      "ranges": [
+        {
+          "start": 1,
+          "end": 290,
+          "sha256": "4be5c85eaf3b6ae6022f5cd69fca7e3d636068ce267f1dd4e265044d56304eef"
+        }
+      ]
+    }
+  ],
+  "cases": 46,
+  "generatorSHA256": "d5297fb4eee342466986b91b58617812bf63a71defcb621f016fc01bb5af0754",
+  "combinedSourceSHA256": "20250e1efdd566ed1f120ce82faa2238e0b0dec04cbfbe653e74563076eaebe6",
+  "bindings": [
+    "Original clause types, compiled clauses and index filter execute unchanged with the original wildmatch C wrapper.",
+    "Synthetic captured path metadata includes root aliases and overlapping roots. The driver decodes source variants and projects returned indices/visit/cancellation fields.",
+    "This proves clause filtering only, not raw path parsing, catalog lookup, freshness, filesystem authority, cancellation delivery or public MCP scope integration."
+  ]
+}

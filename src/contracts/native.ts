@@ -13,7 +13,8 @@ import { NativeAskUserInput, NativeAskUserResult } from './interaction.js';
 import { NativeTokenStatsInput, NativeTokenStatsResult } from './token-accounting.js';
 import { NativeSearchPatternInput, NativeSearchPatternResult, NativeSearchPathsInput, NativeSearchPathsResult,
   NativeLiteralSearchInput, NativeLiteralSearchResult, NativeRegexSearchInput, NativeRegexSearchResult,
-  NativeRegexCompilationInput, NativeRegexCompilationResult, NativeSearchRecoveryInput, NativeSearchRecoveryResult } from './search-pattern.js';
+  NativeRegexCompilationInput, NativeRegexCompilationResult, NativeSearchRecoveryInput, NativeSearchRecoveryResult,
+  NativeSearchScopeInput, NativeSearchScopeResult } from './search-pattern.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
 export { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -273,6 +274,7 @@ export const NativeOperation = Type.Union([
   NativeRegexSearchInput,
   NativeRegexCompilationInput,
   NativeSearchRecoveryInput,
+  NativeSearchScopeInput,
   NativeTokenStatsInput,
   ...automaticReviewGitInput.anyOf,
   ...NativeGitWorktreeInput.anyOf,
@@ -383,6 +385,7 @@ export const NativeResult = Type.Union([
   ...NativeRegexSearchResult.anyOf,
   ...NativeRegexCompilationResult.anyOf,
   NativeSearchRecoveryResult,
+  NativeSearchScopeResult,
   NativeTokenStatsResult,
   ...NativeGitWorktreeResult.anyOf,
   Type.Object({ kind: Type.Literal('gitDiffFingerprint'), fingerprint: NativeGitSnapshotInput.properties.fingerprint }, { additionalProperties: false }),
