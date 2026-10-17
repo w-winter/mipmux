@@ -182,7 +182,7 @@ export class SmipRuntime {
     try {
       const snapshot = pinned ?? await owner.current(combined);
       const operation = new WorkspaceOperation(snapshot, owner.declaration, combined,
-        this, async () => { this.#operations.delete(operation); await release(); }, nextSignal => this.#admitOperation(owner, nextSignal, snapshot),
+        this, async () => { this.#operations.delete(operation); await release(); }, (nextSignal, captured) => this.#admitOperation(owner, nextSignal, captured),
         { kind: 'workspace', owner });
       this.#operations.add(operation);
       return operation;

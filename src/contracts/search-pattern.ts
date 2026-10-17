@@ -53,9 +53,11 @@ export const NativeSearchRecoveryResult = Type.Object({ kind: Type.Literal('sear
     pattern: Type.String() }, closed)),
   warning: Type.String() }, closed);
 const restrictedRootPath = Type.Union([Type.String(), Type.Null()]);
+export const NativeSearchScopeRoot = Type.Object({ id: Type.String({ format: 'uuid' }), name: Type.String(),
+  path: Type.String({ pattern: '^/[^\u0000]*$' }) }, closed);
 export const NativeSearchScopeInput = Type.Object({ kind: Type.Literal('filterSearchScope'),
-  snapshots: Type.Array(Type.Object({ standardizedFullPath: Type.String(), standardizedRelativePath: Type.String(),
-    standardizedRootPath: Type.String(), clientDisplayPath: Type.String() }, closed)),
+  roots: Type.Array(NativeSearchScopeRoot),
+  files: Type.Array(Type.Object({ rootID: Type.String({ format: 'uuid' }), path: RelativePath }, closed)),
   caseInsensitive: Type.Boolean(), clauses: Type.Array(Type.Union([
     Type.Object({ kind: Type.Literal('exactFile'), absPath: Type.String(), relPath: Type.String(), restrictedRootPath }, closed),
     Type.Object({ kind: Type.Literal('exactFolder'), absLower: Type.String(), relLower: Type.String(), restrictedRootPath }, closed),

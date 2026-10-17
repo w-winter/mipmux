@@ -14,7 +14,7 @@ import { NativeTokenStatsInput, NativeTokenStatsResult } from './token-accountin
 import { NativeSearchPatternInput, NativeSearchPatternResult, NativeSearchPathsInput, NativeSearchPathsResult,
   NativeLiteralSearchInput, NativeLiteralSearchResult, NativeRegexSearchInput, NativeRegexSearchResult,
   NativeRegexCompilationInput, NativeRegexCompilationResult, NativeSearchRecoveryInput, NativeSearchRecoveryResult,
-  NativeSearchScopeInput, NativeSearchScopeResult } from './search-pattern.js';
+  NativeSearchScopeInput, NativeSearchScopeResult, NativeSearchScopeRoot } from './search-pattern.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
 export { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -115,7 +115,7 @@ export const NativeSelectionCandidatesResult = Type.Object({ kind: Type.Literal(
 const parsedSearchScope = Type.Object({
   spec: Type.Object({ caseInsensitive: Type.Boolean(), clauses: NativeSearchScopeInput.properties.clauses }, { additionalProperties: false }),
   issues: Type.Array(Type.String()),
-  freshnessRootRefs: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), name: Type.String(), path: Type.String() }, { additionalProperties: false })),
+  freshnessRootRefs: Type.Array(NativeSearchScopeRoot),
   exactClauses: Type.Array(Type.Object({ clauseIndex: SafeCount, rootID: Type.String({ format: 'uuid' }), relativePath: Type.String(),
     missingClauses: NativeSearchScopeInput.properties.clauses }, { additionalProperties: false })),
 }, { additionalProperties: false });

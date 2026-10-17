@@ -43,7 +43,7 @@ test('an absent credential beneath an independently symlinked parent stays denie
   await symlink(join(f.root, 'config'), join(f.base, 'credential-dir'));
   const credential = join(f.base, 'credential-dir/auth.json');
   const options = { ...f.options, credentialPaths: [credential] };
-  const filters = { roots: [], directories: [], include: [], exclude: [], extensions: [] };
+  const filters = { roots: [], paths: [], exclude: [], extensions: [] };
   const runtime = new SmipRuntime(options);
   try {
     const handle = await runtime.declare(f.spec, signal());

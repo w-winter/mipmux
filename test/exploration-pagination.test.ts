@@ -18,7 +18,7 @@ test('real search modes and output continuations preserve complete counts and re
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);
     const operation = await handle.openOperation(new AbortController().signal);
     const query = { mode: 'content', query: { kind: 'literal', text: 'CAFÉ', caseSensitive: false, wholeWord: true },
-      filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: 0, after: 0, countOnly: false,
+      filters: { roots: [], paths: [], exclude: [], extensions: [] }, before: 0, after: 0, countOnly: false,
       maxResults: 50, maxOutputBytes: 10000, continuation: null } satisfies SearchRequest;
     const full = await operation.fileSearch(query);
     if (full.kind !== 'search') assert.fail('Missing search');
@@ -42,7 +42,7 @@ test('real search modes and output continuations preserve complete counts and re
     if (count.kind !== 'search') assert.fail('Missing counts');
     assert.deepEqual(count.counts, full.counts); assert.deepEqual(count.files, []); assert.equal(count.truncated, false);
     const both = await operation.fileSearch({ ...query, mode: 'both', query: { kind: 'literal', text: 'a', caseSensitive: true, wholeWord: false },
-      filters: { ...query.filters, roots: ['r'], include: ['a.*'], extensions: ['.txt'] } });
+      filters: { ...query.filters, roots: ['r'], paths: ['a.*'], extensions: ['.txt'] } });
     if (both.kind !== 'search') assert.fail('Missing combined search');
     assert.deepEqual(both.files.map(file => file.path), ['a.txt']); assert.equal(both.files[0]?.pathMatch, true);
     assert.equal(both.counts.matchingLines, 4);
@@ -57,7 +57,7 @@ test('real search modes and output continuations preserve complete counts and re
     if (regex.kind !== 'search') assert.fail('Missing regex match');
     assert.equal(regex.counts.totalMatches, 3);
     await assert.rejects(operation.fileSearch({ ...query, query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);
-    await assert.rejects(operation.fileSearch({ ...query, filters: { ...query.filters, include: ['absent.*'] },
+    await assert.rejects(operation.fileSearch({ ...query, filters: { ...query.filters, paths: ['absent.*'] },
       query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);
     const readQuery = { root: 'r', path: 'a.txt', start_line: null, offset: null, limit: null, maxOutputBytes: 10000, continuation: null };
     const read = await operation.readFile(readQuery);
@@ -71,8 +71,10 @@ test('real search modes and output continuations preserve complete counts and re
     const later = await handle.openOperation(new AbortController().signal);
     await assert.rejects(later.readFile({ ...readQuery, continuation: readPage.continuation }), /staleContinuation/);
     await later.close();
+    const currentPage = await operation.fileSearch({ ...query, maxOutputBytes: cap });
+    if (currentPage.kind !== 'search' || !currentPage.continuation) assert.fail('Missing current continuation');
     await writeFile(join(root, 'a.txt'), 'changed');
-    await assert.rejects(operation.fileSearch({ ...query, continuation: first.continuation }), /sourceChanged/);
+    await assert.rejects(operation.fileSearch({ ...query, continuation: currentPage.continuation }), /sourceChanged/);
     await operation.close(); await handle.close();
   } finally { await runtime.close(); }
 });

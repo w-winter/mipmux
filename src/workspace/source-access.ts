@@ -1,10 +1,17 @@
-import type { BridgeClient } from '../native/bridge-client.js';
+import { NativeFailure, type BridgeClient } from '../native/bridge-client.js';
 import type { NativeHandle } from '../contracts/native.js';
 import type { DirectoryRef, SourceIdentity } from '../contracts/workspace.js';
 import type { AdmittedRoot, SourcePath } from '../contracts/inventory.js';
 import { WorkspaceFailure } from './values.js';
 
 export interface OpenRoot extends AdmittedRoot { readonly handle: NativeHandle }
+export function unavailableRootCode(error: NativeFailure) {
+  switch (error.code) {
+    case 'notFound': case 'permissionDenied': case 'rootChanged': case 'nonRegularFile': case 'symlink': case 'nativeIOFailed':
+      return error.code;
+    default: return null;
+  }
+}
 /** Admits requested roots once per operation; native I/O rechecks each retained capability. */
 export class NativeAccess {
   readonly #opened = new Map<string, OpenRoot>();
@@ -24,6 +31,16 @@ export class NativeAccess {
   }
   /** Revalidates the physical root before serving captured graph data. */
   async validateRoot(name: string): Promise<void> { await this.#openRoot(this.root(name)); }
+  /** Expected physical failures are observations; protocol, worker and cancellation failures propagate. */
+  async rootAvailability(name: string) {
+    try { await this.validateRoot(name); return { kind: 'available' as const }; }
+    catch (error) {
+      if (!(error instanceof NativeFailure)) throw error;
+      const code = unavailableRootCode(error);
+      if (code === null) throw error;
+      return { kind: 'unavailable' as const, code };
+    }
+  }
   async #openRoot(root: AdmittedRoot): Promise<OpenRoot> {
     const opened = await this.bridge.request({ kind: 'openRoots', roots: [{ name: root.name,
       absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity }] }, this.signal);

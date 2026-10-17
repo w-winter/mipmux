@@ -78,8 +78,8 @@
     }
   ],
   "cases": 46,
-  "generatorSHA256": "d5297fb4eee342466986b91b58617812bf63a71defcb621f016fc01bb5af0754",
-  "combinedSourceSHA256": "20250e1efdd566ed1f120ce82faa2238e0b0dec04cbfbe653e74563076eaebe6",
+  "generatorSHA256": "8fcdb545f31a5354cea6ef17d8d703fd0883cc9b6aa3ab401e96b703a3f86ad4",
+  "combinedSourceSHA256": "6f05c70be01642b993697d923180cb2f8127e5088076e95c01fe4c5acf63d31c",
   "bindings": [
     "Original clause types, compiled clauses and index filter execute unchanged with the original wildmatch C wrapper.",
     "Synthetic captured path metadata includes root aliases and overlapping roots. The driver decodes source variants and projects returned indices/visit/cancellation fields.",

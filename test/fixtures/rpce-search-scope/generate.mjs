@@ -47,15 +47,22 @@ const clauses = [
   ...['src', 'alpha/src', '/r/src', '', '/', 'src/file.swift', 'srcish'].map(candidateLower =>
     ({ kind: 'prefix', candidateLower })),
 ];
+const roots = [
+  { id: '00000000-0000-0000-0000-000000000001', name: 'Alpha', path: '/r' },
+  { id: '00000000-0000-0000-0000-000000000002', name: 'Beta', path: '/s' },
+  { id: '00000000-0000-0000-0000-000000000003', name: 'Nested', path: '/r/src' },
+];
+const files = snapshots.map(snapshot => ({ rootID: roots.find(root => root.path === snapshot.standardizedRootPath).id,
+  path: snapshot.standardizedRelativePath }));
 const inputs = [];
 for (const caseInsensitive of [false, true]) {
   for (const [index, clause] of clauses.entries()) inputs.push({ name: `clause-${index}-${caseInsensitive}`,
-    input: { kind: 'filterSearchScope', snapshots, clauses: [clause], caseInsensitive } });
-  inputs.push({ name: `or-deduplicated-${caseInsensitive}`, input: { kind: 'filterSearchScope', snapshots,
-    clauses: [clauses[0], clauses[4], clauses[6], clauses[0]], caseInsensitive } });
+    input: { kind: 'filterSearchScope', roots, files, clauses: [clause], caseInsensitive }, referenceSnapshots: snapshots });
+  inputs.push({ name: `or-deduplicated-${caseInsensitive}`, input: { kind: 'filterSearchScope', roots, files,
+    clauses: [clauses[0], clauses[4], clauses[6], clauses[0]], caseInsensitive }, referenceSnapshots: snapshots });
 }
-inputs.push({ name: 'no-clauses', input: { kind: 'filterSearchScope', snapshots, clauses: [], caseInsensitive: true } });
-inputs.push({ name: 'no-snapshots', input: { kind: 'filterSearchScope', snapshots: [], clauses, caseInsensitive: true } });
+inputs.push({ name: 'no-clauses', input: { kind: 'filterSearchScope', roots, files, clauses: [], caseInsensitive: true }, referenceSnapshots: snapshots });
+inputs.push({ name: 'no-snapshots', input: { kind: 'filterSearchScope', roots, files: [], clauses, caseInsensitive: true }, referenceSnapshots: [] });
 const driver = `
 extension FileSearchPathSnapshot: Decodable {}
 extension SearchPathClause: Decodable {
@@ -74,11 +81,11 @@ extension SearchPathClause: Decodable {
         }
     }
 }
-struct Input: Decodable { let snapshots: [FileSearchPathSnapshot]; let clauses: [SearchPathClause]; let caseInsensitive: Bool }
-struct Case: Decodable { let name: String; let input: Input }
+struct Input: Decodable { let clauses: [SearchPathClause]; let caseInsensitive: Bool }
+struct Case: Decodable { let name: String; let input: Input; let referenceSnapshots: [FileSearchPathSnapshot] }
 let cases = try JSONDecoder().decode([Case].self, from: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))
 let outputs: [[String: Any]] = cases.map { item in
-    let result = filterPathIndicesResult(snapshots: item.input.snapshots,
+    let result = filterPathIndicesResult(snapshots: item.referenceSnapshots,
         spec: SearchPathFilterSpec(caseInsensitive: item.input.caseInsensitive, clauses: item.input.clauses))
     return ["kind": "searchScopeFiltered", "indices": result.matchedSnapshotIndices,
             "visited": result.visitedSnapshotCount, "cancelled": result.cancelled]
@@ -101,7 +108,7 @@ try {
     join(scratch, 'wildmatch.o'), join(scratch, 'wrapper.o'), '-o', join(scratch, 'oracle')]);
   outputs = JSON.parse(execFileSync(join(scratch, 'oracle'), [join(scratch, 'inputs.json')], { encoding: 'utf8' }));
 } finally { execFileSync('/usr/bin/trash', [scratch]); }
-const generated = { 'cases.json': inputs.map((item, index) => ({ ...item, expected: outputs[index] })),
+const generated = { 'cases.json': inputs.map(({ name, input }, index) => ({ name, input, expected: outputs[index] })),
   'provenance.json': { revision, sources, cases: inputs.length, generatorSHA256: hash(readFileSync(fileURLToPath(import.meta.url))),
     combinedSourceSHA256: hash(text), bindings: [
       'Original clause types, compiled clauses and index filter execute unchanged with the original wildmatch C wrapper.',

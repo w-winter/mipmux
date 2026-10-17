@@ -6122,11 +6122,12 @@
       "changes": [
         "Bind ready-publication currentness to the existing owner of workspace demands. Revalidate confined raw bytes, artifact key, mode and applicable policy after extraction before completing the managed catalog. Native reads enforce root identity; no watcher ticket or app store is imported. The file also contains existing operation lifecycle, exploration and Git bindings.",
         "Admit source capabilities per requested root; pure captured-value operations no longer trigger unrelated source admission. Validate all source roots at Git, tree and structure boundaries; include the output root for whole-workspace operations. Fresh single-root validation serves automatic graph queries.",
-        "Bind automatic Review ownership resolution to the existing tracked operation, with source/output root checks before reading native metadata; retain partial ownership groups rather than reusing all-or-nothing initial target election."
+        "Bind automatic Review ownership resolution to the existing tracked operation, with source/output root checks before reading native metadata; retain partial ownership groups rather than reusing all-or-nothing initial target election.",
+        "Capture current published catalogs for tool calls and forks. Demand loading receives the requesting operation's captured view, including its explicit registrations; workspace refresh advances subsequent operations. Each invoking operation owns query workers through cancellation and closure."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "a12dfeabf5a0760d7ecb733ae65869afbe23f08da0b454d2c0d45413e679b2e3",
+      "sha256": "0fd73e1660e4803eadafc96077dced1b3bfbd9f3848788c546193cdf784efd8c",
       "classification": "handwritten"
     },
     {
@@ -6206,7 +6207,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "915ddd912d28da79225d87af36559e2db51349eeff12e94e554974553e0aa83d",
+      "sha256": "3c7931bacf0ce10e6a835c2a922b785a2bf2aad366696f133e983cc623aea861",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6221,7 +6222,8 @@
         "Project captured source issues and target-acquisition failures into pending/unmapped selection paths in stable file-UUID order. Coverage of the captured graph is separate from delivered-body measurement and acquisition completion.",
         "Keep the captured selection and revision while the presentation wrapper repeats acquisition and reply assembly according to the source policy. Observation ownership advances only through this request's own retained maps, so a competing edit or finalization fence cannot be adopted by a retry. Public size/preview errors retain the source persistence-before-reply contract. Pending automatic publication uses the existing unresolved observation state and cannot be archived.",
         "Freeze explicit selection and mode for final assembly; pass the existing derive path as fresh acquisition for each presentation attempt. Adopt finalization materials and acquisition state as one observation on success or failure; canonical selection and revision stay owned by the draft.",
-        "Pass operation-owned automatic Git preassembly through live observations and retain the finalization capture for terminal inspection after the workspace lease is released."
+        "Pass operation-owned automatic Git preassembly through live observations and retain the finalization capture for terminal inspection after the workspace lease is released.",
+        "Use the admitted current operation consistently for selection, automatic graph resolution, previews, mutation receipts, startup context and validation. Captured material identities and required evidence remain fixed. Terminal inspection uses the finalization inventory."
       ]
     },
     {
@@ -6229,7 +6231,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
       "destination": "src/workspace/source-access.ts",
-      "sha256": "eb4e4506a7b988755d64c3a966a0da52344c25b1e7bd78608aa711879b7c0cc2",
+      "sha256": "2ad914ebfef408f163ef46050341e70e2c6888dc6e9af20f45f0738f02a3b689",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6419,11 +6421,12 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "0018c73e574c0aa35be1c26c81e46ff62724fd3a7d3593ce0c13f185abe27d13",
+      "sha256": "65126fed6d25cc683f6a344cc41d6e3c2ed83e93b6348adf83b98abeadf86bfc",
       "classification": "handwritten",
       "changes": [
         "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework.",
-        "WorkspaceFileContextStore.swift:372-373,15031-15034,15386-15400: Bind the number of retained presentations to the existing workspace owner, with an idempotent release for each reservation. Logical root aliases identify the already-pinned physical roots for the workspace lifetime. Operations and drafts share reservations, separately from artifact demands and the per-presentation entry limit."
+        "WorkspaceFileContextStore.swift:372-373,15031-15034,15386-15400: Bind the number of retained presentations to the existing workspace owner, with an idempotent release for each reservation. Logical root aliases identify the already-pinned physical roots for the workspace lifetime. Operations and drafts share reservations, separately from artifact demands and the per-presentation entry limit.",
+        "Capture an existing latest publication without waiting for an unrelated unfinished scan; explicit refresh barriers still wait for their requested publication."
       ]
     },
     {
@@ -6441,12 +6444,13 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "68acafc8250bf31dcc5c655eec640baa201f532d7fa30c99d30353461ebc6a0b",
+      "sha256": "4b333091872f746f6bf79cc638a0473ee14c70069d0eec50c1e0e5b3bd50d199",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
         "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 16 and retain the capture for terminal inspection.",
-        "Expose the captured automatic Git observation through a read-only getter; only the finalization owner may replace it."
+        "Expose the captured automatic Git observation through a read-only getter; only the finalization owner may replace it.",
+        "Retain the finalization inventory alongside material and automatic Git captures for terminal inspection after workspace lease release."
       ]
     },
     {
@@ -6950,7 +6954,7 @@
         "Run all matching through the existing native worker and its pinned Foundation/PCRE2 implementation. The host configuration has one nativeExecutable owner; it contains no separate search executable or optional search gate. Preserve one current decoded file, query limits and parent-owned settlement.",
         "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged."
       ],
-      "sha256": "cb6e00191e0b1f248d98e4a43e02e6f7d68406f223baa4f7ad6f29b6eebff4f7"
+      "sha256": "fc40aa4b2733482372e599d2340903b8576762860d43a674032a687523a2697b"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7253,7 +7257,7 @@
         "The source normalized-stage catch suppresses callback errors. The headless binding suppresses only typed searchFailed pattern failures there: filesystem authority, protocol and cancellation failures propagate through the existing operation owner. This retains required fail-closed root/credential boundaries and local tool retirement instead of running another native request after cancellation. Compressed and quoted failures propagate.",
         "Raw source bytes are revalidated and decoded for every attempted pass. No document collection, retry-result cache, alternate search backend, or new resource limit is introduced."
       ],
-      "sha256": "00996be95e5f549de59ebb46b6479b8774462289fa055c7e219d34a880eece44"
+      "sha256": "190fc25e2dd093065133a050a3c072d6a53b6978a759549b8b33c5eb47a4315a"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
@@ -7306,9 +7310,10 @@
       ],
       "classification": "handwritten",
       "changes": [
-        "Decode the four distinct source clause variants and captured path metadata through the existing strict native wire boundary. The prefix wire tag maps to source legacyPrefix;it is the current source prefix clause,not a separate compatibility reader. Return source indices and visit/cancellation facts directly. This native dependency does not yet parse raw path scopes or establish catalog freshness."
+        "Decode source clauses and ordered root-relative files through the strict native wire boundary. Build path snapshots from stable root references and retained ClientPathFormatter.displayPath, then return source indices, visit counts and cancellation metadata. Root IDs must be unique and every file must belong to a supplied root. The prefix wire tag maps to the source legacyPrefix case.",
+        "Accept roots and ordered relative file references; native display formatting supplies aliases for single-root and multi-root workspaces."
       ],
-      "sha256": "3eb429a1867cf7ff3236945ce1ae3f671a98a9f24c012f5492a9844a94db7230"
+      "sha256": "fa118b2b78260a4ccf46a6692a6ac8631e4fc57e17d2d09c47092e64ea56d489"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
@@ -7335,9 +7340,10 @@
       ],
       "classification": "fixture",
       "changes": [
-        "46 expected cases generated by the unchanged original filter and original wildmatch C/wrapper at the pin. Synthetic metadata exercises root restrictions,overlapping roots,alias/relative/absolute globs,case/Unicode behavior,prefix boundaries and OR deduplication. The original generator driver only decodes variants and projects outputs;public scope parsing/freshness/IO are not exercised."
+        "46 expected cases generated by the unchanged original filter and original wildmatch C/wrapper at the pin. Synthetic metadata exercises root restrictions,overlapping roots,alias/relative/absolute globs,case/Unicode behavior,prefix boundaries and OR deduplication. The original generator driver only decodes variants and projects outputs;public scope parsing/freshness/IO are not exercised.",
+        "Native inputs carry root references and ordered relative files. The reference driver uses original path snapshots and 46 expected filter outputs to compare native display-path construction and clause filtering."
       ],
-      "sha256": "bc4b8111bac58d49cc1ceb27fccf168a57ab145ef58a587cefa3d7d15e6c4c90"
+      "sha256": "2ffcc888e1b44db6282432971468d4bd6948607b4dd1bab0f139dc8367f2db3b"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/StoreBackedWorkspaceSearch.swift",
@@ -7445,6 +7451,34 @@
         "Existing captured catalog and path-profile locator retain their current owner. Return the original required input/location metadata with each resolved record so the source search-scope parser can preserve root identity and corrected relative paths. The existing selection callers continue to read file/folder fields;no lookup decision changes."
       ],
       "sha256": "efbbcdbf6ff53471807f4e3435c4036fb6a122c3b5090fb2506540ceca87db0a"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/StoreBackedWorkspaceSearch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "98a2e79aee76df6340de517c97d336fe59f9b4edb3b2e8313cb014e90a5950b5",
+      "destination": "src/exploration/search-scope.ts",
+      "ranges": [
+        [
+          90,
+          204
+        ],
+        [
+          355,
+          407
+        ],
+        [
+          616,
+          877
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Bind scope parsing before freshness reconciliation and exact-clause refresh afterward to the existing workspace refresh owner and a pinned query operation. Native catalog lookup, clause refresh and display-path filtering use stable UUIDs for headless roots across both captures.",
+        "Use filters.paths for raw OR scopes with headless root narrowing, filters.extensions and filters.exclude. Library, Pi and MCP callers use the same request shape.",
+        "First pages reconcile declared roots through the workspace owner; continuations use its current generation without another scan. Parent operations own their query workers through cancellation and closure.",
+        "Expected physical root failures produce unavailableRoots diagnostics. Strict identity checks exclude replacement roots from body acquisition. Known file-acquisition failures remain limitations, and enumeration completeness stays visible."
+      ],
+      "sha256": "920f804a0324a3aad2ddbad6bc645dc9380184d873e0db6a187ff9b9519c1bb9"
     }
   ],
   "dependencies": [

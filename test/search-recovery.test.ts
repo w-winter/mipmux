@@ -62,7 +62,7 @@ test('public content recovery retries the whole query only after zero primary ma
     for (const item of cases) for (const countOnly of [false, true]) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: { kind: item.kind, text: item.text }, countOnly,
-          filters: { directories: [{ root: 'r', path: item.directory }] } } } });
+          filters: { paths: [item.directory] } } } });
       assert.equal(found.isError, false, JSON.stringify(found));
       const result = searchReply.Parse(found.structuredContent);
       assert.equal(result.counts.matchingLines, item.lines.length, JSON.stringify(item));
@@ -74,7 +74,7 @@ test('public content recovery retries the whole query only after zero primary ma
     for (const maxResults of [0, 1]) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: { kind: 'literal', text: 'frame\\(' }, maxResults,
-          filters: { directories: [{ root: 'r', path: 'recover' }] } } } });
+          filters: { paths: ['recover'] } } } });
       assert.equal(found.isError, false, JSON.stringify(found));
       const result = searchReply.Parse(found.structuredContent);
       assert.equal(result.counts.matchingLines, maxResults);

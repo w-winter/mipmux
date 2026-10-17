@@ -3,54 +3,55 @@
     "name": "clause-0-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -77,54 +78,55 @@
     "name": "clause-1-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -151,54 +153,55 @@
     "name": "clause-2-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -224,54 +227,55 @@
     "name": "clause-3-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -297,54 +301,55 @@
     "name": "clause-4-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -373,54 +378,55 @@
     "name": "clause-5-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -451,54 +457,55 @@
     "name": "clause-6-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -529,54 +536,55 @@
     "name": "clause-7-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -607,54 +615,55 @@
     "name": "clause-8-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -681,54 +690,55 @@
     "name": "clause-9-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -756,54 +766,55 @@
     "name": "clause-10-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -829,54 +840,55 @@
     "name": "clause-11-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -899,54 +911,55 @@
     "name": "clause-12-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -971,54 +984,55 @@
     "name": "clause-13-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1047,54 +1061,55 @@
     "name": "clause-14-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1122,54 +1137,55 @@
     "name": "clause-15-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1196,54 +1212,55 @@
     "name": "clause-16-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1271,54 +1288,55 @@
     "name": "clause-17-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1340,54 +1358,55 @@
     "name": "clause-18-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1418,54 +1437,55 @@
     "name": "clause-19-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1490,54 +1510,55 @@
     "name": "clause-20-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1561,54 +1582,55 @@
     "name": "or-deduplicated-false",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1657,54 +1679,55 @@
     "name": "clause-0-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1731,54 +1754,55 @@
     "name": "clause-1-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1805,54 +1829,55 @@
     "name": "clause-2-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1878,54 +1903,55 @@
     "name": "clause-3-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -1951,54 +1977,55 @@
     "name": "clause-4-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2027,54 +2054,55 @@
     "name": "clause-5-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2105,54 +2133,55 @@
     "name": "clause-6-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2183,54 +2212,55 @@
     "name": "clause-7-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2261,54 +2291,55 @@
     "name": "clause-8-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2336,54 +2367,55 @@
     "name": "clause-9-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2412,54 +2444,55 @@
     "name": "clause-10-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2485,54 +2518,55 @@
     "name": "clause-11-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2561,54 +2595,55 @@
     "name": "clause-12-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2633,54 +2668,55 @@
     "name": "clause-13-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2709,54 +2745,55 @@
     "name": "clause-14-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2784,54 +2821,55 @@
     "name": "clause-15-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2858,54 +2896,55 @@
     "name": "clause-16-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -2933,54 +2972,55 @@
     "name": "clause-17-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -3002,54 +3042,55 @@
     "name": "clause-18-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -3080,54 +3121,55 @@
     "name": "clause-19-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -3152,54 +3194,55 @@
     "name": "clause-20-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -3223,54 +3266,55 @@
     "name": "or-deduplicated-true",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [
@@ -3319,54 +3363,55 @@
     "name": "no-clauses",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [
+      "roots": [
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/File.swift"
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
         },
         {
-          "standardizedFullPath": "/r/src/nested/other.swift",
-          "standardizedRelativePath": "src/nested/other.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/nested/other.swift"
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
         },
         {
-          "standardizedFullPath": "/r/srcish/File.swift",
-          "standardizedRelativePath": "srcish/File.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/srcish/File.swift"
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/Readme.md",
-          "standardizedRelativePath": "Readme.md",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/Readme.md"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/nested/other.swift"
         },
         {
-          "standardizedFullPath": "/s/src/File.swift",
-          "standardizedRelativePath": "src/File.swift",
-          "standardizedRootPath": "/s",
-          "clientDisplayPath": "Beta/src/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "srcish/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/File.swift",
-          "standardizedRelativePath": "File.swift",
-          "standardizedRootPath": "/r/src",
-          "clientDisplayPath": "Nested/File.swift"
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "Readme.md"
         },
         {
-          "standardizedFullPath": "/r/SRC/café.swift",
-          "standardizedRelativePath": "SRC/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/SRC/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000002",
+          "path": "src/File.swift"
         },
         {
-          "standardizedFullPath": "/r/src/café.swift",
-          "standardizedRelativePath": "src/café.swift",
-          "standardizedRootPath": "/r",
-          "clientDisplayPath": "Alpha/src/café.swift"
+          "rootID": "00000000-0000-0000-0000-000000000003",
+          "path": "File.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "SRC/café.swift"
+        },
+        {
+          "rootID": "00000000-0000-0000-0000-000000000001",
+          "path": "src/café.swift"
         }
       ],
       "clauses": [],
@@ -3383,7 +3428,24 @@
     "name": "no-snapshots",
     "input": {
       "kind": "filterSearchScope",
-      "snapshots": [],
+      "roots": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Alpha",
+          "path": "/r"
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Beta",
+          "path": "/s"
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000003",
+          "name": "Nested",
+          "path": "/r/src"
+        }
+      ],
+      "files": [],
       "clauses": [
         {
           "kind": "exactFile",

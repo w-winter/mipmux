@@ -41,7 +41,7 @@ export function failureResult(error: unknown) {
   const code = failureCode(error);
   const target = cacheRecoveryTarget(error);
   if (error instanceof WorkspaceFailure && ['limitWithNegativeStart', 'zeroStart', 'gitStatusMalformed', 'gitShowMalformed', 'invalidSelection',
-    'gitSnapshotUnavailable', 'gitSnapshotManifestUnavailable', 'gitSnapshotNotFound', 'gitArtifactReadDenied', 'invalidQuestion', 'invalidSearchPattern'].includes(code)) {
+    'gitSnapshotUnavailable', 'gitSnapshotManifestUnavailable', 'gitSnapshotNotFound', 'gitArtifactReadDenied', 'invalidQuestion', 'invalidSearchPattern', 'invalidSearchScope'].includes(code)) {
     return { kind: 'error', code, message: error.details.message };
   }
   if (target) return { kind: 'error', code, target };

@@ -5,19 +5,31 @@ struct SearchScopeFilterInput {
     private let spec: SearchPathFilterSpec
 
     init(_ value: Any) throws {
-        let input = try WireObject(value, keys: ["kind", "snapshots", "clauses", "caseInsensitive"])
-        guard let snapshots = try input.value("snapshots") as? [Any],
+        let input = try WireObject(value, keys: ["kind", "roots", "files", "clauses", "caseInsensitive"])
+        guard let rootValues = try input.value("roots") as? [Any],
+              let files = try input.value("files") as? [Any],
               let clauses = try input.value("clauses") as? [Any]
         else { throw BridgeFailure("nativeProtocolError") }
-        self.snapshots = try snapshots.map { value in
-            let fields = try WireObject(value, keys: [
-                "standardizedFullPath", "standardizedRelativePath", "standardizedRootPath", "clientDisplayPath"
-            ])
-            return try FileSearchPathSnapshot(
-                standardizedFullPath: fields.string("standardizedFullPath"),
-                standardizedRelativePath: fields.string("standardizedRelativePath"),
-                standardizedRootPath: fields.string("standardizedRootPath"),
-                clientDisplayPath: fields.string("clientDisplayPath")
+        var rootIDs: Set<UUID> = []
+        let roots = try rootValues.map { value in
+            let root = try WireObject(value, keys: ["id", "name", "path"])
+            guard let id = try UUID(uuidString: root.string("id")), rootIDs.insert(id).inserted
+            else { throw BridgeFailure("nativeProtocolError") }
+            return try WorkspaceRootRef(id: id, name: root.string("name"), fullPath: root.string("path"))
+        }
+        let rootsByID = Dictionary(uniqueKeysWithValues: roots.map { ($0.id, $0) })
+        snapshots = try files.map { value in
+            let fields = try WireObject(value, keys: ["rootID", "path"])
+            guard let rootID = try UUID(uuidString: fields.string("rootID")),
+                  let root = rootsByID[rootID]
+            else { throw BridgeFailure("nativeProtocolError") }
+            let path = try fields.string("path")
+            try PathMatchInput.relativePath(path)
+            return FileSearchPathSnapshot(
+                standardizedFullPath: StandardizedPath.join(standardizedRoot: root.standardizedFullPath,
+                                                            standardizedRelativePath: path),
+                standardizedRelativePath: path, standardizedRootPath: root.standardizedFullPath,
+                clientDisplayPath: ClientPathFormatter.displayPath(root: root, relativePath: path, visibleRoots: roots)
             )
         }
         spec = try SearchPathFilterSpec(caseInsensitive: input.boolean("caseInsensitive"),

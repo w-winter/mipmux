@@ -1,4 +1,3 @@
-import { posix } from 'node:path';
 import { searchValidator, type SearchRequest } from '../contracts/exploration.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { SourceIdentity } from '../contracts/workspace.js';
@@ -7,6 +6,7 @@ import { pageIdentity, pageOffset } from './continuation.js';
 import { pageResult, type ResultEncoding } from './output-budget.js';
 import { prepareSearch } from './search-query.js';
 import { searchContent } from './search-pass.js';
+import { prepareSearchScope, refreshSearchScope } from './search-scope.js';
 
 export interface SearchFile {
   readonly root: string; readonly path: string; readonly identity: SourceIdentity;
@@ -17,14 +17,16 @@ export interface SearchFile {
 
 export async function fileSearch(operation: WorkspaceOperation, request: SearchRequest, encode?: ResultEncoding) {
   if (!searchValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
-  const admitted = operation.snapshot.entries.filter(entry => entry.kind === 'file').filter(entry => {
-    if (entry.visibility !== 'discoverable') return false;
-    const filters = request.filters;
-    return (!filters.roots.length || filters.roots.includes(entry.root)) &&
-      (!filters.directories.length || filters.directories.some(directory => directory.root === entry.root && entry.path.startsWith(directory.path + '/'))) &&
-      (!filters.include.length || filters.include.some(glob => posix.matchesGlob(entry.path, glob)));
+  const parsed = await prepareSearchScope(operation, request);
+  return operation.withSearchOperation(request.continuation === null ? 'first' : 'continuation', async query => {
+    const scope = await refreshSearchScope(query, request, parsed);
+    return preparedSearch(query, request, scope, encode);
   });
-  const pattern = await prepareSearch(operation, request, admitted);
+}
+
+async function preparedSearch(operation: WorkspaceOperation, request: SearchRequest,
+  scope: Awaited<ReturnType<typeof refreshSearchScope>>, encode?: ResultEncoding) {
+  const pattern = await prepareSearch(operation, request, scope.candidates);
   const { candidates, matchedPaths } = pattern;
   const { maxOutputBytes, continuation, ...settings } = request;
   const digest = pageIdentity(operation.snapshot, settings, candidates.map(entry => ({ root: entry.root, path: entry.path,
@@ -38,10 +40,12 @@ export async function fileSearch(operation: WorkspaceOperation, request: SearchR
   return pageResult(records, 0, maxOutputBytes, (files) => {
     const result = {
       kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
+      scopedFileCount: scope.scopedFileCount, enumeration: operation.snapshot.enumeration, unavailableRoots: scope.unavailableRoots,
       engine: pattern.mode === 'path' ? 'RPCE path' : pattern.raw.isRegex || contentPattern?.isRegex === true ? 'PCRE2' : 'Foundation',
       newlineView: 'Original decoded text; CRLF, CR and LF define lines', counts,
       limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),
-      returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files, limitations,
+      returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files,
+      limitations: [...scope.unavailable, ...limitations],
       truncated: !request.countOnly && offset + files.length < matchedFiles,
       continuation: request.countOnly || offset + files.length === matchedFiles ? null : { digest, offset: offset + files.length },
     };

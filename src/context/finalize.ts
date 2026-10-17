@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import type { CodemapMode, ContextBuildRequest, Manifest } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
+import type { InventorySnapshot } from '../contracts/inventory.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { identity } from './material-store.js';
 import { renderBundle } from './render.js';
@@ -28,6 +29,8 @@ export class FinalizationOperation {
   readonly #cancel = new AbortController();
   #claimed = false;
   #capturedPresentation: CodemapPresentation;
+  #capturedInventory: InventorySnapshot;
+  get capturedInventory(): InventorySnapshot { return this.#capturedInventory; }
   #capturedAutomaticGit: AutomaticReviewGitCapture | null = null;
   get capturedAutomaticGit(): AutomaticReviewGitCapture | null { return this.#capturedAutomaticGit; }
   readonly result: Promise<FinalizationResult>;
@@ -47,6 +50,7 @@ export class FinalizationOperation {
     private readonly publishing: () => void = () => {},
   ) {
     this.#capturedPresentation = { materials: new Map(initial.materials), automaticAcquisition: freeze(initial.automaticAcquisition) };
+    this.#capturedInventory = operation.snapshot;
     this.result = this.#run(
       operation,
       request,
@@ -73,6 +77,7 @@ export class FinalizationOperation {
   ): Promise<FinalizationResult> {
     signal.throwIfAborted();
     const operation = await owner.fork(signal);
+    this.#capturedInventory = operation.snapshot;
     const bridge = owner.runtime.makeBridge();
     try {
       const candidate = await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation), async presentation => {
@@ -81,7 +86,8 @@ export class FinalizationOperation {
         this.#capturedPresentation = { materials: new Map(materials.map(material => [material.record.id, material])),
           automaticAcquisition: freeze(automaticAcquisition) };
         await revalidateMaterials(operation, materials);
-        const { generation, ...inventory } = operation.snapshot;
+        this.#capturedInventory = operation.snapshot;
+        const { generation, ...inventory } = this.#capturedInventory;
         const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal,
           { kind: 'live', operation });
         this.#capturedAutomaticGit = input.automaticGit;

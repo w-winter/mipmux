@@ -7,6 +7,8 @@ import { serializedBytes } from './output-budget.js';
 import type { prepareSearch } from './search-query.js';
 import type { SearchFile } from './search.js';
 import { scanLiteralContent, scanRegexContent } from './content-search.js';
+import { unavailableRootCode } from '../workspace/source-access.js';
+import { NativeFailure } from '../native/bridge-client.js';
 
 type SearchPlan = Awaited<ReturnType<typeof prepareSearch>>;
 type RecoveryAttempt = Awaited<ReturnType<WorkspaceOperation['prepareSearchRecovery']>>['attempts'][number];
@@ -78,8 +80,13 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
       contentMatches += found.matchingLines;
       if (retain()) { text = prepared; matching = new Set(found.matches); }
     } catch (error) {
-      if (!(error instanceof WorkspaceFailure) || !['binarySource', 'decodeFailed'].includes(error.code)) throw error;
-      limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
+      if (error instanceof WorkspaceFailure && ['binarySource', 'decodeFailed'].includes(error.code)) {
+        limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
+      } else {
+        const code = error instanceof NativeFailure ? unavailableRootCode(error) : null;
+        if (request.continuation !== null || code === null) throw error;
+        limitations.push({ root: candidate.root, path: candidate.path, code });
+      }
     }
     flush();
   }

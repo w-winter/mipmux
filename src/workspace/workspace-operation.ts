@@ -20,6 +20,7 @@ import { capturedFile, completeFile } from './inventory-file.js';
 import { observe } from './observe.js';
 import type { CatalogedGitArtifact } from './git-artifact-catalog.js';
 import { join } from 'node:path';
+import { managedInventory } from './managed-inventory.js';
 
 /** Pins one inventory and owns a separate bridge until close joins admitted operations. */
 export class WorkspaceOperation {
@@ -28,15 +29,19 @@ export class WorkspaceOperation {
   #access: Promise<NativeAccess> | null = null;
   #bridge: BridgeClient | null = null;
   readonly #pending = new Set<Promise<unknown>>();
+  readonly #explorations = new Set<WorkspaceOperation>();
+  #snapshot: InventorySnapshot;
   readonly #codemapRetains = new Set<() => Promise<void>>();
   readonly #codemapPresentations = new Set<() => void>();
   #closing: Promise<void> | null = null;
-  constructor(private readonly baseSnapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
+  constructor(snapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
     signal: AbortSignal,
-    readonly runtime: SmipRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal) => Promise<WorkspaceOperation>,
-    private readonly catalog: { kind: 'workspace'; owner: WorkspaceRuntime } | { kind: 'verification' }) { this.signal = AbortSignal.any([signal, this.#controller.signal]); }
+    readonly runtime: SmipRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal, snapshot: InventorySnapshot) => Promise<WorkspaceOperation>,
+    private readonly catalog: { kind: 'workspace'; owner: WorkspaceRuntime } | { kind: 'verification' }) {
+    this.#snapshot = snapshot; this.signal = AbortSignal.any([signal, this.#controller.signal]);
+  }
   get snapshot(): InventorySnapshot {
-    return this.catalog.kind === 'workspace' ? this.catalog.owner.registeredSnapshot(this.baseSnapshot) : this.baseSnapshot;
+    return this.#snapshot;
   }
   registerGitArtifact(entry: CatalogedGitArtifact): void {
     this.#check();
@@ -78,6 +83,7 @@ export class WorkspaceOperation {
       const entry = capturedFile(captured, acquired, visibility);
       const owner = this.catalog.owner;
       owner.registerExplicitFile(this.snapshot, entry, policy.snapshot());
+      this.#snapshot = managedInventory(this.snapshot, [{ entry, policy: policy.snapshot() }]);
       return entry;
     });
   }
@@ -88,9 +94,9 @@ export class WorkspaceOperation {
       const entry = await this.registerExplicitSource(captured);
       this.signal.throwIfAborted();
       if (entry.structural.kind !== 'pending') return { result: Promise.resolve(entry), release: async () => {} };
-      const owner = this.catalog.owner;
+      const owner = this.catalog.owner, snapshot = this.snapshot;
       const lease = owner.retainCodemap(entry, async signal => {
-        const operation = await this.openPinned(signal);
+        const operation = await this.openPinned(signal, snapshot);
         try {
           const access = await (operation.#access ??= operation.#openAccess());
           const acquired = await operation.readRawSource(captured);
@@ -105,7 +111,11 @@ export class WorkspaceOperation {
       });
       const release = async () => { await lease.release(); this.#codemapRetains.delete(release); };
       this.#codemapRetains.add(release);
-      return { result: lease.result, release };
+      const result = lease.result.then(entry => {
+        this.#snapshot = managedInventory(this.snapshot, [{ entry, policy: snapshot.policy }]);
+        return entry;
+      });
+      return { result, release };
     });
   }
   retainCodemapPresentation(root: string): (() => void) | null {
@@ -124,11 +134,21 @@ export class WorkspaceOperation {
       finally { await demand.release(); }
     });
   }
-  fork(signal: AbortSignal): Promise<WorkspaceOperation> { this.#check(); return this.openPinned(signal); }
+  /** Captures the current published catalog; existing operations and their source identities remain pinned. */
+  fork(signal: AbortSignal): Promise<WorkspaceOperation> {
+    this.#check();
+    return this.catalog.kind === 'workspace' ? this.runtime.openOperation(this.catalog.owner, signal) : this.openPinned(signal, this.snapshot);
+  }
   validateSourceRoot(name: string) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       await access.validateRoot(name);
+    });
+  }
+  sourceRootAvailability(name: string) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return access.rootAvailability(name);
     });
   }
   validateSourceRoots() {
@@ -221,7 +241,7 @@ export class WorkspaceOperation {
   }
   readGit(request: GitRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
-    return this.#track(() => readGit(this, captured, encode));
+    return this.#explore(operation => readGit(operation, captured, encode));
   }
   /** Captures authorized evidence before reply projection; maxOutputBytes does not limit this internal acquisition. */
   captureGitDiff(request: Extract<GitRequest, { op: 'diff' }>, generateDiffText: boolean) {
@@ -318,15 +338,23 @@ export class WorkspaceOperation {
   }
   readFile(request: ReadRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
-    return this.#track(() => readFile(this, captured, encode));
+    return this.#explore(operation => readFile(operation, captured, encode));
   }
   fileSearch(request: SearchRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
     return this.#track(() => fileSearch(this, captured, encode));
   }
+  /** First pages reconcile the catalog; continuations use its current generation. Query workers close before settlement. */
+  withSearchOperation<T>(page: 'first' | 'continuation', work: (operation: WorkspaceOperation) => Promise<T>) {
+    return this.#track(async () => {
+      if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
+      if (page === 'first') await this.catalog.owner.refresh(this.signal);
+      return this.#withExploration(await this.runtime.openOperation(this.catalog.owner, this.signal), work);
+    });
+  }
   getFileTree(request: TreeRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
-    return this.#track(() => getFileTree(this, captured, encode));
+    return this.#explore(operation => getFileTree(operation, captured, encode));
   }
   renderFileTree(input: Extract<NativeOperation, { kind: 'renderFileTree' }>) {
     return this.#track(async () => {
@@ -337,7 +365,15 @@ export class WorkspaceOperation {
   }
   getCodeStructure(request: StructureRequest, encode?: ResultEncoding) {
     const captured = structuredClone(request);
-    return this.#track(() => getCodeStructure(this, captured, encode));
+    return this.#explore(operation => getCodeStructure(operation, captured, encode));
+  }
+  #explore<T>(work: (operation: WorkspaceOperation) => Promise<T>): Promise<T> {
+    return this.#track(async () => this.#withExploration(await this.fork(this.signal), work));
+  }
+  async #withExploration<T>(operation: WorkspaceOperation, work: (operation: WorkspaceOperation) => Promise<T>): Promise<T> {
+    this.#explorations.add(operation);
+    try { return await work(operation); }
+    finally { await operation.close(); this.#explorations.delete(operation); }
   }
   sliceReadText(input: Extract<NativeOperation, { kind: 'sliceReadText' }>) {
     return this.#track(async () => {
@@ -431,6 +467,18 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  resolveSearchScope(input: Extract<NativeOperation, { kind: 'parseSearchScope' | 'refreshSearchScope' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result.scope;
+    });
+  }
+  filterSearchScope(input: Extract<NativeOperation, { kind: 'filterSearchScope' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   renderFileBlock(input: Extract<NativeOperation, { kind: 'renderFileBlock' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
@@ -455,7 +503,10 @@ export class WorkspaceOperation {
     this.#closing ??= (async () => {
       this.cancel();
       for (const release of this.#codemapPresentations) release();
-      try { await Promise.all([...this.#codemapRetains].map(release => release())); await this.#bridge?.close(); }
+      try {
+        await Promise.all([...this.#codemapRetains].map(release => release()).concat([...this.#explorations].map(operation => operation.close())));
+        await this.#bridge?.close();
+      }
       finally { await Promise.allSettled([...this.#pending]); await this.release(); }
     })();
     return this.#closing;

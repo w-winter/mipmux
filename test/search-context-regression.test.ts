@@ -27,7 +27,7 @@ test('dense overlapping context emits each source line once with linear selectio
       const started = performance.now();
       try {
         const result = await operation.fileSearch({ mode: 'content', query: { kind: 'literal', text: 'needle', caseSensitive: true, wholeWord: false },
-          filters: { roots: [], directories: [], include: [], exclude: [], extensions: [] }, before: count, after: count,
+          filters: { roots: [], paths: [], exclude: [], extensions: [] }, before: count, after: count,
           countOnly: false, maxResults: count, maxOutputBytes: 1000000, continuation: null });
         if (result.kind !== 'search') assert.fail('Missing search result');
         assert.equal(result.counts.matchingLines, count);

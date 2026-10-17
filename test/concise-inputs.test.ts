@@ -36,7 +36,7 @@ test('concise MCP exploration matches explicit options and preserves validation,
     const value = declaration.Parse(declared.structuredContent);
     const workspaceId = value.id;
     const call = (name: string, args: ToolArguments) => client.callTool({ name, arguments: { workspaceId, ...args } });
-    const filters = { roots: [], directories: [], include: [], exclude: [], extensions: [] };
+    const filters = { roots: [], paths: [], exclude: [], extensions: [] };
     const pairs: [string, ToolArguments, ToolArguments][] = [
       ['get_file_tree', {}, { input: { type: 'files', mode: 'auto', scope: null, maxDepth: null, continuation: null }, draftId: null }],
       ['read_file', { input: { root: 'r', path: 'greet.ts' } }, { input: { root: 'r', path: 'greet.ts', start_line: null, offset: null, limit: null, continuation: null } }],

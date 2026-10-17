@@ -2,7 +2,7 @@ import type { BridgeClient } from '../native/bridge-client.js';
 import type { InventorySnapshot, PolicySnapshot } from '../contracts/inventory.js';
 import { ArtifactStore } from './artifact-store.js';
 import { scanInventory } from './inventory.js';
-import { NativeAccess, type OpenRoot } from './source-access.js';
+import { NativeAccess, unavailableRootCode, type OpenRoot } from './source-access.js';
 import type { PolicyDeclaration } from './root-policy.js';
 import { canonicalJSON, freeze, WorkspaceFailure } from './values.js';
 import { entryKey, managedInventory, type ManagedRegistration } from './managed-inventory.js';
@@ -146,6 +146,14 @@ export class WorkspaceRuntime {
       this.#managed.set(key, { entry, policy: policy.snapshot() });
       this.#managedRevision++;
     } catch (error) {
+      if (error instanceof NativeFailure && unavailableRootCode(error) !== null) {
+        const root = await access.rootAvailability(source.root);
+        if (root.kind === 'unavailable') {
+          process.stderr.write(JSON.stringify({ level: 'warn', event: 'managedSourceRootUnavailable',
+            workspaceKey: this.key, root: source.root, path: source.path, code: root.code }) + '\n');
+          return;
+        }
+      }
       if (error instanceof NativeFailure && ['notFound', 'nonRegularFile', 'symlink'].includes(error.code) ||
         error instanceof WorkspaceFailure && error.code === 'pathDenied') {
         if (this.#managed.get(key) !== registered) throw new WorkspaceFailure('sourceChanged', source);
@@ -245,9 +253,9 @@ export class WorkspaceRuntime {
     if (this.#closing) throw new WorkspaceFailure('workspaceClosed');
     signal.throwIfAborted();
     if (this.#failure !== null) throw this.#failure;
+    if (this.#snapshot) return this.registeredSnapshot(this.#snapshot);
     if (this.#flight) return this.#wait(this.#requested, signal);
-    if (!this.#snapshot) throw new WorkspaceFailure('inventoryUnavailable');
-    return this.registeredSnapshot(this.#snapshot);
+    throw new WorkspaceFailure('inventoryUnavailable');
   }
 
   close(): Promise<void> {
