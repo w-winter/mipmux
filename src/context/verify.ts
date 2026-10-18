@@ -11,6 +11,7 @@ import { StructureIndex } from '../workspace/structure-index.js';
 import { parseSourceBlock, type SourceBlock } from './source-block.js';
 import { finalFileTreeInput } from './final-tree.js';
 import { verifySourceOmissions } from './source-omissions.js';
+import { verifyExcludedSources } from './clipboard-selection.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -31,6 +32,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     throw new WorkspaceFailure('invalidManifest');
   }
   if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
+  verifyExcludedSources(manifest);
   verifySourceOmissions(manifest);
   requireEqual(manifest.deniedAbsolutePaths.includes(manifest.inventory.outputRoot.canonicalPath), true);
   const inventoryPaths = new Set<string>();
@@ -47,10 +49,12 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   requireEqual(sha256(canonicalJSON(manifest.request)), manifest.requestDigest);
   requireEqual(inventoryDigest(manifest.inventory), manifest.inventory.inventoryDigest);
   const materials = decodeMaterials(manifest, context);
-  requireEqual(manifest.fileTree.input, finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles));
+  requireEqual(manifest.fileTree.input, manifest.request.copyPreset === 'diffFollowUp' ? null
+    : finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles));
   const treeSpan = manifest.fileTree.span, treeBytes = context.subarray(treeSpan.offset, treeSpan.offset + treeSpan.length);
   requireEqual(identity(treeBytes), { byteCount: treeSpan.length, sha256: treeSpan.sha256 });
   const fileTree = { input: manifest.fileTree.input, text: decodedBody(treeBytes) };
+  if (fileTree.input === null) requireEqual(fileTree.text, '');
   const automaticSpan = manifest.automaticGit?.span;
   const automaticText = automaticSpan ? context.subarray(automaticSpan.offset, automaticSpan.offset + automaticSpan.length) : null;
   if (automaticText && automaticSpan) requireEqual(identity(automaticText), { byteCount: automaticSpan.length, sha256: automaticSpan.sha256 });
@@ -63,6 +67,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     inventory: manifest.inventory,
     prompt: manifest.prompt,
     materials,
+    excludedSources: manifest.excludedSources,
     unavailableRoots: manifest.unavailableRoots,
     unavailableFiles: manifest.unavailableFiles,
     automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
@@ -223,7 +228,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   const sources = materials.flatMap(material => material.record.kind === 'source' ? [material.record] : []);
   const explicit = sources.filter(record => record.selectionOrigin === 'explicit');
   const inferred = sources.filter(record => record.selectionOrigin === 'inferred').map(record => record.id).sort();
-  if (manifest.codemapMode === 'manual') {
+  if (manifest.codemapMode === 'manual' || manifest.request.copyPreset === 'diffFollowUp') {
     requireEqual(inferred, []); requireEqual(manifest.automaticCodemaps, []);
   }
   else {

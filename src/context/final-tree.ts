@@ -10,7 +10,7 @@ import type { AutomaticReviewGitSource } from './automatic-review-git.js';
 
 type TreeInput = Extract<NativeOperation, { kind: 'renderFileTree' }>;
 export interface FinalFileTree {
-  readonly input: TreeInput;
+  readonly input: TreeInput | null;
   readonly text: string;
 }
 
@@ -53,8 +53,9 @@ export async function renderFinalFileTree(runtime: SmipRuntime, inventory: Omit<
   return { input, text: result.tree };
 }
 
-export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs'>,
+export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs' | 'excludedSources'>,
   signal: AbortSignal, gitSource: AutomaticReviewGitSource): Promise<RenderInput> {
-  const fileTree = await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, input.unavailableRoots, input.unavailableFiles, signal);
+  const fileTree = input.request.copyPreset === 'diffFollowUp' ? { input: null, text: '' }
+    : await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, input.unavailableRoots, input.unavailableFiles, signal);
   return prepareClipboard(runtime, { ...input, fileTree }, signal, gitSource);
 }

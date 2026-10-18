@@ -37,7 +37,7 @@ test('native automatic Review rendering matches original RPCE coordinator observ
     const span = result.bodySpans[0]; assert(span); assert(result.text);
     const body = Buffer.from(result.text).subarray(span.offset, span.offset + span.length);
     assert.equal(body.toString(), 'PATCH 🙂');
-    verifyAutomaticReviewGitCapture({ text: result.text, evidence: { completeness: result.completeness, pathIssues: [], outcomes: [
+    verifyAutomaticReviewGitCapture({ text: result.text, evidence: { completeness: result.completeness, sourceRoots: [{ root: 'r', path: '/r' }], pathIssues: [], outcomes: [
       { kind: 'diff', checkout, comparison, body: { ...span, sha256: sha256(body) } },
       { kind: 'noChanges', checkout: { ...checkout, displayLabel: 'Other' }, comparison },
     ] } }, true);

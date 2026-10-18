@@ -4,7 +4,7 @@ struct PromptContextResolved { let storedPromptIds: [UUID]?; let includeMetaProm
 struct CapturedStoredPrompt: Decodable { let id: UUID; let title: String; let content: String }
 struct CapturedSelectedGitDiff: Decodable { let id: String; let text: String }
 
-enum ClipboardPresetKind: String, Decodable { case standard, plan, codeReview }
+enum ClipboardPresetKind: String, Decodable { case standard, plan, diffFollowUp, codeReview }
 
 struct PreparedClipboardInput: Decodable {
     let duplicateUserInstructionsAtTop: Bool
@@ -45,14 +45,16 @@ struct PreparedClipboardOperation {
         let preset = switch input.copyPreset {
         case .standard: BuiltInCopyPresets.standard
         case .plan: BuiltInCopyPresets.plan
+        case .diffFollowUp: BuiltInCopyPresets.diffFollowUp
         case .codeReview: BuiltInCopyPresets.codeReview
         }
         guard let includeFiles = preset.includeFiles, let includeUserPrompt = preset.includeUserPrompt,
-              let includeMetaPrompts = preset.includeMetaPrompts, let promptIDs = preset.storedPromptIds,
+              let includeMetaPrompts = preset.includeMetaPrompts,
               let gitInclusion = preset.gitInclusion
         else {
             throw BridgeFailure("nativeProtocolError")
         }
+        let promptIDs = preset.storedPromptIds
         let selection = ClipboardMetaSelection(storedPrompts: input.storedPrompts, metaInstructions: [])
         let metas = selection.metaInstructions(for: PromptContextResolved(
             storedPromptIds: promptIDs, includeMetaPrompts: includeMetaPrompts
@@ -65,8 +67,12 @@ struct PreparedClipboardOperation {
         let optionalDiffs = needsAutomaticGit ? [input.automaticGitDiff].compactMap(\.self) : selectedDiffs.map(\.text)
         let gitDiff = (optionalDiffs + [input.gitDiff].compactMap(\.self)).joined(separator: "\n\n")
         let text = RPCEClipboardPackaging.generatePreparedClipboardContent(
-            metaInstructions: metas, userInstructions: input.userInstructions, codemapBlocks: input.codemapBlocks,
-            contentBlocks: input.contentBlocks, fileTreeContent: input.fileTreeContent, gitDiff: gitDiff,
+            metaInstructions: metas, userInstructions: input.userInstructions,
+            codemapBlocks: preset.codeMapUsage == CodeMapUsage.none ? [] : input.codemapBlocks,
+            contentBlocks: input.contentBlocks,
+            fileTreeContent: preset.includeFileTree == true && preset.fileTreeMode != FileTreeOption.none
+                ? input.fileTreeContent : "",
+            gitDiff: gitDiff,
             includeSavedPrompts: !metas.isEmpty, includeFiles: includeFiles, includeUserPrompt: includeUserPrompt,
             includeDatetimeInUserInstructions: input.includeDatetimeInUserInstructions,
             promptSectionsOrder: input.promptSectionsOrder,
@@ -80,7 +86,7 @@ struct PreparedClipboardOperation {
                 "preset": [
                     "kind": input.copyPreset.rawValue, "gitInclusion": gitInclusion.rawValue,
                     "includeMetaPrompts": includeMetaPrompts,
-                    "storedPromptIds": promptIDs.map { $0.uuidString.lowercased() }
+                    "storedPromptIds": promptIDs.map { $0.map { $0.uuidString.lowercased() } } as Any? ?? NSNull()
                 ]]
     }
 }

@@ -94,7 +94,7 @@ export class FinalizationOperation {
     try {
       const rootFailures = await captureUnavailableRoots(operation);
       const unavailableRoots = new Set(rootFailures.map(root => root.root));
-      const candidate = await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation, unavailableRoots), async presentation => {
+      const assemble = async (presentation: CodemapPresentation) => {
         const captured = await refreshGitArtifactMaterials(operation, [...presentation.materials.values()]);
         const automaticAcquisition = presentation.automaticAcquisition;
         this.#capturedPresentation = { materials: new Map(captured.map(material => [material.record.id, material])),
@@ -110,8 +110,10 @@ export class FinalizationOperation {
           { kind: 'live', operation });
         this.#capturedAutomaticGit = input.automaticGit;
         this.#capturedReferenceTokens = await captureReferenceTokens(operation, input, canonical);
-        return { materials, automaticAcquisition, inventory, input, rendered: renderBundle(input) };
-      });
+        return { materials, automaticAcquisition: input.automaticAcquisition, inventory, input, rendered: renderBundle(input) };
+      };
+      const candidate = request.copyPreset === 'diffFollowUp' ? await assemble(this.#capturedPresentation)
+        : await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation, unavailableRoots), assemble);
       const { materials, automaticAcquisition, inventory, input, rendered } = candidate;
       if (automaticAcquisition.kind === 'pending' || rendered.diagnostics.length) {
         return {
@@ -123,7 +125,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 20,
+        schemaVersion: 21,
         codemapMode,
         automaticCodemaps: [...automaticAcquisition.outcomes],
         request,
@@ -133,6 +135,7 @@ export class FinalizationOperation {
         deniedAbsolutePaths: [...owner.declaration.deniedAbsolutePaths],
         prompt,
         materials: rendered.records,
+        excludedSources: [...input.excludedSources],
         unavailableRoots: [...input.unavailableRoots],
         unavailableFiles: [...input.unavailableFiles],
         clipboardPreset: input.clipboardPreset,

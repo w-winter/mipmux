@@ -70,6 +70,11 @@ async function revalidateCodemapSource(operation: WorkspaceOperation,
 
 export function capturedSourceSelections(materials: readonly Material[], roots: readonly UnavailableRoot[], files: readonly UnavailableFile[]): SourceSelection[] {
   const selections = materials.flatMap(({ record }) => record.kind === 'source' && record.selectionOrigin === 'explicit' ? [record.selection] : []);
+  return restoreOmittedSourceSelections(selections, roots, files);
+}
+
+export function restoreOmittedSourceSelections(captured: readonly SourceSelection[], roots: readonly UnavailableRoot[], files: readonly UnavailableFile[]): SourceSelection[] {
+  const selections = [...captured];
   const omitted = [...roots.flatMap(root => root.sources), ...files].sort((a, b) => a.selectionIndex - b.selectionIndex);
   for (const source of omitted) selections.splice(source.selectionIndex, 0, source.selection);
   return selections;
@@ -114,7 +119,7 @@ export function verifySourceOmissions(manifest: Manifest): void {
     if (file.selection.kind === 'codemap' && manifest.codemapMode !== 'manual') throw new WorkspaceFailure('bundleIntegrityFailed');
   }
   const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles];
-  const count = manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;
+  const count = manifest.excludedSources.length + manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;
   if (new Set(omitted.map(source => source.selectionIndex)).size !== omitted.length || omitted.some(source => source.selectionIndex >= count)) {
     throw new WorkspaceFailure('bundleIntegrityFailed');
   }

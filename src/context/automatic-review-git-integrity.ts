@@ -1,6 +1,9 @@
 // Parses RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3 framing; see docs/vendor-provenance.json.
 import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
-import type { AutomaticReviewGitEvidence, Span } from '../contracts/context.js';
+import type { AutomaticReviewGitEvidence, SourceSelection, Span } from '../contracts/context.js';
+import type { InventorySnapshot } from '../contracts/inventory.js';
+import { posix } from 'node:path';
+import { contains } from '../workspace/root-policy.js';
 import { sha256, WorkspaceFailure } from '../workspace/values.js';
 
 function verifyCompleteness({ outcomes, pathIssues, completeness }: AutomaticReviewGitEvidence): void {
@@ -64,4 +67,23 @@ export function verifyAutomaticReviewGitCapture(capture: AutomaticReviewGitCaptu
   };
   consumeSections(capture.evidence, consume, body);
   if (cursor !== bytes.length || (bytes.length === 0) !== (capture.text === null)) invalid();
+}
+
+/** Each checkout path must belong to the captured full/slice scope; path failures account for unresolved members. */
+export function verifyAutomaticReviewGitSelection(capture: AutomaticReviewGitCapture | null,
+  inventory: Omit<InventorySnapshot, 'generation'>, selections: readonly SourceSelection[]): void {
+  if (capture === null) return;
+  const roots = new Map(capture.evidence.sourceRoots.map(root => [root.root, root.path]));
+  if (roots.size !== capture.evidence.sourceRoots.length || roots.size !== inventory.roots.length ||
+    inventory.roots.some(root => !roots.has(root.name))) throw new WorkspaceFailure('invalidClipboard');
+  const remaining = new Set(selections.filter(selection => selection.kind !== 'codemap')
+    .map(selection => posix.join(roots.get(selection.source.root)!, selection.source.path).normalize('NFC')));
+  for (const outcome of capture.evidence.outcomes) {
+    if (!outcome.checkout.selectedPaths.length) throw new WorkspaceFailure('invalidClipboard');
+    for (const path of outcome.checkout.selectedPaths) {
+      if (!contains(outcome.checkout.identity.checkoutRootPath.normalize('NFC'), path.normalize('NFC')) ||
+        !remaining.delete(path.normalize('NFC'))) throw new WorkspaceFailure('invalidClipboard');
+    }
+  }
+  if (remaining.size > capture.evidence.pathIssues.length) throw new WorkspaceFailure('invalidClipboard');
 }

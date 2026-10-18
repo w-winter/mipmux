@@ -9,7 +9,7 @@ export const PromptSectionsOrder = Type.Array(PromptSection, {
   allOf: defaultPromptSectionsOrder.map(section => ({ contains: Type.Literal(section) })),
 });
 /** Clipboard presets retain source inclusion and saved-prompt choices; role bodies come from the caller catalog. */
-export const ClipboardPreset = Type.Enum(['standard', 'plan', 'codeReview']);
+export const ClipboardPreset = Type.Enum(['standard', 'plan', 'diffFollowUp', 'codeReview']);
 export type ClipboardPreset = Static<typeof ClipboardPreset>;
 export const StoredPrompt = Type.Object({ id: Type.String({ format: 'uuid' }), title: Type.String(), content: Type.String() }, closed);
 export type StoredPrompt = Static<typeof StoredPrompt>;
@@ -22,6 +22,8 @@ export const CapturedClipboardPreset = Type.Union([
     includeMetaPrompts: Type.Literal(false), storedPromptIds: Type.Tuple([]) }, closed),
   Type.Object({ kind: Type.Literal('plan'), gitInclusion: Type.Literal('none'), includeMetaPrompts: Type.Literal(true),
     storedPromptIds: Type.Tuple([Type.Literal(architectStoredPromptID)]) }, closed),
+  Type.Object({ kind: Type.Literal('diffFollowUp'), gitInclusion: Type.Literal('selected'), includeMetaPrompts: Type.Literal(false),
+    storedPromptIds: Type.Null() }, closed),
   Type.Object({ kind: Type.Literal('codeReview'), gitInclusion: Type.Literal('selected'), includeMetaPrompts: Type.Literal(true),
     storedPromptIds: Type.Tuple([Type.Literal(reviewStoredPromptID)]) }, closed),
 ]);

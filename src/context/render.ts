@@ -1,6 +1,6 @@
 import type { CapturedClipboardPreset } from '../contracts/presentation.js';
 import { posix } from 'node:path';
-import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, MaterialRecord, SourceSelection, Span, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { Material } from './material-store.js';
 import type { FinalFileTree } from './final-tree.js';
@@ -16,6 +16,7 @@ export interface RenderInput {
   readonly inventory: Omit<InventorySnapshot, 'generation'>;
   readonly prompt: string;
   readonly materials: readonly Material[];
+  readonly excludedSources: readonly SourceSelection[];
   readonly automaticAcquisition: AutomaticAcquisitionState;
   readonly fileTree: FinalFileTree;
   readonly clipboard: string;
@@ -119,7 +120,8 @@ function materialDiagnostics(materials: readonly Material[], units: number, allo
 
 /** Renders exact material bodies and byte spans without I/O or ambient state. */
 export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
-  const materials = input.materials;
+  const materials = input.request.copyPreset === 'diffFollowUp'
+    ? input.materials.filter(material => material.record.kind === 'patch' || material.record.kind === 'gitPatch') : input.materials;
   const { records, costs, fileTreeSpan, automaticGitSpan, comparisonText } = parseClipboard(input);
   const context = input.clipboard, offset = Buffer.byteLength(context), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);
@@ -148,6 +150,7 @@ export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
           entry.structural.record.outcome.kind !== 'ready'
         ),
         materials: records.map((record) => ({ ...packetMetadata(record), spans: record.spans })),
+        excludedSources: input.excludedSources,
         unavailableRoots: input.unavailableRoots,
         unavailableFiles: input.unavailableFiles,
         automaticGit: input.automaticGit === null ? null : { evidence: input.automaticGit.evidence, span: automaticGitSpan },

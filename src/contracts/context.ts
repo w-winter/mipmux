@@ -182,6 +182,7 @@ const gitCommit = Type.String({ pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' });
 const reviewComparison = Type.Object({ head: gitCommit, base: gitCommit }, closed);
 const capturedReviewCheckout = { checkout: AutomaticReviewGitCheckout };
 export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticReviewGitCompleteness,
+  sourceRoots: Type.Array(Type.Object({ root: RootName, path: Type.String({ pattern: '^/[^\u0000]*$' }) }, closed)),
   pathIssues: Type.Array(AutomaticReviewGitPathIssue), outcomes: Type.Array(Type.Union([
     Type.Object({ ...capturedReviewCheckout, kind: Type.Literal('diff'), comparison: reviewComparison, body: Span }, closed),
     Type.Object({ ...capturedReviewCheckout, kind: Type.Enum(['noChanges', 'commandFailed']), comparison: reviewComparison }, closed),
@@ -189,7 +190,7 @@ export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticR
   ])) }, closed);
 export type AutomaticReviewGitEvidence = Static<typeof AutomaticReviewGitEvidence>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(20),
+  schemaVersion: Type.Literal(21),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
   request: ContextBuildRequest,
@@ -199,11 +200,12 @@ export const Manifest = Type.Object({
   deniedAbsolutePaths: Type.Array(Type.String({ pattern: '^/[^\\u0000]*$' })),
   prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
+  excludedSources: Type.Array(SourceSelection),
   unavailableRoots: Type.Array(UnavailableRoot),
   unavailableFiles: Type.Array(UnavailableFile),
   clipboardPreset: CapturedClipboardPreset,
   automaticGit: Type.Union([Type.Object({ evidence: AutomaticReviewGitEvidence, span: Type.Union([Span, Type.Null()]) }, closed), Type.Null()]),
-  fileTree: Type.Object({ input: NativeFileTreeInput, span: Span }, closed),
+  fileTree: Type.Object({ input: Type.Union([NativeFileTreeInput, Type.Null()]), span: Span }, closed),
   files: Type.Object({ context: SourceIdentity, handoff: SourceIdentity }, closed),
   accounting: Type.Object({
     recipient: Type.Literal('context.md'),

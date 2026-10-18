@@ -8,12 +8,43 @@ import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { verifyBundle } from '../src/index.js';
+import { contextRequestValidator } from '../src/contracts/context.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 
 const readinessReferences = Compile(Type.Array(Type.Object({ name: Type.String(), waitMilliseconds: Type.Integer(),
   statuses: Type.Array(Type.Enum(['ready', 'pending'])), afterPresentationRelease: Type.Array(Type.Object({ workCompleted: Type.Boolean() })) })));
 const referenceCases = readinessReferences.Parse(JSON.parse(await readFile('test/fixtures/rpce-readiness-observer/expected.json', 'utf8')));
+
+test('Diff Follow-Up publishes while an excluded optional codemap has independently retained demand', async () => {
+  const request = contextRequestValidator.Parse({ task: 'Discuss changes', constraints: '', enhancementMode: 'preserve', purpose: 'review',
+    initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+    duplicateUserInstructionsAtTop: false, copyPreset: 'diffFollowUp', budgetUnits: 100000, discoveryHints: [], outputName: 'diff-follow-up' });
+  const f = await fixture(), operation = await f.owner.openOperation(new AbortController().signal);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let lease: Awaited<ReturnType<typeof operation.requestExplicitCodemap>> | null = null;
+  try {
+    const draft = await f.owner.createDraft(request, new AbortController().signal);
+    lease = await operation.requestExplicitCodemap(f.source); await f.entering;
+    await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'add', mode: 'codemap_only',
+      paths: [f.source.root + '/' + f.source.path], maxOutputBytes: 100000 })), new AbortController().signal);
+    let releasedForFailure = false, demandSettled = false;
+    void lease.result.then(() => { demandSettled = true; }, () => {});
+    const readinessMilliseconds = referenceCases.find(entry => entry.name === 'ready-completion')!.waitMilliseconds;
+    timer = setTimeout(() => { releasedForFailure = true; f.release(); }, readinessMilliseconds * 2);
+    const ready = await draft.finalize(new AbortController().signal);
+    assert(ready.kind === 'ready'); assert.equal(releasedForFailure, false); assert.equal(demandSettled, false);
+    assert.equal(await readFile(join(ready.directory, 'context.md'), 'utf8'), '<user_instructions>\nDiscuss changes\n</user_instructions>\n');
+    await verifyBundle(ready.directory);
+    await mkdir('test-output', { recursive: true });
+    await writeFile('test-output/diff-follow-up-pending-codemap.json', JSON.stringify({ directory: ready.directory,
+      demandSettledAtPublication: demandSettled, manifest: ready.manifest }, null, 2) + '\n');
+  } finally {
+    if (timer !== null) clearTimeout(timer);
+    f.release(); if (lease !== null) { await lease.result; await lease.release(); }
+    await operation.close(); await f.runtime.close();
+  }
+});
 
 async function fixture(outcome: 'held' | 'failFirst' = 'held',
   beforeRead: ((request: Extract<NativeOperation, { kind: 'readSource' }>) => Promise<void>) | null = null) {

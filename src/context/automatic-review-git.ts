@@ -1,15 +1,13 @@
 // Ported from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3; see docs/vendor-provenance.json.
-import type { AutomaticReviewGitEvidence, ContextBuildRequest, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
+import type { AutomaticReviewGitEvidence, ContextBuildRequest, SourceSelection, UnavailableRoot } from '../contracts/context.js';
 import type { NativeOperation, NativeResult } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
-import type { Material } from './material-store.js';
 import { selectedGitSourcePaths } from './git-target.js';
 import { resolveDiffRepository, gitText } from '../exploration/git-repository.js';
 import { prepareGitDiffComparison, capturePreparedGitDiff } from '../exploration/git-diff.js';
 import { resolveGitCommit } from '../patches/local-git.js';
 import { gitProcess } from '../patches/git-process.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
-import { capturedSourceSelections } from './source-omissions.js';
 
 export interface AutomaticReviewGitCapture {
   readonly evidence: AutomaticReviewGitEvidence;
@@ -40,17 +38,19 @@ function diffRequest(root: string, base: string) {
 
 /** Resolves every checkout boundary before the first working-tree capture, matching RPCE's discover coordinator. */
 export async function acquireAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
-  materials: readonly Material[], unavailableRoots: readonly UnavailableRoot[], unavailableFiles: readonly UnavailableFile[]): Promise<AutomaticReviewGitCapture> {
+  selections: readonly SourceSelection[], unavailableRoots: readonly UnavailableRoot[]): Promise<AutomaticReviewGitCapture> {
   const unavailable = new Set(unavailableRoots.map(root => root.root));
   const roots = new Map(operation.snapshot.roots.map(root => [root.name, root.identity.canonicalPath]));
   const catalog = new Set(operation.snapshot.entries.flatMap(entry => entry.kind === 'file' && !unavailable.has(entry.root)
     ? [roots.get(entry.root)! + '/' + entry.path] : []));
-  const paths = selectedGitSourcePaths(operation, capturedSourceSelections(materials, unavailableRoots, unavailableFiles));
+  const paths = selectedGitSourcePaths(operation, selections);
   return acquireSelectedReviewGit(operation, request, { paths: paths.filter(path => catalog.has(path)), unresolvedCandidates: paths.filter(path => !catalog.has(path)) });
 }
 
 export async function acquireSelectedReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
   selection: { readonly paths: readonly string[]; readonly unresolvedCandidates: readonly string[] }): Promise<AutomaticReviewGitCapture> {
+  const paths = await operation.selectionPathBindings(operation.snapshot.roots.map(root => root.identity.canonicalPath));
+  const sourceRoots = operation.snapshot.roots.map((root, index) => ({ root: root.name, path: paths[index]! }));
   const ownership = await operation.resolveAutomaticReviewGit(selection, request.reviewGitBase ?? null);
   if (ownership.checkouts.length && !operation.runtime.options.git) throw new WorkspaceFailure('gitNotConfigured');
   const plans: Plan[] = [];
@@ -80,11 +80,11 @@ export async function acquireSelectedReviewGit(operation: WorkspaceOperation, re
       plans.push({ kind: 'baseResolutionFailed', checkout });
     }
   }
-  return capturePlans(operation, plans, ownership.pathIssues);
+  return capturePlans(operation, plans, ownership.pathIssues, sourceRoots);
 }
 
 async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[],
-  pathIssues: AutomaticReviewGitEvidence['pathIssues']): Promise<AutomaticReviewGitCapture> {
+  pathIssues: AutomaticReviewGitEvidence['pathIssues'], sourceRoots: AutomaticReviewGitEvidence['sourceRoots']): Promise<AutomaticReviewGitCapture> {
   const outcomes: Outcome[] = [];
   for (const plan of plans) {
     operation.signal.throwIfAborted();
@@ -106,7 +106,7 @@ async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[
   operation.signal.throwIfAborted();
   let diffIndex = 0;
   const bytes = Buffer.from(result.text ?? '');
-  const evidence: AutomaticReviewGitEvidence = { completeness: result.completeness, pathIssues,
+  const evidence: AutomaticReviewGitEvidence = { completeness: result.completeness, pathIssues, sourceRoots,
     outcomes: result.outcomes.map((outcome, index) => {
       if (outcome.kind === 'baseResolutionFailed') return { kind: outcome.kind, checkout: outcome.checkout };
       const plan = plans[index]!;
@@ -134,13 +134,13 @@ export async function revalidateCapturedAutomaticReviewGit(operation: WorkspaceO
     const commands = await prepareGitDiffComparison(operation, diffRequest(checkout.identity.root, outcome.comparison.base), owner);
     plans.push({ kind: 'ready', checkout, owner, commands, comparison: outcome.comparison });
   }
-  const current = await capturePlans(operation, plans, captured.evidence.pathIssues);
+  const current = await capturePlans(operation, plans, captured.evidence.pathIssues, captured.evidence.sourceRoots);
   if (canonicalJSON(current) !== canonicalJSON(captured)) throw new WorkspaceFailure('automaticGitChanged');
 }
 
 export async function revalidateAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
-  materials: readonly Material[], captured: AutomaticReviewGitCapture | null, unavailableRoots: readonly UnavailableRoot[], unavailableFiles: readonly UnavailableFile[]): Promise<void> {
+  selections: readonly SourceSelection[], captured: AutomaticReviewGitCapture | null, unavailableRoots: readonly UnavailableRoot[]): Promise<void> {
   if (captured === null) return;
-  const current = await acquireAutomaticReviewGit(operation, request, materials, unavailableRoots, unavailableFiles);
+  const current = await acquireAutomaticReviewGit(operation, request, selections, unavailableRoots);
   if (canonicalJSON(current) !== canonicalJSON(captured)) throw new WorkspaceFailure('automaticGitChanged');
 }

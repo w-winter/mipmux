@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "2d66a66eb26c4b789eb6269c71c7aa042c5e983a98582456f0b96178bfc30d26",
+      "sha256": "c9218c7f68417da5f30d1a5af549b1f212f53f971d91313bd07337115a6472c5",
       "classification": "handwritten",
       "ranges": [
         [
@@ -24,7 +24,8 @@
         "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
         "Invoke automatic preassembly lazily from native Review eligibility; capture native text and evidence separately from selected artifacts and required patches. Parse its span and relative body proofs for exact accounting and native-free saved integrity.",
         "Parse the captured section order, including repetitions, against retained material blocks. The manifest records the first canonical body/frame/tree/automatic-Git spans. Every repeated occurrence must equal those bytes and the parser must consume the whole packet. Aggregate all occurrence bytes per logical material before estimating item units. This reuses the existing saved verification model without duplicate material identities or redundant frame tables.",
-        "Parse the numeric datetime shape from actual user-instruction headers and require every repeated header to retain the same value. Preserve those bytes for archived integrity and accounting. For current presentation comparison only, remove the parsed attribute-value spans; material and role text, including date-like tags inside evidence, remain exact. Native clock values can differ between export and current verification; the comparison uses parser-proven attribute spans to isolate that variation."
+        "Parse the numeric datetime shape from actual user-instruction headers and require every repeated header to retain the same value. Preserve those bytes for archived integrity and accounting. For current presentation comparison only, remove the parsed attribute-value spans; material and role text, including date-like tags inside evidence, remain exact. Native clock values can differ between export and current verification; the comparison uses parser-proven attribute spans to isolate that variation.",
+        "Capture available explicit ordinary selections as excludedSources for Diff Follow-Up while leaving draft membership intact. Native preset inclusion determines emitted sections; parse only delivered patch material for spans and costs. Source-required sources/documents conflict explicitly instead of being discarded. Bind automatic checkout paths to captured full/slice membership, including unavailable-source positions."
       ]
     },
     {
@@ -32,7 +33,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "native/Sources/SmipBridge/PreparedClipboardInput.swift",
-      "sha256": "bdfb1b647c32a9f1241641e7a103dfc3a4aeaf35bb665f2e5dfba0e99dba7e9f",
+      "sha256": "3ccd672d3489fd7d16fdbaf438ae032ba11efb4fa63f5a4aebc2f4519986c7ab",
       "classification": "handwritten",
       "ranges": [
         [
@@ -45,7 +46,8 @@
         "Caller-required PatchInput bodies are a headless request contract, not source optional selected artifacts or replaceable supplied packaging text. They remain complete after optional selected patches for every preset. Return the exact preset Git mode with the saved meta projection. Native eligibility requests the lazy automatic provider only when Review has no nonblank selected patch text. Automatic preassembly text precedes independent required patch bodies.",
         "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
         "Forward the captured promptSectionsOrder to the retained PromptAssemblyBuilder through RPCEClipboardPackaging. Include every configured repetition; no second rendering path is added.",
-        "Forward the captured includeDatetimeInUserInstructions setting into the retained formatter in Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift:351-371, SHA256 22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb. The omitted request setting uses the source false default. The original DateFormatter and wall-clock call remain unchanged."
+        "Forward the captured includeDatetimeInUserInstructions setting into the retained formatter in Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift:351-371, SHA256 22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb. The omitted request setting uses the source false default. The original DateFormatter and wall-clock call remain unchanged.",
+        "Bind Diff Follow-Up to its exact retained constructor, including nullable storedPromptIds. Apply includeFileTree/fileTreeMode and codeMapUsage none before the retained clipboard kernel, matching PromptContextPreAssemblyService.swift:255-261,579-601. File-body inclusion remains owned by the existing native kernel. Explicit caller constraints and required patch bodies retain their headless request contracts."
       ]
     },
     {
@@ -5261,7 +5263,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "8888d33d8a3fe4e1eafc104bf76aa4f34596aee170961acee2535c2429b5f186",
       "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift",
-      "sha256": "ce892f5bb3ac5444ce34f0aebe9ed09af9706fbb45839d35cb6ad70439b21471",
+      "sha256": "34581d617f7121c785180bcd34028ffbd7fcda55bd2b6301ba2ea1bb1d2421ac",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5273,7 +5275,7 @@
           16
         ],
         [
-          19,
+          18,
           19
         ],
         [
@@ -5285,12 +5287,16 @@
           57
         ],
         [
+          76,
+          91
+        ],
+        [
           93,
           109
         ]
       ],
       "changes": [
-        "Retain exact Standard/Plan/Review constructors and referenced UUIDs; Diff Follow-Up and Manual branches remain incomplete port requirements."
+        "Retain exact Standard/Plan/Diff Follow-Up/Review constructors and referenced UUIDs. Diff Follow-Up keeps nil storedPromptIds from the original initializer default. Manual remains an incomplete port requirement."
       ]
     },
     {
@@ -6214,7 +6220,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "6bb02856b18d75e970dda0b4735db46a7d8b416e865da3856ba6de3e9f068182",
+      "sha256": "78ac327e3ac5f12059ff61f77e7d8cf6d25b55214168aa472ca61debbf531869",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6231,7 +6237,8 @@
         "Freeze explicit selection and mode for final assembly; pass the existing derive path as fresh acquisition for each presentation attempt. Adopt finalization materials and acquisition state as one observation on success or failure; canonical selection and revision stay owned by the draft.",
         "Pass operation-owned automatic Git preassembly through live observations and retain the finalization capture for terminal inspection after the workspace lease is released.",
         "Use the admitted current operation consistently for selection, automatic graph resolution, previews, mutation receipts, startup context and validation. Captured material identities and required evidence remain fixed. Terminal inspection uses the finalization inventory.",
-        "Assemble current selection entries, blocks and component counts from per-source presentation availability while retaining canonical material membership. Explicit unavailable_sources and incomplete measurement distinguish absent bodies from removed selection."
+        "Assemble current selection entries, blocks and component counts from per-source presentation availability while retaining canonical material membership. Explicit unavailable_sources and incomplete measurement distinguish absent bodies from removed selection.",
+        "Reject Diff Follow-Up requests with caller-required sources or documents before acquisition. Existing selection lifecycle and document receipt admission remain the authorities; the shared clipboard boundary rejects an incompatible later document mutation."
       ]
     },
     {
@@ -6452,7 +6459,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "e7dea051f6bd78eecd64794afbe04ba31670636e328161e285d6f80a0c84284f",
+      "sha256": "9cd453028360519beaf06e7edc5c96bc8a0e4fb812726a018a8da6eb2bd854c6",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
@@ -6542,7 +6549,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "cadf05b996e20f5d469073a3ce2be28c374176e3a37abf8c15f36b9d4767c2e4",
+      "sha256": "23d9c5adbcd228fb9f17422807ff7ab00baf8e605591180baf8a8b24e8aea9e1",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6564,7 +6571,8 @@
         "Capture preassembly evidence, not selected artifacts or Git snapshots. Replay captured bases for final serving checks; compare current intent for current bundle verification.",
         "Classify expected Git operational failures directly in each I/O catch after cancellation and root validation, preserving original errors for all other failure domains.",
         "Treat omitted full/sliced paths as unresolved candidates for automatic Review export diagnostics. They grant no replacement-root filesystem access.",
-        "Reconstruct original explicit source order from delivered records and omission indices. Catalog paths in available roots remain candidates for authorized deletion diffs even when ordinary bodies are omitted; unavailable-root or absent-catalog paths become unresolved candidates."
+        "Reconstruct original explicit source order from delivered records and omission indices. Catalog paths in available roots remain candidates for authorized deletion diffs even when ordinary bodies are omitted; unavailable-root or absent-catalog paths become unresolved candidates.",
+        "Accept captured source selections independently of delivered material. Capture sourceRoots through the existing selectionPathBindings native boundary so saved integrity can relate root-qualified membership to Foundation-normalized checkout paths, including macOS /private/var versus /var. Revalidation reuses the same captured projection before publication and recomputes it for current verification."
       ]
     },
     {
@@ -6572,7 +6580,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git-integrity.ts",
-      "sha256": "0eafe7aa3b103da01e4098d30e26da615a095c09494f933f9dbb86a2d798d351",
+      "sha256": "3f70c2fa64fbd196d8a5ebb9d8ec5eeea5f187fa50eb716a391f2febeb09421b",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6586,7 +6594,8 @@
       ],
       "changes": [
         "Parse archived source framing, exact diagnostics, relative body spans and completeness without producing Git text or invoking native code. Require the provider observation for Review without nonblank selected patches.",
-        "Keep completeness checks, checkout sections and diagnostic grammar in distinct parser phases sharing one byte cursor. This is verification only, not a text renderer."
+        "Keep completeness checks, checkout sections and diagnostic grammar in distinct parser phases sharing one byte cursor. This is verification only, not a text renderer.",
+        "Verify checkout path membership against captured full/slice selection using native-normalized sourceRoots, canonical Unicode equality and existing root containment. Path diagnostics account for unresolved members. This closes the reproduced full-to-codemap archive forgery without consulting native or current files. The ownership producer is Sources/RepoPrompt/Features/Prompt/Services/ReviewGitSelectedPathOwnershipResolver.swift:54-150, SHA256 4243ff0af1a4e7f080e0dba25ceb1257dd4cad15ed73e23f7d4351f4f999b3f5."
       ]
     },
     {
@@ -6648,7 +6657,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "551f40f968ca24f53f60cc73416174f226a7f4801b253ee6997e1ea5f7cef4eb",
       "destination": "src/contracts/presentation.ts",
-      "sha256": "c21217c311f8510190d86acf4e4f100a37f08e17f58d90991e800ef662215d13",
+      "sha256": "62a7291d3890fcf60c127fa47bde7af105b99f5315b6ba9f5d5060e8cf7cf333",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6662,7 +6671,8 @@
       ],
       "changes": [
         "Use the section names and default order from RPCE in the shared TypeScript/native schema. The optional public promptSectionsOrder setting captures the effective order at build admission; omission selects the source default.",
-        "Require every section with JSON Schema contains checks while retaining repetitions, matching Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift:5445-5456, SHA256 142aea37ff038a9fd4805257a9706d64e091e0a62e3850493236c3bf91cc01b2. This is the effective ordered value, not raw persisted preference parsing."
+        "Require every section with JSON Schema contains checks while retaining repetitions, matching Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift:5445-5456, SHA256 142aea37ff038a9fd4805257a9706d64e091e0a62e3850493236c3bf91cc01b2. This is the effective ordered value, not raw persisted preference parsing.",
+        "Admit diffFollowUp and preserve its exact selected-Git/false-meta/null-storedPromptIds projection from Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift:76-91, SHA256 8888d33d8a3fe4e1eafc104bf76aa4f34596aee170961acee2535c2429b5f186."
       ]
     },
     {
@@ -7579,7 +7589,7 @@
         "Omit optional manual pending codemaps from final delivery while preserving their source identity, mode, explicit index and artifact key. Keep required pending maps in the candidate so existing diagnostics block publication. codemapPending is a historical presentation observation, like automatic acquisition evidence; current verification binds its readable source and key rather than repeating readiness. Saved verification requires matching captured inventory metadata.",
         "Archive optional explicit codemap I/O outcomes with their original identity, mode, artifact key and observed pending/unmapped disposition. Revalidate the same I/O cause before assembly, claim and current verification. Required sources reject and recovered/differently failing sources invalidate the candidate."
       ],
-      "sha256": "8b8dcf247f0fddc17b6c9590381db4b3c7ca85f24972214422f6f37bf05fb1ba"
+      "sha256": "8263ad8ff84c6d78c1e34b8a9463df24630bc3e32b6e9bfcc0d27f47c20c5da2"
     },
     {
       "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",
@@ -7639,6 +7649,23 @@
         "Only inspectSource corresponds to this metadata-admission boundary. Reuse existing confined descriptors and no-follow parent traversal, then fstatat the leaf without reading bytes. Missing, symlink and nonregular metadata is separate from subsequent read failure. The original smip read/export/snapshot substrate remains in this file and is not claimed as copied source."
       ],
       "sha256": "b3649735889c1917cda762f4dd4b27bed82e25d8423ca2551dcad7a0e00b504e"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "8888d33d8a3fe4e1eafc104bf76aa4f34596aee170961acee2535c2429b5f186",
+      "destination": "src/context/clipboard-selection.ts",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          76,
+          91
+        ]
+      ],
+      "changes": [
+        "Bind source file exclusion to the existing headless required-material guarantee: reject conflicts explicitly. Archive only available explicit source selections and inventory bindings, not undelivered bodies; unavailable sources retain the existing omission records. Current verification checks the captured excluded identities and policy. No independent selection owner or source renderer is introduced."
+      ],
+      "sha256": "41be975e1d109cc1e65a762de12808d06a1ca06a3654f1d1245e37b8c905ec96"
     }
   ],
   "dependencies": [
@@ -13509,6 +13536,18 @@
       "line": 117,
       "name": "filterPathIndicesResult",
       "destination": "native/Sources/SmipBridge/RPCESearchScopeFiltering.swift"
+    },
+    {
+      "name": "diffFollowUpUUID",
+      "line": 18,
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift"
+    },
+    {
+      "name": "diffFollowUp",
+      "line": 77,
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift"
     }
   ],
   "sourceCoverage": [

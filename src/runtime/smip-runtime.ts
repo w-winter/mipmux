@@ -19,6 +19,8 @@ import { parseClipboard, preparedClipboardInput } from '../context/clipboard.js'
 import { finalFileTreeInput } from '../context/final-tree.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import { observe } from '../workspace/observe.js';
+import { revalidateExcludedSources } from '../context/clipboard-selection.js';
+import { capturedSourceSelections, restoreOmittedSourceSelections } from '../context/source-omissions.js';
 
 interface GitSnapshotMutationAccess { readonly bridge: BridgeClient; readonly root: NativeHandle }
 interface GitSnapshotMutationOwner { tail: Promise<void>; bridge: BridgeClient | null }
@@ -232,11 +234,17 @@ export class SmipRuntime {
     this.#operations.add(operation);
     try {
       await revalidateMaterials(operation,materials, manifest.unavailableRoots, manifest.unavailableFiles);
-      await revalidateAutomaticReviewGit(operation, manifest.request, materials, automaticGit, manifest.unavailableRoots, manifest.unavailableFiles);
-      const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), signal);
-      if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
+      await revalidateExcludedSources(operation, manifest);
+      const selections = manifest.request.copyPreset === 'diffFollowUp'
+        ? restoreOmittedSourceSelections(manifest.excludedSources, manifest.unavailableRoots, manifest.unavailableFiles)
+        : capturedSourceSelections(materials, manifest.unavailableRoots, manifest.unavailableFiles);
+      await revalidateAutomaticReviewGit(operation, manifest.request, selections, automaticGit, manifest.unavailableRoots);
+      if (fileTree.input !== null) {
+        const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), signal);
+        if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
+      }
       const input = { request: manifest.request, prompt: manifest.prompt,
-        inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree,
+        inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, excludedSources: manifest.excludedSources, fileTree,
         unavailableRoots: manifest.unavailableRoots,
         unavailableFiles: manifest.unavailableFiles,
         automaticAcquisition: { kind: 'settled' as const, outcomes: manifest.automaticCodemaps }, automaticGit };

@@ -69,6 +69,7 @@ import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
 import { captureReferenceTokens, referenceTokenFields, type ReferenceTokenView } from './reference-tokens.js';
 import { captureSourcePresentation, selectionSourcePath, unavailableSelectionRoots } from './source-presentation.js';
 import { capturedSourceSelections } from './source-omissions.js';
+import { assertClipboardRequiredMaterials } from './clipboard-selection.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
@@ -127,6 +128,7 @@ export class DraftRuntime {
     if (operation.snapshot.enumeration.kind !== 'complete') throw new WorkspaceFailure('enumerationIncomplete');
     if (!contextRequestValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
     const request = freeze(structuredClone(input));
+    assertClipboardRequiredMaterials(request, []);
     strictText(request.task);
     strictText(request.constraints);
     request.discoveryHints.forEach(strictText);
