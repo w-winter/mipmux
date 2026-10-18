@@ -166,7 +166,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 17);
+    assert.equal(ready.manifest.schemaVersion, 18);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -194,10 +194,10 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
         }
       }
       const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
-        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots,
+        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
         codemapMode: manifest.codemapMode, materials,
-        fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
-      manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots), span: rendered.fileTreeSpan };
+        fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
+      manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), span: rendered.fileTreeSpan };
       manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
       manifest.accounting.bytes = rendered.measurement.bytes; manifest.accounting.units = rendered.measurement.units;
       await writeFile(join(ready.directory, 'context.md'), rendered.context); await writeFile(join(ready.directory, 'handoff.md'), rendered.handoff);
@@ -205,7 +205,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
       await assert.rejects(verifyBundle(ready.directory), /bundleIntegrityFailed/);
     }
     const restored = renderBundle(await prepareClipboard(f.runtime, { request: ready.manifest.request, inventory: ready.manifest.inventory,
-      automaticAcquisition: { kind: 'settled', outcomes: ready.manifest.automaticCodemaps }, unavailableRoots: ready.manifest.unavailableRoots,
+      automaticAcquisition: { kind: 'settled', outcomes: ready.manifest.automaticCodemaps }, unavailableRoots: ready.manifest.unavailableRoots, unavailableFiles: ready.manifest.unavailableFiles,
       prompt: ready.manifest.prompt, codemapMode: ready.manifest.codemapMode, materials: saved.materials, fileTree: saved.fileTree }, signal(), { kind: 'captured', capture: saved.automaticGit }));
     await writeFile(join(ready.directory, 'context.md'), restored.context); await writeFile(join(ready.directory, 'handoff.md'), restored.handoff);
     await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON(ready.manifest));
@@ -233,10 +233,10 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
     manifest.inventory.inventoryDigest = inventoryDigest(manifest.inventory);
     const materials = saved.materials.filter(item => item.record.id !== sourceId(dependency));
     const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
-      automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots,
+      automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
       codemapMode: manifest.codemapMode, materials,
-      fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
-    manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots), span: rendered.fileTreeSpan };
+      fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
+    manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), span: rendered.fileTreeSpan };
     assert.deepEqual(rendered.diagnostics, []);
     manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };
     manifest.accounting.bytes = rendered.measurement.bytes; manifest.accounting.units = rendered.measurement.units;

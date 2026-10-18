@@ -9,6 +9,7 @@ import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset, PromptSectionsO
 import { NativeFileTreeInput, NativeGitCheckout, AutomaticReviewGitCheckout, AutomaticReviewGitPathIssue, AutomaticReviewGitCompleteness } from './native.js';
 import { AutomaticCodemapOutcome } from './automatic-codemaps.js';
 import { Clarification } from './interaction.js';
+import { UnreadableFileCode } from './errors.js';
 
 const closed = { additionalProperties: false };
 const positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
@@ -159,13 +160,17 @@ export const MaterialRecord = Type.Union([
   Type.Object({ ...gitRecord, kind: Type.Literal('gitPatch') }, closed),
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
+/** selectionIndex is the original zero-based position among explicit source selections. */
 export const OmittedSource = Type.Object({ id: Type.String(), selection: SourceSelection,
-  identity: SourceIdentity, mode: sourceRecord.mode }, closed);
+  identity: SourceIdentity, mode: sourceRecord.mode, selectionIndex: SafeCount }, closed);
 export type OmittedSource = Static<typeof OmittedSource>;
 export const UnavailableRoot = Type.Object({ root: RootName,
   code: Type.Enum(['notFound', 'permissionDenied', 'rootChanged', 'nonRegularFile', 'symlink', 'nativeIOFailed']),
   sources: Type.Array(OmittedSource) }, closed);
 export type UnavailableRoot = Static<typeof UnavailableRoot>;
+export const UnavailableFile = Type.Object({ ...OmittedSource.properties,
+  selection: Type.Union([SourceSelection.anyOf[0], SourceSelection.anyOf[1]]), code: UnreadableFileCode }, closed);
+export type UnavailableFile = Static<typeof UnavailableFile>;
 const gitCommit = Type.String({ pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' });
 const reviewComparison = Type.Object({ head: gitCommit, base: gitCommit }, closed);
 const capturedReviewCheckout = { checkout: AutomaticReviewGitCheckout };
@@ -177,7 +182,7 @@ export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticR
   ])) }, closed);
 export type AutomaticReviewGitEvidence = Static<typeof AutomaticReviewGitEvidence>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(17),
+  schemaVersion: Type.Literal(18),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
   request: ContextBuildRequest,
@@ -188,6 +193,7 @@ export const Manifest = Type.Object({
   prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
   unavailableRoots: Type.Array(UnavailableRoot),
+  unavailableFiles: Type.Array(UnavailableFile),
   clipboardPreset: CapturedClipboardPreset,
   automaticGit: Type.Union([Type.Object({ evidence: AutomaticReviewGitEvidence, span: Type.Union([Span, Type.Null()]) }, closed), Type.Null()]),
   fileTree: Type.Object({ input: NativeFileTreeInput, span: Span }, closed),

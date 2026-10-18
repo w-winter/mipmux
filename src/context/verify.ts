@@ -47,7 +47,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   requireEqual(sha256(canonicalJSON(manifest.request)), manifest.requestDigest);
   requireEqual(inventoryDigest(manifest.inventory), manifest.inventory.inventoryDigest);
   const materials = decodeMaterials(manifest, context);
-  requireEqual(manifest.fileTree.input, finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots));
+  requireEqual(manifest.fileTree.input, finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles));
   const treeSpan = manifest.fileTree.span, treeBytes = context.subarray(treeSpan.offset, treeSpan.offset + treeSpan.length);
   requireEqual(identity(treeBytes), { byteCount: treeSpan.length, sha256: treeSpan.sha256 });
   const fileTree = { input: manifest.fileTree.input, text: decodedBody(treeBytes) };
@@ -64,6 +64,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     prompt: manifest.prompt,
     materials,
     unavailableRoots: manifest.unavailableRoots,
+    unavailableFiles: manifest.unavailableFiles,
     automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
     fileTree,
     clipboard: decodedBody(context),
@@ -228,7 +229,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   else {
     if (explicit.some(record => record.selection.kind === 'codemap')) throw new WorkspaceFailure('bundleIntegrityFailed');
     const catalog = new Set(manifest.inventory.entries.filter(entry => entry.kind === 'file').map(sourceId));
-    const omitted = manifest.unavailableRoots.flatMap(root => root.sources).filter(source => source.selection.kind !== 'codemap');
+    const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles].filter(source => source.selection.kind !== 'codemap');
     const seeds = [...explicit, ...omitted].filter(record => catalog.has(record.id)).map(record => record.selection.source);
     const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds,
       new Set(manifest.unavailableRoots.map(root => root.root))).targets : [];

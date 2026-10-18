@@ -3,6 +3,7 @@ import { performance } from 'node:perf_hooks';
 import {
   type ContextBuildRequest,
   type UnavailableRoot,
+  type UnavailableFile,
   type CodemapMode,
   contextRequestValidator,
   type DraftInspection,
@@ -67,6 +68,7 @@ import { acquireAutomaticCodemaps, automaticAcquisitionSummary, automaticCodemap
 import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
 import { captureReferenceTokens, referenceTokenFields, type ReferenceTokenView } from './reference-tokens.js';
 import { captureSourcePresentation, selectionSourcePath, unavailableSelectionRoots } from './source-presentation.js';
+import { capturedSourceSelections } from './source-omissions.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
@@ -100,6 +102,7 @@ export class DraftRuntime {
   #inventory: InventorySnapshot;
   #referenceTokens: ReferenceTokenView | null = null;
   #unavailableRoots: readonly UnavailableRoot[] = [];
+  #unavailableFiles: readonly UnavailableFile[] = [];
   private constructor(
     readonly operation: WorkspaceOperation,
     readonly request: ContextBuildRequest,
@@ -210,7 +213,7 @@ export class DraftRuntime {
         const checkout = await this.gitTarget.publication(operation, current, request);
         this.#check(signal, this.#revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
-        const paths = scope === 'selected' ? selectedGitSourcePaths(operation, current) : null;
+        const paths = scope === 'selected' ? selectedGitSourcePaths(operation, capturedSourceSelections([...current.values()], [], [])) : null;
         const captured = await captureElectedGitDiff(operation, request, checkout, generateDiffText, paths);
         this.#check(signal, this.#revision);
         if (generation !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
@@ -248,13 +251,13 @@ export class DraftRuntime {
         if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
         const repository = await resolveDiffRepository(operation, checkout.root, { kind: 'elected', checkout });
         const prepared = await prepareGitPublicationMetadata(operation, checkout, repository);
-        const paths = capturedOptions.scope === 'selected' ? selectedGitSourcePaths(operation, current) : null;
+        const paths = capturedOptions.scope === 'selected' ? selectedGitSourcePaths(operation, capturedSourceSelections([...current.values()], [], [])) : null;
         const captured = await captureElectedGitDiff(operation, request, checkout, capturedOptions.mode !== 'quick', paths);
         check();
         return publishGitSnapshot(operation, { ...captured, checkout }, request, capturedOptions, this.id, check, prepared);
       };
       let published = checkouts.length > 1
-        ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, current),
+        ? await publishGitSnapshotBatch(operation, checkouts, selectedGitSourcePaths(operation, capturedSourceSelections([...current.values()], [], [])),
           request, capturedOptions, this.id, check)
         : await publishSingle();
       check();
@@ -533,7 +536,7 @@ export class DraftRuntime {
     const snapshot = operation.snapshot;
     const sourceView = await captureSourcePresentation(operation, observed, request);
     const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: sourceView.materials, automaticAcquisition: acquisition, unavailableRoots: [] }, operation.signal, { kind: 'live', operation });
+      prompt, codemapMode: mode, materials: sourceView.materials, automaticAcquisition: acquisition, unavailableRoots: [], unavailableFiles: [] }, operation.signal, { kind: 'live', operation });
     const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
     const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display,
       acquisition.kind === 'settled' ? acquisition.outcomes : [], acquisition.kind === 'settled' ? coverage.sourceIssues : []);
@@ -605,7 +608,7 @@ export class DraftRuntime {
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         const observed = await this.#liveMaterials(operation, [...next.values()]);
         const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
-          codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps }, unavailableRoots: [] }, AbortSignal.any([signal, this.#cancel.signal]),
+          codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps }, unavailableRoots: [], unavailableFiles: [] }, AbortSignal.any([signal, this.#cancel.signal]),
           { kind: 'live', operation });
         const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
         this.#check(signal, request.expectedRevision);
@@ -725,7 +728,7 @@ export class DraftRuntime {
     const mode = state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const;
     const observed = await this.#liveMaterials(operation, [...next.values()]);
     const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
-      codemapMode: mode, materials: observed, automaticAcquisition, unavailableRoots: [] }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation });
+      codemapMode: mode, materials: observed, automaticAcquisition, unavailableRoots: [], unavailableFiles: [] }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation });
     const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, { roots: this.#selection.roots, state });
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
@@ -793,7 +796,7 @@ export class DraftRuntime {
     const captured = [...this.#materials.values()], codemapMode = this.#codemapMode,
       revision = this.#revision, state = this.#state, text = this.#prompt, automaticAcquisition = this.#automaticAcquisition, canonical = this.#selection;
     const materials = await this.#liveMaterials(operation, captured);
-    const omittedIds = new Set(this.#unavailableRoots.flatMap(root => root.sources.map(source => source.id)));
+    const omittedIds = new Set([...this.#unavailableRoots.flatMap(root => root.sources.map(source => source.id)), ...this.#unavailableFiles.map(source => source.id)]);
     const inputForRender = await prepareRenderInput(this.operation.runtime, {
         codemapMode,
         request: this.request,
@@ -801,6 +804,7 @@ export class DraftRuntime {
         prompt: text,
         materials: state === 'terminal' ? materials.filter(material => !omittedIds.has(material.record.id)) : materials,
         unavailableRoots: state === 'terminal' ? this.#unavailableRoots : [],
+        unavailableFiles: state === 'terminal' ? this.#unavailableFiles : [],
         automaticAcquisition,
       }, signal, state === 'terminal' ? { kind: 'captured', capture: this.#automaticGit } : { kind: 'live', operation });
     const rendered = renderBundle(inputForRender), tokens = state === 'terminal' ? this.#referenceTokens
@@ -859,7 +863,7 @@ export class DraftRuntime {
       try {
         const tree = await initialFileTree(operation, selection);
         const materials = await refreshGitArtifactMaterials(operation, input.materials);
-        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, inventory: operation.snapshot, materials, unavailableRoots: [] }, operation.signal, { kind: 'live', operation }),
+        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, inventory: operation.snapshot, materials, unavailableRoots: [], unavailableFiles: [] }, operation.signal, { kind: 'live', operation }),
           draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
         return { context, tree, prompt: input.prompt, roots: operation.snapshot.roots.map(root => root.name) };
       } finally { await operation.close(); }
@@ -873,7 +877,7 @@ export class DraftRuntime {
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const materials = await refreshGitArtifactMaterials(operation, captured);
-        await revalidateMaterials(operation, materials, []);
+        await revalidateMaterials(operation, materials, [], []);
         const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
           codemapMode,
           request: this.request,
@@ -881,7 +885,7 @@ export class DraftRuntime {
           prompt,
           materials,
           automaticAcquisition,
-          unavailableRoots: [],
+          unavailableRoots: [], unavailableFiles: [],
         }, operation.signal, { kind: 'live', operation }));
         return freeze({
           kind: 'validation' as const,
@@ -925,6 +929,7 @@ export class DraftRuntime {
       this.#inventory = operation.capturedInventory;
       this.#referenceTokens = operation.capturedReferenceTokens;
       this.#unavailableRoots = operation.capturedUnavailableRoots;
+      this.#unavailableFiles = operation.capturedUnavailableFiles;
       const captured = operation.capturedPresentation;
       this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;
@@ -942,6 +947,7 @@ export class DraftRuntime {
       this.#inventory = operation.capturedInventory;
       this.#referenceTokens = operation.capturedReferenceTokens;
       this.#unavailableRoots = operation.capturedUnavailableRoots;
+      this.#unavailableFiles = operation.capturedUnavailableFiles;
       const captured = operation.capturedPresentation;
       this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;

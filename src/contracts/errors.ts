@@ -12,6 +12,8 @@ const wireCodes = [
 ] as const;
 
 export const NativeWireFailureCode = Type.Enum(wireCodes);
+export const unreadableFileCodes = ['notFound', 'permissionDenied', 'nonRegularFile', 'symlink', 'nativeIOFailed'] as const;
+export const UnreadableFileCode = Type.Enum(unreadableFileCodes);
 export type NativeFailureCode = Static<typeof NativeWireFailureCode> |
   'invalidRequest' | 'nativeProtocolError' | 'nativeWorkerFailed' | 'cancelled' | 'nativeWorkerClosed';
 

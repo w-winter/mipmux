@@ -1,6 +1,6 @@
 import type { CapturedClipboardPreset } from '../contracts/presentation.js';
 import { posix } from 'node:path';
-import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { Material } from './material-store.js';
 import type { FinalFileTree } from './final-tree.js';
@@ -24,6 +24,7 @@ export interface RenderInput {
   readonly automaticGit: AutomaticReviewGitCapture | null;
   readonly tokenInputs: { readonly promptText: string; readonly selectedInstructionsText: string };
   readonly unavailableRoots: readonly UnavailableRoot[];
+  readonly unavailableFiles: readonly UnavailableFile[];
 }
 export interface ItemCost {
   readonly id: string;
@@ -144,6 +145,7 @@ export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
         ),
         materials: records.map((record) => ({ ...packetMetadata(record), spans: record.spans })),
         unavailableRoots: input.unavailableRoots,
+        unavailableFiles: input.unavailableFiles,
         automaticGit: input.automaticGit === null ? null : { evidence: input.automaticGit.evidence, span: automaticGitSpan },
         context: {
           path: posix.join(input.inventory.outputRoot.declaredPath, input.request.outputName, 'context.md'),

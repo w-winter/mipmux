@@ -65,6 +65,7 @@ struct GitTargetInput {
 
     func render(resolver: SelectedPathVCSResolver) async throws -> [String: Any] {
         guard !paths.isEmpty else { return ["kind": "gitTarget", "state": "deferred"] }
+        let paths = try Self.normalizedSelectionPaths(paths, roots: roots.map(\.path))
         let ownershipResolver = ReviewGitSelectedPathOwnershipResolver(dependencies: .live(resolver: resolver))
         let ownership = try await ownershipResolver.resolve(
             WorkspaceSelectedGitPathResolution(paths: paths, unresolvedCandidates: []),
@@ -115,6 +116,17 @@ struct GitTargetInput {
 
     private func unavailable(_ reason: String, count: Int) -> [String: Any] {
         ["kind": "gitTarget", "state": "unavailable", "reason": reason, "count": count]
+    }
+
+    static func normalizedSelectionPaths(_ paths: [String], roots: [String]) throws -> [String] {
+        try paths.map { path in
+            guard let root = roots.filter({ StandardizedPath.isDescendant(path, of: $0) })
+                .max(by: { $0.count < $1.count }) else { throw BridgeFailure("nativeProtocolError") }
+            let relative = String(path.dropFirst(root.count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            return StandardizedPath.join(
+                standardizedRoot: StandardizedPath.absolute(root), standardizedRelativePath: relative
+            )
+        }
     }
 
     /// Pinned GitRepoRootAuthorization.canonicalPath; hash inputs use their separate source normalization.

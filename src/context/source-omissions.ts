@@ -1,4 +1,4 @@
-import type { CodemapMode, Manifest, MaterialRecord, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, Manifest, MaterialRecord, SourceSelection, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { Material } from './material-store.js';
 import { sourceId } from './material-store.js';
@@ -14,18 +14,49 @@ export async function captureUnavailableRoots(operation: WorkspaceOperation): Pr
 }
 
 /** Omits only optional source bodies; supplied evidence and required inputs keep their ordinary verification. */
-export function packetSources(materials: readonly Material[], unavailable: readonly UnavailableRoot[]) {
+export async function packetSources(operation: WorkspaceOperation, materials: readonly Material[], unavailable: readonly UnavailableRoot[]) {
   const roots = new Map(unavailable.map(root => [root.root, { ...root, sources: [...root.sources] }]));
-  const delivered: Material[] = [];
+  const delivered: Material[] = [], unavailableFiles: UnavailableFile[] = [];
+  const indexes = new Map(materials.filter(({ record }) => record.kind === 'source' && record.selectionOrigin === 'explicit')
+    .map(({ record }, index) => [record.id, index]));
   for (const material of materials) {
     const record = material.record;
     if (record.kind !== 'source') { delivered.push(material); continue; }
     const root = roots.get(record.selection.source.root);
-    if (!root) { delivered.push(material); continue; }
+    if (!root) {
+      const file = await captureUnavailableFile(operation, record, indexes);
+      if (file) unavailableFiles.push(file);
+      else delivered.push(material);
+      continue;
+    }
     if (record.required) throw new WorkspaceFailure(root.code, { ...record.selection.source, required: true });
-    if (record.selectionOrigin === 'explicit') root.sources.push({ id: record.id, selection: record.selection, identity: record.identity, mode: record.mode });
+    if (record.selectionOrigin === 'explicit') root.sources.push({ id: record.id, selection: record.selection, identity: record.identity,
+      mode: record.mode, selectionIndex: indexes.get(record.id)! });
   }
-  return freeze({ materials: delivered, unavailableRoots: [...roots.values()] });
+  return freeze({ materials: delivered, unavailableRoots: [...roots.values()], unavailableFiles });
+}
+
+async function captureUnavailableFile(operation: WorkspaceOperation, record: Extract<MaterialRecord, { kind: 'source' }>, indexes: ReadonlyMap<string, number>): Promise<UnavailableFile | null> {
+  if (record.selection.kind === 'codemap') return null;
+  const state = await operation.sourceAvailability(record.selection.source);
+  if (state.kind === 'available') return null;
+  if (record.required) throw new WorkspaceFailure(state.code, { ...record.selection.source, required: true });
+  return { id: record.id, selection: record.selection, identity: record.identity, mode: record.mode,
+    selectionIndex: indexes.get(record.id)!, code: state.code };
+}
+
+export function capturedSourceSelections(materials: readonly Material[], roots: readonly UnavailableRoot[], files: readonly UnavailableFile[]): SourceSelection[] {
+  const selections = materials.flatMap(({ record }) => record.kind === 'source' && record.selectionOrigin === 'explicit' ? [record.selection] : []);
+  const omitted = [...roots.flatMap(root => root.sources), ...files].sort((a, b) => a.selectionIndex - b.selectionIndex);
+  for (const source of omitted) selections.splice(source.selectionIndex, 0, source.selection);
+  return selections;
+}
+
+export async function revalidateFileAvailability(operation: WorkspaceOperation, files: readonly UnavailableFile[]): Promise<void> {
+  for (const file of files) {
+    const state = await operation.sourceAvailability(file.selection.source);
+    if (state.kind !== 'unavailable' || state.code !== file.code) throw new WorkspaceFailure('sourceAvailabilityChanged', file.selection.source);
+  }
 }
 
 export async function revalidateRootAvailability(operation: WorkspaceOperation, roots: readonly UnavailableRoot[]): Promise<void> {
@@ -50,6 +81,16 @@ export function verifySourceOmissions(manifest: Manifest): void {
     if (!roots.has(root.root) || seenRoots.has(root.root)) throw new WorkspaceFailure('bundleIntegrityFailed');
     seenRoots.add(root.root);
     verifyRootSources(root, manifest.codemapMode, sources, required);
+  }
+  for (const file of manifest.unavailableFiles) {
+    if (!roots.has(file.selection.source.root) || seenRoots.has(file.selection.source.root) ||
+      file.id !== sourceId(file.selection.source) || sources.has(file.id) || required.has(file.id)) throw new WorkspaceFailure('bundleIntegrityFailed');
+    sources.add(file.id);
+  }
+  const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles];
+  const count = manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;
+  if (new Set(omitted.map(source => source.selectionIndex)).size !== omitted.length || omitted.some(source => source.selectionIndex >= count)) {
+    throw new WorkspaceFailure('bundleIntegrityFailed');
   }
   for (const record of manifest.materials) {
     const root = requiredPhysicalRoot(record);

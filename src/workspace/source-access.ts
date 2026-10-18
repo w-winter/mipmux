@@ -3,6 +3,7 @@ import type { NativeHandle } from '../contracts/native.js';
 import type { DirectoryRef, SourceIdentity } from '../contracts/workspace.js';
 import type { AdmittedRoot, SourcePath } from '../contracts/inventory.js';
 import { WorkspaceFailure } from './values.js';
+import { unreadableFileCodes } from '../contracts/errors.js';
 
 export interface OpenRoot extends AdmittedRoot { readonly handle: NativeHandle }
 export function unavailableRootCode(error: NativeFailure) {
@@ -11,6 +12,9 @@ export function unavailableRootCode(error: NativeFailure) {
       return error.code;
     default: return null;
   }
+}
+export function unavailableFileCode(error: NativeFailure) {
+  return unreadableFileCodes.find(code => code === error.code) ?? null;
 }
 /** Admits requested roots once per operation; native I/O rechecks each retained capability. */
 export class NativeAccess {

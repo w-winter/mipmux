@@ -6,12 +6,11 @@ import { canonicalJSON, freeze, WorkspaceFailure } from '../workspace/values.js'
 import type { Material } from './material-store.js';
 import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { readAuthorizedGitArtifact } from '../workspace/git-artifact-catalog.js';
+import type { SourceSelection } from '../contracts/context.js';
 
 type Resolution = Extract<NativeResult, { kind: 'gitTarget' }>;
 
-export function selectedGitSourcePaths(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>): string[] {
-  const sources = [...materials.values()].flatMap(material => material.record.kind === 'source'
-    && material.record.selection.kind !== 'codemap' ? [material.record.selection] : []);
+export function selectedGitSourcePaths(operation: WorkspaceOperation, sources: readonly SourceSelection[]): string[] {
   return ['full', 'slices'].flatMap(kind => sources.filter(source => source.kind === kind).map(source => {
     const root = operation.snapshot.roots.find(root => root.name === source.source.root);
     if (!root) throw new WorkspaceFailure('unknownRoot');
@@ -25,7 +24,7 @@ export class FrozenGitTarget {
   get restrictsGitToExplicitReadOnly(): boolean { return this.resolution.state !== 'available'; }
 
   static async capture(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>): Promise<FrozenGitTarget> {
-    const paths = selectedGitSourcePaths(operation, materials);
+    const paths = selectedGitSourcePaths(operation, [...materials.values()].flatMap(({ record }) => record.kind === 'source' ? [record.selection] : []));
     const resolution: Resolution = !paths.length ? { kind: 'gitTarget', state: 'deferred' }
       : operation.runtime.options.git === undefined ? { kind: 'gitTarget', state: 'unavailable', reason: 'nonGitSelection', count: paths.length }
       : await operation.electGitTarget(paths);

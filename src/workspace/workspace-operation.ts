@@ -2,7 +2,8 @@ import type { InventorySnapshot, SourcePath, PolicySnapshot } from '../contracts
 import type { ReadRequest, TreeRequest, StructureRequest, SearchRequest } from '../contracts/exploration.js';
 import type { BridgeClient } from '../native/bridge-client.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
-import { NativeAccess } from './source-access.js';
+import { NativeAccess, unavailableFileCode } from './source-access.js';
+import { NativeFailure } from '../native/bridge-client.js';
 import { RootPolicy, contains, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
 import { canonicalJSON, WorkspaceFailure } from './values.js';
 import { readFile } from '../exploration/read.js';
@@ -149,6 +150,28 @@ export class WorkspaceOperation {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       return access.rootAvailability(name);
+    });
+  }
+  /** Observes a captured path even after catalog removal; bodies never leave this availability check. */
+  sourceAvailability(source: SourcePath) {
+    const captured = structuredClone(source);
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      const policy = new RootPolicy(this.declaration, access);
+      if (policy.denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
+      await access.validateRoot(captured.root);
+      try {
+        const entry = this.snapshot.entries.find(entry => entry.root === captured.root && entry.path === captured.path);
+        if (entry?.kind === 'file') await policy.revalidate(captured, this.snapshot.policy, entry.visibility);
+        const read = await access.read(captured, null);
+        return { kind: 'available' as const, identity: read.identity, mode: read.fingerprint.mode, key: read.key };
+      } catch (error) {
+        this.signal.throwIfAborted();
+        if (!(error instanceof NativeFailure)) throw error;
+        const code = unavailableFileCode(error);
+        if (code === null) throw error;
+        return { kind: 'unavailable' as const, code };
+      }
     });
   }
   validateSourceRoots() {

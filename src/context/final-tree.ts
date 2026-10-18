@@ -1,4 +1,4 @@
-import type { CodemapMode, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { NativeOperation } from '../contracts/native.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
@@ -16,10 +16,11 @@ export interface FinalFileTree {
 
 /** Captures final-export selection and operation-specific codemap availability in the admitted view. */
 export function finalFileTreeInput(inventory: Omit<InventorySnapshot, 'generation'>,
-  materials: readonly Material[], mode: CodemapMode, unavailableRoots: readonly UnavailableRoot[]): TreeInput {
+  materials: readonly Material[], mode: CodemapMode, unavailableRoots: readonly UnavailableRoot[], unavailableFiles: readonly UnavailableFile[]): TreeInput {
   const selected = new Set<string>(), available = new Set<string>();
   const unavailable = new Set(unavailableRoots.map(root => root.root));
   for (const root of unavailableRoots) for (const source of root.sources) if (source.selection.kind !== 'codemap') selected.add(source.id);
+  for (const source of unavailableFiles) selected.add(source.id);
   for (const material of materials) {
     const record = material.record;
     if (record.kind === 'document' && record.input.kind === 'localDocument') selected.add(sourceId(record.input.source));
@@ -46,14 +47,14 @@ export function finalFileTreeInput(inventory: Omit<InventorySnapshot, 'generatio
 }
 
 export async function renderFinalFileTree(runtime: SmipRuntime, inventory: Omit<InventorySnapshot, 'generation'>,
-  materials: readonly Material[], mode: CodemapMode, unavailableRoots: readonly UnavailableRoot[], signal: AbortSignal): Promise<FinalFileTree> {
-  const input = finalFileTreeInput(inventory, materials, mode, unavailableRoots);
+  materials: readonly Material[], mode: CodemapMode, unavailableRoots: readonly UnavailableRoot[], unavailableFiles: readonly UnavailableFile[], signal: AbortSignal): Promise<FinalFileTree> {
+  const input = finalFileTreeInput(inventory, materials, mode, unavailableRoots, unavailableFiles);
   const result = await runtime.renderPresentation(input, signal);
   return { input, text: result.tree };
 }
 
 export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs'>,
   signal: AbortSignal, gitSource: AutomaticReviewGitSource): Promise<RenderInput> {
-  const fileTree = await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, input.unavailableRoots, signal);
+  const fileTree = await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, input.unavailableRoots, input.unavailableFiles, signal);
   return prepareClipboard(runtime, { ...input, fileTree }, signal, gitSource);
 }

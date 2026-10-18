@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import type { CodemapMode, ContextBuildRequest, Manifest, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, Manifest, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
@@ -36,6 +36,8 @@ export class FinalizationOperation {
   get capturedInventory(): InventorySnapshot { return this.#capturedInventory; }
   #capturedUnavailableRoots: readonly UnavailableRoot[] = [];
   get capturedUnavailableRoots(): readonly UnavailableRoot[] { return this.#capturedUnavailableRoots; }
+  #capturedUnavailableFiles: readonly UnavailableFile[] = [];
+  get capturedUnavailableFiles(): readonly UnavailableFile[] { return this.#capturedUnavailableFiles; }
   #capturedReferenceTokens: ReferenceTokenView | null = null;
   get capturedReferenceTokens(): ReferenceTokenView | null { return this.#capturedReferenceTokens; }
   #capturedAutomaticGit: AutomaticReviewGitCapture | null = null;
@@ -97,13 +99,14 @@ export class FinalizationOperation {
         const automaticAcquisition = presentation.automaticAcquisition;
         this.#capturedPresentation = { materials: new Map(captured.map(material => [material.record.id, material])),
           automaticAcquisition: freeze(automaticAcquisition) };
-        const delivery = packetSources(captured, rootFailures), materials = delivery.materials;
+        const delivery = await packetSources(operation, captured, rootFailures), materials = delivery.materials;
         this.#capturedUnavailableRoots = delivery.unavailableRoots;
-        await revalidateMaterials(operation, materials, delivery.unavailableRoots);
+        this.#capturedUnavailableFiles = delivery.unavailableFiles;
+        await revalidateMaterials(operation, materials, delivery.unavailableRoots, delivery.unavailableFiles);
         this.#capturedInventory = operation.snapshot;
         const { generation, ...inventory } = this.#capturedInventory;
         const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition,
-          unavailableRoots: delivery.unavailableRoots }, signal,
+          unavailableRoots: delivery.unavailableRoots, unavailableFiles: delivery.unavailableFiles }, signal,
           { kind: 'live', operation });
         this.#capturedAutomaticGit = input.automaticGit;
         this.#capturedReferenceTokens = await captureReferenceTokens(operation, input, canonical);
@@ -120,7 +123,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 17,
+        schemaVersion: 18,
         codemapMode,
         automaticCodemaps: [...automaticAcquisition.outcomes],
         request,
@@ -131,6 +134,7 @@ export class FinalizationOperation {
         prompt,
         materials: rendered.records,
         unavailableRoots: [...input.unavailableRoots],
+        unavailableFiles: [...input.unavailableFiles],
         clipboardPreset: input.clipboardPreset,
         automaticGit: input.automaticGit === null ? null : { evidence: input.automaticGit.evidence, span: rendered.automaticGitSpan },
         fileTree: { input: input.fileTree.input, span: rendered.fileTreeSpan },
@@ -179,7 +183,7 @@ export class FinalizationOperation {
           throw new WorkspaceFailure('readbackFailed');
         }
       }
-      await revalidateMaterials(operation, materials, input.unavailableRoots);
+      await revalidateMaterials(operation, materials, input.unavailableRoots, input.unavailableFiles);
       await revalidateCapturedAutomaticReviewGit(operation, input.automaticGit);
       signal.throwIfAborted();
       this.#claimed = true;

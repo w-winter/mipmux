@@ -67,7 +67,7 @@ export async function captureReferenceTokens(operation: WorkspaceOperation, inpu
     ...input.tokenInputs, fileTreeText: tree.tree, gitDiffText: gitText, metadataText: null,
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop }, operation.signal);
   const pending = input.automaticAcquisition.kind === 'pending' || input.materials.some(material => material.availability === 'pendingCodemap');
-  const omitted = input.unavailableRoots.flatMap(root => root.sources);
+  const omitted = [...input.unavailableRoots.flatMap(root => root.sources), ...input.unavailableFiles];
   const incompleteComponents: string[] = [];
   if (omitted.some(source => source.selection.kind !== 'codemap')) incompleteComponents.push('files');
   if (pending || omitted.some(source => source.selection.kind === 'codemap')) incompleteComponents.push('codemap_presentation');

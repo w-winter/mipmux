@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "cf1f892609cb1c078d3c4813697b3a45e3a4e0afabde97bc0c0b67b90e780532",
+      "sha256": "2d66a66eb26c4b789eb6269c71c7aa042c5e983a98582456f0b96178bfc30d26",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6125,11 +6125,12 @@
         "Admit source capabilities per requested root; pure captured-value operations no longer trigger unrelated source admission. Validate all source roots at Git, tree and structure boundaries; include the output root for whole-workspace operations. Fresh single-root validation serves automatic graph queries.",
         "Bind automatic Review ownership resolution to the existing tracked operation, with source/output root checks before reading native metadata; retain partial ownership groups rather than reusing all-or-nothing initial target election.",
         "Capture current published catalogs for tool calls and forks. Demand loading receives the requesting operation's captured view, including its explicit registrations; workspace refresh advances subsequent operations. Each invoking operation owns query workers through cancellation and closure.",
-        "For diff acquisition and checkout revalidation, prove the declared roots associated with resolved paths/checkouts. Unresolved candidates carry diagnostics and grant no filesystem access. Tree, structure and whole-workspace publication retain their wider checks."
+        "For diff acquisition and checkout revalidation, prove the declared roots associated with resolved paths/checkouts. Unresolved candidates carry diagnostics and grant no filesystem access. Tree, structure and whole-workspace publication retain their wider checks.",
+        "Observe per-file availability under original root capabilities and protected-path checks, even after catalog removal. Existing catalog entries retain policy revalidation. Normalize only expected native unreadability into typed observations; worker, policy, changed-root and cancellation failures propagate."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "44c7bd61c01a966d13c73d715c7c642dae7019978abd24f32beeaccea4829794",
+      "sha256": "cee1ecbc828cb9f259be9fcd68af67bea3d3dfc0a824653ca8e49f54e2e24b08",
       "classification": "handwritten"
     },
     {
@@ -6161,11 +6162,12 @@
         "Render ready exact requests as one staged batch per root, matching WorkspaceFileContextStore.swift:15109-15116,15180-15253 and coordinator460-494. Sort canonical paths with the existing headless file UUID tie-break. Return only the first nonrenderable file as terminal unmapped and keep its ready siblings pending; source/policy staleness discards the entire staged root. Captured raw identity, artifact key and executable mode are checked before classifying a nonrenderable result and after complete rendering. These native confined reads bind serving authority to the pinned snapshot rather than watcher-backed handles; they do not establish epoch/publication-retry equivalence. Original renderer, coordinator and diagnostic evidence is in test/fixtures/rpce-root-presentation/.",
         "Bind Coordinator208-345,849-947 selection attempts with a nil requested count to the existing operation: one captured intent, two attempts sharing the monotonic source deadline, demand retained through assembly and confined publication checks, release before retry, and codemap-free incomplete publication on stale exhaustion. Automatic acquisition is repeated from captured targets; incomplete automatic observations use the existing pending acquisition state and withhold inferred materials. The native identity/key/mode checks bind immutable serving authority rather than reproducing watcher epochs or Store receipts. test/fixtures/rpce-presentation-retry/ executes original wrapper, classifier and ownership release under scripted clocks and receipts.",
         "Share WorkspaceFileContextStore.swift:372,15031-15034 retained-record admission across explicit and inferred ready roots. WorkspaceRuntime owns at most 64 root reservations; WorkspaceOperation and the presentation attempt release exact owned reservations after assembly and serving checks, including failure, cancellation and stale retry. Capacity rejection makes only that root pending and does not trigger a stale retry. Pending inferred material retains its acquired-artifact outcome but has no rendered bodies, preventing incomplete publication. Native confined checks remain the authority for pinned roots; watcher epoch and frozen Store handle equivalence are separate obligations.",
-        "Probe represented roots once per presentation attempt. Unavailable manual roots remain pending while healthy roots continue; serving checks revalidate source bytes and policy for available roots."
+        "Probe represented roots once per presentation attempt. Unavailable manual roots remain pending while healthy roots continue; serving checks revalidate source bytes and policy for available roots.",
+        "Keep ordinary full/slice I/O absence separate from codemap staleness so content and packet projection can report nil bodies. Readable source identities, modes and codemap keys retain their existing freshness checks."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "485e0ad657e49cbac248f82cfe0a0e666970cb29fb318d834acc126ea4f5afe3",
+      "sha256": "5f0faaf0a4e9a1639a771779fdbb031cf49afb4701845e3286287c9869496275",
       "classification": "handwritten"
     },
     {
@@ -6210,7 +6212,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "cdd72d634e97343bd47da4dda397fd66b70bb1e8f30e6ca9b0e04fd12b675f66",
+      "sha256": "58d433ea98726254805522417622fa71c13bf357aabaedb3e4798f4f88cc2d2b",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6235,7 +6237,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
       "destination": "src/workspace/source-access.ts",
-      "sha256": "2ad914ebfef408f163ef46050341e70e2c6888dc6e9af20f45f0738f02a3b689",
+      "sha256": "443a9fe61ea9ce76be5bc18394de830af7fbab4b400ed4c7068071b03b0e26f5",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6448,14 +6450,15 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "af0fb8e60179220a578e1825c8e30748d9f09f9da2cb59f245028612f7e34760",
+      "sha256": "64fa0c2c2a53138ab3f35f7f71691de69fc24f19ef194c641e1590969867d2a7",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
-        "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 17 and retain the capture for terminal inspection.",
+        "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 18 and retain the capture for terminal inspection.",
         "Expose the captured automatic Git observation through a read-only getter; only the finalization owner may replace it.",
         "Retain the finalization inventory alongside material and automatic Git captures for terminal inspection after workspace lease release.",
-        "Capture unavailable roots before graph preparation, omit only optional source bodies and archive their original identities in manifest version 17. Revalidate the same root-availability outcomes before the publication claim; required material retains ordinary physical checks."
+        "Capture unavailable roots before graph preparation, omit only optional source bodies and archive their original identities in manifest version 18. Revalidate the same root-availability outcomes before the publication claim; required material retains ordinary physical checks.",
+        "Capture per-file omissions during body assembly and verify their absence before assembly and before publication. Preserve canonical materials separately for terminal inspection, with delivered-body measurement and explicit incomplete component estimates."
       ]
     },
     {
@@ -6512,7 +6515,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "native/Sources/SmipBridge/AutomaticReviewGitInput.swift",
-      "sha256": "5562465d354a8c45be0b40ebd8f09c04d566479e0a4e4c24f857926137ff344e",
+      "sha256": "285d3930f73a9ec4414278bd70680a9f6343cb59f0aae2d48b5bf27733372923",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6527,7 +6530,8 @@
       "changes": [
         "Use the existing helpers that resolve path ownership and format display labels, retaining valid checkout groups alongside path issues. Route Git reads through the root containing the first selected path, using Foundation-normalized root membership; the captured checkout identity remains the authority.",
         "Normalize diff whitespace and derive completeness with source predicates; expose native rendering and body spans through strict wire operations. Wrong-typed comparison bases reject before ownership lookup.",
-        "Decode each wire outcome into a paired typed source outcome and normalized record before rendering; preserve row order and exact normalization without parallel-array mutation."
+        "Decode each wire outcome into a paired typed source outcome and normalized record before rendering; preserve row order and exact normalization without parallel-array mutation.",
+        "Normalize each admitted root before appending its selected relative path. Foundation normalization of a deleted leaf must not introduce a different /private/var spelling from its cached owning checkout. Authorization continues to use the original root capability."
       ]
     },
     {
@@ -6535,7 +6539,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "fbef51673c68e66b91e79bdd869bb8561cc2fb58a89626f2828ca67d481c3e63",
+      "sha256": "cadf05b996e20f5d469073a3ce2be28c374176e3a37abf8c15f36b9d4767c2e4",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6556,7 +6560,8 @@
         "Retain per-checkout base/command outcomes, successful siblings and source-native rendering. Cancellation and headless root/security/worker failures reject rather than become source operational diagnostics.",
         "Capture preassembly evidence, not selected artifacts or Git snapshots. Replay captured bases for final serving checks; compare current intent for current bundle verification.",
         "Classify expected Git operational failures directly in each I/O catch after cancellation and root validation, preserving original errors for all other failure domains.",
-        "Treat omitted full/sliced paths as unresolved candidates for automatic Review export diagnostics. They grant no replacement-root filesystem access."
+        "Treat omitted full/sliced paths as unresolved candidates for automatic Review export diagnostics. They grant no replacement-root filesystem access.",
+        "Reconstruct original explicit source order from delivered records and omission indices. Catalog paths in available roots remain candidates for authorized deletion diffs even when ordinary bodies are omitted; unavailable-root or absent-catalog paths become unresolved candidates."
       ]
     },
     {
@@ -7510,9 +7515,10 @@
       "changes": [
         "Compute source component totals from captured full/sliced bodies, rendered codemaps, authorized Git artifacts and native-resolved prompt/meta text. Captured, incomplete and unavailable observations replace the desktop cache for tab accounting.",
         "Preview uses proposed file totals with canonical selection for tree markers and Git candidates. Token-tree markers use the current codemap presentation. Resolve Git from canonical catalog files; artifact and unresolved paths use original unresolved-selection diagnostics under the confined root binding.",
-        "Acquire token Git independently of selected export patches. Finalization retains its observation for terminal inspection after releasing the workspace lease. Complete-packet measurement remains the budget authority, and the export Git capture remains separate."
+        "Acquire token Git independently of selected export patches. Finalization retains its observation for terminal inspection after releasing the workspace lease. Complete-packet measurement remains the budget authority, and the export Git capture remains separate.",
+        "Record files as an incomplete component when optional full/slice bodies are omitted; terminal measurement remains the exact delivered packet."
       ],
-      "sha256": "7de88de7833210c529a2f10cd8439956b2a4ccb4010545b8afeed80287c59d07"
+      "sha256": "3ca42bdd121c1571cdfbc6746a2a692565153ce9cc4127b8aab2a2e3349a8562"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
@@ -7565,9 +7571,10 @@
       "changes": [
         "Bind source optional nil-content export to explicit unavailable-root metadata and omitted-source identities in the headless archive. Included bodies retain the existing exact spans and current-source checks; required sources cannot become omissions.",
         "Capture unavailable roots before graph preparation and hold that scope through publication. Current verification requires those unavailable-root outcomes to remain unchanged. Restoring an original root invalidates the current capture rather than adding source bodies.",
-        "Saved verification checks omission shape, source/root linkage, uniqueness and required-input preservation using packet bytes. It does not attest to historical filesystem failure."
+        "Saved verification checks omission shape, source/root linkage, uniqueness and required-input preservation using packet bytes. It does not attest to historical filesystem failure.",
+        "Capture optional full/slice I/O failures through the canonical source-availability boundary, alongside unavailable-root omissions. Preserve identity, representation, mode and explicit selection index. Required bodies reject. Revalidation requires the same file-failure code, including after catalog removal; readable or differently failing files invalidate the capture."
       ],
-      "sha256": "5c2c69981b40264fe01d33f73fcf2c4d13a38ee8af25785a1e6dd14fc8996894"
+      "sha256": "12d44e24695f45c59b8bd3b73b38b51ecb679ce6d3666219fef1755df45e0d0c"
     },
     {
       "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",
@@ -7585,6 +7592,31 @@
         "Retain checkout backend/root, fresh Git layout, checkout key, repository/worktree identity and linked-kind checks. Headless WorkspaceOperation validates the captured physical root capability before dispatch instead of authorization of desktop roots and sessions. VCS lookup shares the runtime cache used by election and automatic Review. Return one valid boolean through the strict existing wire."
       ],
       "sha256": "e5b8fe8fab0d2539fe915a206dd73e2b038ed8d03d823e578c583d2243c9f35a"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3e9503df1a195d080b2b054f7c58a28ec8c03cb59d7ed74277f5c62f07367e41",
+      "destination": "native/Sources/SmipBridge/GitTargetInput.swift",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          218,
+          245
+        ],
+        [
+          551,
+          572
+        ],
+        [
+          796,
+          873
+        ]
+      ],
+      "changes": [
+        "Bind ordinary full/sliced candidates to retained ownership, longest admitted root matching, identity grouping, ordering and primary election. Native wire inputs contain physical roots rather than references to desktop roots and sessions. Normalize the root before appending a selected relative path so a missing leaf retains the spelling of the source root; raw root identities and body authorization remain in WorkspaceOperation."
+      ],
+      "sha256": "835455f01950f818187e8624ab9dd51f5bab2193a3c9e9ee1d2f36516ceeac2b"
     }
   ],
   "dependencies": [

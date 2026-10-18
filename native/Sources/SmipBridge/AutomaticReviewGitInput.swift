@@ -82,8 +82,10 @@ struct AutomaticReviewGitInput {
             return ReviewGitDisplayRoot(logicalRootPath: path, logicalRootName: name, physicalRootPath: path)
         })
         let ownershipResolver = ReviewGitSelectedPathOwnershipResolver(dependencies: .live(resolver: resolver))
+        let normalized = try GitTargetInput.normalizedSelectionPaths(paths, roots: roots.map { $0["path"]! })
+        let pathResolution = WorkspaceSelectedGitPathResolution(paths: normalized, unresolvedCandidates: unresolved)
         let ownership = try await ownershipResolver.resolve(
-            WorkspaceSelectedGitPathResolution(paths: paths, unresolvedCandidates: unresolved), displayContext: display
+            pathResolution, displayContext: display
         )
         let checkouts = try ownership.checkouts.map { group -> [String: Any] in
             guard let path = group.selectedPaths.first,

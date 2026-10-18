@@ -10,6 +10,7 @@ import { structureId } from '../workspace/structure-identity.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { canonicalJSON, compareBytes, freeze, WorkspaceFailure } from '../workspace/values.js';
 import { unavailableSelectionRoots } from './source-presentation.js';
+import { NativeFailure } from '../native/bridge-client.js';
 
 // RPCE WorkspaceCodemapPresentationCoordinator's production readiness allowance.
 const codemapReadinessMilliseconds = 10000;
@@ -50,8 +51,13 @@ function reportStalePresentation(record: SourceRecord, cause: string): boolean {
 }
 
 async function revalidateSourceRecord(operation: WorkspaceOperation, record: SourceRecord): Promise<void> {
-  const current = await operation.readRawSource(record.selection.source);
-  if (canonicalJSON([current.identity, descriptorGitMode(current.fingerprint.mode)]) !== canonicalJSON([record.identity, record.mode]) ||
+  const current = await operation.sourceAvailability(record.selection.source);
+  if (current.kind === 'unavailable') {
+    // Full/slice body owners project nil content; codemap serving still requires its source.
+    if (record.selection.kind !== 'codemap') return;
+    throw new NativeFailure(current.code, null);
+  }
+  if (canonicalJSON([current.identity, descriptorGitMode(current.mode)]) !== canonicalJSON([record.identity, record.mode]) ||
     record.selection.kind === 'codemap' && canonicalJSON(current.key) !== canonicalJSON(record.artifactKey)) {
     throw new WorkspaceFailure('sourceChanged', record.selection.source);
   }

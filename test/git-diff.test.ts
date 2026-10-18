@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, open, readFile, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
@@ -162,16 +162,22 @@ test('public diff retains later chunk matches and follows the original stdin-err
       assert.equal(pathspecBytes >= sourceStdinThresholdBytes, longNames);
       const input = gitValidator.Parse(gitValidator.Default({ op: 'diff', root: 'r', paths, detail: 'files', maxOutputBytes: 100000 }));
       if (longNames) {
-        const original = spawnSync(git, ['diff', '--name-status', '--no-ext-diff', '--color=never',
-          '--pathspec-from-file=-', '--pathspec-file-nul', 'HEAD'], { cwd: f.repo, input: 'sub/file.swift\0outside.swift\0', encoding: 'utf8' });
-        assert.equal(original.error, undefined);
-        const sourceMessage = original.stderr.toLowerCase();
-        const recovers = sourceMessage.includes('unknown option') || sourceMessage.includes('pathspec-from-file');
-        if (original.status !== 0 && original.status !== 1 && !recovers) {
-          await assert.rejects(client.explore(workspace.id, { name: 'git', input }, signal()), /gitQueryFailed/);
-          proof.push({ pathspecCount: paths.length, pathspecBytes, sourceExit: original.status, recoveryAdmitted: false });
-          continue;
-        }
+        const probePath = join(f.base, 'probe-pathspecs');
+        await writeFile(probePath, 'sub/file.swift\0outside.swift\0');
+        const stdin = await open(probePath, 'r');
+        try {
+          // Git may reject the option before reading stdin; a file descriptor avoids a parent write racing that exit.
+          const original = spawnSync(git, ['diff', '--name-status', '--no-ext-diff', '--color=never',
+            '--pathspec-from-file=-', '--pathspec-file-nul', 'HEAD'], { cwd: f.repo, stdio: [stdin.fd, 'pipe', 'pipe'], encoding: 'utf8' });
+          assert.equal(original.error, undefined);
+          const sourceMessage = original.stderr.toLowerCase();
+          const recovers = sourceMessage.includes('unknown option') || sourceMessage.includes('pathspec-from-file');
+          if (original.status !== 0 && original.status !== 1 && !recovers) {
+            await assert.rejects(client.explore(workspace.id, { name: 'git', input }, signal()), /gitQueryFailed/);
+            proof.push({ pathspecCount: paths.length, pathspecBytes, sourceExit: original.status, recoveryAdmitted: false });
+            continue;
+          }
+        } finally { await stdin.close(); }
       }
       const result = reply.Parse(await client.explore(workspace.id, { name: 'git', input }, signal()));
       assert.equal(result.kind, 'git', JSON.stringify(result));
