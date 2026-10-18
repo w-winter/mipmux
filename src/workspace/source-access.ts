@@ -60,4 +60,7 @@ export class NativeAccess {
 
     return { bytes: reply.bytes, ...reply.result };
   }
+  async inspect(source: SourcePath) {
+    await this.bridge.request({ kind: 'inspectSource', root: (await this.openRoot(source.root)).handle, path: source.path }, this.signal);
+  }
 }

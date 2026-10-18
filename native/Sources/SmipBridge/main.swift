@@ -37,6 +37,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .openRoots(roots): try files.openRoots(roots)
     case let .listDirectory(root, path): try files.list(root, path: path, request: request)
     case let .fingerprintGitDiff(input): try files.fingerprintGitDiff(input)
+    case let .inspectSource(root, path): try files.inspectSource(root, path: path)
     case let .readSource(root, path, expected): try files.readSource(
             root,
             path: path,

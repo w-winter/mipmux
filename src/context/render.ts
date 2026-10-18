@@ -96,6 +96,10 @@ function materialDiagnostics(materials: readonly Material[], units: number, allo
     if (material.availability === 'pendingCodemap') {
       diagnostics.push({ code: 'codemapPending', materialId: material.record.id, details: { source: material.record.selection.source } });
     }
+    if (material.availability === 'unavailableCodemap') {
+      diagnostics.push({ code: 'codemapUnavailable', materialId: material.record.id,
+        details: { source: material.record.selection.source, cause: material.cause, disposition: material.disposition } });
+    }
   }
   if (units > allowance) {
     diagnostics.push({

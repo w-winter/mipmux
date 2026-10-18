@@ -362,6 +362,7 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('openRoots'), roots: Type.Array(declaration, { minItems: 1 }) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('listDirectory'), root: handle, directory: DirectoryRef }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readSource'), root: handle, path: RelativePath, expected: Type.Union([SourceIdentity, Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('inspectSource'), root: handle, path: RelativePath }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('extract'), extension: Type.String(), bytes: base64, expected: SourceIdentity }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('beginExport'), root: handle, name: Type.String({ pattern: '^[^/\\u0000]+$' }) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('writeExport'), run: handle, filename, bytes: base64 }, { additionalProperties: false }),
@@ -503,6 +504,7 @@ export const NativeResult = Type.Union([
     handle, name: RootName, access, identity: RootIdentity,
   }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('directoryComplete'), count: SafeCount, sha256: SHA256 }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('sourceInspected') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('sourceComplete'), identity: SourceIdentity,
     fingerprint: DescriptorFingerprint, key: Type.Union([ArtifactKey, Type.Null()]),
     decoding: Type.Union([

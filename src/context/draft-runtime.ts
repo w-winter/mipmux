@@ -567,6 +567,7 @@ export class DraftRuntime {
       const path = request.path_display === 'full' ? posix.join(root.identity.canonicalPath, record.selection.source.path) : relative;
       if (failure && record.selection.kind === 'codemap') { pending.push(path); continue; }
       if (material.availability === 'pendingCodemap') { pending.push(path); continue; }
+      if (material.availability === 'unavailableCodemap') { (material.disposition === 'pending' ? pending : unmapped).push(path); continue; }
       if (record.selection.kind === 'codemap' && !material.bodies.length) { unmapped.push(path); continue; }
       const fields = { path, tokens: failure ? 0 : estimateUnits(Buffer.byteLength(material.bodies.join(''))),
         rootPath: root.name, pathWithinRoot: record.selection.source.path };

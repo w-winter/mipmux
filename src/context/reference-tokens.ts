@@ -66,7 +66,7 @@ export async function captureReferenceTokens(operation: WorkspaceOperation, inpu
   const result = await operation.runtime.renderPresentation({ kind: 'calculateTokenStats', files: fileTokens(input),
     ...input.tokenInputs, fileTreeText: tree.tree, gitDiffText: gitText, metadataText: null,
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop }, operation.signal);
-  const pending = input.automaticAcquisition.kind === 'pending' || input.materials.some(material => material.availability === 'pendingCodemap');
+  const pending = input.automaticAcquisition.kind === 'pending' || input.materials.some(material => material.availability !== 'settled');
   const omitted = [...input.unavailableRoots.flatMap(root => root.sources), ...input.unavailableFiles];
   const incompleteComponents: string[] = [];
   if (omitted.some(source => source.selection.kind !== 'codemap')) incompleteComponents.push('files');

@@ -11,6 +11,8 @@ import { failureCode } from '../runtime/tool-result.js';
 import { canonicalJSON, compareBytes, freeze, WorkspaceFailure } from '../workspace/values.js';
 import { unavailableSelectionRoots } from './source-presentation.js';
 import { NativeFailure } from '../native/bridge-client.js';
+import { unavailableFileCode } from '../workspace/source-access.js';
+import { unreadableFileCodes } from '../contracts/errors.js';
 
 // RPCE WorkspaceCodemapPresentationCoordinator's production readiness allowance.
 const codemapReadinessMilliseconds = 10000;
@@ -19,6 +21,10 @@ const maximumPresentationAttempts = 2;
 const maximumCodemapPresentationEntriesPerRoot = 4096;
 
 type PendingPresentation = Extract<Material, { availability: 'pendingCodemap' }>;
+type ExplicitPendingPresentation = Omit<PendingPresentation, 'record'> & {
+  readonly record: Extract<PendingPresentation['record'], { selectionOrigin: 'explicit' }>;
+};
+type UnavailablePresentation = Extract<Material, { availability: 'unavailableCodemap' }>;
 type SourceRecord = Extract<Material['record'], { kind: 'source' }>;
 type Currentness = 'current' | 'stale';
 
@@ -50,6 +56,20 @@ function reportStalePresentation(record: SourceRecord, cause: string): boolean {
   return true;
 }
 
+function unavailablePresentation(material: ExplicitPendingPresentation, cause: UnavailablePresentation['cause'],
+  disposition: UnavailablePresentation['disposition']): UnavailablePresentation {
+  process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapDemandUnavailable',
+    ...material.record.selection.source, cause, disposition }) + '\n');
+  return freeze({ availability: 'unavailableCodemap', record: material.record, cause, disposition, bodies: [], sourceBlock: null });
+}
+
+async function servingStale(operation: WorkspaceOperation, record: SourceRecord, cause: string): Promise<boolean> {
+  if (!unreadableFileCodes.some(code => code === cause)) return reportStalePresentation(record, cause);
+  await operation.validateSourceRoot(record.selection.source.root);
+  process.stderr.write(JSON.stringify({ level: 'warn', event: 'codemapPresentationStale', ...record.selection.source, cause }) + '\n');
+  return true;
+}
+
 async function revalidateSourceRecord(operation: WorkspaceOperation, record: SourceRecord): Promise<void> {
   const current = await operation.sourceAvailability(record.selection.source);
   if (current.kind === 'unavailable') {
@@ -63,7 +83,7 @@ async function revalidateSourceRecord(operation: WorkspaceOperation, record: Sou
   }
 }
 
-async function renderRootCodemaps(operation: WorkspaceOperation, requests: PendingPresentation[]): Promise<{
+async function renderRootCodemaps(operation: WorkspaceOperation, requests: ExplicitPendingPresentation[]): Promise<{
   readonly currentness: Currentness; readonly materials: readonly Material[];
 }> {
   let serving = requests[0]!;
@@ -95,7 +115,7 @@ async function renderRootCodemaps(operation: WorkspaceOperation, requests: Pendi
     return { currentness: 'current', materials: rendered };
   } catch (error) {
     operation.signal.throwIfAborted();
-    if (!reportStalePresentation(serving.record, failureCode(error))) throw error;
+    if (!await servingStale(operation, serving.record, failureCode(error))) throw error;
     return { currentness: 'stale', materials: [] };
   }
 }
@@ -104,12 +124,12 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
   complete: (materials: ReadonlyMap<string, Material>, currentness: Currentness) => Promise<T>): Promise<T> {
   const ready = new Map(materials);
   let currentness: Currentness = 'current';
-  const retains: { readonly material: PendingPresentation;
+  const retains: { readonly material: ExplicitPendingPresentation;
     readonly lease: Awaited<ReturnType<WorkspaceOperation['requestExplicitCodemap']>> }[] = [];
-  const requestsByRoot = new Map<string, PendingPresentation[]>();
+  const requestsByRoot = new Map<string, ExplicitPendingPresentation[]>();
   const inferredByRoot = new Map<string, PendingPresentation[]>();
   const presentations: (() => void)[] = [];
-  const admitted: PendingPresentation[] = [];
+  const admitted: ExplicitPendingPresentation[] = [];
   const work: Promise<void>[] = [];
   const readinessClosed = new AbortController();
   const readinessSignal = AbortSignal.any([operation.signal, readinessClosed.signal]);
@@ -117,19 +137,37 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
   try {
     const unavailableRoots = await unavailableSelectionRoots(operation, materials);
     for (const captured of materials.values()) {
-      const material = pendingPresentation(captured);
-      if (material === null) continue;
-      if (material.record.selectionOrigin === 'inferred') {
-        const root = material.record.selection.source.root;
+      const pending = pendingPresentation(captured);
+      if (pending === null) continue;
+      const record = pending.record;
+      if (record.selectionOrigin === 'inferred') {
+        const root = record.selection.source.root;
         let inferred = inferredByRoot.get(root);
         if (!inferred) { inferred = []; inferredByRoot.set(root, inferred); }
-        inferred.push(material);
+        inferred.push(pending);
         continue;
       }
+      const material: ExplicitPendingPresentation = { ...pending, record };
       ready.set(material.record.id, material);
       if (unavailableRoots.has(material.record.selection.source.root)) continue;
-      const lease = await operation.requestExplicitCodemap(material.record.selection.source);
-      retains.push({ material, lease });
+      try {
+        const metadata = await operation.inspectCodemapSource(record.selection.source);
+        if (metadata.kind === 'unavailable') {
+          ready.set(record.id, unavailablePresentation(material, metadata.code, 'unmapped')); continue;
+        }
+        await revalidateSourceRecord(operation, record);
+        const lease = await operation.requestExplicitCodemap(record.selection.source);
+        retains.push({ material, lease });
+      } catch (error) {
+        operation.signal.throwIfAborted();
+        const code = error instanceof NativeFailure ? unavailableFileCode(error) : null;
+        if (code !== null) {
+          await operation.validateSourceRoot(record.selection.source.root);
+          ready.set(record.id, unavailablePresentation(material, code, 'pending')); continue;
+        }
+        if (!reportStalePresentation(record, failureCode(error))) throw error;
+        currentness = 'stale';
+      }
     }
     operation.signal.throwIfAborted();
     timer = setTimeout(() => readinessClosed.abort(), Math.max(0, deadline - performance.now()));
@@ -148,6 +186,11 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
           operation.signal.throwIfAborted();
           const cause = failureCode(error);
           if (cause === 'cancelled' && readinessClosed.signal.aborted) return;
+          const code = error instanceof NativeFailure ? unavailableFileCode(error) : null;
+          if (code !== null) {
+            await operation.validateSourceRoot(material.record.selection.source.root);
+            ready.set(material.record.id, unavailablePresentation(material, code, 'pending')); return;
+          }
           if (!reportStalePresentation(material.record, cause)) throw error;
           currentness = 'stale';
         }
@@ -179,6 +222,11 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
         ready.set(material.record.id, complete);
       } catch (error) {
         operation.signal.throwIfAborted();
+        const code = error instanceof NativeFailure ? unavailableFileCode(error) : null;
+        if (code !== null) {
+          await operation.validateSourceRoot(material.record.selection.source.root);
+          ready.set(material.record.id, unavailablePresentation(material, code, 'pending')); return;
+        }
         if (!reportStalePresentation(material.record, failureCode(error))) throw error;
         currentness = 'stale';
       }
@@ -222,7 +270,7 @@ async function publicationCurrentness(operation: WorkspaceOperation, mode: Codem
     try { await revalidateSourceRecord(operation, record); }
     catch (error) {
       operation.signal.throwIfAborted();
-      if (!reportStalePresentation(record, failureCode(error))) throw error;
+      if (!await servingStale(operation, record, failureCode(error))) throw error;
       return 'stale';
     }
   }

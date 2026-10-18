@@ -147,6 +147,21 @@ final class ConfinedFiles {
         return result
     }
 
+    func inspectSource(_ handle: NativeHandle, path: String) throws -> [String: Any] {
+        let root = try sourceRoot(handle)
+        var parts = try components(path)
+        let leaf = parts.removeLast()
+        let parent = try traverse(root.directory.value, components: parts)
+        var info = stat()
+        guard fstatat(parent.value, leaf, &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+        try validate(root)
+        switch info.st_mode & mode_t(S_IFMT) {
+        case mode_t(S_IFREG): return ["kind": "sourceInspected"]
+        case mode_t(S_IFLNK): throw BridgeFailure("symlink")
+        default: throw BridgeFailure("nonRegularFile")
+        }
+    }
+
     func readSource(_ handle: NativeHandle, path: String, expected: SourceIdentity?, request: Request, extraction: Extraction) throws -> [String: Any] {
         let root = try sourceRoot(handle)
         var parts = try components(path)

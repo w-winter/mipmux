@@ -152,6 +152,24 @@ export class WorkspaceOperation {
       return access.rootAvailability(name);
     });
   }
+  /** Classifies metadata admission independently of later byte reads; protected paths and original roots remain required. */
+  inspectCodemapSource(source: SourcePath) {
+    const captured = structuredClone(source);
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      if (new RootPolicy(this.declaration, access).denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
+      await access.validateRoot(captured.root);
+      try { await access.inspect(captured); return { kind: 'regular' as const }; }
+      catch (error) {
+        this.signal.throwIfAborted();
+        if (!(error instanceof NativeFailure)) throw error;
+        const code = unavailableFileCode(error);
+        if (code === null) throw error;
+        await access.validateRoot(captured.root);
+        return { kind: 'unavailable' as const, code };
+      }
+    });
+  }
   /** Observes a captured path even after catalog removal; bodies never leave this availability check. */
   sourceAvailability(source: SourcePath) {
     const captured = structuredClone(source);

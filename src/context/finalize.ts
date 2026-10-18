@@ -123,7 +123,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 19,
+        schemaVersion: 20,
         codemapMode,
         automaticCodemaps: [...automaticAcquisition.outcomes],
         request,

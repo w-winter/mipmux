@@ -25,6 +25,14 @@ export async function packetSources(operation: WorkspaceOperation, materials: re
     if (record.kind !== 'source') { delivered.push(material); continue; }
     const root = roots.get(record.selection.source.root);
     if (!root) {
+      if (material.availability === 'unavailableCodemap') {
+        if (material.record.required) throw new WorkspaceFailure(material.cause, material.record.selection.source);
+        const file = { id: material.record.id, selection: material.record.selection, identity: material.record.identity,
+          mode: material.record.mode, selectionIndex: indexes.get(material.record.id)!, code: material.cause,
+          artifactKey: material.record.artifactKey, disposition: material.disposition };
+        await revalidateFileAvailability(operation, [file]);
+        unavailableFiles.push(file); continue;
+      }
       const file = await captureUnavailableFile(operation, record, indexes, material.availability);
       if (file) unavailableFiles.push(file);
       else delivered.push(material);
@@ -103,6 +111,7 @@ export function verifySourceOmissions(manifest: Manifest): void {
       file.id !== sourceId(file.selection.source) || sources.has(file.id) || required.has(file.id)) throw new WorkspaceFailure('bundleIntegrityFailed');
     sources.add(file.id);
     if (file.code === 'codemapPending') verifyPendingCodemap(manifest, file);
+    if (file.selection.kind === 'codemap' && manifest.codemapMode !== 'manual') throw new WorkspaceFailure('bundleIntegrityFailed');
   }
   const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles];
   const count = manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;

@@ -168,12 +168,14 @@ export const UnavailableRoot = Type.Object({ root: RootName,
   code: Type.Enum(['notFound', 'permissionDenied', 'rootChanged', 'nonRegularFile', 'symlink', 'nativeIOFailed']),
   sources: Type.Array(OmittedSource) }, closed);
 export type UnavailableRoot = Static<typeof UnavailableRoot>;
-/** codemapPending records historical readiness; current verification binds its source identity, mode and artifact key. */
+/** codemapPending records historical readiness; manual I/O failures retain their observed pending/unmapped disposition. */
 export const UnavailableFile = Type.Union([
   Type.Object({ ...OmittedSource.properties,
     selection: Type.Union([SourceSelection.anyOf[0], SourceSelection.anyOf[1]]), code: UnreadableFileCode }, closed),
   Type.Object({ ...OmittedSource.properties, selection: SourceSelection.anyOf[2],
     code: Type.Literal('codemapPending'), artifactKey: ArtifactKey }, closed),
+  Type.Object({ ...OmittedSource.properties, selection: SourceSelection.anyOf[2], code: UnreadableFileCode,
+    disposition: Type.Enum(['pending', 'unmapped']), artifactKey: ArtifactKey }, closed),
 ]);
 export type UnavailableFile = Static<typeof UnavailableFile>;
 const gitCommit = Type.String({ pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' });
@@ -187,7 +189,7 @@ export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticR
   ])) }, closed);
 export type AutomaticReviewGitEvidence = Static<typeof AutomaticReviewGitEvidence>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(19),
+  schemaVersion: Type.Literal(20),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
   request: ContextBuildRequest,

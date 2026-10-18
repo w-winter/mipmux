@@ -6,6 +6,8 @@ import { prepareText } from '../exploration/lines.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { posix } from 'node:path';
 import { documentBlockPath, parseSourceBlock, type SourceBlock } from './source-block.js';
+import type { Static } from 'typebox';
+import type { UnreadableFileCode } from '../contracts/errors.js';
 
 export interface SettledMaterial {
   readonly availability: 'settled';
@@ -23,7 +25,15 @@ interface PendingCodemapMaterial {
   readonly bodies: readonly [];
   readonly sourceBlock: null;
 }
-export type Material = SettledMaterial | PendingCodemapMaterial;
+interface UnavailableCodemapMaterial {
+  readonly availability: 'unavailableCodemap';
+  readonly record: Extract<PendingCodemapMaterial['record'], { selectionOrigin: 'explicit' }>;
+  readonly cause: Static<typeof UnreadableFileCode>;
+  readonly disposition: 'pending' | 'unmapped';
+  readonly bodies: readonly [];
+  readonly sourceBlock: null;
+}
+export type Material = SettledMaterial | PendingCodemapMaterial | UnavailableCodemapMaterial;
 export function sourceId(source: { root: string; path: string }): string {
   return 'source:' + canonicalJSON([source.root, source.path]);
 }
