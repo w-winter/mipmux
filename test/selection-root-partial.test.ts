@@ -95,3 +95,41 @@ test('unavailable required source stays selected and prevents packet publication
     await workspace.close();
   } finally { await runtime.close(); }
 });
+
+test('content view loads full files and slices, withholding unreadable leaves without hiding healthy siblings', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'smip-selection-leaf-'));
+  const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
+  await writeFile(join(root, 'full.txt'), 'captured full content\n');
+  await writeFile(join(root, 'slice.txt'), 'first\ncaptured slice content\nlast\n');
+  await writeFile(join(root, 'healthy.txt'), 'healthy sibling content\n');
+  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  try {
+    const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
+    const draft = await workspace.createDraft({ task: 'Read selected content', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'full.txt' } },
+        { kind: 'slices', source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: null }] },
+        { kind: 'full', source: { root: 'r', path: 'healthy.txt' } }] },
+      requiredSources: [], documents: [], patches: [], discoveryHints: [], budgetUnits: 100000, outputName: 'packet',
+      copyPreset: 'standard', storedPrompts: [], duplicateUserInstructionsAtTop: false }, signal());
+    const original = draft.selectionProjection();
+    const get = () => draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'content', maxOutputBytes: 100000 })), signal());
+    for (const path of ['full.txt', 'slice.txt']) await rename(join(root, path), join(base, path));
+    const unavailable = partial.Parse(await get());
+    assert(unavailable.blocks.some(block => block.includes('healthy sibling content')));
+    assert(!unavailable.blocks.some(block => block.includes('captured full content') || block.includes('captured slice content')));
+    assert.deepEqual(unavailable.unavailable_sources.map(source => [source.path, source.code]).sort(), [['full.txt', 'notFound'], ['slice.txt', 'notFound']]);
+    assert.deepEqual(unavailable.files.filter(file => file.path !== 'healthy.txt').map(file => [file.path, file.render_mode, file.tokens]).sort(),
+      [['full.txt', 'full', 0], ['slice.txt', 'slice', 0]]);
+    assert.equal(unavailable.measurement.complete, false); assert.equal(unavailable.revision, 0);
+    assert.deepEqual(draft.selectionProjection(), original);
+    for (const path of ['full.txt', 'slice.txt']) await rename(join(base, path), join(root, path));
+    const recovered = partial.Parse(await get());
+    assert.equal(recovered.unavailable_sources.length, 0);
+    assert(recovered.blocks.some(block => block.includes('captured full content')));
+    assert(recovered.blocks.some(block => block.includes('captured slice content')));
+    assert.deepEqual(draft.selectionProjection(), original);
+    await mkdir('test-output', { recursive: true });
+    await writeFile('test-output/selection-leaf-content.json', JSON.stringify({ unavailable, recovered, original }, null, 2) + '\n');
+  } finally { await runtime.close(); }
+});

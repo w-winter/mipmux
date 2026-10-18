@@ -7537,9 +7537,10 @@
       "changes": [
         "Bind selected-file content to strict per-root availability. Catalog-resolved full/sliced entries retain their representation with zero tokens and no content block when root authority is unavailable. Missing catalog records become invalid full/slice paths; canonical material membership remains owned by the draft.",
         "Keep captured material bodies separate from the current reply projection. Emit unavailable_sources and incomplete measurement while preserving replacement-directory rejection and publication checks for required sources.",
-        "Move the existing formatter for full/slice blocks into this presentation owner. Classify expected physical read failures at that boundary so other selected files keep their blocks. Source/policy changes, protocol/worker failures and cancellation propagate."
+        "Move the existing formatter for full/slice blocks into this presentation owner. Classify expected physical read failures at that boundary so other selected files keep their blocks. Source/policy changes, protocol/worker failures and cancellation propagate.",
+        "Content view reloads both full files and slices through the existing confined source reader, preserving captured raw identity, executable mode and decoding. Expected read failures retain nil-content entries and healthy sibling blocks. Summary and files views keep captured observation semantics."
       ],
-      "sha256": "a8dae15a9cc25ee07079819372b131c863ec10eb5ca23894763b1227817e8cd3"
+      "sha256": "c99b17543370380d50c2a90ef888bceb3f24ca2fe803d9f305abb7f8e768f2b5"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",

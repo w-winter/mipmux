@@ -31,16 +31,12 @@ async function sourceBlock(operation: WorkspaceOperation, record: SourceRecord, 
 > {
   try {
     if (record.selection.kind === 'codemap') return { kind: 'body', text: bodies.join('') };
-    let content = bodies.join('');
-    if (record.selection.kind === 'slices') {
-      const captured = await operation.readSource(record.selection.source);
-      const decoding = { kind: captured.decoding.kind, identity: captured.decoding.identity, encoding: captured.decoding.encoding };
-      if (canonicalJSON(captured.identity) !== canonicalJSON(record.identity) || descriptorGitMode(captured.fingerprint.mode) !== record.mode ||
-        canonicalJSON(decoding) !== canonicalJSON(record.decoding)) throw new WorkspaceFailure('sourceChanged', record.selection.source);
-      content = captured.text;
-    }
+    const captured = await operation.readSource(record.selection.source);
+    const decoding = { kind: captured.decoding.kind, identity: captured.decoding.identity, encoding: captured.decoding.encoding };
+    if (canonicalJSON(captured.identity) !== canonicalJSON(record.identity) || descriptorGitMode(captured.fingerprint.mode) !== record.mode ||
+      canonicalJSON(decoding) !== canonicalJSON(record.decoding)) throw new WorkspaceFailure('sourceChanged', record.selection.source);
     const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: path,
-      fileName: posix.basename(record.selection.source.path), content, ranges: record.selection.kind === 'slices' ? record.selection.ranges : null });
+      fileName: posix.basename(record.selection.source.path), content: captured.text, ranges: record.selection.kind === 'slices' ? record.selection.ranges : null });
     return { kind: 'body', text: block.text };
   } catch (error) {
     operation.signal.throwIfAborted();
