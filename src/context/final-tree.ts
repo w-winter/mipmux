@@ -20,7 +20,7 @@ export function finalFileTreeInput(inventory: Omit<InventorySnapshot, 'generatio
   const selected = new Set<string>(), available = new Set<string>();
   const unavailable = new Set(unavailableRoots.map(root => root.root));
   for (const root of unavailableRoots) for (const source of root.sources) if (source.selection.kind !== 'codemap') selected.add(source.id);
-  for (const source of unavailableFiles) selected.add(source.id);
+  for (const source of unavailableFiles) if (source.selection.kind !== 'codemap') selected.add(source.id);
   for (const material of materials) {
     const record = material.record;
     if (record.kind === 'document' && record.input.kind === 'localDocument') selected.add(sourceId(record.input.source));

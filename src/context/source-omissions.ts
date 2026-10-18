@@ -2,7 +2,8 @@ import type { CodemapMode, Manifest, MaterialRecord, SourceSelection, Unavailabl
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { Material } from './material-store.js';
 import { sourceId } from './material-store.js';
-import { freeze, WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON, freeze, WorkspaceFailure } from '../workspace/values.js';
+import { descriptorGitMode } from '../contracts/patches.js';
 
 export async function captureUnavailableRoots(operation: WorkspaceOperation): Promise<readonly UnavailableRoot[]> {
   const roots: UnavailableRoot[] = [];
@@ -24,7 +25,7 @@ export async function packetSources(operation: WorkspaceOperation, materials: re
     if (record.kind !== 'source') { delivered.push(material); continue; }
     const root = roots.get(record.selection.source.root);
     if (!root) {
-      const file = await captureUnavailableFile(operation, record, indexes);
+      const file = await captureUnavailableFile(operation, record, indexes, material.availability);
       if (file) unavailableFiles.push(file);
       else delivered.push(material);
       continue;
@@ -36,13 +37,27 @@ export async function packetSources(operation: WorkspaceOperation, materials: re
   return freeze({ materials: delivered, unavailableRoots: [...roots.values()], unavailableFiles });
 }
 
-async function captureUnavailableFile(operation: WorkspaceOperation, record: Extract<MaterialRecord, { kind: 'source' }>, indexes: ReadonlyMap<string, number>): Promise<UnavailableFile | null> {
-  if (record.selection.kind === 'codemap') return null;
+async function captureUnavailableFile(operation: WorkspaceOperation, record: Extract<MaterialRecord, { kind: 'source' }>, indexes: ReadonlyMap<string, number>, availability: Material['availability']): Promise<UnavailableFile | null> {
+  if (record.selection.kind === 'codemap') {
+    if (record.selectionOrigin !== 'explicit' || availability !== 'pendingCodemap' || record.required) return null;
+    const artifactKey = await revalidateCodemapSource(operation, record);
+    return { id: record.id, selection: record.selection, identity: record.identity, mode: record.mode,
+      selectionIndex: indexes.get(record.id)!, code: 'codemapPending', artifactKey };
+  }
   const state = await operation.sourceAvailability(record.selection.source);
   if (state.kind === 'available') return null;
   if (record.required) throw new WorkspaceFailure(state.code, { ...record.selection.source, required: true });
   return { id: record.id, selection: record.selection, identity: record.identity, mode: record.mode,
     selectionIndex: indexes.get(record.id)!, code: state.code };
+}
+
+async function revalidateCodemapSource(operation: WorkspaceOperation,
+  source: Pick<Extract<MaterialRecord, { kind: 'source' }>, 'selection' | 'identity' | 'mode' | 'artifactKey'>) {
+  const state = await operation.sourceAvailability(source.selection.source);
+  if (state.kind === 'unavailable') throw new WorkspaceFailure(state.code, source.selection.source);
+  if (state.key === null || canonicalJSON([state.identity, descriptorGitMode(state.mode), state.key]) !==
+    canonicalJSON([source.identity, source.mode, source.artifactKey])) throw new WorkspaceFailure('sourceChanged', source.selection.source);
+  return state.key;
 }
 
 export function capturedSourceSelections(materials: readonly Material[], roots: readonly UnavailableRoot[], files: readonly UnavailableFile[]): SourceSelection[] {
@@ -54,6 +69,7 @@ export function capturedSourceSelections(materials: readonly Material[], roots: 
 
 export async function revalidateFileAvailability(operation: WorkspaceOperation, files: readonly UnavailableFile[]): Promise<void> {
   for (const file of files) {
+    if (file.code === 'codemapPending') { await revalidateCodemapSource(operation, file); continue; }
     const state = await operation.sourceAvailability(file.selection.source);
     if (state.kind !== 'unavailable' || state.code !== file.code) throw new WorkspaceFailure('sourceAvailabilityChanged', file.selection.source);
   }
@@ -86,6 +102,7 @@ export function verifySourceOmissions(manifest: Manifest): void {
     if (!roots.has(file.selection.source.root) || seenRoots.has(file.selection.source.root) ||
       file.id !== sourceId(file.selection.source) || sources.has(file.id) || required.has(file.id)) throw new WorkspaceFailure('bundleIntegrityFailed');
     sources.add(file.id);
+    if (file.code === 'codemapPending') verifyPendingCodemap(manifest, file);
   }
   const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles];
   const count = manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;
@@ -95,6 +112,15 @@ export function verifySourceOmissions(manifest: Manifest): void {
   for (const record of manifest.materials) {
     const root = requiredPhysicalRoot(record);
     if (root !== null && seenRoots.has(root)) throw new WorkspaceFailure('bundleIntegrityFailed');
+  }
+}
+
+function verifyPendingCodemap(manifest: Manifest, file: Extract<UnavailableFile, { code: 'codemapPending' }>): void {
+  const entry = manifest.inventory.entries.find(entry => entry.root === file.selection.source.root && entry.path === file.selection.source.path);
+  if (manifest.codemapMode !== 'manual' || entry?.kind !== 'file' ||
+    (entry.structural.kind !== 'pending' && entry.structural.kind !== 'artifact') ||
+    canonicalJSON([entry.identity, entry.structural.key]) !== canonicalJSON([file.identity, file.artifactKey])) {
+    throw new WorkspaceFailure('bundleIntegrityFailed');
   }
 }
 

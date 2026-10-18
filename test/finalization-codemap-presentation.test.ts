@@ -52,17 +52,17 @@ test('finalization freshly applies root rendering before publication without req
       { kind: 'codemap', source: { root: 'a', path: 'Peer.swift' } }, { kind: 'codemap', source: { root: 'a', path: 'Empty.swift' } },
       { kind: 'codemap', source: { root: 'b', path: 'Healthy.swift' } },
     ] } }, f.signal);
-    const blocked = await f.client.finalize(draft.id, f.signal);
-    assert.equal(blocked.kind, 'blocked');
-    if (blocked.kind === 'blocked') { assert.equal(blocked.revision, 0); assert.equal(blocked.measurement.complete, false); }
-    assert.deepEqual(await readdir(join(f.base, 'out')), []);
-    await f.client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
-      op: 'remove', mode: 'codemap_only', paths: ['a/Empty.swift'], maxOutputBytes: 30000,
-    })), f.signal);
     const ready = await f.client.finalize(draft.id, f.signal); assert.equal(ready.kind, 'ready');
-    if (ready.kind === 'ready') await verifyBundle(ready.directory);
+    if (ready.kind === 'ready') {
+      await verifyBundle(ready.directory);
+      assert(ready.manifest.unavailableFiles.some(file => file.code === 'codemapPending' && file.selection.source.path === 'Peer.swift'));
+      const content = await readFile(join(ready.directory, 'context.md'), 'utf8');
+      assert(content.includes('SeedRecord')); assert(content.includes('HealthyRecord'));
+      assert(!ready.manifest.materials.some(record => record.kind === 'source' && record.selection.kind === 'codemap' &&
+        record.selection.source.path === 'Peer.swift'));
+    }
     await mkdir('test-output', { recursive: true });
-    await writeFile('test-output/final-codemap-root-proof.json', JSON.stringify({ blocked, ready }, null, 2) + '\n');
+    await writeFile('test-output/final-codemap-root-proof.json', JSON.stringify({ ready }, null, 2) + '\n');
   } finally { await f.client.close(); await f.runtime.close(); }
 });
 

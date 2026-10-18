@@ -6450,15 +6450,16 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "64fa0c2c2a53138ab3f35f7f71691de69fc24f19ef194c641e1590969867d2a7",
+      "sha256": "fdde533f36d478abc5ea5d0f40798b87734b75cfc3d3c9da20b5e40ca248a6e2",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
-        "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 18 and retain the capture for terminal inspection.",
+        "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 19 and retain the capture for terminal inspection.",
         "Expose the captured automatic Git observation through a read-only getter; only the finalization owner may replace it.",
         "Retain the finalization inventory alongside material and automatic Git captures for terminal inspection after workspace lease release.",
-        "Capture unavailable roots before graph preparation, omit only optional source bodies and archive their original identities in manifest version 18. Revalidate the same root-availability outcomes before the publication claim; required material retains ordinary physical checks.",
-        "Capture per-file omissions during body assembly and verify their absence before assembly and before publication. Preserve canonical materials separately for terminal inspection, with delivered-body measurement and explicit incomplete component estimates."
+        "Capture unavailable roots before graph preparation, omit only optional source bodies and archive their original identities in manifest version 19. Revalidate the same root-availability outcomes before the publication claim; required material retains ordinary physical checks.",
+        "Capture per-file omissions during body assembly and verify their absence before assembly and before publication. Preserve canonical materials separately for terminal inspection, with delivered-body measurement and explicit incomplete component estimates.",
+        "Archive the canonical version-19 pending-map omission variant. The existing root-atomic presentation and shared-deadline readiness owners run unchanged before packet partitioning."
       ]
     },
     {
@@ -7572,9 +7573,10 @@
         "Bind source optional nil-content export to explicit unavailable-root metadata and omitted-source identities in the headless archive. Included bodies retain the existing exact spans and current-source checks; required sources cannot become omissions.",
         "Capture unavailable roots before graph preparation and hold that scope through publication. Current verification requires those unavailable-root outcomes to remain unchanged. Restoring an original root invalidates the current capture rather than adding source bodies.",
         "Saved verification checks omission shape, source/root linkage, uniqueness and required-input preservation using packet bytes. It does not attest to historical filesystem failure.",
-        "Capture optional full/slice I/O failures through the canonical source-availability boundary, alongside unavailable-root omissions. Preserve identity, representation, mode and explicit selection index. Required bodies reject. Revalidation requires the same file-failure code, including after catalog removal; readable or differently failing files invalidate the capture."
+        "Capture optional full/slice I/O failures through the canonical source-availability boundary, alongside unavailable-root omissions. Preserve identity, representation, mode and explicit selection index. Required bodies reject. Revalidation requires the same file-failure code, including after catalog removal; readable or differently failing files invalidate the capture.",
+        "Omit optional manual pending codemaps from final delivery while preserving their source identity, mode, explicit index and artifact key. Keep required pending maps in the candidate so existing diagnostics block publication. codemapPending is a historical presentation observation, like automatic acquisition evidence; current verification binds its readable source and key rather than repeating readiness. Saved verification requires matching captured inventory metadata."
       ],
-      "sha256": "12d44e24695f45c59b8bd3b73b38b51ecb679ce6d3666219fef1755df45e0d0c"
+      "sha256": "b87da4e19f3441ece3d7ea9fd026595541dd27a743462f7cbaaad5c2d4ff876d"
     },
     {
       "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",

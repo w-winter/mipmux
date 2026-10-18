@@ -166,7 +166,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 18);
+    assert.equal(ready.manifest.schemaVersion, 19);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
