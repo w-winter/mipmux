@@ -225,7 +225,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   else {
     if (explicit.some(record => record.selection.kind === 'codemap')) throw new WorkspaceFailure('bundleIntegrityFailed');
     const seeds = explicit.map(record => record.selection.source);
-    const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds).targets : [];
+    const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds, new Set()).targets : [];
     const byId = new Map(candidates.map(candidate => [sourceId(candidate), candidate]));
     requireEqual(manifest.automaticCodemaps.map(item => sourceId(item.source)).sort(), [...byId.keys()].sort());
     for (const outcome of manifest.automaticCodemaps) {

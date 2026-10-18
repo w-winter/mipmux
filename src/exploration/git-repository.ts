@@ -24,7 +24,7 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
   if (!configured) throw new WorkspaceFailure('gitNotConfigured');
   const root = operation.snapshot.roots.find(root => root.name === rootName);
   if (!root) throw new WorkspaceFailure('unknownRoot');
-  await operation.validateSourceRoots();
+  await operation.validateSourceRoot(rootName);
   const run = async (cwd: string, args: readonly string[]) => {
     const result = await gitProcess(operation.runtime.supervisor, configured.executable, cwd, args, operation.signal, { kind: 'repository' });
     if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
@@ -69,7 +69,7 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
       throw new WorkspaceFailure('gitRepositoryDenied');
     }
   }
-  const access = await operation.openGitSourceAccess(repository.worktree);
+  const access = await operation.openGitSourceAccess(rootName, repository.worktree);
   const permits = (path: string) => {
     if (!pathValidator.Check(path)) throw new WorkspaceFailure('gitProtocolError');
     return !deniedAbsolutePath(operation.declaration, join(repository.worktree.canonicalPath, path), join(anchor.worktree.canonicalPath, path));

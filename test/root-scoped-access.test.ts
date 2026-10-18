@@ -38,13 +38,20 @@ test('a replaced root does not prevent scoped reads from an independent admitted
     assert.equal(reply.kind, 'read'); assert(JSON.stringify(reply).includes('Healthy second root'));
     const request = selectionValidator.Parse(selectionValidator.Default({ op: 'get', maxOutputBytes: 30000 }));
     const selected = await healthyDraft.manageSelection(request, signal()); assert.equal(selected.files.length, 1);
-    await assert.rejects(replacedDraft.manageSelection(request, signal()), /rootChanged/);
+    const unavailable = await replacedDraft.manageSelection(request, signal());
+    assert.equal(unavailable.files[0]?.tokens, 0);
+    assert.equal(unavailable.unavailable_sources[0]?.code, 'rootChanged');
     const manual = await healthyManual.manageSelection(request, signal()); assert.equal(manual.files.length, 1);
-    await assert.rejects(replacedManual.manageSelection(request, signal()), /rootChanged/);
+    const unavailableManual = await replacedManual.manageSelection(request, signal());
+    assert.equal(unavailableManual.files[0]?.tokens, 0);
+    assert.equal(unavailableManual.measurement.complete, false);
     const codemap = await healthyCodemap.manageSelection(request, signal()); assert.equal(codemap.files.length, 1);
-    await assert.rejects(replacedCodemap.manageSelection(request, signal()), /rootChanged/);
+    const unavailableCodemap = await replacedCodemap.manageSelection(request, signal());
+    assert.deepEqual(unavailableCodemap.files, []);
+    assert.equal(unavailableCodemap.unavailable_sources[0]?.required, true);
     await assert.rejects(operation.validateRoots(), /rootChanged/);
     await mkdir('test-output', { recursive: true });
-    await writeFile('test-output/root-scoped-access-proof.json', JSON.stringify({ healthy: healthy.identity, reply, selected, manual, codemap, replacementDenied: true }, null, 2) + '\n');
+    await writeFile('test-output/root-scoped-access-proof.json', JSON.stringify({ healthy: healthy.identity, reply, selected, manual, codemap,
+      unavailable, unavailableManual, unavailableCodemap, replacementDenied: true }, null, 2) + '\n');
   } finally { await operation.close(); await workspace.close(); await runtime.close(); }
 });

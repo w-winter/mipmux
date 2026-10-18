@@ -5957,7 +5957,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
       "destination": "src/workspace/structure-index.ts",
-      "sha256": "8c14941646363a85dba25449010397d9ea9b88ad38aac5456685eafbfcbaa723",
+      "sha256": "1eb840243bb4b067de95f42e69ac9b89c10a1af5a2ef689a7fc2448323eb6ebe",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5980,7 +5980,8 @@
       "changes": [
         "Bind admitted discoverable identities to immutable inventory and shared headless UUID ordering. Source/root admission and shared budgets retain production defaults from Models/WorkspaceCodemapAutomaticSelectionModels.swift:315-391.",
         "Reject a refused root without charging counters, retain useful later roots, then apply the existing1024-target demand gate from Selection/WorkspaceSelectionMutationService.swift:107-143. Return typed rejections rather than throwing or truncating accepted targets.",
-        "Project admitted captured source slots into source aggregate coverage separately from query admission. Rejected roots spend no allowance and contribute no issues for individual source files; target-demand rejection has unavailable aggregate coverage."
+        "Project admitted captured source slots into source aggregate coverage separately from query admission. Rejected roots spend no allowance and contribute no issues for individual source files; target-demand rejection has unavailable aggregate coverage.",
+        "Accept captured unavailable-root observations. Limits on source/root inputs precede per-root admission; an unavailable root contributes pending coverage and consumes no shared graph-query budget."
       ]
     },
     {
@@ -6123,11 +6124,12 @@
         "Bind ready-publication currentness to the existing owner of workspace demands. Revalidate confined raw bytes, artifact key, mode and applicable policy after extraction before completing the managed catalog. Native reads enforce root identity; no watcher ticket or app store is imported. The file also contains existing operation lifecycle, exploration and Git bindings.",
         "Admit source capabilities per requested root; pure captured-value operations no longer trigger unrelated source admission. Validate all source roots at Git, tree and structure boundaries; include the output root for whole-workspace operations. Fresh single-root validation serves automatic graph queries.",
         "Bind automatic Review ownership resolution to the existing tracked operation, with source/output root checks before reading native metadata; retain partial ownership groups rather than reusing all-or-nothing initial target election.",
-        "Capture current published catalogs for tool calls and forks. Demand loading receives the requesting operation's captured view, including its explicit registrations; workspace refresh advances subsequent operations. Each invoking operation owns query workers through cancellation and closure."
+        "Capture current published catalogs for tool calls and forks. Demand loading receives the requesting operation's captured view, including its explicit registrations; workspace refresh advances subsequent operations. Each invoking operation owns query workers through cancellation and closure.",
+        "For diff acquisition and checkout revalidation, prove the declared roots associated with resolved paths/checkouts. Unresolved candidates carry diagnostics and grant no filesystem access. Tree, structure and whole-workspace publication retain their wider checks."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "6bc535b5e885f7d060cf3e0d481c58a7745656d9ecb4574511526be5ccf6757e",
+      "sha256": "201f2cce389ba1a59b08a23f26d5f460f3f34c0202f3f76e04aec829c8598534",
       "classification": "handwritten"
     },
     {
@@ -6158,11 +6160,12 @@
         "Group ready exact-selection requests by logical root before body rendering. Apply WorkspaceFileContextStore.swift:373,15002-15017 entry admission at 4096 and MCPServerViewModel+SelectionCore.swift:591-602 pending disposition on rejection. Ready-no-symbols outcomes count; terminal-unavailable artifacts do not. Required membership participates in the same count and remains required while pending; publication requires a complete presentation. Other roots remain eligible. Original-body evidence is in test/fixtures/rpce-presentation-limit/.",
         "Render ready exact requests as one staged batch per root, matching WorkspaceFileContextStore.swift:15109-15116,15180-15253 and coordinator460-494. Sort canonical paths with the existing headless file UUID tie-break. Return only the first nonrenderable file as terminal unmapped and keep its ready siblings pending; source/policy staleness discards the entire staged root. Captured raw identity, artifact key and executable mode are checked before classifying a nonrenderable result and after complete rendering. These native confined reads bind serving authority to the pinned snapshot rather than watcher-backed handles; they do not establish epoch/publication-retry equivalence. Original renderer, coordinator and diagnostic evidence is in test/fixtures/rpce-root-presentation/.",
         "Bind Coordinator208-345,849-947 selection attempts with a nil requested count to the existing operation: one captured intent, two attempts sharing the monotonic source deadline, demand retained through assembly and confined publication checks, release before retry, and codemap-free incomplete publication on stale exhaustion. Automatic acquisition is repeated from captured targets; incomplete automatic observations use the existing pending acquisition state and withhold inferred materials. The native identity/key/mode checks bind immutable serving authority rather than reproducing watcher epochs or Store receipts. test/fixtures/rpce-presentation-retry/ executes original wrapper, classifier and ownership release under scripted clocks and receipts.",
-        "Share WorkspaceFileContextStore.swift:372,15031-15034 retained-record admission across explicit and inferred ready roots. WorkspaceRuntime owns at most 64 root reservations; WorkspaceOperation and the presentation attempt release exact owned reservations after assembly and serving checks, including failure, cancellation and stale retry. Capacity rejection makes only that root pending and does not trigger a stale retry. Pending inferred material retains its acquired-artifact outcome but has no rendered bodies, preventing incomplete publication. Native confined checks remain the authority for pinned roots; watcher epoch and frozen Store handle equivalence are separate obligations."
+        "Share WorkspaceFileContextStore.swift:372,15031-15034 retained-record admission across explicit and inferred ready roots. WorkspaceRuntime owns at most 64 root reservations; WorkspaceOperation and the presentation attempt release exact owned reservations after assembly and serving checks, including failure, cancellation and stale retry. Capacity rejection makes only that root pending and does not trigger a stale retry. Pending inferred material retains its acquired-artifact outcome but has no rendered bodies, preventing incomplete publication. Native confined checks remain the authority for pinned roots; watcher epoch and frozen Store handle equivalence are separate obligations.",
+        "Probe represented roots once per presentation attempt. Unavailable manual roots remain pending while healthy roots continue; serving checks revalidate source bytes and policy for available roots."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "0fbdfccfbff008b7a177770f8958d4aafb58a5290700a3ba62dfa98cbfe3e9f0",
+      "sha256": "485e0ad657e49cbac248f82cfe0a0e666970cb29fb318d834acc126ea4f5afe3",
       "classification": "handwritten"
     },
     {
@@ -6207,7 +6210,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "bcf763e8f2513abd0e6c87b6e6773f51a9ad55884ff318d5c3cf3a3f4b270d61",
+      "sha256": "a8c8f9c6d73d7e7c6ce97d77445dbfff17ff4e5024843d71a00ba67fdd8bdc5b",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6223,7 +6226,8 @@
         "Keep the captured selection and revision while the presentation wrapper repeats acquisition and reply assembly according to the source policy. Observation ownership advances only through this request's own retained maps, so a competing edit or finalization fence cannot be adopted by a retry. Public size/preview errors retain the source persistence-before-reply contract. Pending automatic publication uses the existing unresolved observation state and cannot be archived.",
         "Freeze explicit selection and mode for final assembly; pass the existing derive path as fresh acquisition for each presentation attempt. Adopt finalization materials and acquisition state as one observation on success or failure; canonical selection and revision stay owned by the draft.",
         "Pass operation-owned automatic Git preassembly through live observations and retain the finalization capture for terminal inspection after the workspace lease is released.",
-        "Use the admitted current operation consistently for selection, automatic graph resolution, previews, mutation receipts, startup context and validation. Captured material identities and required evidence remain fixed. Terminal inspection uses the finalization inventory."
+        "Use the admitted current operation consistently for selection, automatic graph resolution, previews, mutation receipts, startup context and validation. Captured material identities and required evidence remain fixed. Terminal inspection uses the finalization inventory.",
+        "Assemble current selection entries, blocks and component counts from per-source presentation availability while retaining canonical material membership. Explicit unavailable_sources and incomplete measurement distinguish absent bodies from removed selection."
       ]
     },
     {
@@ -6530,7 +6534,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "c8328d4ac8d99e58eae50b0205faf5754cd093d0ddb8325fb6066732a208b9cb",
+      "sha256": "00f4ae5d7910c18888181a2471b94d6d31cd2e0fb453b7aa7fe98696193c9b16",
       "classification": "handwritten",
       "ranges": [
         [
@@ -7497,7 +7501,34 @@
         "Preview uses proposed file totals with canonical selection for tree markers and Git candidates. Token-tree markers use the current codemap presentation. Resolve Git from canonical catalog files; artifact and unresolved paths use original unresolved-selection diagnostics under the confined root binding.",
         "Acquire token Git independently of selected export patches. Finalization retains its observation for terminal inspection after releasing the workspace lease. Complete-packet measurement remains the budget authority, and the export Git capture remains separate."
       ],
-      "sha256": "125fa05e313a6074b93f74bc8b7e8c03f25a144e5c26daeb2fd9d9bbff0c93c3"
+      "sha256": "8f9589e989272d6accab105a81b5001dc0288c05de4be05fe142d055ba95ee9e"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b50b67ae2d3ba73a90b652ce7b224fdb4dbe083a66f2348a4b5e6b93291f3234",
+      "destination": "src/context/source-presentation.ts",
+      "ranges": [
+        [
+          690,
+          778
+        ],
+        [
+          800,
+          843
+        ],
+        [
+          973,
+          1011
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Bind selected-file content to strict per-root availability. Catalog-resolved full/sliced entries retain their representation with zero tokens and no content block when root authority is unavailable. Missing catalog records become invalid full/slice paths; canonical material membership remains owned by the draft.",
+        "Keep captured material bodies separate from the current reply projection. Emit unavailable_sources and incomplete measurement while preserving replacement-directory rejection and publication checks for required sources.",
+        "Move the existing formatter for full/slice blocks into this presentation owner. Classify expected physical read failures at that boundary so other selected files keep their blocks. Source/policy changes, protocol/worker failures and cancellation propagate."
+      ],
+      "sha256": "a8dae15a9cc25ee07079819372b131c863ec10eb5ca23894763b1227817e8cd3"
     }
   ],
   "dependencies": [

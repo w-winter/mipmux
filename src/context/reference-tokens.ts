@@ -48,11 +48,17 @@ function tokenTreeInput(input: RenderInput, selectedPaths: ReadonlySet<string>):
 export async function captureReferenceTokens(operation: WorkspaceOperation, input: RenderInput, canonical: CanonicalSelection): Promise<ReferenceTokenView> {
   const paths = [...new Set([...canonical.state.selectedPaths, ...Object.entries(canonical.state.slices)
     .filter(([, ranges]) => ranges.length).map(([path]) => path)])];
-  const tree = await operation.runtime.renderPresentation(tokenTreeInput(input, new Set(paths)), operation.signal);
+  const selectedPaths = new Set(paths);
+  const tree = await operation.runtime.renderPresentation(tokenTreeInput(input, selectedPaths), operation.signal);
   let gitText: string | null = null;
   if (input.clipboardPreset.gitInclusion === 'selected') {
     const roots = new Map(input.inventory.roots.map(root => [root.name, root.identity.canonicalPath]));
-    const files = new Set(input.inventory.entries.flatMap(entry => entry.kind === 'file' ? [posix.join(roots.get(entry.root)!, entry.path)] : []));
+    const candidates = input.inventory.entries.filter(entry => entry.kind === 'file' && selectedPaths.has(posix.join(roots.get(entry.root)!, entry.path)));
+    const availableRoots = new Set<string>();
+    for (const root of new Set(candidates.map(entry => entry.root))) {
+      if ((await operation.sourceRootAvailability(root)).kind === 'available') availableRoots.add(root);
+    }
+    const files = new Set(candidates.filter(entry => availableRoots.has(entry.root)).map(entry => posix.join(roots.get(entry.root)!, entry.path)));
     const git = await acquireSelectedReviewGit(operation, input.request, { paths: paths.filter(path => files.has(path)),
       unresolvedCandidates: paths.filter(path => !files.has(path)) });
     gitText = git.text;

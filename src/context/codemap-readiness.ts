@@ -9,6 +9,7 @@ import { descriptorGitMode } from '../contracts/patches.js';
 import { structureId } from '../workspace/structure-identity.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { canonicalJSON, compareBytes, freeze, WorkspaceFailure } from '../workspace/values.js';
+import { unavailableSelectionRoots } from './source-presentation.js';
 
 // RPCE WorkspaceCodemapPresentationCoordinator's production readiness allowance.
 const codemapReadinessMilliseconds = 10000;
@@ -108,6 +109,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
   const readinessSignal = AbortSignal.any([operation.signal, readinessClosed.signal]);
   let timer: ReturnType<typeof setTimeout> | null = null;
   try {
+    const unavailableRoots = await unavailableSelectionRoots(operation, materials);
     for (const captured of materials.values()) {
       const material = pendingPresentation(captured);
       if (material === null) continue;
@@ -119,6 +121,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
         continue;
       }
       ready.set(material.record.id, material);
+      if (unavailableRoots.has(material.record.selection.source.root)) continue;
       const lease = await operation.requestExplicitCodemap(material.record.selection.source);
       retains.push({ material, lease });
     }
@@ -201,11 +204,15 @@ function incompletePublication(mode: CodemapMode, presentation: CollectedPresent
 
 async function publicationCurrentness(operation: WorkspaceOperation, mode: CodemapMode,
   presentation: CodemapPresentation): Promise<Currentness> {
+  const roots = new Map<string, boolean>();
   for (const material of presentation.materials.values()) {
     const record = material.record;
     if (record.kind !== 'source') continue;
     if (record.selection.kind === 'codemap' && (material.availability !== 'settled' || !material.bodies.length)) continue;
     if (record.selection.kind !== 'codemap' && mode !== 'automatic') continue;
+    const root = record.selection.source.root;
+    if (!roots.has(root)) roots.set(root, (await operation.sourceRootAvailability(root)).kind === 'available');
+    if (!roots.get(root)) continue;
     try { await revalidateSourceRecord(operation, record); }
     catch (error) {
       operation.signal.throwIfAborted();

@@ -70,7 +70,7 @@ export async function acquireSelectedReviewGit(operation: WorkspaceOperation, re
       plans.push({ kind: 'ready', checkout, owner: repository, commands, comparison: { head, base } });
     } catch (error) {
       operation.signal.throwIfAborted();
-      await operation.validateRoots();
+      await operation.validateSourceRoot(checkout.identity.root);
       if (!(error instanceof WorkspaceFailure && operationalFailures.has(error.code))) throw error;
       plans.push({ kind: 'baseResolutionFailed', checkout });
     }
@@ -92,7 +92,7 @@ async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[
       outcomes.push({ kind: 'diff', checkout: plan.checkout, text: captured.content.diffText ?? '' });
     } catch (error) {
       operation.signal.throwIfAborted();
-      await operation.validateRoots();
+      await operation.validateSourceRoot(plan.checkout.identity.root);
       if (!(error instanceof WorkspaceFailure && operationalFailures.has(error.code))) throw error;
       outcomes.push({ kind: 'commandFailed', checkout: plan.checkout });
     }

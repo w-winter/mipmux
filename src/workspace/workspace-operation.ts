@@ -3,7 +3,7 @@ import type { ReadRequest, TreeRequest, StructureRequest, SearchRequest } from '
 import type { BridgeClient } from '../native/bridge-client.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import { NativeAccess } from './source-access.js';
-import { RootPolicy, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
+import { RootPolicy, contains, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
 import { canonicalJSON, WorkspaceFailure } from './values.js';
 import { readFile } from '../exploration/read.js';
 import { getFileTree } from '../exploration/tree.js';
@@ -260,7 +260,13 @@ export class WorkspaceOperation {
   resolveAutomaticReviewGit(selection: { readonly paths: readonly string[]; readonly unresolvedCandidates: readonly string[] }, base: string | null) {
     const captured = structuredClone(selection);
     return this.#track(async () => {
-      await this.validateRoots();
+      const roots = new Set<string>();
+      for (const path of captured.paths) {
+        const owning = this.snapshot.roots.filter(root => contains(root.identity.canonicalPath, path));
+        if (!owning.length) throw new WorkspaceFailure('pathDenied');
+        for (const root of owning) roots.add(root.name);
+      }
+      for (const root of roots) await this.validateSourceRoot(root);
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request({ kind: 'resolveAutomaticReviewGit', paths: [...captured.paths], unresolvedCandidates: [...captured.unresolvedCandidates], base,
         roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result;
@@ -269,15 +275,15 @@ export class WorkspaceOperation {
   revalidateGitTargets(input: Extract<NativeOperation, { kind: 'revalidateGitTargets' }>) {
     const captured = structuredClone(input);
     return this.#track(async () => {
-      await this.validateSourceRoots();
+      for (const root of new Set(captured.checkouts.map(checkout => checkout.root))) await this.validateSourceRoot(root);
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(captured, this.signal)).result;
     });
   }
-  openGitSourceAccess(identity: RootIdentity) {
+  openGitSourceAccess(root: string, identity: RootIdentity) {
     const captured = structuredClone(identity);
     return this.#track(async () => {
-      await this.validateSourceRoots();
+      await this.validateSourceRoot(root);
       const access = await (this.#access ??= this.#openAccess());
       const opened = await access.bridge.request({ kind: 'openRoots', roots: [{ name: 'GitRepository',
         absolutePath: captured.declaredPath, access: 'source', expected: captured }] }, this.signal);

@@ -77,7 +77,7 @@ test('automatic source classification preserves source aggregate coverage and fi
   const pending = sourceFile('r', 'Pending.swift', 'pending'), excluded = sourceFile('r', 'Excluded.swift', 'terminal');
   const seed = structuralFile('s', 'Seed.swift', [], ['Peer']), peer = structuralFile('s', 'Peer.swift', ['Peer'], []);
   const result = new StructureIndex({ roots: structuralRoots('r', 's'), entries: [pending, excluded, seed, peer] })
-    .resolveAutomaticCodemapTargets([pending, excluded, seed]);
+    .resolveAutomaticCodemapTargets([pending, excluded, seed], new Set());
   const observed = schema.Parse(result);
   assert.deepEqual(result.targets, [peer]);
   assert.deepEqual(observedCoverage(observed), { status: 'partial', sourceIssues: [

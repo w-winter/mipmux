@@ -58,7 +58,7 @@ export class StructureIndex {
   }
 
   /** One-hop, root-local targets, excluding seeds; common-name suppression precedes seed exclusion. */
-  resolveAutomaticCodemapTargets(seeds: readonly SourcePath[]): AutomaticCodemapTargets {
+  resolveAutomaticCodemapTargets(seeds: readonly SourcePath[], unavailableRoots: ReadonlySet<string>): AutomaticCodemapTargets {
     const grouped = this.#groupSources(seeds);
     const sourceCount = [...grouped.values()].reduce((sum, group) => sum + group.length, 0);
     if (sourceCount > maximumRawSourceCount) return { kind: 'queryBudget', targets: [], rejections: [
@@ -72,6 +72,9 @@ export class StructureIndex {
     const coverageRoots: AutomaticRootCoverage[] = [];
     for (const [name, sources] of ordered) {
       const root = this.#roots.get(name)!;
+      if (unavailableRoots.has(name)) {
+        coverageRoots.push({ status: 'pending', sourceIssues: [], targetCount: 0 }); continue;
+      }
       if (root.residency === null) root.residency = evaluateStructureResidency(captureStructureFiles(root.root, root.entries), root.definitions);
       if (root.residency.kind === 'revoked') {
         rejections.push({ kind: 'graphRevoked', root: name, reason: root.residency.reason });

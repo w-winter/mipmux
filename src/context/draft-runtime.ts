@@ -65,6 +65,7 @@ import type { AutomaticCodemapOutcome, AutomaticAcquisitionState } from '../cont
 import { acquireAutomaticCodemaps, automaticAcquisitionSummary, automaticCodemapDisposition, type DerivedMaterials } from './automatic-codemap-acquisition.js';
 import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
 import { captureReferenceTokens, referenceTokenFields, type ReferenceTokenView } from './reference-tokens.js';
+import { captureSourcePresentation, selectionSourcePath, unavailableSelectionRoots } from './source-presentation.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
@@ -429,9 +430,9 @@ export class DraftRuntime {
         const explicitCurrent = new Map([...current].filter(([, material]) => material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
         const explicit = request.op === 'get' ? explicitCurrent
           : await this.#prepareExplicitSelection(operation, prepared, current, [current]);
-        await this.#validateSelectionRoots(operation, explicit);
+        const unavailableRoots = await unavailableSelectionRoots(operation, explicit);
         const presentationStartedAt = performance.now();
-        const resolution = this.#automaticCandidates(operation.snapshot, explicit, prepared.mode, revision), targets = resolution.targets;
+        const resolution = this.#automaticCandidates(operation.snapshot, explicit, prepared.mode, revision, unavailableRoots), targets = resolution.targets;
         const candidate = this.#mutationChanges(explicitCurrent, explicit, prepared.state, this.#prompt);
         const isMutation = request.op !== 'get' && request.op !== 'preview';
         this.#check(signal, revision);
@@ -528,13 +529,17 @@ export class DraftRuntime {
     invalid: readonly string[], revision: number, prompt: string, acquisition: AutomaticAcquisitionState, coverage: AutomaticCoverage, canonical: CanonicalSelection) {
     const observed = await refreshGitArtifactMaterials(operation, [...materials.values()]);
     const snapshot = operation.snapshot;
+    const sourceView = await captureSourcePresentation(operation, observed, request);
     const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: observed, automaticAcquisition: acquisition }, operation.signal, { kind: 'live', operation });
+      prompt, codemapMode: mode, materials: sourceView.materials, automaticAcquisition: acquisition }, operation.signal, { kind: 'live', operation });
     const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
     const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display,
       acquisition.kind === 'settled' ? acquisition.outcomes : [], acquisition.kind === 'settled' ? coverage.sourceIssues : []);
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
     const blocks: string[] = [];
+    const failures = new Map(sourceView.unavailable.map(item => [item.record.id, item]));
+    const invalidPaths = [...invalid, ...sourceView.unavailable.filter(item => item.kind === 'notCataloged' && item.record.selection.kind !== 'codemap')
+      .map(item => selectionSourcePath(operation, item.record, request.path_display))];
     for (const material of observed) {
       const record = material.record;
       if (record.kind === 'gitMap' || record.kind === 'gitPatch') {
@@ -549,40 +554,34 @@ export class DraftRuntime {
         continue;
       }
       if (record.kind !== 'source') continue;
+      const failure = failures.get(record.id);
+      if (failure?.kind === 'notCataloged') continue;
       const root = snapshot.roots.find(root => root.name === record.selection.source.root)!;
       const relative = snapshot.roots.length === 1 ? record.selection.source.path
         : root.name + '/' + record.selection.source.path;
       const path = request.path_display === 'full' ? posix.join(root.identity.canonicalPath, record.selection.source.path) : relative;
+      if (failure && record.selection.kind === 'codemap') { pending.push(path); continue; }
       if (material.availability === 'pendingCodemap') { pending.push(path); continue; }
       if (record.selection.kind === 'codemap' && !material.bodies.length) { unmapped.push(path); continue; }
-      const fields = { path, tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))),
+      const fields = { path, tokens: failure ? 0 : estimateUnits(Buffer.byteLength(material.bodies.join(''))),
         rootPath: root.name, pathWithinRoot: record.selection.source.path };
       entries.push(this.#selectionFileEntry(record, fields));
-      if (request.view === 'content') blocks.push(await this.#sourceBlock(operation, record, material.bodies, path));
+      const block = sourceView.blocks.get(record.id);
+      if (block !== undefined) blocks.push(block);
     }
     const reply = await operation.renderSelectionReply({ kind: 'renderSelectionReply', entries,
       status: request.op === 'preview' ? 'preview' : 'ok', codemapAutoEnabled: mode === 'automatic',
-      invalidPaths: [...invalid], unmappedPaths: unmapped, pendingPaths: pending,
+      invalidPaths, unmappedPaths: unmapped, pendingPaths: pending,
       blocks: request.view === 'content' ? blocks : null, view: request.view });
-    return { ...reply, ...referenceTokenFields(tokens), revision, measurement: rendered.measurement, diagnostics: rendered.diagnostics };
-  }
-  async #sourceBlock(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'source' }>,
-    bodies: readonly string[], path: string): Promise<string> {
-    if (record.selection.kind === 'codemap') return bodies.join('');
-    let content = bodies.join('');
-    if (record.selection.kind === 'slices') {
-      const captured = await operation.readSource(record.selection.source);
-      const decoding = { kind: captured.decoding.kind, identity: captured.decoding.identity, encoding: captured.decoding.encoding };
-      if (canonicalJSON(captured.identity) !== canonicalJSON(record.identity) ||
-        descriptorGitMode(captured.fingerprint.mode) !== record.mode || canonicalJSON(decoding) !== canonicalJSON(record.decoding)) {
-        throw new WorkspaceFailure('sourceChanged', record.selection.source);
-      }
-      content = captured.text;
-    }
-    const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: path,
-      fileName: posix.basename(record.selection.source.path), content,
-      ranges: record.selection.kind === 'slices' ? record.selection.ranges : null });
-    return block.text;
+    const missing = sourceView.unavailable.length > 0;
+    const components = new Set([...tokens.incompleteComponents, ...sourceView.unavailable.map(item =>
+      item.record.selection.kind === 'codemap' ? 'codemap_presentation' : 'files')]);
+    const tokenView = { ...tokens, incompleteComponents: ['files', 'codemap_presentation'].filter(component => components.has(component)) };
+    return { ...reply, ...referenceTokenFields(tokenView), revision,
+      unavailable_sources: sourceView.unavailable.map(({ record, code }) => ({ ...record.selection.source, code, required: record.required })),
+      measurement: { ...rendered.measurement, complete: !missing && rendered.measurement.complete },
+      diagnostics: [...rendered.diagnostics, ...sourceView.unavailable.map(({ record, code }) => ({ code: 'sourceUnavailable', materialId: record.id,
+        details: { ...record.selection.source, cause: code, required: record.required } }))] };
   }
   #selectionFileEntry(record: Extract<Material['record'], { kind: 'source' }>, fields: SelectionReplyFile): SelectionReplyEntry {
     switch (record.selection.kind) {
@@ -638,23 +637,21 @@ export class DraftRuntime {
   }
   async #derive(operation: WorkspaceOperation, explicit: Map<string, Material>, mode: CodemapMode,
     revision: number): Promise<DerivedMaterials> {
-    await this.#validateSelectionRoots(operation, explicit);
-    const resolution = this.#automaticCandidates(operation.snapshot, explicit, mode, revision);
+    const unavailableRoots = await unavailableSelectionRoots(operation, explicit);
+    const resolution = this.#automaticCandidates(operation.snapshot, explicit, mode, revision, unavailableRoots);
     return acquireAutomaticCodemaps(operation, explicit, resolution.targets, { draftId: this.id, revision });
   }
-  async #validateSelectionRoots(operation: WorkspaceOperation, explicit: ReadonlyMap<string, Material>): Promise<void> {
-    const roots = new Set([...explicit.values()].flatMap(({ record }) => record.kind === 'source' ? [record.selection.source.root] : []));
-    for (const root of roots) await operation.validateSourceRoot(root);
-  }
-  #automaticCandidates(snapshot: InventorySnapshot, explicit: ReadonlyMap<string, Material>, mode: CodemapMode, revision: number): AutomaticCodemapTargets {
+  #automaticCandidates(snapshot: InventorySnapshot, explicit: ReadonlyMap<string, Material>, mode: CodemapMode, revision: number,
+    unavailableRoots: ReadonlySet<string>): AutomaticCodemapTargets {
     if (mode === 'manual') return { kind: 'ready', targets: [], coverage: aggregateAutomaticCoverage([]) };
+    const catalog = new Set(snapshot.entries.filter(entry => entry.kind === 'file').map(sourceId));
     const seeds = [...explicit.values()].flatMap(({ record }) =>
-      record.kind === 'source' && record.selection.kind !== 'codemap' ? [record.selection.source] : []);
+      record.kind === 'source' && record.selection.kind !== 'codemap' && catalog.has(record.id) ? [record.selection.source] : []);
     if (!seeds.length) return { kind: 'ready', targets: [], coverage: aggregateAutomaticCoverage([]) };
     if (this.#structure?.digest !== snapshot.inventoryDigest) {
       this.#structure = { digest: snapshot.inventoryDigest, index: new StructureIndex(snapshot) };
     }
-    const resolution = this.#structure.index.resolveAutomaticCodemapTargets(seeds);
+    const resolution = this.#structure.index.resolveAutomaticCodemapTargets(seeds, unavailableRoots);
     if (resolution.kind === 'targetDemandLimit') {
       process.stderr.write(JSON.stringify({ level: 'warn', event: 'automaticCodemapDemandRejected', draftId: this.id,
         revision, inventoryDigest: snapshot.inventoryDigest, attempted: resolution.attempted, limit: resolution.limit }) + '\n');

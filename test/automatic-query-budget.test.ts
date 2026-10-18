@@ -15,8 +15,8 @@ test('automatic source and root limits reject the whole input before target dema
   const peer = structuralFile('r', 'Peer.swift', ['Peer'], []);
   const snapshot = { roots: structuralRoots('r'), entries: [...seeds, extra, peer] };
   const index = new StructureIndex(snapshot);
-  assert.equal(index.resolveAutomaticCodemapTargets(seeds).targets.length, 1);
-  assert.deepEqual(index.resolveAutomaticCodemapTargets([...seeds, extra]), {
+  assert.equal(index.resolveAutomaticCodemapTargets(seeds, new Set()).targets.length, 1);
+  assert.deepEqual(index.resolveAutomaticCodemapTargets([...seeds, extra], new Set()), {
     kind: 'queryBudget', targets: [], rejections: [{ kind: 'sourceLimit', attempted: 4097, limit: 4096 }],
     coverage: { status: 'unavailable', sourceIssues: [] },
   });
@@ -25,7 +25,7 @@ test('automatic source and root limits reject the whole input before target dema
     const seeds = names.map(root => structuralFile(root, 'Seed.swift', ['Seed'], ['Peer']));
     const peers = names.map(root => structuralFile(root, 'Peer.swift', ['Peer'], []));
     const snapshot = { roots: structuralRoots(...names), entries: [...seeds, ...peers] };
-    const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets(seeds);
+    const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets(seeds, new Set());
     if (count === 64) assert.equal(result.targets.length, count);
     else assert.deepEqual(result, { kind: 'queryBudget', targets: [],
       rejections: [{ kind: 'rootLimit', attempted: 65, limit: 64 }], coverage: { status: 'unavailable', sourceIssues: [] } });
@@ -37,7 +37,7 @@ test('resolution budgets count distinct source-to-target edges rather than globa
   for (const count of [100, 101]) {
     const peers = Array.from({ length: count }, (_, index) => structuralFile('r', 'Peer' + index + '.swift', ['Peer', 'OtherName'], []));
     const snapshot = { roots: structuralRoots('r'), entries: [...seeds, ...peers] };
-    const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets(seeds);
+    const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets(seeds, new Set());
     if (count === 100) assert.equal(result.targets.length, count);
     else assert.deepEqual(result, { kind: 'queryBudget', targets: [], rejections: [
       { kind: 'resolutionLimit', root: 'r', attempted: 101000, limit: 100000 },
@@ -52,7 +52,7 @@ test('unresolved-reference budgets count each source while suppressing duplicate
       ['Peer', ...missing, ...missing]));
     const peer = structuralFile('r', 'Peer.swift', ['Peer'], []);
     const snapshot = { roots: structuralRoots('r'), entries: [...seeds, peer] };
-    const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets(seeds);
+    const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets(seeds, new Set());
     if (count === 100) assert.deepEqual(result.targets, [peer]);
     else assert.deepEqual(result, { kind: 'queryBudget', targets: [], rejections: [
       { kind: 'referenceFailureLimit', root: 'r', attempted: 101000, limit: 100000 },
@@ -66,7 +66,7 @@ test('a refused root consumes no shared automatic query budget and another root 
   const otherSeed = structuralFile('s', 'Seed.swift', [], ['Other']);
   const other = structuralFile('s', 'Other.swift', ['Other'], []);
   const snapshot = { roots: structuralRoots('r', 's'), entries: [...seeds, ...peers, otherSeed, other] };
-  const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets([...seeds, otherSeed]);
+  const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets([...seeds, otherSeed], new Set());
   assert.deepEqual(result.targets, [other]);
   await mkdir('test-output', { recursive: true });
   await writeFile('test-output/automatic-query-budget-proof.json', JSON.stringify(result, null, 2) + '\n');
@@ -79,7 +79,7 @@ test('shared query allocation uses root UUID order rather than root alias order'
   const otherSeed = structuralFile('r', 'Seed.swift', [], ['Other']);
   const other = structuralFile('r', 'Other.swift', ['Other'], []);
   const snapshot = { roots, entries: [...seeds, ...peers, otherSeed, other] };
-  const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets([...seeds, otherSeed]);
+  const result = new StructureIndex(snapshot).resolveAutomaticCodemapTargets([...seeds, otherSeed], new Set());
   assert.deepEqual(result, { kind: 'queryBudget', targets: peers.slice().sort((a, b) => Buffer.compare(Buffer.from(a.path), Buffer.from(b.path))),
     rejections: [{ kind: 'resolutionLimit', root: 'r', attempted: 1, limit: 0 }], coverage: { status: 'partial', sourceIssues: [] } });
 });
