@@ -51,7 +51,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
         return { ...material, sourceBlock: { ...material.sourceBlock, text } };
       });
       const forged = renderBundle(await prepareClipboard(runtime, { request: manifest.request, inventory: manifest.inventory, codemapMode: manifest.codemapMode,
-        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
+        automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots,
         prompt: manifest.prompt, materials, fileTree: saved.fileTree }, signal, { kind: 'captured', capture: saved.automaticGit }));
       manifest.materials = forged.records;
       manifest.fileTree.span = forged.fileTreeSpan;
@@ -63,7 +63,7 @@ test('recipient Markdown retains the literal prompt and material paths with exac
       await assert.rejects(verifyBundle(result.directory), /bundleIntegrityFailed/);
     }
     const restored = renderBundle(await prepareClipboard(runtime, { request: result.manifest.request, inventory: result.manifest.inventory,
-      automaticAcquisition: { kind: 'settled', outcomes: result.manifest.automaticCodemaps },
+      automaticAcquisition: { kind: 'settled', outcomes: result.manifest.automaticCodemaps }, unavailableRoots: result.manifest.unavailableRoots,
       codemapMode: result.manifest.codemapMode, prompt: result.manifest.prompt, materials: saved.materials, fileTree: saved.fileTree }, signal, { kind: 'captured', capture: saved.automaticGit }));
     await writeFile(join(result.directory, 'context.md'), restored.context);
     await writeFile(join(result.directory, 'handoff.md'), restored.handoff);

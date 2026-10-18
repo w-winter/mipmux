@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import {
   type ContextBuildRequest,
+  type UnavailableRoot,
   type CodemapMode,
   contextRequestValidator,
   type DraftInspection,
@@ -98,6 +99,7 @@ export class DraftRuntime {
   #automaticGit: AutomaticReviewGitCapture | null = null;
   #inventory: InventorySnapshot;
   #referenceTokens: ReferenceTokenView | null = null;
+  #unavailableRoots: readonly UnavailableRoot[] = [];
   private constructor(
     readonly operation: WorkspaceOperation,
     readonly request: ContextBuildRequest,
@@ -166,7 +168,7 @@ export class DraftRuntime {
       const target = await FrozenGitTarget.capture(admission, materials);
       const mode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
       const draft = new DraftRuntime(operation, request, onClosed, target, await captureSelection(admission, materials, mode));
-      const derived = await draft.#derive(admission, materials, draft.#codemapMode, 0);
+      const derived = await draft.#derive(admission, materials, draft.#codemapMode, 0, await unavailableSelectionRoots(admission, materials));
       draft.#materials = derived.materials; draft.#automaticAcquisition = { kind: 'settled', outcomes: derived.automaticCodemaps };
       signal.throwIfAborted();
       return draft;
@@ -474,7 +476,7 @@ export class DraftRuntime {
   async #prepareResolvedSelection(operation: WorkspaceOperation, prepared: ReturnType<typeof projectSelection>,
     current: ReadonlyMap<string, Material>, candidates: readonly ReadonlyMap<string, Material>[], revision: number): Promise<DerivedMaterials> {
     const explicit = await this.#prepareExplicitSelection(operation, prepared, current, candidates);
-    return this.#derive(operation, explicit, prepared.mode, revision);
+    return this.#derive(operation, explicit, prepared.mode, revision, await unavailableSelectionRoots(operation, explicit));
   }
   async #prepareExplicitSelection(operation: WorkspaceOperation, prepared: ReturnType<typeof projectSelection>,
     current: ReadonlyMap<string, Material>, candidates: readonly ReadonlyMap<string, Material>[]) {
@@ -531,7 +533,7 @@ export class DraftRuntime {
     const snapshot = operation.snapshot;
     const sourceView = await captureSourcePresentation(operation, observed, request);
     const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: sourceView.materials, automaticAcquisition: acquisition }, operation.signal, { kind: 'live', operation });
+      prompt, codemapMode: mode, materials: sourceView.materials, automaticAcquisition: acquisition, unavailableRoots: [] }, operation.signal, { kind: 'live', operation });
     const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
     const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display,
       acquisition.kind === 'settled' ? acquisition.outcomes : [], acquisition.kind === 'settled' ? coverage.sourceIssues : []);
@@ -603,7 +605,7 @@ export class DraftRuntime {
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         const observed = await this.#liveMaterials(operation, [...next.values()]);
         const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
-          codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps } }, AbortSignal.any([signal, this.#cancel.signal]),
+          codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps }, unavailableRoots: [] }, AbortSignal.any([signal, this.#cancel.signal]),
           { kind: 'live', operation });
         const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
         this.#check(signal, request.expectedRevision);
@@ -636,8 +638,7 @@ export class DraftRuntime {
     return freeze({ kind: 'prompt' as const, op: request.op, revision: result.revision, prompt });
   }
   async #derive(operation: WorkspaceOperation, explicit: Map<string, Material>, mode: CodemapMode,
-    revision: number): Promise<DerivedMaterials> {
-    const unavailableRoots = await unavailableSelectionRoots(operation, explicit);
+    revision: number, unavailableRoots: ReadonlySet<string>): Promise<DerivedMaterials> {
     const resolution = this.#automaticCandidates(operation.snapshot, explicit, mode, revision, unavailableRoots);
     return acquireAutomaticCodemaps(operation, explicit, resolution.targets, { draftId: this.id, revision });
   }
@@ -724,7 +725,7 @@ export class DraftRuntime {
     const mode = state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const;
     const observed = await this.#liveMaterials(operation, [...next.values()]);
     const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
-      codemapMode: mode, materials: observed, automaticAcquisition }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation });
+      codemapMode: mode, materials: observed, automaticAcquisition, unavailableRoots: [] }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation });
     const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, { roots: this.#selection.roots, state });
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
@@ -747,7 +748,7 @@ export class DraftRuntime {
   async #prepareSourceEdits(operation: WorkspaceOperation, edits: readonly SourceEdit[], current: ReadonlyMap<string, Material>, revision: number) {
     const selection = this.#selection;
     const { explicit, state, mode } = await prepareSourceEdits(operation, edits, current, selection, this.request.requiredSources);
-    const derived = await this.#derive(operation, explicit, mode, revision);
+    const derived = await this.#derive(operation, explicit, mode, revision, await unavailableSelectionRoots(operation, explicit));
     return { next: derived.materials, automaticCodemaps: derived.automaticCodemaps, state, mode };
   }
   inspect(input: DraftInspection, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
@@ -792,12 +793,14 @@ export class DraftRuntime {
     const captured = [...this.#materials.values()], codemapMode = this.#codemapMode,
       revision = this.#revision, state = this.#state, text = this.#prompt, automaticAcquisition = this.#automaticAcquisition, canonical = this.#selection;
     const materials = await this.#liveMaterials(operation, captured);
+    const omittedIds = new Set(this.#unavailableRoots.flatMap(root => root.sources.map(source => source.id)));
     const inputForRender = await prepareRenderInput(this.operation.runtime, {
         codemapMode,
         request: this.request,
         inventory: state === 'terminal' ? this.#inventory : operation.snapshot,
         prompt: text,
-        materials,
+        materials: state === 'terminal' ? materials.filter(material => !omittedIds.has(material.record.id)) : materials,
+        unavailableRoots: state === 'terminal' ? this.#unavailableRoots : [],
         automaticAcquisition,
       }, signal, state === 'terminal' ? { kind: 'captured', capture: this.#automaticGit } : { kind: 'live', operation });
     const rendered = renderBundle(inputForRender), tokens = state === 'terminal' ? this.#referenceTokens
@@ -856,7 +859,7 @@ export class DraftRuntime {
       try {
         const tree = await initialFileTree(operation, selection);
         const materials = await refreshGitArtifactMaterials(operation, input.materials);
-        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, inventory: operation.snapshot, materials }, operation.signal, { kind: 'live', operation }),
+        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, inventory: operation.snapshot, materials, unavailableRoots: [] }, operation.signal, { kind: 'live', operation }),
           draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
         return { context, tree, prompt: input.prompt, roots: operation.snapshot.roots.map(root => root.name) };
       } finally { await operation.close(); }
@@ -870,7 +873,7 @@ export class DraftRuntime {
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const materials = await refreshGitArtifactMaterials(operation, captured);
-        await revalidateMaterials(operation, materials);
+        await revalidateMaterials(operation, materials, []);
         const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
           codemapMode,
           request: this.request,
@@ -878,6 +881,7 @@ export class DraftRuntime {
           prompt,
           materials,
           automaticAcquisition,
+          unavailableRoots: [],
         }, operation.signal, { kind: 'live', operation }));
         return freeze({
           kind: 'validation' as const,
@@ -907,7 +911,7 @@ export class DraftRuntime {
       this.#prompt,
       this.#selection,
       { materials: this.#materials, automaticAcquisition: this.#automaticAcquisition },
-      operation => this.#derive(operation, new Map(explicit), mode, revision),
+      (operation, unavailableRoots) => this.#derive(operation, new Map(explicit), mode, revision, unavailableRoots),
       revision,
       signal,
       publishing,
@@ -920,6 +924,7 @@ export class DraftRuntime {
     this.#finalized = operation.result.then(async (result) => {
       this.#inventory = operation.capturedInventory;
       this.#referenceTokens = operation.capturedReferenceTokens;
+      this.#unavailableRoots = operation.capturedUnavailableRoots;
       const captured = operation.capturedPresentation;
       this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;
@@ -936,6 +941,7 @@ export class DraftRuntime {
     }, async (error: unknown) => {
       this.#inventory = operation.capturedInventory;
       this.#referenceTokens = operation.capturedReferenceTokens;
+      this.#unavailableRoots = operation.capturedUnavailableRoots;
       const captured = operation.capturedPresentation;
       this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;

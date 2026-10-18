@@ -10,6 +10,7 @@ import { readRegularFile } from '../runtime/host-files.js';
 import { StructureIndex } from '../workspace/structure-index.js';
 import { parseSourceBlock, type SourceBlock } from './source-block.js';
 import { finalFileTreeInput } from './final-tree.js';
+import { verifySourceOmissions } from './source-omissions.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -30,6 +31,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     throw new WorkspaceFailure('invalidManifest');
   }
   if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
+  verifySourceOmissions(manifest);
   requireEqual(manifest.deniedAbsolutePaths.includes(manifest.inventory.outputRoot.canonicalPath), true);
   const inventoryPaths = new Set<string>();
   for (const entry of manifest.inventory.entries) {
@@ -45,7 +47,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   requireEqual(sha256(canonicalJSON(manifest.request)), manifest.requestDigest);
   requireEqual(inventoryDigest(manifest.inventory), manifest.inventory.inventoryDigest);
   const materials = decodeMaterials(manifest, context);
-  requireEqual(manifest.fileTree.input, finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode));
+  requireEqual(manifest.fileTree.input, finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots));
   const treeSpan = manifest.fileTree.span, treeBytes = context.subarray(treeSpan.offset, treeSpan.offset + treeSpan.length);
   requireEqual(identity(treeBytes), { byteCount: treeSpan.length, sha256: treeSpan.sha256 });
   const fileTree = { input: manifest.fileTree.input, text: decodedBody(treeBytes) };
@@ -61,6 +63,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     inventory: manifest.inventory,
     prompt: manifest.prompt,
     materials,
+    unavailableRoots: manifest.unavailableRoots,
     automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
     fileTree,
     clipboard: decodedBody(context),
@@ -224,8 +227,11 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   }
   else {
     if (explicit.some(record => record.selection.kind === 'codemap')) throw new WorkspaceFailure('bundleIntegrityFailed');
-    const seeds = explicit.map(record => record.selection.source);
-    const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds, new Set()).targets : [];
+    const catalog = new Set(manifest.inventory.entries.filter(entry => entry.kind === 'file').map(sourceId));
+    const omitted = manifest.unavailableRoots.flatMap(root => root.sources).filter(source => source.selection.kind !== 'codemap');
+    const seeds = [...explicit, ...omitted].filter(record => catalog.has(record.id)).map(record => record.selection.source);
+    const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds,
+      new Set(manifest.unavailableRoots.map(root => root.root))).targets : [];
     const byId = new Map(candidates.map(candidate => [sourceId(candidate), candidate]));
     requireEqual(manifest.automaticCodemaps.map(item => sourceId(item.source)).sort(), [...byId.keys()].sort());
     for (const outcome of manifest.automaticCodemaps) {

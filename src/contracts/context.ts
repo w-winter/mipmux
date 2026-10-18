@@ -1,7 +1,7 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { InventorySnapshot, SourcePath, Exclusion, DecoderPolicy, SourceDecoding } from './inventory.js';
-import { SafeCount, SHA256, SourceIdentity, RelativePath } from './workspace.js';
+import { SafeCount, SHA256, SourceIdentity, RelativePath, RootName } from './workspace.js';
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
@@ -159,6 +159,13 @@ export const MaterialRecord = Type.Union([
   Type.Object({ ...gitRecord, kind: Type.Literal('gitPatch') }, closed),
 ]);
 export type MaterialRecord = Static<typeof MaterialRecord>;
+export const OmittedSource = Type.Object({ id: Type.String(), selection: SourceSelection,
+  identity: SourceIdentity, mode: sourceRecord.mode }, closed);
+export type OmittedSource = Static<typeof OmittedSource>;
+export const UnavailableRoot = Type.Object({ root: RootName,
+  code: Type.Enum(['notFound', 'permissionDenied', 'rootChanged', 'nonRegularFile', 'symlink', 'nativeIOFailed']),
+  sources: Type.Array(OmittedSource) }, closed);
+export type UnavailableRoot = Static<typeof UnavailableRoot>;
 const gitCommit = Type.String({ pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' });
 const reviewComparison = Type.Object({ head: gitCommit, base: gitCommit }, closed);
 const capturedReviewCheckout = { checkout: AutomaticReviewGitCheckout };
@@ -170,7 +177,7 @@ export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticR
   ])) }, closed);
 export type AutomaticReviewGitEvidence = Static<typeof AutomaticReviewGitEvidence>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(16),
+  schemaVersion: Type.Literal(17),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
   request: ContextBuildRequest,
@@ -180,6 +187,7 @@ export const Manifest = Type.Object({
   deniedAbsolutePaths: Type.Array(Type.String({ pattern: '^/[^\\u0000]*$' })),
   prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
+  unavailableRoots: Type.Array(UnavailableRoot),
   clipboardPreset: CapturedClipboardPreset,
   automaticGit: Type.Union([Type.Object({ evidence: AutomaticReviewGitEvidence, span: Type.Union([Span, Type.Null()]) }, closed), Type.Null()]),
   fileTree: Type.Object({ input: NativeFileTreeInput, span: Span }, closed),

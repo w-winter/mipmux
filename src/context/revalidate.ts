@@ -6,6 +6,8 @@ import { acquireLocalPatch } from '../patches/local-git.js';
 import { descriptorGitMode } from '../contracts/patches.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import { revalidateGitArtifact } from './git-artifact-material.js';
+import type { UnavailableRoot } from '../contracts/context.js';
+import { revalidateRootAvailability } from './source-omissions.js';
 
 async function revalidateSource(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'source' }>, bodies: readonly string[]): Promise<void> {
   const source = record.selection.source;
@@ -37,8 +39,9 @@ async function revalidateSource(operation: WorkspaceOperation, record: Extract<M
 export async function revalidateMaterials(
   operation: WorkspaceOperation,
   materials: readonly Material[],
+  unavailableRoots: readonly UnavailableRoot[],
 ): Promise<void> {
-  await operation.validateRoots();
+  await revalidateRootAvailability(operation, unavailableRoots);
   for (const material of materials) {
     const record = material.record;
     if (record.kind === 'source') {

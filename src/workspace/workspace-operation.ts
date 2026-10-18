@@ -161,6 +161,11 @@ export class WorkspaceOperation {
   validateRoots() {
     return this.#track(async () => {
       await this.validateSourceRoots();
+      await this.validateOutputRoot();
+    });
+  }
+  validateOutputRoot() {
+    return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       const output = this.snapshot.outputRoot;
       await access.bridge.request({ kind:'openRoots',roots:[{ name:'output',absolutePath:output.declaredPath,access:'output',expected:output }] },this.signal);

@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "cf373c28bffaa3461c712e0e4db44b6e6690dae2d645aaef99080837c582adc2",
+      "sha256": "cf1f892609cb1c078d3c4813697b3a45e3a4e0afabde97bc0c0b67b90e780532",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6129,7 +6129,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "201f2cce389ba1a59b08a23f26d5f460f3f34c0202f3f76e04aec829c8598534",
+      "sha256": "b8eb4398c31e422a4d11193eb06878ce6b20fe583dce6930c9b805c5fe46b2b9",
       "classification": "handwritten"
     },
     {
@@ -6210,7 +6210,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "a8c8f9c6d73d7e7c6ce97d77445dbfff17ff4e5024843d71a00ba67fdd8bdc5b",
+      "sha256": "cdd72d634e97343bd47da4dda397fd66b70bb1e8f30e6ca9b0e04fd12b675f66",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6448,13 +6448,14 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "20df9d28065cba848368cc6e51bf57fbeaa6df6921d41b98eb9b506663551c51",
+      "sha256": "af0fb8e60179220a578e1825c8e30748d9f09f9da2cb59f245028612f7e34760",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
-        "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 16 and retain the capture for terminal inspection.",
+        "Capture automatic Review text and typed span evidence inside preassembly; replay working-tree evidence against captured object IDs before publication. Archive manifest version 17 and retain the capture for terminal inspection.",
         "Expose the captured automatic Git observation through a read-only getter; only the finalization owner may replace it.",
-        "Retain the finalization inventory alongside material and automatic Git captures for terminal inspection after workspace lease release."
+        "Retain the finalization inventory alongside material and automatic Git captures for terminal inspection after workspace lease release.",
+        "Capture unavailable roots before graph preparation, omit only optional source bodies and archive their original identities in manifest version 17. Revalidate the same root-availability outcomes before the publication claim; required material retains ordinary physical checks."
       ]
     },
     {
@@ -6534,7 +6535,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "00f4ae5d7910c18888181a2471b94d6d31cd2e0fb453b7aa7fe98696193c9b16",
+      "sha256": "fbef51673c68e66b91e79bdd869bb8561cc2fb58a89626f2828ca67d481c3e63",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6554,7 +6555,8 @@
         "Port discover-only orchestration into the existing TypeScript Git/process/capability owners. Resolve exact HEAD/ref commit IDs and merge-base before all working-tree captures; bypass Git-tool main/trunk shorthand by passing frozen object IDs to shared comparison preparation.",
         "Retain per-checkout base/command outcomes, successful siblings and source-native rendering. Cancellation and headless root/security/worker failures reject rather than become source operational diagnostics.",
         "Capture preassembly evidence, not selected artifacts or Git snapshots. Replay captured bases for final serving checks; compare current intent for current bundle verification.",
-        "Classify expected Git operational failures directly in each I/O catch after cancellation and root validation, preserving original errors for all other failure domains."
+        "Classify expected Git operational failures directly in each I/O catch after cancellation and root validation, preserving original errors for all other failure domains.",
+        "Treat omitted full/sliced paths as unresolved candidates for automatic Review export diagnostics. They grant no replacement-root filesystem access."
       ]
     },
     {
@@ -7501,7 +7503,7 @@
         "Preview uses proposed file totals with canonical selection for tree markers and Git candidates. Token-tree markers use the current codemap presentation. Resolve Git from canonical catalog files; artifact and unresolved paths use original unresolved-selection diagnostics under the confined root binding.",
         "Acquire token Git independently of selected export patches. Finalization retains its observation for terminal inspection after releasing the workspace lease. Complete-packet measurement remains the budget authority, and the export Git capture remains separate."
       ],
-      "sha256": "8f9589e989272d6accab105a81b5001dc0288c05de4be05fe142d055ba95ee9e"
+      "sha256": "7de88de7833210c529a2f10cd8439956b2a4ccb4010545b8afeed80287c59d07"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
@@ -7529,6 +7531,33 @@
         "Move the existing formatter for full/slice blocks into this presentation owner. Classify expected physical read failures at that boundary so other selected files keep their blocks. Source/policy changes, protocol/worker failures and cancellation propagate."
       ],
       "sha256": "a8dae15a9cc25ee07079819372b131c863ec10eb5ca23894763b1227817e8cd3"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b50b67ae2d3ba73a90b652ce7b224fdb4dbe083a66f2348a4b5e6b93291f3234",
+      "destination": "src/context/source-omissions.ts",
+      "ranges": [
+        [
+          690,
+          778
+        ],
+        [
+          800,
+          843
+        ],
+        [
+          973,
+          1011
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Bind source optional nil-content export to explicit unavailable-root metadata and omitted-source identities in the headless archive. Included bodies retain the existing exact spans and current-source checks; required sources cannot become omissions.",
+        "Capture unavailable roots before graph preparation and hold that scope through publication. Current verification requires those unavailable-root outcomes to remain unchanged. Restoring an original root invalidates the current capture rather than adding source bodies.",
+        "Saved verification checks omission shape, source/root linkage, uniqueness and required-input preservation using packet bytes. It does not attest to historical filesystem failure."
+      ],
+      "sha256": "5c2c69981b40264fe01d33f73fcf2c4d13a38ee8af25785a1e6dd14fc8996894"
     }
   ],
   "dependencies": [

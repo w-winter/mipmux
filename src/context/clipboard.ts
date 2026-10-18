@@ -53,7 +53,7 @@ export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketI
   let clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);
   if (clipboard.needsAutomaticGit && source.kind === 'live') {
     const operation = await source.operation.fork(signal);
-    try { automaticGit = await acquireAutomaticReviewGit(operation, input.request, input.materials); }
+    try { automaticGit = await acquireAutomaticReviewGit(operation, input.request, input.materials, input.unavailableRoots); }
     finally { await operation.close(); }
     clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);
   }

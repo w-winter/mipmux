@@ -1,5 +1,5 @@
 // Ported from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3; see docs/vendor-provenance.json.
-import type { AutomaticReviewGitEvidence, ContextBuildRequest } from '../contracts/context.js';
+import type { AutomaticReviewGitEvidence, ContextBuildRequest, UnavailableRoot } from '../contracts/context.js';
 import type { NativeOperation, NativeResult } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { Material } from './material-store.js';
@@ -39,9 +39,13 @@ function diffRequest(root: string, base: string) {
 
 /** Resolves every checkout boundary before the first working-tree capture, matching RPCE's discover coordinator. */
 export async function acquireAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
-  materials: readonly Material[]): Promise<AutomaticReviewGitCapture> {
+  materials: readonly Material[], unavailableRoots: readonly UnavailableRoot[]): Promise<AutomaticReviewGitCapture> {
+  const omittedPaths = unavailableRoots.flatMap(root => root.sources.filter(source => source.selection.kind !== 'codemap').map(source => {
+    const declared = operation.snapshot.roots.find(declared => declared.name === root.root)!;
+    return declared.identity.canonicalPath + '/' + source.selection.source.path;
+  }));
   return acquireSelectedReviewGit(operation, request, { paths: selectedGitSourcePaths(operation,
-    new Map(materials.map(material => [material.record.id, material]))), unresolvedCandidates: [] });
+    new Map(materials.map(material => [material.record.id, material]))), unresolvedCandidates: omittedPaths });
 }
 
 export async function acquireSelectedReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
@@ -134,8 +138,8 @@ export async function revalidateCapturedAutomaticReviewGit(operation: WorkspaceO
 }
 
 export async function revalidateAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
-  materials: readonly Material[], captured: AutomaticReviewGitCapture | null): Promise<void> {
+  materials: readonly Material[], captured: AutomaticReviewGitCapture | null, unavailableRoots: readonly UnavailableRoot[]): Promise<void> {
   if (captured === null) return;
-  const current = await acquireAutomaticReviewGit(operation, request, materials);
+  const current = await acquireAutomaticReviewGit(operation, request, materials, unavailableRoots);
   if (canonicalJSON(current) !== canonicalJSON(captured)) throw new WorkspaceFailure('automaticGitChanged');
 }

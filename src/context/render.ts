@@ -1,6 +1,6 @@
 import type { CapturedClipboardPreset } from '../contracts/presentation.js';
 import { posix } from 'node:path';
-import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, MaterialRecord, Span, UnavailableRoot } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { Material } from './material-store.js';
 import type { FinalFileTree } from './final-tree.js';
@@ -23,6 +23,7 @@ export interface RenderInput {
   readonly selectedGitDiffIds: readonly string[];
   readonly automaticGit: AutomaticReviewGitCapture | null;
   readonly tokenInputs: { readonly promptText: string; readonly selectedInstructionsText: string };
+  readonly unavailableRoots: readonly UnavailableRoot[];
 }
 export interface ItemCost {
   readonly id: string;
@@ -142,6 +143,7 @@ export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
           entry.structural.record.outcome.kind !== 'ready'
         ),
         materials: records.map((record) => ({ ...packetMetadata(record), spans: record.spans })),
+        unavailableRoots: input.unavailableRoots,
         automaticGit: input.automaticGit === null ? null : { evidence: input.automaticGit.evidence, span: automaticGitSpan },
         context: {
           path: posix.join(input.inventory.outputRoot.declaredPath, input.request.outputName, 'context.md'),
@@ -151,7 +153,9 @@ export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
         limitation: 'Heuristic estimate; not an exact token count or provider acceptance guarantee.',
         verification: [
           'source-and-policy-revalidation',
-          'complete-materials',
+          'complete-delivered-materials',
+          'required-source-preservation',
+          'explicit-source-omissions',
           'exact-body-spans',
           'actual-packet-accounting',
           'readback-before-manifest',

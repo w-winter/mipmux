@@ -219,12 +219,13 @@ export class SmipRuntime {
       async()=>{this.#operations.delete(operation);},()=>Promise.reject(new WorkspaceFailure('verificationOperationOnly')), { kind: 'verification' });
     this.#operations.add(operation);
     try {
-      await revalidateMaterials(operation,materials);
-      await revalidateAutomaticReviewGit(operation, manifest.request, materials, automaticGit);
-      const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode), signal);
+      await revalidateMaterials(operation,materials, manifest.unavailableRoots);
+      await revalidateAutomaticReviewGit(operation, manifest.request, materials, automaticGit, manifest.unavailableRoots);
+      const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots), signal);
       if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
       const input = { request: manifest.request, prompt: manifest.prompt,
         inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree,
+        unavailableRoots: manifest.unavailableRoots,
         automaticAcquisition: { kind: 'settled' as const, outcomes: manifest.automaticCodemaps }, automaticGit };
       const clipboard = await this.renderPresentation(preparedClipboardInput(input), signal);
       let comparison: string;

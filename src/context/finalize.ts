@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import type { CodemapMode, ContextBuildRequest, Manifest } from '../contracts/context.js';
+import type { CodemapMode, ContextBuildRequest, Manifest, UnavailableRoot } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
@@ -15,6 +15,7 @@ import type { DerivedMaterials } from './automatic-codemap-acquisition.js';
 import { revalidateCapturedAutomaticReviewGit, type AutomaticReviewGitCapture } from './automatic-review-git.js';
 import { captureReferenceTokens, type ReferenceTokenView } from './reference-tokens.js';
 import type { CanonicalSelection } from './selection-preparation.js';
+import { captureUnavailableRoots, packetSources } from './source-omissions.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -33,6 +34,8 @@ export class FinalizationOperation {
   #capturedPresentation: CodemapPresentation;
   #capturedInventory: InventorySnapshot;
   get capturedInventory(): InventorySnapshot { return this.#capturedInventory; }
+  #capturedUnavailableRoots: readonly UnavailableRoot[] = [];
+  get capturedUnavailableRoots(): readonly UnavailableRoot[] { return this.#capturedUnavailableRoots; }
   #capturedReferenceTokens: ReferenceTokenView | null = null;
   get capturedReferenceTokens(): ReferenceTokenView | null { return this.#capturedReferenceTokens; }
   #capturedAutomaticGit: AutomaticReviewGitCapture | null = null;
@@ -49,7 +52,7 @@ export class FinalizationOperation {
     prompt: string,
     canonical: CanonicalSelection,
     initial: CodemapPresentation,
-    prepare: (operation: WorkspaceOperation) => Promise<DerivedMaterials>,
+    prepare: (operation: WorkspaceOperation, unavailableRoots: ReadonlySet<string>) => Promise<DerivedMaterials>,
     revision: number,
     signal: AbortSignal,
     private readonly publishing: () => void = () => {},
@@ -78,7 +81,7 @@ export class FinalizationOperation {
     codemapMode: CodemapMode,
     prompt: string,
     canonical: CanonicalSelection,
-    prepare: (operation: WorkspaceOperation) => Promise<DerivedMaterials>,
+    prepare: (operation: WorkspaceOperation, unavailableRoots: ReadonlySet<string>) => Promise<DerivedMaterials>,
     revision: number,
     signal: AbortSignal,
   ): Promise<FinalizationResult> {
@@ -87,15 +90,20 @@ export class FinalizationOperation {
     this.#capturedInventory = operation.snapshot;
     const bridge = owner.runtime.makeBridge();
     try {
-      const candidate = await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation), async presentation => {
-        const materials = await refreshGitArtifactMaterials(operation, [...presentation.materials.values()]);
+      const rootFailures = await captureUnavailableRoots(operation);
+      const unavailableRoots = new Set(rootFailures.map(root => root.root));
+      const candidate = await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation, unavailableRoots), async presentation => {
+        const captured = await refreshGitArtifactMaterials(operation, [...presentation.materials.values()]);
         const automaticAcquisition = presentation.automaticAcquisition;
-        this.#capturedPresentation = { materials: new Map(materials.map(material => [material.record.id, material])),
+        this.#capturedPresentation = { materials: new Map(captured.map(material => [material.record.id, material])),
           automaticAcquisition: freeze(automaticAcquisition) };
-        await revalidateMaterials(operation, materials);
+        const delivery = packetSources(captured, rootFailures), materials = delivery.materials;
+        this.#capturedUnavailableRoots = delivery.unavailableRoots;
+        await revalidateMaterials(operation, materials, delivery.unavailableRoots);
         this.#capturedInventory = operation.snapshot;
         const { generation, ...inventory } = this.#capturedInventory;
-        const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal,
+        const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition,
+          unavailableRoots: delivery.unavailableRoots }, signal,
           { kind: 'live', operation });
         this.#capturedAutomaticGit = input.automaticGit;
         this.#capturedReferenceTokens = await captureReferenceTokens(operation, input, canonical);
@@ -112,7 +120,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 16,
+        schemaVersion: 17,
         codemapMode,
         automaticCodemaps: [...automaticAcquisition.outcomes],
         request,
@@ -122,6 +130,7 @@ export class FinalizationOperation {
         deniedAbsolutePaths: [...owner.declaration.deniedAbsolutePaths],
         prompt,
         materials: rendered.records,
+        unavailableRoots: [...input.unavailableRoots],
         clipboardPreset: input.clipboardPreset,
         automaticGit: input.automaticGit === null ? null : { evidence: input.automaticGit.evidence, span: rendered.automaticGitSpan },
         fileTree: { input: input.fileTree.input, span: rendered.fileTreeSpan },
@@ -136,7 +145,9 @@ export class FinalizationOperation {
         },
         checks: [
           'source-and-policy-revalidation',
-          'complete-materials',
+          'complete-delivered-materials',
+          'required-source-preservation',
+          'explicit-source-omissions',
           'exact-body-spans',
           'actual-packet-accounting',
           'complete-readback',
@@ -168,7 +179,7 @@ export class FinalizationOperation {
           throw new WorkspaceFailure('readbackFailed');
         }
       }
-      await revalidateMaterials(operation, materials);
+      await revalidateMaterials(operation, materials, input.unavailableRoots);
       await revalidateCapturedAutomaticReviewGit(operation, input.automaticGit);
       signal.throwIfAborted();
       this.#claimed = true;
