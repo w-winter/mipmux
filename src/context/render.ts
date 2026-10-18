@@ -22,6 +22,7 @@ export interface RenderInput {
   readonly clipboardPreset: CapturedClipboardPreset;
   readonly selectedGitDiffIds: readonly string[];
   readonly automaticGit: AutomaticReviewGitCapture | null;
+  readonly tokenInputs: { readonly promptText: string; readonly selectedInstructionsText: string };
 }
 export interface ItemCost {
   readonly id: string;
@@ -111,7 +112,7 @@ function materialDiagnostics(materials: readonly Material[], units: number, allo
 }
 
 /** Renders exact material bodies and byte spans without I/O or ambient state. */
-export function renderBundle(input: RenderInput) {
+export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
   const materials = input.materials;
   const { records, costs, fileTreeSpan, automaticGitSpan, comparisonText } = parseClipboard(input);
   const context = input.clipboard, offset = Buffer.byteLength(context), units = estimateUnits(offset), allowance = input.request.budgetUnits;

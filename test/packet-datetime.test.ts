@@ -29,7 +29,7 @@ async function fixture() {
   let mode: NativeMode = 'normal';
   class Runtime extends SmipRuntime {
     override async renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' |
-      'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' }>>(input: O, signal: AbortSignal) {
+      'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
       const result = await super.renderPresentation(input, signal);
       changeNativeOutput(result, mode);
       return result;

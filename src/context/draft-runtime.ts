@@ -64,6 +64,7 @@ import { readFileReply } from '../exploration/read.js';
 import type { AutomaticCodemapOutcome, AutomaticAcquisitionState } from '../contracts/automatic-codemaps.js';
 import { acquireAutomaticCodemaps, automaticAcquisitionSummary, automaticCodemapDisposition, type DerivedMaterials } from './automatic-codemap-acquisition.js';
 import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
+import { captureReferenceTokens, referenceTokenFields, type ReferenceTokenView } from './reference-tokens.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
@@ -95,6 +96,7 @@ export class DraftRuntime {
   #gitAdvertisements: ReadonlyMap<string, CatalogedGitArtifact> = new Map();
   #automaticGit: AutomaticReviewGitCapture | null = null;
   #inventory: InventorySnapshot;
+  #referenceTokens: ReferenceTokenView | null = null;
   private constructor(
     readonly operation: WorkspaceOperation,
     readonly request: ContextBuildRequest,
@@ -454,7 +456,8 @@ export class DraftRuntime {
           if (request.op !== 'preview') observationOwner = this.#retainRefreshedPresentation(observationOwner,
             presentation.materials, presentation.automaticAcquisition, replyRevision, freezeGeneration);
           const reply = await this.#selectionReply(operation, request, presentation.materials, prepared.mode, prepared.invalid,
-            replyRevision, prompt, presentation.automaticAcquisition, resolution.coverage);
+            replyRevision, prompt, presentation.automaticAcquisition, resolution.coverage,
+            request.op === 'preview' ? selection : { roots: selection.roots, state: prepared.state });
           operation.signal.throwIfAborted();
           if (request.op === 'preview' && request.strict && !reply.files.length && !reply.file_slices?.length) {
             throw new WorkspaceFailure('invalidSelection', { message: await operation.selectionHint(prepared.hintPaths, 'preview') });
@@ -522,11 +525,12 @@ export class DraftRuntime {
     return { unmapped, pending };
   }
   async #selectionReply(operation: WorkspaceOperation, request: SelectionRequest, materials: ReadonlyMap<string, Material>, mode: CodemapMode,
-    invalid: readonly string[], revision: number, prompt: string, acquisition: AutomaticAcquisitionState, coverage: AutomaticCoverage) {
+    invalid: readonly string[], revision: number, prompt: string, acquisition: AutomaticAcquisitionState, coverage: AutomaticCoverage, canonical: CanonicalSelection) {
     const observed = await refreshGitArtifactMaterials(operation, [...materials.values()]);
     const snapshot = operation.snapshot;
-    const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: observed, automaticAcquisition: acquisition }, operation.signal, { kind: 'live', operation }));
+    const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
+      prompt, codemapMode: mode, materials: observed, automaticAcquisition: acquisition }, operation.signal, { kind: 'live', operation });
+    const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
     const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display,
       acquisition.kind === 'settled' ? acquisition.outcomes : [], acquisition.kind === 'settled' ? coverage.sourceIssues : []);
     const entries: Static<typeof NativeSelectionReplyInput>['entries'] = [];
@@ -560,7 +564,7 @@ export class DraftRuntime {
       status: request.op === 'preview' ? 'preview' : 'ok', codemapAutoEnabled: mode === 'automatic',
       invalidPaths: [...invalid], unmappedPaths: unmapped, pendingPaths: pending,
       blocks: request.view === 'content' ? blocks : null, view: request.view });
-    return { ...reply, revision, measurement: rendered.measurement, diagnostics: rendered.diagnostics };
+    return { ...reply, ...referenceTokenFields(tokens), revision, measurement: rendered.measurement, diagnostics: rendered.diagnostics };
   }
   async #sourceBlock(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'source' }>,
     bodies: readonly string[], path: string): Promise<string> {
@@ -592,22 +596,23 @@ export class DraftRuntime {
     const request = structuredClone(input);
     return this.#track((async () => {
       this.#check(signal, request.expectedRevision);
-      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt;
+      const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt, canonical = this.#selection;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const { next, mode, automaticCodemaps } = await this.#prepareSourceEdits(operation, request.edits, current, request.expectedRevision);
         this.#check(signal, request.expectedRevision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         const observed = await this.#liveMaterials(operation, [...next.values()]);
-        const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
+        const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
           codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps } }, AbortSignal.any([signal, this.#cancel.signal]),
-          { kind: 'live', operation }));
+          { kind: 'live', operation });
+        const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
         this.#check(signal, request.expectedRevision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         const result = { kind: 'preview' as const, draftId: this.id, revision: this.#revision, codemapMode: mode,
           automaticAcquisition: automaticAcquisitionSummary({ kind: 'settled', outcomes: automaticCodemaps }),
           items: observed.map(material => materialMetadata(material.record)),
-          measurement: rendered.measurement, costs: rendered.costs, diagnostics: rendered.diagnostics };
+          ...referenceTokenFields(tokens), measurement: rendered.measurement, costs: rendered.costs, diagnostics: rendered.diagnostics };
         const requiredBytes = serializedBytes(encode(result));
         if (requiredBytes > request.maxOutputBytes) throw new WorkspaceFailure('outputBudgetTooSmall', { requiredBytes });
         return freeze(result);
@@ -721,14 +726,15 @@ export class DraftRuntime {
     const { changedIds, changed, revision } = this.#mutationChanges(current, next, state, prompt);
     const mode = state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const;
     const observed = await this.#liveMaterials(operation, [...next.values()]);
-    const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
-      codemapMode: mode, materials: observed, automaticAcquisition }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation }));
+    const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
+      codemapMode: mode, materials: observed, automaticAcquisition }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation });
+    const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, { roots: this.#selection.roots, state });
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
     for (const id of changedIds) if (!next.has(id)) changedCosts.push({ id, bytes: 0, units: 0 });
     changedCosts.sort((a, b) => compareBytes(a.id, b.id));
     const receipt = (costs: typeof changedCosts, incompleteDetails: boolean) => ({
-      kind: 'mutation' as const, revision, codemapMode: mode, changedCosts: costs, incompleteDetails,
+      kind: 'mutation' as const, revision, codemapMode: mode, changedCosts: costs, incompleteDetails, ...referenceTokenFields(tokens),
       automaticAcquisition: automaticAcquisitionSummary(automaticAcquisition),
       measurement: rendered.measurement, diagnostics: rendered.diagnostics,
       costInspection: { draftId: this.id, revision },
@@ -787,22 +793,24 @@ export class DraftRuntime {
       );
     }
     const captured = [...this.#materials.values()], codemapMode = this.#codemapMode,
-      revision = this.#revision, state = this.#state, text = this.#prompt, automaticAcquisition = this.#automaticAcquisition;
+      revision = this.#revision, state = this.#state, text = this.#prompt, automaticAcquisition = this.#automaticAcquisition, canonical = this.#selection;
     const materials = await this.#liveMaterials(operation, captured);
-    const rendered = renderBundle(await prepareRenderInput(this.operation.runtime, {
+    const inputForRender = await prepareRenderInput(this.operation.runtime, {
         codemapMode,
         request: this.request,
         inventory: state === 'terminal' ? this.#inventory : operation.snapshot,
         prompt: text,
         materials,
         automaticAcquisition,
-      }, signal, state === 'terminal' ? { kind: 'captured', capture: this.#automaticGit } : { kind: 'live', operation }));
+      }, signal, state === 'terminal' ? { kind: 'captured', capture: this.#automaticGit } : { kind: 'live', operation });
+    const rendered = renderBundle(inputForRender), tokens = state === 'terminal' ? this.#referenceTokens
+      : await captureReferenceTokens(operation, inputForRender, canonical);
     const prompt = { kind: 'prompt' as const, prompt: text };
     const records: (ItemCost | ReturnType<typeof materialMetadata> | typeof prompt)[] = request.view === 'costs'
       ? rendered.costs
       : [...materials.map((material) => materialMetadata(material.record)), prompt];
     const digest = sha256(canonicalJSON({ id: this.id, revision, view: request.view,
-      records, measurement: rendered.measurement }));
+      records, measurement: rendered.measurement, tokens }));
     return pageResult(
       records,
       pageOffset(continuation, digest),
@@ -813,7 +821,7 @@ export class DraftRuntime {
         draftId: this.id,
         revision,
         state,
-        items,
+        items, ...referenceTokenFields(tokens),
         measurement: rendered.measurement,
         diagnostics: rendered.diagnostics,
         truncated: next !== null,
@@ -900,6 +908,7 @@ export class DraftRuntime {
       this.request,
       mode,
       this.#prompt,
+      this.#selection,
       { materials: this.#materials, automaticAcquisition: this.#automaticAcquisition },
       operation => this.#derive(operation, new Map(explicit), mode, revision),
       revision,
@@ -913,6 +922,7 @@ export class DraftRuntime {
     };
     this.#finalized = operation.result.then(async (result) => {
       this.#inventory = operation.capturedInventory;
+      this.#referenceTokens = operation.capturedReferenceTokens;
       const captured = operation.capturedPresentation;
       this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;
@@ -928,6 +938,7 @@ export class DraftRuntime {
       return result;
     }, async (error: unknown) => {
       this.#inventory = operation.capturedInventory;
+      this.#referenceTokens = operation.capturedReferenceTokens;
       const captured = operation.capturedPresentation;
       this.#automaticGit = operation.capturedAutomaticGit;
       this.#materials = captured.materials; this.#automaticAcquisition = captured.automaticAcquisition;

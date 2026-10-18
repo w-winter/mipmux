@@ -40,8 +40,13 @@ function diffRequest(root: string, base: string) {
 /** Resolves every checkout boundary before the first working-tree capture, matching RPCE's discover coordinator. */
 export async function acquireAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
   materials: readonly Material[]): Promise<AutomaticReviewGitCapture> {
-  const ownership = await operation.resolveAutomaticReviewGit(
-    selectedGitSourcePaths(operation, new Map(materials.map(material => [material.record.id, material]))), request.reviewGitBase ?? null);
+  return acquireSelectedReviewGit(operation, request, { paths: selectedGitSourcePaths(operation,
+    new Map(materials.map(material => [material.record.id, material]))), unresolvedCandidates: [] });
+}
+
+export async function acquireSelectedReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
+  selection: { readonly paths: readonly string[]; readonly unresolvedCandidates: readonly string[] }): Promise<AutomaticReviewGitCapture> {
+  const ownership = await operation.resolveAutomaticReviewGit(selection, request.reviewGitBase ?? null);
   if (ownership.checkouts.length && !operation.runtime.options.git) throw new WorkspaceFailure('gitNotConfigured');
   const plans: Plan[] = [];
   for (const checkout of ownership.checkouts) {

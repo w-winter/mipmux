@@ -10,7 +10,7 @@ import { verifyAutomaticReviewGitCapture } from './automatic-review-git-integrit
 import { defaultPromptSectionsOrder, type PromptSection } from '../contracts/presentation.js';
 
 type ClipboardInput = Extract<NativeOperation, { kind: 'renderPreparedClipboard' }>;
-type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds'>;
+type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'tokenInputs'>;
 
 function partitionMaterials(materials: readonly Material[]) {
   const sorted = [...materials].sort((a, b) => compareBytes(a.record.id, b.record.id));
@@ -57,7 +57,8 @@ export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketI
     finally { await operation.close(); }
     clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);
   }
-  return { ...input, automaticGit, clipboard: clipboard.text, clipboardPreset: clipboard.preset, selectedGitDiffIds: clipboard.selectedGitDiffIds };
+  return { ...input, automaticGit, clipboard: clipboard.text, clipboardPreset: clipboard.preset, selectedGitDiffIds: clipboard.selectedGitDiffIds,
+    tokenInputs: clipboard.tokenInputs };
 }
 
 type Consume = (text: string) => Span;
@@ -83,7 +84,7 @@ function consumeFileMap(tree: string, codemaps: readonly Material[], consume: Co
   return span;
 }
 
-function consumeMetaInstructions(input: RenderInput, consume: Consume) {
+function consumeMetaInstructions(input: Omit<RenderInput, 'tokenInputs'>, consume: Consume) {
   if (input.clipboardPreset.kind !== input.request.copyPreset) throw new WorkspaceFailure('invalidClipboard');
   const metas = input.request.storedPrompts.filter(prompt => input.clipboardPreset.storedPromptIds.some(id => id === prompt.id.toLowerCase()))
     .map(({ title, content }) => ({ title, content }));
@@ -91,7 +92,7 @@ function consumeMetaInstructions(input: RenderInput, consume: Consume) {
   for (const [index, meta] of metas.entries()) consume('<meta prompt ' + (index + 1) + ' = "' + meta.title + '">\n' + meta.content + '\n</meta prompt ' + (index + 1) + '>\n');
 }
 
-function consumeGitDiff(input: RenderInput, patches: readonly Material[], consume: Consume, raw: (material: Material) => void,
+function consumeGitDiff(input: Omit<RenderInput, 'tokenInputs'>, patches: readonly Material[], consume: Consume, raw: (material: Material) => void,
   charge: (id: string, bytes: number) => void): Span | null {
   const automaticText = input.automaticGit?.text ?? '';
   const gitDiff = [automaticText, ...patches.flatMap(material => material.bodies)].filter(Boolean).join('\n\n');
@@ -129,7 +130,7 @@ function withoutDatetimeValues(bytes: Buffer, spans: readonly Span[]): string {
 }
 
 /** Parses every ordered occurrence against canonical material bytes and charges all repetitions. */
-export function parseClipboard(input: RenderInput) {
+export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
   const bytes = Buffer.from(input.clipboard), materials = partitionMaterials(input.materials);
   const includedGitDiffs = new Set(input.selectedGitDiffIds);
   const selectedPatches = input.clipboardPreset.gitInclusion === 'none' ? []

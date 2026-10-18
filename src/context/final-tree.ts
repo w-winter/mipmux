@@ -50,7 +50,7 @@ export async function renderFinalFileTree(runtime: SmipRuntime, inventory: Omit<
   return { input, text: result.tree };
 }
 
-export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit'>,
+export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs'>,
   signal: AbortSignal, gitSource: AutomaticReviewGitSource): Promise<RenderInput> {
   const fileTree = await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, signal);
   return prepareClipboard(runtime, { ...input, fileTree }, signal, gitSource);

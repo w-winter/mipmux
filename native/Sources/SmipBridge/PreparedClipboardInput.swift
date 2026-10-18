@@ -74,10 +74,13 @@ struct PreparedClipboardOperation {
             duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: nil
         )
         return ["kind": "preparedClipboard", "text": text, "selectedGitDiffIds": selectedDiffs.map(\.id),
-                "needsAutomaticGit": needsAutomaticGit, "preset": [
-            "kind": input.copyPreset.rawValue, "gitInclusion": gitInclusion.rawValue,
-            "includeMetaPrompts": includeMetaPrompts,
-            "storedPromptIds": promptIDs.map { $0.uuidString.lowercased() }
-        ]]
+                "needsAutomaticGit": needsAutomaticGit,
+                "tokenInputs": ["promptText": includeUserPrompt ? input.userInstructions : "",
+                                "selectedInstructionsText": metas.map(\.content).joined(separator: "\n\n")],
+                "preset": [
+                    "kind": input.copyPreset.rawValue, "gitInclusion": gitInclusion.rawValue,
+                    "includeMetaPrompts": includeMetaPrompts,
+                    "storedPromptIds": promptIDs.map { $0.uuidString.lowercased() }
+                ]]
     }
 }

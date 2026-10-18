@@ -277,7 +277,7 @@ export const AutomaticReviewGitOutcome = Type.Union([
 const automaticReviewGitInput = Type.Union([
   Type.Object({ kind: Type.Literal('resolveAutomaticReviewGit'),
     roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String() }, { additionalProperties: false })),
-    paths: Type.Array(Type.String()), base: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+    paths: Type.Array(Type.String()), unresolvedCandidates: Type.Array(Type.String()), base: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('renderAutomaticReviewGit'), outcomes: Type.Array(AutomaticReviewGitOutcome),
     pathIssues: Type.Array(AutomaticReviewGitPathIssue) }, { additionalProperties: false }),
 ]);
@@ -444,6 +444,7 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('available'), checkouts: Type.Array(NativeGitCheckout, { minItems: 1 }),
     primary: NativeGitCheckout }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('preparedClipboard'), text: Type.String(), preset: CapturedClipboardPreset,
+    tokenInputs: Type.Object({ promptText: Type.String(), selectedInstructionsText: Type.String() }, { additionalProperties: false }),
     selectedGitDiffIds: Type.Array(Type.String()), needsAutomaticGit: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('automaticReviewGitPaths'), checkouts: Type.Array(AutomaticReviewGitCheckout),
     pathIssues: Type.Array(AutomaticReviewGitPathIssue), base: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),

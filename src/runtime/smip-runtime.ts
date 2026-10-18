@@ -99,7 +99,7 @@ export class SmipRuntime {
     return work;
   }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
-  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' }>>(input: O, signal: AbortSignal) {
+  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const work = (async () => {

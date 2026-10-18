@@ -56,6 +56,7 @@ for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) {
       assert(selection.blocks?.join('\n').includes(patchText));
       const costs = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
       assert(costs.kind === 'costs');
+      assert.equal(costs.token_stats?.files_content, selection.summary?.full_tokens);
       const includesSelectedPatch = copyPreset === 'codeReview';
       assert.equal(costs.items.some(cost => 'id' in cost && cost.id === 'gitArtifact:' + patch), includesSelectedPatch);
       const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');
@@ -119,7 +120,7 @@ test('automatic Git uses merge-base intent and retains required patches independ
   } finally { await f.runtime.close(); }
 });
 
-test('selected nonblank patches bypass automatic Git acquisition while blank patches permit it', async () => {
+test('token inspection acquires automatic Git independently of selected export patches', async () => {
   let acquisitions = 0;
   const f = await fixture(options => {
     class Runtime extends SmipRuntime {
@@ -140,7 +141,7 @@ test('selected nonblank patches bypass automatic Git acquisition while blank pat
     const patch = published.projection.primarySelectionAliases[1]; assert(patch);
     await f.select({ op: 'add', paths: [patch], strict: true }); acquisitions = 0;
     await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
-    assert.equal(acquisitions, 0);
+    assert.equal(acquisitions, 1);
     await writeFile(join(f.out, patch), '\u0085\u2028');
     const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready'); assert(acquisitions > 0);
     assert((await readFile(join(ready.directory, 'context.md'), 'utf8')).includes('-base\n+changed\n'));

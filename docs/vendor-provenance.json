@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "17d12a845d28a4b7d9420cfe540fc160a7293b55d281a8d82084a831930a5bb2",
+      "sha256": "cf373c28bffaa3461c712e0e4db44b6e6690dae2d645aaef99080837c582adc2",
       "classification": "handwritten",
       "ranges": [
         [
@@ -32,7 +32,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "native/Sources/SmipBridge/PreparedClipboardInput.swift",
-      "sha256": "497daca1d02c7aa05db423342fa96f01e55cd3cb0ca2dea8225a2b91f53bbd2a",
+      "sha256": "bdfb1b647c32a9f1241641e7a103dfc3a4aeaf35bb665f2e5dfba0e99dba7e9f",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6127,7 +6127,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "0fd73e1660e4803eadafc96077dced1b3bfbd9f3848788c546193cdf784efd8c",
+      "sha256": "6bc535b5e885f7d060cf3e0d481c58a7745656d9ecb4574511526be5ccf6757e",
       "classification": "handwritten"
     },
     {
@@ -6207,7 +6207,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "3c7931bacf0ce10e6a835c2a922b785a2bf2aad366696f133e983cc623aea861",
+      "sha256": "bcf763e8f2513abd0e6c87b6e6773f51a9ad55884ff318d5c3cf3a3f4b270d61",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6444,7 +6444,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "4b333091872f746f6bf79cc638a0473ee14c70069d0eec50c1e0e5b3bd50d199",
+      "sha256": "20df9d28065cba848368cc6e51bf57fbeaa6df6921d41b98eb9b506663551c51",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
@@ -6507,7 +6507,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "native/Sources/SmipBridge/AutomaticReviewGitInput.swift",
-      "sha256": "0595ca47b565c34e420e2e30b45efe8edd9d6ade8f2deccbe543ce49ee7af327",
+      "sha256": "d8845350ca2b3d02754824726699ed2c86edba279bd049829fce68fba349f8e1",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6530,7 +6530,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "edb082b89b096c1baa95fbc4de37c33f4f021ee7e5c5381508c6cfe230077d38",
+      "sha256": "c8328d4ac8d99e58eae50b0205faf5754cd093d0ddb8325fb6066732a208b9cb",
       "classification": "handwritten",
       "ranges": [
         [
@@ -7479,6 +7479,25 @@
         "Expected physical root failures produce unavailableRoots diagnostics. Strict identity checks exclude replacement roots from body acquisition. Known file-acquisition failures remain limitations, and enumeration completeness stays visible."
       ],
       "sha256": "920f804a0324a3aad2ddbad6bc645dc9380184d873e0db6a187ff9b9519c1bb9"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionReply.swift",
+      "sourceRevision": "64b9352eec13e0252500d429f64ca9d1dd5e49fd",
+      "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
+      "destination": "src/context/reference-tokens.ts",
+      "ranges": [
+        [
+          170,
+          278
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Compute source component totals from captured full/sliced bodies, rendered codemaps, authorized Git artifacts and native-resolved prompt/meta text. Captured, incomplete and unavailable observations replace the desktop cache for tab accounting.",
+        "Preview uses proposed file totals with canonical selection for tree markers and Git candidates. Token-tree markers use the current codemap presentation. Resolve Git from canonical catalog files; artifact and unresolved paths use original unresolved-selection diagnostics under the confined root binding.",
+        "Acquire token Git independently of selected export patches. Finalization retains its observation for terminal inspection after releasing the workspace lease. Complete-packet measurement remains the budget authority, and the export Git capture remains separate."
+      ],
+      "sha256": "125fa05e313a6074b93f74bc8b7e8c03f25a144e5c26daeb2fd9d9bbff0c93c3"
     }
   ],
   "dependencies": [

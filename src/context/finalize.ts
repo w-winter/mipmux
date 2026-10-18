@@ -13,6 +13,8 @@ import { refreshGitArtifactMaterials } from './git-artifact-material.js';
 import { withCodemapPresentation, type CodemapPresentation } from './codemap-readiness.js';
 import type { DerivedMaterials } from './automatic-codemap-acquisition.js';
 import { revalidateCapturedAutomaticReviewGit, type AutomaticReviewGitCapture } from './automatic-review-git.js';
+import { captureReferenceTokens, type ReferenceTokenView } from './reference-tokens.js';
+import type { CanonicalSelection } from './selection-preparation.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -31,6 +33,8 @@ export class FinalizationOperation {
   #capturedPresentation: CodemapPresentation;
   #capturedInventory: InventorySnapshot;
   get capturedInventory(): InventorySnapshot { return this.#capturedInventory; }
+  #capturedReferenceTokens: ReferenceTokenView | null = null;
+  get capturedReferenceTokens(): ReferenceTokenView | null { return this.#capturedReferenceTokens; }
   #capturedAutomaticGit: AutomaticReviewGitCapture | null = null;
   get capturedAutomaticGit(): AutomaticReviewGitCapture | null { return this.#capturedAutomaticGit; }
   readonly result: Promise<FinalizationResult>;
@@ -43,6 +47,7 @@ export class FinalizationOperation {
     request: ContextBuildRequest,
     codemapMode: CodemapMode,
     prompt: string,
+    canonical: CanonicalSelection,
     initial: CodemapPresentation,
     prepare: (operation: WorkspaceOperation) => Promise<DerivedMaterials>,
     revision: number,
@@ -56,6 +61,7 @@ export class FinalizationOperation {
       request,
       codemapMode,
       prompt,
+      canonical,
       prepare,
       revision,
       AbortSignal.any([signal, this.#cancel.signal, operation.signal]),
@@ -71,6 +77,7 @@ export class FinalizationOperation {
     request: ContextBuildRequest,
     codemapMode: CodemapMode,
     prompt: string,
+    canonical: CanonicalSelection,
     prepare: (operation: WorkspaceOperation) => Promise<DerivedMaterials>,
     revision: number,
     signal: AbortSignal,
@@ -91,6 +98,7 @@ export class FinalizationOperation {
         const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition }, signal,
           { kind: 'live', operation });
         this.#capturedAutomaticGit = input.automaticGit;
+        this.#capturedReferenceTokens = await captureReferenceTokens(operation, input, canonical);
         return { materials, automaticAcquisition, inventory, input, rendered: renderBundle(input) };
       });
       const { materials, automaticAcquisition, inventory, input, rendered } = candidate;
