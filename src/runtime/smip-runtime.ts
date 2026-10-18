@@ -45,6 +45,7 @@ export class SmipRuntime {
   readonly #drafts = new Set<DraftRuntime>();
   readonly #clients = new Set<ClientRuntime>();
   readonly #snapshotMutations = new Map<string, GitSnapshotMutationOwner>();
+  #vcsBridge: BridgeClient | null = null;
   readonly #shutdown = new AbortController();
   #closing: Promise<void> | null = null;
   constructor(readonly options: RuntimeOptions) {
@@ -60,6 +61,17 @@ export class SmipRuntime {
   }
   makeBridge(): BridgeClient {
     return new BridgeClient({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
+  }
+  /** Shares VCS ownership for this runtime. Caller cancellation ends observation; shutdown retires the worker. */
+  resolveVCS<O extends Extract<NativeOperation, { kind: 'electGitTarget' | 'resolveAutomaticReviewGit' | 'revalidateGitTargets' }>>(input: O, signal: AbortSignal) {
+    if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
+    const combined = AbortSignal.any([signal, this.#shutdown.signal]);
+    combined.throwIfAborted();
+    const bridge = this.#vcsBridge ??= this.makeBridge();
+    const work = bridge.request(input, this.#shutdown.signal).then(reply => reply.result);
+    this.#admissions.add(work);
+    void work.then(() => this.#admissions.delete(work), () => this.#admissions.delete(work));
+    return observe(work, combined);
   }
   /** Serializes one output root on its runtime-owned worker/cache. A new request reopens a retired worker against the same root identity. */
   mutateGitSnapshots<T>(root: RootIdentity, signal: AbortSignal,
@@ -269,6 +281,7 @@ export class SmipRuntime {
       results.push(...await Promise.allSettled([...this.#owners.values()].map(owner => owner.close())));
       results.push(...await Promise.allSettled([...this.#snapshotMutations.values()].flatMap(owner => owner.bridge ? [owner.bridge.close()] : [])));
       this.#snapshotMutations.clear();
+      results.push(...await Promise.allSettled(this.#vcsBridge ? [this.#vcsBridge.close()] : []));
       results.push(...await Promise.allSettled([this.supervisor.close()]));
       const failure = results.find(result => result.status === 'rejected');
       if (failure?.status === 'rejected') throw failure.reason;

@@ -22,13 +22,12 @@ struct ReviewGitSelectedPathOwnershipResolution: Equatable {
 /// election. It never falls back to a workspace root or broadens an unresolved selection.
 struct ReviewGitSelectedPathOwnershipResolver {
     struct Dependencies {
-        var resolveRepo: @Sendable (URL) -> VCSResolvedRepo?
+        var resolveRepo: @Sendable (URL) async -> VCSResolvedRepo?
         var resolveLayout: @Sendable (URL) -> GitRepositoryLayout?
 
-        static func live() -> Dependencies {
-            let resolver = SelectedPathVCSResolver()
-            return Dependencies(
-                resolveRepo: { resolver.resolve(from: $0) },
+        static func live(resolver: SelectedPathVCSResolver) -> Dependencies {
+            Dependencies(
+                resolveRepo: { await resolver.resolve(from: $0) },
                 resolveLayout: { GitRepositoryLayoutResolver.resolve(atWorkTreeRoot: $0) }
             )
         }
@@ -46,14 +45,14 @@ struct ReviewGitSelectedPathOwnershipResolver {
 
     private let dependencies: Dependencies
 
-    init(dependencies: Dependencies = .live()) {
+    init(dependencies: Dependencies) {
         self.dependencies = dependencies
     }
 
     func resolve(
         _ pathResolution: WorkspaceSelectedGitPathResolution,
         displayContext: ReviewGitDisplayContext
-    ) throws -> ReviewGitSelectedPathOwnershipResolution {
+    ) async throws -> ReviewGitSelectedPathOwnershipResolution {
         try Task.checkCancellation()
         var pathIssues = pathResolution.unresolvedCandidates.enumerated().map { index, path in
             ReviewGitPathIssue.unresolvedSelection(
@@ -69,7 +68,7 @@ struct ReviewGitSelectedPathOwnershipResolver {
             guard seenPaths.insert(physicalPath).inserted else { continue }
             let displayPath = displayContext.displayPath(for: physicalPath, fallbackIndex: index + 1)
 
-            guard let resolved = dependencies.resolveRepo(URL(fileURLWithPath: physicalPath)) else {
+            guard let resolved = await dependencies.resolveRepo(URL(fileURLWithPath: physicalPath)) else {
                 pathIssues.append(.noRepository(displayPath: displayPath))
                 continue
             }
@@ -100,8 +99,10 @@ struct ReviewGitSelectedPathOwnershipResolver {
         )
     }
 
-    private func addSelectedPath(_ physicalPath: String, layout: GitRepositoryLayout,
-                                 displayContext: ReviewGitDisplayContext, groups: inout [String: CheckoutGroup]) {
+    private func addSelectedPath(
+        _ physicalPath: String, layout: GitRepositoryLayout,
+        displayContext: ReviewGitDisplayContext, groups: inout [String: CheckoutGroup]
+    ) {
         let checkoutRoot = layout.workTreeRoot.standardizedFileURL.path
         let repositoryIdentity = GitWorktreeIdentity.repositoryIdentity(
             commonGitDir: layout.commonDir,

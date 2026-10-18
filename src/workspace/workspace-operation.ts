@@ -257,9 +257,8 @@ export class WorkspaceOperation {
     const captured = [...paths];
     return this.#track(async () => {
       await this.validateSourceRoots();
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request({ kind: 'electGitTarget', paths: captured,
-        roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result;
+      return this.runtime.resolveVCS({ kind: 'electGitTarget', paths: captured,
+        roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal);
     });
   }
   resolveAutomaticReviewGit(selection: { readonly paths: readonly string[]; readonly unresolvedCandidates: readonly string[] }, base: string | null) {
@@ -272,17 +271,15 @@ export class WorkspaceOperation {
         for (const root of owning) roots.add(root.name);
       }
       for (const root of roots) await this.validateSourceRoot(root);
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request({ kind: 'resolveAutomaticReviewGit', paths: [...captured.paths], unresolvedCandidates: [...captured.unresolvedCandidates], base,
-        roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal)).result;
+      return this.runtime.resolveVCS({ kind: 'resolveAutomaticReviewGit', paths: [...captured.paths], unresolvedCandidates: [...captured.unresolvedCandidates], base,
+        roots: this.snapshot.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })) }, this.signal);
     });
   }
   revalidateGitTargets(input: Extract<NativeOperation, { kind: 'revalidateGitTargets' }>) {
     const captured = structuredClone(input);
     return this.#track(async () => {
       for (const root of new Set(captured.checkouts.map(checkout => checkout.root))) await this.validateSourceRoot(root);
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(captured, this.signal)).result;
+      return this.runtime.resolveVCS(captured, this.signal);
     });
   }
   openGitSourceAccess(root: string, identity: RootIdentity) {

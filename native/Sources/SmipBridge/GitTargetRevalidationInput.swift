@@ -27,9 +27,12 @@ struct GitTargetRevalidationInput {
         }
     }
 
-    func render() -> [String: Any] {
+    func render(resolver: SelectedPathVCSResolver) async -> [String: Any] {
         for checkout in checkouts {
-            guard let layout = GitRepositoryLayoutResolver.resolve(atWorkTreeRoot: URL(fileURLWithPath: checkout.path)),
+            guard let resolved = await resolver.resolve(from: URL(fileURLWithPath: checkout.path)),
+                  resolved.backendKind == .git,
+                  resolved.rootURL.standardizedFileURL.path == checkout.path,
+                  let layout = GitRepositoryLayoutResolver.resolve(atWorkTreeRoot: resolved.rootURL),
                   layout.workTreeRoot.standardizedFileURL.path == checkout.path,
                   layout.isLinkedWorktree == checkout.linked else { return result(false) }
             let repository = GitWorktreeIdentity.repositoryIdentity(commonGitDir: layout.commonDir,

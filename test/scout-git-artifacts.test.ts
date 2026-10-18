@@ -99,7 +99,7 @@ test('failed or cancelled artifact replies retain publication and committed sele
             override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
               if (operation.kind === 'normalizeGitPublicationOptions') this.publicationOwner = true;
               const result = await super.request(operation, requestSignal);
-              if (effect === 'cancelGrant' && encoded && this.publicationOwner && operation.kind === 'revalidateGitTargets') {
+              if (effect === 'cancelGrant' && encoded && !controller.signal.aborted && operation.kind === 'revalidateGitTargets') {
                 controller.abort(); throw new NativeFailure('rootChanged', null);
               }
               if (effect === 'cancelPerFileGrant' && encoded && this.publicationOwner && operation.kind === 'authorizeGitArtifact' &&

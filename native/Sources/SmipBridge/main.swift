@@ -6,11 +6,12 @@ import Foundation
 #endif
 
 // Each wire variant has one dispatch branch; CCCC enforces the configured complexity limits.
-// swiftlint:disable:next cyclomatic_complexity
-private func execute(_ request: Request, files: ConfinedFiles, extraction: Extraction) async throws -> [String: Any] {
+// swiftlint:disable:next cyclomatic_complexity function_body_length
+private func execute(_ request: Request, files: ConfinedFiles, extraction: Extraction,
+                     vcs: SelectedPathVCSResolver) async throws -> [String: Any] {
     switch request.operation {
     case .describe: try extraction.describe()
-    case let .git(input): try input.render()
+    case let .git(input): try await input.render(resolver: vcs)
     case let .ignore(input): try await input.render(files: files)
     case let .sliceReadText(input): input.render()
     case let .renderFileBlock(input): input.render()
@@ -81,6 +82,7 @@ func serve() async throws {
     let generation = CommandLine.arguments[1]
     let extraction = try Extraction()
     let files = ConfinedFiles(generation: generation)
+    let vcs = SelectedPathVCSResolver()
     var pending = Data()
     let inputChunkBytes = 64 * 1024
     var buffer = [UInt8](repeating: 0, count: inputChunkBytes)
@@ -95,7 +97,7 @@ func serve() async throws {
             pending.removeSubrange(...newline)
             let request = try Request(bytes, generation: generation)
             do {
-                let result = try await execute(request, files: files, extraction: extraction)
+                let result = try await execute(request, files: files, extraction: extraction, vcs: vcs)
                 try request.terminal(result)
             } catch let failure as BridgeFailure {
                 try request.terminal([

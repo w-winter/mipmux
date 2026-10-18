@@ -5416,11 +5416,11 @@
       "sourceSHA256": "4243ff0af1a4e7f080e0dba25ceb1257dd4cad15ed73e23f7d4351f4f999b3f5",
       "destination": "native/Sources/SmipBridge/RPCEGitSelectedPathOwnership.swift",
       "changes": [
-        "Retain selected-file grouping, ownership checks, path issues and ordering. Supply existing native path/layout/model types instead of app module imports. The synchronous worker replaces the async VCSService singleton with the fresh retained GitWorktreeIdentityResolver starting at the selected file parent; no headless Jujutsu backend or application VCS cache is supplied. External job cancellation retires the native worker. Retain existing complexity checks.",
+        "Retain selected-file grouping, ownership checks, path issues and ordering. Supply native path/layout/model types instead of imports from app modules. The async dependency uses the runtime-owned SelectedPathVCSResolver actor; Git layout and identity reads remain fresh. Retain existing complexity checks.",
         "Separate checkout grouping and ordered projection into addSelectedPath/makeCheckouts to meet the existing cognitive-complexity limit; retain source conditions, hashing, sorting, ordinal labels and fields.",
-        "Use SelectedPathVCSResolver for the live VCS dependency instead of constructing a Git-only result. Keep source unsupportedBackend diagnostics for Jujutsu and retain the existing layout, identity and display-label logic."
+        "Use the shared SelectedPathVCSResolver for initial election, automatic Review and checkout revalidation. Keep source unsupportedBackend diagnostics for Jujutsu and retain the existing layout, identity and display-label logic."
       ],
-      "sha256": "20f5c04ce5d7755fb5be0917c24e4b89edab3d434d9b42ce68c7a2997fb3bc13",
+      "sha256": "f86e2054d0998c2726b8e3b5515aecc7871303f0568b2f77f71138c43aebdd73",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6129,7 +6129,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "b8eb4398c31e422a4d11193eb06878ce6b20fe583dce6930c9b805c5fe46b2b9",
+      "sha256": "44c7bd61c01a966d13c73d715c7c642dae7019978abd24f32beeaccea4829794",
       "classification": "handwritten"
     },
     {
@@ -6512,7 +6512,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "native/Sources/SmipBridge/AutomaticReviewGitInput.swift",
-      "sha256": "d8845350ca2b3d02754824726699ed2c86edba279bd049829fce68fba349f8e1",
+      "sha256": "5562465d354a8c45be0b40ebd8f09c04d566479e0a4e4c24f857926137ff344e",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6612,18 +6612,27 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "6e88cabbb685d929f42fc3c0bbdaeb078f99b16aae80c1bdbe950a98e3dee272",
       "destination": "native/Sources/SmipBridge/SelectedPathVCSResolver.swift",
-      "sha256": "0c59db94abd45359aca00cdbda9f6ff22cb92cac3ea31bdfe98a09b27a106c99",
+      "sha256": "e22ef51f248dd11b72839446da27f194b778a742cbcd602a8b5079c9722fd9fe",
       "classification": "handwritten",
       "ranges": [
         [
+          123,
+          130
+        ],
+        [
+          142,
+          161
+        ],
+        [
           269,
-          325
+          346
         ]
       ],
       "changes": [
-        "Bind the source nearest-marker walk to synchronous Foundation metadata in the existing native ownership operation. At each directory an available Jujutsu executable gives .jj precedence over a valid Git layout; a nearer Git checkout wins before an ancestor Jujutsu checkout. Automatic Review and election of initial Git targets share the resolver.",
+        "Retain the source positive query-path/root-path cache and nearest-marker walk in a native actor. Cache misses are not retained. At each directory an available Jujutsu executable gives .jj precedence over Git; a nearer Git checkout wins before an ancestor Jujutsu checkout. Availability is checked lazily and cached, including false results.",
         "Executable availability follows Sources/RepoPromptVCS/JJCommandRunner.swift:165-203, SHA256 4be8bb56f21e50129dc536ed551e4cea3eb46260d9adb6a3a9bca6c2e993c80e. Search the native process PATH and the source common installation directories using FileManager executable checks. The explicit native environment supplied by the host replaces discovery through a GUI login shell. Availability requires no subprocess and does not inspect command output.",
-        "This mapping covers physical marker ownership. VCSService command-based discovery after the marker walk and its long-lived actor caches are not executed; their applicability under explicit headless capabilities remains unverified. The resolver observes metadata afresh for each native operation."
+        "SmipRuntime owns one native worker for election, automatic Review and revalidation. Caller cancellation releases only its observation, matching resolveRepo completing shared cache work; runtime shutdown retires the worker. Root capabilities are validated before each request and checks of layout and identity remain fresh. A retired worker is not silently recreated.",
+        "The marker walk excludes filesystem root, matching the source. Command discovery after no marker is not executed by this adapter. Source commands use the original selected-path URL as their working directory, including regular-file paths; checkout revalidation additionally requires an exact filesystem Git layout. Full command-discovery equivalence remains unproven, rather than being attributed to cache conformance."
       ]
     },
     {
@@ -7558,6 +7567,23 @@
         "Saved verification checks omission shape, source/root linkage, uniqueness and required-input preservation using packet bytes. It does not attest to historical filesystem failure."
       ],
       "sha256": "5c2c69981b40264fe01d33f73fcf2c4d13a38ee8af25785a1e6dd14fc8996894"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "3e9503df1a195d080b2b054f7c58a28ec8c03cb59d7ed74277f5c62f07367e41",
+      "destination": "native/Sources/SmipBridge/GitTargetRevalidationInput.swift",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          596,
+          699
+        ]
+      ],
+      "changes": [
+        "Retain checkout backend/root, fresh Git layout, checkout key, repository/worktree identity and linked-kind checks. Headless WorkspaceOperation validates the captured physical root capability before dispatch instead of authorization of desktop roots and sessions. VCS lookup shares the runtime cache used by election and automatic Review. Return one valid boolean through the strict existing wire."
+      ],
+      "sha256": "e5b8fe8fab0d2539fe915a206dd73e2b038ed8d03d823e578c583d2243c9f35a"
     }
   ],
   "dependencies": [

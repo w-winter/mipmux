@@ -12,8 +12,8 @@ struct AutomaticReviewGitInput {
         self.kind = kind
     }
 
-    func render() throws -> [String: Any] {
-        if kind == "resolveAutomaticReviewGit" { return try resolve() }
+    func render(resolver: SelectedPathVCSResolver) async throws -> [String: Any] {
+        if kind == "resolveAutomaticReviewGit" { return try await resolve(resolver: resolver) }
         let input = try WireObject(value, keys: ["kind", "outcomes", "pathIssues"])
         guard let rows = try input.value("outcomes") as? [[String: Any]],
               let issues = try input.value("pathIssues") as? [[String: Any]]
@@ -70,7 +70,7 @@ struct AutomaticReviewGitInput {
         }
     }
 
-    private func resolve() throws -> [String: Any] {
+    private func resolve(resolver: SelectedPathVCSResolver) async throws -> [String: Any] {
         let input = try WireObject(value, keys: ["kind", "roots", "paths", "unresolvedCandidates", "base"])
         let rawBase: String? = try input.value("base") is NSNull ? nil : input.string("base")
         guard let roots = try input.value("roots") as? [[String: String]],
@@ -81,7 +81,8 @@ struct AutomaticReviewGitInput {
             guard let path = root["path"], let name = root["name"] else { throw BridgeFailure("nativeProtocolError") }
             return ReviewGitDisplayRoot(logicalRootPath: path, logicalRootName: name, physicalRootPath: path)
         })
-        let ownership = try ReviewGitSelectedPathOwnershipResolver().resolve(
+        let ownershipResolver = ReviewGitSelectedPathOwnershipResolver(dependencies: .live(resolver: resolver))
+        let ownership = try await ownershipResolver.resolve(
             WorkspaceSelectedGitPathResolution(paths: paths, unresolvedCandidates: unresolved), displayContext: display
         )
         let checkouts = try ownership.checkouts.map { group -> [String: Any] in

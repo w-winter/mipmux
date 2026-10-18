@@ -63,9 +63,10 @@ struct GitTargetInput {
         }
     }
 
-    func render() throws -> [String: Any] {
+    func render(resolver: SelectedPathVCSResolver) async throws -> [String: Any] {
         guard !paths.isEmpty else { return ["kind": "gitTarget", "state": "deferred"] }
-        let ownership = try ReviewGitSelectedPathOwnershipResolver().resolve(
+        let ownershipResolver = ReviewGitSelectedPathOwnershipResolver(dependencies: .live(resolver: resolver))
+        let ownership = try await ownershipResolver.resolve(
             WorkspaceSelectedGitPathResolution(paths: paths, unresolvedCandidates: []),
             displayContext: ReviewGitDisplayContext(roots: roots.map { root in
                 ReviewGitDisplayRoot(
