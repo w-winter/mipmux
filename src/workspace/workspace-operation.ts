@@ -516,6 +516,12 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
+  projectSearchReply(input: Extract<NativeOperation, { kind: 'projectSearchReply' | 'countSearchReply' }>) {
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      return (await access.bridge.request(input, this.signal)).result;
+    });
+  }
   resolveSearchScope(input: Extract<NativeOperation, { kind: 'parseSearchScope' | 'refreshSearchScope' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());

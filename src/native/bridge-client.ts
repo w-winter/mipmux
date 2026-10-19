@@ -12,6 +12,8 @@ const resultKinds = {
   scanRegexContent: ['regexSearch', 'regexSearchError'],
   compileRegexContent: ['regexCompilation', 'regexSearchError'],
   prepareSearchRecovery: ['searchRecovery'],
+  projectSearchReply: ['searchReply'],
+  countSearchReply: ['searchReply'],
   filterSearchScope: ['searchScopeFiltered'],
   parseSearchScope: ['searchScopeParsed'],
   refreshSearchScope: ['searchScopeParsed'],

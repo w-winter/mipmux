@@ -1,0 +1,20 @@
+{
+  "revision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "path": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+  "sourceSHA256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
+  "gitBlob": "28490c87429b61d151281e79d1c60d7b48ee84ef",
+  "startLine": 934,
+  "endLine": 960,
+  "excerptSHA256": "916b927a15202b8e164b966835c8a544d2b251772453708f5476ea3cda680f3d",
+  "excerpt": "        let budget = max(0, 50000 - 2000)\n        var usedChars = 0\n        var includedContentMatches: [SearchMatch] = []\n        for match in contentMatchesFull {\n            try Task.checkCancellation()\n            let lineStr = \"\\(match.filePath):\\(match.lineNumber + 1): \\(match.lineText)\"\n            let cost = lineStr.count + 3\n            if usedChars + cost > budget { break }\n            includedContentMatches.append(match)\n            usedChars += cost\n        }\n        var includedPathLines: [String] = []\n        for path in pathMatchesFull {\n            try Task.checkCancellation()\n            let cost = path.count + 3\n            if usedChars + cost > budget { break }\n            includedPathLines.append(path)\n            usedChars += cost\n        }\n        let omittedContent = contentMatchesFull.count - includedContentMatches.count\n        let omittedPaths = pathMatchesFull.count - includedPathLines.count\n        let sizeLimitHit = omittedContent + omittedPaths > 0\n        let hitMaxCountLimit = contentMatchesFull.count >= maxResults || pathMatchesFull.count >= maxResults\n        dtoBuildLimitHit = sizeLimitHit || hitMaxCountLimit\n        if dtoBuildLimitHit {\n            dtoBuildOutcome = \"capped\"\n        }",
+  "totalsRange": [
+    971,
+    974
+  ],
+  "totalsExcerpt": "            let perFileTotalsDTO = Dictionary(grouping: contentMatchesFull, by: \\.filePath)\n                .mapValues(\\.count)\n                .sorted { $0.key < $1.key }\n                .map { ToolResultDTOs.PerFileCount(path: $0.key, count: $0.value) }",
+  "totalsExcerptSHA256": "74167395968afa098568cc6ef27ba134f0939495d9d68b6e86d7e2637e0d1a6a",
+  "cases": 4,
+  "referenceSHA256": "59d3970768c229f1286e3af82c882a156c83af8a39e1ff09c832008db424e555",
+  "generator": "scripts/generate-search-reply-fixtures.mjs",
+  "generatorSHA256": "5574cca33c70ece3fb29a858a7ddeee7a878e07da2a1551d9273410966bafa16"
+}

@@ -28,6 +28,8 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .scanRegexContent(input): try input.render()
     case let .compileRegexContent(input): try input.render()
     case let .prepareSearchRecovery(input): input.render()
+    case let .projectSearchReply(input): try input.render()
+    case let .countSearchReply(input): input.render()
     case let .filterSearchScope(input): input.render()
     case let .searchScope(input): await input.render()
     case let .renderPreparedClipboard(input): try input.render()

@@ -7,6 +7,7 @@ import { pageResult, type ResultEncoding } from './output-budget.js';
 import { prepareSearch } from './search-query.js';
 import { searchContent } from './search-pass.js';
 import { prepareSearchScope, refreshSearchScope } from './search-scope.js';
+import { projectSearchReply } from './search-reply.js';
 
 export interface SearchFile {
   readonly root: string; readonly path: string; readonly identity: SourceIdentity;
@@ -32,22 +33,25 @@ async function preparedSearch(operation: WorkspaceOperation, request: SearchRequ
   const digest = pageIdentity(operation.snapshot, settings, candidates.map(entry => ({ root: entry.root, path: entry.path,
     identity: entry.identity })));
   const offset = pageOffset(continuation, digest);
-  const { records, limitations, contentMatches, matchedFiles, correction } = await searchContent(operation, request, pattern, offset);
+  const scanned = await searchContent(operation, request, pattern);
+  const { limitations, correction } = scanned;
+  const projected = await projectSearchReply(operation, request, scanned, matchedPaths);
+  const { records, contentMatches, pathMatches, totalFiles, matchedFiles, ...display } = projected;
   const contentPattern = pattern.content.kind === 'ready' ? pattern.content.pattern : null;
-  if (offset > matchedFiles) throw new WorkspaceFailure('invalidContinuation');
+  if (offset > records.length) throw new WorkspaceFailure('invalidContinuation');
   const matchingLines = contentMatches;
-  const counts = { totalMatches: matchingLines + matchedPaths.size, matchingLines, pathMatches: matchedPaths.size, matchedFiles };
-  return pageResult(records, 0, maxOutputBytes, (files) => {
+  const counts = { totalMatches: matchingLines + pathMatches, matchingLines, pathMatches, totalFiles, matchedFiles };
+  return pageResult(records, offset, maxOutputBytes, (files, next) => {
     const result = {
       kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
       scopedFileCount: scope.scopedFileCount, enumeration: operation.snapshot.enumeration, unavailableRoots: scope.unavailableRoots,
       engine: pattern.mode === 'path' ? 'RPCE path' : pattern.raw.isRegex || contentPattern?.isRegex === true ? 'PCRE2' : 'Foundation',
       newlineView: 'Original decoded text; CRLF, CR and LF define lines', counts,
-      limitHit: !request.countOnly && (contentMatches >= request.maxResults || matchedPaths.size >= request.maxResults),
+      ...display,
       returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files,
       limitations: [...scope.unavailable, ...limitations],
-      truncated: !request.countOnly && offset + files.length < matchedFiles,
-      continuation: request.countOnly || offset + files.length === matchedFiles ? null : { digest, offset: offset + files.length },
+      truncated: next !== null,
+      continuation: next === null ? null : { digest, offset: next },
     };
     if (correction.kind === 'corrected') {
       return { ...result, warning: correction.warning };

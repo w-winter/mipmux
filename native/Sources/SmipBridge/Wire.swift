@@ -168,6 +168,8 @@ enum Operation {
     case scanRegexContent(RegexSearchInput)
     case compileRegexContent(RegexCompilationInput)
     case prepareSearchRecovery(SearchRecoveryInput)
+    case projectSearchReply(SearchReplyInput)
+    case countSearchReply(SearchCountReplyInput)
     case filterSearchScope(SearchScopeFilterInput)
     case searchScope(SearchScopeInput)
     case renderPreparedClipboard(PreparedClipboardOperation)
@@ -353,6 +355,8 @@ enum Operation {
         case "scanRegexContent": return try .scanRegexContent(RegexSearchInput(value))
         case "compileRegexContent": return try .compileRegexContent(RegexCompilationInput(value))
         case "prepareSearchRecovery": return try .prepareSearchRecovery(SearchRecoveryInput(value))
+        case "projectSearchReply": return try .projectSearchReply(SearchReplyInput(value))
+        case "countSearchReply": return try .countSearchReply(SearchCountReplyInput(value))
         case "filterSearchScope": return try .filterSearchScope(SearchScopeFilterInput(value))
         case "parseSearchScope", "refreshSearchScope": return try .searchScope(SearchScopeInput(value))
         case "resolveAutomaticReviewGit", "renderAutomaticReviewGit":

@@ -26,6 +26,16 @@ export const NativeSearchPathsResult = Type.Union([
     excluded: Type.Array(SafeCount) }, closed),
   Type.Object({ kind: Type.Literal('searchPathsError'), message: Type.String() }, closed),
 ]);
+export const NativeSearchReplyInput = Type.Object({ kind: Type.Literal('projectSearchReply'),
+  matches: Type.Array(Type.Object({ filePath: Type.String(), lineNumber: SafeCount, lineText: Type.String() }, closed)),
+  paths: Type.Array(Type.String()), maxResults: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
+}, closed);
+export const NativeSearchReplyResult = Type.Object({ kind: Type.Literal('searchReply'), contentCount: SafeCount,
+  pathCount: SafeCount, totalFiles: SafeCount, matchedFiles: SafeCount, pathMatchLines: Type.Array(Type.String()),
+  limitHit: Type.Boolean(), sizeLimitHit: Type.Boolean(), omittedContentMatches: SafeCount,
+  omittedPathMatches: SafeCount, perFileTotals: Type.Array(Type.Object({ path: Type.String(), count: SafeCount }, closed)) }, closed);
+export const NativeSearchCountInput = Type.Object({ kind: Type.Literal('countSearchReply'), contentMatches: SafeCount,
+  contentFiles: SafeCount, paths: Type.Array(Type.String()) }, closed);
 export const NativeLiteralSearchInput = Type.Object({ kind: Type.Literal('scanLiteralLines'),
   text: Type.String(), pattern: Type.String({ minLength: 1 }), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean(),
   countOnly: Type.Boolean(), limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),

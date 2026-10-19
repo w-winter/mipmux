@@ -6148,7 +6148,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "2ae4aa182652f272163a32a2205ae8f18f158a3960c251280a796437366fdfeb",
+      "sha256": "f913f6349ef68dde39500732ee2e1709249fb61522406ff340ebdec95238ecfd",
       "classification": "handwritten"
     },
     {
@@ -7000,7 +7000,7 @@
         "Run all matching through the existing native worker and its pinned Foundation/PCRE2 implementation. The host configuration has one nativeExecutable owner; it contains no separate search executable or optional search gate. Preserve one current decoded file, query limits and parent-owned settlement.",
         "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged."
       ],
-      "sha256": "fc40aa4b2733482372e599d2340903b8576762860d43a674032a687523a2697b"
+      "sha256": "4ef0fa95b4365a4cdc3978e3f421b5192516d6c24857696df9a7850dee7b171b"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7303,7 +7303,7 @@
         "The source normalized-stage catch suppresses callback errors. The headless binding suppresses only typed searchFailed pattern failures there: filesystem authority, protocol and cancellation failures propagate through the existing operation owner. This retains required fail-closed root/credential boundaries and local tool retirement instead of running another native request after cancellation. Compressed and quoted failures propagate.",
         "Raw source bytes are revalidated and decoded for every attempted pass. No document collection, retry-result cache, alternate search backend, or new resource limit is introduced."
       ],
-      "sha256": "190fc25e2dd093065133a050a3c072d6a53b6978a759549b8b33c5eb47a4315a"
+      "sha256": "3ec762e31b19d4fb6db34955020c616c088b8c33cafac1ee1b9709f7001bd4ee"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
@@ -7806,6 +7806,39 @@
         "Separate settings, selection, readiness, projection and required-evidence phases within the existing owner to meet enforced function-complexity limits; policy and schema remain unchanged."
       ],
       "sha256": "7042f4ba9fe94ac6a75dab684278db04ec97caa3afb6d20b0e8cfe7be11c6ba2"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "db14d99d8b42d4b3982a4b8af80dc5f042789f3ede35abd140430a188c9f8cfb",
+      "destination": "native/Sources/SmipBridge/SearchReplyInput.swift",
+      "ranges": [
+        [
+          886,
+          902
+        ],
+        [
+          934,
+          957
+        ],
+        [
+          971,
+          974
+        ],
+        [
+          1008,
+          1016
+        ]
+      ],
+      "classification": "handwritten",
+      "changes": [
+        "Retain the original search reply character budget, content-before-path accounting and limit flags. The native input supplies captured matching rows and returns prefix counts for the existing headless file/line view.",
+        "Root-qualified paths and zero-based source line numbers bind the display inputs. Count-only queries bypass this projection. Source omissions remain distinct from transport pagination.",
+        "Omit the diagnostics-only dtoBuildOutcome assignment; return only consumed prefix counts and omission flags.",
+        "Retain pre-cap per-file totals and their source ordering; only the DTO constructor becomes native wire dictionaries.",
+        "Count-only results retain the source content-file count, path-only matched-file count, and native sorted path identities because no content rows are collected. Collected results retain separate content-file and union-of-matches counts."
+      ],
+      "sha256": "73888e7a6aab5cb26a64df2fff1770978b12014ab7d06b85c3cf81a2c543048d"
     }
   ],
   "dependencies": [

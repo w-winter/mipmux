@@ -14,7 +14,8 @@ import { NativeTokenStatsInput, NativeTokenStatsResult } from './token-accountin
 import { NativeSearchPatternInput, NativeSearchPatternResult, NativeSearchPathsInput, NativeSearchPathsResult,
   NativeLiteralSearchInput, NativeLiteralSearchResult, NativeRegexSearchInput, NativeRegexSearchResult,
   NativeRegexCompilationInput, NativeRegexCompilationResult, NativeSearchRecoveryInput, NativeSearchRecoveryResult,
-  NativeSearchScopeInput, NativeSearchScopeResult, NativeSearchScopeRoot } from './search-pattern.js';
+  NativeSearchScopeInput, NativeSearchScopeResult, NativeSearchScopeRoot, NativeSearchReplyInput, NativeSearchReplyResult,
+  NativeSearchCountInput } from './search-pattern.js';
 
 import { NativeStructureInput, NativeStructureResult } from './structure.js';
 export { NativeStructureInput, NativeStructureResult } from './structure.js';
@@ -297,6 +298,8 @@ export const NativeOperation = Type.Union([
   NativeRegexSearchInput,
   NativeRegexCompilationInput,
   NativeSearchRecoveryInput,
+  NativeSearchReplyInput,
+  NativeSearchCountInput,
   NativeSearchScopeInput,
   ...NativeSearchScopeResolutionInput.anyOf,
   NativeTokenStatsInput,
@@ -414,6 +417,7 @@ export const NativeResult = Type.Union([
   ...NativeRegexSearchResult.anyOf,
   ...NativeRegexCompilationResult.anyOf,
   NativeSearchRecoveryResult,
+  NativeSearchReplyResult,
   NativeSearchScopeResult,
   NativeSearchScopeParsingResult,
   NativeTokenStatsResult,
