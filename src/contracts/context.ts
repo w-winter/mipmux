@@ -144,6 +144,10 @@ export const MaterialRecord = Type.Union([
     selectionOrigin: Type.Literal('inferred'), required: Type.Literal(false), decoding: SourceDecoding.anyOf[0],
     selection: SourceSelection.anyOf[2], normalized: Type.Tuple([]), artifactKey: ArtifactKey,
   }, closed),
+  Type.Object({ ...sourceRecord,
+    selectionOrigin: Type.Literal('presentation'), required: Type.Literal(false), decoding: SourceDecoding.anyOf[0],
+    selection: SourceSelection.anyOf[2], normalized: Type.Tuple([]), artifactKey: ArtifactKey,
+  }, closed),
   Type.Object({
     kind: Type.Literal('document'), id: Type.String(), input: DocumentInput.anyOf[0],
     identity: SourceIdentity, sourceIdentity: SourceIdentity, spans: Type.Array(Span), frame: Type.Union([Span, Type.Null()]),
@@ -182,6 +186,7 @@ const gitCommit = Type.String({ pattern: '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' });
 const reviewComparison = Type.Object({ head: gitCommit, base: gitCommit }, closed);
 const capturedReviewCheckout = { checkout: AutomaticReviewGitCheckout };
 export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticReviewGitCompleteness,
+  scope: Type.Enum(['selected', 'complete']),
   sourceRoots: Type.Array(Type.Object({ root: RootName, path: Type.String({ pattern: '^/[^\u0000]*$' }) }, closed)),
   pathIssues: Type.Array(AutomaticReviewGitPathIssue), outcomes: Type.Array(Type.Union([
     Type.Object({ ...capturedReviewCheckout, kind: Type.Literal('diff'), comparison: reviewComparison, body: Span }, closed),
@@ -189,8 +194,12 @@ export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticR
     Type.Object({ ...capturedReviewCheckout, kind: Type.Literal('baseResolutionFailed') }, closed),
   ])) }, closed);
 export type AutomaticReviewGitEvidence = Static<typeof AutomaticReviewGitEvidence>;
+export const ManualPresentation = Type.Object({ canonicalSources: Type.Array(SourceSelection), directlySelected: Type.Array(SourcePath),
+  requested: Type.Array(SourcePath), ready: Type.Array(SourcePath), completeRootSet: Type.Boolean() }, closed);
+export type ManualPresentation = Static<typeof ManualPresentation>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(21),
+  schemaVersion: Type.Literal(22),
+  manualPresentation: Type.Union([ManualPresentation, Type.Null()]),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
   request: ContextBuildRequest,

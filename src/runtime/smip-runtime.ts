@@ -3,7 +3,7 @@ import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { BridgeClient } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
 import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
-import type { ContextBuildRequest } from '../contracts/context.js';
+import { contextRequestValidator, type ContextBuildRequest } from '../contracts/context.js';
 import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle } from '../context/verify.js';
@@ -16,7 +16,6 @@ import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/va
 import type { DiscoveryRunner } from '../discovery/runner.js';
 import { ClientRuntime } from './client-runtime.js';
 import { parseClipboard, preparedClipboardInput } from '../context/clipboard.js';
-import { finalFileTreeInput } from '../context/final-tree.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import { observe } from '../workspace/observe.js';
 import { revalidateExcludedSources } from '../context/clipboard-selection.js';
@@ -65,7 +64,7 @@ export class SmipRuntime {
     return new BridgeClient({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
   }
   /** Shares VCS ownership for this runtime. Caller cancellation ends observation; shutdown retires the worker. */
-  resolveVCS<O extends Extract<NativeOperation, { kind: 'electGitTarget' | 'resolveAutomaticReviewGit' | 'revalidateGitTargets' }>>(input: O, signal: AbortSignal) {
+  resolveVCS<O extends Extract<NativeOperation, { kind: 'electGitTarget' | 'resolveCompleteGitTarget' | 'resolveAutomaticReviewGit' | 'revalidateGitTargets' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const combined = AbortSignal.any([signal, this.#shutdown.signal]);
     combined.throwIfAborted();
@@ -113,7 +112,7 @@ export class SmipRuntime {
     return work;
   }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
-  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
+  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const work = (async () => {
@@ -235,15 +234,15 @@ export class SmipRuntime {
     try {
       await revalidateMaterials(operation,materials, manifest.unavailableRoots, manifest.unavailableFiles);
       await revalidateExcludedSources(operation, manifest);
-      const selections = manifest.request.copyPreset === 'diffFollowUp'
+      const selections = manifest.manualPresentation?.canonicalSources ?? (manifest.request.copyPreset === 'diffFollowUp'
         ? restoreOmittedSourceSelections(manifest.excludedSources, manifest.unavailableRoots, manifest.unavailableFiles)
-        : capturedSourceSelections(materials, manifest.unavailableRoots, manifest.unavailableFiles);
+        : capturedSourceSelections(materials, manifest.unavailableRoots, manifest.unavailableFiles));
       await revalidateAutomaticReviewGit(operation, manifest.request, selections, automaticGit, manifest.unavailableRoots);
       if (fileTree.input !== null) {
-        const tree = await this.renderPresentation(finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), signal);
+        const tree = await this.renderPresentation(fileTree.input, signal);
         if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
       }
-      const input = { request: manifest.request, prompt: manifest.prompt,
+      const input = { request: manifest.request, prompt: manifest.prompt, manualPresentation: manifest.manualPresentation,
         inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, excludedSources: manifest.excludedSources, fileTree,
         unavailableRoots: manifest.unavailableRoots,
         unavailableFiles: manifest.unavailableFiles,
@@ -262,6 +261,8 @@ export class SmipRuntime {
   }
   async createDraft(owner: WorkspaceRuntime, request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}): Promise<DraftRuntime> {
     if (this.#closing) throw new WorkspaceFailure('runtimeClosed');
+    if (!contextRequestValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
+    const captured = freeze(structuredClone(request));
     const release = owner.retain();
     const work = (async () => {
       const combined = AbortSignal.any([signal, this.#shutdown.signal]);
@@ -271,7 +272,7 @@ export class SmipRuntime {
       // The draft's base operation pins the publication that satisfied its own barrier; its lifetime is runtime-owned.
       const operation = await this.#admitOperation(owner, this.#shutdown.signal, snapshot);
       try {
-        const draft = await DraftRuntime.acquire(operation, request, combined, () => this.#drafts.delete(draft));
+        const draft = await DraftRuntime.acquire(operation, captured, combined, () => this.#drafts.delete(draft));
         combined.throwIfAborted(); this.#drafts.add(draft); return draft;
       } catch (error) { await operation.close(); throw error; }
     })().finally(release);

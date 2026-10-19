@@ -51,6 +51,7 @@ export async function captureReferenceTokens(operation: WorkspaceOperation, inpu
   const selectedPaths = new Set(paths);
   const tree = await operation.runtime.renderPresentation(tokenTreeInput(input, selectedPaths), operation.signal);
   let gitText: string | null = null;
+  if (input.clipboardPreset.gitInclusion === 'complete') gitText = input.automaticGit?.text ?? null;
   if (input.clipboardPreset.gitInclusion === 'selected') {
     const roots = new Map(input.inventory.roots.map(root => [root.name, root.identity.canonicalPath]));
     const candidates = input.inventory.entries.filter(entry => entry.kind === 'file' && selectedPaths.has(posix.join(roots.get(entry.root)!, entry.path)));

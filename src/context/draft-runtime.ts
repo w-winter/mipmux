@@ -70,6 +70,7 @@ import { captureReferenceTokens, referenceTokenFields, type ReferenceTokenView }
 import { captureSourcePresentation, selectionSourcePath, unavailableSelectionRoots } from './source-presentation.js';
 import { capturedSourceSelections } from './source-omissions.js';
 import { assertClipboardRequiredMaterials } from './clipboard-selection.js';
+import { manualCopySettings } from '../contracts/presentation.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
@@ -538,7 +539,7 @@ export class DraftRuntime {
     const snapshot = operation.snapshot;
     const sourceView = await captureSourcePresentation(operation, observed, request);
     const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: snapshot,
-      prompt, codemapMode: mode, materials: sourceView.materials, automaticAcquisition: acquisition, unavailableRoots: [], unavailableFiles: [] }, operation.signal, { kind: 'live', operation });
+      prompt, codemapMode: mode, materials: sourceView.materials, automaticAcquisition: acquisition, unavailableRoots: [], unavailableFiles: [] }, operation.signal, { kind: 'live', operation }, canonical);
     const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
     const { unmapped, pending } = this.#automaticPresentationPaths(snapshot, request.path_display,
       acquisition.kind === 'settled' ? acquisition.outcomes : [], acquisition.kind === 'settled' ? coverage.sourceIssues : []);
@@ -606,13 +607,13 @@ export class DraftRuntime {
       const freezeGeneration = this.#freezeGeneration, current = this.#materials, prompt = this.#prompt, canonical = this.#selection;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
-        const { next, mode, automaticCodemaps } = await this.#prepareSourceEdits(operation, request.edits, current, request.expectedRevision);
+        const { next, state, mode, automaticCodemaps } = await this.#prepareSourceEdits(operation, request.edits, current, request.expectedRevision);
         this.#check(signal, request.expectedRevision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
         const observed = await this.#liveMaterials(operation, [...next.values()]);
         const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
           codemapMode: mode, materials: observed, automaticAcquisition: { kind: 'settled', outcomes: automaticCodemaps }, unavailableRoots: [], unavailableFiles: [] }, AbortSignal.any([signal, this.#cancel.signal]),
-          { kind: 'live', operation });
+          { kind: 'live', operation }, { roots: canonical.roots, state });
         const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, canonical);
         this.#check(signal, request.expectedRevision);
         if (freezeGeneration !== this.#freezeGeneration) throw new WorkspaceFailure('draftFrozen');
@@ -731,7 +732,7 @@ export class DraftRuntime {
     const mode = state.codemapAutoEnabled ? 'automatic' as const : 'manual' as const;
     const observed = await this.#liveMaterials(operation, [...next.values()]);
     const input = await prepareRenderInput(this.operation.runtime, { request: this.request, inventory: operation.snapshot, prompt,
-      codemapMode: mode, materials: observed, automaticAcquisition, unavailableRoots: [], unavailableFiles: [] }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation });
+      codemapMode: mode, materials: observed, automaticAcquisition, unavailableRoots: [], unavailableFiles: [] }, AbortSignal.any([signal, this.#cancel.signal]), { kind: 'live', operation }, { roots: this.#selection.roots, state });
     const rendered = renderBundle(input), tokens = await captureReferenceTokens(operation, input, { roots: this.#selection.roots, state });
     const changedSet = new Set(changedIds);
     const changedCosts = rendered.costs.filter(cost => changedSet.has(cost.id));
@@ -800,7 +801,7 @@ export class DraftRuntime {
       revision = this.#revision, state = this.#state, text = this.#prompt, automaticAcquisition = this.#automaticAcquisition, canonical = this.#selection;
     const materials = await this.#liveMaterials(operation, captured);
     const omittedIds = new Set([...this.#unavailableRoots.flatMap(root => root.sources.map(source => source.id)), ...this.#unavailableFiles.map(source => source.id)]);
-    const inputForRender = await prepareRenderInput(this.operation.runtime, {
+    const inputForRender = state === 'terminal' && manualCopySettings(this.request.copyPreset) !== null && this.#finalization !== null ? this.#finalization.capturedRenderInput : await prepareRenderInput(this.operation.runtime, {
         codemapMode,
         request: this.request,
         inventory: state === 'terminal' ? this.#inventory : operation.snapshot,
@@ -809,7 +810,7 @@ export class DraftRuntime {
         unavailableRoots: state === 'terminal' ? this.#unavailableRoots : [],
         unavailableFiles: state === 'terminal' ? this.#unavailableFiles : [],
         automaticAcquisition,
-      }, signal, state === 'terminal' ? { kind: 'captured', capture: this.#automaticGit } : { kind: 'live', operation });
+      }, signal, state === 'terminal' ? { kind: 'captured', capture: this.#automaticGit } : { kind: 'live', operation }, canonical);
     const rendered = renderBundle(inputForRender), tokens = state === 'terminal' ? this.#referenceTokens
       : await captureReferenceTokens(operation, inputForRender, canonical);
     const prompt = { kind: 'prompt' as const, prompt: text };
@@ -861,12 +862,12 @@ export class DraftRuntime {
         automaticAcquisition: this.#automaticAcquisition,
         prompt: this.#prompt, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision,
         contextBudgetUnits: this.operation.runtime.options.contextBudgetUnits };
-      const selection = this.selectionProjection();
+      const selection = this.selectionProjection(), canonical = this.#selection;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const tree = await initialFileTree(operation, selection);
         const materials = await refreshGitArtifactMaterials(operation, input.materials);
-        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, inventory: operation.snapshot, materials, unavailableRoots: [], unavailableFiles: [] }, operation.signal, { kind: 'live', operation }),
+        const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, inventory: operation.snapshot, materials, unavailableRoots: [], unavailableFiles: [] }, operation.signal, { kind: 'live', operation }, canonical),
           draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
         return { context, tree, prompt: input.prompt, roots: operation.snapshot.roots.map(root => root.name) };
       } finally { await operation.close(); }
@@ -876,7 +877,7 @@ export class DraftRuntime {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
       const revision = this.#revision, captured = [...this.#materials.values()], prompt = this.#prompt, codemapMode = this.#codemapMode,
-        automaticAcquisition = this.#automaticAcquisition;
+        automaticAcquisition = this.#automaticAcquisition, canonical = this.#selection;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const materials = await refreshGitArtifactMaterials(operation, captured);
@@ -889,7 +890,7 @@ export class DraftRuntime {
           materials,
           automaticAcquisition,
           unavailableRoots: [], unavailableFiles: [],
-        }, operation.signal, { kind: 'live', operation }));
+        }, operation.signal, { kind: 'live', operation }, canonical));
         return freeze({
           kind: 'validation' as const,
           codemapMode,

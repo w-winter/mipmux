@@ -8,6 +8,7 @@ import { prepareGitDiffComparison, capturePreparedGitDiff } from '../exploration
 import { resolveGitCommit } from '../patches/local-git.js';
 import { gitProcess } from '../patches/git-process.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { manualCopySettings } from '../contracts/presentation.js';
 
 export interface AutomaticReviewGitCapture {
   readonly evidence: AutomaticReviewGitEvidence;
@@ -38,20 +39,33 @@ function diffRequest(root: string, base: string) {
 
 /** Resolves every checkout boundary before the first working-tree capture, matching RPCE's discover coordinator. */
 export async function acquireAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
-  selections: readonly SourceSelection[], unavailableRoots: readonly UnavailableRoot[]): Promise<AutomaticReviewGitCapture> {
+  selections: readonly SourceSelection[], unavailableRoots: readonly UnavailableRoot[], scope: AutomaticReviewGitEvidence['scope'] = 'selected'): Promise<AutomaticReviewGitCapture> {
   const unavailable = new Set(unavailableRoots.map(root => root.root));
   const roots = new Map(operation.snapshot.roots.map(root => [root.name, root.identity.canonicalPath]));
   const catalog = new Set(operation.snapshot.entries.flatMap(entry => entry.kind === 'file' && !unavailable.has(entry.root)
     ? [roots.get(entry.root)! + '/' + entry.path] : []));
   const paths = selectedGitSourcePaths(operation, selections);
-  return acquireSelectedReviewGit(operation, request, { paths: paths.filter(path => catalog.has(path)), unresolvedCandidates: paths.filter(path => !catalog.has(path)) });
+  return acquireSelectedReviewGit(operation, request, { paths: paths.filter(path => catalog.has(path)), unresolvedCandidates: paths.filter(path => !catalog.has(path)) }, scope);
 }
 
 export async function acquireSelectedReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
-  selection: { readonly paths: readonly string[]; readonly unresolvedCandidates: readonly string[] }): Promise<AutomaticReviewGitCapture> {
+  selection: { readonly paths: readonly string[]; readonly unresolvedCandidates: readonly string[] }, scope: AutomaticReviewGitEvidence['scope'] = 'selected'): Promise<AutomaticReviewGitCapture> {
   const paths = await operation.selectionPathBindings(operation.snapshot.roots.map(root => root.identity.canonicalPath));
   const sourceRoots = operation.snapshot.roots.map((root, index) => ({ root: root.name, path: paths[index]! }));
-  const ownership = await operation.resolveAutomaticReviewGit(selection, request.reviewGitBase ?? null);
+  const completeRoot = manualCopySettings(request.copyPreset)?.activeGitRoot ?? null;
+  const completeCheckouts: Checkout[] = [];
+  if (scope === 'complete' && completeRoot !== null) {
+    const root = operation.snapshot.roots.find(root => root.name === completeRoot);
+    if (!root) throw new WorkspaceFailure('unknownRoot');
+    await operation.validateSourceRoot(root.name);
+    const elected = await operation.runtime.resolveVCS({ kind: 'resolveCompleteGitTarget', paths: [root.identity.canonicalPath],
+      roots: [{ name: root.name, path: root.identity.canonicalPath }] }, operation.signal);
+    if (elected.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
+    completeCheckouts.push({ identity: elected.primary, displayLabel: root.name, selectedPaths: [] });
+  }
+  const requestedBase = request.reviewGitBase?.trim();
+  const ownership = scope === 'selected' ? await operation.resolveAutomaticReviewGit(selection, request.reviewGitBase ?? null)
+    : { checkouts: completeCheckouts, pathIssues: [], base: !requestedBase || requestedBase.toLowerCase() === 'head' ? null : requestedBase };
   if (ownership.checkouts.length && !operation.runtime.options.git) throw new WorkspaceFailure('gitNotConfigured');
   const plans: Plan[] = [];
   for (const checkout of ownership.checkouts) {
@@ -76,15 +90,15 @@ export async function acquireSelectedReviewGit(operation: WorkspaceOperation, re
     } catch (error) {
       operation.signal.throwIfAborted();
       await operation.validateSourceRoot(checkout.identity.root);
-      if (!(error instanceof WorkspaceFailure && operationalFailures.has(error.code))) throw error;
+      if (scope === 'complete' || !(error instanceof WorkspaceFailure && operationalFailures.has(error.code))) throw error;
       plans.push({ kind: 'baseResolutionFailed', checkout });
     }
   }
-  return capturePlans(operation, plans, ownership.pathIssues, sourceRoots);
+  return capturePlans(operation, plans, ownership.pathIssues, sourceRoots, scope);
 }
 
 async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[],
-  pathIssues: AutomaticReviewGitEvidence['pathIssues'], sourceRoots: AutomaticReviewGitEvidence['sourceRoots']): Promise<AutomaticReviewGitCapture> {
+  pathIssues: AutomaticReviewGitEvidence['pathIssues'], sourceRoots: AutomaticReviewGitEvidence['sourceRoots'], scope: AutomaticReviewGitEvidence['scope']): Promise<AutomaticReviewGitCapture> {
   const outcomes: Outcome[] = [];
   for (const plan of plans) {
     operation.signal.throwIfAborted();
@@ -92,13 +106,13 @@ async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[
     try {
       await plan.owner.revalidate();
       const captured = await capturePreparedGitDiff(operation, diffRequest(plan.checkout.identity.root, plan.comparison.base),
-        plan.owner, plan.commands, true, plan.checkout.selectedPaths);
+        plan.owner, plan.commands, true, scope === 'complete' ? null : plan.checkout.selectedPaths);
       operation.signal.throwIfAborted();
       outcomes.push({ kind: 'diff', checkout: plan.checkout, text: captured.content.diffText ?? '' });
     } catch (error) {
       operation.signal.throwIfAborted();
       await operation.validateSourceRoot(plan.checkout.identity.root);
-      if (!(error instanceof WorkspaceFailure && operationalFailures.has(error.code))) throw error;
+      if (scope === 'complete' || !(error instanceof WorkspaceFailure && operationalFailures.has(error.code))) throw error;
       outcomes.push({ kind: 'commandFailed', checkout: plan.checkout });
     }
   }
@@ -106,7 +120,7 @@ async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[
   operation.signal.throwIfAborted();
   let diffIndex = 0;
   const bytes = Buffer.from(result.text ?? '');
-  const evidence: AutomaticReviewGitEvidence = { completeness: result.completeness, pathIssues, sourceRoots,
+  const evidence: AutomaticReviewGitEvidence = { completeness: result.completeness, scope, pathIssues, sourceRoots,
     outcomes: result.outcomes.map((outcome, index) => {
       if (outcome.kind === 'baseResolutionFailed') return { kind: outcome.kind, checkout: outcome.checkout };
       const plan = plans[index]!;
@@ -134,13 +148,13 @@ export async function revalidateCapturedAutomaticReviewGit(operation: WorkspaceO
     const commands = await prepareGitDiffComparison(operation, diffRequest(checkout.identity.root, outcome.comparison.base), owner);
     plans.push({ kind: 'ready', checkout, owner, commands, comparison: outcome.comparison });
   }
-  const current = await capturePlans(operation, plans, captured.evidence.pathIssues, captured.evidence.sourceRoots);
+  const current = await capturePlans(operation, plans, captured.evidence.pathIssues, captured.evidence.sourceRoots, captured.evidence.scope);
   if (canonicalJSON(current) !== canonicalJSON(captured)) throw new WorkspaceFailure('automaticGitChanged');
 }
 
 export async function revalidateAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
   selections: readonly SourceSelection[], captured: AutomaticReviewGitCapture | null, unavailableRoots: readonly UnavailableRoot[]): Promise<void> {
   if (captured === null) return;
-  const current = await acquireAutomaticReviewGit(operation, request, selections, unavailableRoots);
+  const current = await acquireAutomaticReviewGit(operation, request, selections, unavailableRoots, captured.evidence.scope);
   if (canonicalJSON(current) !== canonicalJSON(captured)) throw new WorkspaceFailure('automaticGitChanged');
 }

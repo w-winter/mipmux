@@ -2,12 +2,14 @@ import type { ContextBuildRequest, Manifest } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { type Material, normalizeRanges, sourceId } from './material-store.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
+import { manualIncludesFiles } from './manual-presentation.js';
 
 /** Required bodies cannot be satisfied by a preset that excludes file content. */
 export function assertClipboardRequiredMaterials(request: ContextBuildRequest, materials: readonly Material[]): void {
-  if (request.copyPreset !== 'diffFollowUp') return;
-  const ids = [...request.requiredSources.map(selection => sourceId(selection.source)), ...request.documents.map(input => 'document:' + input.id),
-    ...materials.flatMap(({ record }) => record.kind === 'document' || record.kind === 'source' && record.required ? [record.id] : [])];
+  if (manualIncludesFiles(request)) return;
+  const ids = [...request.requiredSources.filter(selection => request.copyPreset === 'diffFollowUp' || selection.kind !== 'codemap').map(selection => sourceId(selection.source)), ...request.documents.map(input => 'document:' + input.id),
+    ...materials.flatMap(({ record }) => record.kind === 'document' || record.kind === 'source' && record.required &&
+      (request.copyPreset === 'diffFollowUp' || record.selection.kind !== 'codemap') ? [record.id] : [])];
   if (ids.length) throw new WorkspaceFailure('copyPresetRequiredMaterialConflict', { copyPreset: request.copyPreset, materialIds: [...new Set(ids)] });
 }
 
@@ -34,7 +36,8 @@ export function verifyExcludedSources(manifest: Manifest): void {
 }
 
 export async function revalidateExcludedSources(operation: WorkspaceOperation, manifest: Manifest): Promise<void> {
-  for (const selection of manifest.excludedSources) {
+  for (const selection of manifest.manualPresentation?.canonicalSources ?? manifest.excludedSources) {
+    if (manifest.unavailableRoots.some(root => root.root === selection.source.root) || manifest.unavailableFiles.some(file => file.id === sourceId(selection.source))) continue;
     const entry = manifest.inventory.entries.find(entry => sourceId(entry) === sourceId(selection.source));
     if (entry?.kind !== 'file') throw new WorkspaceFailure('bundleIntegrityFailed');
     const current = await operation.sourceAvailability(selection.source);

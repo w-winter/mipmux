@@ -140,7 +140,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
       const pending = pendingPresentation(captured);
       if (pending === null) continue;
       const record = pending.record;
-      if (record.selectionOrigin === 'inferred') {
+      if (record.selectionOrigin !== 'explicit') {
         const root = record.selection.source.root;
         let inferred = inferredByRoot.get(root);
         if (!inferred) { inferred = []; inferredByRoot.set(root, inferred); }

@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "c9218c7f68417da5f30d1a5af549b1f212f53f971d91313bd07337115a6472c5",
+      "sha256": "f818d84e1ead52a3866eda19a96dc6117d1bd163180a881136e704637588d275",
       "classification": "handwritten",
       "ranges": [
         [
@@ -25,7 +25,9 @@
         "Invoke automatic preassembly lazily from native Review eligibility; capture native text and evidence separately from selected artifacts and required patches. Parse its span and relative body proofs for exact accounting and native-free saved integrity.",
         "Parse the captured section order, including repetitions, against retained material blocks. The manifest records the first canonical body/frame/tree/automatic-Git spans. Every repeated occurrence must equal those bytes and the parser must consume the whole packet. Aggregate all occurrence bytes per logical material before estimating item units. This reuses the existing saved verification model without duplicate material identities or redundant frame tables.",
         "Parse the numeric datetime shape from actual user-instruction headers and require every repeated header to retain the same value. Preserve those bytes for archived integrity and accounting. For current presentation comparison only, remove the parsed attribute-value spans; material and role text, including date-like tags inside evidence, remain exact. Native clock values can differ between export and current verification; the comparison uses parser-proven attribute spans to isolate that variation.",
-        "Capture available explicit ordinary selections as excludedSources for Diff Follow-Up while leaving draft membership intact. Native preset inclusion determines emitted sections; parse only delivered patch material for spans and costs. Source-required sources/documents conflict explicitly instead of being discarded. Bind automatic checkout paths to captured full/slice membership, including unavailable-source positions."
+        "Capture available explicit ordinary selections as excludedSources for Diff Follow-Up while leaving draft membership intact. Native preset inclusion determines emitted sections; parse only delivered patch material for spans and costs. Source-required sources/documents conflict explicitly instead of being discarded. Bind automatic checkout paths to captured full/slice membership, including unavailable-source positions.",
+        "Manual uses captured native flags and selected meta IDs, including case-insensitive UUIDs. Preserve selected nonblank-patch precedence and request selected or complete Git acquisition lazily. Parse delivered materials only and bind Git scope to canonical sources rather than projected map entries.",
+        "Retain selection order for selected representations and native presentation order for complete maps. Saved verification checks canonical source order, requested/ready order and delivered block order."
       ]
     },
     {
@@ -33,7 +35,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "native/Sources/SmipBridge/PreparedClipboardInput.swift",
-      "sha256": "3ccd672d3489fd7d16fdbaf438ae032ba11efb4fa63f5a4aebc2f4519986c7ab",
+      "sha256": "6eb606abe7087251049b6ec543ab84e1f52eaaaf5cae26ee73901431b454f98f",
       "classification": "handwritten",
       "ranges": [
         [
@@ -47,7 +49,8 @@
         "Retain the source selectedGitDiffText whitespace exclusion (PromptPackagingService.swift129-135) in native Foundation. Return included material IDs with the rendered text so span and cost parsing follows actual native inclusion. Omitted optional artifacts remain inspectable in the draft; archived verification derives included IDs from delivered records only. Required patch bodies are not filtered.",
         "Forward the captured promptSectionsOrder to the retained PromptAssemblyBuilder through RPCEClipboardPackaging. Include every configured repetition; no second rendering path is added.",
         "Forward the captured includeDatetimeInUserInstructions setting into the retained formatter in Sources/RepoPrompt/Features/Prompt/Services/PromptPackagingService.swift:351-371, SHA256 22a58b2e0218a11cf4de32f4048af98250a6e1640ba13e0098f6b7272209b3eb. The omitted request setting uses the source false default. The original DateFormatter and wall-clock call remain unchanged.",
-        "Bind Diff Follow-Up to its exact retained constructor, including nullable storedPromptIds. Apply includeFileTree/fileTreeMode and codeMapUsage none before the retained clipboard kernel, matching PromptContextPreAssemblyService.swift:255-261,579-601. File-body inclusion remains owned by the existing native kernel. Explicit caller constraints and required patch bodies retain their headless request contracts."
+        "Bind Diff Follow-Up to its exact retained constructor, including nullable storedPromptIds. Apply includeFileTree/fileTreeMode and codeMapUsage none before the retained clipboard kernel, matching PromptContextPreAssemblyService.swift:255-261,579-601. File-body inclusion remains owned by the existing native kernel. Explicit caller constraints and required patch bodies retain their headless request contracts.",
+        "Resolve the accepted typed Manual input through retained source methods and the retained Manual constructor. Pass selected meta IDs through the original meta selector; use native include/tree/map/Git flags in the existing clipboard kernel. Complete and selected providers remain lazy behind nonblank selected-patch precedence; caller-required patches remain independent."
       ]
     },
     {
@@ -5263,7 +5266,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "8888d33d8a3fe4e1eafc104bf76aa4f34596aee170961acee2535c2429b5f186",
       "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift",
-      "sha256": "34581d617f7121c785180bcd34028ffbd7fcda55bd2b6301ba2ea1bb1d2421ac",
+      "sha256": "288e10fbbd08c330ac16a71219b3d92d79bf8fc7fc9101f43feb9d5283c82c21",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5293,10 +5296,18 @@
         [
           93,
           109
+        ],
+        [
+          17,
+          17
+        ],
+        [
+          59,
+          74
         ]
       ],
       "changes": [
-        "Retain exact Standard/Plan/Diff Follow-Up/Review constructors and referenced UUIDs. Diff Follow-Up keeps nil storedPromptIds from the original initializer default. Manual remains an incomplete port requirement."
+        "Retain exact Standard/Plan/Manual/Diff Follow-Up/Review constructors and referenced UUIDs. Manual retains nil overrides and its stable UUID. Diff Follow-Up keeps the source nil stored-prompt-ID initializer default."
       ]
     },
     {
@@ -6175,7 +6186,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "9f4e35e1649f796187f9ad9f1306551c4ee5ff9c59a54df7f1005bbe46a725ad",
+      "sha256": "318b1b7627a64d7060a35add5efba991984331939d8d54f8c02312ddca18c8d0",
       "classification": "handwritten"
     },
     {
@@ -6220,7 +6231,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "78ac327e3ac5f12059ff61f77e7d8cf6d25b55214168aa472ca61debbf531869",
+      "sha256": "9ad4c90fee55615f27ab9d686c210b754f52ce252f908e01628526e5517c0a06",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6459,7 +6470,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "9cd453028360519beaf06e7edc5c96bc8a0e4fb812726a018a8da6eb2bd854c6",
+      "sha256": "bb3d5b3b9d1aafd0df8b52ce924bb7a1573adf2ad7567fe6fbe18449fe682101",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
@@ -6549,7 +6560,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "23d9c5adbcd228fb9f17422807ff7ab00baf8e605591180baf8a8b24e8aea9e1",
+      "sha256": "1bb4d637f3a9dbe25fea0e20d4fbad5a5996df0ca2ce08f2cca7b160e5cdab3b",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6572,7 +6583,8 @@
         "Classify expected Git operational failures directly in each I/O catch after cancellation and root validation, preserving original errors for all other failure domains.",
         "Treat omitted full/sliced paths as unresolved candidates for automatic Review export diagnostics. They grant no replacement-root filesystem access.",
         "Reconstruct original explicit source order from delivered records and omission indices. Catalog paths in available roots remain candidates for authorized deletion diffs even when ordinary bodies are omitted; unavailable-root or absent-catalog paths become unresolved candidates.",
-        "Accept captured source selections independently of delivered material. Capture sourceRoots through the existing selectionPathBindings native boundary so saved integrity can relate root-qualified membership to Foundation-normalized checkout paths, including macOS /private/var versus /var. Revalidation reuses the same captured projection before publication and recomputes it for current verification."
+        "Accept captured source selections independently of delivered material. Capture sourceRoots through the existing selectionPathBindings native boundary so saved integrity can relate root-qualified membership to Foundation-normalized checkout paths, including macOS /private/var versus /var. Revalidation reuses the same captured projection before publication and recomputes it for current verification.",
+        "Reuse confined acquisition and frozen comparison plans for complete scope from an explicit captured active root. PromptViewModel.swift:7124-7126, GitViewModel.swift:908-931 and GitStatusActor.swift:706-747 provide complete-provider behavior. Approved exception prompt-exports/cb-high-fidelity-port-2026-10-11/remaining-authority-review-decisions.json: use local refs only, never fetch/prune; missing refs fail, not substitute HEAD. Complete passes all-path scope to the existing capture and records scope distinctly from selected evidence."
       ]
     },
     {
@@ -6580,7 +6592,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git-integrity.ts",
-      "sha256": "3f70c2fa64fbd196d8a5ebb9d8ec5eeea5f187fa50eb716a391f2febeb09421b",
+      "sha256": "93e540c987a299740f57c32e7f808eceed9be0fe489c9ea027152db2e2c76c62",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6595,7 +6607,8 @@
       "changes": [
         "Parse archived source framing, exact diagnostics, relative body spans and completeness without producing Git text or invoking native code. Require the provider observation for Review without nonblank selected patches.",
         "Keep completeness checks, checkout sections and diagnostic grammar in distinct parser phases sharing one byte cursor. This is verification only, not a text renderer.",
-        "Verify checkout path membership against captured full/slice selection using native-normalized sourceRoots, canonical Unicode equality and existing root containment. Path diagnostics account for unresolved members. This closes the reproduced full-to-codemap archive forgery without consulting native or current files. The ownership producer is Sources/RepoPrompt/Features/Prompt/Services/ReviewGitSelectedPathOwnershipResolver.swift:54-150, SHA256 4243ff0af1a4e7f080e0dba25ceb1257dd4cad15ed73e23f7d4351f4f999b3f5."
+        "Verify checkout path membership against captured full/slice selection using native-normalized sourceRoots, canonical Unicode equality and existing root containment. Path diagnostics account for unresolved members. This closes the reproduced full-to-codemap archive forgery without consulting native or current files. The ownership producer is Sources/RepoPrompt/Features/Prompt/Services/ReviewGitSelectedPathOwnershipResolver.swift:54-150, SHA256 4243ff0af1a4e7f080e0dba25ceb1257dd4cad15ed73e23f7d4351f4f999b3f5.",
+        "Parse selected versus complete scope. Complete evidence has zero selected paths and binds its one checkout to the explicit active root, or no checkout when the active root is null. Preserve existing framing/body/completeness checks."
       ]
     },
     {
@@ -6657,7 +6670,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "551f40f968ca24f53f60cc73416174f226a7f4801b253ee6997e1ea5f7cef4eb",
       "destination": "src/contracts/presentation.ts",
-      "sha256": "62a7291d3890fcf60c127fa47bde7af105b99f5315b6ba9f5d5060e8cf7cf333",
+      "sha256": "7de1588a4287181fcc639bde8c0d26ad88ccabd752f3f4783cce39c8f51d7937",
       "classification": "handwritten",
       "ranges": [
         [
@@ -7531,7 +7544,7 @@
         "Acquire token Git independently of selected export patches. Finalization retains its observation for terminal inspection after releasing the workspace lease. Complete-packet measurement remains the budget authority, and the export Git capture remains separate.",
         "Record files as an incomplete component when optional full/slice bodies are omitted; terminal measurement remains the exact delivered packet."
       ],
-      "sha256": "3a02c0a4172ac839e30c94c559988399c17d3dbc6758cd64571375d8b6f5dd39"
+      "sha256": "51072e39f2a238657647f64a2041d16dede0850172a941b57689a2af69142d1a"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
@@ -7589,7 +7602,7 @@
         "Omit optional manual pending codemaps from final delivery while preserving their source identity, mode, explicit index and artifact key. Keep required pending maps in the candidate so existing diagnostics block publication. codemapPending is a historical presentation observation, like automatic acquisition evidence; current verification binds its readable source and key rather than repeating readiness. Saved verification requires matching captured inventory metadata.",
         "Archive optional explicit codemap I/O outcomes with their original identity, mode, artifact key and observed pending/unmapped disposition. Revalidate the same I/O cause before assembly, claim and current verification. Required sources reject and recovered/differently failing sources invalidate the candidate."
       ],
-      "sha256": "8263ad8ff84c6d78c1e34b8a9463df24630bc3e32b6e9bfcc0d27f47c20c5da2"
+      "sha256": "7d62efa38b55a219614e2b5a82feec68d38a0d100f02afa81868d8581e8fefb8"
     },
     {
       "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",
@@ -7629,9 +7642,10 @@
         ]
       ],
       "changes": [
-        "Bind ordinary full/sliced candidates to retained ownership, longest admitted root matching, identity grouping, ordering and primary election. Native wire inputs contain physical roots rather than references to desktop roots and sessions. Normalize the root before appending a selected relative path so a missing leaf retains the spelling of the source root; raw root identities and body authorization remain in WorkspaceOperation."
+        "Bind ordinary full/sliced candidates to retained ownership, longest admitted root matching, identity grouping, ordering and primary election. Native wire inputs contain physical roots rather than references to desktop roots and sessions. Normalize the root before appending a selected relative path so a missing leaf retains the spelling of the source root; raw root identities and body authorization remain in WorkspaceOperation.",
+        "Resolve the explicit complete-Git active root with the existing SelectedPathVCSResolver, GitRepositoryLayoutResolver, GitWorktreeIdentity and GitRepoDescriptor. This is root authority from GitViewModel.swift:908-931 rather than a fabricated selected file or an unrelated repository election."
       ],
-      "sha256": "835455f01950f818187e8624ab9dd51f5bab2193a3c9e9ee1d2f36516ceeac2b"
+      "sha256": "db7858f7296c3835bb0b31eb8cf483ba629af59f84d5b693724ea26131dadcba"
     },
     {
       "source": "Sources/RepoPrompt/Infrastructure/VCS/GitBlobIdentityService.swift",
@@ -7665,7 +7679,133 @@
       "changes": [
         "Bind source file exclusion to the existing headless required-material guarantee: reject conflicts explicitly. Archive only available explicit source selections and inventory bindings, not undelivered bodies; unavailable sources retain the existing omission records. Current verification checks the captured excluded identities and policy. No independent selection owner or source renderer is introduced."
       ],
-      "sha256": "41be975e1d109cc1e65a762de12808d06a1ca06a3654f1d1245e37b8c905ec96"
+      "sha256": "1d6d3592b585221ab0310417bcf023f2a04a24b06412cbe076f05d9b77365314"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "142aea37ff038a9fd4805257a9706d64e091e0a62e3850493236c3bf91cc01b2",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardResolver.swift",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          6872,
+          6884
+        ],
+        [
+          6907,
+          6946
+        ],
+        [
+          6974,
+          6997
+        ]
+      ],
+      "changes": [
+        "Retain the three resolver methods unchanged. Captured current settings, nullable workspace customizations and a typed Manual request replace the app view model. Reuse retained preset values; no RPCE preferences are read. PromptContextResolved and CopyCustomizations expose only the fields consumed by these methods. Native preset resolution owns actual output flags.",
+        "Scope SwiftLint identifier-name suppression around the unchanged mapGitInclusion method so the original c/p bindings remain intact."
+      ],
+      "sha256": "d7fd8064333af41827d0af2cf3e495576b4a08adefedc9efa5676f47efc0b64b"
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationIntentResolver.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "8b4f74ae43c139e02b9e37a33969e76b6970ea8361ff637beed8242ca83e83c8",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresentationIntent.swift",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          6,
+          98
+        ],
+        [
+          125,
+          127
+        ]
+      ],
+      "changes": [
+        "Retain the original plan signature, decisions and UTF-8 helper. Extract only the exact source lookup loop (32-51) into resolveSourceFiles to satisfy enforced cognitive complexity: plan 15 and helper 14, down from 29. Bind already-expanded canonical files and admitted catalog to store lookup/root methods; reuse existing file/lookup models, profiles and the installed supported-language catalog. The twelve original intent expectations match after explicitly expanding fixture folders at the canonical-selection adapter boundary; no oracle is regenerated."
+      ],
+      "sha256": "c0288db68023e59fa5f67e1bef47deee9c60f0f7e558370ed2c19a71365ec278"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b50b67ae2d3ba73a90b652ce7b224fdb4dbe083a66f2348a4b5e6b93291f3234",
+      "destination": "native/Sources/SmipBridge/ClipboardPresentationInput.swift",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          824,
+          846
+        ],
+        [
+          983,
+          1011
+        ],
+        [
+          1026,
+          1053
+        ]
+      ],
+      "changes": [
+        "Adapt accounting projection to captured IDs and ready presentation IDs. Ready directly selected files become maps in selected usage; slice-only entries remain sliced. Append extra maps only in auto/complete, excluding represented full/slice IDs. Native intent planning and existing file/codemap renderers remain the producers.",
+        "Retain selection order for selected representations and native presentation order for complete maps. Saved verification checks canonical source order, requested/ready order and delivered block order."
+      ],
+      "sha256": "c20ae97994281367e41b7fc6c9047907338b1435633390ab40a477ee77afcfe4"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextPreAssemblyService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
+      "destination": "src/context/manual-presentation.ts",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          245,
+          279
+        ],
+        [
+          308,
+          360
+        ],
+        [
+          554,
+          601
+        ]
+      ],
+      "changes": [
+        "Bind exact/automatic/none intent to existing readiness, root-atomic rendering, shared deadlines, per-root capacity, serving-currentness checks and retainers. Prepare temporary map materials as presentation evidence; preserve canonical selection and revision. Complete uses exact supported catalog membership, not automatic graph target/query limits. Capture canonical/direct/requested/ready scope for native-free verification and reject required representation loss explicitly.",
+        "Separate settings, selection, readiness, projection and required-evidence phases within the existing owner to meet enforced function-complexity limits; policy and schema remain unchanged."
+      ],
+      "sha256": "99edea820826c46548b95adab1d0ed6f7d4d89c1b01022fc2f89c66f68af1ad2"
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "b50b67ae2d3ba73a90b652ce7b224fdb4dbe083a66f2348a4b5e6b93291f3234",
+      "destination": "src/context/manual-integrity.ts",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          824,
+          846
+        ],
+        [
+          983,
+          1011
+        ],
+        [
+          1026,
+          1053
+        ]
+      ],
+      "changes": [
+        "Parse archived Manual settings, exact request membership and output representation proofs without native execution. This is an integrity checker, not a second producer or renderer. Verify canonical/direct sources, complete-root coverage, ready codemap identities and source-origin distinctions against captured inventory. Native methods remain the live resolver and planner.",
+        "Retain selection order for selected representations and native presentation order for complete maps. Saved verification checks canonical source order, requested/ready order and delivered block order.",
+        "Separate settings, selection, readiness, projection and required-evidence phases within the existing owner to meet enforced function-complexity limits; policy and schema remain unchanged."
+      ],
+      "sha256": "7042f4ba9fe94ac6a75dab684278db04ec97caa3afb6d20b0e8cfe7be11c6ba2"
     }
   ],
   "dependencies": [
@@ -13548,6 +13688,48 @@
       "line": 77,
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
       "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift"
+    },
+    {
+      "name": "manualUUID",
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift",
+      "line": 17
+    },
+    {
+      "name": "manual",
+      "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresets.swift",
+      "line": 60
+    },
+    {
+      "name": "resolveCopyCodeMapUsage",
+      "source": "Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardResolver.swift",
+      "line": 6872
+    },
+    {
+      "name": "resolvePromptContext",
+      "source": "Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardResolver.swift",
+      "line": 6907
+    },
+    {
+      "name": "mapGitInclusion",
+      "source": "Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardResolver.swift",
+      "line": 6974
+    },
+    {
+      "name": "plan",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationIntentResolver.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresentationIntent.swift",
+      "line": 6
+    },
+    {
+      "name": "utf8Precedes",
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/Presentation/WorkspaceCodemapPresentationIntentResolver.swift",
+      "destination": "native/Sources/SmipBridge/RPCEClipboardPresentationIntent.swift",
+      "line": 125
     }
   ],
   "sourceCoverage": [

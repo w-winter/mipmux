@@ -1,6 +1,5 @@
 import Foundation
 
-struct PromptContextResolved { let storedPromptIds: [UUID]?; let includeMetaPrompts: Bool }
 struct CapturedStoredPrompt: Decodable { let id: UUID; let title: String; let content: String }
 struct CapturedSelectedGitDiff: Decodable { let id: String; let text: String }
 
@@ -10,7 +9,7 @@ struct PreparedClipboardInput: Decodable {
     let duplicateUserInstructionsAtTop: Bool
     let includeDatetimeInUserInstructions: Bool
     let promptSectionsOrder: [PromptSection]
-    let copyPreset: ClipboardPresetKind
+    let copyPreset: CapturedCopyPreset
     let storedPrompts: [CapturedStoredPrompt]
     let codemapBlocks: [String]
     let contentBlocks: [String]
@@ -42,28 +41,20 @@ struct PreparedClipboardOperation {
     }
 
     func render() throws -> [String: Any] {
-        let preset = switch input.copyPreset {
-        case .standard: BuiltInCopyPresets.standard
-        case .plan: BuiltInCopyPresets.plan
-        case .diffFollowUp: BuiltInCopyPresets.diffFollowUp
-        case .codeReview: BuiltInCopyPresets.codeReview
-        }
-        guard let includeFiles = preset.includeFiles, let includeUserPrompt = preset.includeUserPrompt,
-              let includeMetaPrompts = preset.includeMetaPrompts,
-              let gitInclusion = preset.gitInclusion
-        else {
-            throw BridgeFailure("nativeProtocolError")
-        }
-        let promptIDs = preset.storedPromptIds
+        let preset = input.copyPreset.resolve()
+        let includeFiles = preset.includeFiles, includeUserPrompt = preset.includeUserPrompt
+        let gitInclusion = preset.gitInclusion
         let selection = ClipboardMetaSelection(storedPrompts: input.storedPrompts, metaInstructions: [])
-        let metas = selection.metaInstructions(for: PromptContextResolved(
-            storedPromptIds: promptIDs, includeMetaPrompts: includeMetaPrompts
-        )) + input.metaInstructions.map { MetaInstruction(title: $0.title, content: $0.content) }
+        let metas = selection.metaInstructions(
+            for: preset,
+            selectedPromptIDsOverride: input.copyPreset.selectedPromptIDs,
+        )
+            + input.metaInstructions.map { MetaInstruction(title: $0.title, content: $0.content) }
         // Caller-required evidence is independent of the preset's optional selected-artifact policy.
         let selectedDiffs = gitInclusion == .none ? [] : input.selectedGitDiffs.filter {
             !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
-        let needsAutomaticGit = gitInclusion == .selected && selectedDiffs.isEmpty
+        let needsAutomaticGit = gitInclusion != .none && selectedDiffs.isEmpty
         let optionalDiffs = needsAutomaticGit ? [input.automaticGitDiff].compactMap(\.self) : selectedDiffs.map(\.text)
         let gitDiff = (optionalDiffs + [input.gitDiff].compactMap(\.self)).joined(separator: "\n\n")
         let text = RPCEClipboardPackaging.generatePreparedClipboardContent(
@@ -77,16 +68,12 @@ struct PreparedClipboardOperation {
             includeDatetimeInUserInstructions: input.includeDatetimeInUserInstructions,
             promptSectionsOrder: input.promptSectionsOrder,
             disabledPromptSections: [],
-            duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: nil
+            duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: nil,
         )
         return ["kind": "preparedClipboard", "text": text, "selectedGitDiffIds": selectedDiffs.map(\.id),
                 "needsAutomaticGit": needsAutomaticGit,
                 "tokenInputs": ["promptText": includeUserPrompt ? input.userInstructions : "",
                                 "selectedInstructionsText": metas.map(\.content).joined(separator: "\n\n")],
-                "preset": [
-                    "kind": input.copyPreset.rawValue, "gitInclusion": gitInclusion.rawValue,
-                    "includeMetaPrompts": includeMetaPrompts,
-                    "storedPromptIds": promptIDs.map { $0.map { $0.uuidString.lowercased() } } as Any? ?? NSNull()
-                ]]
+                "preset": input.copyPreset.wireResolved]
     }
 }

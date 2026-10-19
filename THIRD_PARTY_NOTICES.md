@@ -6,6 +6,8 @@ The native discovery prompt factory, discovery prompt, rendered references, ques
 
 PCRE2 10.49 is statically linked under BSD-3-Clause WITH PCRE2-exception. Its pinned SLJIT dependency uses BSD-2-Clause. Their complete texts are in `ThirdPartyLicenses/pcre2/LICENCE.md` and `ThirdPartyLicenses/sljit/LICENSE`.
 
+Manual copy-preset resolution and codemap presentation planning retain source functions from RepoPrompt CE revision `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3` under Apache-2.0. The native adapters bind captured settings and admitted file catalogs. `docs/vendor-provenance.json` records the retained ranges and accounting adaptations.
+
 SwiftTreeSitter, the Tree-sitter runtime, and the twelve grammar packages have license copies in their named directories under `ThirdPartyLicenses/`. The JavaScript/Python scanner snapshots and accompanying headers match the pinned grammar sources. `ThirdPartyLicenses/tree-sitter/ICU-LICENSE` contains the runtime's bundled Unicode/ICU notice.
 
 Swift Crypto 4.5.1 and its resolved Swift ASN.1 dependency have Apache-2.0 licenses and notices in `ThirdPartyLicenses/swift-crypto/` and `ThirdPartyLicenses/swift-asn1/`. The Linux crypto build includes BoringSSL-derived source identified by Swift Crypto's `Sources/CCryptoBoringSSL/hash.txt`; its Apache-2.0 license at revision `0226f30467f540a3f62ef48d453f93927da199b6` is in `ThirdPartyLicenses/boringssl/LICENSE`.

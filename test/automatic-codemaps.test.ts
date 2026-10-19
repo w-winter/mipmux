@@ -166,7 +166,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 21);
+    assert.equal(ready.manifest.schemaVersion, 22);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);
@@ -193,7 +193,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
             identity: unrelated.identity, artifactKey: representation.key }, bodies: [representation.body] });
         }
       }
-      const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
+      const rendered = renderBundle(await prepareClipboard(f.runtime, { manualPresentation: null, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
         automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
         codemapMode: manifest.codemapMode, materials,
         fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
@@ -204,7 +204,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
       await writeFile(join(ready.directory, 'manifest.json'), canonicalJSON(manifest));
       await assert.rejects(verifyBundle(ready.directory), /bundleIntegrityFailed/);
     }
-    const restored = renderBundle(await prepareClipboard(f.runtime, { request: ready.manifest.request, inventory: ready.manifest.inventory,
+    const restored = renderBundle(await prepareClipboard(f.runtime, { manualPresentation: null, request: ready.manifest.request, inventory: ready.manifest.inventory,
       automaticAcquisition: { kind: 'settled', outcomes: ready.manifest.automaticCodemaps }, unavailableRoots: ready.manifest.unavailableRoots, unavailableFiles: ready.manifest.unavailableFiles,
       prompt: ready.manifest.prompt, codemapMode: ready.manifest.codemapMode, materials: saved.materials, fileTree: saved.fileTree }, signal(), { kind: 'captured', capture: saved.automaticGit }));
     await writeFile(join(ready.directory, 'context.md'), restored.context); await writeFile(join(ready.directory, 'handoff.md'), restored.handoff);
@@ -232,7 +232,7 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
     for (let count = 1; count < suppressedPostingSize; count++) manifest.inventory.entries.push(structuredClone(dependency));
     manifest.inventory.inventoryDigest = inventoryDigest(manifest.inventory);
     const materials = saved.materials.filter(item => item.record.id !== sourceId(dependency));
-    const rendered = renderBundle(await prepareClipboard(f.runtime, { request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
+    const rendered = renderBundle(await prepareClipboard(f.runtime, { manualPresentation: null, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt,
       automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
       codemapMode: manifest.codemapMode, materials,
       fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));

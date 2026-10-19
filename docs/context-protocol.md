@@ -12,6 +12,43 @@ With `codeReview` or `diffFollowUp`, nonblank selected patch artifacts supply th
 
 Use `diffFollowUp` for a packet containing Git evidence, caller constraints and the literal prompt. Optional full-file and slice selections define automatic Git scope; codemap-only selections remain available for draft inspection. Publication can proceed while excluded optional codemaps are pending. Required sources and supplied or local documents conflict with this preset and return `copyPresetRequiredMaterialConflict`; choose a file-including preset when those bodies are needed.
 
+## Manual copy settings
+
+Supply the following object as `copyPreset` to capture Manual's settings for one build. Settings and saved-prompt IDs are copied at admission; later caller mutations cannot alter the packet. `selectedPromptIds` selects entries from `storedPrompts` in catalog order, with case-insensitive UUID matching.
+
+```json
+{
+  "kind": "manual",
+  "current": {
+    "fileTreeMode": "Auto",
+    "codeMapUsage": "auto",
+    "gitInclusion": "none"
+  },
+  "customizations": {
+    "includeFiles": null,
+    "includeUserPrompt": null,
+    "includeMetaPrompts": null,
+    "includeFileTree": null,
+    "fileTreeMode": null,
+    "codeMapUsage": null,
+    "gitInclusion": null
+  },
+  "codeMapsGloballyDisabled": false,
+  "selectedPromptIds": [],
+  "activeGitRoot": "repo"
+}
+```
+
+Include flags accept true, false or null; null resolves to true. Tree modes are `Auto`, `Full`, `Selected` and `None`. The tree customization takes precedence over the current tree mode. Codemap usage is `none`, `auto`, `selected` or `complete`; Manual uses the current value even when a codemap customization is supplied. `codeMapsGloballyDisabled` captures the copy resolver's disable input and forces copy codemap usage to `none`.
+
+Automatic codemaps follow canonical automatic or manual selection mode. Selected usage requests maps for files selected as full files, slices or explicit codemaps. It replaces directly selected files when a map is ready and retains slice-only bodies. Complete usage presents supported files across ordinary roots, including unselected files. Export presentation leaves canonical membership and revision unchanged. Required source representations or documents that would be excluded or replaced return `copyPresetRequiredMaterialConflict`. File exclusion controls ordinary bodies; codemaps belong to the file-map section.
+
+Current Git modes are `none`, `selectedFiles` and `all`; the customization accepts `none`, `selected`, `complete` or null. Nonblank selected patches take precedence. Selected acquisition uses full and slice membership; complete acquisition uses the explicitly named `activeGitRoot`, or produces no complete diff when that field is null. Comparisons use already-local refs, with object IDs frozen before acquisition. Missing local refs return an error. Caller-required patches remain complete in every mode.
+
+Directly selected representations retain selection order. Complete codemaps follow native root-path and file-path order, independently of the aliases used to display roots.
+
+## Build and verify
+
 Supply `initialSelection: { codemapMode: "automatic", sources: [] }` for an empty automatic starting selection, or include known starting files/slices. Use manual mode for an explicit codemap selection or a manual selection with no codemaps. Discovery can remove or replace initial sources; only `requiredSources` pins immutable representations. Keep initial and required representations identical when they name the same source.
 
 Read the operator's `contextBudgetUnits` from the host configuration and set `request.budgetUnits` to that value. A smaller budget requires the user's instruction. Context assembly needs the task, sources and budget; choosing a receiving model belongs to delivery. Pin source representations only when the assignment requires them. A changed file does not by itself require a full-file selection; discovery can choose appropriate implementation slices while retaining complete required patches.

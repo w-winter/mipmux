@@ -7,8 +7,14 @@ import { sourceId } from './material-store.js';
 import type { RenderInput } from './render.js';
 import { prepareClipboard } from './clipboard.js';
 import type { AutomaticReviewGitSource } from './automatic-review-git.js';
+import type { CanonicalSelection } from './selection-preparation.js';
+import { withManualPresentation } from './manual-presentation.js';
+import { assertClipboardRequiredMaterials } from './clipboard-selection.js';
+import { manualCopySettings, type ManualClipboardPreset } from '../contracts/presentation.js';
+import type { ManualPresentation } from '../contracts/context.js';
 
 type TreeInput = Extract<NativeOperation, { kind: 'renderFileTree' }>;
+type FileTreeCapture = Pick<RenderInput, 'request' | 'inventory' | 'materials' | 'codemapMode' | 'unavailableRoots' | 'unavailableFiles' | 'manualPresentation'>;
 export interface FinalFileTree {
   readonly input: TreeInput | null;
   readonly text: string;
@@ -53,9 +59,51 @@ export async function renderFinalFileTree(runtime: SmipRuntime, inventory: Omit<
   return { input, text: result.tree };
 }
 
-export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs' | 'excludedSources'>,
-  signal: AbortSignal, gitSource: AutomaticReviewGitSource): Promise<RenderInput> {
+function manualTreeSelections(input: FileTreeCapture, proof: ManualPresentation, preset: ManualClipboardPreset): Set<string> {
+  const selected = new Set(proof.canonicalSources.filter(source => source.kind !== 'codemap').map(source => sourceId(source.source)));
+  for (const { record } of input.materials) {
+    if (record.kind === 'document' && record.input.kind === 'localDocument') selected.add(sourceId(record.input.source));
+    if (record.kind === 'source' && record.selection.kind === 'codemap' && preset.current.codeMapUsage === 'auto' && input.codemapMode === 'automatic') selected.add(record.id);
+  }
+  return selected;
+}
+
+export function capturedFileTreeInput(input: FileTreeCapture): TreeInput | null {
+  if (input.request.copyPreset === 'diffFollowUp') return null;
+  const tree = finalFileTreeInput(input.inventory, input.materials, input.codemapMode, input.unavailableRoots, input.unavailableFiles);
+  const preset = manualCopySettings(input.request.copyPreset), proof = input.manualPresentation;
+  if (preset === null) return tree;
+  if (proof === null) throw new Error('Manual presentation proof required');
+  const mode = preset.customizations.fileTreeMode ?? preset.current.fileTreeMode;
+  if (preset.customizations.includeFileTree === false || mode === 'None') return null;
+  const selected = manualTreeSelections(input, proof, preset);
+  const ready = new Set(proof.ready.map(sourceId));
+  for (const entry of tree.entries) if (entry.kind === 'file') {
+    entry.selected = selected.has(sourceId(entry));
+    entry.hasCodeMap = !preset.codeMapsGloballyDisabled && ready.has(sourceId(entry));
+  }
+  tree.showCodeMapMarkers = !preset.codeMapsGloballyDisabled;
+  tree.mode = mode === 'Full' ? 'full' : mode === 'Selected' ? 'selected' : 'auto';
+  return tree;
+}
+
+export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs' | 'excludedSources' | 'manualPresentation'>,
+  signal: AbortSignal, gitSource: AutomaticReviewGitSource, canonical: CanonicalSelection): Promise<RenderInput> {
+  assertClipboardRequiredMaterials(input.request, input.materials);
+  const preset = manualCopySettings(input.request.copyPreset);
+  if (preset !== null) {
+    if (gitSource.kind !== 'live') throw new Error('Manual presentation requires a live operation');
+    return withManualPresentation(runtime, gitSource.operation, input, canonical, async (materials, manualPresentation, inventory) => {
+      const { generation: _generation, ...capturedInventory } = inventory;
+      const treeInput = capturedFileTreeInput({ ...input, inventory: capturedInventory, materials, manualPresentation });
+      const fileTree = treeInput === null ? { input: null, text: '' }
+        : { input: treeInput, text: (await runtime.renderPresentation(treeInput, signal)).tree };
+      return prepareClipboard(runtime, { ...input, materials, inventory: capturedInventory, manualPresentation, fileTree,
+        automaticAcquisition: input.codemapMode === 'automatic' && preset.current.codeMapUsage === 'auto' && !preset.codeMapsGloballyDisabled
+          ? input.automaticAcquisition : { kind: 'settled', outcomes: [] } }, signal, gitSource);
+    });
+  }
   const fileTree = input.request.copyPreset === 'diffFollowUp' ? { input: null, text: '' }
     : await renderFinalFileTree(runtime, input.inventory, input.materials, input.codemapMode, input.unavailableRoots, input.unavailableFiles, signal);
-  return prepareClipboard(runtime, { ...input, fileTree }, signal, gitSource);
+  return prepareClipboard(runtime, { ...input, manualPresentation: null, fileTree }, signal, gitSource);
 }

@@ -180,7 +180,7 @@ test('current verification rejects self-consistent forged slices against the exa
       const body = bodies.join('');
       materials[materials.indexOf(material)] = { ...material, bodies, sourceBlock: { text: prefix + body + '\n```',
         bodySpans: [{ offset: Buffer.byteLength(prefix), length: Buffer.byteLength(body) }] } };
-      const rendered = renderBundle(await prepareClipboard(f.runtime, { codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials,
+      const rendered = renderBundle(await prepareClipboard(f.runtime, { manualPresentation: null, codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials,
         automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
         fileTree: { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), text: saved.fileTree.text } }, signal(), { kind: 'captured', capture: saved.automaticGit }));
       manifest.fileTree = { input: finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles), span: rendered.fileTreeSpan };
@@ -232,7 +232,7 @@ test('integrity reestablishes supplied patch input and receipt agreement without
         const saved = await loadVerifiedBundle(ready.directory);
         const material = saved.materials.find(item => item.record.kind === 'patch'); assert(material);
         const materials = saved.materials.map(item => item === material ? { ...item, record: patch } : item);
-        const rendered = renderBundle(await prepareClipboard(f.runtime, { codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials, fileTree: saved.fileTree,
+        const rendered = renderBundle(await prepareClipboard(f.runtime, { manualPresentation: null, codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory, prompt: manifest.prompt, materials, fileTree: saved.fileTree,
           automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles }, signal(), { kind: 'captured', capture: saved.automaticGit }));
         manifest.fileTree.span = rendered.fileTreeSpan;
         manifest.materials = rendered.records; manifest.files = { context: identity(rendered.context), handoff: identity(rendered.handoff) };

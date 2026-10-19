@@ -46,9 +46,11 @@ struct GitTargetInput {
 
     private let roots: [Root]
     private let paths: [String]
+    private let completeRoot: Bool
 
     init(_ value: Any) throws {
         let input = try WireObject(value, keys: ["kind", "roots", "paths"])
+        completeRoot = try input.string("kind") == "resolveCompleteGitTarget"
         guard let rawRoots = try input.value("roots") as? [Any],
               let rawPaths = try input.value("paths") as? [Any] else { throw BridgeFailure("nativeProtocolError") }
         roots = try rawRoots.map { value in
@@ -64,6 +66,7 @@ struct GitTargetInput {
     }
 
     func render(resolver: SelectedPathVCSResolver) async throws -> [String: Any] {
+        if completeRoot { return try await resolveCompleteRoot(resolver: resolver) }
         guard !paths.isEmpty else { return ["kind": "gitTarget", "state": "deferred"] }
         let paths = try Self.normalizedSelectionPaths(paths, roots: roots.map(\.path))
         let ownershipResolver = ReviewGitSelectedPathOwnershipResolver(dependencies: .live(resolver: resolver))
@@ -116,6 +119,31 @@ struct GitTargetInput {
 
     private func unavailable(_ reason: String, count: Int) -> [String: Any] {
         ["kind": "gitTarget", "state": "unavailable", "reason": reason, "count": count]
+    }
+
+    private func resolveCompleteRoot(resolver: SelectedPathVCSResolver) async throws -> [String: Any] {
+        guard roots.count == 1, paths.count == 1, let root = roots.first, paths[0] == root.path else {
+            throw BridgeFailure("nativeProtocolError")
+        }
+        guard let resolved = await resolver.resolve(from: URL(fileURLWithPath: root.path)),
+              resolved.backendKind == .git,
+              let layout = GitRepositoryLayoutResolver.resolve(atWorkTreeRoot: resolved.rootURL)
+        else {
+            return unavailable("nonGitSelection", count: 1)
+        }
+        let repository = GitWorktreeIdentity.repositoryIdentity(commonGitDir: layout.commonDir,
+                                                                mainWorktreeRoot: layout.knownMainWorktreeRoot)
+        let checkout = Checkout(root: root.name, checkoutRootPath: layout.workTreeRoot.standardizedFileURL.path,
+                                repoKey: GitRepoDescriptor(rootURL: layout.workTreeRoot).repoKey,
+                                repositoryID: repository.repositoryID,
+                                worktreeID: GitWorktreeIdentity.worktreeID(
+                                    repositoryID: repository.repositoryID,
+                                    gitDir: layout.gitDir,
+                                    isMain: !layout.isLinkedWorktree,
+                                    path: layout.workTreeRoot,
+                                ),
+                                kind: layout.isLinkedWorktree ? .linkedWorktree : .canonical)
+        return ["kind": "gitTarget", "state": "available", "checkouts": [checkout.json], "primary": checkout.json]
     }
 
     static func normalizedSelectionPaths(_ paths: [String], roots: [String]) throws -> [String] {

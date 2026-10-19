@@ -1,10 +1,11 @@
 // Parses RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3 framing; see docs/vendor-provenance.json.
 import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
-import type { AutomaticReviewGitEvidence, SourceSelection, Span } from '../contracts/context.js';
+import type { AutomaticReviewGitEvidence, ContextBuildRequest, SourceSelection, Span } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import { posix } from 'node:path';
 import { contains } from '../workspace/root-policy.js';
 import { sha256, WorkspaceFailure } from '../workspace/values.js';
+import { manualCopySettings } from '../contracts/presentation.js';
 
 function verifyCompleteness({ outcomes, pathIssues, completeness }: AutomaticReviewGitEvidence): void {
   const failures = pathIssues.length > 0 || outcomes.some(outcome => outcome.kind === 'baseResolutionFailed' || outcome.kind === 'commandFailed');
@@ -71,11 +72,20 @@ export function verifyAutomaticReviewGitCapture(capture: AutomaticReviewGitCaptu
 
 /** Each checkout path must belong to the captured full/slice scope; path failures account for unresolved members. */
 export function verifyAutomaticReviewGitSelection(capture: AutomaticReviewGitCapture | null,
-  inventory: Omit<InventorySnapshot, 'generation'>, selections: readonly SourceSelection[]): void {
+  inventory: Omit<InventorySnapshot, 'generation'>, selections: readonly SourceSelection[], request: ContextBuildRequest): void {
   if (capture === null) return;
   const roots = new Map(capture.evidence.sourceRoots.map(root => [root.root, root.path]));
   if (roots.size !== capture.evidence.sourceRoots.length || roots.size !== inventory.roots.length ||
     inventory.roots.some(root => !roots.has(root.name))) throw new WorkspaceFailure('invalidClipboard');
+  if (capture.evidence.scope === 'complete') {
+    const preset = manualCopySettings(request.copyPreset);
+    if (preset === null || capture.evidence.pathIssues.length || capture.evidence.completeness !== 'complete' ||
+      preset.activeGitRoot !== null && !roots.has(preset.activeGitRoot) ||
+      capture.evidence.outcomes.length !== (preset.activeGitRoot === null ? 0 : 1) || capture.evidence.outcomes.some(outcome =>
+        outcome.checkout.identity.root !== preset.activeGitRoot || outcome.checkout.selectedPaths.length ||
+        !contains(outcome.checkout.identity.checkoutRootPath.normalize('NFC'), roots.get(outcome.checkout.identity.root)!.normalize('NFC')))) throw new WorkspaceFailure('invalidClipboard');
+    return;
+  }
   const remaining = new Set(selections.filter(selection => selection.kind !== 'codemap')
     .map(selection => posix.join(roots.get(selection.source.root)!, selection.source.path).normalize('NFC')));
   for (const outcome of capture.evidence.outcomes) {

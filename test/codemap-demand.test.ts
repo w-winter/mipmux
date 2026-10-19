@@ -16,10 +16,13 @@ const readinessReferences = Compile(Type.Array(Type.Object({ name: Type.String()
   statuses: Type.Array(Type.Enum(['ready', 'pending'])), afterPresentationRelease: Type.Array(Type.Object({ workCompleted: Type.Boolean() })) })));
 const referenceCases = readinessReferences.Parse(JSON.parse(await readFile('test/fixtures/rpce-readiness-observer/expected.json', 'utf8')));
 
-test('Diff Follow-Up publishes while an excluded optional codemap has independently retained demand', async () => {
+for (const copyPreset of ['diffFollowUp', { kind: 'manual', current: { fileTreeMode: 'None', codeMapUsage: 'none', gitInclusion: 'none' },
+  customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null, includeFileTree: null, fileTreeMode: null,
+    codeMapUsage: null, gitInclusion: null }, codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null }] as const) {
+test(`${copyPreset === 'diffFollowUp' ? 'Diff Follow-Up' : 'Manual none'} publishes while an excluded optional codemap has independently retained demand`, async () => {
   const request = contextRequestValidator.Parse({ task: 'Discuss changes', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
-    duplicateUserInstructionsAtTop: false, copyPreset: 'diffFollowUp', budgetUnits: 100000, discoveryHints: [], outputName: 'diff-follow-up' });
+    duplicateUserInstructionsAtTop: false, copyPreset, budgetUnits: 100000, discoveryHints: [], outputName: 'diff-follow-up' });
   const f = await fixture(), operation = await f.owner.openOperation(new AbortController().signal);
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lease: Awaited<ReturnType<typeof operation.requestExplicitCodemap>> | null = null;
@@ -37,13 +40,35 @@ test('Diff Follow-Up publishes while an excluded optional codemap has independen
     assert.equal(await readFile(join(ready.directory, 'context.md'), 'utf8'), '<user_instructions>\nDiscuss changes\n</user_instructions>\n');
     await verifyBundle(ready.directory);
     await mkdir('test-output', { recursive: true });
-    await writeFile('test-output/diff-follow-up-pending-codemap.json', JSON.stringify({ directory: ready.directory,
+    await writeFile(`test-output/${copyPreset === 'diffFollowUp' ? 'diff-follow-up' : 'manual-none'}-pending-codemap.json`, JSON.stringify({ directory: ready.directory,
       demandSettledAtPublication: demandSettled, manifest: ready.manifest }, null, 2) + '\n');
   } finally {
     if (timer !== null) clearTimeout(timer);
     f.release(); if (lease !== null) { await lease.result; await lease.release(); }
     await operation.close(); await f.runtime.close();
   }
+});
+}
+
+test('Manual complete exact-demand cancellation joins extraction and prevents publication', async () => {
+  const request = contextRequestValidator.Parse({ task: 'Inspect complete codemaps', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+    initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+    duplicateUserInstructionsAtTop: false, copyPreset: { kind: 'manual', current: { fileTreeMode: 'None', codeMapUsage: 'complete', gitInclusion: 'none' },
+      customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null, includeFileTree: null, fileTreeMode: null,
+        codeMapUsage: null, gitInclusion: null }, codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null },
+    budgetUnits: 100000, discoveryHints: [], outputName: 'cancelled-manual' });
+  const f = await fixture();
+  const operation = await f.owner.openOperation(new AbortController().signal);
+  try {
+    const draft = await f.owner.createDraft(request, new AbortController().signal), controller = new AbortController();
+    await operation.registerExplicitSource(f.source);
+    const finalizing = draft.finalize(controller.signal);
+    await Promise.race([f.entering, finalizing.then(() => { throw new Error('Demand settled before extraction'); })]);
+    const rejected = assert.rejects(finalizing, /abort|cancel/i);
+    controller.abort(); f.release(); await rejected;
+    assert.equal(draft.revision, 0); assert.deepEqual(draft.selectionProjection().sources, []);
+    await assert.rejects(readFile(join(f.base, 'out/cancelled-manual/manifest.json')), /ENOENT/);
+  } finally { f.release(); await operation.close(); await f.runtime.close(); }
 });
 
 async function fixture(outcome: 'held' | 'failFirst' = 'held',

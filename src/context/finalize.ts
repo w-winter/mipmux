@@ -5,7 +5,7 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { identity } from './material-store.js';
-import { renderBundle } from './render.js';
+import { renderBundle, type RenderInput } from './render.js';
 import { prepareRenderInput } from './final-tree.js';
 import { revalidateMaterials } from './revalidate.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
@@ -16,6 +16,7 @@ import { revalidateCapturedAutomaticReviewGit, type AutomaticReviewGitCapture } 
 import { captureReferenceTokens, type ReferenceTokenView } from './reference-tokens.js';
 import type { CanonicalSelection } from './selection-preparation.js';
 import { captureUnavailableRoots, packetSources } from './source-omissions.js';
+import { manualCopySettings } from '../contracts/presentation.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -43,6 +44,11 @@ export class FinalizationOperation {
   #capturedAutomaticGit: AutomaticReviewGitCapture | null = null;
   get capturedAutomaticGit(): AutomaticReviewGitCapture | null { return this.#capturedAutomaticGit; }
   readonly result: Promise<FinalizationResult>;
+  #capturedRenderInput: RenderInput | null = null;
+  get capturedRenderInput(): RenderInput {
+    if (this.#capturedRenderInput === null) throw new WorkspaceFailure('materialUnavailable');
+    return this.#capturedRenderInput;
+  }
   /** Materials and acquisition state advance together; the returned material map is a copy. */
   get capturedPresentation(): CodemapPresentation {
     return { materials: new Map(this.#capturedPresentation.materials), automaticAcquisition: this.#capturedPresentation.automaticAcquisition };
@@ -107,12 +113,16 @@ export class FinalizationOperation {
         const { generation, ...inventory } = this.#capturedInventory;
         const input = await prepareRenderInput(owner.runtime, { request, prompt, codemapMode, materials, inventory, automaticAcquisition,
           unavailableRoots: delivery.unavailableRoots, unavailableFiles: delivery.unavailableFiles }, signal,
-          { kind: 'live', operation });
+          { kind: 'live', operation }, canonical);
+        this.#capturedRenderInput = input;
+        this.#capturedInventory = operation.snapshot;
         this.#capturedAutomaticGit = input.automaticGit;
         this.#capturedReferenceTokens = await captureReferenceTokens(operation, input, canonical);
-        return { materials, automaticAcquisition: input.automaticAcquisition, inventory, input, rendered: renderBundle(input) };
+        return { materials: input.materials, automaticAcquisition: input.automaticAcquisition, inventory: input.inventory, input, rendered: renderBundle(input) };
       };
-      const candidate = request.copyPreset === 'diffFollowUp' ? await assemble(this.#capturedPresentation)
+      const manual = manualCopySettings(request.copyPreset);
+      const candidate = request.copyPreset === 'diffFollowUp' || manual !== null &&
+        (manual.current.codeMapUsage !== 'auto' || manual.codeMapsGloballyDisabled) ? await assemble(this.#capturedPresentation)
         : await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation, unavailableRoots), assemble);
       const { materials, automaticAcquisition, inventory, input, rendered } = candidate;
       if (automaticAcquisition.kind === 'pending' || rendered.diagnostics.length) {
@@ -125,7 +135,8 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 21,
+        schemaVersion: 22,
+        manualPresentation: input.manualPresentation,
         codemapMode,
         automaticCodemaps: [...automaticAcquisition.outcomes],
         request,

@@ -87,6 +87,12 @@ const canonicalSelectionPath = Type.String({ pattern: '^/[^\\u0000]*$' });
 export const NativeSelectionState = Type.Object({ selectedPaths: Type.Array(canonicalSelectionPath),
   manualCodemapPaths: Type.Array(canonicalSelectionPath), slices: Type.Record(Type.String(), Type.Array(NativeSliceRange)),
   codemapAutoEnabled: Type.Boolean() }, { additionalProperties: false });
+export const NativeClipboardPresentationInput = Type.Object({ kind: Type.Literal('planClipboardPresentation'), copyPreset: ClipboardPreset,
+  selection: NativeSelectionState, readyFileIDs: Type.Array(Type.String({ format: 'uuid' })),
+  roots: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), standardizedFullPath: Type.String() }, { additionalProperties: false })),
+  files: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), rootID: Type.String({ format: 'uuid' }), name: Type.String(),
+    standardizedRelativePath: RelativePath, fullPath: Type.String() }, { additionalProperties: false })),
+}, { additionalProperties: false });
 export const NativeSelectionTransitionInput = Type.Object({ kind: Type.Literal('transitionSelection'), selection: NativeSelectionState,
   mutation: Type.Union([
     Type.Object({ kind: Type.Literal('fullFiles'), op: Type.Enum(['add', 'remove']), paths: Type.Array(canonicalSelectionPath) }, { additionalProperties: false }),
@@ -283,6 +289,8 @@ const automaticReviewGitInput = Type.Union([
 ]);
 export const AutomaticReviewGitCompleteness = Type.Enum(['complete', 'partial', 'failed']);
 export const NativeOperation = Type.Union([
+  Type.Object({ kind: Type.Literal('resolveCompleteGitTarget'), roots: Type.Array(Type.Object({ name: RootName, path: Type.String() }, { additionalProperties: false }), { minItems: 1, maxItems: 1 }),
+    paths: Type.Array(Type.String(), { minItems: 1, maxItems: 1 }) }, { additionalProperties: false }),
   NativeSearchPatternInput,
   NativeSearchPathsInput,
   NativeLiteralSearchInput,
@@ -378,6 +386,7 @@ export const NativeOperation = Type.Union([
   NativePromptAssemblyInput,
   NativeClipboardInput,
   NativePreparedClipboardInput,
+  NativeClipboardPresentationInput,
   NativeStructureInput,
 ]);
 export type NativeOperation = Static<typeof NativeOperation>;
@@ -396,6 +405,9 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('clipboardPresentation'), preset: CapturedClipboardPreset, intent: Type.Enum(['none', 'automatic', 'exact']),
+    fileIDs: Type.Array(Type.String({ format: 'uuid' })), completeRootSet: Type.Boolean(),
+    codemapFileIDs: Type.Array(Type.String({ format: 'uuid' })) }, { additionalProperties: false }),
   ...NativeSearchPatternResult.anyOf,
   ...NativeSearchPathsResult.anyOf,
   NativeLiteralSearchResult,

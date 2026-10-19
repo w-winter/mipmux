@@ -9,9 +9,11 @@ import { renderBundle } from './render.js';
 import { readRegularFile } from '../runtime/host-files.js';
 import { StructureIndex } from '../workspace/structure-index.js';
 import { parseSourceBlock, type SourceBlock } from './source-block.js';
-import { finalFileTreeInput } from './final-tree.js';
+import { capturedFileTreeInput } from './final-tree.js';
 import { verifySourceOmissions } from './source-omissions.js';
 import { verifyExcludedSources } from './clipboard-selection.js';
+import { verifyManualPresentation } from './manual-integrity.js';
+import { manualCopySettings } from '../contracts/presentation.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -49,8 +51,8 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   requireEqual(sha256(canonicalJSON(manifest.request)), manifest.requestDigest);
   requireEqual(inventoryDigest(manifest.inventory), manifest.inventory.inventoryDigest);
   const materials = decodeMaterials(manifest, context);
-  requireEqual(manifest.fileTree.input, manifest.request.copyPreset === 'diffFollowUp' ? null
-    : finalFileTreeInput(manifest.inventory, materials, manifest.codemapMode, manifest.unavailableRoots, manifest.unavailableFiles));
+  verifyManualPresentation(manifest, materials);
+  requireEqual(manifest.fileTree.input, capturedFileTreeInput({ ...manifest, materials }));
   const treeSpan = manifest.fileTree.span, treeBytes = context.subarray(treeSpan.offset, treeSpan.offset + treeSpan.length);
   requireEqual(identity(treeBytes), { byteCount: treeSpan.length, sha256: treeSpan.sha256 });
   const fileTree = { input: manifest.fileTree.input, text: decodedBody(treeBytes) };
@@ -62,6 +64,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     text: automaticText === null ? null : decodedBody(automaticText) };
   let rendered: ReturnType<typeof renderBundle>;
   try { rendered = renderBundle({
+    manualPresentation: manifest.manualPresentation,
     codemapMode: manifest.codemapMode,
     request: manifest.request,
     inventory: manifest.inventory,
@@ -227,15 +230,19 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   }
   const sources = materials.flatMap(material => material.record.kind === 'source' ? [material.record] : []);
   const explicit = sources.filter(record => record.selectionOrigin === 'explicit');
-  const inferred = sources.filter(record => record.selectionOrigin === 'inferred').map(record => record.id).sort();
-  if (manifest.codemapMode === 'manual' || manifest.request.copyPreset === 'diffFollowUp') {
+  const manual = manualCopySettings(manifest.request.copyPreset);
+  const inferred = sources.filter(record => record.selectionOrigin === 'inferred' || manifest.codemapMode === 'automatic' && manifest.manualPresentation !== null && record.selectionOrigin === 'presentation' &&
+    manual?.current.codeMapUsage === 'auto').map(record => record.id).sort();
+  const automaticManual = manual !== null && manual.current.codeMapUsage === 'auto' && !manual.codeMapsGloballyDisabled;
+  if (manifest.codemapMode === 'manual' || manifest.request.copyPreset === 'diffFollowUp' || manifest.manualPresentation !== null && !automaticManual) {
     requireEqual(inferred, []); requireEqual(manifest.automaticCodemaps, []);
   }
   else {
     if (explicit.some(record => record.selection.kind === 'codemap')) throw new WorkspaceFailure('bundleIntegrityFailed');
     const catalog = new Set(manifest.inventory.entries.filter(entry => entry.kind === 'file').map(sourceId));
     const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles].filter(source => source.selection.kind !== 'codemap');
-    const seeds = [...explicit, ...omitted].filter(record => catalog.has(record.id)).map(record => record.selection.source);
+    const seeds = manifest.manualPresentation !== null ? manifest.manualPresentation.canonicalSources.filter(selection => selection.kind !== 'codemap' && catalog.has(sourceId(selection.source))).map(selection => selection.source)
+      : [...explicit, ...omitted].filter(record => catalog.has(record.id)).map(record => record.selection.source);
     const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds,
       new Set(manifest.unavailableRoots.map(root => root.root))).targets : [];
     const byId = new Map(candidates.map(candidate => [sourceId(candidate), candidate]));

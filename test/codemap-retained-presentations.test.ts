@@ -43,7 +43,7 @@ async function fixture() {
       return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
     }
     override async renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' |
-      'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
+      'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
       const reply = await super.renderPresentation(input, signal);
       if (behavior === 'off' || input.kind !== 'renderPreparedClipboard' || !input.input.codemapBlocks.some(block => block.includes('FirstRecord'))) return reply;
       if (behavior === 'fail') throw new Error('Injected presentation failure');

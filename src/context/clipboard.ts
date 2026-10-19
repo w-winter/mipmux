@@ -7,17 +7,18 @@ import { compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits } from './budget.js';
 import { acquireAutomaticReviewGit, type AutomaticReviewGitSource } from './automatic-review-git.js';
 import { verifyAutomaticReviewGitCapture, verifyAutomaticReviewGitSelection } from './automatic-review-git-integrity.js';
-import { defaultPromptSectionsOrder, type PromptSection } from '../contracts/presentation.js';
-import { assertClipboardRequiredMaterials } from './clipboard-selection.js';
+import { defaultPromptSectionsOrder, manualCopySettings, type PromptSection } from '../contracts/presentation.js';
 import { capturedSourceSelections, restoreOmittedSourceSelections } from './source-omissions.js';
 
 type ClipboardInput = Extract<NativeOperation, { kind: 'renderPreparedClipboard' }>;
 type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'tokenInputs'>;
 
-function partitionMaterials(materials: readonly Material[]) {
+function partitionMaterials(input: Pick<RenderInput, 'materials' | 'manualPresentation'>) {
+  const materials = input.materials;
   const sorted = [...materials].sort((a, b) => compareBytes(a.record.id, b.record.id));
-  const codemaps = sorted.filter(material => material.record.kind === 'source' && material.record.selection.kind === 'codemap');
-  const sources = sorted.filter(material => material.record.kind === 'source' && material.record.selection.kind !== 'codemap');
+  const orderedSources = input.manualPresentation === null ? sorted : materials;
+  const codemaps = orderedSources.filter(material => material.record.kind === 'source' && material.record.selection.kind === 'codemap');
+  const sources = orderedSources.filter(material => material.record.kind === 'source' && material.record.selection.kind !== 'codemap');
   const documents = sorted.filter(material => material.record.kind === 'document');
   const maps = materials.filter(material => material.record.kind === 'gitMap');
   const selectedPatches = materials.filter(material => material.record.kind === 'gitPatch');
@@ -32,7 +33,7 @@ function contentBlock(material: Material): string {
 
 /** Binds retained blocks and explicit caller instructions to the source clipboard assembly boundary. */
 export function preparedClipboardInput(input: PacketInput): ClipboardInput {
-  const materials = partitionMaterials(input.materials);
+  const materials = partitionMaterials(input);
   return { kind: 'renderPreparedClipboard', input: {
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop,
     includeDatetimeInUserInstructions: input.request.includeDatetimeInUserInstructions ?? false,
@@ -51,7 +52,6 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
 
 export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketInput, 'automaticGit' | 'excludedSources'>,
   signal: AbortSignal, source: AutomaticReviewGitSource): Promise<RenderInput> {
-  assertClipboardRequiredMaterials(input.request, input.materials);
   const excludedSources = input.request.copyPreset === 'diffFollowUp' ? input.materials.flatMap(({ record }) =>
     record.kind === 'source' && record.selectionOrigin === 'explicit' ? [record.selection] : []) : [];
   const packet = { ...input, excludedSources, automaticAcquisition: input.request.copyPreset === 'diffFollowUp'
@@ -61,7 +61,8 @@ export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketI
   if (clipboard.needsAutomaticGit && source.kind === 'live') {
     const operation = await source.operation.fork(signal);
     try { automaticGit = await acquireAutomaticReviewGit(operation, input.request,
-      capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles), input.unavailableRoots); }
+      input.manualPresentation?.canonicalSources ?? capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles), input.unavailableRoots,
+      clipboard.preset.gitInclusion === 'complete' ? 'complete' : 'selected'); }
     finally { await operation.close(); }
     clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...packet, automaticGit }), signal);
   }
@@ -93,9 +94,11 @@ function consumeFileMap(tree: string, codemaps: readonly Material[], consume: Co
 }
 
 function consumeMetaInstructions(input: Omit<RenderInput, 'tokenInputs'>, consume: Consume) {
-  if (input.clipboardPreset.kind !== input.request.copyPreset) throw new WorkspaceFailure('invalidClipboard');
-  const ids = input.clipboardPreset.storedPromptIds;
-  const metas = input.request.storedPrompts.filter(prompt => ids !== null && ids.some(id => id === prompt.id.toLowerCase()))
+  const manual = manualCopySettings(input.request.copyPreset);
+  if (input.clipboardPreset.kind !== (manual === null ? input.request.copyPreset : 'manual')) throw new WorkspaceFailure('invalidClipboard');
+  const ids = input.clipboardPreset.kind === 'manual' && input.clipboardPreset.includeMetaPrompts && manual !== null
+    ? manual.selectedPromptIds : input.clipboardPreset.storedPromptIds;
+  const metas = input.request.storedPrompts.filter(prompt => ids !== null && ids.some(id => id.toLowerCase() === prompt.id.toLowerCase()))
     .map(({ title, content }) => ({ title, content }));
   if (input.request.constraints) metas.push({ title: 'Constraints', content: input.request.constraints });
   for (const [index, meta] of metas.entries()) consume('<meta prompt ' + (index + 1) + ' = "' + meta.title + '">\n' + meta.content + '\n</meta prompt ' + (index + 1) + '>\n');
@@ -140,8 +143,8 @@ function withoutDatetimeValues(bytes: Buffer, spans: readonly Span[]): string {
 
 /** Parses every ordered occurrence against canonical material bytes and charges all repetitions. */
 export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
-  const bytes = Buffer.from(input.clipboard), materials = partitionMaterials(input.request.copyPreset === 'diffFollowUp'
-    ? input.materials.filter(material => material.record.kind === 'patch' || material.record.kind === 'gitPatch') : input.materials);
+  const bytes = Buffer.from(input.clipboard), materials = partitionMaterials({ ...input, materials: input.request.copyPreset === 'diffFollowUp'
+    ? input.materials.filter(material => material.record.kind === 'patch' || material.record.kind === 'gitPatch') : input.materials });
   const includedGitDiffs = new Set(input.selectedGitDiffIds);
   const selectedPatches = input.clipboardPreset.gitInclusion === 'none' ? []
     : materials.selectedPatches.filter(material => includedGitDiffs.has(material.record.id));
@@ -171,10 +174,11 @@ export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
     if (!records.has(material.record.id)) records.set(material.record.id, { ...material.record, frame, spans });
     charge(material.record.id, frame.length);
   };
-  verifyAutomaticReviewGitCapture(input.automaticGit, input.clipboardPreset.gitInclusion === 'selected' && selectedPatches.length === 0);
+  verifyAutomaticReviewGitCapture(input.automaticGit, input.clipboardPreset.gitInclusion !== 'none' && selectedPatches.length === 0);
+  if (input.automaticGit && input.automaticGit.evidence.scope !== (input.clipboardPreset.gitInclusion === 'complete' ? 'complete' : 'selected')) throw new WorkspaceFailure('invalidClipboard');
   verifyAutomaticReviewGitSelection(input.automaticGit, input.inventory, input.request.copyPreset === 'diffFollowUp'
     ? restoreOmittedSourceSelections(input.excludedSources, input.unavailableRoots, input.unavailableFiles)
-    : capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles));
+    : input.manualPresentation?.canonicalSources ?? capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles), input.request);
   const capturedSpans = new Map<'fileMap' | 'gitDiff', Span>();
   const sections = {
     fileMap: () => {
@@ -191,7 +195,7 @@ export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
     },
     metaPrompts: () => { consumeMetaInstructions(input, consume); },
     userInstructions: () => {
-      if (!input.prompt) return;
+      if (!input.prompt || input.clipboardPreset.kind === 'manual' && !input.clipboardPreset.includeUserPrompt) return;
       if (!input.request.includeDatetimeInUserInstructions) {
         consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n'); return;
       }
