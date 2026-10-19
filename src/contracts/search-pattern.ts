@@ -6,12 +6,17 @@ export const SearchPatternKind = Type.Enum(['auto', 'literal', 'regex'], { defau
 export const SearchMode = Type.Enum(['auto', 'path', 'content', 'both'], { default: 'auto' });
 const pattern = Type.Object({ text: Type.String(), isRegex: Type.Boolean() }, closed);
 export type PreparedSearchPattern = Static<typeof pattern>;
+const diagnostic = Type.Union([
+  Type.Object({ kind: Type.Literal('pattern'), issue: Type.String(), suggestion: Type.Union([Type.String(), Type.Null()]) }, closed),
+  Type.Object({ kind: Type.Literal('rejected'), message: Type.String() }, closed),
+]);
+export type SearchDiagnostic = Static<typeof diagnostic>;
 export const NativeSearchPatternInput = Type.Object({ kind: Type.Literal('prepareSearchPattern'),
   text: Type.String(), queryKind: SearchPatternKind, wholeWord: Type.Boolean(), mode: SearchMode }, closed);
 export const NativeSearchPatternResult = Type.Union([
   Type.Object({ kind: Type.Literal('searchPattern'), mode: Type.Enum(['path', 'content', 'both']), path: pattern, content: pattern }, closed),
   Type.Object({ kind: Type.Literal('searchContentPatternError'), mode: Type.Enum(['content', 'both']),
-    path: pattern, message: Type.String() }, closed),
+    path: pattern, diagnostic }, closed),
   Type.Object({ kind: Type.Literal('searchPatternError'), message: Type.String() }, closed),
 ]);
 export const NativeSearchPathsInput = Type.Object({ kind: Type.Literal('matchSearchPaths'),
@@ -24,7 +29,7 @@ export const NativeSearchPathsInput = Type.Object({ kind: Type.Literal('matchSea
 export const NativeSearchPathsResult = Type.Union([
   Type.Object({ kind: Type.Literal('searchPaths'), order: Type.Array(SafeCount), matches: Type.Array(SafeCount),
     excluded: Type.Array(SafeCount) }, closed),
-  Type.Object({ kind: Type.Literal('searchPathsError'), message: Type.String() }, closed),
+  Type.Object({ kind: Type.Literal('searchPathsError'), order: Type.Array(SafeCount), excluded: Type.Array(SafeCount), diagnostic }, closed),
 ]);
 export const NativeSearchReplyInput = Type.Object({ kind: Type.Literal('projectSearchReply'),
   matches: Type.Array(Type.Object({ filePath: Type.String(), lineNumber: SafeCount, lineText: Type.String() }, closed)),
@@ -42,7 +47,7 @@ export const NativeLiteralSearchInput = Type.Object({ kind: Type.Literal('scanLi
 }, closed);
 export const NativeLiteralSearchResult = Type.Union([Type.Object({ kind: Type.Literal('literalSearch'),
   matchingLines: SafeCount, matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })),
-}, closed), Type.Object({ kind: Type.Literal('literalSearchError'), message: Type.String() }, closed)]);
+}, closed), Type.Object({ kind: Type.Literal('literalSearchError'), diagnostic }, closed)]);
 export const NativeRegexSearchInput = Type.Object({ kind: Type.Literal('scanRegexContent'), text: Type.String(),
   pattern: Type.String(), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean(), countOnly: Type.Boolean(),
   limit: Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
@@ -54,7 +59,7 @@ export const NativeRegexCompilationInput = Type.Object({ kind: Type.Literal('com
   pattern: Type.String(), caseSensitive: Type.Boolean(), wholeWord: Type.Boolean() }, closed);
 export const NativeRegexCompilationResult = Type.Union([
   Type.Object({ kind: Type.Literal('regexCompilation'), correction }, closed),
-  Type.Object({ kind: Type.Literal('regexSearchError'), message: Type.String() }, closed),
+  Type.Object({ kind: Type.Literal('regexSearchError'), diagnostic }, closed),
 ]);
 export const NativeSearchRecoveryInput = Type.Object({ kind: Type.Literal('prepareSearchRecovery'),
   pattern: Type.String(), isRegex: Type.Boolean() }, closed);
@@ -79,5 +84,5 @@ export const NativeSearchScopeResult = Type.Object({ kind: Type.Literal('searchS
 export const NativeRegexSearchResult = Type.Union([
   Type.Object({ kind: Type.Literal('regexSearch'), matchingLines: SafeCount,
     matches: Type.Array(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })) }, closed),
-  Type.Object({ kind: Type.Literal('regexSearchError'), message: Type.String() }, closed),
+  Type.Object({ kind: Type.Literal('regexSearchError'), diagnostic }, closed),
 ]);

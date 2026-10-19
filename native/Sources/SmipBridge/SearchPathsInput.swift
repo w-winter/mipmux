@@ -73,17 +73,22 @@ struct SearchPathsInput {
             let right = files[$1].standardizedFullPath
             return mode == .path ? WorkspaceCodemapGraphOrdering.utf8Precedes(left, right) : left < right
         }
+        let included = Set(files.map(\.ordinal))
+        let excluded = (0 ..< inputCount).filter { !included.contains($0) }
+        let ordered = order.map { files[$0].ordinal }
         do {
             let matches = try matchingIndices(order: order)
-            let included = Set(files.map(\.ordinal))
-            let excluded = (0 ..< inputCount).filter { !included.contains($0) }
-            return ["kind": "searchPaths", "order": order.map { files[$0].ordinal },
+            return ["kind": "searchPaths", "order": ordered,
                     "matches": matches.map { files[$0].ordinal }, "excluded": excluded]
         } catch let error as PCRE2Error {
-            return ["kind": "searchPathsError", "message":
-                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern).localizedDescription]
+            return ["kind": "searchPathsError", "order": ordered, "excluded": excluded,
+                    "diagnostic": SearchDiagnostic.render(
+                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern),
+                pattern: pattern, isRegex: isRegex
+            )]
         } catch let error as RegexPatternFailure {
-            return ["kind": "searchPathsError", "message": error.localizedDescription]
+            return ["kind": "searchPathsError", "order": ordered, "excluded": excluded,
+                    "diagnostic": SearchDiagnostic.render(error, pattern: pattern, isRegex: isRegex)]
         }
     }
 

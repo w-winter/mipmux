@@ -37,10 +37,13 @@ struct LiteralSearchInput {
             return ["kind": "literalSearch", "matches": result.hits.map { $0.lineNumber + 1 },
                     "matchingLines": countOnly ? result.lineMatchCount : result.hits.count]
         } catch let error as RegexPatternFailure {
-            return ["kind": "literalSearchError", "message": error.localizedDescription]
+            return ["kind": "literalSearchError",
+                    "diagnostic": SearchDiagnostic.render(error, pattern: pattern, isRegex: false)]
         } catch let error as PCRE2Error {
-            return ["kind": "literalSearchError", "message":
-                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern).localizedDescription]
+            return ["kind": "literalSearchError", "diagnostic": SearchDiagnostic.render(
+                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern),
+                pattern: pattern, isRegex: false
+            )]
         }
     }
 }

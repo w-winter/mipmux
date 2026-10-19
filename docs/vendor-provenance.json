@@ -6816,10 +6816,11 @@
         "This adapter prepares patterns only. Automatic mode routing, limits on results, path globbing and regex repairs remain separate conformance requirements.",
         "Resolve the requested auto/path/content/both mode using the retained source heuristic. Public glob requests bind to literal interpretation and path mode.",
         "Normalize non-fuzzy whole-word content into a complete PCRE2 pattern. Literal input uses the existing quoted-literal owner; regex input retains its grouping. The wrapping expression is from Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift:301, range SHA256 289c82540dad799af7b03b38c1a01a6c473bb5571d38852d065658ef945c73c0, full-file SHA256 ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e. The literal branch agrees with SearchMatch.swift2067-2075.",
-        "Apply the existing RegexToolkit.validateComplexity to the original trimmed content pattern before flexible-space or whole-word preparation, following SearchMatch.swift1298-1299. Retain the content-phase failure separately so content-only requests return the native diagnostic as invalidSearchPattern, while both-mode requests keep their path phase, following SearchMatch.swift2803-2876. The source MCP DTO omits phase errors; this adapter also omits a rejected content phase from a successful both-mode reply. Path-only preparation does not apply content admission."
+        "Apply the existing RegexToolkit.validateComplexity to the original trimmed content pattern before flexible-space or whole-word preparation, following SearchMatch.swift1298-1299. Retain the content-phase failure separately so content-only requests return the native diagnostic as invalidSearchPattern, while both-mode requests keep their path phase, following SearchMatch.swift2803-2876. Path-only preparation does not apply content admission.",
+        "Preserve content admission as a typed rejection distinct from recognized pattern errors; reuse SearchDiagnostic for the private wire payload. Successful both-mode replies expose failed-phase diagnostics from SearchMatch.swift rather than discarding them."
       ],
       "classification": "handwritten",
-      "sha256": "179a90c682d9884bd6b67518631eccd271b786469449acfa404f56109ec5d989"
+      "sha256": "933e23614f7a04de8e1fb2e0d24ec4f0ceb271039a230568330c90074d1c2ec0"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6943,6 +6944,10 @@
         [
           2313,
           2345
+        ],
+        [
+          2803,
+          2807
         ]
       ],
       "changes": [
@@ -6950,10 +6955,11 @@
         "Regex cache scheduling is omitted for this per-request adapter. Original regex repairs and regex-to-glob/literal substitution remain pending the named source-search-regex-recovery decision. Invalid primary regexes return a typed error; no silent substitution is added.",
         "Decode the two consumed filter fields once. Supply Foundation filename-extension metadata, preserve original descriptor ordinals through filtering, and return retained/omitted index partitions. Filtering occurs before path collection and content acquisition.",
         "Primary path regex compilation shares the retained native worker cache, following SearchMatch.swift856-862; path matching, authorization and ordering remain captured-query operations rather than cached results.",
-        "Execute the original path preparation recovery: try the retained path compiler, then select the original glob/literal strategy when no regex/suffix plan is available. Preserve original pattern, sorting, signed early exits and per-descriptor matching. No content auto-correction warning is invented for path recovery."
+        "Execute the original path preparation recovery: try the retained path compiler, then select the original glob/literal strategy when no regex/suffix plan is available. Preserve original pattern, sorting, signed early exits and per-descriptor matching. No content auto-correction warning is invented for path recovery.",
+        "Return the source-filtered descriptor order and excluded partition with an expected path failure, so the content phase retains its original ordering and filters. Format only recognized native pattern failures through the existing formatter; unexpected native failures still throw."
       ],
       "classification": "handwritten",
-      "sha256": "6e8656f1aef6a1bb9245a0c2b07e43eb306b30b62ab2903950c72c24974b9a09"
+      "sha256": "3e60beb72dba7d3d33247ccdeb2c2525a4a4fa3f94584f48f659a7c147dc50ac"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6968,15 +6974,20 @@
         [
           2747,
           2750
+        ],
+        [
+          2783,
+          2877
         ]
       ],
       "changes": [
         "Bind root aliases and captured physical paths to native pattern/matching owners. Validate the returned candidate permutation and unique in-range path indices once at the native boundary, then pass the resolved mode, content pattern, ordered admitted candidates and path membership to the existing content search.",
         "Forward extensions and exclusions to native filtering and validate one complete retained/omitted partition plus path-hit membership before constructing the ordered candidates.",
-        "Compile raw content regex once at query preparation before source acquisition. Normalize known compile failures into the existing ready/failed content phase;content-only fails while both-mode can serve its path phase. Carry the native correction proof to output rather than re-deciding warnings per file."
+        "Compile raw content regex once at query preparation before source acquisition. Normalize known compile failures into the existing ready/failed content phase;content-only fails while both-mode can serve its path phase. Carry the native correction proof to output rather than re-deciding warnings per file.",
+        "Retain typed path and content failures independently. A single-mode failure propagates; both-mode propagates only when both phases fail, selecting the content diagnostic. Zero hits is a healthy phase. Validate the native retained/excluded partition on both success and expected path failure."
       ],
       "classification": "handwritten",
-      "sha256": "a45704e72c0c4752d61421a6931c80ed3d9357a7020ce2fcf33f67e0aef36108"
+      "sha256": "e00c9c9c6dd337b39abe84444a5c811fe07101294e585ebb5b24c98f0dce0a5a"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -6995,6 +7006,10 @@
         [
           2794,
           2855
+        ],
+        [
+          2783,
+          2877
         ]
       ],
       "classification": "handwritten",
@@ -7003,9 +7018,10 @@
         "Grouped replies expose source path-hit and matching-line counts. Both native literal and raw regex scanners receive original decoded text. Matching requires no temporary ordinal files or secondary matching process; per-candidate source/policy revalidation and grouped context retain their existing owners.",
         "The native scanner owns literal flexible-space and whole-word matching. The preparation result identifies the strategy; matching receives original decoded text, the raw pattern and query flags.",
         "Run all matching through the existing native worker and its pinned Foundation/PCRE2 implementation. The host configuration has one nativeExecutable owner; it contains no separate search executable or optional search gate. Preserve one current decoded file, query limits and parent-owned settlement.",
-        "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged."
+        "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged.",
+        "Expose filtered candidate count as searchedFiles. MCPFileToolProvider.swift790-807,867-902,1005-1024 returns recognized pattern errors as zero-count SearchResultDTO values with source issue/suggestion; MCPConnectionManager.swift14970-14978 and15058-15132 wraps successful domain values with isError=false. Preserve that envelope at the search producer, while empty queries, complexity admission, cancellation, authorization and unexpected protocol/native failures keep the existing failure path. MCPServerViewModel.swift7489-7497 supplies the exact suggestion only when filters.paths admitted zero scope records before extension/exclusion filtering. Public grouped-file replies retain phase and per-file diagnostics from SearchResults as typed fields."
       ],
-      "sha256": "4ef0fa95b4365a4cdc3978e3f421b5192516d6c24857696df9a7850dee7b171b"
+      "sha256": "1ad09d40e55b38caa876ab30aa5fb4546874851a07c565c02d62ec26946910e3"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7049,9 +7065,10 @@
       ],
       "classification": "handwritten",
       "changes": [
-        "Decode captured original text and explicit literal/whole-word/case/collection flags. Validate the source pattern policy and invoke the retained count-only path or collected literal scanner. Return one-based Source hit lines, original count-only summary totals and typed known regex diagnostics. The MCP binding enables fuzzy-space matching when spaces are present; it exposes no independent fuzzy toggle."
+        "Decode captured original text and explicit literal/whole-word/case/collection flags. Validate the source pattern policy and invoke the retained count-only path or collected literal scanner. Return one-based Source hit lines, original count-only summary totals and typed known regex diagnostics. The MCP binding enables fuzzy-space matching when spaces are present; it exposes no independent fuzzy toggle.",
+        "Return the shared SearchDiagnostic wire payload for caught RegexPatternFailure/PCRE2Error values. The unchanged source formatter owns recognized issue/suggestion text; rejection remains distinct. Other failures and cancellation are not converted into diagnostics."
       ],
-      "sha256": "445f088efad70cbcbf5af5f924aa2b2be8132694b4b6d2654b7b9964e31e1bf8"
+      "sha256": "30b737766177ba1268963668775f63bb1fb5997e01c811e90315d2fa5d257445"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7066,13 +7083,18 @@
         [
           2117,
           2240
+        ],
+        [
+          1670,
+          1685
         ]
       ],
       "classification": "handwritten",
       "changes": [
-        "Pass captured original decoded text and raw query flags to native literal and regex owners. Validate ordered in-range hit lines and source summary/collection semantics once before grouped presentation."
+        "Pass captured original decoded text and raw query flags to native literal and regex owners. Validate ordered in-range hit lines and source summary/collection semantics once before grouped presentation.",
+        "Return expected per-file scanner diagnostics as typed data after native schema parsing; validate line summaries only for successful scans. Do not promote a file failure to a global compilation failure."
       ],
-      "sha256": "0622d30bb3ae15ec4a5ccb676d99445f7986f85155e696c362be0bc048d89088"
+      "sha256": "7a2dcce86320024cc6335623b9a37b503cd1ce17e8eb2f0bf4473974e952c6fb"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7167,9 +7189,10 @@
       ],
       "classification": "handwritten",
       "changes": [
-        "Decode raw captured content, original pattern/whole-word/case flags and collection policy. Return source matching-line counts and one-based hit lines; collected counts derive from delivered hits, while count-only preserves summary totals. Convert known regex failures into typed results."
+        "Decode raw captured content, original pattern/whole-word/case flags and collection policy. Return source matching-line counts and one-based hit lines; collected counts derive from delivered hits, while count-only preserves summary totals. Convert known regex failures into typed results.",
+        "Return the shared SearchDiagnostic wire payload for caught RegexPatternFailure/PCRE2Error values. The unchanged source formatter owns recognized issue/suggestion text; rejection remains distinct. Other failures and cancellation are not converted into diagnostics."
       ],
-      "sha256": "c0ddf75cf64f2cc765fedae97362f4a1f83dff3fc41004fec2f3fa64170fc271"
+      "sha256": "2c6277c0a34f27f06adc7b6d0e8d6a848c1fce10ad92e66a0a5bbe0d15c6044d"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7242,9 +7265,10 @@
       ],
       "classification": "handwritten",
       "changes": [
-        "Parse raw pattern and explicit case/word options, apply source complexity admission and compile through the retained engine factory. Return correction proof or a typed known pattern failure, without running a matcher."
+        "Parse raw pattern and explicit case/word options, apply source complexity admission and compile through the retained engine factory. Return correction proof or a typed known pattern failure, without running a matcher.",
+        "Return the shared SearchDiagnostic wire payload for caught RegexPatternFailure/PCRE2Error values. The unchanged source formatter owns recognized issue/suggestion text; rejection remains distinct. Other failures and cancellation are not converted into diagnostics."
       ],
-      "sha256": "d60ac33dbf88e260e5e9c7565ab3169d7a0082a81896e2e78cd2fadcb57b7254"
+      "sha256": "5981757657b02b5e54daa0dd0666086128ffc297ff96ad791d6e15a212380ea8"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/StoreBackedWorkspaceSearch.swift",
@@ -7299,16 +7323,30 @@
         [
           1280,
           1469
+        ],
+        [
+          1415,
+          1436
+        ],
+        [
+          1664,
+          1695
+        ],
+        [
+          2803,
+          2877
         ]
       ],
       "classification": "handwritten",
       "changes": [
         "Execute each candidate as a whole query over the originally filtered and ordered file set, using the existing native scanners. Reuse the bounded page-prefix collector, count-only traversal, exact source identity checks and line context. The original file collector moved from search.ts so retries share the same path rather than a separate implementation.",
         "Only aggregate content counts admit recovery; a file with no matches cannot trigger a retry while another primary file matched. A literal retry replaces the primary result even at zero. Regex retries return the first positive result or the original primary, with sticky compilation correction and exact native warning. Keep original path results fixed across content retries.",
-        "The source normalized-stage catch suppresses callback errors. The headless binding suppresses only typed searchFailed pattern failures there: filesystem authority, protocol and cancellation failures propagate through the existing operation owner. This retains required fail-closed root/credential boundaries and local tool retirement instead of running another native request after cancellation. Compressed and quoted failures propagate.",
-        "Raw source bytes are revalidated and decoded for every attempted pass. No document collection, retry-result cache, alternate search backend, or new resource limit is introduced."
+        "The source normalized-stage catch suppresses callback errors. The headless binding suppresses only typed query-wide pattern failures there: filesystem authority, protocol and cancellation failures propagate through the existing operation owner. This retains required fail-closed root/credential boundaries and local tool retirement instead of running another native request after cancellation. Compressed and quoted failures propagate.",
+        "Raw source bytes are revalidated and decoded for every attempted pass. No document collection, retry-result cache, alternate search backend, or new resource limit is introduced.",
+        "Preserve expected per-file pattern failures separately from phase failures, with empty hits for the failed file and continued scanning of healthy files. Primary per-file diagnostics survive all-zero regex recovery; positive/literal recovery retains the source result-replacement rules. Expected query-wide recovery compilation failures participate in the same both-mode phase rule. Normalized-stage suppression is limited to the search-local typed failure; host authority, native/protocol failures and cancellation propagate.",
+        "Keep correction state across failed content recovery, matching the source inout wasAutoCorrected flag and StoreBackedWorkspaceSearch.swift490-493 warning projection. A healthy both-mode path phase retains the compilation warning even when content recovery subsequently fails."
       ],
-      "sha256": "3ec762e31b19d4fb6db34955020c616c088b8c33cafac1ee1b9709f7001bd4ee"
+      "sha256": "aa108aed34e0a0fed3f6b31a9f7e378b3be9612a7ba9716ef9ef93f0bfd6b6ad"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
@@ -8029,6 +8067,58 @@
             ]
           ]
         }
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptRegexCore/RegexToolkit.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "9d06ec10d75e717606b45caf78c3947127a58db6553d3d82ead1a5cd94d7a12f",
+      "destination": "native/Sources/SmipBridge/SearchDiagnostic.swift",
+      "sha256": "7251f2bc4d1d05e36c15021deafa342545f916c8dc36024268a7d2586aca9d4d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          441,
+          489
+        ]
+      ],
+      "changes": [
+        "Reuse the unchanged package-access SearchPatternErrorFormatter.parts for recognized SearchPatternError values. Keep other RegexPatternFailure values as rejected diagnostics so complexity admission does not become a successful MCP search value.",
+        "Bind only suggestion argument spellings: regex=true becomes query.kind=\"regex\" and regex=false becomes query.kind=\"literal\". Preserve the source issue and all other advice. Encode nullable suggestions explicitly at the private native boundary."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "855690c33ed7449ec856f8912a30367f4fd07e2a79e33fe5686d61cfe92f2b08",
+      "destination": "src/exploration/search-diagnostic.ts",
+      "sha256": "1705a705513adff37a8cc7b9b8222e610a80b8b5605212c6665b4f79ed322ab4",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2803,
+          2877
+        ]
+      ],
+      "changes": [
+        "Use one search-local typed exception for expected query-wide phase failures. Per-file native diagnostics remain returned data, not this exception. Generic runtime error redaction is unchanged."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "destination": "src/contracts/search-pattern.ts",
+      "sha256": "da7d38597f236e196915d65de701b1d17f8044026704500a7d8e2cb7905504a2",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          114,
+          248
+        ]
+      ],
+      "changes": [
+        "Define the single current private native diagnostic union: recognized pattern issue plus nullable suggestion, or admission rejection message. SearchMatch.swift114-157 and2803-2877 define separate path/content/per-file failure ownership. Search paths return the filtered order and excluded partition even on an expected matching failure; compile and scanner operations retain distinct call-site ownership."
       ]
     }
   ],

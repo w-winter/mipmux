@@ -33,7 +33,8 @@ struct SearchPatternInput {
                 try RegexToolkit.validateComplexity(pattern, isRegex: isRegex)
             } catch let error as RegexPatternFailure {
                 return ["kind": "searchContentPatternError", "mode": effectiveMode.rawValue,
-                        "path": ["text": pattern, "isRegex": isRegex], "message": error.localizedDescription]
+                        "path": ["text": pattern, "isRegex": isRegex],
+                        "diagnostic": SearchDiagnostic.render(error, pattern: pattern, isRegex: isRegex)]
             }
         }
         let fuzzy = !isRegex && pattern.contains(" ")

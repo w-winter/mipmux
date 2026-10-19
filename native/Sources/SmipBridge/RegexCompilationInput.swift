@@ -24,10 +24,13 @@ struct RegexCompilationInput {
                 : ["kind": "unchanged"]
             return ["kind": "regexCompilation", "correction": correction]
         } catch let error as RegexPatternFailure {
-            return ["kind": "regexSearchError", "message": error.localizedDescription]
+            return ["kind": "regexSearchError",
+                    "diagnostic": SearchDiagnostic.render(error, pattern: pattern, isRegex: true)]
         } catch let error as PCRE2Error {
-            return ["kind": "regexSearchError", "message":
-                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern).localizedDescription]
+            return ["kind": "regexSearchError", "diagnostic": SearchDiagnostic.render(
+                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern),
+                pattern: pattern, isRegex: true
+            )]
         }
     }
 }

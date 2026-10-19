@@ -1,5 +1,5 @@
 import type { SearchRequest } from '../contracts/exploration.js';
-import type { PreparedSearchPattern, SearchCorrection } from '../contracts/search-pattern.js';
+import type { PreparedSearchPattern, SearchCorrection, SearchDiagnostic } from '../contracts/search-pattern.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { prepareText, type PreparedText } from './lines.js';
@@ -9,15 +9,17 @@ import { scanLiteralContent, scanRegexContent } from './content-search.js';
 import { unavailableRootCode } from '../workspace/source-access.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { matchedContext } from './search-reply.js';
+import { SearchPatternFailure } from './search-diagnostic.js';
 
 type SearchPlan = Awaited<ReturnType<typeof prepareSearch>>;
 type RecoveryAttempt = Awaited<ReturnType<WorkspaceOperation['prepareSearchRecovery']>>['attempts'][number];
+interface ContentCorrection { current: SearchCorrection }
 
 async function compileRecovery(operation: WorkspaceOperation, request: SearchRequest, attempt: RecoveryAttempt): Promise<SearchCorrection> {
   if (attempt.kind === 'literal') return { kind: 'unchanged' };
   const compiled = await operation.compileRegexContent({ kind: 'compileRegexContent', pattern: attempt.pattern,
     caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord });
-  if (compiled.kind === 'regexSearchError') throw new WorkspaceFailure('searchFailed', { message: compiled.message });
+  if (compiled.kind === 'regexSearchError') throw new SearchPatternFailure(compiled.diagnostic);
   return compiled.correction;
 }
 
@@ -26,6 +28,7 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
   const { candidates, matchedPaths } = plan;
   const matches = candidates.map(() => ({ matchingLines: 0 }));
   const limitations: { root: string; path: string; code: string }[] = [];
+  const perFileErrors: { root: string; path: string; diagnostic: SearchDiagnostic }[] = [];
   const records: SearchFile[] = [];
   let current = 0, contentFiles = 0, contentMatches = 0;
   let text: PreparedText | null = null;
@@ -57,9 +60,13 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
         : await scanLiteralContent(operation, source.text, prepared.lines.length, { pattern: content.text,
           caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
           countOnly: request.countOnly, limit: request.maxResults - contentMatches });
-      matches[index]!.matchingLines = found.matchingLines;
-      contentMatches += found.matchingLines;
-      if (!request.countOnly) { text = prepared; matching = new Set(found.matches); }
+      if (found.kind === 'regexSearchError' || found.kind === 'literalSearchError') {
+        perFileErrors.push({ root: candidate.root, path: candidate.path, diagnostic: found.diagnostic });
+      } else {
+        matches[index]!.matchingLines = found.matchingLines;
+        contentMatches += found.matchingLines;
+        if (!request.countOnly) { text = prepared; matching = new Set(found.matches); }
+      }
     } catch (error) {
       if (error instanceof WorkspaceFailure && ['binarySource', 'decodeFailed'].includes(error.code)) {
         limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
@@ -72,29 +79,40 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
     flush();
   }
   while (current < candidates.length) flush();
-  return { records, limitations, contentMatches, contentFiles };
+  return { records, limitations, contentMatches, contentFiles, perFileErrors };
 }
 
 export async function searchContent(operation: WorkspaceOperation, request: SearchRequest, plan: SearchPlan) {
+  const correction: ContentCorrection = { current: plan.content.kind === 'ready' ? plan.content.correction : { kind: 'unchanged' } };
+  try {
+    const result = await recoverContent(operation, request, plan, correction);
+    return { ...result, contentError: plan.content.kind === 'failed' ? plan.content.diagnostic : null };
+  } catch (error) {
+    if (!(error instanceof SearchPatternFailure) || plan.mode !== 'both' || plan.pathError !== null) throw error;
+    const result = await scanPass(operation, request, plan, null);
+    return { ...result, correction: correction.current, contentError: error.diagnostic };
+  }
+}
+
+async function recoverContent(operation: WorkspaceOperation, request: SearchRequest, plan: SearchPlan, correction: ContentCorrection) {
   const initial = plan.mode === 'path' || plan.content.kind === 'failed' ? null : plan.raw;
   let primary = await scanPass(operation, request, plan, initial);
-  let correction: SearchCorrection = plan.content.kind === 'ready' ? plan.content.correction : { kind: 'unchanged' };
-  if (initial === null || primary.contentMatches > 0) return { ...primary, correction };
+  if (initial === null || primary.contentMatches > 0) return { ...primary, correction: correction.current };
   const recovery = await operation.prepareSearchRecovery({ kind: 'prepareSearchRecovery', pattern: initial.text, isRegex: initial.isRegex });
   for (const attempt of recovery.attempts) {
     try {
       const compiled = await compileRecovery(operation, request, attempt);
-      if (compiled.kind === 'corrected') correction = compiled;
+      if (compiled.kind === 'corrected') correction.current = compiled;
       const result = await scanPass(operation, request, plan, { text: attempt.pattern, isRegex: attempt.kind !== 'literal' });
       if (attempt.kind === 'literal') primary = result;
       if (result.contentMatches > 0) {
-        correction = { kind: 'corrected', warning: recovery.warning };
-        return { ...result, correction };
+        correction.current = { kind: 'corrected', warning: recovery.warning };
+        return { ...result, correction: correction.current };
       }
     } catch (error) {
       // Only the source normalized stage ignores a pattern failure; host authority and cancellation still apply.
-      if (attempt.kind !== 'normalizedRegex' || !(error instanceof WorkspaceFailure) || error.code !== 'searchFailed') throw error;
+      if (attempt.kind !== 'normalizedRegex' || !(error instanceof SearchPatternFailure)) throw error;
     }
   }
-  return { ...primary, correction };
+  return { ...primary, correction: correction.current };
 }

@@ -28,10 +28,13 @@ struct RegexSearchInput {
             return ["kind": "regexSearch", "matchingLines": countOnly ? result.lineMatchCount : result.hits.count,
                     "matches": result.hits.map { $0.lineNumber + 1 }]
         } catch let error as RegexPatternFailure {
-            return ["kind": "regexSearchError", "message": error.localizedDescription]
+            return ["kind": "regexSearchError",
+                    "diagnostic": SearchDiagnostic.render(error, pattern: pattern, isRegex: true)]
         } catch let error as PCRE2Error {
-            return ["kind": "regexSearchError", "message":
-                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern).localizedDescription]
+            return ["kind": "regexSearchError", "diagnostic": SearchDiagnostic.render(
+                RepoPromptPCRE2Adapter.searchPatternError(from: error, pattern: pattern),
+                pattern: pattern, isRegex: true
+            )]
         }
     }
 }

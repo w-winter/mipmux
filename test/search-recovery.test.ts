@@ -87,7 +87,10 @@ test('public content recovery retries the whole query only after zero primary ma
     for (const text of ['[abc', quoteOverflow]) {
       const invalid = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: { kind: 'regex', text } } } });
-      assert.equal(invalid.isError, true);
+      assert.equal(invalid.isError, text === quoteOverflow);
+      if (text !== quoteOverflow) {
+        assert.equal(searchReply.Parse(invalid.structuredContent).counts.matchingLines, 0);
+      }
       observations.push({ text, invalid });
     }
     await mkdir('test-output', { recursive: true });

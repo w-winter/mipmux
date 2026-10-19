@@ -57,9 +57,12 @@ test('real search modes and output continuations preserve complete counts and re
     const regex = await operation.fileSearch({ ...query, query: { kind: 'regex', text: '(?<=x )café', caseSensitive: true, wholeWord: true } });
     if (regex.kind !== 'search') assert.fail('Missing regex match');
     assert.equal(regex.counts.totalMatches, 3);
-    await assert.rejects(operation.fileSearch({ ...query, query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);
-    await assert.rejects(operation.fileSearch({ ...query, filters: { ...query.filters, paths: ['absent.*'] },
-      query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } }), /searchFailed/);
+    for (const paths of [[], ['absent.*']]) {
+      const invalid = await operation.fileSearch({ ...query, filters: { ...query.filters, paths },
+        query: { kind: 'regex', text: '[', caseSensitive: true, wholeWord: false } });
+      if (invalid.kind !== 'search' || !('error' in invalid)) assert.fail('Missing pattern diagnostic');
+      assert.equal(invalid.error, 'Invalid regex pattern. The regular expression could not be compiled. A character class is missing its closing `]`.');
+    }
     const readQuery = { root: 'r', path: 'a.txt', start_line: null, offset: null, limit: null, maxOutputBytes: 10000, continuation: null };
     const read = await operation.readFile(readQuery);
     if (read.kind !== 'read') assert.fail('Missing read');
