@@ -107,6 +107,8 @@ The MCP and Pi `manage_selection` tool supports get, set, add, remove, preview, 
 
 A supported file with no rendered codemap remains selected. Selection replies identify it in `code_structure.unmapped_paths`; it contributes no source or codemap body. Pending extraction left by cancellation can complete on a later explicit codemap request.
 
+Set runtime or host `copyContext.codeMapsGloballyDisabled` to `true` to disable codemap generation and output, including cached signatures. `get_code_structure` returns an unavailable result with issue `codemaps_disabled`. Source reads and searches remain available. Packets and exports can include full files and slices. Codemap-only selection mutations are rejected; optional initial codemap membership remains recorded, and required codemaps return `codemapUnavailable`.
+
 Create a draft from a workspace handle after declaring its roots and output directory. Creation reconciles the workspace and acquires required material before returning. `initialSelection` captures mutable starting sources and automatic/manual codemap mode; `requiredSources` declares evidence that must remain selected. Automatic initial selection accepts full files and slices; manual selection also accepts codemaps. Required codemaps select manual mode. A draft owns its selections and pins exact source bytes; close each draft when finished. Closing the workspace handle does not revoke an existing draft.
 
 ```ts

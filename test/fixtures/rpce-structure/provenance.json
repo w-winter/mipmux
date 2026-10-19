@@ -8,7 +8,8 @@
     "App receipt/fence/identity types supplied by immutable data declarations; explicit headless UUIDs supplied in fixtures.",
     "Signature presentation supplies already-rendered entries and factual issues instead of app demand coordination.",
     "Darwin import is conditional for Linux.",
-    "Bounded folder traversal and explicit resolver bodies are extracted independently from the pinned source; immutable path/catalog setup and selected-path binding are shared. Public MCP checks independently exercise selected full/sliced sources."
+    "Bounded folder traversal and explicit resolver bodies are extracted independently from the pinned source; immutable path/catalog setup and selected-path binding are shared. Public MCP checks independently exercise selected full/sliced sources.",
+    "Every structural input includes the required false codeMapsGloballyDisabled wire field. Existing reference outputs are unchanged; global unavailable behavior is covered by the public cold/warm runtime tests."
   ],
   "sources": [
     {

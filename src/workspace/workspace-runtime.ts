@@ -40,7 +40,7 @@ export class WorkspaceRuntime {
   #managedRevision = 0;
   constructor(readonly key: string, readonly declaration: PolicyDeclaration, private roots: readonly OpenRoot[],
     private bridge: BridgeClient, readonly artifacts: ArtifactStore, readonly onClosed: () => void,
-    readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal) {}
+    readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal, readonly codeMapsGloballyDisabled: boolean) {}
 
   registerGitArtifact(entry: CatalogedGitArtifact): void {
     this.#controller.signal.throwIfAborted();
@@ -140,7 +140,7 @@ export class WorkspaceRuntime {
       const discoverable = await policy.admitted(source, false);
       const acquired = await access.read(source, null);
       const entry = await completeFile(access, capturedFile(source, acquired, discoverable ? 'discoverable' : 'managedOnly'),
-        acquired, this.artifacts, () => this.retain(), this.artifactBuildSignal);
+        acquired, this.artifacts, () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled);
       access.signal.throwIfAborted();
       if (this.#managed.get(key) !== registered) throw new WorkspaceFailure('sourceChanged', source);
       this.#managed.set(key, { entry, policy: policy.snapshot() });
@@ -186,7 +186,7 @@ export class WorkspaceRuntime {
         process.stderr.write(JSON.stringify({ level: 'info', event: 'inventoryStarted', workspaceKey: this.key, generation: target }) + '\n');
         const access = new NativeAccess(this.bridge, this.roots, this.#controller.signal);
         const snapshot = await scanInventory(access,
-          this.declaration, this.key, target, this.artifacts, () => this.retain(), this.artifactBuildSignal);
+          this.declaration, this.key, target, this.artifacts, () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled);
         await this.#refreshManaged(access);
         this.#controller.signal.throwIfAborted();
         this.#snapshot = snapshot; this.#published = target; this.#failure = null;

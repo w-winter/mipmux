@@ -30,7 +30,7 @@ test('native structural queries preserve RPCE traversal, size, signature and una
 
 test('native folder seed admission keeps direct-file priority and RPCE overflow sentinel independently of graph size', async () => {
   const uuid = (index: number) => `00000000-0000-0000-0000-${index.toString(16).padStart(12, '0')}`;
-  const input = Compile(NativeStructureInput).Parse({ kind: 'queryStructure', inventoryDigest: 'a'.repeat(64),
+  const input = Compile(NativeStructureInput).Parse({ kind: 'queryStructure', inventoryDigest: 'a'.repeat(64), codeMapsGloballyDisabled: false,
     roots: [{ id: uuid(90000), name: 'r', canonicalPath: '/fixture/r', complete: true, directories: ['bulk'],
       files: Array.from({ length: 8194 }, (_, index) => ({ id: uuid(index + 1),
         path: `bulk/${String(index).padStart(5, '0')}.swift`, state: 'empty', definitions: [], references: [], signature: null })) }],

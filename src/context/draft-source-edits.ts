@@ -14,6 +14,9 @@ class SourceEditPreparation {
     this.state = selection.state;
   }
   async upsert(selected: SourceSelection) {
+    if (selected.kind === 'codemap' && this.operation.runtime.options.copyContext.codeMapsGloballyDisabled) {
+      throw new WorkspaceFailure('invalidSelection', { message: 'Codemap generation is disabled; codemap-only selection modes are unavailable.' });
+    }
     const id = sourceId(selected.source), required = this.requiredSources.find(value => sourceId(value.source) === id);
     if (required && canonicalJSON(required) !== canonicalJSON(selected)) throw new WorkspaceFailure('requiredMaterialMutation', { id });
     const material = await acquireSource(this.operation, { selectionOrigin: 'explicit', selection: selected, required: required !== undefined });

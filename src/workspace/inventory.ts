@@ -9,7 +9,8 @@ import { compareBytes, freeze, WorkspaceFailure } from './values.js';
 import { capturedFile, completeFile } from './inventory-file.js';
 
 export async function scanInventory(access: NativeAccess, declaration: PolicyDeclaration, workspaceKey: string,
-  generation: number, artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal): Promise<InventorySnapshot> {
+  generation: number, artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal,
+  codeMapsGloballyDisabled: boolean): Promise<InventorySnapshot> {
   const description = (await access.bridge.request({ kind: 'describe' }, access.signal)).result;
   const supportedExtensions = new Set(description.extensions.map(entry => entry.extension));
   const policy = new RootPolicy(declaration, access);
@@ -18,7 +19,8 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   async function acquire(source: SourcePath): Promise<void> {
     try {
       const acquired = await access.read(source, null);
-      entries.push(await completeFile(access, capturedFile(source, acquired, 'discoverable'), acquired, artifacts, retainExtraction, artifactBuildSignal));
+      entries.push(await completeFile(access, capturedFile(source, acquired, 'discoverable'), acquired, artifacts, retainExtraction,
+        artifactBuildSignal, codeMapsGloballyDisabled));
     } catch (error) {
       if (!(error instanceof NativeFailure) || ['cancelled', 'nativeWorkerClosed', 'nativeProtocolError'].includes(error.code)) throw error;
       const supported = supportedExtensions.has(extname(source.path).slice(1).toLowerCase());

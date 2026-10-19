@@ -185,6 +185,9 @@ export function projectSelection(selection: CanonicalSelection, known: ReadonlyM
 }
 export async function prepareSelection(operation: WorkspaceOperation, request: SelectionRequest,
   materials: ReadonlyMap<string, Material>, selection: CanonicalSelection, grants: ReadonlyMap<string, CatalogedGitArtifact>) {
+  if (operation.runtime.options.copyContext.codeMapsGloballyDisabled && (request.mode === 'codemap_only' || request.op === 'demote')) {
+    throw new WorkspaceFailure('invalidSelection', { message: 'Codemap generation is disabled; codemap-only selection modes are unavailable.' });
+  }
   const { roots, state } = selection;
   const parsed = await operation.parseSelectionInputs({ kind: 'parseSelectionInputs', paths: request.paths, slices: request.slices });
   validateIngress(request, parsed);

@@ -149,6 +149,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
       }
       const material: ExplicitPendingPresentation = { ...pending, record };
       ready.set(material.record.id, material);
+      if (operation.runtime.options.copyContext.codeMapsGloballyDisabled) continue;
       if (unavailableRoots.has(material.record.selection.source.root)) continue;
       try {
         const metadata = await operation.inspectCodemapSource(record.selection.source);

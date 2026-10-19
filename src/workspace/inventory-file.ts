@@ -16,8 +16,9 @@ export function capturedFile(source: SourcePath, acquired: AcquiredSource, visib
 }
 
 export async function completeFile(access: NativeAccess, entry: FileEntry, acquired: AcquiredSource,
-  artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal): Promise<FileEntry> {
-  if (acquired.key === null) return entry;
+  artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal,
+  codeMapsGloballyDisabled: boolean): Promise<FileEntry> {
+  if (codeMapsGloballyDisabled || acquired.key === null) return entry;
   const key = acquired.key;
   const record = await artifacts.resolve(key, async () => {
     const release = retainExtraction();

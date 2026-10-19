@@ -63,6 +63,7 @@ struct StructureInput: Decodable {
     let seedInput: SeedInput
     let kind: String
     let inventoryDigest: String
+    let codeMapsGloballyDisabled: Bool
     let roots: [Root]
     let expand: String
     let depth: Int
@@ -103,6 +104,13 @@ struct StructureInput: Decodable {
     }
 
     func render() throws -> [String: Any] {
+        if codeMapsGloballyDisabled {
+            return try encoded(RPCEStructureReply.codeStructureUnavailableReply(issue: .init(
+                code: "codemaps_disabled", phase: "graph_snapshot", path: nil, retryable: false,
+                retryAfterMilliseconds: nil, attempted: nil, limit: nil,
+                message: "Codemap generation is disabled."
+            ), size: size, worktreeScope: nil))
+        }
         let policy = WorkspaceCodemapGraphPolicy.initial
         let budget = policy.queryBudget(size: size, includesSignatures: signatures)
         let direction: WorkspaceCodemapStructureTraversalDirection? = switch expand {

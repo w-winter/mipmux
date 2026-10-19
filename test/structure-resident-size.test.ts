@@ -13,7 +13,7 @@ test('a small structural output cannot bypass the source resident graph node lim
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     env: {}, supervisor });
-  const input: NativeStructureInput = { kind: 'queryStructure', inventoryDigest: 'a'.repeat(64),
+  const input: NativeStructureInput = { kind: 'queryStructure', inventoryDigest: 'a'.repeat(64), codeMapsGloballyDisabled: false,
     roots: [{ id: uuid(0), name: 'r', canonicalPath: '/fixture/r', complete: true, directories: [],
       files: Array.from({ length: residentNodeLimit + 1 }, (_, index) => ({ id: uuid(index + 1), path: index + '.swift',
         state: 'empty', definitions: [], references: [], signature: null })) }],

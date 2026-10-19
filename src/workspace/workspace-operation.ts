@@ -94,14 +94,17 @@ export class WorkspaceOperation {
       if (this.catalog.kind !== 'workspace') throw new WorkspaceFailure('verificationOperationOnly');
       const entry = await this.registerExplicitSource(captured);
       this.signal.throwIfAborted();
-      if (entry.structural.kind !== 'pending') return { result: Promise.resolve(entry), release: async () => {} };
+      if (this.runtime.options.copyContext.codeMapsGloballyDisabled || entry.structural.kind !== 'pending') {
+        return { result: Promise.resolve(entry), release: async () => {} };
+      }
       const owner = this.catalog.owner, snapshot = this.snapshot;
       const lease = owner.retainCodemap(entry, async signal => {
         const operation = await this.openPinned(signal, snapshot);
         try {
           const access = await (operation.#access ??= operation.#openAccess());
           const acquired = await operation.readRawSource(captured);
-          const complete = await completeFile(access, entry, acquired, this.runtime.artifacts, () => owner.retain(), owner.artifactBuildSignal);
+          const complete = await completeFile(access, entry, acquired, this.runtime.artifacts, () => owner.retain(), owner.artifactBuildSignal,
+            this.runtime.options.copyContext.codeMapsGloballyDisabled);
           const current = await operation.readRawSource(captured);
           if (canonicalJSON([current.identity, current.key, current.fingerprint.mode]) !==
             canonicalJSON([acquired.identity, acquired.key, acquired.fingerprint.mode])) throw new WorkspaceFailure('sourceChanged', captured);

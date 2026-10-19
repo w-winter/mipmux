@@ -6146,11 +6146,12 @@
         "Capture current published catalogs for tool calls and forks. Demand loading receives the requesting operation's captured view, including its explicit registrations; workspace refresh advances subsequent operations. Each invoking operation owns query workers through cancellation and closure.",
         "For diff acquisition and checkout revalidation, prove the declared roots associated with resolved paths/checkouts. Unresolved candidates carry diagnostics and grant no filesystem access. Tree, structure and whole-workspace publication retain their wider checks.",
         "Observe per-file availability under original root capabilities and protected-path checks, even after catalog removal. Existing catalog entries retain policy revalidation. Normalize only expected native unreadability into typed observations; worker, policy, changed-root and cancellation failures propagate.",
-        "Add a protected, original-root metadata inspection before byte acquisition. Metadata and read observations remain separate so the source demand classifier is not inferred from an ambiguous read exception."
+        "Add a protected, original-root metadata inspection before byte acquisition. Metadata and read observations remain separate so the source demand classifier is not inferred from an ambiguous read exception.",
+        "Settle globally disabled explicit codemap demand with the registered source entry before retaining any extraction. Shared completion independently uses the same captured flag. Optional supported sources remain pending, not unsupported. Source WorkspaceFileContextStore.swift:13331-13337 revokes globally suspended graph authority."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "f913f6349ef68dde39500732ee2e1709249fb61522406ff340ebdec95238ecfd",
+      "sha256": "d52c3b1ccc2aafc864c4445bfc1efe06de4acb568fd4ac5c8ae7a6d462edf14b",
       "classification": "handwritten"
     },
     {
@@ -6184,11 +6185,12 @@
         "Share WorkspaceFileContextStore.swift:372,15031-15034 retained-record admission across explicit and inferred ready roots. WorkspaceRuntime owns at most 64 root reservations; WorkspaceOperation and the presentation attempt release exact owned reservations after assembly and serving checks, including failure, cancellation and stale retry. Capacity rejection makes only that root pending and does not trigger a stale retry. Pending inferred material retains its acquired-artifact outcome but has no rendered bodies, preventing incomplete publication. Native confined checks remain the authority for pinned roots; watcher epoch and frozen Store handle equivalence are separate obligations.",
         "Probe represented roots once per presentation attempt. Unavailable manual roots remain pending while healthy roots continue; serving checks revalidate source bytes and policy for available roots.",
         "Keep ordinary full/slice I/O absence separate from codemap staleness so content and packet projection can report nil bodies. Readable source identities, modes and codemap keys retain their existing freshness checks.",
-        "Metadata admission classifies missing, nonregular and symlinked manual sources as unmapped. Native read failures after metadata admission become pending, matching the source transient result. Keep a typed unavailableCodemap observation with its cause/disposition. Ready root rendering/serving read failures invalidate that bundle and use existing stale retries; cancellation, policy/source changes and unknown failures retain their original paths."
+        "Metadata admission classifies missing, nonregular and symlinked manual sources as unmapped. Native read failures after metadata admission become pending, matching the source transient result. Keep a typed unavailableCodemap observation with its cause/disposition. Ready root rendering/serving read failures invalidate that bundle and use existing stale retries; cancellation, policy/source changes and unknown failures retain their original paths.",
+        "Skip disabled explicit presentation demand immediately while keeping captured optional membership and normal serving checks. Source SelectionCore.swift:1513-1514 omits disabled code_structure; MCPSelectionToolProvider.swift:165-177 rejects new codemap-only mutations. Required maps still fail acquisition, and existing file-only packaging projects initial optional maps."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "318b1b7627a64d7060a35add5efba991984331939d8d54f8c02312ddca18c8d0",
+      "sha256": "31c97da52b8eab87f9fdf4c781e67022d6f42db16cb9ead661ad3debc48fe0bb",
       "classification": "handwritten"
     },
     {
@@ -6233,7 +6235,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "0f41e6d0d491b5520b08223491ebae90899690cef59ec27853e76b5e7049363b",
+      "sha256": "238bc1a98d8f273b3caa7966d5c58936b59b139e31702655a70964bfc9e7ad81",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6251,7 +6253,8 @@
         "Pass operation-owned automatic Git preassembly through live observations and retain the finalization capture for terminal inspection after the workspace lease is released.",
         "Use the admitted current operation consistently for selection, automatic graph resolution, previews, mutation receipts, startup context and validation. Captured material identities and required evidence remain fixed. Terminal inspection uses the finalization inventory.",
         "Assemble current selection entries, blocks and component counts from per-source presentation availability while retaining canonical material membership. Explicit unavailable_sources and incomplete measurement distinguish absent bodies from removed selection.",
-        "Reject Diff Follow-Up requests with caller-required sources or documents before acquisition. Existing selection lifecycle and document receipt admission remain the authorities; the shared clipboard boundary rejects an incompatible later document mutation."
+        "Reject Diff Follow-Up requests with caller-required sources or documents before acquisition. Existing selection lifecycle and document receipt admission remain the authorities; the shared clipboard boundary rejects an incompatible later document mutation.",
+        "Use captured copyContext.codeMapsGloballyDisabled to skip automatic candidate queries and suppress selected code_structure diagnostics, following WorkspaceFileContextStore.swift:13331-13337 and SelectionCore.swift:1513-1514 / SelectionReply.swift:769. Preserve selection revision and optional initial membership."
       ]
     },
     {
@@ -6449,12 +6452,13 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "65126fed6d25cc683f6a344cc41d6e3c2ed83e93b6348adf83b98abeadf86bfc",
+      "sha256": "61de9af09bcdf7e92245d7f5242034529686a3a6849e8cb29f3ac78fcf5ccd85",
       "classification": "handwritten",
       "changes": [
         "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework.",
         "WorkspaceFileContextStore.swift:372-373,15031-15034,15386-15400: Bind the number of retained presentations to the existing workspace owner, with an idempotent release for each reservation. Logical root aliases identify the already-pinned physical roots for the workspace lifetime. Operations and drafts share reservations, separately from artifact demands and the per-presentation entry limit.",
-        "Capture an existing latest publication without waiting for an unrelated unfinished scan; explicit refresh barriers still wait for their requested publication."
+        "Capture an existing latest publication without waiting for an unrelated unfinished scan; explicit refresh barriers still wait for their requested publication.",
+        "Capture the immutable runtime global disable value and pass it to ordinary inventory and managed-file completion. Source WorkspaceFileContextStore.swift:10992-11033,13331-13337,13410-13425 suspends generation and graph authority; dynamic app transition machinery is unnecessary for immutable headless settings."
       ]
     },
     {
@@ -8119,6 +8123,82 @@
       ],
       "changes": [
         "Define the single current private native diagnostic union: recognized pattern issue plus nullable suggestion, or admission rejection message. SearchMatch.swift114-157 and2803-2877 define separate path/content/per-file failure ownership. Search paths return the filtered order and excluded partition even on an expected matching failure; compile and scanner operations retain distinct call-site ownership."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "a4e6c2d540cc80b7b3977ae5716cc91ba4fd726ace775a7b7117bafa2d6df3d5",
+      "destination": "native/Sources/SmipBridge/StructureInput.swift",
+      "sha256": "9c895ba36a7a1a93850d17b22a804e26a9d471b957358992866b1d1f1015b028",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          5987,
+          6020
+        ]
+      ],
+      "changes": [
+        "Bind the captured global disable flag to the private structural request. Before graph query, call the retained unavailable factory and formatter with the exact source issue. Keep source root authorization in the existing operation. Other structural input parsing and graph adaptation remain headless bindings."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/WorkspaceContext/WorkspaceFileContextStore.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
+      "destination": "src/workspace/inventory-file.ts",
+      "sha256": "c796cc2debf5c154baa3241093c7deccc8fa88541c60a9cc88f8664af9addfbd",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          11031,
+          11033
+        ],
+        [
+          13331,
+          13337
+        ],
+        [
+          13410,
+          13425
+        ]
+      ],
+      "changes": [
+        "Bind global suspension to shared completion before artifact cache resolution or extraction. Inventory, managed refresh and explicit demand use the immutable runtime flag. Retain supported pending metadata and raw/decoded identities; existing artifacts are not removed."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPSelectionToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "5a3d5f975378215e220275ccadaad183d57737ddef816d701bbd9a48bf22085d",
+      "destination": "src/context/selection-preparation.ts",
+      "sha256": "6b84c12723154a5c198668cedb9b1d34b43c4ef18e32f0f1e386b917d69c67c0",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          165,
+          177
+        ]
+      ],
+      "changes": [
+        "Reject codemap_only modes and demotion before mutation when globally disabled. Map MCP invalidParams to the existing invalidSelection result; replace the desktop Advanced Settings reference with disabled generation. Other selection preparation remains the existing headless binding."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPSelectionToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "5a3d5f975378215e220275ccadaad183d57737ddef816d701bbd9a48bf22085d",
+      "destination": "src/context/draft-source-edits.ts",
+      "sha256": "b6b0e584f3487550b77095889beaf8e0fad3c1d3eebc2b1ce75245268e5f3666",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          165,
+          177
+        ]
+      ],
+      "changes": [
+        "Apply the disabled codemap-only ingress rejection to new codemap source edits through the shared source-edit owner. Keep initial optional membership and required acquisition separate from mutations."
       ]
     }
   ],

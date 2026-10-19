@@ -171,7 +171,7 @@ export class SmipRuntime {
           process.stderr.write(JSON.stringify({ level: 'info', event: 'workspaceSnapshotMaintenanceCompleted', workspaceKey: key,
             outcome: maintenance.result.outcome }) + '\n');
           const admitted = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => this.#owners.delete(key),
-            () => this.makeBridge(), this.#shutdown.signal);
+            () => this.makeBridge(), this.#shutdown.signal, this.options.copyContext.codeMapsGloballyDisabled);
           this.#owners.set(key, admitted); adopted = true;
           return admitted;
         });

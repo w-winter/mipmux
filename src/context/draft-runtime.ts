@@ -580,7 +580,8 @@ export class DraftRuntime {
     }
     const reply = await operation.renderSelectionReply({ kind: 'renderSelectionReply', entries,
       status: request.op === 'preview' ? 'preview' : 'ok', codemapAutoEnabled: mode === 'automatic',
-      invalidPaths, unmappedPaths: unmapped, pendingPaths: pending,
+      invalidPaths, unmappedPaths: this.request.copyContext.codeMapsGloballyDisabled ? [] : unmapped,
+      pendingPaths: this.request.copyContext.codeMapsGloballyDisabled ? [] : pending,
       blocks: request.view === 'content' ? blocks : null, view: request.view });
     const missing = sourceView.unavailable.length > 0;
     const components = new Set([...tokens.incompleteComponents, ...sourceView.unavailable.map(item =>
@@ -654,7 +655,7 @@ export class DraftRuntime {
   }
   #automaticCandidates(snapshot: InventorySnapshot, explicit: ReadonlyMap<string, Material>, mode: CodemapMode, revision: number,
     unavailableRoots: ReadonlySet<string>): AutomaticCodemapTargets {
-    if (mode === 'manual') return { kind: 'ready', targets: [], coverage: aggregateAutomaticCoverage([]) };
+    if (mode === 'manual' || this.request.copyContext.codeMapsGloballyDisabled) return { kind: 'ready', targets: [], coverage: aggregateAutomaticCoverage([]) };
     const catalog = new Set(snapshot.entries.filter(entry => entry.kind === 'file').map(sourceId));
     const seeds = [...explicit.values()].flatMap(({ record }) =>
       record.kind === 'source' && record.selection.kind !== 'codemap' && catalog.has(record.id) ? [record.selection.source] : []);

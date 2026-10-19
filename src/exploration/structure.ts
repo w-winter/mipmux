@@ -22,6 +22,7 @@ export async function getCodeStructure(operation: WorkspaceOperation, request: S
   const seedInput: NativeStructureInput['seedInput'] = request.seeds === null
     ? { kind: 'selected', selectors } : { kind: 'paths', selectors };
   const result = await operation.queryStructure({ kind: 'queryStructure', inventoryDigest: snapshot.inventoryDigest,
+    codeMapsGloballyDisabled: operation.runtime.options.copyContext.codeMapsGloballyDisabled,
     roots, seedInput, expand: request.expand, depth: request.depth, signatures: request.signatures, size: request.size });
   // Semantic size limits are applied by the source query. Transport admission never omits graph evidence.
   const reply = { kind: 'structure' as const, inventoryDigest: snapshot.inventoryDigest, ...result.reply, text: result.text };

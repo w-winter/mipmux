@@ -31,6 +31,7 @@ const selector = Type.Union([
 ]);
 const uuid = Type.String({ pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' });
 export const NativeStructureInput = Type.Object({ kind: Type.Literal('queryStructure'), inventoryDigest: SHA256,
+  codeMapsGloballyDisabled: Type.Boolean(),
   roots: Type.Array(Type.Object({ id: uuid, name: RootName, canonicalPath: Type.String({ pattern: '^/[^\\u0000]*$' }),
     complete: Type.Boolean(), directories: Type.Array(RelativePath),
     files: Type.Array(Type.Object({ id: uuid, path: RelativePath,
