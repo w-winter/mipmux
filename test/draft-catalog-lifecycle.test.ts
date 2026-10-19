@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -22,7 +23,7 @@ for (const mutation of ['selection', 'update'] as const) test(`draft ${mutation}
   const base = await mkdtemp(join(tmpdir(), 'smip-draft-catalog-'));
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'old.ts'), 'export const old = "needle old";\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100 });
   try {
@@ -76,7 +77,7 @@ test('catalog reconciliation cannot refreeze required source evidence', async ()
   const base = await mkdtemp(join(tmpdir(), 'smip-draft-required-catalog-'));
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'required.txt'), 'needle original\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100 });
   try {
@@ -97,7 +98,7 @@ test('managed source refresh advances new operations without changing an admitte
   const base = await mkdtemp(join(tmpdir(), 'smip-managed-catalog-'));
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   await writeFile(join(root, '.repo_ignore'), 'hidden.txt\n'); await writeFile(join(root, 'hidden.txt'), 'original\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100 });
   try {

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises';
@@ -27,7 +28,7 @@ test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap ma
   await writeFile(join(root, 'zone/Shared.swift'), 'struct SharedRecord {\n let value: Int\n}\n');
   await writeFile(join(root, 'outside.txt'), 'Outside\n');
   await writeFile(join(other, 'zone/wrong-root.txt'), 'Other root\n');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100, credentialPaths: [], git: null,
     discovery: null, defaultMaxOutputBytes: 12000 }));
@@ -87,7 +88,7 @@ for (const nativeKind of ['renderFileTree', 'queryStructure'] as const) test(`cl
       return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
     }
   }
-  const runtime = new Runtime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
@@ -133,7 +134,7 @@ test('job cancellation reaches a held startup tree before scout dispatch and ter
       return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
     }
   }
-  const runtime = new Runtime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {

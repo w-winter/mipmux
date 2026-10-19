@@ -4,6 +4,8 @@ import { BridgeClient } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
 import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
 import { contextRequestValidator, type ContextBuildRequest } from '../contracts/context.js';
+import { CopyContext } from '../contracts/presentation.js';
+import { Compile } from 'typebox/compile';
 import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle } from '../context/verify.js';
@@ -19,12 +21,13 @@ import { parseClipboard, preparedClipboardInput } from '../context/clipboard.js'
 import type { RootIdentity } from '../contracts/workspace.js';
 import { observe } from '../workspace/observe.js';
 import { revalidateExcludedSources } from '../context/clipboard-selection.js';
-import { capturedSourceSelections, restoreOmittedSourceSelections } from '../context/source-omissions.js';
+import { capturedSourceSelections } from '../context/source-omissions.js';
 
 interface GitSnapshotMutationAccess { readonly bridge: BridgeClient; readonly root: NativeHandle }
 interface GitSnapshotMutationOwner { tail: Promise<void>; bridge: BridgeClient | null }
 
 export interface RuntimeOptions {
+  readonly copyContext: CopyContext;
   /** User-owned maximum packet allowance in utf8-21-over-80-v1 units; larger request allowances are rejected. */
   readonly contextBudgetUnits: number;
   readonly cachePath: string;
@@ -50,6 +53,7 @@ export class SmipRuntime {
   readonly #shutdown = new AbortController();
   #closing: Promise<void> | null = null;
   constructor(readonly options: RuntimeOptions) {
+    if (!Compile(CopyContext).Check(options.copyContext)) throw new WorkspaceFailure('invalidCopyContext');
     this.options = freeze(structuredClone(options));
     if (!Number.isSafeInteger(options.contextBudgetUnits) || options.contextBudgetUnits < 1) {
       throw new WorkspaceFailure('invalidContextBudget');
@@ -112,7 +116,7 @@ export class SmipRuntime {
     return work;
   }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
-  renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
+  renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const work = (async () => {
@@ -217,6 +221,9 @@ export class SmipRuntime {
   async #verifyCurrentBundle(directory: string, signal: AbortSignal) {
     signal.throwIfAborted();
     const { verified,materials,fileTree,automaticGit,comparisonText: savedComparison } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
+    const resolved = await this.renderPresentation({ kind: 'resolveCopyPreset', context: manifest.request.copyContext,
+      selector: manifest.request.copyPresetSelector }, signal);
+    if (canonicalJSON(resolved.preset) !== canonicalJSON(manifest.clipboardPreset)) throw new WorkspaceFailure('presentationChanged');
     validateWorkspaceSpec({ roots:manifest.inventory.roots.map(root=>({name:root.name,absolutePath:root.identity.declaredPath})),
       exclusions:manifest.exclusions,outputRoot:manifest.inventory.outputRoot.declaredPath });
     const cache = await this.#admitCache();
@@ -234,9 +241,7 @@ export class SmipRuntime {
     try {
       await revalidateMaterials(operation,materials, manifest.unavailableRoots, manifest.unavailableFiles);
       await revalidateExcludedSources(operation, manifest);
-      const selections = manifest.manualPresentation?.canonicalSources ?? (manifest.request.copyPreset === 'diffFollowUp'
-        ? restoreOmittedSourceSelections(manifest.excludedSources, manifest.unavailableRoots, manifest.unavailableFiles)
-        : capturedSourceSelections(materials, manifest.unavailableRoots, manifest.unavailableFiles));
+      const selections = manifest.manualPresentation?.canonicalSources ?? capturedSourceSelections(materials, manifest.unavailableRoots, manifest.unavailableFiles);
       await revalidateAutomaticReviewGit(operation, manifest.request, selections, automaticGit, manifest.unavailableRoots);
       if (fileTree.input !== null) {
         const tree = await this.renderPresentation(fileTree.input, signal);
@@ -272,7 +277,12 @@ export class SmipRuntime {
       // The draft's base operation pins the publication that satisfied its own barrier; its lifetime is runtime-owned.
       const operation = await this.#admitOperation(owner, this.#shutdown.signal, snapshot);
       try {
-        const draft = await DraftRuntime.acquire(operation, captured, combined, () => this.#drafts.delete(draft));
+        const resolved = await this.renderPresentation({ kind: 'resolveCopyPreset', selector: captured.copyPreset,
+          context: this.options.copyContext }, combined);
+        if (resolved.preset === null) throw new WorkspaceFailure('copyPresetNotFound');
+        const request = freeze({ ...captured, copyPresetSelector: captured.copyPreset, copyPreset: resolved.preset,
+          copyContext: this.options.copyContext });
+        const draft = await DraftRuntime.acquire(operation, request, combined, () => this.#drafts.delete(draft));
         combined.throwIfAborted(); this.#drafts.add(draft); return draft;
       } catch (error) { await operation.close(); throw error; }
     })().finally(release);

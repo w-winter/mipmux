@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
@@ -25,7 +26,7 @@ test('publication capture admits current checkout subsets but refuses changed, e
     run(['add', '.']); run(['commit', '-qm', 'base']); await writeFile(join(path, 'file.txt'), 'changed ' + name + '\n');
     roots.push({ name, absolutePath: path });
   }
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const request = (sources: SourceSelection[], outputName: string): ContextBuildRequest => ({ task: 'Collect evidence', constraints: '',
     enhancementMode: 'preserve', purpose: 'review', initialSelection: { codemapMode: 'manual', sources }, requiredSources: [], documents: [], patches: [],

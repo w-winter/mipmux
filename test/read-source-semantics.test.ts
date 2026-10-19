@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -30,7 +31,7 @@ test('public MCP read_file executes source bounds and retains exact text and dia
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   for (const [index, entry] of cases.entries()) await writeFile(join(root, index + '.txt'), '\uFEFF' + entry.input.text);
   const config = join(base, 'config.json');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 12000 }));

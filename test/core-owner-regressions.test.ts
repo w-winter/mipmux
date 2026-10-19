@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
@@ -21,7 +22,7 @@ async function fixture() {
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');
   return { base, root, spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot },
-    options: { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    options: { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
       nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } } };
 }

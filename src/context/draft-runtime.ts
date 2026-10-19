@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import {
-  type ContextBuildRequest,
+  type CapturedContextBuildRequest,
   type UnavailableRoot,
   type UnavailableFile,
   type CodemapMode,
-  contextRequestValidator,
+  CapturedContextBuildRequest as CapturedRequestSchema,
   type DraftInspection,
   type DraftUpdate,
   type SourceEdit,
@@ -70,7 +70,9 @@ import { captureReferenceTokens, referenceTokenFields, type ReferenceTokenView }
 import { captureSourcePresentation, selectionSourcePath, unavailableSelectionRoots } from './source-presentation.js';
 import { capturedSourceSelections } from './source-omissions.js';
 import { assertClipboardRequiredMaterials } from './clipboard-selection.js';
-import { manualCopySettings } from '../contracts/presentation.js';
+import { exportPrompt, selectionFileEntry } from './prompt-export.js';
+import { listPromptPresets } from './prompt-presets.js';
+import { usesPresetPresentation } from '../contracts/presentation.js';
 
 const promptValidator = Compile(PromptRequestSchema), previewValidator = Compile(DraftPreview);
 const snapshotPublicationValidator = Compile(GitSnapshotPublicationOptions);
@@ -80,8 +82,6 @@ const gitArtifactEffectFailures = new Set(['revisionConflict', 'draftFrozen', 'g
   'rootChanged', 'outputChanged', 'nativeIOFailed', 'invalidEncoding']);
 const gitArtifactReadFailures = new Set(['gitArtifactNotCataloged', 'gitArtifactUnauthorized', 'gitRepositoryChanged',
   'pathDenied', 'notFound', 'permissionDenied', 'symlink', 'nonRegularFile', 'rootChanged', 'outputChanged', 'nativeIOFailed', 'invalidEncoding']);
-type SelectionReplyEntry = Static<typeof NativeSelectionReplyInput>['entries'][number];
-type SelectionReplyFile = Omit<Extract<SelectionReplyEntry, { kind: 'full' }>, 'kind'>;
 
 export class DraftRuntime {
   readonly id = randomUUID();
@@ -107,7 +107,7 @@ export class DraftRuntime {
   #unavailableFiles: readonly UnavailableFile[] = [];
   private constructor(
     readonly operation: WorkspaceOperation,
-    readonly request: ContextBuildRequest,
+    readonly request: CapturedContextBuildRequest,
     private readonly onClosed: () => void,
     private readonly gitTarget: FrozenGitTarget,
     selection: CanonicalSelection,
@@ -122,12 +122,12 @@ export class DraftRuntime {
 
   static async acquire(
     operation: WorkspaceOperation,
-    input: ContextBuildRequest,
+    input: CapturedContextBuildRequest,
     signal: AbortSignal,
     onClosed: () => void,
   ): Promise<DraftRuntime> {
     if (operation.snapshot.enumeration.kind !== 'complete') throw new WorkspaceFailure('enumerationIncomplete');
-    if (!contextRequestValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
+    if (!Compile(CapturedRequestSchema).Check(input)) throw new WorkspaceFailure('invalidRequest');
     const request = freeze(structuredClone(input));
     assertClipboardRequiredMaterials(request, []);
     strictText(request.task);
@@ -574,7 +574,7 @@ export class DraftRuntime {
       if (record.selection.kind === 'codemap' && !material.bodies.length) { unmapped.push(path); continue; }
       const fields = { path, tokens: failure ? 0 : estimateUnits(Buffer.byteLength(material.bodies.join(''))),
         rootPath: root.name, pathWithinRoot: record.selection.source.path };
-      entries.push(this.#selectionFileEntry(record, fields));
+      entries.push(selectionFileEntry(record, fields));
       const block = sourceView.blocks.get(record.id);
       if (block !== undefined) blocks.push(block);
     }
@@ -591,13 +591,6 @@ export class DraftRuntime {
       measurement: { ...rendered.measurement, complete: !missing && rendered.measurement.complete },
       diagnostics: [...rendered.diagnostics, ...sourceView.unavailable.map(({ record, code }) => ({ code: 'sourceUnavailable', materialId: record.id,
         details: { ...record.selection.source, cause: code, required: record.required } }))] };
-  }
-  #selectionFileEntry(record: Extract<Material['record'], { kind: 'source' }>, fields: SelectionReplyFile): SelectionReplyEntry {
-    switch (record.selection.kind) {
-      case 'codemap': return { ...fields, kind: 'codemap', origin: record.selectionOrigin === 'inferred' ? 'auto' : 'manual' };
-      case 'slices': return { ...fields, kind: 'slice', ranges: record.selection.ranges };
-      case 'full': return { ...fields, kind: 'full' };
-    }
   }
   preview(input: DraftPreview, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!previewValidator.Check(input)) return Promise.reject(new WorkspaceFailure('invalidRequest'));
@@ -631,6 +624,16 @@ export class DraftRuntime {
   async prompt(input: PromptRequest, signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (!promptValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
     const request = structuredClone(input);
+    if (request.op === 'list_presets') return listPromptPresets(this.operation.runtime, signal, request.maxOutputBytes, encode);
+    if (request.op === 'export') {
+      this.#check(signal, this.#revision);
+      const mode = this.#codemapMode, revision = this.#revision, explicit = new Map([...this.#materials].filter(([, material]) =>
+        material.record.kind !== 'source' || material.record.selectionOrigin === 'explicit'));
+      return this.#track(exportPrompt({ owner: this.operation, request: this.request, revision, mode, prompt: this.#prompt,
+        canonical: this.#selection, presentation: { materials: this.#materials, automaticAcquisition: this.#automaticAcquisition },
+        prepare: (operation, unavailable) => this.#derive(operation, explicit, mode, revision, unavailable) }, request,
+      AbortSignal.any([signal, this.#cancel.signal, this.operation.signal]), encode));
+    }
     this.#check(signal, request.op === 'get' ? this.#revision : request.expectedRevision);
     if (request.op === 'get') {
       const result = { kind: 'prompt' as const, op: request.op, revision: this.#revision, prompt: this.#prompt };
@@ -801,7 +804,7 @@ export class DraftRuntime {
       revision = this.#revision, state = this.#state, text = this.#prompt, automaticAcquisition = this.#automaticAcquisition, canonical = this.#selection;
     const materials = await this.#liveMaterials(operation, captured);
     const omittedIds = new Set([...this.#unavailableRoots.flatMap(root => root.sources.map(source => source.id)), ...this.#unavailableFiles.map(source => source.id)]);
-    const inputForRender = state === 'terminal' && manualCopySettings(this.request.copyPreset) !== null && this.#finalization !== null ? this.#finalization.capturedRenderInput : await prepareRenderInput(this.operation.runtime, {
+    const inputForRender = state === 'terminal' && usesPresetPresentation(this.request.copyPreset) && this.#finalization !== null ? this.#finalization.capturedRenderInput : await prepareRenderInput(this.operation.runtime, {
         codemapMode,
         request: this.request,
         inventory: state === 'terminal' ? this.#inventory : operation.snapshot,

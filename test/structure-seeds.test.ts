@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -21,7 +22,7 @@ test('public structural seeds use owned selection, whole roots, direct-file prio
     `struct ${name}Record {\n let shared: SharedRecord\n}\n`);
   await writeFile(join(root, 'src', 'Shared.swift'), 'struct SharedRecord {\n let value: Int\n}\n');
   await writeFile(join(root, 'readme.txt'), 'Source fixture\n');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 50000 }));
   const client = new Client({ name: 'structure-seeds', version: '1' });

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -26,7 +27,7 @@ async function setup() {
   await writeFile(join(root, 'source.txt'), '\uFEFFsource\r\n');
   await writeFile(join(root, 'local.md'), 'complete local plan');
   const options = {
-    cachePath: join(base, 'cache'),
+    copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

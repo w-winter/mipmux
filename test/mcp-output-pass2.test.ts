@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -13,7 +14,7 @@ import { verifyBundle } from '../src/context/verify.js';
 import { SmipRuntime } from '../src/runtime/smip-runtime.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
-const config = { cachePath: '/unavailable/cache', nativeExecutable: '/unavailable/native', nativeEnvironment: {}, terminationGraceMs: 100,
+const config = { copyContext: copyContext(), cachePath: '/unavailable/cache', nativeExecutable: '/unavailable/native', nativeEnvironment: {}, terminationGraceMs: 100,
   contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 };
 const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
 for (const scenario of ['subscription', 'existing', 'progress', 'outputError', 'cleanupError'] as const) {
@@ -112,7 +113,7 @@ test('production stdio shutdown waits for real claimed publication before closin
     }
     const callback = args.find(arg => typeof arg === 'function'); if (typeof callback === 'function') callback(); return true;
   });
-  const host = serveSmipStdio({ ...config, cachePath: join(directory, 'cache'),
+  const host = serveSmipStdio({ ...config, copyContext: copyContext(), cachePath: join(directory, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) });
   let id = 0;
   const call = async (name: string, args: unknown) => {

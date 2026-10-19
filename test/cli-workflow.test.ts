@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFile, spawn } from 'node:child_process';
@@ -23,7 +24,7 @@ test('built CLI warms, explores, renders, verifies, invalidates and emits failed
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };
   const request = { task: 'Caller task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }],
     documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
-  const config = { cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const config = { copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, git: null, discovery: provider.config };
   const files = { config: join(directory, 'config.json'), spec: join(directory, 'spec.json'), input: join(directory, 'input.json'),
     request: join(directory, 'request.json'), draft: join(directory, 'draft.json'), build: join(directory, 'build.json') };
@@ -86,7 +87,7 @@ test('CLI build interruption returns a settled cancelled receipt and exit 130', 
   const directory = provider.directory, root = join(directory, 'root'), output = join(directory, 'out');
   await mkdir(root); await mkdir(output);
   const config = join(directory, 'config.json'), request = join(directory, 'build.json');
-  await writeFile(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, git: null, discovery: provider.config }));
   await writeFile(request, JSON.stringify({ workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'one',
     request: { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],

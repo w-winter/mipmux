@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -37,7 +38,7 @@ async function fixture(mode: 'manual' | 'automatic' = 'manual') {
       ...(mode === 'manual' ? [{ kind: 'codemap', source: { root: 'r', path: 'Map.swift' } }] : []),
     ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'diffFollowUp', storedPrompts: [role],
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' });
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
@@ -135,10 +136,11 @@ test('saved Diff Follow-Up rejects excluded codemap membership that cannot expla
     const directory = join(f.base, 'forged'); await mkdir(directory);
     const originalHandoff = await readFile(join(ready.directory, 'handoff.md'), 'utf8');
     const manifest = structuredClone(ready.manifest);
-    const index = manifest.excludedSources.findIndex(selection => selection.source.path === 'Full.swift'); assert(index >= 0);
-    manifest.excludedSources[index] = { kind: 'codemap', source: { root: 'r', path: 'Full.swift' } };
-    const handoff = originalHandoff.replace('"excludedSources":' + canonicalJSON(ready.manifest.excludedSources),
-      '"excludedSources":' + canonicalJSON(manifest.excludedSources));
+    assert(manifest.manualPresentation);
+    const index = manifest.manualPresentation.canonicalSources.findIndex(selection => selection.source.path === 'Full.swift'); assert(index >= 0);
+    manifest.manualPresentation.canonicalSources[index] = { kind: 'codemap', source: { root: 'r', path: 'Full.swift' } };
+    const handoff = originalHandoff.replace('"manualPresentation":' + canonicalJSON(ready.manifest.manualPresentation),
+      '"manualPresentation":' + canonicalJSON(manifest.manualPresentation));
     assert.notEqual(handoff, originalHandoff);
     manifest.files.handoff = { sha256: sha256(handoff), byteCount: Buffer.byteLength(handoff) };
     await writeFile(join(directory, 'context.md'), await readFile(join(ready.directory, 'context.md')));

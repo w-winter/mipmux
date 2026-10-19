@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -28,7 +29,7 @@ test('automatic demand overflow clears only inferred codemaps and preserves sour
   await writeFile(join(root, 'Seed.swift'), 'struct Seed { let shared: SharedRecord }\n');
   await Promise.all(Array.from({ length: maximumCandidateDemandCount + 1 }, (_, index) =>
     writeFile(join(root, 'Peer' + index + '.swift'), 'struct SharedRecord { let value: Int }\n')));
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {} });
   const proof: unknown[] = [];

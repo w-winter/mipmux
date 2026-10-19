@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readlink, readdir, writeFile } from 'node:fs/promises';
@@ -64,7 +65,7 @@ async function fixture() {
     requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const diff = gitValidator.Parse(gitValidator.Default({ op: 'diff', maxOutputBytes: 1 })); assert(diff.op === 'diff');
-  const options = { cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };
   return { base, root, out, options, request, diff, run };
 }
@@ -123,7 +124,8 @@ test('publication retains completed files on I/O/cancellation failure and admits
       if (failure === 'revision') {
         const published = await pending; assert.equal(published.kind, 'single');
         assert.equal(draft.revision, 1);
-        assert.equal((await draft.prompt({ op: 'get', maxOutputBytes: 100000 }, signal())).prompt, 'Collect evidence\nChanged');
+        const prompt = await draft.prompt({ op: 'get', maxOutputBytes: 100000 }, signal());
+        assert('prompt' in prompt); assert.equal(prompt.prompt, 'Collect evidence\nChanged');
         assert((await draft.readGitArtifact(published.projection.primarySelectionAliases[0]!, signal())).text.includes(snapshotID));
       } else await assert.rejects(pending, failure === 'cancel' ? /cancelled|aborted/i : /nativeIOFailed/);
       await assertRetainedFiles(f.out, snapshotID, failure);

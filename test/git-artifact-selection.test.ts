@@ -1,3 +1,4 @@
+import { copyContext, buildRequest } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, unlink, writeFile } from 'node:fs/promises';
@@ -29,7 +30,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
     requiredSources: [], documents: [], ...presentation, storedPrompts: [],
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
-  const runtime = makeRuntime({ cachePath: join(base, 'cache'),
+  const runtime = makeRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
@@ -189,7 +190,7 @@ test('automatic Git retains valid checkout diffs beside non-repository selection
       }
       const workspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'other', absolutePath: other }],
         exclusions: [], outputRoot: f.out }, signal());
-      const draft = await workspace.createDraft({ ...f.draft.request, initialSelection: { codemapMode: 'manual', sources: [
+      const draft = await workspace.createDraft({ ...buildRequest(f.draft.request), initialSelection: { codemapMode: 'manual', sources: [
         { kind: 'full', source: { root: 'r', path: 'file.txt' } }, { kind: 'full', source: { root: 'other', path: 'file.txt' } },
       ] } }, signal());
       const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
@@ -239,7 +240,7 @@ test('automatic Git freezes every checkout before diff capture and publishes aga
     advance = () => { run(['add', '.']); run(['commit', '-qm', 'advanced during first capture']); };
     const workspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'z', absolutePath: other }],
       exclusions: [], outputRoot: f.out }, signal());
-    const draft = await workspace.createDraft({ ...f.draft.request, initialSelection: { codemapMode: 'manual', sources: [
+    const draft = await workspace.createDraft({ ...buildRequest(f.draft.request), initialSelection: { codemapMode: 'manual', sources: [
       { kind: 'full', source: { root: 'r', path: 'file.txt' } }, { kind: 'full', source: { root: 'z', path: 'file.txt' } },
     ] } }, signal());
     armed = true;

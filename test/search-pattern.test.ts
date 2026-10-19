@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -24,7 +25,7 @@ test('public file_search uses source pattern inference, trimming and literal fle
     'multi-start\nmiddle\nmulti-end\ncrlf-start\r\nmiddle\r\ncrlf-end\r\ncr-start\rmiddle\rcr-end\r' +
     'nul\0spaced\tneedle\nfunc)\n');
   const config = join(base, 'config.json');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'),
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 12000 }));

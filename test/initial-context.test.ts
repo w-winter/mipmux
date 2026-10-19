@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -14,7 +15,7 @@ test('initial context supplies all roots, explicit inputs and budget facts witho
   await writeFile(join(directory, 'r/notes.txt'), 'REQUIRED_DOCUMENT_BODY_NOT_STARTUP_METADATA');
   await writeFile(join(directory, 's/other.txt'), 'Other source');
   await writeFile(join(directory, 's/Ready.swift'), 'struct Ready { let value: Int }');
-  const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), credentialPaths: [], contextBudgetUnits: 200000,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), credentialPaths: [], contextBudgetUnits: 200000,
     terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },

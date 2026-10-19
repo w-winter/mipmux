@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { renameSync } from 'node:fs';
@@ -54,7 +55,7 @@ test('scout implicit Git uses frozen selected-file ownership rather than all loa
       }
       return { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 };
     });
-    const runtime = new SmipRuntime({ cachePath: join(base, 'cache-' + scenario.name), contextBudgetUnits: 200000,
+    const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache-' + scenario.name), contextBudgetUnits: 200000,
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
       credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));

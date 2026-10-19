@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -26,7 +27,7 @@ async function fixture(separateGitDirectory: boolean) {
   await writeFile(join(main, 'file.txt'), 'base\n'); run(main, ['add', '.']); run(main, ['commit', '-qm', 'base']);
   run(main, ['worktree', 'add', '-q', '-b', 'feature', linked]);
   await writeFile(join(main, 'file.txt'), 'main changed\n'); await writeFile(join(linked, 'file.txt'), 'linked changed\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'),
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const request: ContextBuildRequest = { task: 'Collect worktree evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',

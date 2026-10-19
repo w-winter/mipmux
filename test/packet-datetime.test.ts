@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -28,14 +29,14 @@ async function fixture() {
   await writeFile(join(base, 'root/file.txt'), sourceBody);
   let mode: NativeMode = 'normal';
   class Runtime extends SmipRuntime {
-    override async renderPresentation<O extends Extract<NativeOperation, { kind: 'renderFileTree' | 'renderPreparedClipboard' |
+    override async renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' |
       'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
       const result = await super.renderPresentation(input, signal);
       changeNativeOutput(result, mode);
       return result;
     }
   }
-  const runtime = new Runtime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { TZ: 'UTC', LC_ALL: 'en_US.UTF-8' }, terminationGraceMs: 100 });
   const signal = new AbortController().signal;

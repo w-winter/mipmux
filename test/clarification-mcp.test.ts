@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, access } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -45,7 +46,7 @@ async function createFixture(scenario: Scenario, t: TestContext) {
   const root = join(provider.directory, 'root'), outputRoot = join(provider.directory, 'out');
   await mkdir(root); await mkdir(outputRoot); await writeFile(join(root, 'Main.swift'), 'struct Main {}\n');
   const configPath = join(provider.directory, 'config.json');
-  await writeFile(configPath, JSON.stringify({ cachePath: join(provider.directory, 'cache'),
+  await writeFile(configPath, JSON.stringify({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 200000, credentialPaths: [], git: null,
     discovery: { ...provider.config, prompt: { kind: 'rpce' } }, defaultMaxOutputBytes: 12000 }));

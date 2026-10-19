@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -45,7 +46,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
       { kind: 'codemap', source: { root: 'r', path: 'code.swift' } }] },
     requiredSources: [], documents: [], patches: [], copyPreset: 'codeReview', storedPrompts: [],
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
-  const options = { cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };
   const runtime = makeRuntime(options);
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
@@ -145,7 +146,7 @@ test('real Pi dispatch publishes and auto-selects Git artifacts into its complet
     }
     return { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 };
   });
-  const runtime = new SmipRuntime({ ...f.options, cachePath: f.options.cachePath + '-pi' });
+  const runtime = new SmipRuntime({ ...f.options, copyContext: copyContext(), cachePath: f.options.cachePath + '-pi' });
   const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());

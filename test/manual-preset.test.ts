@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -16,9 +17,9 @@ import { identity } from '../src/context/material-store.js';
 const signal = () => new AbortController().signal;
 const roleA = { id: 'a7777777-7777-7777-7777-777777777777', title: 'First', content: 'FIRST ROLE' };
 const roleB = { id: '88888888-8888-8888-8888-888888888888', title: 'Second', content: 'SECOND ROLE' };
-type Manual = Extract<ContextBuildRequest['copyPreset'], { kind: 'manual' }>;
+type Manual = ReturnType<typeof copyContext>;
 function manual(usage: Manual['current']['codeMapUsage'] = 'auto', tree: Manual['current']['fileTreeMode'] = 'Auto', git: Manual['current']['gitInclusion'] = 'none'): Manual {
-  return { kind: 'manual', current: { fileTreeMode: tree, codeMapUsage: usage, gitInclusion: git },
+  return { presets: [], current: { fileTreeMode: tree, codeMapUsage: usage, gitInclusion: git },
     customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null, includeFileTree: null,
       fileTreeMode: null, codeMapUsage: null, gitInclusion: null },
     codeMapsGloballyDisabled: false, selectedPromptIds: [roleB.id, roleA.id], activeGitRoot: 'r' };
@@ -29,7 +30,7 @@ async function fixture(copyPreset: ReturnType<typeof manual>, mode = 'manual') {
       { kind: 'full', source: { root: 'r', path: 'Full.swift' } },
       { kind: 'slices', source: { root: 'r', path: 'Slice.swift' }, ranges: [{ start: 2, end: 2, description: 'Middle only' }] },
       ...(mode === 'manual' ? [{ kind: 'codemap', source: { root: 'r', path: 'Map.swift' } }] : []),
-    ] }, requiredSources: [], documents: [], patches: [], copyPreset, storedPrompts: [roleA, roleB],
+    ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'manual', storedPrompts: [roleA, roleB],
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' });
   const base = await mkdtemp(join(tmpdir(), 'smip-manual-preset-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
@@ -41,12 +42,12 @@ async function fixture(copyPreset: ReturnType<typeof manual>, mode = 'manual') {
   run(['init', '-q']); run(['add', '.']); run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-qm', 'base']);
   await writeFile(join(root, 'Full.swift'), 'struct Full { let map: ManualPeer; func body() { print("FULL CHANGED") } }\n');
   await writeFile(join(root, 'Other.swift'), 'struct Other { func body() { print("OTHER CHANGED") } }\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyPreset, cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, git: { executable: git } });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
-    return { runtime, workspace, root, request, run };
+    return { runtime, workspace, root, request, settings: copyPreset, run };
   } catch (error) { await runtime.close(); throw error; }
 }
 
@@ -88,7 +89,7 @@ test('Manual captures settings and meta IDs at admission and retains catalog ord
   const f = await fixture(manual('none', 'None'));
   try {
     const draft = await f.workspace.createDraft(f.request, signal());
-    Object.assign(f.request.copyPreset, { selectedPromptIds: [], current: { fileTreeMode: 'Full', codeMapUsage: 'complete', gitInclusion: 'all' } });
+    Object.assign(f.settings, { selectedPromptIds: [], current: { fileTreeMode: 'Full', codeMapUsage: 'complete', gitInclusion: 'all' } });
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
     assert(!context.includes('<file_map>')); assert(!context.includes('<git_diff>'));
@@ -147,7 +148,7 @@ for (const disabled of [false, true]) test(`Manual current codemap usage ignores
   const f = await fixture(preset);
   try {
     const pending = f.workspace.createDraft(f.request, signal());
-    Object.assign(f.request.copyPreset, { selectedPromptIds: [], codeMapsGloballyDisabled: !disabled });
+    Object.assign(f.settings, { selectedPromptIds: [], codeMapsGloballyDisabled: !disabled });
     const draft = await pending, ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
     assert.equal(context.includes('FULL CHANGED'), disabled); assert(context.includes('FIRST ROLE'));
@@ -219,8 +220,11 @@ test('Manual reports required source/document conflicts before excluding or proj
     const draft = await f.workspace.createDraft({ ...f.request, requiredSources: [f.request.initialSelection.sources[0]!] }, signal());
     await assert.rejects(draft.finalize(signal()), /copyPresetRequiredMaterialConflict/);
     const excluded = { ...preset, customizations: { ...preset.customizations, includeFiles: false } };
-    await assert.rejects(f.workspace.createDraft(contextRequestValidator.Parse({ ...f.request, copyPreset: excluded,
-      documents: [{ kind: 'suppliedDocument', id: 'doc', role: 'report', origin: 'fixture', text: 'REQUIRED DOCUMENT' }] }), signal()), /copyPresetRequiredMaterialConflict/);
+    const excludedFixture = await fixture(excluded);
+    try {
+      await assert.rejects(excludedFixture.workspace.createDraft({ ...excludedFixture.request,
+        documents: [{ kind: 'suppliedDocument', id: 'doc', role: 'report', origin: 'fixture', text: 'REQUIRED DOCUMENT' }] }, signal()), /copyPresetRequiredMaterialConflict/);
+    } finally { await excludedFixture.runtime.close(); }
   } finally { await f.runtime.close(); }
 });
 
@@ -277,18 +281,21 @@ test('Manual complete Git uses the explicit active repository, including a null 
     await writeFile(join(peer, 'peer.txt'), 'PEER BASE\n'); run(['init', '-q']); run(['add', '.']);
     run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-qm', 'peer base']);
     await writeFile(join(peer, 'peer.txt'), 'EXPLICIT PEER CHANGE\n');
-    const workspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'other', absolutePath: peer }],
-      exclusions: [], outputRoot: join(f.root, '../out') }, signal());
     for (const activeGitRoot of ['other', null]) {
       const preset = manual('none', 'None', 'all'); preset.activeGitRoot = activeGitRoot;
-      const draft = await workspace.createDraft({ ...f.request, copyPreset: preset, outputName: activeGitRoot ?? 'no-root' }, signal());
+      const runtime = new SmipRuntime({ ...f.runtime.options, copyContext: preset });
+      try {
+      const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'other', absolutePath: peer }],
+        exclusions: [], outputRoot: join(f.root, '../out') }, signal());
+      const draft = await workspace.createDraft({ ...f.request, outputName: activeGitRoot ?? 'no-root' }, signal());
       const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
       const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
       assert.equal(context.includes('<git_diff>'), activeGitRoot !== null);
       if (activeGitRoot !== null) {
         const diff = context.slice(context.indexOf('<git_diff>')); assert(diff.includes('EXPLICIT PEER CHANGE')); assert(!diff.includes('FULL CHANGED'));
       }
-      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
+      await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, runtime, signal());
+      } finally { await runtime.close(); }
     }
   } finally { await f.runtime.close(); }
 });

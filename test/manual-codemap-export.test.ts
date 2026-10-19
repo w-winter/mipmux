@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -38,7 +39,7 @@ async function fixture(effect: 'optional' | 'changed' | 'cancel') {
       return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
     }
   }
-  const runtime = new Runtime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const workspace = await runtime.declare({ roots: ['a', 'b'].map(name => ({ name, absolutePath: join(base, name) })),
     exclusions: [], outputRoot: join(base, 'out') }, signal());

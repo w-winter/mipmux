@@ -1,6 +1,6 @@
 import type { CapturedClipboardPreset } from '../contracts/presentation.js';
 import { posix } from 'node:path';
-import type { CodemapMode, ContextBuildRequest, ManualPresentation, MaterialRecord, SourceSelection, Span, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, CapturedContextBuildRequest, ManualPresentation, MaterialRecord, SourceSelection, Span, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { Material } from './material-store.js';
 import type { FinalFileTree } from './final-tree.js';
@@ -13,7 +13,7 @@ import type { AutomaticReviewGitCapture } from './automatic-review-git.js';
 export interface RenderInput {
   readonly manualPresentation: ManualPresentation | null;
   readonly codemapMode: CodemapMode;
-  readonly request: ContextBuildRequest;
+  readonly request: CapturedContextBuildRequest;
   readonly inventory: Omit<InventorySnapshot, 'generation'>;
   readonly prompt: string;
   readonly materials: readonly Material[];
@@ -121,8 +121,7 @@ function materialDiagnostics(materials: readonly Material[], units: number, allo
 
 /** Renders exact material bodies and byte spans without I/O or ambient state. */
 export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
-  const materials = input.request.copyPreset === 'diffFollowUp'
-    ? input.materials.filter(material => material.record.kind === 'patch' || material.record.kind === 'gitPatch') : input.materials;
+  const materials = input.materials;
   const { records, costs, fileTreeSpan, automaticGitSpan, comparisonText } = parseClipboard(input);
   const context = input.clipboard, offset = Buffer.byteLength(context), units = estimateUnits(offset), allowance = input.request.budgetUnits;
   const fixedBytes = offset - costs.reduce((sum, cost) => sum + cost.bytes, 0);

@@ -2,7 +2,7 @@
 import Foundation
 
 // Modified: retain the model and initializer; persisted compatibility readers are not included.
-enum CopyPresetKind: String, CaseIterable {
+enum CopyPresetKind: String, CaseIterable, Codable {
     case standard // Standard default preset
     case plan // Architect planning copy
     case manual // Manual current behavior
@@ -10,7 +10,7 @@ enum CopyPresetKind: String, CaseIterable {
     case codeReview // Review w/ git diff
 }
 
-struct CopyPreset: Identifiable, Equatable {
+struct CopyPreset: Identifiable, Equatable, Codable {
     let id: UUID
     let name: String
     let builtInKind: CopyPresetKind?

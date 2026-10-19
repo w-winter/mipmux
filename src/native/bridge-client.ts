@@ -6,6 +6,7 @@ import type { NativeFailureCode } from '../contracts/errors.js';
 
 type Entry = Extract<NativeFrame, { kind: 'entry' }>;
 const resultKinds = {
+  listCopyPresets: ['copyPresets'], resolveCopyPreset: ['copyPreset'], writePromptExport: ['promptExportWritten'],
   prepareSearchPattern: ['searchPattern', 'searchContentPatternError', 'searchPatternError'],
   matchSearchPaths: ['searchPaths', 'searchPathsError'],
   scanLiteralLines: ['literalSearch', 'literalSearchError'],

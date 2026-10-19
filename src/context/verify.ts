@@ -13,7 +13,6 @@ import { capturedFileTreeInput } from './final-tree.js';
 import { verifySourceOmissions } from './source-omissions.js';
 import { verifyExcludedSources } from './clipboard-selection.js';
 import { verifyManualPresentation } from './manual-integrity.js';
-import { manualCopySettings } from '../contracts/presentation.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
@@ -230,11 +229,10 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   }
   const sources = materials.flatMap(material => material.record.kind === 'source' ? [material.record] : []);
   const explicit = sources.filter(record => record.selectionOrigin === 'explicit');
-  const manual = manualCopySettings(manifest.request.copyPreset);
+  const preset = manifest.request.copyPreset;
   const inferred = sources.filter(record => record.selectionOrigin === 'inferred' || manifest.codemapMode === 'automatic' && manifest.manualPresentation !== null && record.selectionOrigin === 'presentation' &&
-    manual?.current.codeMapUsage === 'auto').map(record => record.id).sort();
-  const automaticManual = manual !== null && manual.current.codeMapUsage === 'auto' && !manual.codeMapsGloballyDisabled;
-  if (manifest.codemapMode === 'manual' || manifest.request.copyPreset === 'diffFollowUp' || manifest.manualPresentation !== null && !automaticManual) {
+    preset.codeMapUsage === 'auto').map(record => record.id).sort();
+  if (manifest.codemapMode === 'manual' || preset.codeMapUsage !== 'auto') {
     requireEqual(inferred, []); requireEqual(manifest.automaticCodemaps, []);
   }
   else {

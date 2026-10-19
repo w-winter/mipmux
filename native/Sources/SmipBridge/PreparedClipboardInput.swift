@@ -3,13 +3,12 @@ import Foundation
 struct CapturedStoredPrompt: Decodable { let id: UUID; let title: String; let content: String }
 struct CapturedSelectedGitDiff: Decodable { let id: String; let text: String }
 
-enum ClipboardPresetKind: String, Decodable { case standard, plan, diffFollowUp, codeReview }
-
 struct PreparedClipboardInput: Decodable {
     let duplicateUserInstructionsAtTop: Bool
     let includeDatetimeInUserInstructions: Bool
     let promptSectionsOrder: [PromptSection]
     let copyPreset: CapturedCopyPreset
+    let selectedPromptIds: [UUID]
     let storedPrompts: [CapturedStoredPrompt]
     let codemapBlocks: [String]
     let contentBlocks: [String]
@@ -29,7 +28,7 @@ struct PreparedClipboardOperation {
         let raw = try object.value("input")
         _ = try WireObject(raw, keys: [
             "duplicateUserInstructionsAtTop", "includeDatetimeInUserInstructions", "promptSectionsOrder",
-            "copyPreset", "storedPrompts",
+            "copyPreset", "selectedPromptIds", "storedPrompts",
             "codemapBlocks", "contentBlocks",
             "fileTreeContent", "selectedGitDiffs", "gitDiff", "automaticGitDiff",
             "metaInstructions", "userInstructions"
@@ -47,7 +46,7 @@ struct PreparedClipboardOperation {
         let selection = ClipboardMetaSelection(storedPrompts: input.storedPrompts, metaInstructions: [])
         let metas = selection.metaInstructions(
             for: preset,
-            selectedPromptIDsOverride: input.copyPreset.selectedPromptIDs,
+            selectedPromptIDsOverride: input.selectedPromptIds,
         )
             + input.metaInstructions.map { MetaInstruction(title: $0.title, content: $0.content) }
         // Caller-required evidence is independent of the preset's optional selected-artifact policy.

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
@@ -56,7 +57,7 @@ test('public snapshot comparisons use only the saved HEAD, precede named refs an
     }
   } finally { await bridge.close(); await supervisor.close(); }
   const config = join(base, 'config.json');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, terminationGraceMs: 100,
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, terminationGraceMs: 100,
     credentialPaths: repos.map(entry => join(entry.repo, 'denied.txt')), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, git: { executable: git }, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'snapshot-compare', version: '1' }), proof: unknown[] = [];

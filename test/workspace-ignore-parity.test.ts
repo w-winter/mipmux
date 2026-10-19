@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -12,7 +13,7 @@ async function fixture() {
   const directory = await mkdtemp(join(tmpdir(), 'smip-ignore-parity-'));
   const repo = join(directory, 'repo'), root = join(repo, 'src'), out = join(directory, 'out');
   await mkdir(root, { recursive: true }); await mkdir(out);
-  const options = { cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
+  const options = { copyContext: copyContext(), cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
     credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {} };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };

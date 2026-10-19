@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -56,7 +57,7 @@ for (const scenario of ['timeout', 'abort'] as const) {
       if (value && typeof value === 'object' && 'id' in value && typeof value.id === 'number') responses.get(value.id)?.(value);
       if (typeof callback === 'function') callback(); return true;
     });
-    const host = serveSmipStdio({ cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    const host = serveSmipStdio({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
       nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: 12000 });
     let id = 0;
     const call = async (name: string, args: unknown) => {

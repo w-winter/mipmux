@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -48,7 +49,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
   await writeFile(join(root, 'untracked.txt'), 'added\n');
   await writeFile(join(root, 'empty-new.txt'), '');
   const options = {
-    cachePath: join(base, 'cache'),
+    copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     git: { executable: git },

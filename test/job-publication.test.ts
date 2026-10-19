@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -19,7 +20,7 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
     const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
     await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'body');
     const options = { nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-      nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], cachePath: join(provider.directory, 'cache'), terminationGraceMs: 100 };
+      nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), terminationGraceMs: 100 };
     let pause = true;
     class Runtime extends SmipRuntime {
       override makeBridge() {

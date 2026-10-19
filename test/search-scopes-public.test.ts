@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -25,7 +26,7 @@ test('public raw scopes use RPCE clauses and preserve protected paths and ambigu
     await mkdir(dirname(join(root, path)), { recursive: true }); await writeFile(join(root, path), 'needle\n');
   }
   const config = join(base, 'config.json');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), nativeEnvironment: {},
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeEnvironment: {},
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [join(a, 'protected.txt')],
     git: null, discovery: null, defaultMaxOutputBytes: 100000 }));
@@ -82,7 +83,7 @@ for (const boundary of ['catalog', 'body'] as const) test(`search handles disapp
   await writeFile(join(root, 'victim.ts'), 'needle\n');
   const healthy = join(base, 'healthy'); await mkdir(healthy); await writeFile(join(healthy, 'safe.ts'), 'needle\n');
   const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [] });
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let entered!: () => void;
@@ -133,7 +134,7 @@ test('fresh searches retain healthy roots when another registered root is replac
   await mkdir(a); await mkdir(b); await mkdir(out);
   await writeFile(join(a, 'healthy.txt'), 'needle\n');
   await writeFile(join(b, '.repo_ignore'), 'hidden.txt\n'); await writeFile(join(b, 'hidden.txt'), 'needle\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), nativeEnvironment: {},
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeEnvironment: {},
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [] });
   try {

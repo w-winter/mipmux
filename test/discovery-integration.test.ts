@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, open, readFile, writeFile } from 'node:fs/promises';
@@ -36,7 +37,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
   const source = '\uFEFFsource\r\nlast line', report = 'START\n' + 'complete report evidence\n'.repeat(4000) + 'END';
   await writeFile(join(root, 'file.txt'), source);
   await writeFile(join(root, 'oversize.txt'), 'OPTIONAL'.repeat(100000));
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [provider.config.authPath, provider.config.modelsPath], terminationGraceMs: 100,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [provider.config.authPath, provider.config.modelsPath], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
     const runner = new PiRunner(provider.config, runtime.supervisor), inputs: DiscoveryInput[] = [];
@@ -116,7 +117,7 @@ test('discovery material paging measures the real Pi result and returns every co
     : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
   let continuation: { digest: string; offset: number } | null = null;
   const root = join(provider.directory, 'source'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
@@ -238,7 +239,7 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'Completed handoff', stop: 'end_turn', tokens: 10 });
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor)), other = runtime.createClient(null);

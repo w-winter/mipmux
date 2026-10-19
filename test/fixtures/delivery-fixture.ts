@@ -1,3 +1,4 @@
+import { copyContext } from './copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -40,7 +41,7 @@ export async function prepareDeliveryFixture() {
     discoveryHints: ['All required material is fixed. Inspect the complete admitted materials and commit the architectural handoff before validating.'],
     budgetUnits: 100000, outputName: 'packet' };
   const input = { workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'public-delivery', request };
-  const options: RuntimeOptions = { cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+  const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`libexec/${process.platform}-${process.arch}/SmipBridge`), nativeEnvironment: {}, git: { executable: git } };
   const handoff = { clarifiedTask: 'Inspect the complete public mixed-material packet.', architecture: 'Swift types and text evidence form a synthetic review packet.',
     relationships: ['Summary supplies retained syntactic structure; Delivery supplies complete source; the patch deletes old evidence and adds an untracked file.'], ambiguities: [] };

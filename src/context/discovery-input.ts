@@ -1,5 +1,5 @@
 import type { DiscoveryInput } from '../contracts/discovery.js';
-import type { ContextBuildRequest } from '../contracts/context.js';
+import type { CapturedContextBuildRequest } from '../contracts/context.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import { scoutTokenBudget } from './budget.js';
 import { defaultQuestionTimeoutSeconds } from '../contracts/interaction.js';
@@ -12,7 +12,7 @@ export interface DiscoveryObservation {
 }
 
 /** Uses one captured draft observation for the source policy and ordered startup sections. */
-export async function prepareDiscoveryInput(runtime: SmipRuntime, request: ContextBuildRequest,
+export async function prepareDiscoveryInput(runtime: SmipRuntime, request: CapturedContextBuildRequest,
   view: DiscoveryObservation, restrictsReviewGitToExplicitReadOnly: boolean, signal: AbortSignal): Promise<DiscoveryInput> {
   const tokenBudget = scoutTokenBudget(request.budgetUnits);
   const policy = await runtime.renderPresentation({ kind: 'renderDiscoveryPrompt', tokenBudget,

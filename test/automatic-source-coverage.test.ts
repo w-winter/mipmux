@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -15,7 +16,7 @@ test('automatic selection reports source coverage while retaining useful targets
   await writeFile(join(first, 'Peer.swift'), 'struct Peer { let value: Int }\n');
   await writeFile(join(second, 'Seed.swift'), 'struct Seed { let value: Peer }\n');
   await writeFile(join(second, 'Peer.swift'), 'struct Peer { let value: Int }\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 100000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 100000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = () => new AbortController().signal;
   try {

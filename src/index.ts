@@ -6,6 +6,7 @@ export { WorkspaceSpec, type InventorySnapshot, type SourcePath } from './contra
 export { ReadRequest, TreeRequest, StructureRequest, SearchRequest, type Continuation } from './contracts/exploration.js';
 export { WorkspaceFailure } from './workspace/values.js';
 export { ContextBuildRequest, SourceSelection, CodemapMode, PromptEnhancementMode, PromptRequest, DraftUpdate, DraftPreview, DraftInspection, Manifest } from './contracts/context.js';
+export { CopyContext, ClipboardPreset } from './contracts/presentation.js';
 export { PatchInput } from './contracts/patches.js';
 export type { DraftRuntime } from './context/draft-runtime.js';
 export type { FinalizationResult } from './context/finalize.js';

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { access, mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
@@ -37,7 +38,7 @@ async function fixture() {
   await writeFile(join(base, 'root/b.txt'), 'first\nsecond\nthird');
   await writeFile(join(base, 'root/binary.swift'), Buffer.from([0xff, 0xfe, 0x00, 0xd8]));
   const options = {
-    cachePath: join(base, 'cache'),
+    copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -56,7 +57,7 @@ async function fixture() {
   await writeFile(join(repo, 'tracked.txt'), 'staged\n'); run(['add', '--', 'tracked.txt']);
   await writeFile(join(repo, 'tracked.txt'), 'working\n'); await writeFile(join(repo, 'new.txt'), 'untracked\n');
   await writeFile(join(repo, 'denied.txt'), 'PROTECTED_BODY\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
     credentialPaths: [join(repo, 'denied.txt')], git: { executable: git }, terminationGraceMs: 100, contextBudgetUnits: 200000 });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: repo }], exclusions: [], outputRoot: out }, signal());
   const request = (compare: string, paths: string[] = []) => {

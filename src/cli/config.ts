@@ -1,4 +1,5 @@
 import { IgnoreSettings } from '../contracts/inventory.js';
+import { CopyContext } from '../contracts/presentation.js';
 import { readFile } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
 import Type, { type Static, type TSchema } from 'typebox';
@@ -12,7 +13,7 @@ import { mcpProtectedPaths } from '../discovery/mcp-config.js';
 const closed = { additionalProperties: false };
 const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
 const executable = Type.Object({ executable: absolute }, closed);
-export const HostConfig = Type.Object({ ignoreSettings: Type.Optional(IgnoreSettings), cachePath: absolute, nativeExecutable: absolute,
+export const HostConfig = Type.Object({ copyContext: CopyContext, ignoreSettings: Type.Optional(IgnoreSettings), cachePath: absolute, nativeExecutable: absolute,
   nativeEnvironment: Type.Record(Type.String(), Type.String()),
   terminationGraceMs: Type.Integer({ minimum: 0, maximum: 2147483647 }),
   credentialPaths: Type.Array(absolute),
@@ -33,7 +34,7 @@ export async function loadJSON<S extends TSchema>(path: string, schema: S): Prom
   return freeze(value);
 }
 export function compose(config: HostConfig, configurationPath: string | null) {
-  const runtimeOptions = { cachePath: config.cachePath, nativeExecutable: config.nativeExecutable,
+  const runtimeOptions = { copyContext: config.copyContext, cachePath: config.cachePath, nativeExecutable: config.nativeExecutable,
     contextBudgetUnits: config.contextBudgetUnits,
     nativeEnvironment: config.nativeEnvironment, terminationGraceMs: config.terminationGraceMs,
     credentialPaths: [...config.credentialPaths, ...(configurationPath === null ? [] : [configurationPath]),

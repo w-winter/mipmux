@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -46,7 +47,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source evidence\n');
   const discovery = { ...provider.config, prompt: { kind: 'rpce' as const }, mcp };
-  const { runtime, client } = compose({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+  const { runtime, client } = compose({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     discovery, git: null, defaultMaxOutputBytes: 10000 }, null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);

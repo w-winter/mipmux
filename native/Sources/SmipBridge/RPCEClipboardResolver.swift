@@ -2,7 +2,7 @@
 // Modified: captured settings replace the app view model; resolver methods retain their original bodies.
 import Foundation
 
-struct PromptContextResolved {
+struct PromptContextResolved: Codable {
     var includeFiles: Bool
     var includeUserPrompt: Bool
     var includeMetaPrompts: Bool
@@ -29,12 +29,12 @@ struct CapturedCopySettings: Decodable {
         let codeMapUsage: CodeMapUsage
         let gitInclusion: GitDiffInclusionMode
     }
-    let kind: String
     let current: Current
     let customizations: CopyCustomizations
     let codeMapsGloballyDisabled: Bool
     let selectedPromptIds: [UUID]
     let activeGitRoot: String?
+    let presets: [CopyPreset]
 }
 struct ClipboardPresetResolver {
     let fileTreeOption: FileTreeOption
@@ -120,67 +120,4 @@ struct ClipboardPresetResolver {
         return .none
     }
     // swiftlint:enable identifier_name
-}
-enum CapturedCopyPreset: Decodable {
-    case builtIn(ClipboardPresetKind)
-    case manual(CapturedCopySettings)
-    init(from decoder: Decoder) throws {
-        let value = try decoder.singleValueContainer()
-        if let name = try? value.decode(String.self), let kind = ClipboardPresetKind(rawValue: name) {
-            self = .builtIn(kind)
-        } else { self = try .manual(value.decode(CapturedCopySettings.self)) }
-    }
-
-    var kind: String {
-        switch self {
-        case let .builtIn(value): value.rawValue
-        case .manual: "manual"
-        }
-    }
-
-    var selectedPromptIDs: [UUID]? {
-        switch self {
-        case .builtIn: nil
-        case let .manual(value): value.selectedPromptIds
-        }
-    }
-
-    func resolve() -> PromptContextResolved {
-        switch self {
-        case let .manual(settings):
-            return ClipboardPresetResolver(fileTreeOption: settings.current.fileTreeMode,
-                                           codeMapUsage: settings.current.codeMapUsage,
-                                           codeMapsGloballyDisabled: settings.codeMapsGloballyDisabled,
-                                           gitViewModel: CapturedGitSettings(gitDiffInclusionMode: settings.current
-                                               .gitInclusion))
-                .resolvePromptContext(BuiltInCopyPresets.manual, custom: settings.customizations)
-        case let .builtIn(kind):
-            let preset = switch kind {
-            case .standard: BuiltInCopyPresets.standard
-            case .plan: BuiltInCopyPresets.plan
-            case .diffFollowUp: BuiltInCopyPresets.diffFollowUp
-            case .codeReview: BuiltInCopyPresets.codeReview
-            }
-            return ClipboardPresetResolver(fileTreeOption: .auto, codeMapUsage: .auto, codeMapsGloballyDisabled: false,
-                                           gitViewModel: CapturedGitSettings(gitDiffInclusionMode: .none))
-                .resolvePromptContext(
-                    preset,
-                    custom: nil,
-                )
-        }
-    }
-
-    var wireResolved: [String: Any] {
-        let cfg = resolve()
-        var result: [String: Any] = ["kind": kind, "gitInclusion": cfg.gitInclusion.rawValue,
-                                     "includeMetaPrompts": cfg.includeMetaPrompts,
-                                     "storedPromptIds": cfg.storedPromptIds
-                                         .map { $0.map { $0.uuidString.lowercased() } } as Any? ?? NSNull()]
-        if case .manual = self {
-            result.merge(["includeFiles": cfg.includeFiles, "includeUserPrompt": cfg.includeUserPrompt,
-                          "includeFileTree": cfg.includeFileTree, "fileTreeMode": cfg.fileTreeMode.rawValue,
-                          "codeMapUsage": cfg.codeMapUsage.rawValue]) { _, value in value }
-        }
-        return result
-    }
 }

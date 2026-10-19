@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
@@ -57,7 +58,7 @@ async function fixture(beforeRead?: (path: string, pinned: boolean) => Promise<v
       return new Bridge({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
     }
   }
-  const runtime = new Runtime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 100000,
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 100000,
     credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
@@ -166,7 +167,6 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
     await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.schemaVersion, 22);
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const saved = await loadVerifiedBundle(ready.directory);

@@ -173,6 +173,8 @@ enum Operation {
     case filterSearchScope(SearchScopeFilterInput)
     case searchScope(SearchScopeInput)
     case renderPreparedClipboard(PreparedClipboardOperation)
+    case copyPresetCatalog(CopyPresetCatalogOperation)
+    case writePromptExport(NativeHandle, String, Data)
     case planClipboardPresentation(ClipboardPresentationInput)
     case renderClipboard(ClipboardOperation)
     case queryStructure(StructureInput)
@@ -362,6 +364,13 @@ enum Operation {
         case "resolveAutomaticReviewGit", "renderAutomaticReviewGit":
             return try .git(.ownership(.automaticReview(AutomaticReviewGitInput(value))))
         case "renderPreparedClipboard": return try .renderPreparedClipboard(PreparedClipboardOperation(value))
+        case "listCopyPresets", "resolveCopyPreset":
+            return try .copyPresetCatalog(CopyPresetCatalogOperation(value, listing: kind == "listCopyPresets"))
+        case "writePromptExport":
+            let fields = try WireObject(value, keys: ["kind", "root", "path", "bytes"])
+            return try .writePromptExport(
+                NativeHandle(fields.value("root")), fields.string("path"), fields.bytes("bytes")
+            )
         case "planClipboardPresentation": return try .planClipboardPresentation(ClipboardPresentationInput(value))
         case "renderClipboard": return try .renderClipboard(ClipboardOperation(value))
         case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))

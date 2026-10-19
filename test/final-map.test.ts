@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -16,7 +17,7 @@ async function fixture(Runtime: typeof SmipRuntime = SmipRuntime) {
   await writeFile(join(directory, 'r/Peer.swift'), 'struct Peer { let value: Int }\n');
   await writeFile(join(directory, 'r/Neighbor.swift'), 'struct Neighbor { let other: String }\n');
   await writeFile(join(directory, 's/Other.swift'), 'struct Other {}\n');
-  const runtime = new Runtime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   const client = runtime.createClient(null);

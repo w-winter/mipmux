@@ -3,12 +3,12 @@ import type { NativeOperation } from '../contracts/native.js';
 import type { Material } from './material-store.js';
 import type { SmipRuntime } from '../runtime/smip-runtime.js';
 import type { RenderInput, ItemCost } from './render.js';
-import { compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON, compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits } from './budget.js';
 import { acquireAutomaticReviewGit, type AutomaticReviewGitSource } from './automatic-review-git.js';
 import { verifyAutomaticReviewGitCapture, verifyAutomaticReviewGitSelection } from './automatic-review-git-integrity.js';
-import { defaultPromptSectionsOrder, manualCopySettings, type PromptSection } from '../contracts/presentation.js';
-import { capturedSourceSelections, restoreOmittedSourceSelections } from './source-omissions.js';
+import { defaultPromptSectionsOrder, type PromptSection } from '../contracts/presentation.js';
+import { capturedSourceSelections } from './source-omissions.js';
 
 type ClipboardInput = Extract<NativeOperation, { kind: 'renderPreparedClipboard' }>;
 type PacketInput = Omit<RenderInput, 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'tokenInputs'>;
@@ -38,7 +38,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop,
     includeDatetimeInUserInstructions: input.request.includeDatetimeInUserInstructions ?? false,
     promptSectionsOrder: [...(input.request.promptSectionsOrder ?? defaultPromptSectionsOrder)],
-    copyPreset: input.request.copyPreset, storedPrompts: input.request.storedPrompts,
+    copyPreset: input.request.copyPreset, selectedPromptIds: input.request.copyContext.selectedPromptIds, storedPrompts: input.request.storedPrompts,
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
     contentBlocks: materials.contents.map(contentBlock),
     fileTreeContent: input.fileTree.text,
@@ -52,10 +52,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
 
 export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketInput, 'automaticGit' | 'excludedSources'>,
   signal: AbortSignal, source: AutomaticReviewGitSource): Promise<RenderInput> {
-  const excludedSources = input.request.copyPreset === 'diffFollowUp' ? input.materials.flatMap(({ record }) =>
-    record.kind === 'source' && record.selectionOrigin === 'explicit' ? [record.selection] : []) : [];
-  const packet = { ...input, excludedSources, automaticAcquisition: input.request.copyPreset === 'diffFollowUp'
-    ? { kind: 'settled' as const, outcomes: [] } : input.automaticAcquisition };
+  const packet = { ...input, excludedSources: [] };
   let automaticGit = source.kind === 'captured' ? source.capture : null;
   let clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...packet, automaticGit }), signal);
   if (clipboard.needsAutomaticGit && source.kind === 'live') {
@@ -94,10 +91,9 @@ function consumeFileMap(tree: string, codemaps: readonly Material[], consume: Co
 }
 
 function consumeMetaInstructions(input: Omit<RenderInput, 'tokenInputs'>, consume: Consume) {
-  const manual = manualCopySettings(input.request.copyPreset);
-  if (input.clipboardPreset.kind !== (manual === null ? input.request.copyPreset : 'manual')) throw new WorkspaceFailure('invalidClipboard');
-  const ids = input.clipboardPreset.kind === 'manual' && input.clipboardPreset.includeMetaPrompts && manual !== null
-    ? manual.selectedPromptIds : input.clipboardPreset.storedPromptIds;
+  if (canonicalJSON(input.clipboardPreset) !== canonicalJSON(input.request.copyPreset)) throw new WorkspaceFailure('invalidClipboard');
+  const ids = input.clipboardPreset.storedPromptIds?.length ? input.clipboardPreset.storedPromptIds
+    : input.clipboardPreset.includeMetaPrompts ? input.request.copyContext.selectedPromptIds : [];
   const metas = input.request.storedPrompts.filter(prompt => ids !== null && ids.some(id => id.toLowerCase() === prompt.id.toLowerCase()))
     .map(({ title, content }) => ({ title, content }));
   if (input.request.constraints) metas.push({ title: 'Constraints', content: input.request.constraints });
@@ -143,8 +139,7 @@ function withoutDatetimeValues(bytes: Buffer, spans: readonly Span[]): string {
 
 /** Parses every ordered occurrence against canonical material bytes and charges all repetitions. */
 export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
-  const bytes = Buffer.from(input.clipboard), materials = partitionMaterials({ ...input, materials: input.request.copyPreset === 'diffFollowUp'
-    ? input.materials.filter(material => material.record.kind === 'patch' || material.record.kind === 'gitPatch') : input.materials });
+  const bytes = Buffer.from(input.clipboard), materials = partitionMaterials(input);
   const includedGitDiffs = new Set(input.selectedGitDiffIds);
   const selectedPatches = input.clipboardPreset.gitInclusion === 'none' ? []
     : materials.selectedPatches.filter(material => includedGitDiffs.has(material.record.id));
@@ -176,9 +171,8 @@ export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
   };
   verifyAutomaticReviewGitCapture(input.automaticGit, input.clipboardPreset.gitInclusion !== 'none' && selectedPatches.length === 0);
   if (input.automaticGit && input.automaticGit.evidence.scope !== (input.clipboardPreset.gitInclusion === 'complete' ? 'complete' : 'selected')) throw new WorkspaceFailure('invalidClipboard');
-  verifyAutomaticReviewGitSelection(input.automaticGit, input.inventory, input.request.copyPreset === 'diffFollowUp'
-    ? restoreOmittedSourceSelections(input.excludedSources, input.unavailableRoots, input.unavailableFiles)
-    : input.manualPresentation?.canonicalSources ?? capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles), input.request);
+  verifyAutomaticReviewGitSelection(input.automaticGit, input.inventory,
+    input.manualPresentation?.canonicalSources ?? capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles), input.request);
   const capturedSpans = new Map<'fileMap' | 'gitDiff', Span>();
   const sections = {
     fileMap: () => {
@@ -195,7 +189,7 @@ export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
     },
     metaPrompts: () => { consumeMetaInstructions(input, consume); },
     userInstructions: () => {
-      if (!input.prompt || input.clipboardPreset.kind === 'manual' && !input.clipboardPreset.includeUserPrompt) return;
+      if (!input.prompt || !input.clipboardPreset.includeUserPrompt) return;
       if (!input.request.includeDatetimeInUserInstructions) {
         consume('<user_instructions>\n' + input.prompt + '\n</user_instructions>\n'); return;
       }

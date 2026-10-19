@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { chmod, readFile, mkdir, mkdtemp, rename, stat, symlink, unlink, writeFile } from 'node:fs/promises';
@@ -27,7 +28,7 @@ test('current verification admits only recorded material, applies current denies
   await writeFile(join(root, 'unrelated/private.txt'), 'not selected');
   await writeFile(join(root, 'model.swift'), 'struct Example {\n let title: String\n}\n');
   const options = {
-    cachePath: join(base, 'cache'),
+    copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
@@ -148,7 +149,7 @@ test('current verification cancellation and runtime shutdown join native work an
   await mkdir(out);
   await writeFile(join(root, 'file.txt'), 'body');
   const options = {
-    cachePath: join(base, 'cache'),
+    copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

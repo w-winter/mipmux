@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -42,7 +43,7 @@ async function fixture() {
   await writeFile(join(repo, 'credential.swift'), 'PROTECTED_FIXTURE_CHANGED\n');
   await writeFile(join(root, 'literal*.swift'), 'literal changed\n'); await writeFile(join(root, 'literal-other.swift'), 'other changed\n');
   await writeFile(join(root, 'added.swift'), 'new\nlast');
-  const options = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
     credentialPaths: [join(repo, 'credential.swift')], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, git: { executable: git } };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') };

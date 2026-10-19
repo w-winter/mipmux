@@ -1,3 +1,4 @@
+import { copyContext, buildRequest } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { test } from 'node:test';
@@ -94,7 +95,7 @@ test('source admission overflow preserves explicit files and a verifiable packet
     const path = 'Note' + index + '.txt'; await writeFile(join(root, path), '');
     sources.push({ kind: 'full', source: { root: 'r', path } });
   }
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const signal = new AbortController().signal;
@@ -107,7 +108,7 @@ test('source admission overflow preserves explicit files and a verifiable packet
     assert.equal(verified.manifest.materials.filter(material => material.kind === 'source' && material.selectionOrigin === 'inferred').length, 0);
     assert.equal(verified.manifest.materials.filter(material => material.kind === 'source' && material.selectionOrigin === 'explicit').length, 4097);
     await writeFile(join(root, '.repo_ignore'), 'Note4095.txt\n');
-    const ignored = await workspace.createDraft({ ...verified.manifest.request, requiredSources: [sources[0]!],
+    const ignored = await workspace.createDraft({ ...buildRequest(verified.manifest.request), requiredSources: [sources[0]!],
       initialSelection: { codemapMode: 'automatic', sources: sources.slice(0, -1) }, outputName: 'managed-only' }, signal);
     await ignored.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'add', mode: 'full',
       paths: [join(root, 'Note4095.txt')], maxOutputBytes: 10000000 })), signal);

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -37,7 +38,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
       GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
     run(['init', '-q']); run(['add', '.']); run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'base']);
     const discovery = { ...provider.config, prompt: { kind: 'rpce' } };
-    const config = hostValidator.Parse({ cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
+    const config = hostValidator.Parse({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
       contextBudgetUnits: 200000, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000 });
     const { runtime, client } = compose(config, null);
@@ -101,7 +102,7 @@ test('native policy/startup failure and cancellation settle without static or cu
         return new Bridge({ executable: this.options.nativeExecutable, env: {}, supervisor: this.supervisor });
       }
     }
-    const runtime = new Runtime({ cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
+    const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
       contextBudgetUnits: 200000, terminationGraceMs: 100 });
     const client = runtime.createClient(new PiRunner({ ...provider.config, prompt: { kind: 'rpce' } }, runtime.supervisor));

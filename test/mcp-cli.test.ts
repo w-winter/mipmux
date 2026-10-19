@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -17,7 +18,7 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
   const root = join(base, 'root'), outputRoot = join(base, 'out'), config = join(base, 'config.json');
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let title: String\n}');
-  const options = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [config], nativeEnvironment: {},
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [config], nativeEnvironment: {},
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
   const runtime = new SmipRuntime(options);
@@ -61,7 +62,7 @@ test('official MCP probes accept disabled provider deadlines and create no works
   t.after(() => provider.close());
   provider.config.policy.retry.provider.timeoutMs = 0;
   const config = join(base, 'config.json');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
@@ -94,7 +95,7 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'source\n');
   const config = join(provider.directory, 'config.json');
-  await writeFile(config, JSON.stringify({ cachePath: join(provider.directory, 'cache'),
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 2000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

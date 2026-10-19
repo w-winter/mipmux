@@ -5,7 +5,7 @@ import { SafeCount, SHA256, SourceIdentity, RelativePath, RootName } from './wor
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
-import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset, PromptSectionsOrder } from './presentation.js';
+import { ClipboardPreset, CopyContext, StoredPrompt, CapturedClipboardPreset, PromptSectionsOrder } from './presentation.js';
 import { NativeFileTreeInput, NativeGitCheckout, AutomaticReviewGitCheckout, AutomaticReviewGitPathIssue, AutomaticReviewGitCompleteness } from './native.js';
 import { AutomaticCodemapOutcome } from './automatic-codemaps.js';
 import { Clarification } from './interaction.js';
@@ -74,12 +74,17 @@ export const ContextBuildRequest = Type.Object({
   outputName: Type.String({ pattern: '^(?!\\.{1,2}$)[^/\\u0000]+$' }),
 }, closed);
 export type ContextBuildRequest = Static<typeof ContextBuildRequest>;
+export const CapturedContextBuildRequest = Type.Object({ ...ContextBuildRequest.properties,
+  copyPreset: CapturedClipboardPreset, copyPresetSelector: ClipboardPreset, copyContext: CopyContext }, closed);
+export type CapturedContextBuildRequest = Static<typeof CapturedContextBuildRequest>;
 const promptOperations = [
   Type.Object({ op: Type.Literal('set'), text: Type.String() }, closed),
   Type.Object({ op: Type.Literal('append'), text: Type.String() }, closed),
   Type.Object({ op: Type.Literal('clear') }, closed),
 ] as const;
 export const PromptRequest = Type.Union([
+  Type.Object({ op: Type.Literal('list_presets'), maxOutputBytes: positive }, closed),
+  Type.Object({ op: Type.Literal('export'), path: Type.String(), copy_preset: Type.Optional(ClipboardPreset), maxOutputBytes: positive }, closed),
   Type.Object({ op: Type.Literal('get'), maxOutputBytes: positive }, closed),
   Type.Object({ ...promptOperations[0].properties, expectedRevision: SafeCount, maxOutputBytes: positive }, closed),
   Type.Object({ ...promptOperations[1].properties, expectedRevision: SafeCount, maxOutputBytes: positive }, closed),
@@ -187,6 +192,9 @@ const reviewComparison = Type.Object({ head: gitCommit, base: gitCommit }, close
 const capturedReviewCheckout = { checkout: AutomaticReviewGitCheckout };
 export const AutomaticReviewGitEvidence = Type.Object({ completeness: AutomaticReviewGitCompleteness,
   scope: Type.Enum(['selected', 'complete']),
+  /** Directory binding for complete scope; null for selected scope or no active root. */
+  rootBinding: Type.Union([Type.Null(), Type.Object({ kind: Type.Literal('worktree') }, closed),
+    Type.Object({ kind: Type.Literal('gitDirectory'), path: Type.String({ pattern: '^/[^\u0000]*$' }) }, closed)]),
   sourceRoots: Type.Array(Type.Object({ root: RootName, path: Type.String({ pattern: '^/[^\u0000]*$' }) }, closed)),
   pathIssues: Type.Array(AutomaticReviewGitPathIssue), outcomes: Type.Array(Type.Union([
     Type.Object({ ...capturedReviewCheckout, kind: Type.Literal('diff'), comparison: reviewComparison, body: Span }, closed),
@@ -198,11 +206,11 @@ export const ManualPresentation = Type.Object({ canonicalSources: Type.Array(Sou
   requested: Type.Array(SourcePath), ready: Type.Array(SourcePath), completeRootSet: Type.Boolean() }, closed);
 export type ManualPresentation = Static<typeof ManualPresentation>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(22),
+  schemaVersion: Type.Literal(23),
   manualPresentation: Type.Union([ManualPresentation, Type.Null()]),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
-  request: ContextBuildRequest,
+  request: CapturedContextBuildRequest,
   requestDigest: SHA256,
   inventory: Type.Omit(InventorySnapshot, ['generation']),
   exclusions: Type.Array(Exclusion),

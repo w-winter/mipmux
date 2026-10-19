@@ -1,4 +1,4 @@
-import { ClipboardPreset, StoredPrompt, CapturedClipboardPreset, PromptSection as promptSection } from './presentation.js';
+import { ClipboardPreset, CopyContext, RawCopyPreset, StoredPrompt, CapturedClipboardPreset, PromptSection as promptSection } from './presentation.js';
 import { DecoderPolicy, IgnoreAuthority, IgnoreControl, IgnoreSettings } from './inventory.js';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -67,7 +67,7 @@ export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('re
   duplicateUserInstructionsAtTop: Type.Boolean(),
   includeDatetimeInUserInstructions: Type.Boolean(),
   promptSectionsOrder: Type.Array(promptSection),
-  copyPreset: ClipboardPreset, storedPrompts: Type.Array(StoredPrompt),
+  copyPreset: CapturedClipboardPreset, selectedPromptIds: CopyContext.properties.selectedPromptIds, storedPrompts: Type.Array(StoredPrompt),
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
   selectedGitDiffs: Type.Array(Type.Object({ id: Type.String(), text: Type.String() }, { additionalProperties: false })),
   gitDiff: snippetText, automaticGitDiff: snippetText, userInstructions: Type.String(),
@@ -88,7 +88,7 @@ const canonicalSelectionPath = Type.String({ pattern: '^/[^\\u0000]*$' });
 export const NativeSelectionState = Type.Object({ selectedPaths: Type.Array(canonicalSelectionPath),
   manualCodemapPaths: Type.Array(canonicalSelectionPath), slices: Type.Record(Type.String(), Type.Array(NativeSliceRange)),
   codemapAutoEnabled: Type.Boolean() }, { additionalProperties: false });
-export const NativeClipboardPresentationInput = Type.Object({ kind: Type.Literal('planClipboardPresentation'), copyPreset: ClipboardPreset,
+export const NativeClipboardPresentationInput = Type.Object({ kind: Type.Literal('planClipboardPresentation'), copyPreset: CapturedClipboardPreset,
   selection: NativeSelectionState, readyFileIDs: Type.Array(Type.String({ format: 'uuid' })),
   roots: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), standardizedFullPath: Type.String() }, { additionalProperties: false })),
   files: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), rootID: Type.String({ format: 'uuid' }), name: Type.String(),
@@ -188,7 +188,7 @@ const selectionReplyFields = { path: Type.String(), rootPath: Type.String(), pat
 export const NativeSelectionReplyInput = Type.Object({ kind: Type.Literal('renderSelectionReply'), entries: Type.Array(Type.Union([
   Type.Object({ ...selectionReplyFields, kind: Type.Literal('full') }, { additionalProperties: false }),
   Type.Object({ ...selectionReplyFields, kind: Type.Literal('slice'), ranges: Type.Array(NativeSliceRange, { minItems: 1 }) }, { additionalProperties: false }),
-  Type.Object({ ...selectionReplyFields, kind: Type.Literal('codemap'), origin: Type.Enum(['auto', 'manual']) }, { additionalProperties: false }),
+  Type.Object({ ...selectionReplyFields, kind: Type.Literal('codemap'), origin: Type.Enum(['auto', 'manual', 'selected_mode']) }, { additionalProperties: false }),
 ])), status: Type.Enum(['ok', 'preview']), codemapAutoEnabled: Type.Boolean(), invalidPaths: Type.Array(Type.String()),
   unmappedPaths: Type.Array(Type.String()), pendingPaths: Type.Array(Type.String()), blocks: Type.Union([Type.Array(Type.String()), Type.Null()]),
   view: Type.Enum(['summary', 'files', 'content', 'codemaps']) }, { additionalProperties: false });
@@ -390,6 +390,9 @@ export const NativeOperation = Type.Union([
   NativeClipboardInput,
   NativePreparedClipboardInput,
   NativeClipboardPresentationInput,
+  Type.Object({ kind: Type.Literal('listCopyPresets'), context: CopyContext }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('resolveCopyPreset'), context: CopyContext, selector: ClipboardPreset }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('writePromptExport'), root: handle, path: RelativePath, bytes: base64 }, { additionalProperties: false }),
   NativeStructureInput,
 ]);
 export type NativeOperation = Static<typeof NativeOperation>;
@@ -408,6 +411,9 @@ export const DescriptorFingerprint = Type.Object({
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
 export const NativeResult = Type.Union([
+  Type.Object({ kind: Type.Literal('copyPresets'), presets: Type.Array(RawCopyPreset) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('copyPreset'), hasSelector: Type.Boolean(), preset: Type.Union([CapturedClipboardPreset, Type.Null()]) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('promptExportWritten'), identity: SourceIdentity }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('clipboardPresentation'), preset: CapturedClipboardPreset, intent: Type.Enum(['none', 'automatic', 'exact']),
     fileIDs: Type.Array(Type.String({ format: 'uuid' })), completeRootSet: Type.Boolean(),
     codemapFileIDs: Type.Array(Type.String({ format: 'uuid' })) }, { additionalProperties: false }),

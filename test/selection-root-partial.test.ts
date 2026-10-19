@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
@@ -29,7 +30,7 @@ for (const mode of ['manual', 'automatic'] as const) for (const preset of ['stan
       env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
     run(['init', '-q']); run(['config', 'user.name', 'Fixture']); run(['config', 'user.email', 'fixture@example.invalid']);
     run(['add', '.']); run(['commit', '-qm', 'base']);
-    const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+    const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
       terminationGraceMs: 100, git: { executable: git } });
     try {
@@ -76,7 +77,7 @@ test('unavailable required source stays selected and prevents packet publication
   const base = await mkdtemp(join(tmpdir(), 'smip-required-root-'));
   const a = join(base, 'a'), b = join(base, 'b'), out = join(base, 'out'); await mkdir(a); await mkdir(b); await mkdir(out);
   await writeFile(join(a, 'required.txt'), 'Required original\n'); await writeFile(join(b, 'healthy.txt'), 'Healthy body\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'a', absolutePath: a }, { name: 'b', absolutePath: b }], exclusions: [], outputRoot: out }, signal());
@@ -102,7 +103,7 @@ test('content view loads full files and slices, withholding unreadable leaves wi
   await writeFile(join(root, 'full.txt'), 'captured full content\n');
   await writeFile(join(root, 'slice.txt'), 'first\ncaptured slice content\nlast\n');
   await writeFile(join(root, 'healthy.txt'), 'healthy sibling content\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());

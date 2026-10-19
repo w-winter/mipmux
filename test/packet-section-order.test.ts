@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -25,7 +26,7 @@ test('public packets preserve source section permutations and repetitions with e
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
   runGit(['init', '-q']); runGit(['config', 'user.name', 'Fixture']); runGit(['config', 'user.email', 'fixture@example.invalid']);
   runGit(['add', '.']); runGit(['commit', '-qm', 'base']); await writeFile(join(root, 'Main.swift'), full);
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100, git: { executable: git } });
   const signal = new AbortController().signal;

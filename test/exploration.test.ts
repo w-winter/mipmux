@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -14,7 +15,7 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
   await writeFile(join(base, 'root/A.swift'), 'struct OwnerRecord {\n let peer: PeerRecord\n let missing: MissingRecord\n}\n');
   await writeFile(join(base, 'root/B.swift'), 'struct PeerRecord {\n let owner: OwnerRecord\n}\n');
   await writeFile(join(base, 'root/C.swift'), 'struct PeerRecord {\n let label: String\n}\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   try {

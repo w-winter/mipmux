@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -43,7 +44,7 @@ async function fixture() {
   await writeFile(join(root, 'file.txt'), 'one é\ntwo\nthree\n');
   run(['add', '--', 'sub/file.txt']); run(['commit', '-m', 'second']);
   const second = run(['rev-parse', 'HEAD']).trim();
-  const options = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
     credentialPaths: [join(root, 'protected.txt')], nativeExecutable, nativeEnvironment: {}, git: { executable: git } };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
   return { base, repo, root, first, second, options, spec, run };

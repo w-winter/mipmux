@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -13,7 +14,7 @@ test('the user assembly ceiling rejects caller overrides before discovery and pe
   const directory = await mkdtemp(join(tmpdir(), 'smip-assembly-budget-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out'));
   const contextBudgetUnits = 10000;
-  const options = { cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
+  const options = { copyContext: copyContext(), cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     contextBudgetUnits };
   const { runtime } = compose({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000 }, null);
@@ -57,7 +58,7 @@ test('client jobs deduplicate admission, isolate ids, release cancelled work', a
     await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }));
     throw new Error('Cancelled boundary');
   } };
-  const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
   const request: ContextBuildRequest = { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],

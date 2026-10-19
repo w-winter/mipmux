@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { chmod, mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -33,7 +34,7 @@ async function fixture() {
   await mkdir(join(root, 'private'));
   await writeFile(join(root, '.repo_ignore'), 'private/\n');
   await writeFile(join(root, 'private/Hidden.swift'), 'struct ExplicitlyManaged {\n  let value: Int\n}\n');
-  await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
+  await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 30000 }));
@@ -174,7 +175,7 @@ test('selection commits before reply rendering and survives cancellation, failur
         return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
       }
     }
-    const runtime = new Runtime({ cachePath: join(f.base, scenario + '-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, scenario + '-cache'), contextBudgetUnits: 200000, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
     try {
       const signal = () => new AbortController().signal;
@@ -279,7 +280,7 @@ test('undecodable codemap-only membership retains raw evidence and passes saved/
     code_structure: Type.Object({ unmapped_paths: Type.Array(Type.String()) }) }));
   const manifestSchema = Compile(Type.Object({ materials: Type.Array(Type.Object({ kind: Type.Literal('source'),
     selection: SourceSelection, decoding: Type.Object({ kind: Type.Literal('undecodable') }), spans: Type.Array(Type.Unknown()) })) }));
-  const runtime = new SmipRuntime({ cachePath: join(f.base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(f.base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const reply = await f.select({ op: 'set', mode: 'codemap_only', paths: ['r/Undecodable.swift'], view: 'content' });
@@ -424,7 +425,7 @@ test('cancellation during codemap extraction retains committed membership and ge
       return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
     }
   }
-  const runtime = new Runtime({ cachePath: join(f.base, 'cancel-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, 'cancel-cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = () => new AbortController().signal;
   armed = false;
@@ -502,7 +503,7 @@ test('the source readiness deadline reports pending codemaps and a later get com
       return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
     }
   }
-  const runtime = new Runtime({ cachePath: join(f.base, 'deadline-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, 'deadline-cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = () => new AbortController().signal;
   const client = runtime.createClient(null);
@@ -558,7 +559,7 @@ test('stale codemap completion reports pending committed membership and a later 
         return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
       }
     }
-    const runtime = new Runtime({ cachePath: join(f.base, 'currentness-cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, 'currentness-cache'), contextBudgetUnits: 200000, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
     const signal = () => new AbortController().signal;
     const client = runtime.createClient(null);

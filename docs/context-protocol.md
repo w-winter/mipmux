@@ -12,13 +12,12 @@ With `codeReview` or `diffFollowUp`, nonblank selected patch artifacts supply th
 
 Use `diffFollowUp` for a packet containing Git evidence, caller constraints and the literal prompt. Optional full-file and slice selections define automatic Git scope; codemap-only selections remain available for draft inspection. Publication can proceed while excluded optional codemaps are pending. Required sources and supplied or local documents conflict with this preset and return `copyPresetRequiredMaterialConflict`; choose a file-including preset when those bodies are needed.
 
-## Manual copy settings
+## Copy settings and presets
 
-Supply the following object as `copyPreset` to capture Manual's settings for one build. Settings and saved-prompt IDs are copied at admission; later caller mutations cannot alter the packet. `selectedPromptIds` selects entries from `storedPrompts` in catalog order, with case-insensitive UUID matching.
+Supply `copyContext` in the host configuration or `SmipRuntime` options. The example below chooses automatic maps, an adaptive tree and no automatic Git. Choose current values explicitly; they apply to Manual and to missing custom-preset tree or codemap settings. Each draft captures the validated settings and configured catalog at admission. Set request `copyPreset` to `"manual"` for Manual. `selectedPromptIds` selects entries from `storedPrompts` in catalog order, with case-insensitive UUID matching.
 
 ```json
 {
-  "kind": "manual",
   "current": {
     "fileTreeMode": "Auto",
     "codeMapUsage": "auto",
@@ -35,17 +34,24 @@ Supply the following object as `copyPreset` to capture Manual's settings for one
   },
   "codeMapsGloballyDisabled": false,
   "selectedPromptIds": [],
-  "activeGitRoot": "repo"
+  "activeGitRoot": "repo",
+  "presets": []
 }
 ```
 
-Include flags accept true, false or null; null resolves to true. Tree modes are `Auto`, `Full`, `Selected` and `None`. The tree customization takes precedence over the current tree mode. Codemap usage is `none`, `auto`, `selected` or `complete`; Manual uses the current value even when a codemap customization is supplied. `codeMapsGloballyDisabled` captures the copy resolver's disable input and forces copy codemap usage to `none`.
+Include flags accept true, false or null; null resolves to true. Tree modes are `Auto`, `Full`, `Selected` and `None`. Working-copy customizations apply only to Manual. Its tree customization takes precedence over the current tree mode. Codemap usage is `none`, `auto`, `selected` or `complete`; Manual uses the current value even when a codemap customization is supplied. The single operator-owned `codeMapsGloballyDisabled` setting forces resolved copy codemap usage to `none`.
+
+`presets` supplies built-in overrides and custom records. Each record contains `id`, `name`, nullable `builtInKind`, nullable `description` and `icon`, `isBuiltIn`, nullable include flags, nullable `fileTreeMode`, `codeMapUsage` and `gitInclusion`, nullable `storedPromptIds`, and nullable `notes`. Built-in records use their stable UUID and `isBuiltIn: true`; nonnull behavioral fields override the built-in, while identity and descriptive fields come from the original. The last override for a built-in ID applies. Custom records use `isBuiltIn: false`. Catalog order is Standard, Plan, Diff Follow-Up, Review, Manual, followed by custom records in configured order.
+
+Selectors accept a string UUID, kind or name, or an object with `id`, `kind` and `name`. UUID lookup has priority and a valid unresolved UUID ends lookup. Kind lookup returns the original built-in. Explicit-name and UUID lookup use the overridden catalog. Thus `"standard"` selects the original kind, while `{ "name": "Standard" }` selects its configured entry. Names and kinds match case-insensitively. Custom presets ignore Manual working-copy customizations; missing tree and codemap settings use captured current values, and missing Git inclusion resolves to none.
 
 Automatic codemaps follow canonical automatic or manual selection mode. Selected usage requests maps for files selected as full files, slices or explicit codemaps. It replaces directly selected files when a map is ready and retains slice-only bodies. Complete usage presents supported files across ordinary roots, including unselected files. Export presentation leaves canonical membership and revision unchanged. Required source representations or documents that would be excluded or replaced return `copyPresetRequiredMaterialConflict`. File exclusion controls ordinary bodies; codemaps belong to the file-map section.
 
 Current Git modes are `none`, `selectedFiles` and `all`; the customization accepts `none`, `selected`, `complete` or null. Nonblank selected patches take precedence. Selected acquisition uses full and slice membership; complete acquisition uses the explicitly named `activeGitRoot`, or produces no complete diff when that field is null. Comparisons use already-local refs, with object IDs frozen before acquisition. Missing local refs return an error. Caller-required patches remain complete in every mode.
 
 Directly selected representations retain selection order. Complete codemaps follow native root-path and file-path order, independently of the aliases used to display roots.
+
+Call MCP `prompt` with `{ "input": { "op": "list_presets" } }` to receive `{ "op": "list_presets", "presets_list": { "presets": [...] } }`. Each item contains a `preset` descriptor and its raw configured flags; absent raw values are omitted. Listing needs no workspace or draft. To export an interim file, call `prompt` with the owning `draftId` and `input: { op: "export", path: "interim.md", copy_preset: "manual" }`. Relative paths are rooted in the authorized output directory; absolute paths must remain inside that directory. Parent directories must exist. The response contains `op: "export"` and an `export` object with `path`, `tokens`, UTF-8 `bytes`, selected `files` metadata and the effective `copy_preset` descriptor. Export captures one prompt/selection revision and applies the same required-material, coherence and numeric-budget checks as finalization. It does not advance revision or change the active preset. Continue editing or finalize the same draft afterward.
 
 ## Build and verify
 

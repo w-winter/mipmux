@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, readFile, realpath, rename, writeFile } from 'node:fs/promises';
@@ -25,7 +26,7 @@ test('Review and implicit target election honor available Jujutsu while retainin
   }
   for (const root of ['colocated', 'standalone']) await mkdir(join(base, root, '.jj'));
   await writeFile(join(base, 'standalone/file.txt'), 'standalone evidence\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { PATH: join(base, 'bin') }, terminationGraceMs: 100, git: { executable: git } });
   const request: ContextBuildRequest = { task: 'Inspect selected VCS ownership', constraints: '', purpose: 'review', enhancementMode: 'preserve',
@@ -80,7 +81,7 @@ test('VCS ownership retains successful path and root entries until runtime dispo
   for (const path of ['a.txt', 'b.txt']) await writeFile(join(base, 'repo', path), 'base\n');
   run('repo', ['add', '.']); run('repo', ['commit', '-qm', 'base']);
   await writeFile(join(base, 'repo/a.txt'), 'changed\n'); await writeFile(join(base, 'plain/a.txt'), 'plain\n');
-  const options = { cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: { PATH: join(base, 'bin') }, terminationGraceMs: 100, git: { executable: git } };
   const spec = { roots: ['repo', 'plain'].map(name => ({ name, absolutePath: join(base, name) })), exclusions: [], outputRoot: join(base, 'out') };
@@ -134,7 +135,7 @@ test('cancelling a VCS observer leaves the shared resolver available to later op
   };
   const entered = barrier(), gate = barrier();
   let gated = false;
-  const options = { cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100, git: { executable: git } };
   class Runtime extends SmipRuntime {

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -31,7 +32,7 @@ async function fixture(copyPreset: ContextBuildRequest['copyPreset']) {
   run(['init', '-q']); run(['config', 'user.name', 'Fixture']); run(['config', 'user.email', 'fixture@example.invalid']);
   run(['add', '.']); run(['commit', '-qm', 'base']);
   await writeFile(join(a, 'main.txt'), full + 'working tree difference\n');
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'Alpha', absolutePath: a }, { name: 'LongerBetaRoot', absolutePath: b }],

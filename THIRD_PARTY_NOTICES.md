@@ -6,7 +6,7 @@ The native discovery prompt factory, discovery prompt, rendered references, ques
 
 PCRE2 10.49 is statically linked under BSD-3-Clause WITH PCRE2-exception. Its pinned SLJIT dependency uses BSD-2-Clause. Their complete texts are in `ThirdPartyLicenses/pcre2/LICENCE.md` and `ThirdPartyLicenses/sljit/LICENSE`.
 
-Manual copy-preset resolution and codemap presentation planning retain source functions from RepoPrompt CE revision `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3` under Apache-2.0. The native adapters bind captured settings and admitted file catalogs. `docs/vendor-provenance.json` records the retained ranges and accounting adaptations.
+Copy-preset selection, catalog projection, resolution, codemap presentation planning and prompt export derive from RepoPrompt CE revision `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3` under Apache-2.0. The native adapters bind captured settings and admitted file catalogs. Headless export confines writes to the declared output directory. `docs/vendor-provenance.json` records source ranges and adaptations.
 
 SwiftTreeSitter, the Tree-sitter runtime, and the twelve grammar packages have license copies in their named directories under `ThirdPartyLicenses/`. The JavaScript/Python scanner snapshots and accompanying headers match the pinned grammar sources. `ThirdPartyLicenses/tree-sitter/ICU-LICENSE` contains the runtime's bundled Unicode/ICU notice.
 

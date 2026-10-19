@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -51,7 +52,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const config = join(directory, 'config.json'), specPath = join(directory, 'spec.json'), requestPath = join(directory, 'request.json');
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output };
   writeFileSync(specPath, JSON.stringify(spec));
-  writeFileSync(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
+  writeFileSync(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/smip'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
@@ -85,7 +86,7 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(terminal.discovery.promptSHA256, createHash('sha256').update(promptBytes).digest('hex'));
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('RELOCATED_EDITABLE_PROMPT'));
     provider.config.prompt = { kind: 'rpce' };
-    writeFileSync(config, JSON.stringify({ cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
+    writeFileSync(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
       terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null,
       discovery: provider.config, defaultMaxOutputBytes: 10000 }));
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'native-relocation', request: {

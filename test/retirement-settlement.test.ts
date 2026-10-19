@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -20,7 +21,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
   if (boundary === 'search') search.query = { kind: 'literal', text: 'source\\(', caseSensitive: true, wholeWord: false };
   await mkdir(root); await mkdir(outputRoot); await writeFile(join(root, 'file.txt'), boundary === 'search' ? 'source(\n' : 'source\n');
   const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
-  const runtime = new SmipRuntime({ cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable, nativeEnvironment: {}, terminationGraceMs: 100 });
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let armed = false;

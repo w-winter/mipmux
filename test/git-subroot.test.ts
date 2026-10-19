@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, realpath, unlink, writeFile } from 'node:fs/promises';
@@ -25,7 +26,7 @@ test('worktree, staged and commit patches for a declared subroot retain owning-c
   run(['add', '-u']); run(['commit', '-m', 'target']); const target = run(['rev-parse', 'HEAD']).trim();
   await writeFile(join(root, 'added.txt'), 'added\n'); await writeFile(join(repo, 'outside-untracked.txt'), 'OUTSIDE UNTRACKED\n');
   const index = await readFile(join(repo, '.git/index'));
-  const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     git: { executable: git }, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal;

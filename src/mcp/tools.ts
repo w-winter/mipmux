@@ -79,11 +79,12 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     (input, ctx) => client().update(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('draft_preview', Type.Object({ draftId: id, input: Type.Omit(DraftPreview, ['maxOutputBytes']), ...budget }, closed),
     (input, ctx) => client().preview(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
-  register('prompt', Type.Object({ draftId: id, input: Type.Union([
+  register('prompt', Type.Object({ draftId: Type.Optional(id), input: Type.Union([
     Type.Omit(PromptRequest.anyOf[0], ['maxOutputBytes']), Type.Omit(PromptRequest.anyOf[1], ['maxOutputBytes']),
     Type.Omit(PromptRequest.anyOf[2], ['maxOutputBytes']), Type.Omit(PromptRequest.anyOf[3], ['maxOutputBytes']),
+    Type.Omit(PromptRequest.anyOf[4], ['maxOutputBytes']), Type.Omit(PromptRequest.anyOf[5], ['maxOutputBytes']),
   ]), ...budget }, closed),
-    (input, ctx) => client().prompt(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
+    (input, ctx) => client().prompt(input.draftId ?? null, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('draft_validate', Type.Object({ draftId: id, ...budget }, closed),
     (input, ctx) => client().validate(input.draftId, input.maxOutputBytes ?? defaultMaxOutputBytes, ctx.mcpReq.signal, toolResult));
   register('draft_finalize', Type.Object({ draftId: id }, closed), (input, ctx) => client().finalize(input.draftId, ctx.mcpReq.signal));

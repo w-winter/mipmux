@@ -1,5 +1,6 @@
 // Ported from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3; see docs/vendor-provenance.json.
-import type { AutomaticReviewGitEvidence, ContextBuildRequest, SourceSelection, UnavailableRoot } from '../contracts/context.js';
+import { realpath } from 'node:fs/promises';
+import type { AutomaticReviewGitEvidence, CapturedContextBuildRequest, SourceSelection, UnavailableRoot } from '../contracts/context.js';
 import type { NativeOperation, NativeResult } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { selectedGitSourcePaths } from './git-target.js';
@@ -8,7 +9,7 @@ import { prepareGitDiffComparison, capturePreparedGitDiff } from '../exploration
 import { resolveGitCommit } from '../patches/local-git.js';
 import { gitProcess } from '../patches/git-process.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
-import { manualCopySettings } from '../contracts/presentation.js';
+import { contains } from '../workspace/root-policy.js';
 
 export interface AutomaticReviewGitCapture {
   readonly evidence: AutomaticReviewGitEvidence;
@@ -27,6 +28,17 @@ type Plan =
   | { readonly kind: 'ready'; readonly checkout: Checkout; readonly owner: Owner; readonly commands: Commands; readonly comparison: Comparison }
   | { readonly kind: 'baseResolutionFailed'; readonly checkout: Checkout };
 
+async function resolveCheckoutRepository(operation: WorkspaceOperation, checkout: Checkout,
+  scope: AutomaticReviewGitEvidence['scope']): Promise<Owner> {
+  const owner = await resolveDiffRepository(operation, checkout.identity.root, scope === 'complete'
+    ? { kind: 'explicit', worktree: null } : { kind: 'elected', checkout: checkout.identity });
+  // Complete capture keeps the declared metadata anchor even when its worktree is elsewhere.
+  if (scope === 'complete' && await realpath(checkout.identity.checkoutRootPath) !== owner.repository.worktree.canonicalPath) {
+    throw new WorkspaceFailure('gitRepositoryChanged');
+  }
+  return owner;
+}
+
 // Only these Git failures become partial diagnostics; security, worker and cancellation failures reject.
 const operationalFailures = new Set(['gitQueryFailed', 'gitFailed', 'gitProtocolError', 'gitOutputUndecodable', 'gitComparisonUnavailable']);
 
@@ -38,7 +50,7 @@ function diffRequest(root: string, base: string) {
 }
 
 /** Resolves every checkout boundary before the first working-tree capture, matching RPCE's discover coordinator. */
-export async function acquireAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
+export async function acquireAutomaticReviewGit(operation: WorkspaceOperation, request: CapturedContextBuildRequest,
   selections: readonly SourceSelection[], unavailableRoots: readonly UnavailableRoot[], scope: AutomaticReviewGitEvidence['scope'] = 'selected'): Promise<AutomaticReviewGitCapture> {
   const unavailable = new Set(unavailableRoots.map(root => root.root));
   const roots = new Map(operation.snapshot.roots.map(root => [root.name, root.identity.canonicalPath]));
@@ -48,45 +60,61 @@ export async function acquireAutomaticReviewGit(operation: WorkspaceOperation, r
   return acquireSelectedReviewGit(operation, request, { paths: paths.filter(path => catalog.has(path)), unresolvedCandidates: paths.filter(path => !catalog.has(path)) }, scope);
 }
 
-export async function acquireSelectedReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
+async function completeReviewCheckouts(operation: WorkspaceOperation, completeRoot: string | null): Promise<{
+  checkouts: Checkout[]; rootBinding: AutomaticReviewGitEvidence['rootBinding'];
+}> {
+  if (completeRoot === null) return { checkouts: [], rootBinding: null };
+  const root = operation.snapshot.roots.find(root => root.name === completeRoot);
+  if (!root) throw new WorkspaceFailure('unknownRoot');
+  await operation.validateSourceRoot(root.name);
+  const repository = await resolveDiffRepository(operation, root.name, { kind: 'explicit', worktree: null });
+  const path = repository.repository.worktree.canonicalPath;
+  const gitDirectory = repository.repository.gitDirectory.canonicalPath;
+  let rootBinding: AutomaticReviewGitEvidence['rootBinding'];
+  if (contains(path, root.identity.canonicalPath)) rootBinding = { kind: 'worktree' };
+  else if (contains(gitDirectory, root.identity.canonicalPath)) rootBinding = { kind: 'gitDirectory', path: gitDirectory };
+  else throw new WorkspaceFailure('gitRepositoryDenied');
+  const elected = await operation.runtime.resolveVCS({ kind: 'resolveCompleteGitTarget', paths: [path],
+    roots: [{ name: root.name, path }] }, operation.signal);
+  if (elected.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
+  return { checkouts: [{ identity: elected.primary, displayLabel: root.name, selectedPaths: [] }], rootBinding };
+}
+
+async function reviewComparison(operation: WorkspaceOperation, repository: Owner, requestedBase: string | null): Promise<Comparison> {
+  const line = async (args: readonly string[]) => {
+    const result = await gitProcess(operation.runtime.supervisor, repository.executable,
+      repository.repository.worktree.canonicalPath, args, operation.signal, { kind: 'repository' });
+    if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
+    const text = gitText(result.bytes);
+    if (!text.endsWith('\n')) throw new WorkspaceFailure('gitProtocolError');
+    return text.slice(0, -1);
+  };
+  const head = await resolveGitCommit('HEAD', line);
+  const base = requestedBase === null ? head : await line(['merge-base', head, await resolveGitCommit(requestedBase, line)]);
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(base)) throw new WorkspaceFailure('gitProtocolError');
+  return { head, base };
+}
+
+export async function acquireSelectedReviewGit(operation: WorkspaceOperation, request: CapturedContextBuildRequest,
   selection: { readonly paths: readonly string[]; readonly unresolvedCandidates: readonly string[] }, scope: AutomaticReviewGitEvidence['scope'] = 'selected'): Promise<AutomaticReviewGitCapture> {
   const paths = await operation.selectionPathBindings(operation.snapshot.roots.map(root => root.identity.canonicalPath));
   const sourceRoots = operation.snapshot.roots.map((root, index) => ({ root: root.name, path: paths[index]! }));
-  const completeRoot = manualCopySettings(request.copyPreset)?.activeGitRoot ?? null;
-  const completeCheckouts: Checkout[] = [];
-  if (scope === 'complete' && completeRoot !== null) {
-    const root = operation.snapshot.roots.find(root => root.name === completeRoot);
-    if (!root) throw new WorkspaceFailure('unknownRoot');
-    await operation.validateSourceRoot(root.name);
-    const elected = await operation.runtime.resolveVCS({ kind: 'resolveCompleteGitTarget', paths: [root.identity.canonicalPath],
-      roots: [{ name: root.name, path: root.identity.canonicalPath }] }, operation.signal);
-    if (elected.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
-    completeCheckouts.push({ identity: elected.primary, displayLabel: root.name, selectedPaths: [] });
-  }
+  const complete = scope === 'complete' ? await completeReviewCheckouts(operation, request.copyContext.activeGitRoot)
+    : { checkouts: [], rootBinding: null };
   const requestedBase = request.reviewGitBase?.trim();
   const ownership = scope === 'selected' ? await operation.resolveAutomaticReviewGit(selection, request.reviewGitBase ?? null)
-    : { checkouts: completeCheckouts, pathIssues: [], base: !requestedBase || requestedBase.toLowerCase() === 'head' ? null : requestedBase };
+    : { checkouts: complete.checkouts, pathIssues: [], base: !requestedBase || requestedBase.toLowerCase() === 'head' ? null : requestedBase };
   if (ownership.checkouts.length && !operation.runtime.options.git) throw new WorkspaceFailure('gitNotConfigured');
   const plans: Plan[] = [];
   for (const checkout of ownership.checkouts) {
     operation.signal.throwIfAborted();
     try {
-      const repository = await resolveDiffRepository(operation, checkout.identity.root, { kind: 'elected', checkout: checkout.identity });
+      const repository = await resolveCheckoutRepository(operation, checkout, scope);
       const valid = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: [checkout.identity] });
       if (!valid.valid) throw new WorkspaceFailure('gitRepositoryChanged');
-      const line = async (args: readonly string[]) => {
-        const result = await gitProcess(operation.runtime.supervisor, repository.executable,
-          repository.repository.worktree.canonicalPath, args, operation.signal, { kind: 'repository' });
-        if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
-        const text = gitText(result.bytes);
-        if (!text.endsWith('\n')) throw new WorkspaceFailure('gitProtocolError');
-        return text.slice(0, -1);
-      };
-      const head = await resolveGitCommit('HEAD', line);
-      const base = ownership.base === null ? head : await line(['merge-base', head, await resolveGitCommit(ownership.base, line)]);
-      if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(base)) throw new WorkspaceFailure('gitProtocolError');
-      const commands = await prepareGitDiffComparison(operation, diffRequest(checkout.identity.root, base), repository);
-      plans.push({ kind: 'ready', checkout, owner: repository, commands, comparison: { head, base } });
+      const comparison = await reviewComparison(operation, repository, ownership.base);
+      const commands = await prepareGitDiffComparison(operation, diffRequest(checkout.identity.root, comparison.base), repository);
+      plans.push({ kind: 'ready', checkout, owner: repository, commands, comparison });
     } catch (error) {
       operation.signal.throwIfAborted();
       await operation.validateSourceRoot(checkout.identity.root);
@@ -94,11 +122,12 @@ export async function acquireSelectedReviewGit(operation: WorkspaceOperation, re
       plans.push({ kind: 'baseResolutionFailed', checkout });
     }
   }
-  return capturePlans(operation, plans, ownership.pathIssues, sourceRoots, scope);
+  return capturePlans(operation, plans, ownership.pathIssues, sourceRoots, scope, complete.rootBinding);
 }
 
 async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[],
-  pathIssues: AutomaticReviewGitEvidence['pathIssues'], sourceRoots: AutomaticReviewGitEvidence['sourceRoots'], scope: AutomaticReviewGitEvidence['scope']): Promise<AutomaticReviewGitCapture> {
+  pathIssues: AutomaticReviewGitEvidence['pathIssues'], sourceRoots: AutomaticReviewGitEvidence['sourceRoots'],
+  scope: AutomaticReviewGitEvidence['scope'], rootBinding: AutomaticReviewGitEvidence['rootBinding']): Promise<AutomaticReviewGitCapture> {
   const outcomes: Outcome[] = [];
   for (const plan of plans) {
     operation.signal.throwIfAborted();
@@ -120,7 +149,7 @@ async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[
   operation.signal.throwIfAborted();
   let diffIndex = 0;
   const bytes = Buffer.from(result.text ?? '');
-  const evidence: AutomaticReviewGitEvidence = { completeness: result.completeness, scope, pathIssues, sourceRoots,
+  const evidence: AutomaticReviewGitEvidence = { completeness: result.completeness, scope, rootBinding, pathIssues, sourceRoots,
     outcomes: result.outcomes.map((outcome, index) => {
       if (outcome.kind === 'baseResolutionFailed') return { kind: outcome.kind, checkout: outcome.checkout };
       const plan = plans[index]!;
@@ -142,17 +171,18 @@ export async function revalidateCapturedAutomaticReviewGit(operation: WorkspaceO
   for (const outcome of captured.evidence.outcomes) {
     const checkout = outcome.checkout;
     if (outcome.kind === 'baseResolutionFailed') { plans.push(outcome); continue; }
-    const owner = await resolveDiffRepository(operation, checkout.identity.root, { kind: 'elected', checkout: checkout.identity });
+    const owner = await resolveCheckoutRepository(operation, checkout, captured.evidence.scope);
     const valid = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: [checkout.identity] });
     if (!valid.valid) throw new WorkspaceFailure('gitRepositoryChanged');
     const commands = await prepareGitDiffComparison(operation, diffRequest(checkout.identity.root, outcome.comparison.base), owner);
     plans.push({ kind: 'ready', checkout, owner, commands, comparison: outcome.comparison });
   }
-  const current = await capturePlans(operation, plans, captured.evidence.pathIssues, captured.evidence.sourceRoots, captured.evidence.scope);
+  const current = await capturePlans(operation, plans, captured.evidence.pathIssues, captured.evidence.sourceRoots,
+    captured.evidence.scope, captured.evidence.rootBinding);
   if (canonicalJSON(current) !== canonicalJSON(captured)) throw new WorkspaceFailure('automaticGitChanged');
 }
 
-export async function revalidateAutomaticReviewGit(operation: WorkspaceOperation, request: ContextBuildRequest,
+export async function revalidateAutomaticReviewGit(operation: WorkspaceOperation, request: CapturedContextBuildRequest,
   selections: readonly SourceSelection[], captured: AutomaticReviewGitCapture | null, unavailableRoots: readonly UnavailableRoot[]): Promise<void> {
   if (captured === null) return;
   const current = await acquireAutomaticReviewGit(operation, request, selections, unavailableRoots, captured.evidence.scope);

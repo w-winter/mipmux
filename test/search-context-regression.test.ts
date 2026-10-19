@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -9,7 +10,7 @@ test('dense overlapping context emits each source line once with linear selectio
   await mkdir('test-output', { recursive: true });
   const base = await mkdtemp(join(tmpdir(), 'smip-search-context-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const measurements: { lines: number; numericSetInsertions: number; durationMs: number }[] = [];
   try {

@@ -11,6 +11,7 @@ import { WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall, scopedGitCall, scopedReadCall } from '../discovery/scoped-tools.js';
 import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
 import type { ClientQuestionResponse } from '../contracts/interaction.js';
+import { listPromptPresets } from '../context/prompt-presets.js';
 
 type ExplorationCall = Exclude<DiscoveryCall, { name: 'ask_user' | 'draft_inspect' | 'draft_update' | 'draft_validate' | 'draft_preview' | 'prompt' | 'manage_selection' }>;
 interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRuntime }
@@ -84,7 +85,9 @@ export class ClientRuntime {
     const { draft } = this.#manual(id);
     return this.#track(signal, combined => draft.preview(request, combined, encode));
   }
-  prompt(id: string, request: Parameters<DraftRuntime['prompt']>[0], signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+  prompt(id: string | null, request: Parameters<DraftRuntime['prompt']>[0], signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
+    if (request.op === 'list_presets') return this.#track(signal, combined => listPromptPresets(this.runtime, combined, request.maxOutputBytes, encode));
+    if (id === null) throw new WorkspaceFailure('draftRequired');
     const { draft } = this.#manual(id);
     return this.#track(signal, combined => draft.prompt(request, combined, encode));
   }

@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
@@ -23,7 +24,7 @@ test('numeric assembly budget remains the packet limit while scout input receive
     throw new WorkspaceFailure('fixtureBudgetObserved');
   } };
   const contextBudgetUnits = 200000;
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits, credentialPaths: [],
     terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
   try {

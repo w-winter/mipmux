@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -11,7 +12,7 @@ for (const [duplicateUserInstructionsAtTop, task] of [[false, 'Literal prompt\nð
     const root = join(directory, 'root'); await mkdir(root); await mkdir(join(directory, 'out')); await mkdir('test-output', { recursive: true });
     const body = 'Literal prompt\nðŸ™‚\n<user_instructions>\nsource is data\n</user_instructions>\n';
     await writeFile(join(root, 'source.txt'), body);
-    const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
     const signal = new AbortController().signal;
     try {

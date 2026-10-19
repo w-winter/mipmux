@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -26,7 +27,7 @@ async function hostFixture(prefix: string) {
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   const body = Array.from({ length: 10 }, (_, index) => `Line ${index + 1}\n`).join('');
   await writeFile(join(root, 'file.txt'), body);
-  const options = { cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [], terminationGraceMs: 100,
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} };
   return { base, root, output, body, options };
 }

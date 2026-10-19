@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -19,7 +20,7 @@ test('required full source, complete report and patch reach verified output; sta
   await writeFile(join(root, 'model.swift'), body);
   await writeFile(join(root, 'empty.txt'), '');
   const runtime = new SmipRuntime({
-    cachePath: join(base, 'cache'),
+    copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

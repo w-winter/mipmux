@@ -13,7 +13,7 @@ export const FileTreeMode = Type.Enum(['Auto', 'Full', 'Selected', 'None']);
 export const CodeMapUsage = Type.Enum(['none', 'auto', 'selected', 'complete']);
 export const GitInclusion = Type.Enum(['none', 'selected', 'complete']);
 const nullable = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()]);
-export const ManualClipboardPreset = Type.Object({ kind: Type.Literal('manual'),
+export const CopyContext = Type.Object({
   current: Type.Object({ fileTreeMode: FileTreeMode, codeMapUsage: CodeMapUsage,
     gitInclusion: Type.Enum(['none', 'selectedFiles', 'all']) }, closed),
   customizations: Type.Object({ includeFiles: nullable(Type.Boolean()), includeUserPrompt: nullable(Type.Boolean()),
@@ -21,33 +21,29 @@ export const ManualClipboardPreset = Type.Object({ kind: Type.Literal('manual'),
     codeMapUsage: nullable(CodeMapUsage), gitInclusion: nullable(GitInclusion) }, closed),
   codeMapsGloballyDisabled: Type.Boolean(), selectedPromptIds: Type.Array(Type.String({ format: 'uuid' })),
   activeGitRoot: nullable(Type.String({ pattern: '^[A-Za-z][A-Za-z0-9_-]*$' })),
+  presets: Type.Array(Type.Object({ id: Type.String({ format: 'uuid' }), name: Type.String(),
+    builtInKind: nullable(Type.Enum(['standard', 'plan', 'manual', 'diffFollowUp', 'codeReview'])),
+    description: nullable(Type.String()), icon: nullable(Type.String()), isBuiltIn: Type.Boolean(),
+    includeFiles: nullable(Type.Boolean()), includeUserPrompt: nullable(Type.Boolean()), includeMetaPrompts: nullable(Type.Boolean()),
+    includeFileTree: nullable(Type.Boolean()), fileTreeMode: nullable(FileTreeMode), codeMapUsage: nullable(CodeMapUsage),
+    gitInclusion: nullable(GitInclusion), storedPromptIds: nullable(Type.Array(Type.String({ format: 'uuid' }))), notes: nullable(Type.String()) }, closed)),
 }, closed);
-export type ManualClipboardPreset = Static<typeof ManualClipboardPreset>;
-export const ClipboardPreset = Type.Union([Type.Enum(['standard', 'plan', 'diffFollowUp', 'codeReview']), ManualClipboardPreset]);
+export type CopyContext = Static<typeof CopyContext>;
+export const RawCopyPreset = CopyContext.properties.presets.items;
+export type RawCopyPreset = Static<typeof RawCopyPreset>;
+export const ClipboardPreset = Type.Union([Type.String(), Type.Object({ id: Type.Optional(Type.String()),
+  kind: Type.Optional(Type.String()), name: Type.Optional(Type.String()) }, closed)]);
 export type ClipboardPreset = Static<typeof ClipboardPreset>;
-export function manualCopySettings(preset: ClipboardPreset): ManualClipboardPreset | null {
-  switch (preset) {
-    case 'standard': case 'plan': case 'diffFollowUp': case 'codeReview': return null;
-    default: return preset;
-  }
-}
 export const StoredPrompt = Type.Object({ id: Type.String({ format: 'uuid' }), title: Type.String(), content: Type.String() }, closed);
 export type StoredPrompt = Static<typeof StoredPrompt>;
-// Stable stored-prompt UUIDs from BuiltInCopyPresets at the pinned RPCE revision.
-const architectStoredPromptID = '8e81aac2-79ce-4897-a59e-efd81eebb7e9';
-const reviewStoredPromptID = 'd7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b';
 /** Exact source preset projection accepted from native assembly and archived manifests. */
-export const CapturedClipboardPreset = Type.Union([
-  Type.Object({ kind: Type.Literal('manual'), gitInclusion: GitInclusion, includeFiles: Type.Boolean(),
+export const CapturedClipboardPreset = Type.Object({ raw: RawCopyPreset, gitInclusion: GitInclusion, includeFiles: Type.Boolean(),
     includeUserPrompt: Type.Boolean(), includeMetaPrompts: Type.Boolean(), includeFileTree: Type.Boolean(),
-    fileTreeMode: FileTreeMode, codeMapUsage: CodeMapUsage, storedPromptIds: Type.Null() }, closed),
-  Type.Object({ kind: Type.Literal('standard'), gitInclusion: Type.Literal('none'),
-    includeMetaPrompts: Type.Literal(false), storedPromptIds: Type.Tuple([]) }, closed),
-  Type.Object({ kind: Type.Literal('plan'), gitInclusion: Type.Literal('none'), includeMetaPrompts: Type.Literal(true),
-    storedPromptIds: Type.Tuple([Type.Literal(architectStoredPromptID)]) }, closed),
-  Type.Object({ kind: Type.Literal('diffFollowUp'), gitInclusion: Type.Literal('selected'), includeMetaPrompts: Type.Literal(false),
-    storedPromptIds: Type.Null() }, closed),
-  Type.Object({ kind: Type.Literal('codeReview'), gitInclusion: Type.Literal('selected'), includeMetaPrompts: Type.Literal(true),
-    storedPromptIds: Type.Tuple([Type.Literal(reviewStoredPromptID)]) }, closed),
-]);
+    fileTreeMode: FileTreeMode, codeMapUsage: CodeMapUsage,
+    storedPromptIds: nullable(Type.Array(Type.String({ format: 'uuid' }))) }, closed);
 export type CapturedClipboardPreset = Static<typeof CapturedClipboardPreset>;
+
+export function usesPresetPresentation(preset: CapturedClipboardPreset): boolean {
+  return preset.raw.builtInKind === 'manual' || preset.raw.builtInKind === null ||
+    preset.codeMapUsage !== 'auto' || !preset.includeFiles || !preset.includeFileTree || preset.fileTreeMode !== 'Auto';
+}

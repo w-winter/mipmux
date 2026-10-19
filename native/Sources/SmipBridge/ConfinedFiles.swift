@@ -7,7 +7,7 @@ import RepoPromptCodeMapCore
     import Glibc
 #endif
 
-private final class Descriptor {
+final class Descriptor {
     let value: Int32
     private var closed = false
     init(_ value: Int32) throws {
@@ -346,6 +346,16 @@ final class ConfinedFiles {
         return ["kind": "exportOpened", "run": NativeHandle(generation: generation, id: id).json]
     }
 
+    func writePromptExport(_ handle: NativeHandle, path: String, bytes: Data) throws -> [String: Any] {
+        let root = try lookupRoot(handle)
+        guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
+        let parts = try components(path)
+        let parent = try traverse(root.directory.value, components: Array(parts.dropLast()))
+        try validate(root)
+        try AtomicFile.create(parent.value, filename: parts.last!, bytes: bytes)
+        return ["kind": "promptExportWritten", "identity": Extraction.identity(bytes).json]
+    }
+
     func resolveGitSnapshotID(_ handle: NativeHandle, repoKey: String, snapshotID: String?) throws -> [String: Any] {
         let root = try lookupRoot(handle)
         guard root.access == "output" else { throw BridgeFailure("invalidOutputCapability") }
@@ -404,7 +414,7 @@ final class ConfinedFiles {
         let pointer: [String: Any]
         if symlinkat(snapshotID, repository.value, "CURRENT") != 0 {
             let failure = errno
-            try writeAtomic(repository.value, filename: "CURRENT", bytes: Data(snapshotID.utf8))
+            try AtomicFile.replace(repository.value, filename: "CURRENT", bytes: Data(snapshotID.utf8))
             pointer = ["kind": "file", "symlinkErrno": failure]
         } else {
             pointer = ["kind": "symlink"]
@@ -512,7 +522,7 @@ final class ConfinedFiles {
         let run = try lookupSnapshotRun(handle)
         let parts = try components(path), directories = Array(parts.dropLast()), leaf = parts[parts.count - 1]
         let parent = try createDirectories(run.directory.value, components: directories)
-        try writeAtomic(parent.value, filename: leaf, bytes: bytes)
+        try AtomicFile.replace(parent.value, filename: leaf, bytes: bytes)
         try validate(run)
         let current = try traverse(run.directory.value, components: directories)
         let previousInfo = try status(parent.value), currentInfo = try status(current.value)
@@ -536,7 +546,7 @@ final class ConfinedFiles {
         let run = try lookupRun(handle)
         let file = try Descriptor(openat(run.directory.value, filename, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600))
         do {
-            try writeBytes(bytes, descriptor: file.value)
+            try AtomicFile.writeBytes(bytes, descriptor: file.value)
             guard fsync(file.value) == 0 else { throw ioFailure() }
             try file.finish()
             try validate(run)
@@ -592,7 +602,7 @@ final class ConfinedFiles {
             write: { name, bytes in
                 try self.validate(root)
                 let directory = try traverse(root.directory.value, components: ["_git_data"])
-                try self.writeAtomic(directory.value, filename: name.rawValue, bytes: bytes)
+                try AtomicFile.replace(directory.value, filename: name.rawValue, bytes: bytes)
             },
             remove: { name in
                 try self.validate(root)
@@ -817,34 +827,6 @@ final class ConfinedFiles {
         }
     }
 
-    private func writeBytes(_ bytes: Data, descriptor: Int32) throws {
-        try bytes.withUnsafeBytes { buffer in
-            var offset = 0
-            while offset < buffer.count {
-                let written = write(descriptor, buffer.baseAddress!.advanced(by: offset), buffer.count - offset)
-                if written < 0, errno == EINTR { continue }
-                guard written > 0 else { throw ioFailure() }
-                offset += written
-            }
-        }
-    }
-
-    private func writeAtomic(_ parent: Int32, filename: String, bytes: Data) throws {
-        var existing = stat()
-        if fstatat(parent, filename, &existing, AT_SYMLINK_NOFOLLOW) == 0 {
-            guard existing.st_mode & mode_t(S_IFMT) != mode_t(S_IFLNK) else { throw BridgeFailure("symlink") }
-            guard existing.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw BridgeFailure("nonRegularFile") }
-        } else if errno != ENOENT { throw ioFailure() }
-        let temporary = ".snapshot-" + UUID().uuidString
-        let file = try Descriptor(openat(parent, temporary,
-                                        O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600))
-        defer { unlinkat(parent, temporary, 0) }
-        try writeBytes(bytes, descriptor: file.value)
-        guard fsync(file.value) == 0 else { throw ioFailure() }
-        try file.finish()
-        guard renameat(parent, temporary, parent, filename) == 0, fsync(parent) == 0 else { throw ioFailure() }
-    }
-
     private func readChunks(_ fd: Int32, body: (Data) throws -> Void) throws {
         var buffer = [UInt8](repeating: 0, count: readChunkBytes)
         while true {
@@ -975,7 +957,7 @@ private func fingerprint(_ fd: Int32) throws -> DescriptorFingerprint {
                                  changedSeconds: String(changed.tv_sec), changedNanoseconds: Int(changed.tv_nsec))
 }
 
-private func ioFailure() -> BridgeFailure {
+func ioFailure() -> BridgeFailure {
     let number = errno
     let code = switch number {
     case ENOENT: "notFound"

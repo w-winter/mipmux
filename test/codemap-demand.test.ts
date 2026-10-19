@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, realpath, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -16,14 +17,13 @@ const readinessReferences = Compile(Type.Array(Type.Object({ name: Type.String()
   statuses: Type.Array(Type.Enum(['ready', 'pending'])), afterPresentationRelease: Type.Array(Type.Object({ workCompleted: Type.Boolean() })) })));
 const referenceCases = readinessReferences.Parse(JSON.parse(await readFile('test/fixtures/rpce-readiness-observer/expected.json', 'utf8')));
 
-for (const copyPreset of ['diffFollowUp', { kind: 'manual', current: { fileTreeMode: 'None', codeMapUsage: 'none', gitInclusion: 'none' },
-  customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null, includeFileTree: null, fileTreeMode: null,
-    codeMapUsage: null, gitInclusion: null }, codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null }] as const) {
+for (const copyPreset of ['diffFollowUp', 'manual'] as const) {
 test(`${copyPreset === 'diffFollowUp' ? 'Diff Follow-Up' : 'Manual none'} publishes while an excluded optional codemap has independently retained demand`, async () => {
   const request = contextRequestValidator.Parse({ task: 'Discuss changes', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
     duplicateUserInstructionsAtTop: false, copyPreset, budgetUnits: 100000, discoveryHints: [], outputName: 'diff-follow-up' });
-  const f = await fixture(), operation = await f.owner.openOperation(new AbortController().signal);
+  const settings = copyContext(); settings.current.fileTreeMode = 'None'; settings.current.codeMapUsage = 'none';
+  const f = await fixture('held', null, settings), operation = await f.owner.openOperation(new AbortController().signal);
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lease: Awaited<ReturnType<typeof operation.requestExplicitCodemap>> | null = null;
   try {
@@ -50,29 +50,30 @@ test(`${copyPreset === 'diffFollowUp' ? 'Diff Follow-Up' : 'Manual none'} publis
 });
 }
 
-test('Manual complete exact-demand cancellation joins extraction and prevents publication', async () => {
+for (const operationKind of ['finalize', 'export'] as const) test(`Manual complete ${operationKind} cancellation joins extraction and prevents publication`, async () => {
   const request = contextRequestValidator.Parse({ task: 'Inspect complete codemaps', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
     initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
-    duplicateUserInstructionsAtTop: false, copyPreset: { kind: 'manual', current: { fileTreeMode: 'None', codeMapUsage: 'complete', gitInclusion: 'none' },
-      customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null, includeFileTree: null, fileTreeMode: null,
-        codeMapUsage: null, gitInclusion: null }, codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null },
+    duplicateUserInstructionsAtTop: false, copyPreset: operationKind === 'finalize' ? 'manual' : 'standard',
     budgetUnits: 100000, discoveryHints: [], outputName: 'cancelled-manual' });
-  const f = await fixture();
+  const settings = copyContext(); settings.current.fileTreeMode = 'None'; settings.current.codeMapUsage = 'complete';
+  const f = await fixture('held', null, settings);
   const operation = await f.owner.openOperation(new AbortController().signal);
   try {
     const draft = await f.owner.createDraft(request, new AbortController().signal), controller = new AbortController();
     await operation.registerExplicitSource(f.source);
-    const finalizing = draft.finalize(controller.signal);
+    const finalizing = operationKind === 'finalize' ? draft.finalize(controller.signal)
+      : draft.prompt({ op: 'export', copy_preset: 'manual', path: 'cancelled-manual.md', maxOutputBytes: 100000 }, controller.signal);
     await Promise.race([f.entering, finalizing.then(() => { throw new Error('Demand settled before extraction'); })]);
     const rejected = assert.rejects(finalizing, /abort|cancel/i);
     controller.abort(); f.release(); await rejected;
     assert.equal(draft.revision, 0); assert.deepEqual(draft.selectionProjection().sources, []);
     await assert.rejects(readFile(join(f.base, 'out/cancelled-manual/manifest.json')), /ENOENT/);
+    await assert.rejects(readFile(join(f.base, 'out/cancelled-manual.md')), /ENOENT/);
   } finally { f.release(); await operation.close(); await f.runtime.close(); }
 });
 
 async function fixture(outcome: 'held' | 'failFirst' = 'held',
-  beforeRead: ((request: Extract<NativeOperation, { kind: 'readSource' }>) => Promise<void>) | null = null) {
+  beforeRead: ((request: Extract<NativeOperation, { kind: 'readSource' }>) => Promise<void>) | null = null, settings = copyContext()) {
   const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-codemap-demand-')));
   const root = join(base, 'source'), output = join(base, 'out');
   await mkdir(join(root, 'private'), { recursive: true }); await mkdir(output);
@@ -97,7 +98,7 @@ async function fixture(outcome: 'held' | 'failFirst' = 'held',
       return new Bridge({ executable: this.options.nativeExecutable, env: this.options.nativeEnvironment, supervisor: this.supervisor });
     }
   }
-  const runtime = new Runtime({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new Runtime({ copyContext: settings, cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const owner = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, new AbortController().signal);
   await owner.refresh(new AbortController().signal);

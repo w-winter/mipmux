@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -21,7 +22,7 @@ async function fixture() {
   const root = join(directory, 'source'), outputRoot = join(directory, 'out');
   await mkdir(root); await mkdir(outputRoot);
   const runtime = new SmipRuntime({
-    cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
+    copyContext: copyContext(), cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
     credentialPaths: [], nativeEnvironment: {},
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
   });

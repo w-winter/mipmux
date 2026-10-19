@@ -1,22 +1,42 @@
 import type { Manifest, ManualPresentation, SourceSelection } from '../contracts/context.js';
-import { manualCopySettings, type CapturedClipboardPreset, type ManualClipboardPreset } from '../contracts/presentation.js';
+import { usesPresetPresentation, type CapturedClipboardPreset, type CopyContext, type RawCopyPreset } from '../contracts/presentation.js';
 import type { Material } from './material-store.js';
 import { codemapRepresentation, sourceId } from './material-store.js';
 import { canonicalJSON, compareBytes, WorkspaceFailure } from '../workspace/values.js';
 
-type ResolvedManualPreset = Extract<CapturedClipboardPreset, { kind: 'manual' }>;
+type ResolvedManualPreset = CapturedClipboardPreset;
 type SourceRecord = Extract<Material['record'], { kind: 'source' }>;
 
 function invalid(): never { throw new WorkspaceFailure('bundleIntegrityFailed'); }
 
-function verifyResolvedSettings(request: ManualClipboardPreset, cfg: ResolvedManualPreset): void {
-  const custom = request.customizations;
-  const usage = request.codeMapsGloballyDisabled ? 'none' : request.current.codeMapUsage;
-  const git = custom.gitInclusion ?? (request.current.gitInclusion === 'all' ? 'complete' : request.current.gitInclusion === 'selectedFiles' ? 'selected' : 'none');
-  if (canonicalJSON(cfg) !== canonicalJSON({ kind: 'manual', includeFiles: custom.includeFiles ?? true,
-    includeUserPrompt: custom.includeUserPrompt ?? true, includeMetaPrompts: custom.includeMetaPrompts ?? true,
-    includeFileTree: custom.includeFileTree ?? true, fileTreeMode: custom.fileTreeMode ?? request.current.fileTreeMode,
-    codeMapUsage: usage, gitInclusion: git, storedPromptIds: null })) invalid();
+function archivedCodeMapUsage(context: CopyContext, raw: RawCopyPreset, manual: boolean): CapturedClipboardPreset['codeMapUsage'] {
+  if (context.codeMapsGloballyDisabled) return 'none';
+  return manual ? context.current.codeMapUsage : raw.codeMapUsage ?? context.current.codeMapUsage;
+}
+
+function archivedGitInclusion(context: CopyContext, raw: RawCopyPreset, manual: boolean): CapturedClipboardPreset['gitInclusion'] {
+  const custom = manual ? context.customizations.gitInclusion : null;
+  if (custom !== null) return custom;
+  if (raw.gitInclusion !== null) return raw.gitInclusion;
+  if (!manual) return 'none';
+  switch (context.current.gitInclusion) {
+    case 'all': return 'complete';
+    case 'selectedFiles': return 'selected';
+    case 'none': return 'none';
+  }
+}
+
+function verifyResolvedSettings(manifest: Manifest, cfg: ResolvedManualPreset): void {
+  const context = manifest.request.copyContext, raw = cfg.raw;
+  const manual = raw.builtInKind === 'manual' || raw.id.toLowerCase() === '22222222-2222-2222-2222-222222222222';
+  const custom = manual ? context.customizations : null;
+  if (canonicalJSON(cfg) !== canonicalJSON({ raw, includeFiles: custom?.includeFiles ?? raw.includeFiles ?? true,
+    includeUserPrompt: custom?.includeUserPrompt ?? raw.includeUserPrompt ?? true,
+    includeMetaPrompts: custom?.includeMetaPrompts ?? raw.includeMetaPrompts ?? true,
+    includeFileTree: custom?.includeFileTree ?? raw.includeFileTree ?? true,
+    fileTreeMode: custom?.fileTreeMode ?? raw.fileTreeMode ?? context.current.fileTreeMode,
+    codeMapUsage: archivedCodeMapUsage(context, raw, manual), gitInclusion: archivedGitInclusion(context, raw, manual), storedPromptIds: raw.storedPromptIds })) invalid();
+  if (canonicalJSON(cfg) !== canonicalJSON(manifest.request.copyPreset)) invalid();
 }
 
 function verifyCanonicalSources(manifest: Manifest, proof: ManualPresentation) {
@@ -53,9 +73,9 @@ function verifyReadySources(manifest: Manifest, proof: ManualPresentation, cfg: 
   return ready;
 }
 
-function verifyDeliveredSource(record: SourceRecord, maps: ReadonlySet<string>, expected: ReadonlyMap<string, SourceSelection>, required: ReadonlySet<string>): void {
+function verifyDeliveredSource(record: SourceRecord, maps: ReadonlySet<string>, expected: ReadonlyMap<string, SourceSelection>, required: ReadonlySet<string>, inferred: boolean): void {
   if (maps.has(record.id)) {
-    if (record.selection.kind !== 'codemap' || record.selectionOrigin !== (required.has(record.id) ? 'explicit' : 'presentation')) invalid();
+    if (record.selection.kind !== 'codemap' || record.selectionOrigin !== (required.has(record.id) ? 'explicit' : inferred ? 'inferred' : 'presentation')) invalid();
   } else if (record.selectionOrigin !== 'explicit' || canonicalJSON(record.selection) !== canonicalJSON(expected.get(record.id))) invalid();
 }
 
@@ -72,20 +92,20 @@ function verifyDeliveredMaterials(manifest: Manifest, materials: readonly Materi
   if (canonicalJSON(actual.filter(record => record.selection.kind === 'codemap').map(record => record.id)) !== canonicalJSON(orderedMaps) ||
     canonicalJSON(actual.filter(record => record.selection.kind !== 'codemap').map(record => record.id)) !== canonicalJSON([...expected.keys()])) invalid();
   const required = new Set(manifest.request.requiredSources.filter(source => source.kind === 'codemap').map(source => sourceId(source.source)));
-  for (const record of actual) verifyDeliveredSource(record, maps, expected, required);
+  for (const record of actual) verifyDeliveredSource(record, maps, expected, required, manifest.codemapMode === 'automatic' && usage === 'auto');
   if (!cfg.includeFiles && materials.some(material => material.record.kind === 'document' || material.record.kind === 'gitMap')) invalid();
 }
 
 /** Checks captured native decisions and delivered representations using only archived inputs and inventory. */
 export function verifyManualPresentation(manifest: Manifest, materials: readonly Material[]): void {
-  const request = manualCopySettings(manifest.request.copyPreset), proof = manifest.manualPresentation;
-  if (request === null) {
+  const proof = manifest.manualPresentation;
+  const cfg = manifest.clipboardPreset;
+  verifyResolvedSettings(manifest, cfg);
+  if (!usesPresetPresentation(cfg)) {
     if (proof !== null || materials.some(material => material.record.kind === 'source' && material.record.selectionOrigin === 'presentation')) invalid();
     return;
   }
-  const cfg = manifest.clipboardPreset;
-  if (proof === null || cfg.kind !== 'manual') invalid();
-  verifyResolvedSettings(request, cfg);
+  if (proof === null) invalid();
   const sources = verifyCanonicalSources(manifest, proof);
   const requested = requestedSources(manifest, proof, cfg);
   const ready = verifyReadySources(manifest, proof, cfg, sources, requested);

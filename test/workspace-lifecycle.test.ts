@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, unlink } from 'node:fs/promises';
@@ -20,7 +21,7 @@ test('warming satisfies a later barrier, cancelled observers release only their 
   await writeFile(join(root, 'model.swift'), 'struct First {\n let value: String\n}');
   const entered = barrier(), resume = barrier();
   let blocked = false, extractions = 0;
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+  const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends SmipRuntime {
     override makeBridge() {
@@ -80,7 +81,7 @@ test('different declarations share pending extraction while public and operation
   await writeFile(join(base, 'root/shared.swift'), 'struct SharedRecord {\n let value: String\n}');
   const extractionEntered = barrier(), releaseExtraction = barrier(), secondRead = barrier();
   let extractions = 0, reads = 0;
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+  const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends SmipRuntime {
     override makeBridge() {
@@ -122,7 +123,7 @@ test('settled inventory distinguishes unavailable acquisition, decoding, unsuppo
   await writeFile(join(base, 'root/cases/invalid.swift'), Buffer.from([0xff, 0xfe, 0x00, 0xd8]));
   await writeFile(join(base, 'root/cases/empty.swift'), '');
   await writeFile(join(base, 'root/cases/note.txt'), 'unsupported');
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+  const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends SmipRuntime {
     override makeBridge() {
@@ -158,7 +159,7 @@ test('closing a held physical operation joins pending work and leaves a sibling 
   await writeFile(join(base, 'root/file.txt'), 'sibling body');
   const entered = barrier(), resume = barrier(), aborted = barrier();
   let hold = false;
-  const options: RuntimeOptions = { cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+  const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} };
   class Runtime extends SmipRuntime {
     override makeBridge() {
@@ -210,7 +211,7 @@ test('incomplete enumeration permits known-source exploration but refuses draft 
       return new Bridge({ executable: this.options.nativeExecutable, env: {}, supervisor: this.supervisor });
     }
   }
-  const runtime = new PartialRuntime({ cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+  const runtime = new PartialRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, credentialPaths: [] });
   const signal = new AbortController().signal;

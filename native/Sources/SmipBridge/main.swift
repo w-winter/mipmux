@@ -33,6 +33,8 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .filterSearchScope(input): input.render()
     case let .searchScope(input): await input.render()
     case let .renderPreparedClipboard(input): try input.render()
+    case let .copyPresetCatalog(input): input.render()
+    case let .writePromptExport(root, path, bytes): try files.writePromptExport(root, path: path, bytes: bytes)
     case let .planClipboardPresentation(input): await input.render()
     case let .renderClipboard(input): await input.render()
     case let .queryStructure(input): try input.render()

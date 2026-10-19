@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, readlink, readdir, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -29,7 +30,7 @@ test('workspace admission applies full snapshot maintenance and shutdown retains
     await writeFile(join(directory, 'MAP.txt'), name);
   }
   await symlink('old', join(output, '_git_data/repos/a/CURRENT'));
-  const options = { cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000 };
   const runtime = new SmipRuntime(options);
   try {
@@ -50,7 +51,7 @@ test('workspace admission applies full snapshot maintenance and shutdown retains
 
 test('a cancelled queued snapshot mutation does not bypass its predecessor', async () => {
   const base = await mkdtemp(join(tmpdir(), 'smip-snapshot-queue-')), output = join(base, 'out'); await mkdir(output);
-  const runtime = new SmipRuntime({ cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000 });
   const bridge = runtime.makeBridge(); let release!: () => void, entered!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; }), started = new Promise<void>(resolve => { entered = resolve; });

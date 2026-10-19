@@ -1,3 +1,4 @@
+import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -14,7 +15,7 @@ for (const [copyPreset, storedPrompts] of [
 ] as const) test(`copy preset ${copyPreset} selects only its captured stored prompt from ${storedPrompts.length} entries`, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'smip-copy-preset-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out')); await mkdir('test-output', { recursive: true });
-  const runtime = new SmipRuntime({ cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal;

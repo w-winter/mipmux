@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import type { CodemapMode, ContextBuildRequest, Manifest, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, CapturedContextBuildRequest, Manifest, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
@@ -16,7 +16,6 @@ import { revalidateCapturedAutomaticReviewGit, type AutomaticReviewGitCapture } 
 import { captureReferenceTokens, type ReferenceTokenView } from './reference-tokens.js';
 import type { CanonicalSelection } from './selection-preparation.js';
 import { captureUnavailableRoots, packetSources } from './source-omissions.js';
-import { manualCopySettings } from '../contracts/presentation.js';
 
 export type FinalizationResult =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -55,7 +54,7 @@ export class FinalizationOperation {
   }
   constructor(
     operation: WorkspaceOperation,
-    request: ContextBuildRequest,
+    request: CapturedContextBuildRequest,
     codemapMode: CodemapMode,
     prompt: string,
     canonical: CanonicalSelection,
@@ -85,7 +84,7 @@ export class FinalizationOperation {
   }
   async #run(
     owner: WorkspaceOperation,
-    request: ContextBuildRequest,
+    request: CapturedContextBuildRequest,
     codemapMode: CodemapMode,
     prompt: string,
     canonical: CanonicalSelection,
@@ -120,9 +119,7 @@ export class FinalizationOperation {
         this.#capturedReferenceTokens = await captureReferenceTokens(operation, input, canonical);
         return { materials: input.materials, automaticAcquisition: input.automaticAcquisition, inventory: input.inventory, input, rendered: renderBundle(input) };
       };
-      const manual = manualCopySettings(request.copyPreset);
-      const candidate = request.copyPreset === 'diffFollowUp' || manual !== null &&
-        (manual.current.codeMapUsage !== 'auto' || manual.codeMapsGloballyDisabled) ? await assemble(this.#capturedPresentation)
+      const candidate = request.copyPreset.codeMapUsage !== 'auto' ? await assemble(this.#capturedPresentation)
         : await withCodemapPresentation(operation, codemapMode, performance.now(), () => prepare(operation, unavailableRoots), assemble);
       const { materials, automaticAcquisition, inventory, input, rendered } = candidate;
       if (automaticAcquisition.kind === 'pending' || rendered.diagnostics.length) {
@@ -135,7 +132,7 @@ export class FinalizationOperation {
         };
       }
       const manifest: Manifest = {
-        schemaVersion: 22,
+        schemaVersion: 23,
         manualPresentation: input.manualPresentation,
         codemapMode,
         automaticCodemaps: [...automaticAcquisition.outcomes],

@@ -54,6 +54,12 @@ Importing `smip` starts no processes and creates no storage. Construct `SmipRunt
 import { SmipRuntime } from 'smip';
 
 const runtime = new SmipRuntime({
+  copyContext: {
+    current: { fileTreeMode: 'Auto', codeMapUsage: 'auto', gitInclusion: 'none' },
+    customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null,
+      includeFileTree: null, fileTreeMode: null, codeMapUsage: null, gitInclusion: null },
+    codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null, presets: [],
+  },
   contextBudgetUnits: 200000,
   cachePath: '/var/tmp/private-smip-cache',
   nativeExecutable: '/opt/smip/libexec/darwin-arm64/SmipBridge',
@@ -144,9 +150,11 @@ Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `meta
 
 Set `includeDatetimeInUserInstructions` to true to add the native local datetime to each nonempty user-instruction block. The default is false. Repeated blocks share one timestamp, and its bytes count toward the budget. Saved packets retain that timestamp; current verification compares the remaining presentation independently of the clock.
 
-`copyPreset` selects `standard`, `plan`, `diffFollowUp` or `codeReview`. Standard includes ordinary context. Plan selects the saved architect prompt with ID `8e81aac2-79ce-4897-a59e-efd81eebb7e9`; Review selects ID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b`. Supply the complete matching role in `storedPrompts`, an array of `{ id, title, content }` entries. Diff Follow-Up delivers Git evidence, caller constraints and literal user instructions. Use optional source selections to set its Git scope; required sources or documents produce `copyPresetRequiredMaterialConflict`.
+`copyPreset` selects `standard`, `plan`, `manual`, `diffFollowUp` or `codeReview`, a UUID, or a preset name. An object with `id`, `kind` or `name` selects explicitly by those fields, in that priority. Kind lookup uses the original built-in; UUID and explicit-name lookup use the configured catalog with built-in overrides. Standard includes ordinary context. Plan selects the saved architect prompt with ID `8e81aac2-79ce-4897-a59e-efd81eebb7e9`; Review selects ID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b`. Supply the complete matching role in `storedPrompts`, an array of `{ id, title, content }` entries. Diff Follow-Up delivers Git evidence, caller constraints and literal user instructions. Use optional source selections to set its Git scope; required sources or documents produce `copyPresetRequiredMaterialConflict`.
 
-For Manual, supply a `copyPreset` object with `kind: "manual"`, captured current settings, workspace overrides, selected saved-prompt IDs and an active Git root. The [Manual request example](docs/context-protocol.md#manual-copy-settings) lists every field. Manual supports no codemaps, automatic related maps, selected-file maps or complete maps across all declared roots. Selected-file mode can replace directly selected bodies with maps; slice-only entries retain their slices. Required bodies that a setting would exclude or replace return `copyPresetRequiredMaterialConflict`.
+The required runtime or host `copyContext` configures current settings, Manual working-copy overrides, selected saved-prompt IDs, an active Git root and preset records. Each draft captures that context at admission. The [copy settings example](docs/context-protocol.md#copy-settings-and-presets) lists every field. Manual supports no codemaps, automatic related maps, selected-file maps or complete maps across all declared roots. Selected-file mode can replace directly selected bodies with maps; slice-only entries retain their slices. Required bodies that a setting would exclude or replace return `copyPresetRequiredMaterialConflict`.
+
+Use `prompt` with `input: { op: "list_presets" }` to list the raw configured catalog; no draft is needed. Use `input: { op: "export", path: "interim.md", copy_preset: "manual" }` and the owning `draftId` to write a complete UTF-8 context file under the declared output root. `copy_preset` is optional and applies only to that export. Existing files and symlink destinations are rejected. The draft remains inspectable, editable and finalizable. Cancellation before writing creates no destination; cancellation after a successful write can leave the complete file while returning cancellation.
 
 Manual complete Git uses the explicit `activeGitRoot` and already-local comparison refs. A null root produces no complete diff. Missing local refs fail explicitly. Refresh remote-tracking refs yourself before requesting a comparison that needs them. Nonblank selected patch artifacts take precedence over both selected and complete Git acquisition.
 
@@ -198,6 +206,17 @@ Host configuration uses this shape. The numbers are example host choices, not mo
 
 ```json
 {
+  "copyContext": {
+    "current": { "fileTreeMode": "Auto", "codeMapUsage": "auto", "gitInclusion": "none" },
+    "customizations": {
+      "includeFiles": null, "includeUserPrompt": null, "includeMetaPrompts": null,
+      "includeFileTree": null, "fileTreeMode": null, "codeMapUsage": null, "gitInclusion": null
+    },
+    "codeMapsGloballyDisabled": false,
+    "selectedPromptIds": [],
+    "activeGitRoot": null,
+    "presets": []
+  },
   "cachePath": "/var/tmp/private-smip-cache",
   "nativeExecutable": "/opt/smip/libexec/darwin-arm64/SmipBridge",
   "nativeEnvironment": { "REPOPROMPT_PCRE2_JIT": "auto" },
