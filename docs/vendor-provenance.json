@@ -7593,9 +7593,10 @@
         "Compute source component totals from captured full/sliced bodies, rendered codemaps, authorized Git artifacts and native-resolved prompt/meta text. Captured, incomplete and unavailable observations replace the desktop cache for tab accounting.",
         "Preview uses proposed file totals with canonical selection for tree markers and Git candidates. Token-tree markers use the current codemap presentation. Resolve Git from canonical catalog files; artifact and unresolved paths use original unresolved-selection diagnostics under the confined root binding.",
         "Acquire token Git independently of selected export patches. Finalization retains its observation for terminal inspection after releasing the workspace lease. Complete-packet measurement remains the budget authority, and the export Git capture remains separate.",
-        "Record files as an incomplete component when optional full/slice bodies are omitted; terminal measurement remains the exact delivered packet."
+        "Record files as an incomplete component when optional full/slice bodies are omitted; terminal measurement remains the exact delivered packet.",
+        "Token-tree rendering honors captured includeFileTree, effective Full/Selected/Auto/None mode and global codemap-marker settings. Match canonical selection paths through their captured normalized root bindings, then translate known Git candidates to admitted physical root paths before acquisition. Canonical candidate order and unresolved diagnostics remain preserved."
       ],
-      "sha256": "51072e39f2a238657647f64a2041d16dede0850172a941b57689a2af69142d1a"
+      "sha256": "f003858a9bad03feb856c279d160f4af783422383be95db2e592731a42e5c192"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",

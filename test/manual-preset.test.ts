@@ -242,6 +242,29 @@ test('Manual selected replaces directly selected slices with a map and clears th
   } finally { await f.runtime.close(); }
 });
 
+test('Manual component tree costs follow captured inclusion, mode and global marker settings', async () => {
+  for (const scenario of [
+    { mode: 'None', include: null, disabled: false },
+    { mode: 'Selected', include: null, disabled: false },
+    { mode: 'Full', include: null, disabled: false },
+    { mode: 'Full', include: false, disabled: false },
+    { mode: 'Full', include: null, disabled: true },
+  ] as const) {
+    const context = manual('none', scenario.mode);
+    context.customizations.includeFileTree = scenario.include;
+    context.codeMapsGloballyDisabled = scenario.disabled;
+    const f = await fixture(context);
+    try {
+      const draft = await f.workspace.createDraft(f.request, signal());
+      const costs = await draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
+      assert(costs.kind === 'costs');
+      const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
+      assert.equal(costs.token_stats?.file_tree ?? 0, Math.floor(ready.manifest.fileTree.span.length * 21 / 80),
+        JSON.stringify(scenario));
+    } finally { await f.runtime.close(); }
+  }
+});
+
 test('Manual preview measures the proposed direct selection and leaves canonical membership unchanged', async () => {
   const f = await fixture(manual('selected', 'None'));
   try {

@@ -28,10 +28,12 @@ function fileTokens(input: RenderInput) {
   return totals;
 }
 
-function tokenTreeInput(input: RenderInput, selectedPaths: ReadonlySet<string>): Extract<NativeOperation, { kind: 'renderFileTree' }> {
+function tokenTreeInput(input: RenderInput, selectedPaths: ReadonlySet<string>,
+  roots: ReadonlyMap<string, string>): Extract<NativeOperation, { kind: 'renderFileTree' }> | null {
+  const preset = input.clipboardPreset;
+  if (!preset.includeFileTree || preset.fileTreeMode === 'None') return null;
   const maps = new Set(input.materials.flatMap(material => material.record.kind === 'source' &&
     material.record.selection.kind === 'codemap' && material.availability === 'settled' && material.bodies.length ? [material.record.id] : []));
-  const roots = new Map(input.inventory.roots.map(root => [root.name, root.identity.canonicalPath]));
   const entries = input.inventory.entries.flatMap<Extract<NativeOperation, { kind: 'renderFileTree' }>['entries'][number]>(entry => {
     if (entry.kind === 'directory') return entry.visibility === 'discoverable' ? [{ kind: 'directory', root: entry.root, path: entry.path }] : [];
     if (entry.kind !== 'file' && entry.kind !== 'acquisitionFailed') return [];
@@ -40,8 +42,9 @@ function tokenTreeInput(input: RenderInput, selectedPaths: ReadonlySet<string>):
     return [{ kind: 'file', root: entry.root, path: entry.path, selected, hasCodeMap }];
   });
   return { kind: 'renderFileTree', roots: input.inventory.roots.map(root => ({ name: root.name, path: root.name })), entries,
-    scope: null, mode: 'auto', maxDepth: null, includeLegend: true, showFullPaths: false,
-    onlyIncludeRootsWithSelectedFiles: true, showCodeMapMarkers: true };
+    scope: null, mode: preset.fileTreeMode === 'Full' ? 'full' : preset.fileTreeMode === 'Selected' ? 'selected' : 'auto',
+    maxDepth: null, includeLegend: true, showFullPaths: false,
+    onlyIncludeRootsWithSelectedFiles: true, showCodeMapMarkers: !input.request.copyContext.codeMapsGloballyDisabled };
 }
 
 /** File totals use the proposed presentation; tree and Git use the captured canonical selection, including during preview. */
@@ -49,23 +52,30 @@ export async function captureReferenceTokens(operation: WorkspaceOperation, inpu
   const paths = [...new Set([...canonical.state.selectedPaths, ...Object.entries(canonical.state.slices)
     .filter(([, ranges]) => ranges.length).map(([path]) => path)])];
   const selectedPaths = new Set(paths);
-  const tree = await operation.runtime.renderPresentation(tokenTreeInput(input, selectedPaths), operation.signal);
+  const roots = new Map(canonical.roots.map(root => [root.name, root.selectionPath]));
+  const treeInput = tokenTreeInput(input, selectedPaths, roots);
+  let fileTreeText = '';
+  if (treeInput !== null) fileTreeText = (await operation.runtime.renderPresentation(treeInput, operation.signal)).tree;
   let gitText: string | null = null;
   if (input.clipboardPreset.gitInclusion === 'complete') gitText = input.automaticGit?.text ?? null;
   if (input.clipboardPreset.gitInclusion === 'selected') {
-    const roots = new Map(input.inventory.roots.map(root => [root.name, root.identity.canonicalPath]));
     const candidates = input.inventory.entries.filter(entry => entry.kind === 'file' && selectedPaths.has(posix.join(roots.get(entry.root)!, entry.path)));
     const availableRoots = new Set<string>();
     for (const root of new Set(candidates.map(entry => entry.root))) {
       if ((await operation.sourceRootAvailability(root)).kind === 'available') availableRoots.add(root);
     }
-    const files = new Set(candidates.filter(entry => availableRoots.has(entry.root)).map(entry => posix.join(roots.get(entry.root)!, entry.path)));
-    const git = await acquireSelectedReviewGit(operation, input.request, { paths: paths.filter(path => files.has(path)),
+    const physicalRoots = new Map(input.inventory.roots.map(root => [root.name, root.identity.canonicalPath]));
+    // Match normalized selection paths; acquire through the admitted physical roots.
+    const files = new Map(candidates.filter(entry => availableRoots.has(entry.root)).map(entry => [
+      posix.join(roots.get(entry.root)!, entry.path), posix.join(physicalRoots.get(entry.root)!, entry.path),
+    ]));
+    const git = await acquireSelectedReviewGit(operation, input.request, {
+      paths: paths.filter(path => files.has(path)).map(path => files.get(path)!),
       unresolvedCandidates: paths.filter(path => !files.has(path)) });
     gitText = git.text;
   }
   const result = await operation.runtime.renderPresentation({ kind: 'calculateTokenStats', files: fileTokens(input),
-    ...input.tokenInputs, fileTreeText: tree.tree, gitDiffText: gitText, metadataText: null,
+    ...input.tokenInputs, fileTreeText, gitDiffText: gitText, metadataText: null,
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop }, operation.signal);
   const pending = input.automaticAcquisition.kind === 'pending' || input.materials.some(material => material.availability !== 'settled');
   const omitted = [...input.unavailableRoots.flatMap(root => root.sources), ...input.unavailableFiles];

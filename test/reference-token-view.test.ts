@@ -85,6 +85,10 @@ test('reference preview uses proposed file totals and canonical tree and Git inp
     assert.equal(projected.token_stats.file_tree, before.token_stats.file_tree);
     assert.equal(projected.token_stats.git, before.token_stats.git); assert(before.token_stats.git);
     assert.equal(f.draft.revision, 0);
+    const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');
+    const gitSpan = ready.manifest.automaticGit?.span; assert(gitSpan);
+    const packet = await readFile(join(ready.directory, 'context.md'));
+    assert.equal(before.token_stats.git, units(packet.subarray(gitSpan.offset, gitSpan.offset + gitSpan.length).toString()));
     await mkdir('test-output', { recursive: true });
     await writeFile('test-output/reference-token-preview.json', JSON.stringify({ before, preview }, null, 2) + '\n');
   } finally { await f.draft.close(); await f.workspace.close(); await f.runtime.close(); }
