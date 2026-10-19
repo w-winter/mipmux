@@ -2,18 +2,29 @@ import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { controlledHttpMcp } from './fixtures/controlled-http-mcp.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DiscoveryReceipt } from '../src/contracts/discovery.js';
+import { Manifest } from '../src/contracts/context.js';
 
-test('local package audits resources and executes relocated library, native, CLI, MCP and discovery prompt', async () => {
+async function waitForSettlement(client: Client, jobId: string) {
+  const observation = Compile(Type.Object({ localSettled: Type.Boolean() }));
+  for (;;) {
+    const reply = await client.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 } });
+    const snapshot = observation.Parse(reply.structuredContent);
+    if (snapshot.localSettled) return reply;
+  }
+}
+
+test('local package audits resources and executes relocated library, native, CLI, MCP and discovery prompt', async t => {
   const directory = mkdtempSync(join(tmpdir(), 'smip-package-'));
   execFileSync(process.execPath, [resolve('scripts/package-local.mjs'), directory], { stdio: 'pipe' });
   const receipt = JSON.parse(readFileSync(join(directory, 'inventory.json'), 'utf8'));
@@ -38,11 +49,31 @@ test('local package audits resources and executes relocated library, native, CLI
   const command = join(packageRoot, 'dist/cli/main.js');
   writeFileSync(join(installed, 'import.mjs'), 'import {SmipRuntime, verifyBundle} from "smip"; if (typeof SmipRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
   execFileSync(process.execPath, [join(installed, 'import.mjs')], { cwd: '/' });
-  let requestInteraction = false, interactionCalls = 0;
-  const provider = await scriptedProvider(() => requestInteraction && interactionCalls++ === 0
-    ? { kind: 'tool', name: 'ask_user', input: { questions: [{ id: 'scope', question: 'Which context?', options: ['API', 'UI'],
-      allows_multiple: true, allows_custom: true }] }, stop: 'tool_use', tokens: 10 }
-    : { kind: 'text', text: 'Complete diagnostic', stop: 'end_turn', tokens: 10 });
+  const remote = await controlledHttpMcp(); t.after(() => remote.close());
+  let phase: { kind: 'finish' } | { kind: 'question' | 'fetch'; calls: number } | { kind: 'hold'; entered: () => void } = { kind: 'finish' };
+  const provider = await scriptedProvider(() => {
+    if (phase.kind === 'hold') return { kind: 'hold', entered: phase.entered };
+    if (phase.kind === 'question' && phase.calls++ === 0) return {
+      kind: 'tool', name: 'ask_user', input: { questions: [{ id: 'scope', question: 'Which context?', options: ['API', 'UI'],
+        allows_multiple: true, allows_custom: true }] }, stop: 'tool_use', tokens: 10 };
+    if (phase.kind === 'fetch') {
+      const call = phase.calls++;
+      if (call === 0) return { kind: 'tool', name: 'mcp__controlled__read_ticket', input: {}, stop: 'tool_use', tokens: 10 };
+      if (call === 1) {
+        assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('FETCHED_DOCUMENT_END'));
+        return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 0, maxOutputBytes: 10000,
+          mutation: { kind: 'addDocument', document: { kind: 'suppliedDocument', id: 'installed-ticket', role: 'evidence',
+            origin: remote.url, text: remote.text } } }, stop: 'tool_use', tokens: 10 };
+      }
+    }
+    return { kind: 'text', text: 'Complete diagnostic', stop: 'end_turn', tokens: 10 };
+  });
+  const agentDirectory = join(directory, 'scout-mcp'); mkdirSync(agentDirectory, { mode: 0o700 });
+  writeFileSync(join(agentDirectory, 'mcp.json'), JSON.stringify({ mcpServers: { controlled: {
+    url: remote.url, exposure: 'hidden', toolExposure: { read_ticket: 'direct' },
+    headers: { Authorization: 'Bearer synthetic$$$!mcp-token' },
+  } } }));
+  provider.config.mcp = { agentDirectory };
   const prompt = join(directory, 'editable-discovery.md');
   const promptBytes = Buffer.from('# smip discovery v1\nRELOCATED_EDITABLE_PROMPT\n');
   writeFileSync(prompt, promptBytes);
@@ -98,29 +129,78 @@ test('local package audits resources and executes relocated library, native, CLI
         if (error) reject(error); else resolveResult(stdout);
       });
     });
-    const nativeTerminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt })).Parse(JSON.parse(nativeResult));
+    const nativeTerminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt,
+      bundle: Type.Object({ directory: Type.String() }) })).Parse(JSON.parse(nativeResult));
     assert.equal(nativeTerminal.state, 'ready'); assert(nativeTerminal.state === 'ready');
     assert.equal(nativeTerminal.discovery.promptVersion, 'rpce-43a9c29');
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('Leave the prompt COMPLETELY unchanged'));
     assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('<current_prompt_content>'));
-    requestInteraction = true;
+    const verification = ['integrity', 'current'].map(mode => {
+      const args = [command, 'verify', '--bundle', nativeTerminal.bundle.directory, '--mode', mode];
+      if (mode === 'current') args.push('--config', config);
+      const result = Compile(Type.Object({ kind: Type.Literal(mode === 'current' ? 'currentVerified' : 'verified'), manifest: Manifest })).Parse(JSON.parse(
+        execFileSync(process.execPath, args, { cwd: '/', encoding: 'utf8' })));
+      return { mode, requestDigest: result.manifest.requestDigest };
+    });
+    phase = { kind: 'question', calls: 0 };
     const workspaceId = Compile(Type.Object({ id: Type.String() })).Parse((await client.callTool({ name: 'workspace_declare',
       arguments: { spec } })).structuredContent).id;
+    const read = Compile(Type.Object({ kind: Type.Literal('read'), content: Type.String() })).Parse((await client.callTool({
+      name: 'read_file', arguments: { workspaceId, input: { root: 'r', path: 'model.swift' } },
+    })).structuredContent);
+    assert.equal(read.content, 'struct Relocated { let title: String }\n');
+    const search = Compile(Type.Object({ kind: Type.Literal('search'), counts: Type.Object({ matchingLines: Type.Integer() }) })).Parse(
+      (await client.callTool({ name: 'file_search', arguments: { workspaceId,
+        input: { mode: 'content', query: { kind: 'literal', text: 'Relocated' } } } })).structuredContent);
+    assert.equal(search.counts.matchingLines, 1);
+    const request = {
+      task: 'Inspect', initialSelection: { codemapMode: 'manual', sources: [] }, duplicateUserInstructionsAtTop: false,
+      copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [],
+      discoveryHints: [], outputName: 'interactive-packet', budgetUnits: 10000,
+    };
     const jobId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
-      arguments: { workspaceId, requestId: 'interactive-relocation', request: {
-        task: 'Inspect', initialSelection: { codemapMode: 'manual', sources: [] }, duplicateUserInstructionsAtTop: false,
-        copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-        requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [],
-        discoveryHints: [], outputName: 'interactive-packet', budgetUnits: 10000, clarification: {},
-      } },
+      arguments: { workspaceId, requestId: 'interactive-relocation', request: { ...request, clarification: {} } },
     })).structuredContent).jobId;
-    const interactive = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true),
-      discovery: DiscoveryReceipt })).Parse((await client.callTool({ name: 'context_builder_wait',
-      arguments: { jobId, durationMs: 10000 } })).structuredContent);
+    const interactiveReply = await waitForSettlement(client, jobId);
+    writeFileSync(join(directory, 'interactive-wait.json'), JSON.stringify(interactiveReply));
+    const interactiveValidator = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: DiscoveryReceipt }));
+    assert(interactiveValidator.Check(interactiveReply.structuredContent), JSON.stringify(interactiveReply));
+    const interactive = interactiveReply.structuredContent;
     assert.equal(questions, 1); assert.equal(interactive.discovery.promptVersion, 'custom-file-v1');
     assert(JSON.stringify(provider.requests.at(-1)!.messages).includes('installed custom context'));
+    phase = { kind: 'fetch', calls: 0 };
+    const fetchedId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
+      arguments: { workspaceId, requestId: 'http-relocation', request: { ...request, outputName: 'http-packet' } } })).structuredContent).jobId;
+    const fetched = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: DiscoveryReceipt,
+      bundle: Type.Object({ directory: Type.String() }) })).Parse((await waitForSettlement(client, fetchedId)).structuredContent);
+    const verified = Compile(Type.Object({ kind: Type.Literal('verified'), manifest: Manifest })).Parse(JSON.parse(execFileSync(
+      process.execPath, [command, 'verify', '--bundle', fetched.bundle.directory, '--mode', 'integrity'], { cwd: '/', encoding: 'utf8' })));
+    const document = verified.manifest.materials.find(material => material.id === 'document:installed-ticket');
+    assert(document?.kind === 'document');
+    assert.equal(document.spans.length, 1);
+    const context = readFileSync(join(fetched.bundle.directory, 'context.md'));
+    for (const span of document.spans) assert.deepEqual(context.subarray(span.offset, span.offset + span.length), Buffer.from(remote.text));
+    assert.deepEqual(remote.calls, ['read_ticket']);
+    assert.equal(fetched.discovery.mcp?.shutdown, 'dispatched');
+    const observed = Compile(Type.Object({ state: Type.Literal('ready') })).Parse((await client.callTool({
+      name: 'context_builder_result', arguments: { jobId: fetchedId },
+    })).structuredContent);
+    let entered!: () => void;
+    const entering = new Promise<void>(resolveEntered => { entered = resolveEntered; });
+    phase = { kind: 'hold', entered };
+    const beforeCancel = readdirSync(output).sort();
+    const cancelledId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
+      arguments: { workspaceId, requestId: 'cancel-relocation', request: { ...request, outputName: 'cancel-packet' } } })).structuredContent).jobId;
+    const waiting = waitForSettlement(client, cancelledId);
+    await Promise.race([entering, waiting.then(() => { throw new Error('Installed job settled before the provider hold'); })]);
+    await client.callTool({ name: 'context_builder_cancel', arguments: { jobId: cancelledId } });
+    const cancelled = Compile(Type.Object({ state: Type.Literal('cancelled'), localSettled: Type.Literal(true),
+      discovery: DiscoveryReceipt })).Parse((await waiting).structuredContent);
+    assert.equal(cancelled.discovery.workerClosed, true); assert.equal(cancelled.discovery.parentToolsSettled, true);
+    assert.deepEqual(readdirSync(output).sort(), beforeCancel);
     writeFileSync(join(directory, 'relocation-receipt.json'), JSON.stringify({ installed, packageSHA256: receipt.sha256,
-      installLockSHA256, terminal, nativeTerminal, interactive }));
+      installLockSHA256, terminal, nativeTerminal, verification, read, search, interactive, fetched, observed, cancelled }));
     mkdirSync(resolve('test-output'), { recursive: true });
     writeFileSync(resolve('test-output/group-e-relocation.json'), JSON.stringify({ directory, installed, receipt: join(directory, 'relocation-receipt.json') }));
   } finally { await client.close(); await provider.close(); }
