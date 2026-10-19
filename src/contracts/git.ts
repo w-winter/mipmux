@@ -6,6 +6,12 @@ const closed = { additionalProperties: false };
 export const NativeGitChangedFile = Type.Object({ path: Type.String(), status: Type.String(),
   additions: Type.Union([Type.Integer(), Type.Null()]), deletions: Type.Union([Type.Integer(), Type.Null()]) }, closed);
 const output = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
+const worktreePath = Type.Union([Type.String({ pattern: '^/[^\\u0000]*$' }), Type.Null()], { default: null });
+const repositoryPath = Type.Union([RelativePath, Type.Null()], { default: null });
+const repositorySelector = Type.Object({ root: RootName, path: repositoryPath, worktree: worktreePath }, closed);
+const repositories = Type.Union([Type.Array(repositorySelector, { minItems: 1 }), Type.Null()], { default: null });
+const repositoryInput = Type.Optional(Type.Union([Type.Array(Type.Object({ root: RootName,
+  path: Type.Optional(repositoryPath), worktree: Type.Optional(worktreePath) }, closed), { minItems: 1 }), Type.Null()]));
 const diff = { op: Type.Literal('diff'), root: Type.Union([RootName, Type.Null()], { default: null }),
   compare: Type.String({ pattern: '^[^\\u0000]*$', default: 'uncommitted' }),
   worktree: Type.Union([Type.String({ pattern: '^/[^\\u0000]*$' }), Type.Null()], { default: null }),
@@ -13,12 +19,12 @@ const diff = { op: Type.Literal('diff'), root: Type.Union([RootName, Type.Null()
   detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
   detectRenames: Type.Boolean({ default: false }), maxOutputBytes: output };
 export const GitRequest = Type.Union([
-  Type.Object({ op: Type.Literal('log'), root: RootName, count: Type.Integer({ default: 10 }),
+  Type.Object({ op: Type.Literal('log'), repositories, count: Type.Integer({ default: 10 }),
     path: Type.Union([RelativePath, Type.Null()], { default: null }), maxOutputBytes: output }, closed),
-  Type.Object({ op: Type.Literal('blame'), root: RootName, path: RelativePath,
+  Type.Object({ op: Type.Literal('blame'), repositories, path: RelativePath,
     lines: Type.Union([Type.String(), Type.Null()], { default: null }), maxOutputBytes: output }, closed),
-  Type.Object({ op: Type.Literal('status'), root: RootName, maxOutputBytes: output }, closed),
-  Type.Object({ op: Type.Literal('show'), root: RootName, ref: Type.String({ pattern: '^[^\\u0000]*$' }),
+  Type.Object({ op: Type.Literal('status'), repositories, maxOutputBytes: output }, closed),
+  Type.Object({ op: Type.Literal('show'), repositories, ref: Type.String({ pattern: '^[^\\u0000]*$' }),
     detail: Type.String({ default: 'summary' }), contextLines: Type.Integer({ default: 3 }),
     detectRenames: Type.Boolean({ default: false }), maxOutputBytes: output }, closed),
   Type.Object({ ...diff, artifacts: Type.Literal(false, { default: false }) }, closed),
@@ -29,12 +35,12 @@ export const GitRequest = Type.Union([
 ]);
 export type GitRequest = Static<typeof GitRequest>;
 export const GitInput = Type.Union([
-  Type.Object({ op: Type.Literal('log'), root: RootName, count: Type.Optional(GitRequest.anyOf[0].properties.count),
+  Type.Object({ op: Type.Literal('log'), repositories: repositoryInput, count: Type.Optional(GitRequest.anyOf[0].properties.count),
     path: Type.Optional(GitRequest.anyOf[0].properties.path) }, closed),
-  Type.Object({ op: Type.Literal('blame'), root: RootName, path: RelativePath,
+  Type.Object({ op: Type.Literal('blame'), repositories: repositoryInput, path: RelativePath,
     lines: Type.Optional(GitRequest.anyOf[1].properties.lines) }, closed),
-  Type.Object({ op: Type.Literal('status'), root: RootName }, closed),
-  Type.Object({ op: Type.Literal('show'), root: RootName, ref: GitRequest.anyOf[3].properties.ref,
+  Type.Object({ op: Type.Literal('status'), repositories: repositoryInput }, closed),
+  Type.Object({ op: Type.Literal('show'), repositories: repositoryInput, ref: GitRequest.anyOf[3].properties.ref,
     detail: Type.Optional(GitRequest.anyOf[3].properties.detail), contextLines: Type.Optional(GitRequest.anyOf[3].properties.contextLines),
     detectRenames: Type.Optional(GitRequest.anyOf[3].properties.detectRenames) }, closed),
   Type.Object({ op: Type.Literal('diff'), root: Type.Optional(GitRequest.anyOf[4].properties.root),
@@ -75,10 +81,21 @@ export const GitDiff = Type.Object({ compare: Type.String(), detail: Type.Option
   by_status: Type.Optional(Type.Record(Type.String(), Type.Integer())), oneliner: Type.String(), truncated: Type.Optional(Type.Boolean()),
   truncation_note: Type.Optional(Type.String()) }, closed);
 const authority = { kind: Type.Literal('git'), root: RootName, repository: Type.Object({ worktree: RootIdentity, gitDirectory: RootIdentity }, closed) };
+const text = Type.Optional(Type.String());
+export const GitWorktree = Type.Object({ is_worktree: Type.Boolean(), worktree_root: Type.String(),
+  worktree_name: text, common_git_dir: text, main_worktree_root: text, worktree_branch: text,
+  main_branch: text, worktree_head: text, main_head: text }, closed);
+const metadata = { worktree: Type.Optional(GitWorktree), warning: text };
+const repo = { root: RootName, repo_root: Type.String(), repo_key: Type.String(), repo_name: Type.String() };
 export const GitResult = Type.Union([
   Type.Object({ ...authority, op: Type.Literal('diff'), diff: GitDiff, exclusions: Type.Array(Type.String()) }, closed),
-  Type.Object({ ...authority, op: Type.Literal('show'), show, exclusions: Type.Array(Type.String()) }, closed),
-  Type.Object({ ...authority, op: Type.Literal('status'), status }, closed),
-  Type.Object({ ...authority, op: Type.Literal('log'), log: Type.Object({ commits: Type.Array(commit) }, closed) }, closed),
-  Type.Object({ ...authority, op: Type.Literal('blame'), blame: Type.Object({ path: RelativePath, lines: Type.Array(blame) }, closed) }, closed),
+  Type.Object({ ...authority, ...metadata, op: Type.Literal('show'), show, exclusions: Type.Array(Type.String()) }, closed),
+  Type.Object({ ...authority, ...metadata, op: Type.Literal('status'), status }, closed),
+  Type.Object({ kind: Type.Literal('git'), op: Type.Literal('status'), repos: Type.Array(Type.Union([
+    Type.Object({ ...repo, repository: authority.repository, status, worktree: Type.Optional(GitWorktree) }, closed),
+    Type.Object({ ...repo, error: Type.String() }, closed),
+  ])) }, closed),
+  Type.Object({ ...authority, ...metadata, op: Type.Literal('log'), log: Type.Object({ commits: Type.Array(commit) }, closed) }, closed),
+  Type.Object({ ...authority, ...metadata, op: Type.Literal('blame'), blame: Type.Object({ path: RelativePath, lines: Type.Array(blame) }, closed) }, closed),
 ]);
+export type GitResult = Static<typeof GitResult>;

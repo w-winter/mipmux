@@ -35,7 +35,9 @@ export function bindDiscoveryPrompt(source: string): string {
           maxOutputBytes: exampleOutputBytes, continuation: null } });
       }
       if (call.tool === 'git' && 'repo_root' in call.args) {
-        call.args.root = call.args.repo_root; delete call.args.repo_root;
+        if (call.args.op === 'diff') call.args.root = call.args.repo_root;
+        else call.args.repositories = [{ root: call.args.repo_root }];
+        delete call.args.repo_root;
       }
       if (call.tool === 'prompt' && call.args.op !== 'get') call.args.expectedRevision = 0;
       call.args.maxOutputBytes = exampleOutputBytes;
@@ -45,6 +47,8 @@ export function bindDiscoveryPrompt(source: string): string {
     'The user message contains the source startup sections followed by a captured runtime observation. Its constraints are fixed caller requirements. ' +
     'Use draft_inspect with view "costs" for complete-packet accounting and view "metadata" for committed state. ' +
     'Supply maxOutputBytes for tool replies. Prompt mutations also require the latest expectedRevision from the observation or a mutation reply; 0 in examples is a placeholder. ' +
+    'For Git status/log/show/blame, use repositories:[{root,path?,worktree?}] for explicit targets; diff uses root and worktree directly. ' +
+    'Omitting repositories uses the frozen selected checkouts; multi-repository log/show/blame require an explicit target. ' +
     'Use draft_validate for the final publication check, then acknowledge completion. The parent verifies and publishes the packet; the final assistant text is not the packet. ' +
     'Required caller evidence cannot be removed to force the budget. If it cannot fit, retain it and report the blocking diagnostic.\n';
 }

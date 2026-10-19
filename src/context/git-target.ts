@@ -7,6 +7,10 @@ import type { Material } from './material-store.js';
 import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { readAuthorizedGitArtifact } from '../workspace/git-artifact-catalog.js';
 import type { SourceSelection } from '../contracts/context.js';
+import type { GitRequest } from '../contracts/git.js';
+import type { ResultEncoding } from '../exploration/output-budget.js';
+import { readGit } from '../exploration/git.js';
+import { readElectedDiff } from '../exploration/git-diff.js';
 
 type Resolution = Extract<NativeResult, { kind: 'gitTarget' }>;
 
@@ -36,6 +40,18 @@ export class FrozenGitTarget {
     const current = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: this.resolution.checkouts });
     if (!current.valid) throw new WorkspaceFailure('gitRepositoryChanged');
     return this.resolution.primary;
+  }
+
+  async read(operation: WorkspaceOperation, request: GitRequest, encode: ResultEncoding) {
+    if (request.op === 'diff') return readElectedDiff(operation, request, await this.primary(operation), encode);
+    if (request.repositories !== null) {
+      if (!this.restrictsGitToExplicitReadOnly) await this.primary(operation);
+      return readGit(operation, request, encode);
+    }
+    await this.primary(operation);
+    if (this.resolution.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
+    if (this.resolution.checkouts.length > 1 && request.op !== 'status') throw new WorkspaceFailure('gitExplicitRepositoryRequired');
+    return readGit(operation, request, encode, this.resolution.checkouts);
   }
 
   async publication(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>,

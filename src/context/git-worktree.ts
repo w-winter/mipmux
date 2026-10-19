@@ -46,7 +46,7 @@ export async function captureGitWorktreeReply(operation: WorkspaceOperation, pro
   const branch = await currentBranch(read, repoRoot), head = await read(repoRoot, headArguments);
   let mainBranch: string | null = null, mainHead: string | null = null;
   if (mainRoot !== null) {
-    const main = await resolveDiffRepository(operation, checkout.root, { kind: 'explicit', worktree: mainRoot });
+    const main = await resolveDiffRepository(operation, checkout.root, { kind: 'advertised', checkout, worktree: mainRoot });
     mainBranch = await currentBranch(read, mainRoot); mainHead = await read(mainRoot, headArguments);
     await main.revalidate();
   }

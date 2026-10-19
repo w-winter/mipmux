@@ -40,8 +40,8 @@ test('Review and implicit target election honor available Jujutsu while retainin
     const diff = gitValidator.Parse(gitValidator.Default({ op: 'diff', detail: 'full', maxOutputBytes: 100000 })); assert(diff.op === 'diff');
     const colocated = await workspace.createDraft({ ...request, outputName: 'colocated', initialSelection: { codemapMode: 'manual',
       sources: [{ kind: 'full', source: { root: 'colocated', path: 'file.txt' } }] } }, signal());
-    await assert.rejects(colocated.readImplicitGitDiff(diff, signal(), value => value), /gitTargetRequired/);
-    await assert.rejects(mixed.readImplicitGitDiff(diff, signal(), value => value), /gitTargetRequired/);
+    await assert.rejects(colocated.readScopedGit(diff, signal(), value => value), /gitTargetRequired/);
+    await assert.rejects(mixed.readScopedGit(diff, signal(), value => value), /gitTargetRequired/);
     const ready = await mixed.finalize(signal()); assert.equal(ready.kind, 'ready');
     if (ready.kind !== 'ready') throw new Error('Review did not publish');
     const automatic = ready.manifest.automaticGit; assert(automatic);
@@ -58,7 +58,7 @@ test('Review and implicit target election honor available Jujutsu while retainin
     await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, runtime, signal());
     const nested = await workspace.createDraft({ ...request, outputName: 'nested', initialSelection: { codemapMode: 'manual',
       sources: [{ kind: 'full', source: { root: 'colocated', path: 'nested/file.txt' } }] } }, signal());
-    const implicit = await nested.readImplicitGitDiff(diff, signal(), value => value);
+    const implicit = await nested.readScopedGit(diff, signal(), value => value);
     assert(JSON.stringify(implicit).includes('colocated/nested changed'));
     const nestedReady = await nested.finalize(signal()); assert.equal(nestedReady.kind, 'ready');
     if (nestedReady.kind === 'ready') {
@@ -95,17 +95,17 @@ test('VCS ownership retains successful path and root entries until runtime dispo
     const workspace = await runtime.declare(spec, signal());
     const first = await workspace.createDraft(request('repo', 'a.txt'), signal());
     await mkdir(join(base, 'repo/.jj'));
-    assert(JSON.stringify(await first.readImplicitGitDiff(diff, signal(), value => value)).includes('+changed'));
+    assert(JSON.stringify(await first.readScopedGit(diff, signal(), value => value)).includes('+changed'));
     const cachedPath = await workspace.createDraft(request('repo', 'a.txt'), signal());
-    await cachedPath.readImplicitGitDiff(diff, signal(), value => value);
+    await cachedPath.readScopedGit(diff, signal(), value => value);
     const newPath = await workspace.createDraft(request('repo', 'b.txt'), signal());
-    await assert.rejects(newPath.readImplicitGitDiff(diff, signal(), value => value), /gitTargetRequired/);
-    await assert.rejects(first.readImplicitGitDiff(diff, signal(), value => value), /gitRepositoryChanged/);
+    await assert.rejects(newPath.readScopedGit(diff, signal(), value => value), /gitTargetRequired/);
+    await assert.rejects(first.readScopedGit(diff, signal(), value => value), /gitRepositoryChanged/);
     await rename(join(base, 'repo/.jj'), join(base, 'retired-jj'));
     const stillCached = await workspace.createDraft(request('repo', 'b.txt'), signal());
-    await assert.rejects(stillCached.readImplicitGitDiff(diff, signal(), value => value), /gitTargetRequired/);
+    await assert.rejects(stillCached.readScopedGit(diff, signal(), value => value), /gitTargetRequired/);
     const absent = await workspace.createDraft(request('plain', 'a.txt'), signal());
-    await assert.rejects(absent.readImplicitGitDiff(diff, signal(), value => value), /gitTargetRequired/);
+    await assert.rejects(absent.readScopedGit(diff, signal(), value => value), /gitTargetRequired/);
     run('plain', ['init', '-q']);
     const operation = await workspace.openOperation(signal());
     try {
@@ -116,7 +116,7 @@ test('VCS ownership retains successful path and root entries until runtime dispo
   try {
     const workspace = await restarted.declare(spec, signal());
     const draft = await workspace.createDraft(request('repo', 'b.txt'), signal());
-    await draft.readImplicitGitDiff(diff, signal(), value => value);
+    await draft.readScopedGit(diff, signal(), value => value);
     await mkdir('test-output', { recursive: true });
     await writeFile('test-output/vcs-cache-lifecycle.json', JSON.stringify({ runtimeScoped: true, positivePathCached: true,
       rootBackendRevalidated: true, absenceNotCached: true, restartResolvesFresh: true }) + '\n');

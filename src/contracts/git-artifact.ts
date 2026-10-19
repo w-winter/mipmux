@@ -1,15 +1,13 @@
 import Type, { type Static } from 'typebox';
 import { Base64 } from './artifact.js';
-import { GitDiff } from './git.js';
+import { GitDiff, GitWorktree } from './git.js';
 import { RelativePath } from './workspace.js';
 
 const closed = { additionalProperties: false };
 const counts = Type.Object({ files: Type.Integer(), insertions: Type.Integer(), deletions: Type.Integer() }, closed);
 const byStatus = Type.Record(Type.String(), Type.Integer());
 const text = Type.Optional(Type.String());
-export const GitArtifactWorktree = Type.Object({ is_worktree: Type.Boolean(), worktree_root: Type.String(),
-  worktree_name: text, common_git_dir: text, main_worktree_root: text, worktree_branch: text,
-  main_branch: text, worktree_head: text, main_head: text }, closed);
+export const GitArtifactWorktree = GitWorktree;
 const artifacts = Type.Object({ manifest: Type.String(), map: Type.String(), files_tsv: Type.String(), tree: Type.String(),
   changed_lines: text, selection_paths: text, all_patch: text, deep_hunks: text, deep_changed_lines: text }, closed);
 const primary = Type.Object({ map: Type.String(), all_patch: text, auto_selected: Type.Optional(Type.Array(Type.String())),

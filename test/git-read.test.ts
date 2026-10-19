@@ -70,28 +70,28 @@ test('public Git log/blame use the nearest owning checkout, retain source fields
       const reply = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input, maxOutputBytes } });
       proof.push({ input, result: reply }); return { reply, value: result.Parse(reply.structuredContent) };
     };
-    const log = await call({ op: 'log', root: 'r' });
+    const log = await call({ op: 'log', repositories: [{ root: 'r', path: null, worktree: null }] });
     assert.equal(log.reply.isError, false, JSON.stringify(log.reply));
     assert.equal(log.value.kind, 'git'); assert.equal(log.value.root, 'r'); assert(log.value.log);
     assert.deepEqual(log.value.log.commits.map(row => row.sha), [f.second, f.first]);
     assert.deepEqual(log.value.log.commits.map(row => [row.message, row.files_changed, row.insertions, row.deletions]), [
       ['second', 1, 1, 0], ['first', 2, 3, 0],
     ]);
-    const limited = await call({ op: 'log', root: 'r', count: 1, path: 'file.txt' });
+    const limited = await call({ op: 'log', repositories: [{ root: 'r', path: null, worktree: null }], count: 1, path: 'file.txt' });
     assert.deepEqual(limited.value.log?.commits.map(row => row.sha), [f.second]);
-    const blame = await call({ op: 'blame', root: 'r', path: 'file.txt', lines: '2 - 3' });
+    const blame = await call({ op: 'blame', repositories: [{ root: 'r', path: null, worktree: null }], path: 'file.txt', lines: '2 - 3' });
     assert.equal(blame.reply.isError, false, JSON.stringify(blame.reply)); assert(blame.value.blame);
     assert.deepEqual(blame.value.blame.lines.map(row => [row.num, row.sha, row.author, row.date, row.content]), [
       [2, f.first.slice(0, 7), 'Fixture', '2026-10-11T10:00:00Z', 'two'],
       [3, f.second.slice(0, 7), 'Fixture', '2026-10-11T10:00:00Z', 'three'],
     ]);
     assert.equal(existsSync(converterMarker), false, 'Read-only blame must not execute a repository converter');
-    const cap = await call({ op: 'log', root: 'r' }, 1); assert.equal(cap.value.kind, 'outputBudgetTooSmall');
-    const protectedPath = await call({ op: 'blame', root: 'r', path: 'protected.txt' });
+    const cap = await call({ op: 'log', repositories: [{ root: 'r', path: null, worktree: null }] }, 1); assert.equal(cap.value.kind, 'outputBudgetTooSmall');
+    const protectedPath = await call({ op: 'blame', repositories: [{ root: 'r', path: null, worktree: null }], path: 'protected.txt' });
     assert.equal(protectedPath.reply.isError, true); assert.equal(protectedPath.value.code, 'pathDenied');
-    const failure = await call({ op: 'blame', root: 'r', path: 'missing.txt' });
+    const failure = await call({ op: 'blame', repositories: [{ root: 'r', path: null, worktree: null }], path: 'missing.txt' });
     assert.equal(failure.reply.isError, true); assert.equal(failure.value.code, 'gitQueryFailed');
-    const foreign = await call({ op: 'log', root: 'foreign' });
+    const foreign = await call({ op: 'log', repositories: [{ root: 'foreign', path: null, worktree: null }] });
     assert.equal(foreign.reply.isError, true); assert.equal(foreign.value.code, 'unknownRoot');
     assert.deepEqual(await readFile(join(f.repo, '.git/index')), before);
     assert(!JSON.stringify(proof).includes('synthetic protected content'));
@@ -103,10 +103,10 @@ test('real scripted SDK scout can inspect Git through the allowed tool boundary 
   const f = await fixture();
   await writeFile(join(f.root, 'file.txt'), 'one é\ntwo\nthree\nSDK_DIFF_EVIDENCE\n');
   const provider = await scriptedProvider((_summary, index) => index === 1
-    ? { kind: 'tool', name: 'git', input: { op: 'status', root: 'r', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
-    : index === 2 ? { kind: 'tool', name: 'git', input: { op: 'log', root: 'r', count: 1, maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
-    : index === 3 ? { kind: 'tool', name: 'git', input: { op: 'blame', root: 'r', path: 'file.txt', lines: '1-2', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
-    : index === 4 ? { kind: 'tool', name: 'git', input: { op: 'show', root: 'r', ref: 'HEAD', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
+    ? { kind: 'tool', name: 'git', input: { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }], maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
+    : index === 2 ? { kind: 'tool', name: 'git', input: { op: 'log', repositories: [{ root: 'r', path: null, worktree: null }], count: 1, maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
+    : index === 3 ? { kind: 'tool', name: 'git', input: { op: 'blame', repositories: [{ root: 'r', path: null, worktree: null }], path: 'file.txt', lines: '1-2', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
+    : index === 4 ? { kind: 'tool', name: 'git', input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref: 'HEAD', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 5 ? { kind: 'tool', name: 'git', input: { op: 'diff', root: 'r', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
   const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
@@ -142,7 +142,7 @@ test('cancelling a held Git process joins it and leaves the workspace usable', a
   });
   try {
     const workspace = await client.declare(f.spec, signal()), controller = new AbortController();
-    const query = { op: 'log' as const, root: 'r', count: 1, path: null, maxOutputBytes: 24000 };
+    const query = { op: 'log' as const, repositories: [{ root: 'r', path: null, worktree: null }], count: 1, path: null, maxOutputBytes: 24000 };
     const initial = await client.explore(workspace.id, { name: 'git', input: query }, signal());
     assert('kind' in initial && initial.kind === 'git');
     armed = true;
@@ -183,7 +183,7 @@ test('public Git status returns coherent source categories for a subdirectory ro
   try {
     await client.connect(transport);
     const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
-    const reply = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input: { op: 'status', root: 'r' } } });
+    const reply = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input: { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }] } } });
     assert.equal(reply.isError, false, JSON.stringify(reply));
     const value = result.Parse(reply.structuredContent);
     assert.equal(value.kind, 'git'); assert.equal(value.op, 'status'); assert(value.status);
@@ -194,7 +194,7 @@ test('public Git status returns coherent source categories for a subdirectory ro
     assert.equal(value.status.summary, branch + ' | 3 staged, 1 modified, 2 untracked');
     assert.equal(value.status.upstream, undefined); assert.equal(value.status.ahead, undefined); assert.equal(value.status.behind, undefined);
     const cap = result.Parse((await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
-      input: { op: 'status', root: 'r' }, maxOutputBytes: 1 } })).structuredContent);
+      input: { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }] }, maxOutputBytes: 1 } })).structuredContent);
     assert.equal(cap.kind, 'outputBudgetTooSmall');
     assert.deepEqual(await readFile(join(f.repo, '.git/index')), before);
     assert.equal(existsSync(fsmonitorMarker), false, 'Status must not execute a repository fsmonitor hook');

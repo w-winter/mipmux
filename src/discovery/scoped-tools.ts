@@ -12,8 +12,8 @@ export function scopedGitCall(input: GitRequest, draft: DraftRuntime | null, ope
     if (!draft) throw new WorkspaceFailure('draftRequired');
     return draft.publishGitArtifacts(input, signal, encode);
   }
-  return input.op === 'diff' && input.root === null && input.worktree === null && draft
-    ? draft.readImplicitGitDiff(input, signal, encode) : operation.readGit(input, encode);
+  return draft && (input.op !== 'diff' || input.root === null && input.worktree === null)
+    ? draft.readScopedGit(input, signal, encode) : operation.readGit(input, encode);
 }
 
 export function scopedReadCall(input: ReadRequest, draft: DraftRuntime | null, operation: WorkspaceOperation,

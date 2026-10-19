@@ -53,7 +53,7 @@ test('public show preserves metadata, full hunks, root-commit source behavior an
     const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
     const call = async (ref: string, detail = 'summary', maxOutputBytes = 24000) => {
       const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
-        input: { op: 'show', root: 'r', ref, detail }, maxOutputBytes } });
+        input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref, detail }, maxOutputBytes } });
       proof.push(result); return { response: result, value: reply.Parse(result.structuredContent) };
     };
     const summary = await call('  HEAD  '); assert.equal(summary.response.isError, false, JSON.stringify(summary.response));
@@ -92,7 +92,7 @@ test('cancelling show between Git phases joins its process and preserves workspa
   });
   try {
     const workspace = await client.declare(f.spec, new AbortController().signal), controller = new AbortController();
-    const input = { op: 'show' as const, root: 'r', ref: 'HEAD', detail: 'full', contextLines: 3, detectRenames: false, maxOutputBytes: 24000 };
+    const input = { op: 'show' as const, repositories: [{ root: 'r', path: null, worktree: null }], ref: 'HEAD', detail: 'full', contextLines: 3, detectRenames: false, maxOutputBytes: 24000 };
     const initial = await client.explore(workspace.id, { name: 'git', input }, new AbortController().signal);
     assert('kind' in initial && initial.kind === 'git'); armed = true;
     const pending = client.explore(workspace.id, { name: 'git', input }, controller.signal);
@@ -124,7 +124,7 @@ test('public show excludes protected files and both protected rename endpoints w
       exclusions: [{ kind: 'prefix', root: 'r', path: 'skip.txt' }] } } })).structuredContent);
     const call = async (ref: string, detail: string) => {
       const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
-        input: { op: 'show', root: 'r', ref, detail, detectRenames: true } } });
+        input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref, detail, detectRenames: true } } });
       assert.equal(result.isError, false, JSON.stringify(result)); proof.push(result); return reply.Parse(result.structuredContent);
     };
     const full = await call(evidence, 'full'); assert(full.show?.files);
@@ -154,7 +154,7 @@ test('malformed show metadata stops before subsequent diff commands', async t =>
   });
   try {
     const workspace = await client.declare(f.spec, new AbortController().signal);
-    await assert.rejects(client.explore(workspace.id, { name: 'git', input: { op: 'show', root: 'r', ref: 'HEAD',
+    await assert.rejects(client.explore(workspace.id, { name: 'git', input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref: 'HEAD',
       detail: 'full', contextLines: 3, detectRenames: false, maxOutputBytes: 24000 } }, new AbortController().signal), /gitShowMalformed/);
     assert.equal(diffCommands, 0);
     await writeFile(join(f.base, 'malformed-receipt.json'), JSON.stringify({ diffCommands }) + '\n');
@@ -177,7 +177,7 @@ test('public MCP retains source diagnostics for malformed Git show and status ou
   try {
     await client.connect(transport);
     const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
-    for (const input of [{ op: 'show', root: 'r', ref: 'HEAD' }, { op: 'status', root: 'r' }]) {
+    for (const input of [{ op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref: 'HEAD' }, { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }] }]) {
       const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input } });
       assert.equal(result.isError, true);
       const value = reply.Parse(result.structuredContent);

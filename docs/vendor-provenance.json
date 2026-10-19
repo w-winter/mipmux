@@ -6235,7 +6235,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "238bc1a98d8f273b3caa7966d5c58936b59b139e31702655a70964bfc9e7ad81",
+      "sha256": "a32431bd95edfbf8e7de038d0303aafac22fda4a09c0dfb729691ad08c20cdf2",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6254,7 +6254,8 @@
         "Use the admitted current operation consistently for selection, automatic graph resolution, previews, mutation receipts, startup context and validation. Captured material identities and required evidence remain fixed. Terminal inspection uses the finalization inventory.",
         "Assemble current selection entries, blocks and component counts from per-source presentation availability while retaining canonical material membership. Explicit unavailable_sources and incomplete measurement distinguish absent bodies from removed selection.",
         "Reject Diff Follow-Up requests with caller-required sources or documents before acquisition. Existing selection lifecycle and document receipt admission remain the authorities; the shared clipboard boundary rejects an incompatible later document mutation.",
-        "Use captured copyContext.codeMapsGloballyDisabled to skip automatic candidate queries and suppress selected code_structure diagnostics, following WorkspaceFileContextStore.swift:13331-13337 and SelectionCore.swift:1513-1514 / SelectionReply.swift:769. Preserve selection revision and optional initial membership."
+        "Use captured copyContext.codeMapsGloballyDisabled to skip automatic candidate queries and suppress selected code_structure diagnostics, following WorkspaceFileContextStore.swift:13331-13337 and SelectionCore.swift:1513-1514 / SelectionReply.swift:769. Preserve selection revision and optional initial membership.",
+        "Route draft-scoped Git reads through FrozenGitTarget.read while retaining the existing operation fork, cancellation, pending-work and close ownership. MCP and Pi dispatch share this path. Git read admission follows MCPContextBuilderGitReviewPolicy.swift:62-129 at revision 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3."
       ]
     },
     {
@@ -8199,6 +8200,143 @@
       ],
       "changes": [
         "Apply the disabled codemap-only ingress rejection to new codemap source edits through the shared source-edit owner. Keep initial optional membership and required acquisition separate from mutations."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "src/exploration/git.ts",
+      "sha256": "2d4ace40d76b535119d353e08b1c9b5266a29538c1c2049d8bd32e87219a5617",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          228,
+          249
+        ],
+        [
+          610,
+          620
+        ],
+        [
+          940,
+          1104
+        ]
+      ],
+      "changes": [
+        "Bind ordered status reads and primary history operations to admitted checkout identities and the existing supervised process. Reuse native status/log/show/blame projections and native worktree metadata/warnings.",
+        "Reuse the existing native repository plan for the source maximum of three concurrent status reads. Preserve input order and expected per-repository query/parse failures; cancellation, permission and identity failures reject the request.",
+        "Use the existing read-only output budget for the complete response. Runtime error codes replace app-localized process failures. Root and repository identities supplement the source DTO; warnings name the canonical repositories selector.",
+        "Show receives the admitted owner directly, so its metadata and body acquisition use the same checkout. Existing diff acquisition and protected endpoint filtering remain shared."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "src/exploration/git-read-repositories.ts",
+      "sha256": "7d54f48a6166dcb10faf3bc4a6c39464d93d561295f512e107a22e448a54c33d",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          34,
+          50
+        ],
+        [
+          515,
+          570
+        ],
+        [
+          610,
+          620
+        ]
+      ],
+      "changes": [
+        "Resolve ordered declared-root selectors through existing native checkout identities and the supervised repository resolver. Case-fold checkout paths for first-occurrence deduplication.",
+        "Bind app root/path/tree selectors to repositories entries containing root, optional root-relative path and optional absolute advertised worktree. Native identity capture follows authorization; no external repository or alternate backend is substituted.",
+        "Use the first discovered Git root only for unscoped reads without a draft. Draft reads supply their frozen checkouts. Revalidate each resolved owner before acquisition and reply.",
+        "Default discovery uses the same supervised repository owner as explicit selection before native identity construction. This retains metadata-directory anchors and core.worktree discovery, matching VCSService.swift:267-347 and GitService.swift:644-656 at the pinned revision. Only confirmed repository absence advances to the next declared root."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptVCS/GitRepoTargetResolver.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4eb9620b17fed9b16acb06111f72207eed608298760e3e3d79efe88fefe22379",
+      "destination": "src/exploration/git-repository.ts",
+      "sha256": "facaaa698f39cbd6e2330eaed18293436cb78b2afaa1dfec4c553bf117f6ee52",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          585,
+          645
+        ]
+      ],
+      "changes": [
+        "Use the existing supervised resolver and captured filesystem identities to admit advertised same-repository worktrees. A declared subroot authorizes its owning checkout advertisement under the approved Git evidence authority.",
+        "An already admitted checkout can anchor main-worktree metadata reads, including nested repositories. Explicit exclusions and credential/protected paths remain enforced by the existing permits function.",
+        "Classify only exit 128 with empty stdout and the C-locale rev-parse --show-toplevel no-repository diagnostic as expected absence. Preserve gitQueryFailed for other process failures and propagate protocol, identity, authorization and cancellation failures. Explicit callers retain their error code."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPGitToolProvider.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
+      "destination": "src/context/git-worktree.ts",
+      "sha256": "065d0ec38b81fec9478d98e517e5d376d51a9a553186d36a24cd1b05ed4fa164",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          64,
+          95
+        ],
+        [
+          126,
+          163
+        ]
+      ],
+      "changes": [
+        "Retain the existing supervised branch/head/listing acquisition and native WorktreeDTO/warning renderer. Anchor main-checkout admission to the captured checkout rather than resolving the declared root again."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/Policies/MCPContextBuilderGitReviewPolicy.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "93fa042dc08968720b50914e12b953abab6f3b234be3858003bcdd0662b6c90e",
+      "destination": "src/context/git-target.ts",
+      "sha256": "e53e73b33527a2e2031962a7d959500d16032b6d780b156066f4e84a0cdca8b3",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          62,
+          129
+        ]
+      ],
+      "changes": [
+        "Bind read admission to the existing immutable FrozenGitTarget. Unelected targets require explicit read selectors; elected targets revalidate even for explicit reads.",
+        "Implicit status uses all frozen checkouts; implicit log/show/blame require one checkout. Preserve the existing implicit diff and publication flows."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Infrastructure/MCP/ToolResultDTOs.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "4db6ff4a3e1a92b9dff08e2a780f2a513bbf29e68bc638a1bcd2b0dcefe3f559",
+      "destination": "src/contracts/git.ts",
+      "sha256": "8688f60f6a8e2406f805771248d72e9436086338b5c1162b20b74aab75ddd320",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2045,
+          2240
+        ],
+        [
+          2280,
+          2325
+        ]
+      ],
+      "changes": [
+        "Describe the source single/multiple status and worktree projection with strict TypeBox schemas. Per-repository success and expected failure are distinct variants.",
+        "Use one ordered repositories selector for status/log/show/blame. Null means the captured draft target or first Git root without a draft. Each entry has root, nullable path and nullable worktree; public inputs default omitted fields at admission. Diff inputs retain their separate existing contract.",
+        "Share the worktree output schema with Git artifact replies; preserve the established root-qualified authority fields and complete-response output budget."
       ]
     }
   ],

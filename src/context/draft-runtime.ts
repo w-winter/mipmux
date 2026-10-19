@@ -53,7 +53,7 @@ import { descriptorGitMode } from '../contracts/patches.js';
 import { prepareRenderInput } from './final-tree.js';
 import { FrozenGitTarget, selectedGitSourcePaths } from './git-target.js';
 import type { GitRequest } from '../contracts/git.js';
-import { readElectedDiff, captureElectedGitDiff } from '../exploration/git-diff.js';
+import { captureElectedGitDiff } from '../exploration/git-diff.js';
 import { publishGitSnapshot, prepareGitPublicationMetadata } from './git-publication.js';
 import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { publishGitSnapshotBatch } from './git-publication-batch.js';
@@ -194,13 +194,12 @@ export class DraftRuntime {
     void work.then(() => this.#pending.delete(work), () => this.#pending.delete(work));
     return work;
   }
-  readImplicitGitDiff(input: Extract<GitRequest, { op: 'diff' }>, signal: AbortSignal, encode: ResultEncoding) {
+  readScopedGit(input: GitRequest, signal: AbortSignal, encode: ResultEncoding) {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
-        const checkout = await this.gitTarget.primary(operation);
-        return await readElectedDiff(operation, structuredClone(input), checkout, encode);
+        return await this.gitTarget.read(operation, structuredClone(input), encode);
       } finally { await operation.close(); }
     })());
   }

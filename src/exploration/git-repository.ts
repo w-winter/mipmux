@@ -19,7 +19,8 @@ export function gitText(bytes: Buffer): string {
 
 /** Resolves a loaded checkout or an advertised worktree, then fences its captured identities. */
 export async function resolveDiffRepository(operation: WorkspaceOperation, rootName: string,
-  location: { kind: 'explicit'; worktree: string | null } | { kind: 'elected'; checkout: NativeGitCheckout }) {
+  location: { kind: 'explicit'; worktree: string | null } | { kind: 'elected'; checkout: NativeGitCheckout }
+    | { kind: 'advertised'; checkout: NativeGitCheckout; worktree: string }) {
   const configured = operation.runtime.options.git;
   if (!configured) throw new WorkspaceFailure('gitNotConfigured');
   const root = operation.snapshot.roots.find(root => root.name === rootName);
@@ -27,7 +28,11 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
   await operation.validateSourceRoot(rootName);
   const run = async (cwd: string, args: readonly string[]) => {
     const result = await gitProcess(operation.runtime.supervisor, configured.executable, cwd, args, operation.signal, { kind: 'repository' });
-    if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
+    if (result.code !== 0) {
+      const notRepository = args[0] === 'rev-parse' && args[1] === '--show-toplevel' && result.code === 128 && result.bytes.length === 0 &&
+        /^fatal: not a git repository \(or any (?:of the parent directories\): \.git|parent up to mount point [^\n]+\))\n/.test(gitText(result.stderr));
+      throw new WorkspaceFailure('gitQueryFailed', { exit: result.code, reason: notRepository ? 'notRepository' : 'commandFailed' });
+    }
     return result.bytes;
   };
   const identify = async (cwd: string) => {
@@ -39,8 +44,8 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
     return { worktree: await identity(['rev-parse', '--show-toplevel']), gitDirectory: await identity(['rev-parse', '--absolute-git-dir']),
       commonDirectory: await identity(['rev-parse', '--path-format=absolute', '--git-common-dir']) };
   };
-  const anchorPath = location.kind === 'elected' ? location.checkout.checkoutRootPath : root.identity.canonicalPath;
-  const worktree = location.kind === 'explicit' ? location.worktree : null;
+  const anchorPath = location.kind === 'explicit' ? root.identity.canonicalPath : location.checkout.checkoutRootPath;
+  const worktree = location.kind === 'elected' ? null : location.worktree;
   const anchor = await identify(anchorPath);
   const advertisedWorktrees = async () => {
     const listing = gitText(await run(anchor.worktree.canonicalPath, ['worktree', 'list', '--porcelain', '-z']));
@@ -62,7 +67,8 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
     const path = await realpath(worktree);
     const advertised = await advertisedWorktrees();
     const loaded = operation.snapshot.roots.some(root => contains(root.identity.canonicalPath, path));
-    const advertisingCheckoutLoaded = advertised.some(path => operation.snapshot.roots.some(root => contains(root.identity.canonicalPath, path)));
+    const advertisingCheckoutLoaded = advertised.some(path => operation.snapshot.roots.some(root =>
+      contains(root.identity.canonicalPath, path) || contains(path, root.identity.canonicalPath)));
     if (!advertised.includes(path) || !loaded && !advertisingCheckoutLoaded) throw new WorkspaceFailure('gitRepositoryDenied');
     repository = await identify(path);
     if (repository.worktree.canonicalPath !== path || canonicalJSON(repository.commonDirectory) !== canonicalJSON(anchor.commonDirectory)) {
