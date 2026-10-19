@@ -105,7 +105,7 @@ test('complete documents added during curation count toward the recipient allowa
     const workspace = await runtime.declare(f.spec, signal());
     const draft = await workspace.createDraft({ ...request, outputName: 'oversized-document',
       budgetUnits: 1000 }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
     const text = 'Complete fetched document\r\n'.repeat(1000);
     const update = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000,
       mutation: { kind: 'addDocument', document: { kind: 'suppliedDocument', id: 'large', role: 'evidence', origin: 'fixture', text } } }, signal());
@@ -135,12 +135,14 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
     const changes = [{ kind: 'upsert' as const, selection: slices }, {
       kind: 'upsert' as const,
       selection: { kind: 'codemap' as const, source: { root: 'r', path: 'a.swift' } },
-    }, { kind: 'prompt' as const, op: 'append' as const, text: '\n\n' + JSON.stringify(handoff) }];
+    }];
     for (const [index, mutation] of changes.entries()) {
       await a.update({ expectedRevision: index, maxOutputBytes: 10000, mutation }, signal());
     }
+    await a.prompt({ expectedRevision: 2, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff) }, signal());
+    await b.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff) }, signal());
     for (const [index, mutation] of [...changes].reverse().entries()) {
-      await b.update({ expectedRevision: index, maxOutputBytes: 10000, mutation }, signal());
+      await b.update({ expectedRevision: index + 1, maxOutputBytes: 10000, mutation }, signal());
     }
     assert.deepEqual((await a.validate(signal())).measurement, (await b.validate(signal())).measurement);
     assert.equal(a.revision, 3);
@@ -152,10 +154,10 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
     await a.update({ expectedRevision: 3, maxOutputBytes: 10000, mutation: changes[0]! }, signal());
     assert.equal(a.revision, 3);
     await assert.rejects(
-      a.update({
+      a.prompt({
         expectedRevision: 3,
         maxOutputBytes: 1,
-        mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, architecture: 'changed' }) },
+        op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, architecture: 'changed' }) ,
       }, signal()),
       /outputBudgetTooSmall/,
     );
@@ -193,15 +195,15 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
       outputName: 'limited',
       budgetUnits: 1,
     }, signal());
-    await limited.update(
-      { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
+    await limited.prompt(
+      { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  },
       signal(),
     );
     assert.equal((await limited.finalize(signal())).kind, 'blocked');
-    await limited.update({
+    await limited.prompt({
       expectedRevision: 1,
       maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, clarifiedTask: 'short' }) },
+      op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, clarifiedTask: 'short' }) ,
     }, signal());
     await limited.close();
     const required = await workspace.createDraft({
@@ -323,8 +325,8 @@ test('cancellation and revision changes during preparation prevent late commits;
     resume.release();
     await refused;
     assert.equal(draft.revision, 0);
-    await draft.update(
-      { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
+    await draft.prompt(
+      { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  },
       signal(),
     );
     const before = new AbortController();
@@ -383,9 +385,8 @@ test('minimum mutation receipts commit omitted item costs but reject before comm
     assert.deepEqual(result.costInspection, { draftId: draft.id, revision: 1 });
     const costs = (await draft.inspect({ view: 'costs', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal));
     assert(costs.kind === 'costs'); assert.equal(costs.items.length, 1);
-    const handoffResult = await draft.update({ expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
-    assert.equal(handoffResult.incompleteDetails, false);
-    assert.deepEqual(handoffResult.changedCosts, []);
+    const handoffResult = await draft.prompt({ expectedRevision: 1, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
+    assert('revision' in handoffResult); assert.equal(handoffResult.revision, 2);
     await assert.rejects(async () => (await draft.inspect({ view: 'material', materialId: 'missing', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal)), /materialUnavailable/);
     await probe.close(); await draft.close(); await workspace.close();
   } finally { await runtime.close(); }
@@ -428,8 +429,8 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
       const rejected = assert.rejects(pending, scenario === 'freeze' ? /draftFrozen/ : /revisionConflict/);
       await entered.promise;
       if (scenario === 'freeze') assert.equal((await draft.finalize(signal())).kind, 'blocked');
-      else {await draft.update(
-          { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
+      else {await draft.prompt(
+          { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  },
           signal(),
         );}
       resume.release();
@@ -454,13 +455,13 @@ test('bounded metadata inspection exposes the current literal prompt and invalid
       (await client.inspect(draft.id, { view: 'metadata', maxOutputBytes, continuation }, new AbortController().signal));
     const unset = (await inspect(10000)); assert(unset.kind === 'metadata');
     assert.deepEqual(unset.items.at(-1), { kind: 'prompt', prompt: request.task }); assert.equal(unset.revision, 0);
-    await client.update(draft.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, architecture: 'old'.repeat(500) }) } }, signal());
+    await client.prompt(draft.id, { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify({ ...handoff, architecture: 'old'.repeat(500) })  }, signal());
     const committed = (await inspect(10000)); assert(committed.kind === 'metadata');
     const cap = Buffer.byteLength(JSON.stringify({ ...committed, items: committed.items.slice(0, 1), truncated: true,
       continuation: { digest: '0'.repeat(64), offset: 1 } }));
     const page = (await inspect(cap)); assert(page.kind === 'metadata' && page.continuation);
     const value = { clarifiedTask: 'complete clarification', architecture: 'architecture'.repeat(200), relationships: ['A uses B', 'C owns D'], ambiguities: ['one', 'two'] };
-    await client.update(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'set', text: JSON.stringify(value) } }, signal());
+    await client.prompt(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, op: 'set', text: JSON.stringify(value)  }, signal());
     await assert.rejects(async () => (await inspect(10000, page.continuation)), /staleContinuation/);
     assert.equal((await inspect(cap)).kind, 'metadata');
     const first = (await inspect(cap)); assert(first.kind === 'metadata' && first.continuation);

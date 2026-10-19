@@ -20,7 +20,7 @@ import { ClientRuntime } from './client-runtime.js';
 import { parseClipboard, preparedClipboardInput } from '../context/clipboard.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import { observe } from '../workspace/observe.js';
-import { revalidateExcludedSources } from '../context/clipboard-selection.js';
+import { revalidateCanonicalSources } from '../context/clipboard-selection.js';
 import { capturedSourceSelections } from '../context/source-omissions.js';
 
 interface GitSnapshotMutationAccess { readonly bridge: BridgeClient; readonly root: NativeHandle }
@@ -240,7 +240,7 @@ export class SmipRuntime {
     this.#operations.add(operation);
     try {
       await revalidateMaterials(operation,materials, manifest.unavailableRoots, manifest.unavailableFiles);
-      await revalidateExcludedSources(operation, manifest);
+      await revalidateCanonicalSources(operation, manifest);
       const selections = manifest.manualPresentation?.canonicalSources ?? capturedSourceSelections(materials, manifest.unavailableRoots, manifest.unavailableFiles);
       await revalidateAutomaticReviewGit(operation, manifest.request, selections, automaticGit, manifest.unavailableRoots);
       if (fileTree.input !== null) {
@@ -248,7 +248,7 @@ export class SmipRuntime {
         if (tree.tree !== fileTree.text) throw new WorkspaceFailure('presentationChanged');
       }
       const input = { request: manifest.request, prompt: manifest.prompt, manualPresentation: manifest.manualPresentation,
-        inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, excludedSources: manifest.excludedSources, fileTree,
+        inventory: manifest.inventory, codemapMode: manifest.codemapMode, materials, fileTree,
         unavailableRoots: manifest.unavailableRoots,
         unavailableFiles: manifest.unavailableFiles,
         automaticAcquisition: { kind: 'settled' as const, outcomes: manifest.automaticCodemaps }, automaticGit };

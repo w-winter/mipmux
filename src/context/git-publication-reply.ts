@@ -15,12 +15,12 @@ export async function decorateGitPublicationReply(operation: WorkspaceOperation,
     return [item.snapshotDir, file.bytes];
   }));
   if (published.kind === 'multiple') {
-    const projection = await operation.gitDiffOperation({ kind: 'decorateGitArtifacts', repos: published.projection.reply.repos,
+    const projection = await operation.projectNative({ kind: 'decorateGitArtifacts', repos: published.projection.reply.repos,
       manifests, autoSelectedPaths, readinessWarnings });
     return { ...published, projection };
   }
   const { op: _op, ...body } = published.projection.reply;
-  const projection = await operation.gitDiffOperation({ kind: 'decorateGitArtifacts', repos: [{ ...body,
+  const projection = await operation.projectNative({ kind: 'decorateGitArtifacts', repos: [{ ...body,
     repo_root: published.checkout.checkoutRootPath, repo_key: published.checkout.repoKey }],
     manifests, autoSelectedPaths, readinessWarnings });
   const repo = projection.reply.repos[0];

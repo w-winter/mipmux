@@ -6,6 +6,7 @@ import { NativeFailure } from '../native/bridge-client.js';
 import { unavailableRootCode } from '../workspace/source-access.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import { descriptorGitMode } from '../contracts/patches.js';
+import type { InventorySnapshot, SourcePath } from '../contracts/inventory.js';
 
 type SourceRecord = Extract<Material['record'], { kind: 'source' }>;
 type RootAvailability = Awaited<ReturnType<WorkspaceOperation['sourceRootAvailability']>>;
@@ -20,10 +21,10 @@ export async function unavailableSelectionRoots(operation: WorkspaceOperation, m
   return unavailable;
 }
 
-export function selectionSourcePath(operation: WorkspaceOperation, record: SourceRecord, display: SelectionRequest['path_display']): string {
-  const source = record.selection.source, root = operation.snapshot.roots.find(root => root.name === source.root)!;
+export function selectionSourcePath(snapshot: Pick<InventorySnapshot, 'roots'>, source: SourcePath, display: SelectionRequest['path_display']): string {
+  const root = snapshot.roots.find(root => root.name === source.root)!;
   return display === 'full' ? posix.join(root.identity.canonicalPath, source.path)
-    : operation.snapshot.roots.length === 1 ? source.path : root.name + '/' + source.path;
+    : snapshot.roots.length === 1 ? source.path : root.name + '/' + source.path;
 }
 
 async function sourceBlock(operation: WorkspaceOperation, record: SourceRecord, bodies: readonly string[], path: string): Promise<
@@ -35,7 +36,7 @@ async function sourceBlock(operation: WorkspaceOperation, record: SourceRecord, 
     const decoding = { kind: captured.decoding.kind, identity: captured.decoding.identity, encoding: captured.decoding.encoding };
     if (canonicalJSON(captured.identity) !== canonicalJSON(record.identity) || descriptorGitMode(captured.fingerprint.mode) !== record.mode ||
       canonicalJSON(decoding) !== canonicalJSON(record.decoding)) throw new WorkspaceFailure('sourceChanged', record.selection.source);
-    const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: path,
+    const block = await operation.projectNative({ kind: 'renderFileBlock', selectedPath: path,
       fileName: posix.basename(record.selection.source.path), content: captured.text, ranges: record.selection.kind === 'slices' ? record.selection.ranges : null });
     return { kind: 'body', text: block.text };
   } catch (error) {
@@ -66,7 +67,7 @@ export async function captureSourcePresentation(operation: WorkspaceOperation, m
     const failure = await unavailableSource(operation, record, catalog, roots);
     if (failure) { unavailable.push(failure); continue; }
     if (request.view === 'content' && material.bodies.length) {
-      const block = await sourceBlock(operation, record, material.bodies, selectionSourcePath(operation, record, request.path_display));
+      const block = await sourceBlock(operation, record, material.bodies, selectionSourcePath(operation.snapshot, record.selection.source, request.path_display));
       if (block.kind === 'unavailable') { unavailable.push({ kind: 'bodyUnavailable', record, code: block.code }); continue; }
       blocks.set(record.id, block.text);
     }

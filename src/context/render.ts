@@ -1,6 +1,6 @@
 import type { CapturedClipboardPreset } from '../contracts/presentation.js';
 import { posix } from 'node:path';
-import type { CodemapMode, CapturedContextBuildRequest, ManualPresentation, MaterialRecord, SourceSelection, Span, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
+import type { CodemapMode, CapturedContextBuildRequest, ManualPresentation, MaterialRecord, Span, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { Material } from './material-store.js';
 import type { FinalFileTree } from './final-tree.js';
@@ -17,7 +17,6 @@ export interface RenderInput {
   readonly inventory: Omit<InventorySnapshot, 'generation'>;
   readonly prompt: string;
   readonly materials: readonly Material[];
-  readonly excludedSources: readonly SourceSelection[];
   readonly automaticAcquisition: AutomaticAcquisitionState;
   readonly fileTree: FinalFileTree;
   readonly clipboard: string;
@@ -150,7 +149,6 @@ export function renderBundle(input: Omit<RenderInput, 'tokenInputs'>) {
           entry.structural.record.outcome.kind !== 'ready'
         ),
         materials: records.map((record) => ({ ...packetMetadata(record), spans: record.spans })),
-        excludedSources: input.excludedSources,
         manualPresentation: input.manualPresentation,
         unavailableRoots: input.unavailableRoots,
         unavailableFiles: input.unavailableFiles,

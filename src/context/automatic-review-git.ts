@@ -7,7 +7,6 @@ import { selectedGitSourcePaths } from './git-target.js';
 import { resolveDiffRepository, gitText } from '../exploration/git-repository.js';
 import { prepareGitDiffComparison, capturePreparedGitDiff } from '../exploration/git-diff.js';
 import { resolveGitCommit } from '../patches/local-git.js';
-import { gitProcess } from '../patches/git-process.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { contains } from '../workspace/root-policy.js';
 
@@ -80,12 +79,9 @@ async function completeReviewCheckouts(operation: WorkspaceOperation, completeRo
   return { checkouts: [{ identity: elected.primary, displayLabel: root.name, selectedPaths: [] }], rootBinding };
 }
 
-async function reviewComparison(operation: WorkspaceOperation, repository: Owner, requestedBase: string | null): Promise<Comparison> {
+async function reviewComparison(repository: Owner, requestedBase: string | null): Promise<Comparison> {
   const line = async (args: readonly string[]) => {
-    const result = await gitProcess(operation.runtime.supervisor, repository.executable,
-      repository.repository.worktree.canonicalPath, args, operation.signal, { kind: 'repository' });
-    if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
-    const text = gitText(result.bytes);
+    const text = gitText(await repository.run(args));
     if (!text.endsWith('\n')) throw new WorkspaceFailure('gitProtocolError');
     return text.slice(0, -1);
   };
@@ -112,7 +108,7 @@ export async function acquireSelectedReviewGit(operation: WorkspaceOperation, re
       const repository = await resolveCheckoutRepository(operation, checkout, scope);
       const valid = await operation.revalidateGitTargets({ kind: 'revalidateGitTargets', checkouts: [checkout.identity] });
       if (!valid.valid) throw new WorkspaceFailure('gitRepositoryChanged');
-      const comparison = await reviewComparison(operation, repository, ownership.base);
+      const comparison = await reviewComparison(repository, ownership.base);
       const commands = await prepareGitDiffComparison(operation, diffRequest(checkout.identity.root, comparison.base), repository);
       plans.push({ kind: 'ready', checkout, owner: repository, commands, comparison });
     } catch (error) {

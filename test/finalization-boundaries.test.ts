@@ -95,8 +95,8 @@ test('native boundary failures, preclaim cancellation and postclaim runtime clos
     try {
       const workspace = await runtime.declare(f.spec, signal()),
         draft = await workspace.createDraft(f.request, signal());
-      await draft.update(
-        { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
+      await draft.prompt(
+        { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  },
         signal(),
       );
       await workspace.close();
@@ -134,8 +134,8 @@ test('integrity is source-independent; current verification detects delivered so
   const f = await setup(), runtime = new SmipRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft(f.request, signal());
-    await draft.update(
-      { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } },
+    await draft.prompt(
+      { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  },
       signal(),
     );
     const result = await draft.finalize(signal());
@@ -171,7 +171,7 @@ test('claimed publication reports uncertain acknowledgement loss after native sy
     const runtime = new Runtime(f.options);
     try {
       const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft(f.request, signal());
-      await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+      await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
       enabled = true;
       await assert.rejects(draft.finalize(signal()), error => {
         if (scenario === 'refuse') return error instanceof NativeFailure && error.code === 'alreadyExists';

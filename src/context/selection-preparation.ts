@@ -12,6 +12,7 @@ import { contains } from '../workspace/root-policy.js';
 import type { CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
 import { resolveGitArtifactSelection } from './git-artifact-selection.js';
 import type { GitArtifactMaterial } from './git-artifact-material.js';
+import { selectionCatalogRoots } from '../workspace/selection-catalog.js';
 
 export type SelectionState = Extract<NativeOperation, { kind: 'prepareSelection' }>['selection'];
 type Catalog = Extract<NativeOperation, { kind: 'prepareSelection' }>['catalog'];
@@ -97,18 +98,13 @@ async function capturedCatalog(operation: WorkspaceOperation, roots: readonly Ro
     const outcome = await materializePath(operation, roots, path, normalized[index]!);
     if (outcome) materialization.push(outcome);
   }
-  const entries = operation.snapshot.entries;
-  return { roots: roots.map(root => ({ id: randomUUID(), name: root.name, path: root.selectionPath,
-    files: entries.filter(entry => entry.root === root.name && (entry.kind === 'file' || entry.kind === 'acquisitionFailed'))
-      .map(entry => ({ path: entry.path, discoverable: entry.kind === 'acquisitionFailed' ||
-        entry.kind === 'file' && entry.visibility === 'discoverable' })),
-    directories: entries.filter(entry => entry.root === root.name && entry.kind === 'directory')
-      .map(entry => ({ path: entry.path, discoverable: entry.kind === 'directory' && entry.visibility === 'discoverable' })),
-  })), materialization };
+  return { roots: selectionCatalogRoots(operation.snapshot, roots.map(root => ({
+    id: randomUUID(), name: root.name, path: root.selectionPath,
+  }))), materialization };
 }
 async function replaceSelection(operation: WorkspaceOperation, request: SelectionRequest, parsed: Parsed, state: SelectionState, catalog: Catalog,
   hasFullFileArtifactInputs: boolean) {
-  const result = await operation.prepareSelection({ kind: 'prepareSelection', selection: state, catalog,
+  const result = await operation.projectNative({ kind: 'prepareSelection', selection: state, catalog,
     mutation: { kind: 'set', mode: request.mode, paths: parsed.paths, slices: parsed.slices,
       sliceErrors: parsed.sliceErrors, hasFullFileArtifactInputs } });
   if (result.kind !== 'selectionBuilt') throw new WorkspaceFailure('nativeProtocolError');
@@ -124,7 +120,7 @@ async function mutatePaths(operation: WorkspaceOperation, request: PathRequest, 
     ? { op: request.op, paths: parsed.paths, rawPaths: request.paths }
     : { op: request.op, mode: request.mode === 'codemap_only' ? 'codemap_only' as const : 'full' as const,
       paths: parsed.paths, rawPaths: request.paths };
-  const result = await operation.mutateSelectionPaths({ kind: 'mutateSelectionPaths', selection: state, catalog, mutation });
+  const result = await operation.projectNative({ kind: 'mutateSelectionPaths', selection: state, catalog, mutation });
   invalid.push(...result.invalidPaths);
   if ('codemapUnavailable' in result) invalid.push(...result.codemapUnavailable);
   const resolved = result.op === 'promote' || result.op === 'demote'
@@ -149,7 +145,7 @@ async function mutateSelection(operation: WorkspaceOperation, request: PathReque
   let next = paths.state, resolved = paths.resolved || artifacts.resolved.length > 0;
   const invalid = [...parsed.sliceErrors, ...paths.invalid];
   if (parsed.slices.length) {
-    const result = await operation.prepareSelection({ kind: 'prepareSelection', selection: next, catalog,
+    const result = await operation.projectNative({ kind: 'prepareSelection', selection: next, catalog,
       mutation: { kind: 'slices', op: request.op === 'remove' ? 'remove' : 'add', entries: parsed.slices } });
     if (result.kind !== 'selectionSlicesChanged') throw new WorkspaceFailure('nativeProtocolError');
     next = result.selection; invalid.push(...result.invalidPaths);
@@ -189,7 +185,7 @@ export async function prepareSelection(operation: WorkspaceOperation, request: S
     throw new WorkspaceFailure('invalidSelection', { message: 'Codemap generation is disabled; codemap-only selection modes are unavailable.' });
   }
   const { roots, state } = selection;
-  const parsed = await operation.parseSelectionInputs({ kind: 'parseSelectionInputs', paths: request.paths, slices: request.slices });
+  const parsed = await operation.projectNative({ kind: 'parseSelectionInputs', paths: request.paths, slices: request.slices });
   validateIngress(request, parsed);
   const artifacts = await resolveGitArtifactSelection(operation, request, parsed, materials, grants);
   const ordinary = artifacts.ordinary;
@@ -205,7 +201,7 @@ export async function prepareSelection(operation: WorkspaceOperation, request: S
       { ...request, op: request.op }, ordinary, state, await capturedCatalog(operation, roots, ordinary), artifacts); break;
   }
   if (artifacts.resolved.length) {
-    const result = await operation.transitionSelection({ kind: 'transitionSelection', selection: prepared.state,
+    const result = await operation.projectNative({ kind: 'transitionSelection', selection: prepared.state,
       mutation: { kind: 'fullFiles', op: request.op === 'remove' ? 'remove' : 'add',
         paths: artifacts.resolved.map(material => material.record.reference.absolutePath) } });
     prepared = { ...prepared, state: result.selection };

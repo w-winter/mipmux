@@ -1,8 +1,7 @@
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { runReference } from './reference-harness.mjs';
 
 const [checkout] = process.argv.slice(2);
 if (!checkout) throw new Error('Usage: node scripts/generate-selection-reply-fixtures.mjs <pinned-rpce-checkout>');
@@ -62,11 +61,8 @@ const text = [
 ].join('\n');
 const directory = 'test/fixtures/rpce-selection-reply/';
 const cases = JSON.parse(readFileSync(directory + 'cases.json'));
-const scratch = mkdtempSync(join(tmpdir(), 'smip-selection-reply-reference-'));
-writeFileSync(join(scratch, 'reference.swift'), text);
-execFileSync('swiftc', ['-parse-as-library', join(scratch, 'reference.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });
-const results = JSON.parse(execFileSync(join(scratch, 'reference'), { input: JSON.stringify(cases), encoding: 'utf8' }));
+const results = JSON.parse(runReference(text, JSON.stringify(cases), ['-parse-as-library']));
 writeFileSync(directory + 'cases.json', JSON.stringify(cases.map((entry, index) => ({ ...entry, expected: results[index].expected })), null, 2) + '\n');
 writeFileSync(directory + 'provenance.json', JSON.stringify({ revision, sources, cases: cases.length, generatorSHA256: hash(text),
   bindings: ['Original DTO, aggregation, copy-projection and view-filter bodies compile independently. Shared immutable input parsing supplies paths, category/ranges and captured token values. App path metadata and token services are replaced by those captured values; workspace token recount and content packaging are not tested by these cases.'] }, null, 2) + '\n');
-console.log(JSON.stringify({ cases: cases.length, scratch }));
+console.log(JSON.stringify({ cases: cases.length }));

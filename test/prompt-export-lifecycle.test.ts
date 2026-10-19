@@ -72,7 +72,7 @@ test('an export captures one prompt and selection revision while a later mutatio
     armed = true;
     const exporting = draft.prompt({ op: 'export', path: 'captured.md', maxOutputBytes: 100000 }, signal());
     await Promise.race([entering, exporting.then(() => { throw new Error('Assembly was not held'); })]);
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'prompt', op: 'set', text: 'LATER PROMPT' } }, signal());
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes: 100000, op: 'set', text: 'LATER PROMPT'  }, signal());
     await draft.update({ expectedRevision: 1, maxOutputBytes: 100000, mutation: { kind: 'clearSources' } }, signal());
     release(); await exporting;
     const body = await readFile(join(f.output, 'captured.md'), 'utf8');

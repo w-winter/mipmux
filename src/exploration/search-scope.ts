@@ -1,26 +1,17 @@
 import type { SearchRequest } from '../contracts/exploration.js';
-import type { NativeOperation } from '../contracts/native.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { structureId } from '../workspace/structure-identity.js';
 import { WorkspaceFailure } from '../workspace/values.js';
+import { selectionCatalogRoots } from '../workspace/selection-catalog.js';
 
-type CatalogRoots = Extract<NativeOperation, { kind: 'parseSearchScope' }>['roots'];
 type ParsedScope = Awaited<ReturnType<WorkspaceOperation['resolveSearchScope']>>;
 
 async function capture(operation: WorkspaceOperation, selectedRoots: readonly string[]) {
   const snapshot = operation.snapshot;
   const paths = await operation.selectionPathBindings(snapshot.roots.map(root => root.identity.canonicalPath));
-  const roots: CatalogRoots = snapshot.roots.map((root, index) => ({ id: structureId(root.identity, null), name: root.name,
-    path: paths[index]!, files: [], directories: [] }));
-  const byName = new Map(roots.map(root => [root.name, root]));
-  for (const entry of snapshot.entries) {
-    const root = byName.get(entry.root)!;
-    if (entry.kind === 'file' || entry.kind === 'acquisitionFailed') {
-      root.files.push({ path: entry.path, discoverable: entry.kind === 'acquisitionFailed' || entry.visibility === 'discoverable' });
-    } else if (entry.kind === 'directory') {
-      root.directories.push({ path: entry.path, discoverable: entry.visibility === 'discoverable' });
-    }
-  }
+  const roots = selectionCatalogRoots(snapshot, snapshot.roots.map((root, index) => ({
+    id: structureId(root.identity, null), name: root.name, path: paths[index]!,
+  })));
   return { snapshot, roots, scoped: roots.filter(root => !selectedRoots.length || selectedRoots.includes(root.name)) };
 }
 
@@ -63,7 +54,7 @@ export async function refreshSearchScope(operation: WorkspaceOperation, request:
   let matches = admitted;
   if (resolved) {
     const ids = new Map(resolved.catalog.roots.map(root => [root.name, root.id]));
-    const filtered = await operation.filterSearchScope({ kind: 'filterSearchScope',
+    const filtered = await operation.projectNative({ kind: 'filterSearchScope',
       roots: resolved.catalog.roots.map(({ id, name, path }) => ({ id, name, path })),
       files: admitted.map(file => ({ rootID: ids.get(file.root)!, path: file.path })), ...resolved.scope.spec });
     if (filtered.cancelled) throw new WorkspaceFailure('cancelled');

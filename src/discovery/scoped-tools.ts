@@ -34,7 +34,6 @@ export async function scopedCall(call: Exclude<DiscoveryCall, { name: 'ask_user'
     case 'file_search': return operation.fileSearch(call.input, encode);
     case 'git': return scopedGitCall(call.input, draft, operation, signal, encode);
     case 'read_file': return scopedReadCall(call.input, draft, operation, signal, encode);
-    case 'draft_preview': return draft.preview(call.input, signal, encode);
     case 'draft_update': return draft.update(call.input, signal, encode);
     case 'draft_inspect': return draft.inspect(call.input, signal, encode);
     case 'prompt': return draft.prompt(call.input, signal, encode);

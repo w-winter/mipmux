@@ -19,8 +19,8 @@ test('recipient Markdown retains the literal prompt and material paths with exac
   try {
     const workspace = await runtime.declare(fixture.input.workspace, signal);
     const draft = await workspace.createDraft(fixture.input.request, signal);
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 12000,
-      mutation: { kind: 'prompt', op: 'append', text: addition } }, signal);
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes: 12000,
+      op: 'append', text: addition  }, signal);
     const admitted = (await draft.inspect({ view: 'material', materialId: 'patch:changes', maxOutputBytes: 12000, continuation: null }, new AbortController().signal));
     assert.equal(admitted.kind, 'material');
     if (admitted.kind !== 'material') assert.fail('Missing patch material');

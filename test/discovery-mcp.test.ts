@@ -34,9 +34,9 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
         mutation: { kind: 'addDocument', document: { kind: 'suppliedDocument', id: 'fetched-ticket', role: 'evidence',
           origin: server.url, text: server.text } } }, stop: 'tool_use', tokens: 10 };
     }
-    if (index === 7) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 1, maxOutputBytes: 10000,
-        mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Repair the discovery worker', architecture: 'Ticket: repair the discovery worker',
-          relationships: [], ambiguities: [] }) } }, stop: 'tool_use', tokens: 10 };
+    if (index === 7) return { kind: 'tool', name: 'prompt', input: { expectedRevision: 1, maxOutputBytes: 10000,
+        op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Repair the discovery worker', architecture: 'Ticket: repair the discovery worker',
+          relationships: [], ambiguities: [] })  }, stop: 'tool_use', tokens: 10 };
     if (index === 8) return { kind: 'tool', name: 'draft_validate', input: { maxOutputBytes: 10000 }, stop: 'tool_use', tokens: 10 };
     return { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 };
   });

@@ -79,7 +79,7 @@ test('two-phase finalization across many roots completes under a controlled desc
     assert.equal((await operation.readSource({ root: 'r00', path: 'file.txt' })).bytes.toString(), 'body r00\n');
     await operation.close();
     const draft = await workspace.createDraft(request, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Many roots', relationships: [], ambiguities: [] }) } }, signal());
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Many roots', relationships: [], ambiguities: [] })  }, signal());
     const result = await draft.finalize(signal());
     assert.equal(result.kind, 'ready');
     if (result.kind !== 'ready') assert.fail('unreachable');

@@ -1,7 +1,6 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -18,12 +17,8 @@ test('native Git publication selection merge preserves original captured/latest 
   const cases = fixtures.Parse(JSON.parse(await readFile('test/fixtures/rpce-git-publication-selection/cases.json', 'utf8')));
   const invoke = (operation: NativeOperation) => {
     const generation = 'git-selection-reference';
-    const result = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, requestId: 'merge', generation, operation }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(result.status, 0, result.stderr);
-    const frames = result.stdout.trim().split('\n'); assert.equal(frames.length, 1);
-    return response.Parse(JSON.parse(frames[0]!)).result.selection;
+    const nativeFrame = callNative(operation, generation, 'merge');
+    return response.Parse(nativeFrame).result.selection;
   };
   const proof: { name: string; selection: ReturnType<typeof invoke>; removed: ReturnType<typeof invoke> | null }[] = [];
   for (const entry of cases) {

@@ -1,19 +1,16 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
-import { nativeFrameValidator, type NativeOperation } from '../src/contracts/native.js';
+import type { NativeOperation } from '../src/contracts/native.js';
 
 type ScopeOperation = Extract<NativeOperation, { kind: 'parseSearchScope' | 'refreshSearchScope' }>;
 
 function request(operation: ScopeOperation) {
   const generation = 'scope-parser';
-  const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-    input: JSON.stringify({ wireVersion: 1, requestId: 'scope', generation, operation }) + '\n', encoding: 'utf8',
-  });
-  assert.equal(child.status, 0, child.stderr);
-  const frame = nativeFrameValidator.Parse(JSON.parse(child.stdout.trim()));
+  const frame = callNative(operation, generation, 'scope');
   if (frame.kind !== 'terminal' || frame.result.kind !== 'searchScopeParsed') assert.fail('Missing parsed scope');
   return frame.result.scope;
 }

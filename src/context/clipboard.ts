@@ -50,20 +50,19 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
   } };
 }
 
-export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketInput, 'automaticGit' | 'excludedSources'>,
+export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketInput, 'automaticGit'>,
   signal: AbortSignal, source: AutomaticReviewGitSource): Promise<RenderInput> {
-  const packet = { ...input, excludedSources: [] };
   let automaticGit = source.kind === 'captured' ? source.capture : null;
-  let clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...packet, automaticGit }), signal);
+  let clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);
   if (clipboard.needsAutomaticGit && source.kind === 'live') {
     const operation = await source.operation.fork(signal);
     try { automaticGit = await acquireAutomaticReviewGit(operation, input.request,
       input.manualPresentation?.canonicalSources ?? capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles), input.unavailableRoots,
       clipboard.preset.gitInclusion === 'complete' ? 'complete' : 'selected'); }
     finally { await operation.close(); }
-    clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...packet, automaticGit }), signal);
+    clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);
   }
-  return { ...packet, automaticGit, clipboard: clipboard.text, clipboardPreset: clipboard.preset, selectedGitDiffIds: clipboard.selectedGitDiffIds,
+  return { ...input, automaticGit, clipboard: clipboard.text, clipboardPreset: clipboard.preset, selectedGitDiffIds: clipboard.selectedGitDiffIds,
     tokenInputs: clipboard.tokenInputs };
 }
 

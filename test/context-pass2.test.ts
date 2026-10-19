@@ -54,7 +54,7 @@ test('participating worktree material must match retained source bytes and mode 
         { kind: 'full', source: { root: 'r', path: 'scope/source.txt' } }, { kind: 'full', source: { root: 'r', path: 'support.txt' } }],
         patches: [{ kind: 'localPatch', id: 'patch', root: 'r', scope: { kind: 'paths', paths: ['scope'] },
           comparison: { kind: 'worktree', base: { kind: 'commit', ref: base }, includeUntracked: true } }] }, signal());
-      await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+      await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
       const validation = await draft.validate(signal());
       const finalized = await draft.finalize(signal());
       if (scenario === 'coherent') { assert.equal(finalized.kind, 'ready'); if (finalized.kind === 'ready') await verifyBundle(finalized.directory); }
@@ -78,7 +78,7 @@ test('saved supplied policy paths must equal the duplicate-free declared union a
     const draft = await workspace.createDraft({ ...request, patches: [{ kind: 'suppliedPatch', id: 'p', root: 'r', text: 'complete patch\n', origin: 'fixture',
       comparison: { kind: 'supplied', base: 'a', target: 'b' }, coverage: ['covered.txt'],
       targets: [{ path: 'target.txt', identity: { sha256: '0'.repeat(64), byteCount: 0 }, mode: '100644' }] }] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
     const context = await readFile(join(ready.directory, 'context.md')), handoffBytes = await readFile(join(ready.directory, 'handoff.md'));

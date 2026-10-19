@@ -1,9 +1,9 @@
-import { readFileSync, writeFileSync, mkdtempSync, openSync, closeSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { runReference } from './reference-harness.mjs';
 
 const [checkout] = process.argv.slice(2);
 if (!checkout) throw new Error('Usage: node scripts/generate-selection-candidate-fixtures.mjs <pinned-rpce-checkout>');
@@ -107,18 +107,11 @@ for entry in raw {
 }
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: output, options: [.sortedKeys]))`,
 ].join('\n\n') + '\n';
-const run = mkdtempSync(join(tmpdir(), 'smip-selection-candidates-reference-'));
-writeFileSync(run + '/reference.swift', text);
-execFileSync('swiftc', [run + '/reference.swift', '-o', run + '/reference'], { stdio: 'inherit' });
 const ordinaryDirectory = 'test/fixtures/rpce-selection-path-mutations/';
 const preparationDirectory = 'test/fixtures/rpce-selection-preparation/';
 const inputs = [...JSON.parse(readFileSync(directory + 'cases.json')), ...JSON.parse(readFileSync(ordinaryDirectory + 'cases.json')),
   ...JSON.parse(readFileSync(preparationDirectory + 'cases.json')), ...JSON.parse(readFileSync(parseDirectory + 'cases.json'))];
-writeFileSync(run + '/input.json', JSON.stringify(inputs));
-const inputFile = openSync(run + '/input.json', 'r'), outputFile = openSync(run + '/output.json', 'w');
-try { execFileSync(run + '/reference', [], { stdio: [inputFile, outputFile, 'inherit'] }); }
-finally { closeSync(inputFile); closeSync(outputFile); }
-const output = JSON.parse(readFileSync(run + '/output.json'));
+const output = JSON.parse(runReference(text, JSON.stringify(inputs)));
 const candidates = output.filter(entry => entry.input.kind === 'resolveSelectionCandidates');
 const ordinary = output.filter(entry => entry.input.kind === 'mutateSelectionPaths');
 writeFileSync(directory + 'cases.json', JSON.stringify(candidates) + '\n');
@@ -146,4 +139,4 @@ parseProof.cases = parsedInputs.length;
 parseProof.generatorSHA256 = provenance.generatorSHA256;
 writeFileSync(parseDirectory + 'provenance.json', JSON.stringify(parseProof, null, 2) + '\n');
 console.log(JSON.stringify({ parsedInputs: parsedInputs.length, candidates: candidates.length, ordinaryMutations: ordinary.length,
-  preparations: preparations.length, scratch: run }));
+  preparations: preparations.length }));

@@ -1,7 +1,6 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -12,11 +11,8 @@ test('native patch splitting, hunks, counts and changed-line text preserve origi
   const proof: unknown[] = [];
   for (const entry of cases) {
     const generation = 'git-patch-reference';
-    const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, generation, requestId: entry.name, operation: entry.input }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(child.status, 0, child.stderr);
-    const result = envelope.Parse(JSON.parse(child.stdout.trim())).result;
+    const nativeFrame = callNative(entry.input, generation, entry.name);
+    const result = envelope.Parse(nativeFrame).result;
     assert.deepEqual(result, entry.expected, entry.name);
     proof.push({ name: entry.name, result });
   }

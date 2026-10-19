@@ -3,7 +3,7 @@ import { Compile } from 'typebox/compile';
 import { fromJsonSchema, inputRequired, isInputRequiredResult, CLIENT_CAPABILITIES_META_KEY,
   type McpServer, type ServerContext } from '@modelcontextprotocol/server';
 import { WorkspaceSpec } from '../contracts/inventory.js';
-import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from '../contracts/context.js';
+import { ContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from '../contracts/context.js';
 import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, ScopedStructure, toolDescription } from '../contracts/exploration.js';
 import { GitInput, gitValidator } from '../contracts/git.js';
 import { SelectionInput, selectionValidator } from '../contracts/selection.js';
@@ -77,8 +77,6 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     (input, ctx) => client().inspect(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('draft_update', Type.Object({ draftId: id, input: Type.Omit(DraftUpdate, ['maxOutputBytes']), ...budget }, closed),
     (input, ctx) => client().update(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
-  register('draft_preview', Type.Object({ draftId: id, input: Type.Omit(DraftPreview, ['maxOutputBytes']), ...budget }, closed),
-    (input, ctx) => client().preview(input.draftId, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('prompt', Type.Object({ draftId: Type.Optional(id), input: Type.Union([
     Type.Omit(PromptRequest.anyOf[0], ['maxOutputBytes']), Type.Omit(PromptRequest.anyOf[1], ['maxOutputBytes']),
     Type.Omit(PromptRequest.anyOf[2], ['maxOutputBytes']), Type.Omit(PromptRequest.anyOf[3], ['maxOutputBytes']),

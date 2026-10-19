@@ -132,7 +132,7 @@ test('production stdio shutdown waits for real claimed publication before closin
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
       budgetUnits: 10000 } });
     assert(draft && typeof draft === 'object' && 'id' in draft);
-    await call('draft_update', { draftId: draft.id, input: { expectedRevision: 0, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] }) } } });
+    await call('prompt', { draftId: draft.id, input: { expectedRevision: 0, op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] })  } });
     wire.onmessage?.({ jsonrpc: '2.0', id: ++id, method: 'tools/call', params: { _meta: meta, name: 'draft_finalize', arguments: { draftId: draft.id } } });
     await published.promise;
     let closed = false; const closing = host.close().then(() => { closed = true; });

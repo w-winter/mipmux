@@ -40,6 +40,6 @@
   "generator": "scripts/generate-graph-size-fixtures.mjs",
   "generatorSHA256": "c011b8bbd580aea9b8dfb37109599898e4556e9e82ec94a8d86e915b609fe0dd",
   "input": "test/fixtures/rpce-structure/cases.json",
-  "inputSHA256": "fa86b6c936f44ae237bf8ec26db86ce63cb3b1dbb165021fdf463972f63fa713",
+  "inputSHA256": "34eb62bec0812b3956bf36b994a0b54aeda22e633d729df3c855faec732187fc",
   "scope": "Original fullSize and checked arithmetic run on captured immutable declarations and the retained adjacency adapter; prices/counts are independent of the TypeScript accountant, not proof of app currentness."
 }

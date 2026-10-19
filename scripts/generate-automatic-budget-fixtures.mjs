@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { withReferenceDirectory } from './reference-harness.mjs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { automaticRootCases } from '../dist-test/test/fixtures/automatic-root-cases.js';
@@ -38,8 +38,7 @@ const text = adapters + '\n' + types + `\nfinal class OriginalGraph {
 let cases = try JSONDecoder().decode([Case].self, from: FileHandle.standardInput.readDataToEndOfFile())
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: cases.map { $0.run() }, options: [.sortedKeys]))
 `;
-const work = mkdtempSync(join(tmpdir(), 'smip-automatic-budget-reference-'));
-try {
+withReferenceDirectory('smip-automatic-budget-reference-', work => {
   writeFileSync(join(work, 'main.swift'), text);
   execFileSync('swiftc', [join(work, 'main.swift'), '-o', join(work, 'oracle')], { stdio: 'inherit' });
   const output = execFileSync(join(work, 'oracle'), { input: JSON.stringify(automaticRootCases) });
@@ -54,4 +53,4 @@ try {
     scope: 'Original automaticSelectionLatest body and ordering execute against settled captured adjacency. Adapters construct syntactic postings/edges; this proves root-query counting and budgets, not app currentness, matching or outer-store aggregation.',
   }, null, 2) + '\n');
   console.log(JSON.stringify({ cases: automaticRootCases.length }));
-} finally { execFileSync('trash', [work]); }
+});

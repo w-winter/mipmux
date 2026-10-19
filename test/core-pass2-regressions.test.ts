@@ -66,7 +66,7 @@ test('an absent credential beneath an independently symlinked parent stays denie
     assert.equal(search.counts.matchedFiles, 0);
     assert.equal((await operation.readSource({ root: 'r', path: 'config/public.txt' })).bytes.toString(), 'admitted');
     const draft = await handle.createDraft({ ...f.request, requiredSources: [{ kind: 'full', source: { root: 'r', path: 'config/public.txt' } }] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
     const bundle = await draft.finalize(signal());
     if (bundle.kind !== 'ready') assert.fail('missing bundle');
     await operation.close(); await handle.close();
@@ -142,7 +142,7 @@ test('draft admission uses its qualifying refresh snapshot while a later scan is
       if (mode === 'manual') {
         const draft = await (admission as Promise<DraftRuntime>);
         assert.equal(draft.operation.snapshot.generation, 2);
-        await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+        await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
         assert.equal((await draft.validate(signal())).kind, 'validation');
         await draft.close();
       } else {
@@ -197,8 +197,9 @@ test('terminal manual finalization releases the workspace lease while blocked dr
         budgetUnits: 1000,
       }, signal());
       assert.equal((await client.finalize(draft.id, signal())).kind, 'blocked');
-      const edited = await client.update(draft.id, { expectedRevision: 0, maxOutputBytes: 10000,
-        mutation: { kind: 'prompt', op: 'set', text: JSON.stringify(handoff) } }, signal());
+      const edited = await client.prompt(draft.id, { expectedRevision: 0, maxOutputBytes: 10000,
+        op: 'set', text: JSON.stringify(handoff)  }, signal());
+      assert('revision' in edited);
       assert.equal(edited.revision, 1, 'a blocked draft remains editable');
       await client.closeWorkspace(workspace.id);
       if (scenario === 'stale') {
@@ -215,10 +216,10 @@ test('terminal manual finalization releases the workspace lease while blocked dr
       }
       const metadata = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal));
       assert(metadata.kind === 'metadata' && metadata.state === 'terminal' && metadata.revision === 1);
-      await assert.rejects(client.update(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal()), /draftFrozen|cancelled/);
+      await assert.rejects(client.prompt(draft.id, { expectedRevision: 1, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal()), /draftFrozen|cancelled/);
       const owner = await Promise.race([ownerBridge.closed.then(() => 'closed' as const), sleep(5000, 'retained' as const, { ref: false })]);
       assert.equal(owner, 'closed', scenario + ': a terminal draft retained the workspace lease');
-      await client.update(sibling.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+      await client.prompt(sibling.id, { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
       const validation = JSON.parse(JSON.stringify(await client.validate(sibling.id, 10000, signal())));
       assert.equal(validation.kind, 'validation');
       assert.equal((await client.finalize(sibling.id, signal())).kind, 'ready');

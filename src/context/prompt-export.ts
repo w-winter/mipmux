@@ -1,5 +1,4 @@
 import { isAbsolute, relative } from 'node:path';
-import { performance } from 'node:perf_hooks';
 import type { Static } from 'typebox';
 import type { CapturedContextBuildRequest, CodemapMode, PromptRequest } from '../contracts/context.js';
 import type { NativeSelectionReplyInput } from '../contracts/native.js';
@@ -7,12 +6,7 @@ import type { RootIdentity } from '../contracts/workspace.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { CanonicalSelection } from './selection-preparation.js';
 import type { DerivedMaterials } from './automatic-codemap-acquisition.js';
-import { withCodemapPresentation, type CodemapPresentation } from './codemap-readiness.js';
-import { packetSources, captureUnavailableRoots } from './source-omissions.js';
-import { refreshGitArtifactMaterials } from './git-artifact-material.js';
-import { revalidateMaterials } from './revalidate.js';
-import { revalidateCapturedAutomaticReviewGit } from './automatic-review-git.js';
-import { prepareRenderInput } from './final-tree.js';
+import type { CodemapPresentation } from './codemap-readiness.js';
 import { renderBundle, type RenderInput } from './render.js';
 import { estimateUnits } from './budget.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
@@ -20,6 +14,7 @@ import { identity, type Material } from './material-store.js';
 import { admitPromptReply, presetDescriptor } from './prompt-presets.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
 import { contains } from '../workspace/root-policy.js';
+import { assemblePacket, initialPacketCapture, revalidatePacket } from './packet-assembly.js';
 
 type FileEntry = Static<typeof NativeSelectionReplyInput>['entries'][number];
 type FileFields = Omit<Extract<FileEntry, { kind: 'full' }>, 'kind'>;
@@ -84,21 +79,8 @@ export async function exportPrompt(capture: Capture, request: Extract<PromptRequ
   }
   const operation = await capture.owner.fork(signal), bridge = capture.owner.runtime.makeBridge();
   try {
-    const rootFailures = await captureUnavailableRoots(operation), unavailable = new Set(rootFailures.map(root => root.root));
-    const assemble = async (presentation: CodemapPresentation) => {
-      const materials = await refreshGitArtifactMaterials(operation, [...presentation.materials.values()]);
-      const delivery = await packetSources(operation, materials, rootFailures);
-      await revalidateMaterials(operation, delivery.materials, delivery.unavailableRoots, delivery.unavailableFiles);
-      const { generation: _generation, ...inventory } = operation.snapshot;
-      const input = await prepareRenderInput(operation.runtime, { request: capturedRequest, codemapMode: capture.mode,
-        prompt: capture.prompt, materials: delivery.materials, inventory, automaticAcquisition: presentation.automaticAcquisition,
-        unavailableRoots: delivery.unavailableRoots, unavailableFiles: delivery.unavailableFiles }, operation.signal,
-        { kind: 'live', operation }, capture.canonical);
-      return { input, rendered: renderBundle(input) };
-    };
-    const { input, rendered } = capturedRequest.copyPreset.codeMapUsage === 'auto'
-      ? await withCodemapPresentation(operation, capture.mode, performance.now(), () => capture.prepare(operation, unavailable), assemble)
-      : await assemble(capture.presentation);
+    const { input, rendered } = await assemblePacket(operation, { ...capture, request: capturedRequest },
+      initialPacketCapture(operation.snapshot, capture.presentation), async input => ({ input, rendered: renderBundle(input) }));
     if (!rendered.measurement.complete || rendered.diagnostics.length) {
       throw new WorkspaceFailure('promptExportBlocked', { revision: capture.revision, diagnostics: rendered.diagnostics, measurement: rendered.measurement });
     }
@@ -110,8 +92,7 @@ export async function exportPrompt(capture: Capture, request: Extract<PromptRequ
     const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'output', access: 'output', absolutePath: output.declaredPath, expected: output }] }, signal);
     const root = opened.result.roots[0];
     if (!root) throw new WorkspaceFailure('nativeProtocolError');
-    await revalidateMaterials(operation, input.materials, input.unavailableRoots, input.unavailableFiles);
-    await revalidateCapturedAutomaticReviewGit(operation, input.automaticGit);
+    await revalidatePacket(operation, input);
     signal.throwIfAborted();
     // The synchronous native commit must settle even if cancellation arrives while it writes.
     const written = await bridge.request({ kind: 'writePromptExport', root: root.handle, path: destination,

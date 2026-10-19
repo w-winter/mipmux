@@ -1,8 +1,7 @@
+import { runReference } from './reference-harness.mjs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const [checkout] = process.argv.slice(2);
 if (!checkout) throw new Error('Usage: node scripts/generate-prompt-assembly-fixtures.mjs <pinned-rpce-checkout>');
@@ -30,10 +29,6 @@ const harness = `
     }
 }
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-prompt-assembly-reference-'));
-writeFileSync(join(scratch, 'reference.swift'), source.toString() + harness);
-execFileSync('swiftc', ['-parse-as-library', '-package-name', 'SmipReference', join(scratch, 'reference.swift'),
-  '-o', join(scratch, 'reference')], { stdio: 'inherit' });
 const order = ['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions'];
 const snippets = { fileMap: '<file_map>\nmap\n</file_map>\n\n', fileContents: '<file_contents>\nfiles\n</file_contents>\n\n',
   gitDiff: '<git_diff>\npatch\n</git_diff>\n\n', metaPrompts: '<meta prompt 1 = "Review">\nrole\n</meta prompt 1>\n\n',
@@ -53,11 +48,11 @@ const cases = [
   fixture('duplicate-section-order', { order: ['userInstructions', 'fileMap', 'userInstructions'] }),
   fixture('empty-order', { order: [], duplicateUserInstructionsAtTop: true }),
 ];
-const output = execFileSync(join(scratch, 'reference'), { input: JSON.stringify(cases), encoding: 'utf8' });
+const output = runReference(source.toString() + harness, JSON.stringify(cases), ['-parse-as-library', '-package-name', 'SmipReference']);
 const directory = 'test/fixtures/rpce-prompt-assembly/';
 mkdirSync(directory, { recursive: true });
 writeFileSync(directory + 'cases.json', JSON.stringify(JSON.parse(output), null, 2) + '\n');
 writeFileSync(directory + 'provenance.json', JSON.stringify({ revision, sources: [{ path, sha256: hash(source) }],
   cases: cases.length, generatorSHA256: hash(source.toString() + harness),
   bindings: ['The complete original PromptAssemblyBuilder executes independently. Inputs are already formatted snippets; file-block generation, final-map construction, presets and Git resolution are not covered.'] }, null, 2) + '\n');
-console.log(JSON.stringify({ cases: cases.length, scratch }));
+console.log(JSON.stringify({ cases: cases.length }));

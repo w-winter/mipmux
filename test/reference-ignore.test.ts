@@ -1,7 +1,6 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -21,11 +20,8 @@ test('native ignore snapshots preserve source mandatory floor, layered matching 
   const proof: unknown[] = [];
   const call = (operation: IgnoreInput) => {
     const generation = 'ignore-reference';
-    const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, generation, requestId: 'ignore', operation }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(child.status, 0, child.stderr);
-    return envelope.Parse(JSON.parse(child.stdout.trim())).result;
+    const nativeFrame = callNative(operation, generation, 'ignore');
+    return envelope.Parse(nativeFrame).result;
   };
   for (const entry of cases) {
     const result = call(entry.input);

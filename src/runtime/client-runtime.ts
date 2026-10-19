@@ -13,7 +13,7 @@ import { identityEncoding, type ResultEncoding } from '../exploration/output-bud
 import type { ClientQuestionResponse } from '../contracts/interaction.js';
 import { listPromptPresets } from '../context/prompt-presets.js';
 
-type ExplorationCall = Exclude<DiscoveryCall, { name: 'ask_user' | 'draft_inspect' | 'draft_update' | 'draft_validate' | 'draft_preview' | 'prompt' | 'manage_selection' }>;
+type ExplorationCall = Exclude<DiscoveryCall, { name: 'ask_user' | 'draft_inspect' | 'draft_update' | 'draft_validate' | 'prompt' | 'manage_selection' }>;
 interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRuntime }
 
 /** A connected client's handles and drafts are capabilities only within this owner. */
@@ -80,10 +80,6 @@ export class ClientRuntime {
     encode: ResultEncoding = identityEncoding) {
     const { draft } = this.#manual(id);
     return this.#track(signal, combined => draft.manageSelection(request, combined, encode));
-  }
-  preview(id: string, request: Parameters<DraftRuntime['preview']>[0], signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
-    const { draft } = this.#manual(id);
-    return this.#track(signal, combined => draft.preview(request, combined, encode));
   }
   prompt(id: string | null, request: Parameters<DraftRuntime['prompt']>[0], signal: AbortSignal, encode: ResultEncoding = identityEncoding) {
     if (request.op === 'list_presets') return this.#track(signal, combined => listPromptPresets(this.runtime, combined, request.maxOutputBytes, encode));

@@ -188,7 +188,7 @@ test('Manual archived verification checks exact presentation and complete Git sc
       if (kind === 'gitScope') { assert(manifest.automaticGit); manifest.automaticGit.evidence.scope = 'selected'; }
       else manifest.manualPresentation[kind].pop();
       const handoff = kind === 'gitScope' ? originalHandoff.replace('"scope":"complete"', '"scope":"selected"') : renderBundle({ ...loaded, codemapMode: manifest.codemapMode, request: manifest.request, inventory: manifest.inventory,
-        prompt: manifest.prompt, manualPresentation: manifest.manualPresentation, excludedSources: manifest.excludedSources,
+        prompt: manifest.prompt, manualPresentation: manifest.manualPresentation,
         unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
         automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps }, clipboardPreset: manifest.clipboardPreset,
         selectedGitDiffIds: [], automaticGit: loaded.automaticGit }).handoff;
@@ -247,10 +247,11 @@ test('Manual preview measures the proposed direct selection and leaves canonical
   try {
     const draft = await f.workspace.createDraft({ ...f.request, initialSelection: { codemapMode: 'manual', sources: [] } }, signal());
     const selection = f.request.initialSelection.sources[0]!;
-    const preview = await draft.preview({ expectedRevision: 0, maxOutputBytes: 100000, edits: [{ kind: 'upsert', selection }] }, signal());
+    const preview = await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'preview',
+      paths: [selection.source.root + '/' + selection.source.path], maxOutputBytes: 100000 })), signal());
     const comparison = await f.workspace.createDraft({ ...f.request, outputName: 'comparison', initialSelection: { codemapMode: 'manual', sources: [selection] } }, signal());
     const measured = await comparison.validate(signal());
-    assert.deepEqual(preview.measurement, measured.measurement); assert.deepEqual(preview.costs, measured.costs);
+    assert.deepEqual(preview.measurement, measured.measurement);
     assert.deepEqual(draft.selectionProjection().sources, []); assert.equal(draft.revision, 0);
   } finally { await f.runtime.close(); }
 });

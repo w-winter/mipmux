@@ -79,7 +79,7 @@ export function capturedFileTreeInput(input: FileTreeCapture): TreeInput | null 
   return tree;
 }
 
-export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs' | 'excludedSources' | 'manualPresentation'>,
+export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs' | 'manualPresentation'>,
   signal: AbortSignal, gitSource: AutomaticReviewGitSource, canonical: CanonicalSelection): Promise<RenderInput> {
   assertClipboardRequiredMaterials(input.request, input.materials);
   const preset = input.request.copyPreset;

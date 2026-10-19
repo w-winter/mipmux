@@ -1,12 +1,12 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { NativeOperation } from '../src/contracts/native.js';
 
-const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: Type.Unknown(), expected: Type.Unknown() })));
+const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: NativeOperation, expected: Type.Unknown() })));
 const reply = Compile(Type.Object({ result: Type.Unknown() }));
 
 test('native search scope clauses match the original index filter', async () => {
@@ -14,11 +14,8 @@ test('native search scope clauses match the original index filter', async () => 
   const proof: { name: string; result: unknown }[] = [];
   for (const fixture of cases) {
     const generation = 'search-scope-reference';
-    const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, requestId: fixture.name, generation, operation: fixture.input }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(child.status, 0, fixture.name + ': ' + child.stderr);
-    const actual = reply.Parse(JSON.parse(child.stdout.trim())).result;
+    const nativeFrame = callNative(fixture.input, generation, fixture.name);
+    const actual = reply.Parse(nativeFrame).result;
     assert.deepEqual(actual, fixture.expected, fixture.name);
     proof.push({ name: fixture.name, result: actual });
   }

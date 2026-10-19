@@ -46,7 +46,7 @@ async function publishRepository(operation: WorkspaceOperation, checkout: Native
 
 export async function publishGitSnapshotBatch(operation: WorkspaceOperation, checkouts: readonly NativeGitCheckout[],
   paths: readonly string[], request: DiffRequest, options: GitSnapshotPublicationOptions, ownerID: string, check: () => void) {
-  const plan = await operation.gitDiffOperation({ kind: 'planGitPublication', repositories: checkouts.map(item => item.checkoutRootPath),
+  const plan = await operation.projectNative({ kind: 'planGitPublication', repositories: checkouts.map(item => item.checkoutRootPath),
     paths: [...paths], pathspecs: [...(request.path === null ? [] : [request.path]), ...request.paths], scope: options.scope });
   const outcomes: (Outcome | null)[] = checkouts.map(() => null);
   let next = 0;
@@ -70,7 +70,7 @@ export async function publishGitSnapshotBatch(operation: WorkspaceOperation, che
     if (!file) throw new WorkspaceFailure('nativeProtocolError');
     return [item.snapshotDir, file.bytes];
   }));
-  const projection = await operation.gitDiffOperation({ kind: 'decorateGitArtifacts', repos: ordered.map(item => item.reply),
+  const projection = await operation.projectNative({ kind: 'decorateGitArtifacts', repos: ordered.map(item => item.reply),
     manifests, autoSelectedPaths: [], readinessWarnings: {} });
   check();
   return { kind: 'multiple' as const, publications, projection };

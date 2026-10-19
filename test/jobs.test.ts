@@ -85,7 +85,7 @@ test('client jobs deduplicate admission, isolate ids, release cancelled work', a
     assert.deepEqual(a.result(first.jobId), cancelled);
     const nextWorkspace = await a.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'root') }], exclusions: [], outputRoot: join(directory, 'out') }, signal);
     const manual = await a.createDraft(nextWorkspace.id, request, signal);
-    await a.update(manual.id, { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] }) } }, signal);
+    await a.prompt(manual.id, { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] })  }, signal);
     await a.closeWorkspace(nextWorkspace.id);
     assert.equal((await a.finalize(manual.id, signal)).kind, 'ready');
     assert.equal((await a.inspect(manual.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal)).kind, 'metadata');

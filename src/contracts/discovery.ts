@@ -3,7 +3,7 @@ import { Compile } from 'typebox/compile';
 import { SafeCount, SHA256 } from './workspace.js';
 import { ReadRequest, TreeRequest, ScopedStructure, SearchRequest, ReadInput, StructureInput, SearchInput, Continuation } from './exploration.js';
 import { GitRequest, GitInput } from './git.js';
-import { ContextBuildRequest, DraftInspection, DraftUpdate, DraftPreview, PromptRequest } from './context.js';
+import { ContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from './context.js';
 import { SelectionInput, SelectionRequest } from './selection.js';
 import { AskUserRequest } from './interaction.js';
 
@@ -32,7 +32,7 @@ export const toolSchemas = { ask_user: AskUserRequest, git: Type.Union(GitInput.
   get_code_structure: Type.Object({ ...StructureInput.properties, maxOutputBytes: Positive }, closed),
   file_search: Type.Union(SearchInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))),
   read_file: Type.Union(ReadInput.anyOf.map(schema => Type.Object({ ...schema.properties, maxOutputBytes: Positive }, closed))), draft_inspect: DraftInspection,
-  draft_update: DraftUpdate, draft_preview: DraftPreview, draft_validate: ValidateRequest, prompt: PromptRequest,
+  draft_update: DraftUpdate, draft_validate: ValidateRequest, prompt: PromptRequest,
   manage_selection: Type.Object({ ...SelectionInput.properties, maxOutputBytes: Positive }, closed) };
 export const DiscoveryCall = Type.Union([
   Type.Object({ name: Type.Literal('ask_user'), input: AskUserRequest }, closed),
@@ -43,7 +43,6 @@ export const DiscoveryCall = Type.Union([
   Type.Object({ name: Type.Literal('read_file'), input: ReadRequest }, closed),
   Type.Object({ name: Type.Literal('draft_inspect'), input: DraftInspection }, closed),
   Type.Object({ name: Type.Literal('draft_update'), input: DraftUpdate }, closed),
-  Type.Object({ name: Type.Literal('draft_preview'), input: DraftPreview }, closed),
   Type.Object({ name: Type.Literal('draft_validate'), input: ValidateRequest }, closed),
   Type.Object({ name: Type.Literal('prompt'), input: PromptRequest }, closed),
   Type.Object({ name: Type.Literal('manage_selection'), input: SelectionRequest }, closed),

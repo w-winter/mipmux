@@ -47,12 +47,7 @@ async function resolveMainCompare(operation: WorkspaceOperation, owner: Reposito
   if (comparison.kind !== 'revspec' && comparison.kind !== 'uncommitted' && comparison.kind !== 'staged') return null;
   const baseName = comparison.kind === 'revspec' ? comparison.spec : comparison.base;
   if (!/^(main|trunk)$/i.test(baseName)) return null;
-  const run = async (args: string[]) => {
-    const result = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
-      args, operation.signal, { kind: 'repository' });
-    if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
-    return gitText(result.bytes);
-  };
+  const run = async (args: string[]) => gitText(await owner.run(args));
   const branches = new Set((await run(['for-each-ref', '--format=%(refname:short)', '--count=200', 'refs/remotes']))
     .split('\n').concat((await run(['for-each-ref', '--format=%(refname:short)', '--count=200', 'refs/heads'])).split('\n')));
   let base = ['origin/main', 'upstream/main', 'main', 'origin/master', 'upstream/master', 'master'].find(ref => branches.has(ref));
@@ -80,19 +75,13 @@ async function readRepositoryDiff(operation: WorkspaceOperation, request: DiffRe
   const captured = await captureRepositoryDiff(operation, request, owner,
     request.detail.toLowerCase() === 'patches' || request.detail.toLowerCase() === 'full' ||
     [...(request.path === null ? [] : [request.path]), ...request.paths].filter(path => path.trim()).length === 1 && request.detail.toLowerCase() === 'summary', null);
-  const projected = await operation.gitDiffOperation({ kind: 'projectGitDiff', compare: captured.commands.display, detail: request.detail,
+  const projected = await operation.projectNative({ kind: 'projectGitDiff', compare: captured.commands.display, detail: request.detail,
     pathspecCount: captured.commands.inputCount, isMultiRepo: false, changedFiles: captured.content.changedFiles,
     perFilePatches: captured.content.perFile });
   const reply = { kind: 'git' as const, op: 'diff' as const, root: request.root, repository: captured.repository,
     diff: projected.diff, exclusions: captured.exclusions };
   const requiredBytes = serializedBytes(encode(reply));
   return requiredBytes <= request.maxOutputBytes ? reply : { kind: 'outputBudgetTooSmall' as const, requiredBytes };
-}
-
-export async function captureGitDiff(operation: WorkspaceOperation, request: DiffRequest, generateDiffText: boolean) {
-  if (request.root === null) throw new WorkspaceFailure('gitTargetRequired');
-  const owner = await resolveDiffRepository(operation, request.root, { kind: 'explicit', worktree: request.worktree });
-  return captureRepositoryDiff(operation, request, owner, generateDiffText, null);
 }
 
 export async function captureElectedGitDiff(operation: WorkspaceOperation, request: DiffRequest,
@@ -111,13 +100,13 @@ export async function prepareGitDiffComparison(operation: WorkspaceOperation, re
   const preparation = { kind: 'prepareGitDiff' as const, compare: request.compare,
     paths: [...(request.path === null ? [] : [request.path]), ...request.paths], repoRootPath: owner.repository.worktree.canonicalPath,
     contextLines: request.contextLines, detectRenames: request.detectRenames };
-  let commands = await operation.gitDiffOperation(preparation);
+  let commands = await operation.projectNative(preparation);
   const resolved = await resolveMainCompare(operation, owner, commands.comparison);
-  if (resolved !== null) commands = await operation.gitDiffOperation({ ...preparation, compare: resolved });
+  if (resolved !== null) commands = await operation.projectNative({ ...preparation, compare: resolved });
   else {
     const snapshot = await operation.resolveGitSnapshotComparison((await owner.access.openRoot('GitRepository')).handle, request.compare);
     if (snapshot.kind === 'gitSnapshotComparisonError') throw new WorkspaceFailure(snapshot.code, { message: snapshot.message });
-    commands = await operation.gitDiffOperation({ ...preparation, compare: snapshot.comparison });
+    commands = await operation.projectNative({ ...preparation, compare: snapshot.comparison });
   }
   const reference = commands.comparison.kind === 'unstaged' ? null : commands.comparison.kind === 'revspec'
     ? commands.comparison.spec : commands.comparison.base;
@@ -131,7 +120,7 @@ export async function capturePreparedGitDiff(operation: WorkspaceOperation, requ
   const fingerprint = await captureGitFingerprint(operation, owner, commands);
   let selectedPaths: string[] | null = null;
   if (!commands.inputCount && selectedAbsolutePaths !== null) {
-    const normalized = await operation.gitDiffOperation({ kind: 'normalizeGitSelectedPaths', paths: [...selectedAbsolutePaths],
+    const normalized = await operation.projectNative({ kind: 'normalizeGitSelectedPaths', paths: [...selectedAbsolutePaths],
       repoRootPath: owner.repository.worktree.canonicalPath });
     selectedPaths = normalized.paths;
     commands = { ...commands, paths: normalized.paths, pathspecs: normalized.pathspecs };
@@ -146,7 +135,7 @@ export async function capturePreparedGitDiff(operation: WorkspaceOperation, requ
   const workRoot = join(operation.runtime.options.cachePath, 'work'); await mkdir(workRoot, { recursive: true, mode: 0o700 });
   const scratch = await mkdtemp(join(workRoot, 'scout-diff-'));
   try {
-    const live = await usesWorktree(operation, owner, commands.comparison);
+    const live = await usesWorktree(owner, commands.comparison);
     const content = await captureDiffContent(operation, owner, request, commands, { tracked, untracked }, scratch, live,
       generateDiffText, fingerprint, selectedPaths);
     await owner.revalidate();
@@ -165,7 +154,7 @@ async function captureDiffContent(operation: WorkspaceOperation, owner: Reposito
   const workingDirectory = live ? materialized.trackedRoot : owner.repository.worktree.canonicalPath;
   const numstat = tracked.length ? await runDiff(operation, owner, commands.numstat, tracked, true, workingDirectory) : '';
   const nameStatus = tracked.length ? await runDiff(operation, owner, commands.nameStatus, tracked, true, workingDirectory) : '';
-  const stats = await operation.gitDiffOperation({ kind: 'parseGitDiffStats', numstat: Buffer.from(numstat).toString('base64'),
+  const stats = await operation.projectNative({ kind: 'parseGitDiffStats', numstat: Buffer.from(numstat).toString('base64'),
     nameStatus: Buffer.from(nameStatus).toString('base64'), untracked: materialized.untracked });
   const changedFiles = selected !== null ? stats.files.filter(file => selected.has(file.path))
     : commands.hasRelativeInputs || !commands.inputCount ? stats.files : stats.files.filter(file =>
@@ -180,7 +169,7 @@ async function captureDiffContent(operation: WorkspaceOperation, owner: Reposito
     const combined = [trackedPatch, untrackedPatch].filter(Boolean).join('\n');
     if (combined) {
       diffText = combined;
-      const parsed = await operation.gitDiffOperation({ kind: 'parseGitPatch', text: combined });
+      const parsed = await operation.projectNative({ kind: 'parseGitPatch', text: combined });
       patches = Object.fromEntries(parsed.files.map(file => [file.path, file.patch]));
     }
   }
@@ -258,13 +247,10 @@ export async function captureWorktree(operation: WorkspaceOperation, owner: Repo
 }
 
 /** A lone revision, including a root commit's ^! expansion, compares against live files. */
-export async function usesWorktree(operation: WorkspaceOperation, owner: Repository, comparison: DiffCommands['comparison']) {
+export async function usesWorktree(owner: Repository, comparison: DiffCommands['comparison']) {
   if (comparison.kind === 'staged' || comparison.kind === 'stagedMergeBase') return false;
   if (comparison.kind !== 'revspec') return true;
-  const result = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
-    ['rev-parse', '--revs-only', '--end-of-options', comparison.spec], operation.signal, { kind: 'repository' });
-  if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
-  const revisions = gitText(result.bytes).split('\n').filter(Boolean);
+  const revisions = gitText(await owner.run(['rev-parse', '--revs-only', '--end-of-options', comparison.spec])).split('\n').filter(Boolean);
   if (revisions.some(revision => !/^\^?(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(revision))) throw new WorkspaceFailure('gitProtocolError');
   return revisions.length < 2;
 }
@@ -285,5 +271,5 @@ async function captureUntrackedPatch(operation: WorkspaceOperation, owner: Repos
     ['diff', '--no-index', '--unified=' + contextLines, '--no-ext-diff', '--no-textconv', '--color=never', '--', '../empty', '.'],
     operation.signal, { kind: 'scratch', ceiling: scratch });
   if (result.code !== 0 && result.code !== 1) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
-  return (await operation.gitDiffOperation({ kind: 'normalizeGitUntrackedPatch', text: gitText(result.bytes) })).text;
+  return (await operation.projectNative({ kind: 'normalizeGitUntrackedPatch', text: gitText(result.bytes) })).text;
 }

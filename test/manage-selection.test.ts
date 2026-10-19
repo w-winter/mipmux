@@ -65,6 +65,29 @@ async function fixture() {
   return { base, root, output, client, draftId, select, inspect, workspaceId: identifier.Parse(declared.structuredContent).id };
 }
 
+test('public selection coalesces slice descriptions and subtracts ranges before promotion', async () => {
+  const f = await fixture();
+  try {
+    await f.select({ op: 'add', mode: 'slices', slices: [{ path: 'r/zone/notes.txt',
+      ranges: [{ start_line: 1, end_line: 2, description: 'First' }] }] });
+    await f.select({ op: 'add', mode: 'slices', slices: [{ path: 'r/zone/notes.txt',
+      ranges: [{ start_line: 2, end_line: 3, description: 'Second' }] }] });
+    let selected = (await f.inspect()).items.find(item => item.kind === 'source');
+    assert(selected?.kind === 'source' && selected.selection.kind === 'slices');
+    assert.deepEqual(selected.selection.ranges, [{ start: 1, end: 3, description: 'First; Second' }]);
+    await f.select({ op: 'remove', mode: 'slices', slices: [{ path: 'r/zone/notes.txt',
+      ranges: [{ start_line: 2, end_line: 2 }] }] });
+    selected = (await f.inspect()).items.find(item => item.kind === 'source');
+    assert(selected?.kind === 'source' && selected.selection.kind === 'slices');
+    assert.deepEqual(selected.selection.ranges, [{ start: 1, end: 1, description: 'First; Second' },
+      { start: 3, end: 3, description: 'First; Second' }]);
+    await f.select({ op: 'promote', paths: ['r/zone/notes.txt'] });
+    selected = (await f.inspect()).items.find(item => item.kind === 'source');
+    assert(selected?.kind === 'source' && selected.selection.kind === 'full');
+    await writeFile(join(f.base, 'canonical-slice-edit-proof.json'), JSON.stringify(await f.inspect()) + '\n');
+  } finally { await f.client.close(); }
+});
+
 test('public source selection preserves slices on full add and source promotion/manual-mode semantics', async () => {
   const f = await fixture();
   const receipts = [];

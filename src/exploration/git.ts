@@ -3,7 +3,6 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { gitValidator, type GitRequest, type GitResult } from '../contracts/git.js';
 import { resolveGitCommit } from '../patches/local-git.js';
-import { gitProcess } from '../patches/git-process.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { serializedBytes, identityEncoding, type ResultEncoding } from './output-budget.js';
 import { captureWorktree, discoverPaths, readDiff, runDiff, usesWorktree } from './git-diff.js';
@@ -36,7 +35,7 @@ export async function readGit(operation: WorkspaceOperation, request: GitRequest
 
 async function statusRepositories(operation: WorkspaceOperation, request: Extract<ReadRequest, { op: 'status' }>,
   repositories: readonly ReadRepository[]) {
-  const plan = await operation.gitDiffOperation({ kind: 'planGitPublication',
+  const plan = await operation.projectNative({ kind: 'planGitPublication',
     repositories: repositories.map(repository => repository.checkout.checkoutRootPath), paths: [], pathspecs: [], scope: 'all' });
   const readStatus = async (repository: ReadRepository) => {
     const fields = { root: repository.checkout.root, repo_root: repository.checkout.checkoutRootPath,
@@ -74,12 +73,7 @@ async function readRepository(operation: WorkspaceOperation, request: ReadReques
   const { owner, pathBase } = target;
   if ('path' in request && request.path !== null &&
       !owner.permits(relative(owner.repository.worktree.canonicalPath, join(pathBase, request.path)))) throw new WorkspaceFailure('pathDenied');
-  const read = async (args: readonly string[]) => {
-    const result = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
-      args, operation.signal, { kind: 'repository' });
-    if (result.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
-    return result.bytes;
-  };
+  const read = owner.run;
   const projected = request.op === 'show' ? await readShow(operation, request, owner, read)
     : await readQuery(operation, request, pathBase, read);
   await owner.revalidate();
@@ -112,14 +106,14 @@ async function readQuery(operation: WorkspaceOperation, request: Exclude<GitRequ
   const query = request.op === 'status' ? { op: request.op } : request.op === 'log' ? { op: request.op, count: request.count,
     path: request.path === null ? null : join(root, request.path) }
     : { op: request.op, path: join(root, request.path), lines: request.lines };
-  const command = await operation.prepareGitRead({ kind: 'prepareGitRead', query });
+  const command = await operation.projectNative({ kind: 'prepareGitRead', query });
   const bytes = await read(command.args);
   return operation.projectGitRead({ kind: 'projectGitRead', query, bytes: bytes.toString('base64') });
 }
 async function readShow(operation: WorkspaceOperation, request: Extract<GitRequest, { op: 'show' }>,
   owner: Awaited<ReturnType<typeof resolveDiffRepository>>,
   read: (args: readonly string[]) => Promise<Buffer>) {
-  const command = await operation.prepareGitShow({ kind: 'prepareGitShow', ref: request.ref, detail: request.detail,
+  const command = await operation.projectNative({ kind: 'prepareGitShow', ref: request.ref, detail: request.detail,
     contextLines: request.contextLines, detectRenames: request.detectRenames });
   if (command.kind === 'gitShowError') throw new WorkspaceFailure('invalidRequest', { message: command.message });
   const oid = await resolveGitCommit(command.ref, async args => {
@@ -128,7 +122,7 @@ async function readShow(operation: WorkspaceOperation, request: Extract<GitReque
     return text.slice(0, -1);
   });
   const metadataBytes = await read([...command.metadata, oid]);
-  const metadata = await operation.parseGitShowMetadata({ kind: 'parseGitShowMetadata', bytes: metadataBytes.toString('base64') });
+  const metadata = await operation.projectNative({ kind: 'parseGitShowMetadata', bytes: metadataBytes.toString('base64') });
   if (metadata.kind === 'gitShowError') throw new WorkspaceFailure('gitShowMalformed', { message: metadata.message });
   const revspec = oid + '^!';
   const exclusions: string[] = [];
@@ -138,7 +132,7 @@ async function readShow(operation: WorkspaceOperation, request: Extract<GitReque
   });
   const { tracked } = await discoverPaths(operation, owner, { inputCount: 0, pathspecs: [],
     nameStatus: [...command.nameStatus, revspec], includeUntracked: false }, authorize, exclusions);
-  const live = await usesWorktree(operation, owner, { kind: 'revspec', spec: revspec });
+  const live = await usesWorktree(owner, { kind: 'revspec', spec: revspec });
   const workRoot = join(operation.runtime.options.cachePath, 'work'); await mkdir(workRoot, { recursive: true, mode: 0o700 });
   const scratch = await mkdtemp(join(workRoot, 'show-'));
   try {

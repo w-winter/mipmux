@@ -76,7 +76,7 @@ export async function readAuthorizedGitArtifact(operation: WorkspaceOperation,
     throw new WorkspaceFailure('gitRepositoryChanged');
   }
   const manifest = await operation.readGitSnapshotFile({ ...entry, path: 'manifest.json' });
-  const authorized = await operation.gitDiffOperation({ kind: 'authorizeGitArtifact', manifest: manifest.bytes,
+  const authorized = await operation.projectNative({ kind: 'authorizeGitArtifact', manifest: manifest.bytes,
     snapshotDir: entry.snapshotDir, path: entry.path, ownerID: entry.ownerID, checkout: entry.checkout });
   if (!authorized.authorized) throw new WorkspaceFailure('gitArtifactUnauthorized');
   const body = await operation.readGitSnapshotFile(entry);

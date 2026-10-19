@@ -100,10 +100,10 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
       outputName: 'worktree',
     };
     const draft = await workspace.createDraft(request, signal());
-    await draft.update({
+    await draft.prompt({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) },
+      op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) ,
     }, signal());
     const result = await draft.finalize(signal());
     if (result.kind !== 'ready') assert.fail(JSON.stringify(result));
@@ -204,10 +204,10 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
     run(['config', 'diff.evil.textconv', `touch ${marker}`]);
     const objectNames = await readdir(join(root, '.git/objects'), { recursive: true });
     const matching = await workspace.createDraft(matchRequest, signal());
-    await matching.update({
+    await matching.prompt({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) },
+      op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) ,
     }, signal());
     assert.equal((await matching.finalize(signal())).kind, 'ready');
     await matching.close();

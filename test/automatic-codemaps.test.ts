@@ -148,7 +148,7 @@ test('required codemap intent stays manual and clear operations preserve all req
       draft.update({ expectedRevision: draft.revision, maxOutputBytes, mutation }, signal());
     const initial = (await draft.inspect({ view: 'metadata', maxOutputBytes, continuation: null }, new AbortController().signal));
     assert(initial.kind === 'metadata'); assert.equal(initial.codemapMode, 'manual');
-    await update({ kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) });
+    await draft.prompt({ expectedRevision: draft.revision, maxOutputBytes, op: 'append', text: '\n\n' + JSON.stringify(handoff) }, signal());
     await update({ kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'Peer.swift' } } });
     assert(!(await sources(draft)).some(item => item.selection.source.path === 'Leaf.swift'));
     await update({ kind: 'clearCodemaps' }); await update({ kind: 'clearSources' });
@@ -165,7 +165,7 @@ test('inferred bodies publish and verify, while consistently rehashed missing me
   const f = await fixture();
   try {
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     assert.equal(ready.manifest.codemapMode, 'automatic');
     await verifyCurrentBundle(ready.directory, f.runtime, signal());
@@ -223,7 +223,7 @@ test('duplicate saved inventory entries cannot suppress inferred membership in a
   const f = await fixture();
   try {
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed] }, signal());
-    await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     const saved = await loadVerifiedBundle(ready.directory), manifest = structuredClone(ready.manifest);
     const dependency = manifest.inventory.entries.find(entry => entry.root === 'r' && entry.path === 'Peer.swift');
@@ -453,7 +453,7 @@ test('held inferred acquisition cannot commit across cancellation, close, compet
       let closing: Promise<void> | null = null;
       if (scenario === 'cancel') abort.abort();
       else if (scenario === 'close') closing = draft.close();
-      else if (scenario === 'revision') await draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, signal());
+      else if (scenario === 'revision') await draft.prompt({ expectedRevision: 0, maxOutputBytes, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, signal());
       else assert.equal((await draft.finalize(signal())).kind, 'blocked');
       release(); await rejected; await closing;
       assert.deepEqual((await sources(draft)), []);
@@ -507,8 +507,8 @@ test('a real scripted scout resolves supplied-patch inferred mismatches before t
     if (index === 1 || index === 4) return { kind: 'tool', name: 'draft_validate', input: { maxOutputBytes }, stop: 'tool_use', tokens: 10 };
     if (index === 2) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 0, maxOutputBytes,
       mutation: { kind: 'clearCodemaps' } }, stop: 'tool_use', tokens: 10 };
-    if (index === 3) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 1, maxOutputBytes,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, stop: 'tool_use', tokens: 10 };
+    if (index === 3) return { kind: 'tool', name: 'prompt', input: { expectedRevision: 1, maxOutputBytes,
+      op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, stop: 'tool_use', tokens: 10 };
     return { kind: 'text', text: 'Context committed.', stop: 'end_turn', tokens: 10 };
   });
   const f = await fixture();

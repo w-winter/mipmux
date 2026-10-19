@@ -1,14 +1,14 @@
+import { withReferenceDirectory } from './reference-harness.mjs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const [checkout] = process.argv.slice(2);
 if (!checkout) throw new Error('Usage: node scripts/generate-clipboard-fixtures.mjs <pinned-rpce-checkout>');
 const fixtureDirectory = fileURLToPath(new URL('../test/fixtures/rpce-clipboard/', import.meta.url));
-const directory = mkdtempSync(join(tmpdir(), 'smip-clipboard-reference-'));
+withReferenceDirectory('smip-clipboard-reference-', directory => {
 writeFileSync(join(directory, 'adapters.swift'), readFileSync(join(fixtureDirectory, 'reference-adapters.swift')));
 const revision = '43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -123,3 +123,4 @@ writeFileSync(join(fixtureDirectory, 'provenance.json'), JSON.stringify({ revisi
   executionSHA256: hash(first),
   limits: ['Datetime is disabled in all reference inputs.', 'Captured DTOs supply presentation and authorization facts; tree, acquisition, Git queries, preassembly and preset resolution are not executed.'] }, null, 2) + '\n');
 console.log(JSON.stringify({ cases: cases.length, scratch: directory }));
+});

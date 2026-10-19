@@ -12,14 +12,9 @@ export function assertClipboardRequiredMaterials(request: CapturedContextBuildRe
   if (ids.length) throw new WorkspaceFailure('copyPresetRequiredMaterialConflict', { copyPreset: request.copyPreset, materialIds: [...new Set(ids)] });
 }
 
-/** Excluded selections bind Git scope to captured inventory, not to an archive of undelivered bodies. */
-export function verifyExcludedSources(manifest: Manifest): void {
-  const invalid = () => { throw new WorkspaceFailure('bundleIntegrityFailed'); };
-  if (manifest.excludedSources.length) invalid();
-}
-
-export async function revalidateExcludedSources(operation: WorkspaceOperation, manifest: Manifest): Promise<void> {
-  for (const selection of manifest.manualPresentation?.canonicalSources ?? manifest.excludedSources) {
+export async function revalidateCanonicalSources(operation: WorkspaceOperation, manifest: Manifest): Promise<void> {
+  if (manifest.manualPresentation === null) return;
+  for (const selection of manifest.manualPresentation.canonicalSources) {
     if (manifest.unavailableRoots.some(root => root.root === selection.source.root) || manifest.unavailableFiles.some(file => file.id === sourceId(selection.source))) continue;
     const entry = manifest.inventory.entries.find(entry => sourceId(entry) === sourceId(selection.source));
     if (entry?.kind !== 'file') throw new WorkspaceFailure('bundleIntegrityFailed');

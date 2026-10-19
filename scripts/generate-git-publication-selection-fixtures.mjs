@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { runReference } from './reference-harness.mjs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -73,17 +73,12 @@ let output = try raw.map { entry -> [String: Any] in
 }
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: output, options: [.sortedKeys]))`,
 ].join('\n\n') + '\n';
-const scratch = mkdtempSync(join(tmpdir(), 'smip-git-selection-reference-'));
-try {
-  writeFileSync(scratch + '/reference.swift', text);
-  execFileSync('swiftc', [scratch + '/reference.swift', '-o', scratch + '/reference'], { stdio: 'inherit' });
-  const output = execFileSync(scratch + '/reference', [], { input: JSON.stringify(cases) });
-  writeFileSync(directory + 'cases.json', output.toString() + '\n');
-  writeFileSync(directory + 'provenance.json', JSON.stringify({ sourceRevision: revision, sources,
-    generator: 'scripts/generate-git-publication-selection-fixtures.mjs', generatorSHA256: hash(text), cases: cases.length,
-    bindings: ['Unchanged source merge and full-file transition bodies execute over canonical captured absolute paths.',
-      'Absent range descriptions are explicit null in the fixture wire format.'],
-    limits: ['Pure selection merge only; live draft commits, Git acquisition, advertisement revision checks and finalization are separate integration responsibilities.'],
-  }, null, 2) + '\n');
-  console.log(JSON.stringify({ cases: cases.length, output: directory }));
-} finally { execFileSync('trash', [scratch]); }
+const output = runReference(text, JSON.stringify(cases));
+writeFileSync(directory + 'cases.json', output.toString() + '\n');
+writeFileSync(directory + 'provenance.json', JSON.stringify({ sourceRevision: revision, sources,
+  generator: 'scripts/generate-git-publication-selection-fixtures.mjs', generatorSHA256: hash(text), cases: cases.length,
+  bindings: ['Unchanged source merge and full-file transition bodies execute over canonical captured absolute paths.',
+    'Absent range descriptions are explicit null in the fixture wire format.'],
+  limits: ['Pure selection merge only; live draft commits, Git acquisition, advertisement revision checks and finalization are separate integration responsibilities.'],
+}, null, 2) + '\n');
+console.log(JSON.stringify({ cases: cases.length, output: directory }));

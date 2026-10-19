@@ -17,9 +17,9 @@ type Repository = Awaited<ReturnType<typeof resolveDiffRepository>>;
 const manifestMetadata = Compile(Type.Object({ generatedAt: Type.String() }));
 
 export async function prepareGitPublicationMetadata(operation: WorkspaceOperation, checkout: NativeGitCheckout, repository: Repository) {
-  const metadata = await operation.gitDiffOperation({ kind: 'prepareGitPublicationMetadata', repoRoot: checkout.checkoutRootPath });
+  const metadata = await operation.projectNative({ kind: 'prepareGitPublicationMetadata', repoRoot: checkout.checkoutRootPath });
   const worktree = metadata.worktree === null ? { worktree: null, warning: null }
-    : await captureGitWorktreeReply(operation, input => operation.gitDiffOperation(input), checkout, repository,
+    : await captureGitWorktreeReply(operation, input => operation.projectNative(input), checkout, repository,
       metadata.worktree.mainWorktreeRoot, operation.signal);
   return { repository, metadata, worktree };
 }

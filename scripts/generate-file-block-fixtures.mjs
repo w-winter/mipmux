@@ -1,7 +1,7 @@
+import { withReferenceDirectory } from './reference-harness.mjs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const [checkout] = process.argv.slice(2);
@@ -24,7 +24,7 @@ const h = source('Sources/RepoPromptC/include/string_extensions_wrapper.h');
 const headerStart = h.indexOf('struct repo_split_result {');
 const headerEnd = h.indexOf('void repo_free_split_result(struct repo_split_result *result);') + 'void repo_free_split_result(struct repo_split_result *result);'.length;
 const header = '#include <stddef.h>\n' + h.slice(headerStart, headerEnd) + '\n';
-const scratch = mkdtempSync(join(tmpdir(), 'smip-file-block-reference-'));
+withReferenceDirectory('smip-file-block-reference-', scratch => {
 writeFileSync(join(scratch, 'split.h'), header);
 writeFileSync(join(scratch, 'split.c'), '#include "split.h"\n#include <stdlib.h>\n#include <string.h>\n' + lines(c, 784, 961) + '\n');
 const functions = [lines(packaging, 13, 17), lines(packaging, 403, 443), lines(packaging, 449, 451)]
@@ -88,3 +88,4 @@ writeFileSync(directory + 'cases.json', JSON.stringify(cases.map((item, index) =
 writeFileSync(directory + 'provenance.json', JSON.stringify({ revision, sources, cases: cases.length, generatorSHA256: hash(text),
   bindings: ['Original formatting, slice assembly, Swift scalar splitting and C ending detection compile independently. Inputs supply already resolved display paths; path routing and final packet assembly are not covered. The reference-only harness imports its extracted C declarations through a temporary header; shipped targets use an explicit C module.'] }, null, 2) + '\n');
 console.log(JSON.stringify({ cases: cases.length, scratch }));
+});

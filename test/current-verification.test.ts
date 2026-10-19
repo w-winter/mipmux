@@ -53,10 +53,10 @@ test('current verification admits only recorded material, applies current denies
       outputRoot: out,
     }, signal());
     const draft = await workspace.createDraft(request, signal());
-    await draft.update({
+    await draft.prompt({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Model', relationships: [], ambiguities: [] }) },
+      op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Model', relationships: [], ambiguities: [] }) ,
     }, signal());
     const result = await draft.finalize(signal());
     if (result.kind !== 'ready') assert.fail('missing bundle');
@@ -74,9 +74,9 @@ test('current verification admits only recorded material, applies current denies
     await verifyBundle(result.directory);
     const originalMode = (await stat(join(root, 'model.swift'))).mode;
     const modeDraft = await workspace.createDraft({ ...request, outputName: 'mode-change' }, signal());
-    await modeDraft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({
+    await modeDraft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify({
       clarifiedTask: 'Review', architecture: 'Model', relationships: [], ambiguities: [],
-    }) } }, signal());
+    })  }, signal());
     await chmod(join(root, 'model.swift'), originalMode ^ 0o100);
     await assert.rejects(modeDraft.finalize(signal()), /sourceChanged/);
     await assert.rejects(readFile(join(out, 'mode-change/manifest.json')));
@@ -174,10 +174,10 @@ test('current verification cancellation and runtime shutdown join native work an
         outputRoot: out,
       }, signal()),
       draft = await workspace.createDraft(request, signal());
-    await draft.update({
+    await draft.prompt({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) },
+      op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Review', architecture: 'Files', relationships: [], ambiguities: [] }) ,
     }, signal());
     const result = await draft.finalize(signal());
     if (result.kind !== 'ready') assert.fail('missing bundle');

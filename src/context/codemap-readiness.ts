@@ -134,6 +134,17 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
   const readinessClosed = new AbortController();
   const readinessSignal = AbortSignal.any([operation.signal, readinessClosed.signal]);
   let timer: ReturnType<typeof setTimeout> | null = null;
+  const classify = async (material: ExplicitPendingPresentation, cause: string,
+    code: UnavailablePresentation['cause'] | null): Promise<boolean> => {
+    if (code !== null) {
+      await operation.validateSourceRoot(material.record.selection.source.root);
+      ready.set(material.record.id, unavailablePresentation(material, code, 'pending'));
+      return true;
+    }
+    if (!reportStalePresentation(material.record, cause)) return false;
+    currentness = 'stale';
+    return true;
+  };
   try {
     const unavailableRoots = await unavailableSelectionRoots(operation, materials);
     for (const captured of materials.values()) {
@@ -161,13 +172,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
         retains.push({ material, lease });
       } catch (error) {
         operation.signal.throwIfAborted();
-        const code = error instanceof NativeFailure ? unavailableFileCode(error) : null;
-        if (code !== null) {
-          await operation.validateSourceRoot(record.selection.source.root);
-          ready.set(record.id, unavailablePresentation(material, code, 'pending')); continue;
-        }
-        if (!reportStalePresentation(record, failureCode(error))) throw error;
-        currentness = 'stale';
+        if (!await classify(material, failureCode(error), error instanceof NativeFailure ? unavailableFileCode(error) : null)) throw error;
       }
     }
     operation.signal.throwIfAborted();
@@ -187,13 +192,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
           operation.signal.throwIfAborted();
           const cause = failureCode(error);
           if (cause === 'cancelled' && readinessClosed.signal.aborted) return;
-          const code = error instanceof NativeFailure ? unavailableFileCode(error) : null;
-          if (code !== null) {
-            await operation.validateSourceRoot(material.record.selection.source.root);
-            ready.set(material.record.id, unavailablePresentation(material, code, 'pending')); return;
-          }
-          if (!reportStalePresentation(material.record, cause)) throw error;
-          currentness = 'stale';
+          if (!await classify(material, cause, error instanceof NativeFailure ? unavailableFileCode(error) : null)) throw error;
         }
       })());
     }
@@ -223,13 +222,7 @@ async function withCodemapAttempt<T>(operation: WorkspaceOperation, materials: R
         ready.set(material.record.id, complete);
       } catch (error) {
         operation.signal.throwIfAborted();
-        const code = error instanceof NativeFailure ? unavailableFileCode(error) : null;
-        if (code !== null) {
-          await operation.validateSourceRoot(material.record.selection.source.root);
-          ready.set(material.record.id, unavailablePresentation(material, code, 'pending')); return;
-        }
-        if (!reportStalePresentation(material.record, failureCode(error))) throw error;
-        currentness = 'stale';
+        if (!await classify(material, failureCode(error), error instanceof NativeFailure ? unavailableFileCode(error) : null)) throw error;
       }
     })());
     await Promise.all(work);

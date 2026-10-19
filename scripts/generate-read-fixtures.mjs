@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, mkdtempSync, openSync, closeSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+import { runReference } from './reference-harness.mjs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -59,16 +59,11 @@ let output = try cases.map { entry -> [String: Any] in
 }
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: output, options: [.sortedKeys]))
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-read-reference-'));
-writeFileSync(scratch + '/reference.swift', text);
-execFileSync('swiftc', [scratch + '/reference.swift', '-o', scratch + '/reference'], { stdio: 'inherit' });
-const input = openSync(directory + 'cases.json', 'r'), output = openSync(scratch + '/output.json', 'w');
-try { execFileSync(scratch + '/reference', [], { stdio: [input, output, 'inherit'] }); }
-finally { closeSync(input); closeSync(output); }
+const referenceOutput = runReference(text, readFileSync(directory + 'cases.json'));
 const inputs = JSON.parse(readFileSync(directory + 'cases.json'));
-const results = JSON.parse(readFileSync(scratch + '/output.json'));
+const results = JSON.parse(referenceOutput);
 writeFileSync(directory + 'cases.json', JSON.stringify(results.map((entry, index) => ({ ...inputs[index], expected: entry.expected }))) + '\n');
 provenance.cases = JSON.parse(readFileSync(directory + 'cases.json')).length;
 provenance.generatorSHA256 = hash(text);
 writeFileSync(directory + 'provenance.json', JSON.stringify(provenance, null, 2) + '\n');
-console.log(JSON.stringify({ cases: provenance.cases, scratch }));
+console.log(JSON.stringify({ cases: provenance.cases }));

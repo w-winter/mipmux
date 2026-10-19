@@ -15,7 +15,7 @@ export async function readFile(operation: WorkspaceOperation, request: ReadReque
 
 export async function readFileReply(operation: WorkspaceOperation, request: ReadRequest,
   source: { readonly text: string; readonly identity: SourceIdentity }, encode?: ResultEncoding) {
-  const selection = await operation.sliceReadText({ kind: 'sliceReadText', text: source.text,
+  const selection = await operation.projectNative({ kind: 'sliceReadText', text: source.text,
     start_line: request.start_line, offset: request.offset, limit: request.limit });
   if (selection.kind === 'readTextRangeError') throw new WorkspaceFailure(selection.code, { message: selection.message });
   const range = selection.lines.length ? { start: selection.firstLine, end: selection.lastLine } : null;

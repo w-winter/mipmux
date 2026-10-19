@@ -1,12 +1,12 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { NativeGitSnapshotInput } from '../src/contracts/git-snapshot.js';
 
-const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: Type.Unknown(),
+const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: NativeGitSnapshotInput,
   expected: Type.Array(Type.Object({ path: Type.String(), bytes: Type.String() })) })));
 const reply = Compile(Type.Object({ result: Type.Object({ kind: Type.Literal('gitSnapshotBytes'),
   files: Type.Array(Type.Object({ path: Type.String(), bytes: Type.String() })) }) }));
@@ -35,12 +35,8 @@ test('native snapshot serialization matches complete original manifests, MAPs, i
   const proof: unknown[] = [];
   for (const entry of cases) {
     const generation = 'snapshot-reference';
-    const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, generation, requestId: entry.name,
-        operation: { kind: 'serializeGitSnapshot', input: entry.input } }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(child.status, 0, child.stderr);
-    const result = reply.Parse(JSON.parse(child.stdout.trim())).result;
+    const nativeFrame = callNative({ kind: 'serializeGitSnapshot', input: entry.input }, generation, entry.name);
+    const result = reply.Parse(nativeFrame).result;
     const written = new Map(result.files.map(file => [file.path.normalize('NFC'), file.bytes]));
     assert.deepEqual([...written.keys()].sort(), entry.expected.map(file => file.path.normalize('NFC')).sort(), entry.name);
     for (const file of entry.expected) {

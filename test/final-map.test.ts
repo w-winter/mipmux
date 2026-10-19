@@ -81,8 +81,8 @@ for (const boundary of ['cancellation', 'revision', 'freeze'] as const) test(`${
       : boundary === 'revision' ? /revisionConflict/ : /draftFrozen|cancelled|aborted/i);
     await Promise.race([started, work.then(() => { throw new Error('Mutation did not prepare native presentation'); })]);
     if (boundary === 'cancellation') abort.abort();
-    if (boundary === 'revision') await f.client.update(f.draft.id, { expectedRevision: 0, maxOutputBytes: 30000,
-      mutation: { kind: 'prompt', op: 'append', text: ' changed' } }, f.signal);
+    if (boundary === 'revision') await f.client.prompt(f.draft.id, { expectedRevision: 0, maxOutputBytes: 30000,
+      op: 'append', text: ' changed'  }, f.signal);
     const finalizing = boundary === 'freeze' ? f.client.finalize(f.draft.id, f.signal) : null;
     release(); await rejected;
     if (finalizing) await finalizing;

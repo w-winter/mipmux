@@ -50,10 +50,11 @@ for (const mutation of ['selection', 'update'] as const) test(`draft ${mutation}
       if (mutation === 'selection') {
         changed = await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'add', paths: ['r/new.ts'], mode: 'full', maxOutputBytes: 100000 })), signal());
       } else {
-        const edits = [{ kind: 'upsert' as const, selection: { kind: 'full' as const, source: { root: 'r', path: 'new.ts' } } }];
-        const preview = await draft.preview({ expectedRevision: draft.revision, edits, maxOutputBytes: 100000 }, signal());
-        assert(preview.costs.some(cost => cost.id.includes('new.ts')));
-        changed = await draft.update({ expectedRevision: draft.revision, maxOutputBytes: 100000, mutation: { kind: 'batch', edits } }, signal());
+        const preview = await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
+          op: 'preview', paths: ['r/old.ts', 'r/new.ts'], maxOutputBytes: 100000 })), signal());
+        assert(preview.files.some(file => file.path.includes('new.ts')));
+        changed = await draft.update({ expectedRevision: draft.revision, maxOutputBytes: 100000,
+          mutation: { kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'new.ts' } } } }, signal());
       }
       assert.match(await draft.initialContext(signal()), /new\.ts/);
       const validation = await draft.validate(signal());

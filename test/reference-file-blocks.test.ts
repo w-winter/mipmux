@@ -1,5 +1,5 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
@@ -20,11 +20,8 @@ test('native file blocks preserve original full/slice formatting, normalized ran
   const proof = [];
   for (const entry of cases) {
     const generation = 'file-blocks';
-    const result = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, requestId: entry.name, generation, operation: entry.input }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(result.status, 0, entry.name + ': ' + result.stderr);
-    const found = resultSchema.Parse(JSON.parse(result.stdout.trim())).result;
+    const nativeFrame = callNative(entry.input, generation, entry.name);
+    const found = resultSchema.Parse(nativeFrame).result;
     const block = blockSchema.Parse(found);
     const { bodySpans, ...formatted } = block;
     assert.deepEqual(formatted, entry.expected, entry.name);

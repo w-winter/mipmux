@@ -288,7 +288,7 @@ If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private direct
 
 ### Caller MCP interface
 
-MCP clients launch the `mcp` command over stdio. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`; `prompt`, `draft_create`, `draft_inspect`, `draft_update`, `draft_preview`, `draft_validate`, `draft_finalize`; and `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`. `tools/list` supplies their schemas. Workspace, draft and job IDs belong to the connected client.
+MCP clients launch the `mcp` command over stdio. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`; `prompt`, `manage_selection`, `draft_create`, `draft_inspect`, `draft_update`, `draft_validate`, `draft_finalize`; and `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`. `tools/list` supplies their schemas. Workspace, draft and job IDs belong to the connected client.
 
 Exploration calls use `workspaceId` and a tool-specific `input`. Request a file tree with only `{ "workspaceId": "..." }`, read with `{ "workspaceId": "...", "input": { "root": "app", "path": "src/main.ts" } }`, or search with `{ "workspaceId": "...", "input": { "query": { "text": "greet" } } }`. These tools are available independently of context-builder jobs.
 

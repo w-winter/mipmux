@@ -1,4 +1,5 @@
 import type { SearchRequest } from '../contracts/exploration.js';
+import type { NativeResult } from '../contracts/native.js';
 import type { PreparedSearchPattern, SearchCorrection, SearchDiagnostic } from '../contracts/search-pattern.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { WorkspaceFailure } from '../workspace/values.js';
@@ -12,12 +13,12 @@ import { matchedContext } from './search-reply.js';
 import { SearchPatternFailure } from './search-diagnostic.js';
 
 type SearchPlan = Awaited<ReturnType<typeof prepareSearch>>;
-type RecoveryAttempt = Awaited<ReturnType<WorkspaceOperation['prepareSearchRecovery']>>['attempts'][number];
+type RecoveryAttempt = Extract<NativeResult, { kind: 'searchRecovery' }>['attempts'][number];
 interface ContentCorrection { current: SearchCorrection }
 
 async function compileRecovery(operation: WorkspaceOperation, request: SearchRequest, attempt: RecoveryAttempt): Promise<SearchCorrection> {
   if (attempt.kind === 'literal') return { kind: 'unchanged' };
-  const compiled = await operation.compileRegexContent({ kind: 'compileRegexContent', pattern: attempt.pattern,
+  const compiled = await operation.projectNative({ kind: 'compileRegexContent', pattern: attempt.pattern,
     caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord });
   if (compiled.kind === 'regexSearchError') throw new SearchPatternFailure(compiled.diagnostic);
   return compiled.correction;
@@ -98,7 +99,7 @@ async function recoverContent(operation: WorkspaceOperation, request: SearchRequ
   const initial = plan.mode === 'path' || plan.content.kind === 'failed' ? null : plan.raw;
   let primary = await scanPass(operation, request, plan, initial);
   if (initial === null || primary.contentMatches > 0) return { ...primary, correction: correction.current };
-  const recovery = await operation.prepareSearchRecovery({ kind: 'prepareSearchRecovery', pattern: initial.text, isRegex: initial.isRegex });
+  const recovery = await operation.projectNative({ kind: 'prepareSearchRecovery', pattern: initial.text, isRegex: initial.isRegex });
   for (const attempt of recovery.attempts) {
     try {
       const compiled = await compileRecovery(operation, request, attempt);

@@ -1,7 +1,6 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -23,11 +22,8 @@ test('native comparison, pathspec normalization and diff projection preserve ori
   const proof: unknown[] = [];
   const call = (operation: ProjectionInput) => {
     const generation = 'git-diff-reference';
-    const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, generation, requestId: 'diff', operation }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(child.status, 0, child.stderr);
-    return envelope.Parse(JSON.parse(child.stdout.trim())).result;
+    const nativeFrame = callNative(operation, generation, 'diff');
+    return envelope.Parse(nativeFrame).result;
   };
   for (const entry of cases) {
     const found = call(entry.input);

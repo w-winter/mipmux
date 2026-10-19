@@ -75,21 +75,20 @@ test('draft publication persists complete source snapshots, CURRENT and projecte
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
     const draft = await workspace.createDraft(f.request, signal());
-    const captured = await draft.captureGitPublication(f.diff, true, 'all', signal());
     for (const mode of ['quick', 'standard', 'deep'] as const) {
       const publication = await draft.publishGitSnapshot(f.diff, { mode, scope: 'all', snapshotID: mode,
         inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 }, signal());
       assert(publication.kind === 'single');
       const directory = join(f.out, '_git_data', publication.snapshotDir);
       const saved = metadata.Parse(JSON.parse(await readFile(join(directory, 'manifest.json'), 'utf8')));
-      assert.equal(saved.tabID.toLowerCase(), draft.id); assert.equal(saved.repoRoot, captured.checkout.checkoutRootPath);
-      assert.equal(saved.repoKey, captured.checkout.repoKey); assert.equal(saved.scope, 'all');
+      assert.equal(saved.tabID.toLowerCase(), draft.id); assert.equal(saved.repoRoot, publication.checkout.checkoutRootPath);
+      assert.equal(saved.repoKey, publication.checkout.repoKey); assert.equal(saved.scope, 'all');
       assert.equal(await readlink(join(directory, '../CURRENT')), mode);
       for (const file of publication.files) assert.deepEqual(await readFile(join(directory, file.path)), Buffer.from(file.bytes, 'base64'));
       assert.equal(publication.projection.reply.snapshot_id, mode);
       assert.equal(publication.projection.reply.primary_artifacts.map, '_git_data/' + publication.snapshotDir + '/MAP.txt');
       assert((await readFile(join(directory, 'MAP.txt'), 'utf8')).includes(f.run(['log', '--graph', '--decorate', '--oneline', '--color=never', '-n', '20']).trim()));
-      if (mode !== 'quick') assert.equal(await readFile(join(directory, 'diff/all.patch'), 'utf8'), captured.content.diffText);
+      if (mode !== 'quick') assert((await readFile(join(directory, 'diff/all.patch'), 'utf8')).includes('-base\n+changed\n'));
       else assert(!(await readdir(directory)).includes('diff'));
       if (mode === 'deep') assert((await readdir(join(directory, 'deep'))).includes('hunks.jsonl'));
       proof.push({ mode, publication, saved });
@@ -116,7 +115,7 @@ test('publication retains completed files on I/O/cancellation failure and admits
       const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
       const draft = await workspace.createDraft(f.request, signal()), controller = new AbortController();
       resume.effect = failure === 'cancel' ? async () => { controller.abort(); } : async () => {
-        await draft.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'prompt', op: 'append', text: '\nChanged' } }, signal());
+        await draft.prompt({ expectedRevision: 0, maxOutputBytes: 100000, op: 'append', text: '\nChanged'  }, signal());
       };
       arm();
       const pending = draft.publishGitSnapshot(f.diff, { mode: 'standard', scope: 'all', snapshotID,

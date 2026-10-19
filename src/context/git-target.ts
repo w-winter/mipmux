@@ -54,16 +54,6 @@ export class FrozenGitTarget {
     return readGit(operation, request, encode, this.resolution.checkouts);
   }
 
-  async publication(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>,
-    selector: { readonly root: string | null; readonly worktree: string | null }): Promise<NativeGitCheckout> {
-    const checkouts = await this.publicationRepositories(operation, materials, selector);
-    if (this.resolution.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');
-    if (selector.root === null && selector.worktree === null) return this.resolution.primary;
-    const checkout = checkouts[0];
-    if (!checkout) throw new WorkspaceFailure('gitPublicationTargetDenied');
-    return checkout;
-  }
-
   async publicationRepositories(operation: WorkspaceOperation, materials: ReadonlyMap<string, Material>,
     selector: { readonly root: string | null; readonly worktree: string | null }): Promise<readonly NativeGitCheckout[]> {
     if (this.resolution.state !== 'available') throw new WorkspaceFailure('gitTargetRequired');

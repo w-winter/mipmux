@@ -41,9 +41,9 @@ test('saved bundle reader rejects writerless FIFOs and settles cancellation with
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
     const draft = await workspace.createDraft({ task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }],
       documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 100000 }, signal);
-    await draft.update({ expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({
+    await draft.prompt({ expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify({
       clarifiedTask: 'Inspect', architecture: 'Files', relationships: [], ambiguities: [],
-    }) } }, signal);
+    })  }, signal);
     const bundle = await draft.finalize(signal); assert(bundle.kind === 'ready');
     await draft.close(); await workspace.close();
     const directory = bundle.directory;

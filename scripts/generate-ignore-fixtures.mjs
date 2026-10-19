@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, openSync, closeSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { readReferenceSource, withReferenceDirectory } from './reference-harness.mjs';
+import { readFileSync, writeFileSync, mkdirSync, openSync, closeSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -12,12 +12,11 @@ const provenance = JSON.parse(readFileSync(directory + 'provenance.json'));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 if (execFileSync('git', ['-C', checkout, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== provenance.sourceRevision) throw new Error('Reference revision differs.');
 const sources = provenance.sources.map(entry => {
-  const bytes = readFileSync(resolve(checkout, entry.path));
-  if (hash(bytes) !== entry.sha256) throw new Error('Modified reference source: ' + entry.path);
+  const bytes = readReferenceSource(checkout, entry);
   return bytes.toString();
 });
 const lines = (source, start, end) => sources[source].split('\n').slice(start - 1, end).join('\n');
-const scratch = mkdtempSync(join(tmpdir(), 'smip-ignore-reference-'));
+withReferenceDirectory('smip-ignore-reference-', scratch => {
 mkdirSync(scratch + '/include');
 writeFileSync(scratch + '/include/wildmatch.h', sources[5]);
 writeFileSync(scratch + '/include/repo_gitignore.h', sources[6]);
@@ -80,3 +79,4 @@ writeFileSync(directory + 'cases.json', JSON.stringify(results.map((entry, index
 provenance.cases = results.length; provenance.generatorSHA256 = hash(text);
 writeFileSync(directory + 'provenance.json', JSON.stringify(provenance, null, 2) + '\n');
 console.log(JSON.stringify({ cases: results.length, scratch }));
+});

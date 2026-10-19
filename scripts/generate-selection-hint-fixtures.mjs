@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { runReference } from './reference-harness.mjs';
+import { readFileSync, writeFileSync } from 'node:fs';
+
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
@@ -54,14 +54,11 @@ struct Fixture: Codable { let name: String; let input: Input }
   }
 }
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-selection-hints-reference-'));
-writeFileSync(join(scratch, 'reference.swift'), text);
-execFileSync('swiftc', ['-parse-as-library', join(scratch, 'reference.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });
-const results = JSON.parse(execFileSync(join(scratch, 'reference'), { input: JSON.stringify(cases), encoding: 'utf8' }));
+const results = JSON.parse(runReference(text, JSON.stringify(cases), ['-parse-as-library']));
 writeFileSync(directory + 'cases.json', JSON.stringify(cases.map((entry, index) => ({ ...entry, expected: results[index].expected })), null, 2) + '\n');
 const hash = value => createHash('sha256').update(value).digest('hex');
 writeFileSync(directory + 'provenance.json', JSON.stringify({ revision,
   sources: [{ path: source, sha256: hash(bytes), ranges: [[5867, 5900]] }, { path: pathSource, sha256: hash(pathBytes) }],
   generatorSHA256: hash(text), cases: cases.length,
   bindings: ['Captured root names/paths replace the app store lookup. Root projection and absolute input translation are identity for these headless fixture roots. Original hint method and StandardizedPath bodies execute independently.'] }, null, 2) + '\n');
-console.log(JSON.stringify({ cases: cases.length, scratch }));
+console.log(JSON.stringify({ cases: cases.length }));

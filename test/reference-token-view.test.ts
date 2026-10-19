@@ -78,10 +78,8 @@ test('reference preview uses proposed file totals and canonical tree and Git inp
   const f = await fixture('codeReview');
   try {
     const before = tokens.Parse(await f.draft.inspect({ view: 'costs', continuation: null, maxOutputBytes: 100000 }, signal()));
-    const preview = await f.draft.preview({ expectedRevision: 0, maxOutputBytes: 100000, edits: [
-      { kind: 'remove', source: { root: 'Alpha', path: 'main.txt' } },
-      { kind: 'upsert', selection: { kind: 'full', source: { root: 'LongerBetaRoot', path: 'proposed-file-with-a-longer-name.txt' } } },
-    ] }, signal());
+    const preview = await f.draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'preview',
+      paths: ['LongerBetaRoot/proposed-file-with-a-longer-name.txt'], maxOutputBytes: 100000 })), signal());
     const projected = tokens.Parse(preview);
     assert.notEqual(projected.token_stats.files_content, before.token_stats.files_content);
     assert.equal(projected.token_stats.file_tree, before.token_stats.file_tree);

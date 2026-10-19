@@ -57,15 +57,15 @@ test('required full source, complete report and patch reach verified output; sta
       budgetUnits: 1000000,
     };
     const draft = await workspace.createDraft(request, signal);
-    await draft.update({
+    await draft.prompt({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({
+      op: 'append', text: '\n\n' + JSON.stringify({
           clarifiedTask: 'Inspect the implementation.',
           architecture: 'One model.',
           relationships: [],
           ambiguities: [],
-        }) },
+        }) ,
     }, signal);
     // Supplied comparisons must provide target evidence for every selected source.
     const blocked = await draft.finalize(signal);
@@ -87,15 +87,15 @@ test('required full source, complete report and patch reach verified output; sta
         ],
       }],
     }, signal);
-    await readyDraft.update({
+    await readyDraft.prompt({
       expectedRevision: 0,
       maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({
+      op: 'append', text: '\n\n' + JSON.stringify({
           clarifiedTask: 'Inspect the implementation.',
           architecture: 'One model.',
           relationships: [],
           ambiguities: [],
-        }) },
+        }) ,
     }, signal);
     const result = await readyDraft.finalize(signal);
     assert.equal(result.kind, 'ready');

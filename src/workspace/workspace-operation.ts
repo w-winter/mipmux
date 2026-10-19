@@ -10,7 +10,6 @@ import { readFile } from '../exploration/read.js';
 import { getFileTree } from '../exploration/tree.js';
 import { getCodeStructure } from '../exploration/structure.js';
 import { readGit } from '../exploration/git.js';
-import { captureGitDiff } from '../exploration/git-diff.js';
 import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
@@ -292,11 +291,6 @@ export class WorkspaceOperation {
     const captured = structuredClone(request);
     return this.#explore(operation => readGit(operation, captured, encode));
   }
-  /** Captures authorized evidence before reply projection; maxOutputBytes does not limit this internal acquisition. */
-  captureGitDiff(request: Extract<GitRequest, { op: 'diff' }>, generateDiffText: boolean) {
-    const captured = structuredClone(request);
-    return this.#track(() => captureGitDiff(this, captured, generateDiffText));
-  }
   electGitTarget(paths: readonly string[]) {
     const captured = [...paths];
     return this.#track(async () => {
@@ -348,13 +342,7 @@ export class WorkspaceOperation {
         repository: captured, compare }, this.signal)).result;
     });
   }
-  gitDiffOperation<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'normalizeGitSelectedPaths' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' | 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' | 'renderGitWorktreeReply' | 'planGitPublication' | 'prepareGitPublicationMetadata' | 'normalizeGitPublicationOptions' | 'decorateGitArtifacts' | 'authorizeGitArtifact' }>>(input: O) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  prepareGitRead(input: Extract<NativeOperation, { kind: 'prepareGitRead' }>) {
+  projectNative<O extends Extract<NativeOperation, { kind: 'prepareGitDiff' | 'normalizeGitSelectedPaths' | 'parseGitDiffStats' | 'normalizeGitUntrackedPatch' | 'parseGitPatch' | 'projectGitDiff' | 'prepareGitWorktreeMainRoot' | 'resolveGitWorktreeConfig' | 'projectGitWorktreeListing' | 'renderGitWorktreeReply' | 'planGitPublication' | 'prepareGitPublicationMetadata' | 'normalizeGitPublicationOptions' | 'decorateGitArtifacts' | 'authorizeGitArtifact' | 'prepareGitRead' | 'prepareGitShow' | 'parseGitShowMetadata' | 'sliceReadText' | 'calculateSliceRanges' | 'parseSelectionInputs' | 'prepareSelection' | 'transitionSelection' | 'prepareSearchPattern' | 'matchSearchPaths' | 'scanLiteralLines' | 'scanRegexContent' | 'compileRegexContent' | 'prepareSearchRecovery' | 'projectSearchReply' | 'filterSearchScope' | 'renderFileBlock' | 'mutateSelectionPaths' | 'countSearchReply' }>>(input: O) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(input, this.signal)).result;
@@ -363,28 +351,14 @@ export class WorkspaceOperation {
   projectGitRead(input: Extract<NativeOperation, { kind: 'projectGitRead' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
-      await access.bridge.request({ kind: 'openRoots', roots: this.snapshot.roots.map(root => ({ name: root.name,
-        absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity })) }, this.signal);
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  prepareGitShow(input: Extract<NativeOperation, { kind: 'prepareGitShow' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  parseGitShowMetadata(input: Extract<NativeOperation, { kind: 'parseGitShowMetadata' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
+      await this.validateSourceRoots();
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
   projectGitShow(input: Extract<NativeOperation, { kind: 'projectGitShow' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
-      await access.bridge.request({ kind: 'openRoots', roots: this.snapshot.roots.map(root => ({ name: root.name,
-        absolutePath: root.identity.declaredPath, access: 'source', expected: root.identity })) }, this.signal);
+      await this.validateSourceRoots();
       return (await access.bridge.request(input, this.signal)).result;
     });
   }
@@ -427,12 +401,6 @@ export class WorkspaceOperation {
     try { return await work(operation); }
     finally { await operation.close(); this.#explorations.delete(operation); }
   }
-  sliceReadText(input: Extract<NativeOperation, { kind: 'sliceReadText' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
   askUser<O extends Extract<NativeOperation, { kind: 'prepareAskUser' | 'answerAskUser' }>>(input: O) {
     const captured = structuredClone(input);
     return this.#track(async () => {
@@ -440,34 +408,10 @@ export class WorkspaceOperation {
       return (await access.bridge.request(captured, this.signal)).result;
     });
   }
-  calculateSliceRanges(input: Extract<NativeOperation, { kind: 'calculateSliceRanges' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  parseSelectionInputs(input: Extract<NativeOperation, { kind: 'parseSelectionInputs' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
   selectionPathBindings(paths: readonly string[]) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request({ kind: 'selectionPathBindings', paths: [...paths] }, this.signal)).result.paths;
-    });
-  }
-  prepareSelection(input: Extract<NativeOperation, { kind: 'prepareSelection' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  transitionSelection(input: Extract<NativeOperation, { kind: 'transitionSelection' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
     });
   }
   selectionHint(paths: readonly string[], operation: string) {
@@ -483,70 +427,10 @@ export class WorkspaceOperation {
       return (await access.bridge.request(input, this.signal)).result.reply;
     });
   }
-  prepareSearchPattern(input: Extract<NativeOperation, { kind: 'prepareSearchPattern' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  matchSearchPaths(input: Extract<NativeOperation, { kind: 'matchSearchPaths' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  scanLiteralLines(input: Extract<NativeOperation, { kind: 'scanLiteralLines' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  scanRegexContent(input: Extract<NativeOperation, { kind: 'scanRegexContent' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  compileRegexContent(input: Extract<NativeOperation, { kind: 'compileRegexContent' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  prepareSearchRecovery(input: Extract<NativeOperation, { kind: 'prepareSearchRecovery' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  projectSearchReply(input: Extract<NativeOperation, { kind: 'projectSearchReply' | 'countSearchReply' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
   resolveSearchScope(input: Extract<NativeOperation, { kind: 'parseSearchScope' | 'refreshSearchScope' }>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       return (await access.bridge.request(input, this.signal)).result.scope;
-    });
-  }
-  filterSearchScope(input: Extract<NativeOperation, { kind: 'filterSearchScope' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  renderFileBlock(input: Extract<NativeOperation, { kind: 'renderFileBlock' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
-    });
-  }
-  mutateSelectionPaths(input: Extract<NativeOperation, { kind: 'mutateSelectionPaths' }>) {
-    return this.#track(async () => {
-      const access = await (this.#access ??= this.#openAccess());
-      return (await access.bridge.request(input, this.signal)).result;
     });
   }
   queryStructure(input: Extract<NativeOperation, { kind: 'queryStructure' }>) {

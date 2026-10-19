@@ -10,7 +10,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
       "destination": "src/context/clipboard.ts",
-      "sha256": "8447132d6946a8e7bce018fd3bf81d763073110f0cc75902f1e14c2c96a3a932",
+      "sha256": "0ad7ce1f97b90961c9829bc97e059e0c3431a53582660d2b13ea9de75b513c59",
       "classification": "handwritten",
       "ranges": [
         [
@@ -28,7 +28,8 @@
         "Capture available explicit ordinary selections as excludedSources for Diff Follow-Up while leaving draft membership intact. Native preset inclusion determines emitted sections; parse only delivered patch material for spans and costs. Source-required sources/documents conflict explicitly instead of being discarded. Bind automatic checkout paths to captured full/slice membership, including unavailable-source positions.",
         "Manual uses captured native flags and selected meta IDs, including case-insensitive UUIDs. Preserve selected nonblank-patch precedence and request selected or complete Git acquisition lazily. Parse delivered materials only and bind Git scope to canonical sources rather than projected map entries.",
         "Retain selection order for selected representations and native presentation order for complete maps. Saved verification checks canonical source order, requested/ready order and delivered block order.",
-        "Generalize the captured presentation owner to Manual, custom presets and built-in configurations requiring file/map/tree projection after native admission resolution. Ordinary automatic built-ins retain their existing presentation path. Projected presets archive canonical/direct selections in manualPresentation; excludedSources is empty. Preserve inferred origins for automatic graph maps and exact presentation origins for selected/complete maps. Automatic observations are projected without a second readiness wait."
+        "Generalize the captured presentation owner to Manual, custom presets and built-in configurations requiring file/map/tree projection after native admission resolution. Ordinary automatic built-ins retain their existing presentation path. Projected presets archive canonical/direct selections in manualPresentation; excludedSources is empty. Preserve inferred origins for automatic graph maps and exact presentation origins for selected/complete maps. Automatic observations are projected without a second readiness wait.",
+        "Projected preset selection authority is archived in manualPresentation.canonicalSources. Manifest schema24 removes the unused excludedSources field; no compatibility reader is added."
       ]
     },
     {
@@ -86,7 +87,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "aefe541888bcb6628036438d1862969e2d8d00aa7a2b40807409d9f289fe8363",
-      "sha256": "b263ab0c24bd9dadd1248fa3e4e252111ae3cf7592fcf6b30adc7228a3fac407",
+      "sha256": "ba09c1f53abc1dda0dedae85197e34b2d8fde02f97cf63bd18c19eab6c552182",
       "classification": "handwritten"
     },
     {
@@ -6114,7 +6115,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
       "destination": "test/fixtures/rpce-graph-size/provenance.json",
-      "sha256": "8996d7ad5a673bc99183a9179bb97dac0de2c8a63935b77d22f6ce7f828b347e",
+      "sha256": "e0d262756ef9490c2d174ac26c34ce13779f67fc40165e221188c4b4ad551aaf",
       "classification": "fixture",
       "ranges": [
         [
@@ -6151,7 +6152,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "d52c3b1ccc2aafc864c4445bfc1efe06de4acb568fd4ac5c8ae7a6d462edf14b",
+      "sha256": "72ad5479f35e69d005e3cfbecc0b9bac1381cbfff9f8fb1f0b13d1dd595a75c1",
       "classification": "handwritten"
     },
     {
@@ -6190,7 +6191,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "c20df35cec64f83134b340d205ad809d323dae0d68eed48b8a2037a47ad94539",
-      "sha256": "31c97da52b8eab87f9fdf4c781e67022d6f42db16cb9ead661ad3debc48fe0bb",
+      "sha256": "8107fac6acef16fcdf446f204a9b53d17a42b780234784c805681fc31f489e71",
       "classification": "handwritten"
     },
     {
@@ -6235,7 +6236,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "a32431bd95edfbf8e7de038d0303aafac22fda4a09c0dfb729691ad08c20cdf2",
+      "sha256": "50ab9e05c0b6473ced8665e00a97b114a5fffc882975ae328c8810b1466a3801",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6255,7 +6256,8 @@
         "Assemble current selection entries, blocks and component counts from per-source presentation availability while retaining canonical material membership. Explicit unavailable_sources and incomplete measurement distinguish absent bodies from removed selection.",
         "Reject Diff Follow-Up requests with caller-required sources or documents before acquisition. Existing selection lifecycle and document receipt admission remain the authorities; the shared clipboard boundary rejects an incompatible later document mutation.",
         "Use captured copyContext.codeMapsGloballyDisabled to skip automatic candidate queries and suppress selected code_structure diagnostics, following WorkspaceFileContextStore.swift:13331-13337 and SelectionCore.swift:1513-1514 / SelectionReply.swift:769. Preserve selection revision and optional initial membership.",
-        "Route draft-scoped Git reads through FrozenGitTarget.read while retaining the existing operation fork, cancellation, pending-work and close ownership. MCP and Pi dispatch share this path. Git read admission follows MCPContextBuilderGitReviewPolicy.swift:62-129 at revision 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3."
+        "Route draft-scoped Git reads through FrozenGitTarget.read while retaining the existing operation fork, cancellation, pending-work and close ownership. MCP and Pi dispatch share this path. Git read admission follows MCPContextBuilderGitReviewPolicy.swift:62-129 at revision 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3.",
+        "Use manage_selection for path/slice operations and non-mutating preview, and prompt for literal prompt mutations. Keep baseline individual draft_update edits and supplied-document admission. Packet rendering uses proposed preview selection while component tree/Git costs use canonical selection. Adopt one progressive finalization capture and one cancellation/revision/freeze fence."
       ]
     },
     {
@@ -6477,7 +6479,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "36eec27d79790bd8ba4faef656deadc7471a86876b48dc4123d1a2e7a97f7c16",
+      "sha256": "86661c055ddc91b084c7ff4222bb2de9fb601ee8413ecbc4fcfacc78fb771e89",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
@@ -6486,7 +6488,8 @@
         "Retain the finalization inventory alongside material and automatic Git captures for terminal inspection after workspace lease release.",
         "Capture unavailable roots before graph preparation, omit only optional source bodies and archive their original identities in manifest version 20. Revalidate the same root-availability outcomes before the publication claim; required material retains ordinary physical checks.",
         "Capture per-file omissions during body assembly and verify their absence before assembly and before publication. Preserve canonical materials separately for terminal inspection, with delivered-body measurement and explicit incomplete component estimates.",
-        "Archive the canonical version-20 pending-map omission variant. The existing root-atomic presentation and shared-deadline readiness owners run unchanged before packet partitioning."
+        "Archive the canonical version-20 pending-map omission variant. The existing root-atomic presentation and shared-deadline readiness owners run unchanged before packet partitioning.",
+        "Finalization and interim export share packet-assembly.ts for artifact refresh, omission capture, material validation, native preparation and retained presentation. Finalization records partial capture at the original points, computes reference tokens inside the retained callback and publishes canonical manifest schema24 without the unused excludedSources field."
       ]
     },
     {
@@ -6567,7 +6570,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "9e72735d6f9459650a5c672939fdf85284d3dda91714596e85bbea277264e8c8",
+      "sha256": "a599a2bb10161eb83ec81e65a052c7200308589732abe56e036816aa0c23ffac",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6992,7 +6995,7 @@
         "Retain typed path and content failures independently. A single-mode failure propagates; both-mode propagates only when both phases fail, selecting the content diagnostic. Zero hits is a healthy phase. Validate the native retained/excluded partition on both success and expected path failure."
       ],
       "classification": "handwritten",
-      "sha256": "e00c9c9c6dd337b39abe84444a5c811fe07101294e585ebb5b24c98f0dce0a5a"
+      "sha256": "cad201f25a174b800d741fdd534846a47c76db624a115f23bb77adab3d047ba3"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7099,7 +7102,7 @@
         "Pass captured original decoded text and raw query flags to native literal and regex owners. Validate ordered in-range hit lines and source summary/collection semantics once before grouped presentation.",
         "Return expected per-file scanner diagnostics as typed data after native schema parsing; validate line summaries only for successful scans. Do not promote a file failure to a global compilation failure."
       ],
-      "sha256": "7a2dcce86320024cc6335623b9a37b503cd1ce17e8eb2f0bf4473974e952c6fb"
+      "sha256": "4b422277715ea62e37668f49d1fff4d014c935e33620a65207f89837b9fc9aff"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7351,7 +7354,7 @@
         "Preserve expected per-file pattern failures separately from phase failures, with empty hits for the failed file and continued scanning of healthy files. Primary per-file diagnostics survive all-zero regex recovery; positive/literal recovery retains the source result-replacement rules. Expected query-wide recovery compilation failures participate in the same both-mode phase rule. Normalized-stage suppression is limited to the search-local typed failure; host authority, native/protocol failures and cancellation propagate.",
         "Keep correction state across failed content recovery, matching the source inout wasAutoCorrected flag and StoreBackedWorkspaceSearch.swift490-493 warning projection. A healthy both-mode path phase retains the compilation warning even when content recovery subsequently fails."
       ],
-      "sha256": "aa108aed34e0a0fed3f6b31a9f7e378b3be9612a7ba9716ef9ef93f0bfd6b6ad"
+      "sha256": "eb9b7196ea9b54d265012069da69a75765eb7aa2d04c7d007f7ac4ccc5951b13"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
@@ -7572,7 +7575,7 @@
         "First pages reconcile declared roots through the workspace owner; continuations use its current generation without another scan. Parent operations own their query workers through cancellation and closure.",
         "Expected physical root failures produce unavailableRoots diagnostics. Strict identity checks exclude replacement roots from body acquisition. Known file-acquisition failures remain limitations, and enumeration completeness stays visible."
       ],
-      "sha256": "920f804a0324a3aad2ddbad6bc645dc9380184d873e0db6a187ff9b9519c1bb9"
+      "sha256": "0d1e2725a85cc8a1fecd781ddd296899097e55974a9216f0fbfbb7653cadc8b8"
     },
     {
       "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionReply.swift",
@@ -7620,7 +7623,7 @@
         "Move the existing formatter for full/slice blocks into this presentation owner. Classify expected physical read failures at that boundary so other selected files keep their blocks. Source/policy changes, protocol/worker failures and cancellation propagate.",
         "Content view reloads both full files and slices through the existing confined source reader, preserving captured raw identity, executable mode and decoding. Expected read failures retain nil-content entries and healthy sibling blocks. Summary and files views keep captured observation semantics."
       ],
-      "sha256": "c99b17543370380d50c2a90ef888bceb3f24ca2fe803d9f305abb7f8e768f2b5"
+      "sha256": "66148043f60cdc17feb1219ac3aff7be148ac04bcfe665065fe38f88a4030696"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
@@ -7650,7 +7653,7 @@
         "Omit optional manual pending codemaps from final delivery while preserving their source identity, mode, explicit index and artifact key. Keep required pending maps in the candidate so existing diagnostics block publication. codemapPending is a historical presentation observation, like automatic acquisition evidence; current verification binds its readable source and key rather than repeating readiness. Saved verification requires matching captured inventory metadata.",
         "Archive optional explicit codemap I/O outcomes with their original identity, mode, artifact key and observed pending/unmapped disposition. Revalidate the same I/O cause before assembly, claim and current verification. Required sources reject and recovered/differently failing sources invalidate the candidate."
       ],
-      "sha256": "7d62efa38b55a219614e2b5a82feec68d38a0d100f02afa81868d8581e8fefb8"
+      "sha256": "7a75fb8ae1d1d8b5bd428fa6197e84783724ae7d9e088cf62836d6f447d691bc"
     },
     {
       "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",
@@ -7728,7 +7731,7 @@
         "Bind source file exclusion to the existing headless required-material guarantee: reject conflicts explicitly. Archive only available explicit source selections and inventory bindings, not undelivered bodies; unavailable sources retain the existing omission records. Current verification checks the captured excluded identities and policy. No independent selection owner or source renderer is introduced.",
         "Generalize the captured presentation owner to Manual, custom presets and built-in configurations requiring file/map/tree projection after native admission resolution. Ordinary automatic built-ins retain their existing presentation path. Projected presets archive canonical/direct selections in manualPresentation; excludedSources is empty. Preserve inferred origins for automatic graph maps and exact presentation origins for selected/complete maps. Automatic observations are projected without a second readiness wait."
       ],
-      "sha256": "367c75020fe63d589f670edbe15de423662bb73c84376f34637f5a312a7f7118"
+      "sha256": "85794006eef8b34c7bdc15403eb7d1d0e7e8a517a3fc59ee9fd5705124ba3de4"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/ViewModels/PromptViewModel.swift",
@@ -8001,7 +8004,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "6493dfa51a6e1bd8f6255a1aab2ba3d9fa45efe3732e7d2cc2dc6188746721cb",
       "destination": "src/context/prompt-export.ts",
-      "sha256": "ff44dfbd413b7e860f9df1ff57e03ce28a76616b45500f3d96e2a560b9f884c0",
+      "sha256": "2ec92ea2c59b0de70573ac328a8ab5d7849e823dd84386a6de90339cae67aefe",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8013,7 +8016,8 @@
         "Bind the source phase ordering to a captured immutable draft observation and the existing TypeScript cancellation/job/operation infrastructure. Reuse native preset resolution, presentation planning, packaging and selected-file metadata assembly; required materials, source/comparison coherence and the operator numeric budget are enforced before writing. No draft freeze, active-preset change, revision change or finalization call occurs.",
         "Replace app path translation/mutation mappings with the already-authorized writable output root. Relative and absolute-within-output destinations map to an output-relative path. No source root gains write authority. Native no-follow traversal and linkat commit complete synced bytes without overwrite, including collisions. Await the owned synchronous native write and check cancellation after success, so a cancelled response can retain a complete file.",
         "Replace app ingress wait with operation/bridge settlement because exported output is excluded from source inventory. Use relative path display and declared root aliases, source byte/token/file/preset envelope fields and the retained selected-file assembler. Canonical selected paths and ready presented maps supply captured metadata; includeFiles false yields an empty metadata list.",
-        "Recognize both the declared output-root alias and its canonical identity when routing an absolute destination. Native confinement remains anchored to the single admitted output descriptor; absolute source-root destinations remain denied."
+        "Recognize both the declared output-root alias and its canonical identity when routing an absolute destination. Native confinement remains anchored to the single admitted output descriptor; absolute source-root destinations remain denied.",
+        "Interim export uses the shared packet assembly and pre-write validation, while retaining its own destination admission, response-size check, exclusive write and open-draft lifecycle."
       ],
       "sourceDependencies": [
         {
@@ -8173,7 +8177,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "5a3d5f975378215e220275ccadaad183d57737ddef816d701bbd9a48bf22085d",
       "destination": "src/context/selection-preparation.ts",
-      "sha256": "6b84c12723154a5c198668cedb9b1d34b43c4ef18e32f0f1e386b917d69c67c0",
+      "sha256": "0931b0088bb7139fe568e64444bbdc4ce5dd05c570878f3ebef01da0c24c1138",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8182,7 +8186,8 @@
         ]
       ],
       "changes": [
-        "Reject codemap_only modes and demotion before mutation when globally disabled. Map MCP invalidParams to the existing invalidSelection result; replace the desktop Advanced Settings reference with disabled generation. Other selection preparation remains the existing headless binding."
+        "Reject codemap_only modes and demotion before mutation when globally disabled. Map MCP invalidParams to the existing invalidSelection result; replace the desktop Advanced Settings reference with disabled generation. Other selection preparation remains the existing headless binding.",
+        "Selection and search share the captured catalog projection; each caller supplies its original root IDs and normalized paths. Discoverability, entry order and registration timing remain inputs to the retained native resolver."
       ]
     },
     {
@@ -8190,7 +8195,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "5a3d5f975378215e220275ccadaad183d57737ddef816d701bbd9a48bf22085d",
       "destination": "src/context/draft-source-edits.ts",
-      "sha256": "b6b0e584f3487550b77095889beaf8e0fad3c1d3eebc2b1ce75245268e5f3666",
+      "sha256": "48619b851f391a6d44a217839fb9194d49943031d2404213b979cb609e54881f",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8207,7 +8212,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "310a3e5b292bee8b59bb2fb614c3a2eaf14a8a040369980304be89511a37b201",
       "destination": "src/exploration/git.ts",
-      "sha256": "2d4ace40d76b535119d353e08b1c9b5266a29538c1c2049d8bd32e87219a5617",
+      "sha256": "0eb347a9507f830c252f0037754a995c693d4827f60959939b7a8fb31a03bf8f",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8263,7 +8268,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "4eb9620b17fed9b16acb06111f72207eed608298760e3e3d79efe88fefe22379",
       "destination": "src/exploration/git-repository.ts",
-      "sha256": "facaaa698f39cbd6e2330eaed18293436cb78b2afaa1dfec4c553bf117f6ee52",
+      "sha256": "193d109dbaa8f30f8c3cfc1380c1d0456fd53be89cb5ef38015eacc785e2a267",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8274,7 +8279,8 @@
       "changes": [
         "Use the existing supervised resolver and captured filesystem identities to admit advertised same-repository worktrees. A declared subroot authorizes its owning checkout advertisement under the approved Git evidence authority.",
         "An already admitted checkout can anchor main-worktree metadata reads, including nested repositories. Explicit exclusions and credential/protected paths remain enforced by the existing permits function.",
-        "Classify only exit 128 with empty stdout and the C-locale rev-parse --show-toplevel no-repository diagnostic as expected absence. Preserve gitQueryFailed for other process failures and propagate protocol, identity, authorization and cancellation failures. Explicit callers retain their error code."
+        "Classify only exit 128 with empty stdout and the C-locale rev-parse --show-toplevel no-repository diagnostic as expected absence. Preserve gitQueryFailed for other process failures and propagate protocol, identity, authorization and cancellation failures. Explicit callers retain their error code.",
+        "Expose strict Git queries through the admitted repository owner with its captured working directory and signal. Preserve typed no-repository discovery separately from other command failures; optional queries and diff/scratch process environments retain their own handling."
       ]
     },
     {
@@ -8303,7 +8309,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "93fa042dc08968720b50914e12b953abab6f3b234be3858003bcdd0662b6c90e",
       "destination": "src/context/git-target.ts",
-      "sha256": "e53e73b33527a2e2031962a7d959500d16032b6d780b156066f4e84a0cdca8b3",
+      "sha256": "4a8239db25f623517614df79c3a63dbdd9a727ac622559e7c4a5c5048bf3b694",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8337,6 +8343,28 @@
         "Describe the source single/multiple status and worktree projection with strict TypeBox schemas. Per-repository success and expected failure are distinct variants.",
         "Use one ordered repositories selector for status/log/show/blame. Null means the captured draft target or first Git root without a draft. Each entry has root, nullable path and nullable worktree; public inputs default omitted fields at admission. Diff inputs retain their separate existing contract.",
         "Share the worktree output schema with Git artifact replies; preserve the established root-qualified authority fields and complete-response output budget."
+      ]
+    },
+    {
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextPreAssemblyService.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
+      "destination": "src/context/packet-assembly.ts",
+      "sha256": "79784be405c26eeb93a2ccaad61ec5c27e7478e5fd88c7e1eff72a3dc62c7cc8",
+      "classification": "handwritten",
+      "changes": [
+        "Shared headless packet preparation for finalization and interim export. One captured operation refreshes authorized Git artifacts, collects optional source omissions, validates delivered materials and invokes native presentation.",
+        "The completion callback runs inside retained codemap presentation, including owner-specific token observations. Progressive capture preserves terminal inspection after failure; pre-write validation is shared without combining publication and interim-export lifecycles."
+      ],
+      "ranges": [
+        [
+          236,
+          284
+        ],
+        [
+          308,
+          360
+        ]
       ]
     }
   ],

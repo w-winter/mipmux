@@ -33,8 +33,8 @@ for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
             { path: 'Peer.swift', identity: identity('struct Peer { let value: Int }\n'), mode: '100644' },
             { path: 'slice.txt', identity: identity(sliced), mode: '100644' }]  }],
         budgetUnits: 100000, discoveryHints: [], outputName: 'packet' }, signal);
-      if (enhancementMode !== 'preserve') await draft.update({ expectedRevision: 0, maxOutputBytes: 30000,
-        mutation: { kind: 'prompt', op: enhancementMode === 'augment' ? 'append' : 'set', text: '\nDiscovered details.' } }, signal);
+      if (enhancementMode !== 'preserve') await draft.prompt({ expectedRevision: 0, maxOutputBytes: 30000,
+        op: enhancementMode === 'augment' ? 'append' : 'set', text: '\nDiscovered details.'  }, signal);
       const costs = await draft.inspect({ view: 'costs', maxOutputBytes: 30000, continuation: null }, signal);
       assert(costs.kind === 'costs');
       const result = await draft.finalize(signal); assert(result.kind === 'ready');

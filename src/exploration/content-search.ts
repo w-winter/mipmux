@@ -21,13 +21,13 @@ function validateMatches(result: ContentMatches, lineCount: number, countOnly: b
 }
 
 export async function scanLiteralContent(operation: WorkspaceOperation, text: string, lineCount: number, query: LiteralContentQuery) {
-  const result = await operation.scanLiteralLines({ kind: 'scanLiteralLines', text, ...query });
+  const result = await operation.projectNative({ kind: 'scanLiteralLines', text, ...query });
   if (result.kind === 'literalSearch') validateMatches(result, lineCount, query.countOnly);
   return result;
 }
 
 export async function scanRegexContent(operation: WorkspaceOperation, text: string, lineCount: number, query: RegexContentQuery) {
-  const result = await operation.scanRegexContent({ kind: 'scanRegexContent', text, ...query });
+  const result = await operation.projectNative({ kind: 'scanRegexContent', text, ...query });
   if (result.kind === 'regexSearch') validateMatches(result, lineCount, query.countOnly);
   return result;
 }

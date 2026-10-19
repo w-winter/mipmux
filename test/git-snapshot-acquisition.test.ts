@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { gitValidator } from '../src/contracts/git.js';
+import { gitValidator, type GitRequest } from '../src/contracts/git.js';
 import { NativeGitSnapshotInput } from '../src/contracts/git-snapshot.js';
 import { BridgeClient, type NativeReply } from '../src/native/bridge-client.js';
 import { ProcessSupervisor, type OwnedProcess, type ProcessSpec } from '../src/runtime/process-supervisor.js';
@@ -20,7 +20,8 @@ const nativeExecutable = resolve(`native/.build/${process.platform}-${process.ar
 const fixtures = Compile(Type.Object({ mtime: Type.Number(), files: Type.Array(Type.Object({ path: Type.String(), text: Type.String() })),
   cases: Type.Array(Type.Object({ name: Type.String(), compare: Type.String(), headSHA: Type.String(), baseRefSHA: Type.String(), status: Type.String(),
     expected: Type.Object({ headSHA: Type.String(), baseRef: Type.String(), statusHash: Type.String() }) })) }));
-const manifest = Compile(Type.Pick(NativeGitSnapshotInput, ['fingerprint', 'summary']));
+const manifest = Compile(Type.Object({ ...Type.Pick(NativeGitSnapshotInput, ['fingerprint', 'summary', 'scope']).properties,
+  requestedPaths: Type.Optional(Type.Array(Type.String())), files: Type.Array(Type.Object({ gitPath: Type.String(), status: Type.String() })) }));
 
 test('native fingerprints match original status, rename, missing-file and metadata hashing', async () => {
   const reference = fixtures.Parse(JSON.parse(await readFile('test/fixtures/rpce-git-fingerprint/cases.json', 'utf8')));
@@ -60,62 +61,66 @@ async function fixture() {
   const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
     credentialPaths: [join(repo, 'denied.txt')], git: { executable: git }, terminationGraceMs: 100, contextBudgetUnits: 200000 });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: repo }], exclusions: [], outputRoot: out }, signal());
+  const draft = await workspace.createDraft({ task: 'Capture complete Git evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
+    initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'tracked.txt' } }] },
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [], duplicateUserInstructionsAtTop: false,
+    discoveryHints: [], budgetUnits: 200000, outputName: 'packet' }, signal());
   const request = (compare: string, paths: string[] = []) => {
     const value = gitValidator.Parse(gitValidator.Default({ op: 'diff', root: 'r', compare, paths, detail: 'summary', maxOutputBytes: 1 }));
-    assert.equal(value.op, 'diff'); return value;
+    assert(value.op === 'diff'); return value;
   };
-  return { base, repo, run, head, runtime, workspace, request };
+  const publish = async (input: Extract<GitRequest, { op: 'diff' }>, mode: 'quick' | 'standard' = 'standard', requestSignal = signal()) => {
+    const publication = await draft.publishGitSnapshot(input, { mode, scope: 'all', snapshotID: null,
+      inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 }, requestSignal);
+    assert(publication.kind === 'single');
+    const file = publication.files.find(file => file.path === 'manifest.json'); assert(file);
+    return { publication, metadata: manifest.Parse(JSON.parse(Buffer.from(file.bytes, 'base64').toString())) };
+  };
+  return { base, repo, run, head, runtime, workspace, draft, request, publish };
 }
 
 test('live acquisition retains complete authorized bodies before summary projection and output caps', async () => {
-  const f = await fixture(), operation = await f.workspace.openOperation(signal()), proof: unknown[] = [];
-  const serializer = f.runtime.makeBridge();
+  const f = await fixture(), proof: unknown[] = [];
   const index = await readFile(join(f.repo, '.git/index'));
   try {
     for (const [compare, added, removed, untracked] of [
       ['uncommitted', 'working', 'base', true], ['staged', 'staged', 'base', false], ['unstaged', 'working', 'staged', true],
     ] as const) {
-      const capture = await operation.captureGitDiff(f.request(compare), true);
-      assert.equal(capture.content.fingerprint.headSHA, f.head);
-      assert.equal(capture.content.scope, 'all'); assert.equal(capture.content.requestedPaths, null);
-      const patch = capture.content.perFile?.['tracked.txt']; assert(patch);
+      const captured = await f.publish(f.request(compare));
+      assert.equal(captured.metadata.fingerprint.headSHA, f.head);
+      assert.equal(captured.metadata.scope, 'all'); assert.equal(captured.metadata.requestedPaths, undefined);
+      const patchFile = captured.publication.files.find(file => file.path === 'diff/per-file/tracked.txt.patch'); assert(patchFile);
+      const patch = Buffer.from(patchFile.bytes, 'base64').toString();
       assert(patch.includes('+' + added)); assert(patch.includes('-' + removed));
-      assert.equal(capture.content.changedFiles.some(file => file.path === 'new.txt'), untracked);
-      assert(!capture.content.changedFiles.some(file => file.path === 'denied.txt'));
-      assert(!JSON.stringify(capture.content).includes('PROTECTED_BODY'));
-      assert.equal(capture.exclusions.includes('denied.txt'), compare !== 'staged');
-      assert(capture.content.diffText?.includes(patch));
-      assert.deepEqual(capture.content.summary, { files: untracked ? 2 : 1, insertions: untracked ? 2 : 1, deletions: 1 });
-      const serialized = await serializer.request({ kind: 'serializeGitSnapshot', input: { ...capture.content,
-        snapshotID: compare, repoKey: 'fixture', mode: 'standard', compare: capture.commands.display, compareInput: compare,
-        contextLines: 3, detectRenames: false, commitGraph: '', repoRoot: f.repo, tabID: null, worktree: null } }, signal());
-      const patchFile = serialized.result.files.find(file => file.path === 'diff/all.patch'); assert(patchFile);
-      assert.equal(Buffer.from(patchFile.bytes, 'base64').toString(), capture.content.diffText);
-      const manifestFile = serialized.result.files.find(file => file.path === 'manifest.json'); assert(manifestFile);
-      const saved = manifest.Parse(JSON.parse(Buffer.from(manifestFile.bytes, 'base64').toString()));
-      assert.deepEqual(saved.fingerprint, capture.content.fingerprint); assert.deepEqual(saved.summary, capture.content.summary);
-      proof.push({ capture, serialized });
+      assert.equal(captured.metadata.files.some(file => file.gitPath === 'new.txt'), untracked);
+      assert(!captured.metadata.files.some(file => file.gitPath === 'denied.txt'));
+      for (const file of captured.publication.files) assert(!Buffer.from(file.bytes, 'base64').includes(Buffer.from('PROTECTED_BODY')));
+      const allPatch = captured.publication.files.find(file => file.path === 'diff/all.patch'); assert(allPatch);
+      assert(Buffer.from(allPatch.bytes, 'base64').toString().includes(patch));
+      assert.deepEqual(captured.metadata.summary, { files: untracked ? 2 : 1, insertions: untracked ? 2 : 1, deletions: 1 });
+      assert.equal((await f.draft.operation.readGit(f.request(compare))).kind, 'outputBudgetTooSmall');
+      proof.push(captured);
     }
-    const selected = await operation.captureGitDiff(f.request('uncommitted', ['tracked.txt']), true);
-    assert.equal(selected.content.scope, 'selected'); assert.deepEqual(selected.content.requestedPaths, ['tracked.txt']);
-    const quick = await operation.captureGitDiff(f.request('uncommitted'), false);
-    assert.equal(quick.content.diffText, null); assert.equal(quick.content.perFile, null); assert.equal(quick.content.summary.files, 2);
-    const empty = await operation.captureGitDiff(f.request('staged', ['absent.txt']), true);
-    assert.equal(empty.content.diffText, null); assert.equal(empty.content.perFile, null); assert.equal(empty.content.summary.files, 0);
+    const selected = await f.publish(f.request('uncommitted', ['tracked.txt']));
+    assert.equal(selected.metadata.scope, 'selected'); assert.deepEqual(selected.metadata.requestedPaths, ['tracked.txt']);
+    const quick = await f.publish(f.request('uncommitted'), 'quick');
+    assert(!quick.publication.files.some(file => file.path.startsWith('diff/'))); assert.equal(quick.metadata.summary.files, 2);
+    const empty = await f.publish(f.request('staged', ['absent.txt']));
+    assert(!empty.publication.files.some(file => file.path.startsWith('diff/'))); assert.equal(empty.metadata.summary.files, 0);
     const status = f.run(['status', '--porcelain', '-z', '--untracked-files=all']);
-    const unstaged = await operation.captureGitDiff(f.request('unstaged'), false);
-    assert.equal(unstaged.content.fingerprint.baseRef, 'INDEX');
-    assert.equal(unstaged.content.fingerprint.statusHash, 'index:' + createHash('sha256').update(status).digest('hex'));
-    const revision = await operation.captureGitDiff(f.request('HEAD'), false);
-    assert.equal(revision.content.fingerprint.baseRef, 'HEAD'); assert.equal(revision.content.fingerprint.statusHash, 'revspec:HEAD');
-    await assert.rejects(operation.captureGitDiff(f.request('--output=' + join(f.base, 'injected')), true), /invalidRequest/);
+    const unstaged = await f.publish(f.request('unstaged'), 'quick');
+    assert.equal(unstaged.metadata.fingerprint.baseRef, 'INDEX');
+    assert.equal(unstaged.metadata.fingerprint.statusHash, 'index:' + createHash('sha256').update(status).digest('hex'));
+    const revision = await f.publish(f.request('HEAD'), 'quick');
+    assert.equal(revision.metadata.fingerprint.baseRef, 'HEAD'); assert.equal(revision.metadata.fingerprint.statusHash, 'revspec:HEAD');
+    await assert.rejects(f.publish(f.request('--output=' + join(f.base, 'injected'))), /invalidRequest/);
     assert.deepEqual(await readFile(join(f.repo, '.git/index')), index);
     await writeFile('test-output/git-snapshot-acquisition-proof.json', JSON.stringify({ proof, selected, quick, empty, indexUnchanged: true }, null, 2) + '\n');
-  } finally { await serializer.close(); await operation.close(); await f.workspace.close(); await f.runtime.close(); }
+  } finally { await f.draft.close(); await f.workspace.close(); await f.runtime.close(); }
 });
 
-test('cancellation during snapshot fingerprinting joins Git work before operation settlement', async t => {
-  const f = await fixture(), controller = new AbortController(), operation = await f.workspace.openOperation(controller.signal);
+test('cancellation during snapshot fingerprinting joins Git work before draft settlement', async t => {
+  const f = await fixture(), controller = new AbortController();
   const spawn = f.runtime.supervisor.spawn.bind(f.runtime.supervisor), held: OwnedProcess[] = [];
   let entered!: () => void; const holding = new Promise<void>(resolve => { entered = resolve; });
   t.mock.method(f.runtime.supervisor, 'spawn', (spec: ProcessSpec) => {
@@ -126,9 +131,9 @@ test('cancellation during snapshot fingerprinting joins Git work before operatio
     return spawn(spec);
   });
   try {
-    const pending = operation.captureGitDiff(f.request('uncommitted'), true);
+    const pending = f.publish(f.request('uncommitted'), 'standard', controller.signal);
     await holding; controller.abort(); await assert.rejects(pending, /cancelled|aborted/i);
-    await operation.close(); const joined = await Promise.all(held.map(child => child.closed)); assert.equal(joined.length, 1);
+    await f.draft.close(); const joined = await Promise.all(held.map(child => child.closed)); assert.equal(joined.length, 1);
     await writeFile('test-output/git-snapshot-acquisition-cancel-proof.json', JSON.stringify({ joined }, null, 2) + '\n');
-  } finally { await operation.close(); await f.workspace.close(); await f.runtime.close(); }
+  } finally { await f.draft.close(); await f.workspace.close(); await f.runtime.close(); }
 });

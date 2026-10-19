@@ -1,8 +1,8 @@
+import { withReferenceDirectory } from './reference-harness.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdtempSync, openSync, closeSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync, openSync, closeSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,8 +53,7 @@ let output = try inputs.map { entry -> [String: Any] in
 let bytes = try JSONSerialization.data(withJSONObject: output, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
 FileHandle.standardOutput.write(bytes)
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-ask-user-reference-'));
-try {
+withReferenceDirectory('smip-ask-user-reference-', scratch => {
   writeFileSync(join(scratch, 'main.swift'), text);
   execFileSync('swiftc', ['-swift-version', '6', join(scratch, 'main.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });
   const input = openSync(directory + 'cases.json', 'r'), output = openSync(join(scratch, 'outputs.json'), 'w');
@@ -66,4 +65,4 @@ try {
   provenance.outputSHA256 = hash(bytes);
   writeFileSync(directory + 'provenance.json', JSON.stringify(provenance, null, 2) + '\n');
   console.log(JSON.stringify({ cases: JSON.parse(bytes).length, outputSHA256: hash(bytes) }));
-} finally { execFileSync('trash', [scratch]); }
+});

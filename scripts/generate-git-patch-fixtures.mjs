@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync, mkdtempSync, openSync, closeSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { readReferenceSource, runReference } from './reference-harness.mjs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -12,8 +12,7 @@ const provenance = JSON.parse(readFileSync(directory + 'provenance.json'));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 if (execFileSync('git', ['-C', checkout, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== provenance.sourceRevision) throw new Error('Reference revision differs.');
 const sources = provenance.sources.map(entry => {
-  const bytes = readFileSync(resolve(checkout, entry.path));
-  if (hash(bytes) !== entry.sha256) throw new Error('Modified reference source: ' + entry.path);
+  const bytes = readReferenceSource(checkout, entry);
   return bytes.toString().replaceAll('package ', '').replace('import RepoPromptFileSystem\n', '').split('\n');
 });
 const text = `import Foundation
@@ -40,15 +39,10 @@ for entry in cases {
 }
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: output, options: [.sortedKeys]))
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-git-patch-reference-'));
-writeFileSync(scratch + '/reference.swift', text);
-execFileSync('swiftc', [scratch + '/reference.swift', '-o', scratch + '/reference'], { stdio: 'inherit' });
-const input = openSync(directory + 'cases.json', 'r'), output = openSync(scratch + '/output.json', 'w');
-try { execFileSync(scratch + '/reference', [], { stdio: [input, output, 'inherit'] }); }
-finally { closeSync(input); closeSync(output); }
+const referenceOutput = runReference(text, readFileSync(directory + 'cases.json'));
 const inputs = JSON.parse(readFileSync(directory + 'cases.json'));
-const results = JSON.parse(readFileSync(scratch + '/output.json'));
+const results = JSON.parse(referenceOutput);
 writeFileSync(directory + 'cases.json', JSON.stringify(results.map((entry, index) => ({ ...inputs[index], expected: entry.result })), null, 2) + '\n');
 provenance.cases = results.length; provenance.generatorSHA256 = hash(text);
 writeFileSync(directory + 'provenance.json', JSON.stringify(provenance, null, 2) + '\n');
-console.log(JSON.stringify({ cases: results.length, scratch }));
+console.log(JSON.stringify({ cases: results.length }));

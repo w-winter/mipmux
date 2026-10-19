@@ -76,7 +76,7 @@ test('manual export omits optional pending root siblings while retaining ordinar
     const pending = forged.unavailableFiles.find(file => file.code === 'codemapPending');
     assert(pending?.code === 'codemapPending'); pending.artifactKey.digest = '0'.repeat(64);
     const altered = renderBundle({ manualPresentation: null, request: forged.request, inventory: forged.inventory, prompt: forged.prompt, codemapMode: forged.codemapMode,
-      materials: loaded.materials, excludedSources: forged.excludedSources, automaticAcquisition: { kind: 'settled', outcomes: forged.automaticCodemaps }, fileTree: loaded.fileTree,
+      materials: loaded.materials, automaticAcquisition: { kind: 'settled', outcomes: forged.automaticCodemaps }, fileTree: loaded.fileTree,
       unavailableRoots: forged.unavailableRoots, unavailableFiles: forged.unavailableFiles, clipboard: loaded.clipboard,
       clipboardPreset: forged.clipboardPreset, selectedGitDiffIds: [], automaticGit: null });
     forged.files.handoff = identity(altered.handoff);

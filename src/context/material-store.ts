@@ -143,7 +143,7 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
     frame: null,
   };
   if (selection.kind === 'slices') normalizeRanges(selection.ranges, text.lines.length);
-  const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: selection.source.root + '/' + selection.source.path,
+  const block = await operation.projectNative({ kind: 'renderFileBlock', selectedPath: selection.source.root + '/' + selection.source.path,
     fileName: posix.basename(selection.source.path), content: source.text, ranges: selection.kind === 'slices' ? selection.ranges : null });
   const bodies = selection.kind === 'full' ? [source.text] : block.segments.map(segment => segment.text);
   if (selection.kind === 'slices') record.normalized = block.segments.map(({ start, end, description }) => ({ start, end, description }));
@@ -163,7 +163,7 @@ export async function acquireDocument(operation: WorkspaceOperation, input: Docu
       sourceIdentity: source.identity, spans: [], frame: null };
   }
   const path = documentBlockPath(record);
-  const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: path.path,
+  const block = await operation.projectNative({ kind: 'renderFileBlock', selectedPath: path.path,
     fileName: path.name, content: text, ranges: null });
   return freeze({ availability: 'settled', record, bodies: [text],
     sourceBlock: parseSourceBlock(record, { text: block.text, bodySpans: block.bodySpans }, [text], new WorkspaceFailure('invalidSourceBlock')) });

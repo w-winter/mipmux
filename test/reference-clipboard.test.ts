@@ -1,12 +1,12 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { NativeClipboardInput } from '../src/contracts/native.js';
 
-const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: Type.Unknown(),
+const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: NativeClipboardInput.properties.input,
   expected: Type.Object({ kind: Type.Literal('clipboard'), text: Type.String(), utf8Bytes: Type.Integer(), sha256: Type.String() }),
 })));
 const reply = Compile(Type.Object({ result: Type.Unknown() }));
@@ -16,12 +16,8 @@ test('native clipboard packaging preserves original map, content, Git, meta and 
   const proof: { name: string; bytes: number }[] = [];
   for (const fixture of cases) {
     const generation = 'clipboard';
-    const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, requestId: fixture.name, generation,
-        operation: { kind: 'renderClipboard', input: fixture.input } }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(child.status, 0, fixture.name + ': ' + child.stderr);
-    assert.deepEqual(reply.Parse(JSON.parse(child.stdout.trim())).result,
+    const nativeFrame = callNative({ kind: 'renderClipboard', input: fixture.input }, generation, fixture.name);
+    assert.deepEqual(reply.Parse(nativeFrame).result,
       { kind: 'clipboard', text: fixture.expected.text }, fixture.name);
     assert.equal(Buffer.byteLength(fixture.expected.text), fixture.expected.utf8Bytes, fixture.name);
     proof.push({ name: fixture.name, bytes: fixture.expected.utf8Bytes });

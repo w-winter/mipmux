@@ -94,23 +94,15 @@ export type PromptRequest = Static<typeof PromptRequest>;
 export const SourceEdit = Type.Union([
   Type.Object({ kind: Type.Literal('upsert'), selection: SourceSelection }, closed),
   Type.Object({ kind: Type.Literal('remove'), source: SourcePath }, closed),
-  Type.Object({ kind: Type.Literal('slices'), source: SourcePath, op: Type.Enum(['add', 'setPaths', 'remove']), ranges: Type.Array(LineRange) }, closed),
   Type.Object({ kind: Type.Literal('clearCodemaps') }, closed),
   Type.Object({ kind: Type.Literal('clearSources') }, closed),
 ]);
 export type SourceEdit = Static<typeof SourceEdit>;
-export const DraftPreview = Type.Object({ expectedRevision: SafeCount, maxOutputBytes: positive,
-  edits: Type.Array(SourceEdit, { minItems: 1 }) }, closed);
-export type DraftPreview = Static<typeof DraftPreview>;
 export const DraftUpdate = Type.Object({
   expectedRevision: SafeCount,
   maxOutputBytes: positive,
   mutation: Type.Union([
     ...SourceEdit.anyOf,
-    Type.Object({ kind: Type.Literal('batch'), edits: Type.Array(SourceEdit, { minItems: 1 }) }, closed),
-    Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[0].properties }, closed),
-    Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[1].properties }, closed),
-    Type.Object({ kind: Type.Literal('prompt'), ...promptOperations[2].properties }, closed),
     Type.Object({ kind: Type.Literal('addDocument'), document: SuppliedDocument }, closed),
   ]),
 }, closed);
@@ -206,7 +198,7 @@ export const ManualPresentation = Type.Object({ canonicalSources: Type.Array(Sou
   requested: Type.Array(SourcePath), ready: Type.Array(SourcePath), completeRootSet: Type.Boolean() }, closed);
 export type ManualPresentation = Static<typeof ManualPresentation>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(23),
+  schemaVersion: Type.Literal(24),
   manualPresentation: Type.Union([ManualPresentation, Type.Null()]),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),
@@ -217,7 +209,6 @@ export const Manifest = Type.Object({
   deniedAbsolutePaths: Type.Array(Type.String({ pattern: '^/[^\\u0000]*$' })),
   prompt: Type.String(),
   materials: Type.Array(MaterialRecord),
-  excludedSources: Type.Array(SourceSelection),
   unavailableRoots: Type.Array(UnavailableRoot),
   unavailableFiles: Type.Array(UnavailableFile),
   clipboardPreset: CapturedClipboardPreset,

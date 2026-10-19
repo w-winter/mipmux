@@ -25,7 +25,7 @@ async function capturedArtifactMaterial(operation: WorkspaceOperation, kind: Sel
     return freeze({ availability: 'settled', record: { ...fields, kind: 'gitPatch' }, bodies: [body.text], sourceBlock: null });
   }
   const record: Extract<MaterialRecord, { kind: 'gitMap' }> = { ...fields, kind: 'gitMap', frame: null };
-  const block = await operation.renderFileBlock({ kind: 'renderFileBlock', selectedPath: reference.alias,
+  const block = await operation.projectNative({ kind: 'renderFileBlock', selectedPath: reference.alias,
     fileName: 'MAP.txt', content: body.text, ranges: null });
   return freeze({ availability: 'settled', record, bodies: [body.text],
     sourceBlock: parseSourceBlock(record, { text: block.text, bodySpans: block.bodySpans }, [body.text], new WorkspaceFailure('invalidSourceBlock')) });

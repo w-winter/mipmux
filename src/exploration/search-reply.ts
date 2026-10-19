@@ -37,7 +37,7 @@ export async function projectSearchReply(operation: WorkspaceOperation, request:
     lineText: line.text.replace(/\r\n$|\r$|\n$/u, ''),
   })));
   const displayedPaths = paths.map(file => file.root + '/' + file.path);
-  const projected = await operation.projectSearchReply(request.countOnly
+  const projected = await operation.projectNative(request.countOnly
     ? { kind: 'countSearchReply', contentMatches: scan.contentMatches, contentFiles: scan.contentFiles, paths: displayedPaths }
     : { kind: 'projectSearchReply', matches, paths: displayedPaths, maxResults: request.maxResults });
   if (!request.countOnly && (projected.contentCount > matches.length || projected.pathCount > paths.length ||

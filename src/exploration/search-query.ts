@@ -10,12 +10,12 @@ type ContentPreparation = { readonly kind: 'ready'; readonly pattern: PreparedSe
 
 export async function prepareSearch(operation: WorkspaceOperation, request: SearchRequest,
   candidates: Extract<InventoryEntry, { kind: 'file' }>[]) {
-  const pattern = await operation.prepareSearchPattern({ kind: 'prepareSearchPattern', text: request.query.text,
+  const pattern = await operation.projectNative({ kind: 'prepareSearchPattern', text: request.query.text,
     queryKind: request.query.kind === 'glob' ? 'literal' : request.query.kind,
     wholeWord: request.query.kind !== 'glob' && request.query.wholeWord, mode: request.mode });
   if (pattern.kind === 'searchPatternError') throw new WorkspaceFailure('invalidSearchPattern', { message: pattern.message });
   const roots = new Map(operation.snapshot.roots.map(root => [root.name, root.identity.canonicalPath]));
-  const paths = await operation.matchSearchPaths({ kind: 'matchSearchPaths', mode: pattern.mode,
+  const paths = await operation.projectNative({ kind: 'matchSearchPaths', mode: pattern.mode,
     pattern: pattern.path.text, isRegex: pattern.path.isRegex, caseSensitive: request.query.caseSensitive,
     filters: { extensions: request.filters.extensions, exclude: request.filters.exclude },
     limit: request.maxResults, files: candidates.map(file => {
@@ -35,7 +35,7 @@ export async function prepareSearch(operation: WorkspaceOperation, request: Sear
   if (pattern.kind === 'searchContentPatternError') {
     content = { kind: 'failed', diagnostic: pattern.diagnostic };
   } else if (pattern.mode !== 'path' && pattern.path.isRegex) {
-    const compiled = await operation.compileRegexContent({ kind: 'compileRegexContent', pattern: pattern.path.text,
+    const compiled = await operation.projectNative({ kind: 'compileRegexContent', pattern: pattern.path.text,
       caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord });
     if (compiled.kind === 'regexSearchError') {
       content = { kind: 'failed', diagnostic: compiled.diagnostic };

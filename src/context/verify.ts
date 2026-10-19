@@ -11,11 +11,21 @@ import { StructureIndex } from '../workspace/structure-index.js';
 import { parseSourceBlock, type SourceBlock } from './source-block.js';
 import { capturedFileTreeInput } from './final-tree.js';
 import { verifySourceOmissions } from './source-omissions.js';
-import { verifyExcludedSources } from './clipboard-selection.js';
 import { verifyManualPresentation } from './manual-integrity.js';
 
 function requireEqual(a: unknown, b: unknown): void {
   if (canonicalJSON(a) !== canonicalJSON(b)) throw new WorkspaceFailure('bundleIntegrityFailed');
+}
+
+function verifyFrame(record: Extract<MaterialRecord, { kind: 'source' | 'document' | 'gitMap' }>,
+  context: Buffer, bodies: readonly string[]): SourceBlock {
+  const frame = record.frame;
+  if (!frame) throw new WorkspaceFailure('bundleIntegrityFailed');
+  const bytes = context.subarray(frame.offset, frame.offset + frame.length);
+  requireEqual(identity(bytes), { byteCount: frame.length, sha256: frame.sha256 });
+  return parseSourceBlock(record, { text: decodedBody(bytes),
+    bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
+  bodies, new WorkspaceFailure('bundleIntegrityFailed'));
 }
 
 /** Verifies saved files, representation bodies and accounting using only bundle bytes. */
@@ -33,7 +43,6 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     throw new WorkspaceFailure('invalidManifest');
   }
   if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
-  verifyExcludedSources(manifest);
   verifySourceOmissions(manifest);
   requireEqual(manifest.deniedAbsolutePaths.includes(manifest.inventory.outputRoot.canonicalPath), true);
   const inventoryPaths = new Set<string>();
@@ -69,7 +78,6 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     inventory: manifest.inventory,
     prompt: manifest.prompt,
     materials,
-    excludedSources: manifest.excludedSources,
     unavailableRoots: manifest.unavailableRoots,
     unavailableFiles: manifest.unavailableFiles,
     automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps },
@@ -150,13 +158,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
       );
       verifySourceMaterial(record, entry, bodies);
       if (record.selection.kind !== 'codemap') {
-        const frame = record.frame;
-        if (!frame) throw new WorkspaceFailure('bundleIntegrityFailed');
-        const bytes = context.subarray(frame.offset, frame.offset + frame.length);
-        requireEqual(identity(bytes), { byteCount: frame.length, sha256: frame.sha256 });
-        sourceBlock = parseSourceBlock(record, { text: decodedBody(bytes),
-          bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
-          bodies, new WorkspaceFailure('bundleIntegrityFailed'));
+        sourceBlock = verifyFrame(record, context, bodies);
       }
     } else if (record.kind === 'document') {
       requireEqual(record.id, 'document:' + record.input.id);
@@ -170,13 +172,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
         requireEqual(entry.identity, record.sourceIdentity);
         requireEqual(entry.decoding.identity, record.identity);
       } else requireEqual(bodies[0], record.input.text);
-      const frame = record.frame;
-      if (!frame) throw new WorkspaceFailure('bundleIntegrityFailed');
-      const bytes = context.subarray(frame.offset, frame.offset + frame.length);
-      requireEqual(identity(bytes), { byteCount: frame.length, sha256: frame.sha256 });
-      sourceBlock = parseSourceBlock(record, { text: decodedBody(bytes),
-        bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
-        bodies, new WorkspaceFailure('bundleIntegrityFailed'));
+      sourceBlock = verifyFrame(record, context, bodies);
     } else if (record.kind === 'gitMap' || record.kind === 'gitPatch') {
       requireEqual(record.id, 'gitArtifact:' + record.reference.alias);
       requireEqual(record.reference.alias, '_git_data/' + record.reference.snapshotDir + '/' + record.reference.path);
@@ -185,13 +181,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
       requireEqual(bodies.length, 1); requireEqual(identity(bodies[0]!), record.identity);
       if (record.kind === 'gitMap') {
         requireEqual(record.reference.path, 'MAP.txt');
-        const frame = record.frame;
-        if (!frame) throw new WorkspaceFailure('bundleIntegrityFailed');
-        const bytes = context.subarray(frame.offset, frame.offset + frame.length);
-        requireEqual(identity(bytes), { byteCount: frame.length, sha256: frame.sha256 });
-        sourceBlock = parseSourceBlock(record, { text: decodedBody(bytes),
-          bodySpans: record.spans.map(span => ({ offset: span.offset - frame.offset, length: span.length })) },
-          bodies, new WorkspaceFailure('bundleIntegrityFailed'));
+        sourceBlock = verifyFrame(record, context, bodies);
       } else if (!record.reference.path.startsWith('diff/') || !/\.(patch|diff)$/iu.test(record.reference.path)) {
         throw new WorkspaceFailure('bundleIntegrityFailed');
       }

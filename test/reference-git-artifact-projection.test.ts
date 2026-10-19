@@ -1,12 +1,11 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { GitArtifactReposReply, type NativeGitArtifactInput } from '../src/contracts/git-artifact.js';
-import { nativeFrameValidator, nativeRequestValidator } from '../src/contracts/native.js';
+import { nativeRequestValidator } from '../src/contracts/native.js';
 
 const directory = 'test/fixtures/rpce-git-artifact-projection';
 const requests = Compile(Type.Array(Type.Object({ name: Type.String(), snapshot: Type.String(),
@@ -21,11 +20,7 @@ const expected = Compile(Type.Object({ cases: Type.Array(Type.Object({ name: Typ
 function project(operation: NativeGitArtifactInput) {
   const generation = 'artifact-projection-reference';
   const request = nativeRequestValidator.Parse({ wireVersion: 1, generation, requestId: 'projection', operation });
-  const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-    input: JSON.stringify(request) + '\n', encoding: 'utf8',
-  });
-  assert.equal(child.status, 0, child.stderr);
-  const frame = nativeFrameValidator.Parse(JSON.parse(child.stdout.trim()));
+  const frame = callNative(request.operation, generation, request.requestId);
   assert(frame.kind === 'terminal');
   return frame.result;
 }

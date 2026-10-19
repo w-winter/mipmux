@@ -20,16 +20,16 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
   const provider = await scriptedProvider(summary => {
     assert.equal(summary, false);
     ordinary++;
-    if (ordinary === 1) return { kind: 'tool', name: 'draft_preview', input: { expectedRevision: 0, maxOutputBytes: 20000,
-      edits: [{ kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'oversize.txt' } } }] }, stop: 'tool_use', tokens: 10 };
+    if (ordinary === 1) return { kind: 'tool', name: 'manage_selection', input: { op: 'preview', expectedRevision: 0,
+      maxOutputBytes: 20000, paths: ['r/oversize.txt'] }, stop: 'tool_use', tokens: 10 };
     if (ordinary === 2) return { kind: 'tool', name: 'draft_inspect', input: { view: 'material', materialId: 'document:report', maxOutputBytes: 2000, continuation: null }, stop: 'tool_use', tokens: 10 };
     if (ordinary === 3) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 0, maxOutputBytes: 10000,
       mutation: { kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'oversize.txt' } } } }, stop: 'tool_use', tokens: 10 };
     if (ordinary === 4) return { kind: 'tool', name: 'draft_validate', input: { maxOutputBytes: 10000 }, stop: 'tool_use', tokens: 10 };
     if (ordinary === 5) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 1, maxOutputBytes: 10000,
       mutation: { kind: 'remove', source: { root: 'r', path: 'oversize.txt' } } }, stop: 'tool_use', tokens: 10 };
-    if (ordinary === 6) return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 2, maxOutputBytes: 10000,
-      mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Inspect the example', architecture: 'One complete source', relationships: [], ambiguities: [] }) } }, stop: 'tool_use', tokens: 10 };
+    if (ordinary === 6) return { kind: 'tool', name: 'prompt', input: { expectedRevision: 2, maxOutputBytes: 10000,
+      op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Inspect the example', architecture: 'One complete source', relationships: [], ambiguities: [] })  }, stop: 'tool_use', tokens: 10 };
     if (ordinary === 7) return { kind: 'tool', name: 'draft_validate', input: { maxOutputBytes: 10000 }, stop: 'tool_use', tokens: 10 };
     return { kind: 'text', text: 'Diagnostic acknowledgement only', stop: 'end_turn', tokens: 10 };
   });
@@ -235,8 +235,8 @@ test('normally completed budget-blocked SDK builder retains every committed hand
   const handoff = { clarifiedTask: 'Full clarification', architecture: 'Full architecture'.repeat(200),
     relationships: ['one uses two', 'three owns four'], ambiguities: ['first ambiguity', 'second ambiguity'] };
   let calls = 0;
-  const provider = await scriptedProvider(() => ++calls === 1 ? { kind: 'tool', name: 'draft_update', input: {
-    expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify(handoff) } }, stop: 'tool_use', tokens: 10 }
+  const provider = await scriptedProvider(() => ++calls === 1 ? { kind: 'tool', name: 'prompt', input: {
+    expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'Completed handoff', stop: 'end_turn', tokens: 10 });
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
   const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,

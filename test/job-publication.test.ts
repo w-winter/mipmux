@@ -14,8 +14,8 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
     let turn = 0, entered!: () => void, release!: () => void;
     const paused = new Promise<void>(resolve => { entered = resolve; });
     const resume = new Promise<void>(resolve => { release = resolve; });
-    const provider = await scriptedProvider(() => ++turn === 1 ? { kind: 'tool', name: 'draft_update',
-      input: { expectedRevision: 0, maxOutputBytes: 10000, mutation: { kind: 'prompt', op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] }) } }, stop: 'tool_use', tokens: 10 }
+    const provider = await scriptedProvider(() => ++turn === 1 ? { kind: 'tool', name: 'prompt',
+      input: { expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify({ clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] })  }, stop: 'tool_use', tokens: 10 }
       : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
     const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
     await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'body');

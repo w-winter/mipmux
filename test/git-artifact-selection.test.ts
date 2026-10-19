@@ -397,8 +397,7 @@ test('live artifact observations and export reacquire overwritten snapshots whil
     assert('lines' in material); assert.equal(material.lines.map(line => line.text).join(''), patchText);
     const costs = await f.draft.inspect({ view: 'costs', maxOutputBytes: 100000, continuation: null }, signal());
     assert('measurement' in costs && 'measurement' in initial); assert(costs.measurement.bytes > initial.measurement.bytes);
-    const preview = await f.draft.preview({ expectedRevision: 1, maxOutputBytes: 100000,
-      edits: [{ kind: 'remove', source: { root: 'r', path: 'file.txt' } }] }, signal());
+    const preview = await f.select({ op: 'preview', paths: [map, patch], maxOutputBytes: 100000 });
     assert.equal(preview.measurement.bytes, costs.measurement.bytes);
     const validated = await f.draft.validate(signal()); assert.equal(validated.measurement.bytes, costs.measurement.bytes);
     const ready = await f.draft.finalize(signal()); assert(ready.kind === 'ready');

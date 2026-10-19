@@ -119,7 +119,7 @@ export function verifySourceOmissions(manifest: Manifest): void {
     if (file.selection.kind === 'codemap' && manifest.codemapMode !== 'manual') throw new WorkspaceFailure('bundleIntegrityFailed');
   }
   const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles];
-  const count = manifest.manualPresentation?.canonicalSources.length ?? manifest.excludedSources.length + manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;
+  const count = manifest.manualPresentation?.canonicalSources.length ?? manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;
   if (new Set(omitted.map(source => source.selectionIndex)).size !== omitted.length || omitted.some(source => source.selectionIndex >= count)) {
     throw new WorkspaceFailure('bundleIntegrityFailed');
   }

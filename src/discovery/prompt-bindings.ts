@@ -8,7 +8,7 @@ const exampleOutputBytes = 12000;
 export function bindDiscoveryPrompt(source: string): string {
   return source
     .replaceAll('`manage_selection`, `prompt`, `workspace_context`, `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`',
-      '`manage_selection`, `prompt`, `draft_inspect`, `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`, `draft_update`, `draft_preview`, `draft_validate`')
+      '`manage_selection`, `prompt`, `draft_inspect`, `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`, `draft_update`, `draft_validate`')
     .replace('This prompt comes directly from RepoPrompt. The MCP server\'s workspace state already matches what you see here—codemaps for selected files, the selected-mode file tree, and the `<current_prompt_content>` (user\'s prompt) are embedded.',
       'This prompt uses RepoPrompt CE\'s discovery policy. The captured smip observation identifies the admitted roots, selection, costs and evidence; the file tree and `<current_prompt_content>` are embedded. Use the context tools for complete material bodies.')
     .replaceAll('RepoPrompt MCP tools', 'smip context tools and configured HTTP MCP tools')

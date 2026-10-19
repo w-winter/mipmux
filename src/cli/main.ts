@@ -113,8 +113,8 @@ async function main(): Promise<void> {
             revision = (await client.update(draft.id, { expectedRevision: revision, maxOutputBytes: config.defaultMaxOutputBytes,
               mutation: { kind: 'upsert', selection: item } }, abort.signal)).revision;
           }
-          await client.update(draft.id, { expectedRevision: revision, maxOutputBytes: config.defaultMaxOutputBytes,
-            mutation: { kind: 'prompt', op: 'set', text: selection.prompt } }, abort.signal);
+          await client.prompt(draft.id, { expectedRevision: revision, maxOutputBytes: config.defaultMaxOutputBytes,
+            op: 'set', text: selection.prompt }, abort.signal);
           const finalized = await client.finalize(draft.id, abort.signal); result = finalized;
           if (finalized.kind !== 'ready') process.exitCode = 2;
           break;

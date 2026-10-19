@@ -1,7 +1,6 @@
+import { callNative } from './fixtures/call-native.js';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -17,11 +16,8 @@ test('native show command phases and DTOs retain original RPCE metadata, stats, 
   const proof: unknown[] = [];
   const call = (operation: Extract<NativeOperation, { kind: 'prepareGitShow' | 'parseGitShowMetadata' | 'projectGitShow' }>) => {
     const generation = 'git-show-reference';
-    const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
-      input: JSON.stringify({ wireVersion: 1, generation, requestId: 'show', operation }) + '\n', encoding: 'utf8',
-    });
-    assert.equal(child.status, 0, child.stderr);
-    return envelope.Parse(JSON.parse(child.stdout.trim())).result;
+    const nativeFrame = callNative(operation, generation, 'show');
+    return envelope.Parse(nativeFrame).result;
   };
   for (const entry of cases) {
     const args = prepared.Parse(call({ kind: 'prepareGitShow', ...entry.input }));

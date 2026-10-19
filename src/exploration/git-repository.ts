@@ -31,7 +31,8 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
     if (result.code !== 0) {
       const notRepository = args[0] === 'rev-parse' && args[1] === '--show-toplevel' && result.code === 128 && result.bytes.length === 0 &&
         /^fatal: not a git repository \(or any (?:of the parent directories\): \.git|parent up to mount point [^\n]+\))\n/.test(gitText(result.stderr));
-      throw new WorkspaceFailure('gitQueryFailed', { exit: result.code, reason: notRepository ? 'notRepository' : 'commandFailed' });
+      if (notRepository) throw new WorkspaceFailure('gitQueryFailed', { exit: result.code, reason: 'notRepository' });
+      throw new WorkspaceFailure('gitQueryFailed', { exit: result.code });
     }
     return result.bytes;
   };
@@ -57,7 +58,7 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
         return null;
       }
     };
-    const projected = await resolveGitWorktreeListing(input => operation.gitDiffOperation(input),
+    const projected = await resolveGitWorktreeListing(input => operation.projectNative(input),
       anchor.worktree.canonicalPath, listing, read);
     if (projected.kind === 'gitWorktreeListingError') throw new WorkspaceFailure('gitProtocolError', { message: projected.message });
     return Promise.all(projected.paths.map(path => realpath(path)));
@@ -88,5 +89,6 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
       if (!listed.includes(repository.worktree.canonicalPath)) throw new WorkspaceFailure('gitRepositoryChanged');
     }
   };
-  return { executable: configured.executable, repository, access, permits, revalidate };
+  return { executable: configured.executable, repository, access, permits, revalidate,
+    run: (args: readonly string[]) => run(repository.worktree.canonicalPath, args) };
 }
