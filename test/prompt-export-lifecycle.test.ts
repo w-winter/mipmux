@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, readdir, realpath, writeFile } from 'node:fs/
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
+import { existsSync, mkdirSync, readdirSync, renameSync, statSync } from 'node:fs';
 import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
@@ -117,4 +118,47 @@ test('export refuses over-budget and required-material conflicts before writing'
     await assert.rejects(readFile(join(f.output, 'oversized.md')), /ENOENT/);
     assert.equal(oversized.revision, 0);
   } finally { await f.runtime.close(); }
+});
+
+for (const replaced of ['parent', 'root'] as const) test(`prompt export rejects ${replaced} replacement during native writing`, async () => {
+  const f = await fixture(async () => {}, async () => {}), bridge = f.runtime.makeBridge();
+  const parent = join(f.output, 'sub'), moved = join(f.base, 'moved-output'), destination = join(parent, 'packet.md');
+  await mkdir(parent);
+  // The payload makes the native temporary-file write observable without changing the operator budget.
+  const payloadBytes = 8 * 1024 * 1024, bytes = Buffer.alloc(payloadBytes, 0x41);
+  let changed!: () => void, failed!: (reason: Error) => void;
+  const mutation = new Promise<void>((resolve, reject) => { changed = resolve; failed = reject; });
+  let observed: { temporaryBytes: number; destinationExisted: boolean } | null = null;
+  try {
+    const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'out', absolutePath: f.output,
+      access: 'output', expected: null }] }, signal());
+    const output = opened.result.roots[0]; assert(output);
+    const temporaryObservationIntervalMs = 1;
+    const observer = setInterval(() => {
+      if (observed !== null) return;
+      try {
+        const filename = readdirSync(parent).find(name => name.startsWith('.snapshot-'));
+        if (filename === undefined) return;
+        observed = { temporaryBytes: statSync(join(parent, filename)).size, destinationExisted: existsSync(destination) };
+        assert.equal(observed.destinationExisted, false);
+        const target = replaced === 'parent' ? parent : f.output;
+        renameSync(target, moved); mkdirSync(target);
+        if (replaced === 'root') mkdirSync(parent);
+        changed();
+      } catch (error) { assert(error instanceof Error); failed(error); }
+    }, temporaryObservationIntervalMs);
+    try {
+      const writing = bridge.request({ kind: 'writePromptExport', root: output.handle, path: 'sub/packet.md', bytes: bytes.toString('base64') }, signal());
+      const completed = writing.then(() => false, () => false);
+      assert.equal(await Promise.race([mutation.then(() => true), completed]), true, 'Replacement must precede native acknowledgement');
+      await assert.rejects(writing, replaced === 'parent' ? /outputChanged/ : /rootChanged/);
+      assert(observed);
+      await assert.rejects(readFile(destination), { code: 'ENOENT' });
+      const movedDestination = replaced === 'parent' ? join(moved, 'packet.md') : join(moved, 'sub/packet.md');
+      assert((await readFile(movedDestination)).equals(bytes));
+      await mkdir('test-output', { recursive: true });
+      await writeFile(`test-output/prompt-export-${replaced}-replacement.json`, JSON.stringify({ replaced, observed,
+        payloadBytes, acknowledged: false, completedBytesRetained: true }, null, 2) + '\n');
+    } finally { clearInterval(observer); }
+  } finally { await bridge.close(); await f.runtime.close(); }
 });

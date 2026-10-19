@@ -353,6 +353,12 @@ final class ConfinedFiles {
         let parent = try traverse(root.directory.value, components: Array(parts.dropLast()))
         try validate(root)
         try AtomicFile.create(parent.value, filename: parts.last!, bytes: bytes)
+        try validate(root)
+        let current = try traverse(root.directory.value, components: Array(parts.dropLast()))
+        let previousInfo = try status(parent.value), currentInfo = try status(current.value)
+        guard previousInfo.st_dev == currentInfo.st_dev, previousInfo.st_ino == currentInfo.st_ino else {
+            throw BridgeFailure("outputChanged")
+        }
         return ["kind": "promptExportWritten", "identity": Extraction.identity(bytes).json]
     }
 

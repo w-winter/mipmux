@@ -24,12 +24,13 @@ const reply = Compile(Type.Union([
   Type.Object({ kind: Type.Literal('error'), code: Type.String(), message: Type.String() }),
 ]));
 
-test('public MCP read_file executes source bounds and retains exact text and diagnostic messages', async () => {
+test('public MCP exact reads acquire ignored files with source bounds and diagnostic messages', async () => {
   const cases = casesSchema.Parse(JSON.parse(await readFile(resolve('test/fixtures/rpce-read/cases.json'), 'utf8')));
   await mkdir('test-output', { recursive: true });
   const base = await mkdtemp(join(tmpdir(), 'smip-read-source-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
-  for (const [index, entry] of cases.entries()) await writeFile(join(root, index + '.txt'), '\uFEFF' + entry.input.text);
+  await mkdir(join(root, 'private')); await writeFile(join(root, '.repo_ignore'), 'private/\n');
+  for (const [index, entry] of cases.entries()) await writeFile(join(root, 'private', index + '.txt'), '\uFEFF' + entry.input.text);
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
@@ -47,7 +48,7 @@ test('public MCP read_file executes source bounds and retains exact text and dia
     for (const [index, entry] of cases.entries()) {
       const { start_line, offset, limit } = entry.input;
       const found = await client.callTool({ name: 'read_file', arguments: { workspaceId: workspace.id,
-        input: { root: 'r', path: index + '.txt', start_line, offset, limit } } });
+        input: { root: 'r', path: 'private/' + index + '.txt', start_line, offset, limit } } });
       assert.equal(found.isError, entry.expected.kind === 'readTextRangeError', entry.name + ': ' + JSON.stringify(found.structuredContent));
       const value = reply.Parse(found.structuredContent);
       if (entry.expected.kind === 'readTextRangeError') {

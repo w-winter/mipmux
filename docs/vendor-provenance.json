@@ -7579,7 +7579,7 @@
     },
     {
       "source": "Sources/RepoPrompt/Infrastructure/MCP/ViewModels/MCPServerViewModel+SelectionReply.swift",
-      "sourceRevision": "64b9352eec13e0252500d429f64ca9d1dd5e49fd",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/reference-tokens.ts",
       "ranges": [
@@ -7712,9 +7712,10 @@
         ]
       ],
       "changes": [
-        "Only inspectSource corresponds to this metadata-admission boundary. Reuse existing confined descriptors and no-follow parent traversal, then fstatat the leaf without reading bytes. Missing, symlink and nonregular metadata is separate from subsequent read failure. The original smip read/export/snapshot substrate remains in this file and is not claimed as copied source."
+        "Only inspectSource corresponds to this metadata-admission boundary. Reuse existing confined descriptors and no-follow parent traversal, then fstatat the leaf without reading bytes. Missing, symlink and nonregular metadata is separate from subsequent read failure. The original smip read/export/snapshot substrate remains in this file and is not claimed as copied source.",
+        "Revalidate the output root and destination parent device/inode after atomic interim export creation and before acknowledging its path, reusing the existing snapshot writer identity-check contract."
       ],
-      "sha256": "d78d8e2b30b3e91dbb047b99cf098486a311b8f8c1a0213fa2c659b4a97404a0"
+      "sha256": "35e5da1248aa71712e5676c42ef66f2cf2235c984bb5d9acf7d57a1d442d9db1"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",

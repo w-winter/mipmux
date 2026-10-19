@@ -126,6 +126,7 @@ export async function acquireSource(operation: WorkspaceOperation, input: Source
   }
   const { selection, required } = input;
   if (selection.kind === 'codemap') return acquireExplicitCodemap(operation, selection, required);
+  await operation.registerExplicitSource(selection.source);
   const source = await operation.readSource(selection.source);
   const text = prepareText(source.text);
   const record: Extract<MaterialRecord, { kind: 'source'; selectionOrigin: 'explicit'; decoding: { kind: 'decoded' } }> = {
@@ -157,6 +158,7 @@ export async function acquireDocument(operation: WorkspaceOperation, input: Docu
     text = strictText(input.text);
     record = { kind: 'document', id: 'document:' + input.id, input, identity: identity(text), spans: [], frame: null };
   } else {
+    await operation.registerExplicitSource(input.source);
     const source = await operation.readSource(input.source);
     text = source.text;
     record = { kind: 'document', id: 'document:' + input.id, input, identity: identity(text),

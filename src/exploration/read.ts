@@ -9,6 +9,7 @@ import type { SourceIdentity } from '../contracts/workspace.js';
 export async function readFile(operation: WorkspaceOperation, request: ReadRequest, encode?: ResultEncoding) {
   if (!readValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
   if (request.root === null) throw new WorkspaceFailure('draftRequired');
+  await operation.registerExplicitSource({ root: request.root, path: request.path });
   const source = await operation.readSource({ root: request.root, path: request.path });
   return readFileReply(operation, request, source, encode);
 }
