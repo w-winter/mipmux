@@ -13,6 +13,7 @@ const revision = Compile(Type.Object({ revision: Type.Integer() }));
 const listing = Compile(Type.Object({ op: Type.Literal('list_presets'), presets_list: Type.Object({ presets: Type.Array(Type.Unknown()) }) }));
 const exportedReply = Compile(Type.Object({ op: Type.Literal('export'), export: Type.Object({ bytes: Type.Integer(), tokens: Type.Integer(), files: Type.Array(Type.Unknown()) }) }));
 const finalized = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String() }));
+const removedPlanID = '11111111-1111-1111-1111-111111111111';
 
 test('real MCP lists presets before draft lookup and exports a nonterminal captured context', async () => {
   const base = await mkdtemp(join(tmpdir(), 'smip-prompt-export-'));
@@ -21,12 +22,12 @@ test('real MCP lists presets before draft lookup and exports a nonterminal captu
   await writeFile(join(root, 'source.txt'), 'EXACT SOURCE λ\n');
   const custom = { id: '77777777-7777-7777-7777-777777777777', name: 'Captured custom', builtInKind: null,
     isBuiltIn: false, description: null, icon: null, notes: null,
-    includeFiles: true, includeUserPrompt: false, includeMetaPrompts: false, includeFileTree: false,
-    fileTreeMode: null, codeMapUsage: null, gitInclusion: null, storedPromptIds: null };
+    includeFiles: true, includeUserPrompt: false, includeFileTree: false,
+    fileTreeMode: null, codeMapUsage: null, gitInclusion: null };
   const copyContext = { current: { fileTreeMode: 'None', codeMapUsage: 'none', gitInclusion: 'none' },
-    customizations: { includeFiles: null, includeUserPrompt: false, includeMetaPrompts: null, includeFileTree: false,
+    customizations: { includeFiles: null, includeUserPrompt: false, includeFileTree: false,
       fileTreeMode: null, codeMapUsage: 'complete', gitInclusion: null },
-    codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null, presets: [{ ...custom,
+    codeMapsGloballyDisabled: false, activeGitRoot: null, presets: [{ ...custom,
       id: '00000000-0000-0000-0000-000000000000', name: 'Ignored override name', builtInKind: 'standard', isBuiltIn: true,
       includeFiles: false, includeUserPrompt: true }, custom] };
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
@@ -47,19 +48,31 @@ test('real MCP lists presets before draft lookup and exports a nonterminal captu
   try {
     await client.connect(transport);
     const list = listing.Parse(await call('prompt', { input: { op: 'list_presets' } }));
-    assert.equal(list.presets_list.presets.length, 6);
-    assert.deepEqual(list.presets_list.presets[5], { preset: { id: custom.id, name: custom.name, is_built_in: false },
-      include_files: true, include_user_prompt: false, include_meta_prompts: false, include_file_tree: false });
-    assert.deepEqual(list.presets_list.presets[4], { preset: { id: '22222222-2222-2222-2222-222222222222', name: 'Manual',
+    assert.equal(list.presets_list.presets.length, 5);
+    assert.deepEqual(list.presets_list.presets[4], { preset: { id: custom.id, name: custom.name, is_built_in: false },
+      include_files: true, include_user_prompt: false, include_file_tree: false });
+    assert.deepEqual(list.presets_list.presets[3], { preset: { id: '22222222-2222-2222-2222-222222222222', name: 'Manual',
       kind: 'manual', is_built_in: true }, description: 'Full control - use current settings', icon: '⚙️' });
     const declared = identifier.Parse(await call('workspace_declare', { spec: { roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } }));
     const created = identifier.Parse(await call('draft_create', { workspaceId: declared.id, request: { task: 'ORIGINAL TASK', constraints: '',
       purpose: 'investigation', enhancementMode: 'preserve', initialSelection: { codemapMode: 'manual',
         sources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }] }, requiredSources: [], documents: [], patches: [],
-      storedPrompts: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000,
+      duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000,
       discoveryHints: [], outputName: 'final-packet' } }));
     const draftId = created.id;
     const before = await call('draft_inspect', { draftId, input: { view: 'metadata', continuation: null } });
+    for (const { path, copy_preset } of [
+      { path: 'unrecognized-preset-kind.md', copy_preset: { kind: 'unregistered' } },
+      { path: 'removed-plan-kind.md', copy_preset: { kind: 'plan' } },
+      { path: 'removed-plan-name.md', copy_preset: { name: 'Plan' } },
+      { path: 'removed-plan-id.md', copy_preset: removedPlanID },
+    ]) {
+      const failure = await client.callTool({ name: 'prompt', arguments: { draftId, input: { op: 'export', path, copy_preset } } });
+      assert.equal(failure.isError, true, JSON.stringify(failure));
+      assert.match(JSON.stringify(failure), /copyPresetNotFound/);
+      await assert.rejects(readFile(join(output, path)), /ENOENT/);
+      assert.deepEqual(await call('draft_inspect', { draftId, input: { view: 'metadata', continuation: null } }), before);
+    }
     const exported = exportedReply.Parse(await call('prompt', { draftId, input: { op: 'export', path: 'interim.md', copy_preset: 'manual' } }));
     const text = await readFile(join(output, 'interim.md'), 'utf8');
     assert.equal(text, '<file_contents>\nFile: r/source.txt\n```txt\nEXACT SOURCE λ\n\n```\n</file_contents>\n');

@@ -15,14 +15,12 @@ import { canonicalJSON } from '../src/workspace/values.js';
 import { identity } from '../src/context/material-store.js';
 
 const signal = () => new AbortController().signal;
-const roleA = { id: 'a7777777-7777-7777-7777-777777777777', title: 'First', content: 'FIRST ROLE' };
-const roleB = { id: '88888888-8888-8888-8888-888888888888', title: 'Second', content: 'SECOND ROLE' };
 type Manual = ReturnType<typeof copyContext>;
 function manual(usage: Manual['current']['codeMapUsage'] = 'auto', tree: Manual['current']['fileTreeMode'] = 'Auto', git: Manual['current']['gitInclusion'] = 'none'): Manual {
   return { presets: [], current: { fileTreeMode: tree, codeMapUsage: usage, gitInclusion: git },
-    customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null, includeFileTree: null,
+    customizations: { includeFiles: null, includeUserPrompt: null, includeFileTree: null,
       fileTreeMode: null, codeMapUsage: null, gitInclusion: null },
-    codeMapsGloballyDisabled: false, selectedPromptIds: [roleB.id, roleA.id], activeGitRoot: 'r' };
+    codeMapsGloballyDisabled: false, activeGitRoot: 'r' };
 }
 async function fixture(copyPreset: ReturnType<typeof manual>, mode = 'manual') {
   const request = contextRequestValidator.Parse({ task: 'LITERAL TASK', constraints: '', enhancementMode: 'preserve', purpose: 'review',
@@ -30,7 +28,7 @@ async function fixture(copyPreset: ReturnType<typeof manual>, mode = 'manual') {
       { kind: 'full', source: { root: 'r', path: 'Full.swift' } },
       { kind: 'slices', source: { root: 'r', path: 'Slice.swift' }, ranges: [{ start: 2, end: 2, description: 'Middle only' }] },
       ...(mode === 'manual' ? [{ kind: 'codemap', source: { root: 'r', path: 'Map.swift' } }] : []),
-    ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'manual', storedPrompts: [roleA, roleB],
+    ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'manual',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' });
   const base = await mkdtemp(join(tmpdir(), 'smip-manual-preset-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
@@ -85,15 +83,18 @@ for (const mode of ['manual', 'automatic']) for (const usage of ['none', 'auto',
   });
 }
 
-test('Manual captures settings and meta IDs at admission and retains catalog order', async () => {
+test('Manual captures current settings and fixed constraints at admission', async () => {
   const f = await fixture(manual('none', 'None'));
   try {
-    const draft = await f.workspace.createDraft(f.request, signal());
-    Object.assign(f.settings, { selectedPromptIds: [], current: { fileTreeMode: 'Full', codeMapUsage: 'complete', gitInclusion: 'all' } });
+    const captured = { ...f.request, constraints: 'FIXED CALLER CONSTRAINT' };
+    const draft = await f.workspace.createDraft(captured, signal());
+    captured.constraints = 'LATER CALLER MUTATION';
+    Object.assign(f.settings, { current: { fileTreeMode: 'Full', codeMapUsage: 'complete', gitInclusion: 'all' } });
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
     assert(!context.includes('<file_map>')); assert(!context.includes('<git_diff>'));
-    assert(context.indexOf('FIRST ROLE') < context.indexOf('SECOND ROLE'));
+    assert(context.includes('<constraints>\nFIXED CALLER CONSTRAINT\n</constraints>\n'));
+    assert(!context.includes('LATER CALLER MUTATION'));
     await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
   } finally { await f.runtime.close(); }
 });
@@ -116,7 +117,7 @@ for (const git of ['selectedFiles', 'all'] as const) test(`Manual ${git} retains
 
 test('Manual workspace flags exclude optional bodies and reject later required documents', async () => {
   const preset = manual('none', 'Selected');
-  preset.customizations = { ...preset.customizations, includeFiles: false, includeFileTree: false, includeMetaPrompts: false, includeUserPrompt: false };
+  preset.customizations = { ...preset.customizations, includeFiles: false, includeFileTree: false, includeUserPrompt: false };
   const f = await fixture(preset);
   try {
     const draft = await f.workspace.createDraft(f.request, signal());
@@ -144,15 +145,13 @@ for (const tree of ['Auto', 'Full', 'Selected', 'None'] as const) test(`Manual $
 
 for (const disabled of [false, true]) test(`Manual current codemap usage ignores workspace override with global disable ${disabled}`, async () => {
   const preset = manual('selected', 'None'); preset.customizations.codeMapUsage = 'none'; preset.codeMapsGloballyDisabled = disabled;
-  preset.selectedPromptIds = [roleB.id, roleA.id.toUpperCase()];
   const f = await fixture(preset);
   try {
     const pending = f.workspace.createDraft(f.request, signal());
-    Object.assign(f.settings, { selectedPromptIds: [], codeMapsGloballyDisabled: !disabled });
+    Object.assign(f.settings, { codeMapsGloballyDisabled: !disabled });
     const draft = await pending, ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
     const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
-    assert.equal(context.includes('FULL CHANGED'), disabled); assert(context.includes('FIRST ROLE'));
-    assert(context.indexOf('FIRST ROLE') < context.indexOf('SECOND ROLE'));
+    assert.equal(context.includes('FULL CHANGED'), disabled);
     await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());
   } finally { await f.runtime.close(); }
 });

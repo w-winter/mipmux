@@ -17,7 +17,6 @@ const tokens = Compile(Type.Object({ token_stats: ReferenceTokenStats,
 const signal = () => new AbortController().signal;
 const units = (text: string) => Math.floor(Buffer.byteLength(text) * 21 / 80);
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
-const architect = { id: '8e81aac2-79ce-4897-a59e-efd81eebb7e9', title: 'Role', content: 'Source-selected role '.repeat(5) };
 
 async function fixture(copyPreset: ContextBuildRequest['copyPreset']) {
   const base = await mkdtemp(join(tmpdir(), 'smip-reference-token-view-'));
@@ -40,13 +39,13 @@ async function fixture(copyPreset: ContextBuildRequest['copyPreset']) {
   const request: ContextBuildRequest = { task: 'Raw task '.repeat(10), constraints: 'Explicit constraint '.repeat(4),
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'Alpha', path: 'main.txt' } }] },
     requiredSources: [], patches: [], documents: [], discoveryHints: [], budgetUnits: 200000, outputName: 'packet',
-    enhancementMode: 'preserve', purpose: 'investigation', duplicateUserInstructionsAtTop: true, copyPreset, storedPrompts: [architect] };
+    enhancementMode: 'preserve', purpose: 'investigation', duplicateUserInstructionsAtTop: true, copyPreset };
   return { base, a, out, full: full + 'working tree difference\n', slices, runtime, workspace, request,
     draft: await workspace.createDraft(request, signal()) };
 }
 
 test('reference components count captured representations and raw instructions separately from packet framing', async () => {
-  const f = await fixture('plan');
+  const f = await fixture('standard');
   try {
     await f.draft.update({ expectedRevision: 0, maxOutputBytes: 100000, mutation: { kind: 'upsert', selection: {
       kind: 'slices', source: { root: 'Alpha', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: 'Selected line' }] } } }, signal());
@@ -57,7 +56,7 @@ test('reference components count captured representations and raw instructions s
     assert.equal(stats.token_stats.files_content, units(f.full) + units('second selected line\r\n'));
     assert.equal(stats.token_stats.codemaps, selected.summary?.codemap_tokens);
     assert.equal(stats.token_stats.prompt, 2 * units(f.request.task));
-    assert.equal(stats.token_stats.meta, units(architect.content + '\n\n' + f.request.constraints));
+    assert.equal(stats.token_stats.meta, units(f.request.constraints));
     assert.equal(stats.token_stats.git, undefined);
     assert.equal(stats.token_accounting.source, 'captured_draft');
     assert.equal(stats.token_accounting.refresh_pending, false);

@@ -78,7 +78,9 @@ struct SourceIdentity: Codable, Equatable {
         let object = try WireObject(value, keys: ["sha256", "byteCount"])
         sha256 = try object.string("sha256")
         byteCount = try object.count("byteCount")
-        guard sha256.utf8.count == 64, sha256.utf8.allSatisfy({ (48 ... 57).contains($0) || (97 ... 102).contains($0) }) else {
+        guard sha256.utf8.count == 64,
+              sha256.utf8.allSatisfy({ (48 ... 57).contains($0) || (97 ... 102).contains($0) })
+        else {
             throw BridgeFailure("nativeProtocolError")
         }
     }
@@ -141,7 +143,8 @@ struct RootDeclaration {
     let expected: RootIdentity?
     init(_ value: Any) throws {
         let object = try WireObject(value, keys: ["name", "absolutePath", "access", "expected"])
-        name = try object.string("name"); absolutePath = try object.string("absolutePath"); access = try object.string("access")
+        name = try object.string("name"); absolutePath = try object.string("absolutePath"); access = try object
+            .string("access")
         expected = object.fields["expected"] is NSNull ? nil : try RootIdentity(object.value("expected"))
         guard name.range(of: "^[A-Za-z][A-Za-z0-9_-]*\\z", options: .regularExpression) != nil,
               absolutePath.hasPrefix("/"), ["source", "output"].contains(access)
@@ -158,7 +161,6 @@ enum Operation {
     case ignore(IgnoreOperation)
     case sliceReadText(ReadTextInput)
     case renderFileBlock(FileBlockInput)
-    case renderDiscoveryMessage(DiscoveryMessageInput)
     case renderFileTree(FileTreeInput)
     case renderPromptAssembly(PromptAssemblyInput)
     case calculateTokenStats(TokenStatsInput)
@@ -236,15 +238,13 @@ enum Operation {
             self = try .readSource(
                 NativeHandle(fields.value("root")),
                 fields.string("path"),
-                fields.fields["expected"] is NSNull ? nil : SourceIdentity(fields.value("expected"))
-            )
+                fields.fields["expected"] is NSNull ? nil : SourceIdentity(fields.value("expected")))
         case "extract":
             let fields = try WireObject(value, keys: ["kind", "extension", "bytes", "expected"])
             self = try .extract(
                 fields.string("extension"),
                 fields.bytes("bytes"),
-                SourceIdentity(fields.value("expected"))
-            )
+                SourceIdentity(fields.value("expected")))
         case "beginExport":
             let fields = try WireObject(value, keys: ["kind", "root", "name"])
             self = try .beginExport(NativeHandle(fields.value("root")), fields.string("name"))
@@ -252,15 +252,14 @@ enum Operation {
             let fields = try WireObject(value, keys: ["kind", "root", "repoKey", "snapshotID"])
             self = try .beginGitSnapshot(
                 NativeHandle(fields.value("root")), fields.string("repoKey"),
-                fields.value("snapshotID") is NSNull ? nil : fields.string("snapshotID")
-            )
+                fields.value("snapshotID") is NSNull ? nil : fields.string("snapshotID"))
         case "readGitSnapshotCurrent":
             let fields = try WireObject(value, keys: ["kind", "root", "repoKey"])
             self = try .readGitSnapshotCurrent(NativeHandle(fields.value("root")), fields.string("repoKey"))
         case "resolveGitSnapshotID":
             let fields = try WireObject(value, keys: ["kind", "root", "repoKey", "snapshotID"])
             self = try .resolveGitSnapshotID(NativeHandle(fields.value("root")), fields.string("repoKey"),
-                                            fields.value("snapshotID") is NSNull ? nil : fields.string("snapshotID"))
+                                             fields.value("snapshotID") is NSNull ? nil : fields.string("snapshotID"))
         case "listGitSnapshots":
             let fields = try WireObject(value, keys: ["kind", "root"])
             self = try .listGitSnapshots(NativeHandle(fields.value("root")))
@@ -268,8 +267,8 @@ enum Operation {
         case "resolveGitSnapshotComparison":
             let fields = try WireObject(value, keys: ["kind", "output", "repository", "compare"])
             self = try .resolveGitSnapshotComparison(
-                NativeHandle(fields.value("output")), NativeHandle(fields.value("repository")), fields.string("compare")
-            )
+                NativeHandle(fields.value("output")), NativeHandle(fields.value("repository")), fields.string(
+                    "compare"))
         case "writeGitSnapshotCurrent":
             let fields = try WireObject(value, keys: ["kind", "run"])
             self = try .writeGitSnapshotCurrent(NativeHandle(fields.value("run")))
@@ -279,12 +278,11 @@ enum Operation {
         case "readGitSnapshotFile":
             let fields = try WireObject(value, keys: ["kind", "root", "repoKey", "snapshotID", "path"])
             self = try .readGitSnapshotFile(NativeHandle(fields.value("root")), fields.string("repoKey"),
-                                           fields.string("snapshotID"), fields.string("path"))
+                                            fields.string("snapshotID"), fields.string("path"))
         case "writeGitSnapshotFile":
             let fields = try WireObject(value, keys: ["kind", "run", "path", "bytes"])
             self = try .writeGitSnapshotFile(
-                NativeHandle(fields.value("run")), fields.string("path"), fields.bytes("bytes")
-            )
+                NativeHandle(fields.value("run")), fields.string("path"), fields.bytes("bytes"))
         case "writeExport", "readExport":
             let keys: Set<String> = kind == "writeExport" ? ["kind", "run", "filename", "bytes"] : [
                 "kind",
@@ -297,8 +295,7 @@ enum Operation {
             let handle = try NativeHandle(fields.value("run"))
             self = try kind == "writeExport" ? .writeExport(handle, filename, fields.bytes("bytes")) : .readExport(
                 handle,
-                filename
-            )
+                filename)
         case "publishManifest":
             let fields = try WireObject(value, keys: ["kind", "run", "bytes"])
             self = try .publishManifest(NativeHandle(fields.value("run")), fields.bytes("bytes"))
@@ -310,39 +307,39 @@ enum Operation {
     // swiftlint:disable:next cyclomatic_complexity
     private static func decodeProjection(_ kind: String, _ value: Any) throws -> Operation {
         switch kind {
-        case "selectionPathBindings": return try .selection(.pathBindings(SelectionPathBindingsInput(value)))
-        case "selectionHint": return try .selection(.hint(SelectionHintInput(value)))
-        case "renderSelectionReply": return try .selection(.reply(SelectionReplyInput(value)))
-        case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": return try .git(.show(GitShowInput(value)))
+        case "selectionPathBindings": try .selection(.pathBindings(SelectionPathBindingsInput(value)))
+        case "selectionHint": try .selection(.hint(SelectionHintInput(value)))
+        case "renderSelectionReply": try .selection(.reply(SelectionReplyInput(value)))
+        case "prepareGitShow", "parseGitShowMetadata", "projectGitShow": try .git(.show(GitShowInput(value)))
         case "parseGitComparison", "normalizeGitDiffPaths", "normalizeGitSelectedPaths", "projectGitDiff":
-            return try .git(.diff(GitDiffInput(value)))
+            try .git(.diff(GitDiffInput(value)))
         case "prepareGitDiff", "parseGitDiffStats", "normalizeGitUntrackedPatch":
-            return try .git(.acquisition(GitDiffAcquisitionInput(value)))
-        case "parseGitPatch": return try .git(.patch(GitPatchInput(value)))
-        case "prepareGitRead", "projectGitRead": return try .git(.read(GitReadInput(value)))
-        case "electGitTarget", "resolveCompleteGitTarget": return try .git(.ownership(.target(GitTargetInput(value))))
-        case "revalidateGitTargets": return try .git(.ownership(.targetRevalidation(GitTargetRevalidationInput(value))))
-        case "serializeGitSnapshot": return try .git(.snapshot(GitSnapshotInput(value)))
-        case "prepareGitPublicationMetadata": return try .git(.publicationMetadata(GitPublicationMetadataInput(value)))
-        case "normalizeGitPublicationOptions": return try .git(.publicationOptions(GitPublicationOptionsInput(value)))
-        case "planGitPublication": return try .git(.publicationPlan(GitPublicationPlanInput(value)))
+            try .git(.acquisition(GitDiffAcquisitionInput(value)))
+        case "parseGitPatch": try .git(.patch(GitPatchInput(value)))
+        case "prepareGitRead", "projectGitRead": try .git(.read(GitReadInput(value)))
+        case "electGitTarget", "resolveCompleteGitTarget": try .git(.ownership(.target(GitTargetInput(value))))
+        case "revalidateGitTargets": try .git(.ownership(.targetRevalidation(GitTargetRevalidationInput(value))))
+        case "serializeGitSnapshot": try .git(.snapshot(GitSnapshotInput(value)))
+        case "prepareGitPublicationMetadata": try .git(.publicationMetadata(GitPublicationMetadataInput(value)))
+        case "normalizeGitPublicationOptions": try .git(.publicationOptions(GitPublicationOptionsInput(value)))
+        case "planGitPublication": try .git(.publicationPlan(GitPublicationPlanInput(value)))
         case "prepareGitWorktreeMainRoot", "resolveGitWorktreeConfig",
              "projectGitWorktreeListing", "renderGitWorktreeReply":
-            return try .git(.worktree(GitWorktreeInput(value)))
+            try .git(.worktree(GitWorktreeInput(value)))
         case "projectGitArtifacts", "decorateGitArtifacts":
-            return try .git(.artifacts(GitArtifactProjectionInput(value)))
-        case "authorizeGitArtifact": return try .git(.artifactAuthorization(GitArtifactAuthorizationInput(value)))
-        case "sliceReadText": return try .sliceReadText(ReadTextInput(value))
-        case "parseSelectionInputs": return try .selection(.parse(SelectionInputParsing(value)))
-        case "prepareSelection": return try .selection(.preparation(SelectionPreparationInput(value)))
-        case "mutateSelectionPaths": return try .selection(.paths(SelectionPathMutationInput(value)))
-        case "resolveSelectionCandidates": return try .selection(.candidates(SelectionCandidatesInput(value)))
-        case "matchSelectionPath": return try .matchSelectionPath(PathMatchInput(value))
-        case "calculateSliceRanges": return try .selection(.sliceRanges(SliceRangesInput(value)))
-        case "transitionSelection": return try .selection(.transition(SelectionTransitionInput(value)))
-        case "queryStructure": return try .queryStructure(StructureInput(value))
-        case "renderFileTree": return try .renderFileTree(FileTreeInput(value))
-        default: return try decodePromptProjection(kind, value)
+            try .git(.artifacts(GitArtifactProjectionInput(value)))
+        case "authorizeGitArtifact": try .git(.artifactAuthorization(GitArtifactAuthorizationInput(value)))
+        case "sliceReadText": try .sliceReadText(ReadTextInput(value))
+        case "parseSelectionInputs": try .selection(.parse(SelectionInputParsing(value)))
+        case "prepareSelection": try .selection(.preparation(SelectionPreparationInput(value)))
+        case "mutateSelectionPaths": try .selection(.paths(SelectionPathMutationInput(value)))
+        case "resolveSelectionCandidates": try .selection(.candidates(SelectionCandidatesInput(value)))
+        case "matchSelectionPath": try .matchSelectionPath(PathMatchInput(value))
+        case "calculateSliceRanges": try .selection(.sliceRanges(SliceRangesInput(value)))
+        case "transitionSelection": try .selection(.transition(SelectionTransitionInput(value)))
+        case "queryStructure": try .queryStructure(StructureInput(value))
+        case "renderFileTree": try .renderFileTree(FileTreeInput(value))
+        default: try decodePromptProjection(kind, value)
         }
     }
 
@@ -369,11 +366,9 @@ enum Operation {
         case "writePromptExport":
             let fields = try WireObject(value, keys: ["kind", "root", "path", "bytes"])
             return try .writePromptExport(
-                NativeHandle(fields.value("root")), fields.string("path"), fields.bytes("bytes")
-            )
+                NativeHandle(fields.value("root")), fields.string("path"), fields.bytes("bytes"))
         case "planClipboardPresentation": return try .planClipboardPresentation(ClipboardPresentationInput(value))
         case "renderClipboard": return try .renderClipboard(ClipboardOperation(value))
-        case "renderDiscoveryMessage": return try .renderDiscoveryMessage(DiscoveryMessageInput(value))
         case "renderDiscoveryPrompt": return try .renderDiscoveryPrompt(DiscoveryPromptInput(value))
         case "prepareAskUser", "answerAskUser": return try .askUser(AskUserInput(value))
         default: throw BridgeFailure("nativeProtocolError")
@@ -386,14 +381,15 @@ struct Request {
     let generation: String
     let operation: Operation
     init(_ bytes: Data, generation: String) throws {
-        guard let string = String(data: bytes, encoding: .utf8), Data(string.utf8) == bytes else { throw BridgeFailure("nativeProtocolError") }
+        guard let string = String(data: bytes, encoding: .utf8),
+              Data(string.utf8) == bytes else { throw BridgeFailure("nativeProtocolError") }
         let object = try WireObject(
             decodeWireJSON(bytes),
-            keys: ["wireVersion", "requestId", "generation", "operation"]
-        )
+            keys: ["wireVersion", "requestId", "generation", "operation"])
         id = try object.string("requestId")
         self.generation = try object.string("generation")
-        guard try object.count("wireVersion") == 1, self.generation == generation, !id.isEmpty else { throw BridgeFailure("nativeProtocolError") }
+        guard try object.count("wireVersion") == 1, self.generation == generation,
+              !id.isEmpty else { throw BridgeFailure("nativeProtocolError") }
         operation = try Operation(object.value("operation"))
     }
 

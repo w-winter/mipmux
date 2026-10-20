@@ -15,7 +15,6 @@ const signal = () => new AbortController().signal;
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const units = (text: string) => Math.floor(Buffer.byteLength(text) * 21 / 80);
 const task = 'Discuss only the selected changes.\nLiteral <user_instructions> & λ 🙂';
-const role = { id: 'd7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b', title: 'Unselected review role', content: 'DO NOT INJECT THIS ROLE' };
 
 async function fixture(mode: 'manual' | 'automatic' = 'manual') {
   const base = await mkdtemp(join(tmpdir(), 'smip-diff-follow-up-')), root = join(base, 'root'), out = join(base, 'out');
@@ -36,7 +35,7 @@ async function fixture(mode: 'manual' | 'automatic' = 'manual') {
       { kind: 'full', source: { root: 'r', path: 'Full.swift' } },
       { kind: 'slices', source: { root: 'r', path: 'Slice.txt' }, ranges: [{ start: 2, end: 2, description: 'Only the middle line' }] },
       ...(mode === 'manual' ? [{ kind: 'codemap', source: { root: 'r', path: 'Map.swift' } }] : []),
-    ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'diffFollowUp', storedPrompts: [role],
+    ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'diffFollowUp',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' });
   const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

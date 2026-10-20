@@ -28,7 +28,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
   await writeFile(join(root, 'file.txt'), 'changed\n');
   const request: ContextBuildRequest = { task: 'Retain exact historical evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
-    requiredSources: [], documents: [], ...presentation, storedPrompts: [],
+    requiredSources: [], documents: [], ...presentation,
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const runtime = makeRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
@@ -43,7 +43,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
   return { root, out, runtime, workspace, draft, diff, options, run, select };
 }
 
-for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) {
+for (const copyPreset of ['standard', 'codeReview'] as const) {
   for (const required of [false, true]) test(`${copyPreset} Git export respects inclusion ${required ? 'with' : 'without'} caller-required evidence`, async () => {
     const requiredBody = 'CALLER REQUIRED PATCH\n';
     const f = await fixture(undefined, { copyPreset, patches: required ? [{ kind: 'suppliedPatch', id: 'required', root: 'r',
@@ -80,7 +80,7 @@ for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) {
   });
 }
 
-for (const copyPreset of ['standard', 'plan', 'codeReview'] as const) test(`${copyPreset} export acquires automatic Git evidence only for selected ordinary files`, async () => {
+for (const copyPreset of ['standard', 'codeReview'] as const) test(`${copyPreset} export acquires automatic Git evidence only for selected ordinary files`, async () => {
   const f = await fixture(undefined, { copyPreset, patches: [] });
   try {
     await writeFile(join(f.root, 'unselected.txt'), 'unselected change\n');

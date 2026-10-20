@@ -100,6 +100,11 @@ const cases = [
   fixture('unreadable-and-empty-ordinary-content', { files: [entry('missing', 'Missing.swift', null), entry('empty', 'Empty.swift', '')] }),
   fixture('embedded-fence-and-unicode-bytes', { files: [entry('fence', 'README.md', '```\n😀\0λ\n```\n')], userInstructions: 'é\r\n<literal>&\0😀' }),
 ];
+for (const name of ['review-selected-git-and-explicit-metas', 'review-supplied-git-no-selected-artifact', 'custom-reverse-order']) {
+  const original = cases.find(entry => entry.name === name);
+  if (!original) throw new Error('Missing original clipboard case: ' + name);
+  cases.push({ name: name + '-without-saved-instructions', input: { ...original.input, metaInstructions: [] } });
+}
 writeFileSync(join(directory, 'inputs.json'), JSON.stringify(cases, null, 2) + '\n');
 const commands = [
   ['cc', ['-c', join(directory, 'split.c'), '-o', join(directory, 'split.o')]],

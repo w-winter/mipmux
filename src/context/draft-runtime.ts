@@ -38,7 +38,7 @@ import { structureId } from '../workspace/structure-identity.js';
 import { failureCode } from '../runtime/tool-result.js';
 import { Compile } from 'typebox/compile';
 import { initialFileTree } from '../exploration/tree.js';
-import { prepareDiscoveryInput } from './discovery-input.js';
+import { captureDiscoveryInput } from './discovery-input.js';
 import { selectionValidator, type SelectionRequest } from '../contracts/selection.js';
 import { prepareSelection, captureSelection, projectSelection, type CanonicalSelection, type SelectionState } from './selection-preparation.js';
 import { prepareSourceEdit } from './draft-source-edits.js';
@@ -132,11 +132,6 @@ export class DraftRuntime {
     strictText(request.task);
     strictText(request.constraints);
     request.discoveryHints.forEach(strictText);
-    request.contextBuilderPrompts?.forEach(prompt => { strictText(prompt.title); strictText(prompt.content); });
-    const allowance = request.budgetUnits;
-    if (allowance > operation.runtime.options.contextBudgetUnits) {
-      throw new WorkspaceFailure('assemblyBudgetExceeded', { allowance, maximum: operation.runtime.options.contextBudgetUnits });
-    }
     if (
       new Set(request.requiredSources.map((selection) => sourceId(selection.source))).size !==
         request.requiredSources.length ||
@@ -803,23 +798,22 @@ export class DraftRuntime {
     return this.#initialObservation(signal).then(view => view.context);
   }
   discoveryInput(signal: AbortSignal) {
-    return this.#track((async () => prepareDiscoveryInput(this.operation.runtime, this.request,
-      await this.#initialObservation(signal), this.gitTarget.restrictsGitToExplicitReadOnly, signal))());
+    return this.#track((async () => captureDiscoveryInput(this.request,
+      await this.#initialObservation(signal), this.gitTarget.restrictsGitToExplicitReadOnly))());
   }
   #initialObservation(signal: AbortSignal) {
     return this.#track((async () => {
       this.#check(signal, this.#revision);
       const input = { request: this.request, materials: [...this.#materials.values()],
         automaticAcquisition: this.#automaticAcquisition,
-        prompt: this.#prompt, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision,
-        contextBudgetUnits: this.operation.runtime.options.contextBudgetUnits };
+        prompt: this.#prompt, codemapMode: this.#codemapMode, draftId: this.id, revision: this.#revision };
       const selection = this.selectionProjection(), canonical = this.#selection;
       const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
       try {
         const tree = await initialFileTree(operation, selection);
         const materials = await refreshGitArtifactMaterials(operation, input.materials);
         const context = renderInitialContext({ ...await prepareRenderInput(this.operation.runtime, { ...input, inventory: operation.snapshot, materials, unavailableRoots: [], unavailableFiles: [] }, operation.signal, { kind: 'live', operation }, canonical),
-          draftId: input.draftId, revision: input.revision, contextBudgetUnits: input.contextBudgetUnits, tree });
+          draftId: input.draftId, revision: input.revision, tree });
         return { context, tree, prompt: input.prompt, roots: operation.snapshot.roots.map(root => root.name) };
       } finally { await operation.close(); }
     })());

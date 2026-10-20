@@ -3,7 +3,7 @@ import Foundation
 
 /// All blocks that can appear in the final prompt, in *logical* order.
 enum PromptSection: String, CaseIterable, Identifiable, Codable {
-    case fileMap, fileContents, metaPrompts, userInstructions, gitDiff
+    case fileMap, fileContents, constraints, userInstructions, gitDiff
 
     var id: String {
         rawValue
@@ -14,7 +14,7 @@ enum PromptSection: String, CaseIterable, Identifiable, Codable {
         case .fileMap: "File Tree"
         case .fileContents: "File Contents"
         case .gitDiff: "Git Diff"
-        case .metaPrompts: "Meta Prompts"
+        case .constraints: "Constraints"
         case .userInstructions: "User Instructions"
         }
     }
@@ -23,7 +23,7 @@ enum PromptSection: String, CaseIterable, Identifiable, Codable {
 /// Combines independently‑produced snippets in a caller‑supplied order.
 struct PromptAssemblyBuilder {
     static let defaultSectionOrder: [PromptSection] = [
-        .fileMap, .fileContents, .gitDiff, .metaPrompts, .userInstructions
+        .fileMap, .fileContents, .gitDiff, .constraints, .userInstructions
     ]
 
     let order: [PromptSection]
@@ -53,13 +53,11 @@ struct PromptAssemblyBuilder {
         order: [PromptSection],
         disabled: Set<PromptSection>,
         duplicateUserInstructionsAtTop: Bool,
-        snippets: [PromptSection: String]
-    ) -> String {
+        snippets: [PromptSection: String]) -> String {
         PromptAssemblyBuilder(
             order: order,
             disabled: disabled,
             duplicateUserInstructionsAtTop: duplicateUserInstructionsAtTop,
-            snippets: snippets
-        ).build()
+            snippets: snippets).build()
     }
 }

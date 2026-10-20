@@ -20,7 +20,7 @@ test('initial context supplies all roots, explicit inputs and budget facts witho
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
       { name: 's', absolutePath: join(directory, 's') }], outputRoot: join(directory, 'out'), exclusions: [] }, new AbortController().signal);
-    const draft = await workspace.createDraft({ task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+    const draft = await workspace.createDraft({ task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'localDocument', id: 'notes', role: 'evidence', source: { root: 'r', path: 'notes.txt' } }],
       patches: [], discoveryHints: [], outputName: 'packet',
       budgetUnits: 100000 }, new AbortController().signal);
@@ -28,7 +28,7 @@ test('initial context supplies all roots, explicit inputs and budget facts witho
     const block = text.match(/^(`{3,})\n([\s\S]*?)\n\1\n/m); assert(block);
     const metadata: unknown = JSON.parse(block[2]!);
     assert(Compile(Type.Object({ revision: Type.Literal(0), codemapMode: Type.Literal('automatic'),
-      contextBudgetUnits: Type.Literal(200000), accountingMethod: Type.Literal('utf8-21-over-80-v1'),
+      tokenBudget: Type.Literal(98500), accountingMethod: Type.Literal('utf8-21-over-80-v1'),
       roots: Type.Array(Type.Object({ name: Type.String() }), { minItems: 2, maxItems: 2 }),
       explicitSources: Type.Array(Type.Unknown(), { maxItems: 0 }), inferredCodemaps: Type.Object({ count: Type.Literal(0), itemUnits: Type.Literal(0) }),
       measurement: Type.Object({ allowance: Type.Literal(100000), complete: Type.Literal(true) }),

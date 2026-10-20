@@ -32,10 +32,9 @@ function verifyResolvedSettings(manifest: Manifest, cfg: ResolvedManualPreset): 
   const custom = manual ? context.customizations : null;
   if (canonicalJSON(cfg) !== canonicalJSON({ raw, includeFiles: custom?.includeFiles ?? raw.includeFiles ?? true,
     includeUserPrompt: custom?.includeUserPrompt ?? raw.includeUserPrompt ?? true,
-    includeMetaPrompts: custom?.includeMetaPrompts ?? raw.includeMetaPrompts ?? true,
     includeFileTree: custom?.includeFileTree ?? raw.includeFileTree ?? true,
     fileTreeMode: custom?.fileTreeMode ?? raw.fileTreeMode ?? context.current.fileTreeMode,
-    codeMapUsage: archivedCodeMapUsage(context, raw, manual), gitInclusion: archivedGitInclusion(context, raw, manual), storedPromptIds: raw.storedPromptIds })) invalid();
+    codeMapUsage: archivedCodeMapUsage(context, raw, manual), gitInclusion: archivedGitInclusion(context, raw, manual) })) invalid();
   if (canonicalJSON(cfg) !== canonicalJSON(manifest.request.copyPreset)) invalid();
 }
 

@@ -47,7 +47,7 @@ async function fixture(mode: 'manual' | 'automatic', required: boolean, restoreB
       { kind: 'codemap', source: { root: 's', path: 'Peer.swift' } }] };
   const draft = await workspace.createDraft({ task: 'Export available context', initialSelection, constraints: '', enhancementMode: 'preserve',
     purpose: 'investigation', requiredSources: required ? [sources[0]!] : [], documents: [], patches: [], discoveryHints: [],
-    copyPreset: mode === 'manual' ? 'standard' : 'codeReview', storedPrompts: [], duplicateUserInstructionsAtTop: false,
+    copyPreset: mode === 'manual' ? 'standard' : 'codeReview', duplicateUserInstructionsAtTop: false,
     budgetUnits: 200000, outputName: 'packet' }, signal());
   await rename(r, join(base, 'original')); await mkdir(r);
   await writeFile(join(r, 'Seed.swift'), 'UNAUTHORIZED REPLACEMENT\n');

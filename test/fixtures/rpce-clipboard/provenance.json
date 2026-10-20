@@ -104,12 +104,12 @@
       ]
     }
   ],
-  "cases": 29,
+  "cases": 32,
   "generator": "scripts/generate-clipboard-fixtures.mjs",
   "adapters": "test/fixtures/rpce-clipboard/reference-adapters.swift",
   "adaptersSHA256": "d6dfeba35e9534fff9cc6c83504bbee0d217eee6f238f2698dce199bc628f2b1",
   "harnessSHA256": "cd5811418ac24349153d2e7b867e890156f1f831f5db53b53e0b0ffae11e505c",
-  "executionSHA256": "7b5479c8197f1ed59e0f3f80d60883e18e3380f599a6d7708c124dbf9af87e38",
+  "executionSHA256": "f5a844291255c848de32216730af37cf03a871b293b92989cc930f7436ced6fe",
   "limits": [
     "Datetime is disabled in all reference inputs.",
     "Captured DTOs supply presentation and authorization facts; tree, acquisition, Git queries, preassembly and preset resolution are not executed."

@@ -1,57 +1,62 @@
 import Foundation
 
-enum AgentProviderKind: String {
-    case codexExec
-    case generic
-}
-
 enum PromptEnhancementMode: String {
     case fullRewrite
     case augment
     case preserve
 }
 
-enum ContextBuilderDefaults {
-    static let questionTimeoutSeconds: TimeInterval = 300
-}
+enum DiscoveryPurpose: String { case planning, review, investigation }
 
 struct DiscoveryPromptInput {
     let budget: Int
-    let runtime: AgentProviderKind
+    let template: String
     let mode: PromptEnhancementMode
     let questions: Bool
-    let responseType: String?
-    let instructions: String?
+    let purpose: DiscoveryPurpose
+    let task: String
     let timeout: Int
     let restrictReviewGit: Bool
     let reviewRoots: [String]
+    let fileTree: String
+    let currentPrompt: String
+    let discoveryInstructions: String
 
     init(_ value: Any) throws {
         let object = try WireObject(value, keys: [
-            "kind", "tokenBudget", "runtime", "enhancementMode", "allowClarifyingQuestions",
-            "responseType", "instructions", "questionTimeoutSeconds", "restrictsReviewGitToExplicitReadOnly",
-            "reviewRootNames"
+            "kind", "template", "tokenBudget", "enhancementMode", "allowClarifyingQuestions",
+            "purpose", "task", "questionTimeoutSeconds", "restrictsReviewGitToExplicitReadOnly",
+            "reviewRootNames", "fileTree", "currentPrompt", "discoveryInstructions"
         ])
         budget = try object.count("tokenBudget")
-        guard let runtime = AgentProviderKind(rawValue: try object.string("runtime")),
-              let mode = PromptEnhancementMode(rawValue: try object.string("enhancementMode")),
+        guard let purpose = try DiscoveryPurpose(rawValue: object.string("purpose")),
+              let mode = try PromptEnhancementMode(rawValue: object.string("enhancementMode")),
               let roots = object.fields["reviewRootNames"] as? [String]
         else { throw BridgeFailure("nativeProtocolError") }
-        self.runtime = runtime
+        self.purpose = purpose
+        template = try object.text("template")
         self.mode = mode
         questions = try object.boolean("allowClarifyingQuestions")
         restrictReviewGit = try object.boolean("restrictsReviewGitToExplicitReadOnly")
         reviewRoots = roots
-        responseType = object.fields["responseType"] is NSNull ? nil : try object.string("responseType")
-        instructions = object.fields["instructions"] is NSNull ? nil : try object.string("instructions")
+        task = try object.text("task")
         timeout = try object.count("questionTimeoutSeconds")
+        guard timeout > 0 else { throw BridgeFailure("nativeProtocolError") }
+        fileTree = try object.text("fileTree")
+        currentPrompt = try object.text("currentPrompt")
+        discoveryInstructions = try object.text("discoveryInstructions")
     }
 
-    func render() -> [String: Any] {
-        ["kind": "discoveryPrompt", "text": SystemPromptService.discoverPrompt(
-            tokenBudget: budget, agentKind: runtime, enhancementMode: mode, allowClarifyingQuestions: questions,
-            responseType: responseType, instructions: instructions, questionTimeoutSeconds: TimeInterval(timeout),
-            restrictsReviewGitToExplicitReadOnly: restrictReviewGit, reviewRootNames: reviewRoots
-        )]
+    func render() throws -> [String: Any] {
+        do {
+            let admitted = try DiscoveryTemplate(template)
+            let rendered = try RPCEContextBuilderPrompt.compose(admitted, input: self)
+            return ["kind": "discoveryPrompt", "text": rendered.system,
+                    "message": RPCEContextBuilderMessage.makeUserMessage(fileTree: fileTree, userPrompt: currentPrompt,
+                                                                         discoverInstructions: discoveryInstructions,
+                                                                         metadata: rendered.metadata)]
+        } catch let diagnostic as DiscoveryTemplateDiagnostic {
+            return ["kind": "discoveryTemplateRejected", "diagnostic": diagnostic.wire]
+        }
     }
 }

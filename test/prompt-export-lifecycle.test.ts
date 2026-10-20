@@ -12,7 +12,7 @@ import { copyContext } from './fixtures/copy-context.js';
 const signal = () => new AbortController().signal;
 const request: ContextBuildRequest = { task: 'CAPTURED PROMPT', constraints: '', purpose: 'investigation', enhancementMode: 'fullRewrite',
   initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'Source.swift' } }] },
-  requiredSources: [], documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false,
+  requiredSources: [], documents: [], patches: [], duplicateUserInstructionsAtTop: false,
   copyPreset: 'standard', budgetUnits: 200000, discoveryHints: [], outputName: 'packet' };
 
 async function fixture(before: (operation: NativeOperation) => Promise<void>, after: (operation: NativeOperation) => Promise<void>, settings = copyContext()) {
@@ -92,7 +92,7 @@ test('custom presets use captured current settings but ignore Manual working-cop
   settings.customizations.fileTreeMode = 'Full'; settings.customizations.codeMapUsage = 'none';
   settings.presets.push({ id: 'ABCDEFAB-1234-1234-1234-ABCDEFABCDEF', name: 'Café custom', builtInKind: null,
     description: null, icon: null, notes: null, isBuiltIn: false, includeFiles: null, includeUserPrompt: null,
-    includeMetaPrompts: null, includeFileTree: null, fileTreeMode: null, codeMapUsage: null, gitInclusion: null, storedPromptIds: null });
+    includeFileTree: null, fileTreeMode: null, codeMapUsage: null, gitInclusion: null });
   const f = await fixture(async () => {}, async () => {}, settings);
   try {
     const draft = await f.workspace.createDraft({ ...request, copyPreset: { name: 'Cafe\u0301 custom' } }, signal());
@@ -104,6 +104,24 @@ test('custom presets use captured current settings but ignore Manual working-cop
     assert.equal(final.manifest.clipboardPreset.codeMapUsage, 'selected'); assert.equal(final.manifest.clipboardPreset.gitInclusion, 'none');
     assert.equal(body, await readFile(join(final.directory, 'context.md'), 'utf8'));
     await verifyBundle(final.directory); await verifyCurrentBundle(final.directory, f.runtime, signal());
+  } finally { await f.runtime.close(); }
+});
+
+test('an explicitly configured custom preset named Plan resolves independently of the removed built-in', async () => {
+  const settings = copyContext(), customID = 'abcdefab-1234-1234-1234-abcdefabcdef';
+  settings.current.fileTreeMode = 'None'; settings.current.codeMapUsage = 'none';
+  settings.presets.push({ id: customID, name: 'Plan', builtInKind: null, isBuiltIn: false,
+    description: null, icon: null, notes: null, includeFiles: true, includeUserPrompt: false,
+    includeFileTree: false, fileTreeMode: null, codeMapUsage: null,
+    gitInclusion: null });
+  const f = await fixture(async () => {}, async () => {}, settings);
+  try {
+    const draft = await f.workspace.createDraft(request, signal());
+    const exported = await draft.prompt({ op: 'export', path: 'named-plan.md', copy_preset: { name: 'Plan' }, maxOutputBytes: 100000 }, signal());
+    assert(exported.op === 'export');
+    assert.equal(exported.export.copy_preset.id.toLowerCase(), customID);
+    const body = await readFile(join(f.output, 'named-plan.md'), 'utf8');
+    assert(body.includes('struct Source')); assert(!body.includes('CAPTURED PROMPT'));
   } finally { await f.runtime.close(); }
 });
 

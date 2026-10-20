@@ -32,7 +32,7 @@ async function fixture() {
   await writeFile(join(root, 'file.txt'), 'disposal evidence\n');
   const request: ContextBuildRequest = { task: 'Capture evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };

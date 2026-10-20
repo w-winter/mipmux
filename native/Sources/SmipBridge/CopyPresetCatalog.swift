@@ -6,12 +6,10 @@ struct CapturedCopyPreset: Decodable {
     let raw: CopyPreset
     let includeFiles: Bool
     let includeUserPrompt: Bool
-    let includeMetaPrompts: Bool
     let includeFileTree: Bool
     let fileTreeMode: FileTreeOption
     let codeMapUsage: CodeMapUsage
     let gitInclusion: GitInclusion
-    let storedPromptIds: [UUID]?
 
     init(raw: CopyPreset, settings: CapturedCopySettings) {
         self.raw = raw
@@ -23,27 +21,24 @@ struct CapturedCopyPreset: Decodable {
             .resolvePromptContext(raw, custom: settings.customizations)
         includeFiles = cfg.includeFiles
         includeUserPrompt = cfg.includeUserPrompt
-        includeMetaPrompts = cfg.includeMetaPrompts
         includeFileTree = cfg.includeFileTree
         fileTreeMode = cfg.fileTreeMode
         codeMapUsage = cfg.codeMapUsage
         gitInclusion = cfg.gitInclusion
-        storedPromptIds = cfg.storedPromptIds
     }
 
     func resolve() -> PromptContextResolved {
         PromptContextResolved(includeFiles: includeFiles, includeUserPrompt: includeUserPrompt,
-                              includeMetaPrompts: includeMetaPrompts, includeFileTree: includeFileTree,
+                              includeFileTree: includeFileTree,
                               fileTreeMode: fileTreeMode, codeMapUsage: codeMapUsage,
-                              gitInclusion: gitInclusion, storedPromptIds: storedPromptIds)
+                              gitInclusion: gitInclusion)
     }
 
     var wireResolved: [String: Any] {
         ["raw": raw.wire, "includeFiles": includeFiles, "includeUserPrompt": includeUserPrompt,
-         "includeMetaPrompts": includeMetaPrompts, "includeFileTree": includeFileTree,
+         "includeFileTree": includeFileTree,
          "fileTreeMode": fileTreeMode.rawValue, "codeMapUsage": codeMapUsage.rawValue,
-         "gitInclusion": gitInclusion.rawValue,
-         "storedPromptIds": storedPromptIds.map { $0.map { $0.uuidString.lowercased() } } as Any? ?? NSNull()]
+         "gitInclusion": gitInclusion.rawValue]
     }
 }
 
@@ -52,12 +47,10 @@ extension CopyPreset {
         ["id": id.uuidString.lowercased(), "name": name, "builtInKind": builtInKind?.rawValue as Any? ?? NSNull(),
          "description": description as Any? ?? NSNull(), "icon": icon as Any? ?? NSNull(), "isBuiltIn": isBuiltIn,
          "includeFiles": includeFiles as Any? ?? NSNull(), "includeUserPrompt": includeUserPrompt as Any? ?? NSNull(),
-         "includeMetaPrompts": includeMetaPrompts as Any? ?? NSNull(),
          "includeFileTree": includeFileTree as Any? ?? NSNull(),
          "fileTreeMode": fileTreeMode?.rawValue as Any? ?? NSNull(),
          "codeMapUsage": codeMapUsage?.rawValue as Any? ?? NSNull(),
          "gitInclusion": gitInclusion?.rawValue as Any? ?? NSNull(),
-         "storedPromptIds": storedPromptIds.map { $0.map { $0.uuidString.lowercased() } } as Any? ?? NSNull(),
          "notes": notes as Any? ?? NSNull()]
     }
 }
@@ -76,7 +69,7 @@ struct CopyPresetCatalogOperation {
     }
 
     static var builtIns: [CopyPreset] {
-        [BuiltInCopyPresets.standard, BuiltInCopyPresets.plan, BuiltInCopyPresets.diffFollowUp,
+        [BuiltInCopyPresets.standard, BuiltInCopyPresets.diffFollowUp,
          BuiltInCopyPresets.codeReview, BuiltInCopyPresets.manual]
     }
 
@@ -87,12 +80,11 @@ struct CopyPresetCatalogOperation {
                               description: base.description, icon: base.icon, isBuiltIn: true,
                               includeFiles: override.includeFiles ?? base.includeFiles,
                               includeUserPrompt: override.includeUserPrompt ?? base.includeUserPrompt,
-                              includeMetaPrompts: override.includeMetaPrompts ?? base.includeMetaPrompts,
                               includeFileTree: override.includeFileTree ?? base.includeFileTree,
                               fileTreeMode: override.fileTreeMode ?? base.fileTreeMode,
                               codeMapUsage: override.codeMapUsage ?? base.codeMapUsage,
                               gitInclusion: override.gitInclusion ?? base.gitInclusion,
-                              storedPromptIds: override.storedPromptIds ?? base.storedPromptIds, notes: base.notes)
+                              notes: base.notes)
         } + settings.presets.filter { !$0.isBuiltIn }
     }
 

@@ -36,7 +36,7 @@ test('complete Git resolves an explicitly declared metadata directory and retain
       exclusions: [] }, signal());
     const request = contextRequestValidator.Parse({ task: 'Explain changes', constraints: '', purpose: 'investigation',
       enhancementMode: 'preserve', initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [],
-      documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false, budgetUnits: 200000,
+      documents: [], patches: [], duplicateUserInstructionsAtTop: false, budgetUnits: 200000,
       discoveryHints: [], outputName: 'packet', copyPreset: 'manual' });
     const draft = await workspace.createDraft(request, signal());
     const interim = await workspace.createDraft({ ...request, copyPreset: 'standard', outputName: 'standard-packet' }, signal());

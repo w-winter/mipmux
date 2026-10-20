@@ -23,7 +23,7 @@ test('automatic selection reports source coverage while retaining useful targets
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: first }, { name: 's', absolutePath: second }],
       outputRoot: output, exclusions: [] }, signal());
     const draft = await workspace.createDraft({ task: 'Inspect source coverage', initialSelection: { codemapMode: 'automatic', sources: [] },
-      duplicateUserInstructionsAtTop: false, copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve',
+      duplicateUserInstructionsAtTop: false, copyPreset: 'standard', constraints: '', enhancementMode: 'preserve',
       purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 100000 }, signal());
     const select = (paths: string[]) => draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({
       op: 'set', paths, view: 'files', maxOutputBytes: 100000 })), signal());

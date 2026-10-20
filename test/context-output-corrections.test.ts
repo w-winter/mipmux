@@ -18,7 +18,7 @@ import { gitValidator } from '../src/contracts/git.js';
 
 const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Inspect exact evidence', architecture: 'Synthetic files', relationships: [], ambiguities: [] };
-const request: ContextBuildRequest = { task: 'Complete task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Complete evidence', enhancementMode: 'augment' as const, purpose: 'review',
+const request: ContextBuildRequest = { task: 'Complete task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: 'Complete evidence', enhancementMode: 'augment' as const, purpose: 'review',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
   budgetUnits: 1000000 };
 async function fixture() {

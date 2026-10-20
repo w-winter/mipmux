@@ -62,7 +62,7 @@ async function fixture() {
   run(['add', '.']); run(['commit', '-qm', 'base']); await writeFile(join(root, 'file.txt'), 'changed\n');
   const request: ContextBuildRequest = { task: 'Collect evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const diff = gitValidator.Parse(gitValidator.Default({ op: 'diff', maxOutputBytes: 1 })); assert(diff.op === 'diff');
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

@@ -3,9 +3,9 @@ import type { CapturedContextBuildRequest, ContextBuildRequest } from '../../src
 
 export function copyContext(): CopyContext {
   return { current: { fileTreeMode: 'Auto', codeMapUsage: 'auto', gitInclusion: 'none' },
-    customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null, includeFileTree: null,
+    customizations: { includeFiles: null, includeUserPrompt: null, includeFileTree: null,
       fileTreeMode: null, codeMapUsage: null, gitInclusion: null },
-    codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null, presets: [] };
+    codeMapsGloballyDisabled: false, activeGitRoot: null, presets: [] };
 }
 
 export function buildRequest(captured: CapturedContextBuildRequest): ContextBuildRequest {

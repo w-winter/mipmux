@@ -52,7 +52,7 @@ async function fixture(mode: 'manual' | 'automatic', effect: 'missing' | 'requir
       { kind: 'slices', source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: null }] },
       { kind: 'full', source: { root: 'r', path: 'Healthy.swift' } }] }, requiredSources: effect === 'required' ? [full] : [],
     documents: [], patches: [], discoveryHints: [], budgetUnits: 100000, outputName: 'packet',
-    copyPreset: 'codeReview', storedPrompts: [], duplicateUserInstructionsAtTop: false }, signal());
+    copyPreset: 'codeReview', duplicateUserInstructionsAtTop: false }, signal());
   if (effect === 'changed') await writeFile(join(root, 'Absent.swift'), 'struct ChangedAvailableBody {}\n');
   else for (const path of ['Absent.swift', 'slice.txt']) await rename(join(root, path), join(base, path));
   return { runtime, workspace, draft, root, out, restore };

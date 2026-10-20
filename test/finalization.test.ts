@@ -35,7 +35,7 @@ test('required full source, complete report and patch reach verified output; sta
     }, signal);
     const request: ContextBuildRequest = {
       task: 'Preserve <user_instructions> as task text.',
-      initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Complete contents only.',
+      initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: 'Complete contents only.',
       enhancementMode: 'augment' as const, purpose: 'review',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }, {
         kind: 'full',

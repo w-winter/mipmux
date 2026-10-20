@@ -101,7 +101,7 @@ test('source admission overflow preserves explicit files and a verifiable packet
     const signal = new AbortController().signal;
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
     const draft = await workspace.createDraft({ task: 'Inspect the selected inputs', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-      initialSelection: { codemapMode: 'automatic', sources: [] }, requiredSources: sources, documents: [], patches: [], storedPrompts: [],
+      initialSelection: { codemapMode: 'automatic', sources: [] }, requiredSources: sources, documents: [], patches: [],
       copyPreset: 'standard', duplicateUserInstructionsAtTop: false, budgetUnits: 200000, discoveryHints: [], outputName: 'packet' }, signal);
     const result = await draft.finalize(signal); assert.equal(result.kind, 'ready'); assert(result.kind === 'ready');
     const verified = await verifyBundle(result.directory);

@@ -1,10 +1,10 @@
 # Deliver a context packet
 
-Declare named absolute source roots and an existing output directory. Supply the complete assignment as `task`, complete constraints, required representations/documents/patches, and numeric `budgetUnits`. Set `duplicateUserInstructionsAtTop` to false for the source default, or true to place a second complete resulting-prompt block before the context sections. Set `copyPreset` to `standard`, `plan`, `diffFollowUp` or `codeReview` for the corresponding source copy preset. Supply a `storedPrompts` catalog of `{ id, title, content }` entries; an empty array supplies no saved roles. Plan selects its source architect UUID `8e81aac2-79ce-4897-a59e-efd81eebb7e9`; Review selects its source UUID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b`. Use supplied documents for intentionally included prior reports outside source inventory; their origins are labels, not filesystem access grants.
+Declare named absolute source roots and an existing output directory. Supply the complete assignment as `task`, complete constraints, and required representations/documents/patches. Set `duplicateUserInstructionsAtTop` to false for the source default, or true to place a second complete resulting-prompt block before the context sections. Select `standard`, `manual`, `diffFollowUp` or `codeReview` for context formatting and Git inclusion. Use supplied documents for intentionally included prior reports outside source inventory; their origins are labels, not filesystem access grants. The calling agent system supplies the receiving role separately through its subagent definition.
 
-Set `enhancementMode` to `fullRewrite`, `augment` or `preserve`. Rewrite lets discovery replace the prompt; Augment retains the original and appends discoveries; Preserve keeps the original text unchanged. Supply complete binding requirements in the task and constraints. Inspect the resulting prompt before delivery.
+Set the host's `defaultEnhancementMode` to `fullRewrite`, `augment` or `preserve`; omission selects Augment. The optional request field `enhancementMode` overrides it for one build. Rewrite lets discovery replace the prompt; Augment retains the original and appends discoveries; Preserve keeps the original text unchanged. Supply complete binding requirements in the task and constraints. Inspect the resulting prompt before delivery.
 
-Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `metaPrompts` and `userInstructions`. Include each name at least once. Repeated names include repeated complete sections; every copy counts toward the budget. Omit the field for the default order listed here.
+Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `constraints` and `userInstructions`. Include each name at least once. Repeated names include repeated complete sections; every copy counts toward the budget. Fixed constraints use their own literal `constraints` block. Omit the field for the default order listed here.
 
 Set `includeDatetimeInUserInstructions` to true when the user-instruction headers should include the native local datetime. Omission or false uses plain headers. Saved verification retains the captured timestamp; current verification treats only the actual header datetime values as clock-dependent presentation data.
 
@@ -14,7 +14,7 @@ Use `diffFollowUp` for a packet containing Git evidence, caller constraints and 
 
 ## Copy settings and presets
 
-Supply `copyContext` in the host configuration or `SmipRuntime` options. The example below chooses automatic maps, an adaptive tree and no automatic Git. Choose current values explicitly; they apply to Manual and to missing custom-preset tree or codemap settings. Each draft captures the validated settings and configured catalog at admission. Set request `copyPreset` to `"manual"` for Manual. `selectedPromptIds` selects entries from `storedPrompts` in catalog order, with case-insensitive UUID matching.
+Supply `copyContext` in the host configuration or `SmipRuntime` options. The example below chooses automatic maps, an adaptive tree and no automatic Git. Choose current values explicitly; they apply to Manual and to missing custom-preset tree or codemap settings. Each draft captures the validated settings and configured catalog at admission. Set request `copyPreset` to `"manual"` for Manual.
 
 ```json
 {
@@ -26,14 +26,12 @@ Supply `copyContext` in the host configuration or `SmipRuntime` options. The exa
   "customizations": {
     "includeFiles": null,
     "includeUserPrompt": null,
-    "includeMetaPrompts": null,
     "includeFileTree": null,
     "fileTreeMode": null,
     "codeMapUsage": null,
     "gitInclusion": null
   },
   "codeMapsGloballyDisabled": false,
-  "selectedPromptIds": [],
   "activeGitRoot": "repo",
   "presets": []
 }
@@ -41,7 +39,7 @@ Supply `copyContext` in the host configuration or `SmipRuntime` options. The exa
 
 Include flags accept true, false or null; null resolves to true. Tree modes are `Auto`, `Full`, `Selected` and `None`. Working-copy customizations apply only to Manual. Its tree customization takes precedence over the current tree mode. Codemap usage is `none`, `auto`, `selected` or `complete`; Manual uses the current value even when a codemap customization is supplied. The single operator-owned `codeMapsGloballyDisabled` setting forces resolved copy codemap usage to `none`.
 
-`presets` supplies built-in overrides and custom records. Each record contains `id`, `name`, nullable `builtInKind`, nullable `description` and `icon`, `isBuiltIn`, nullable include flags, nullable `fileTreeMode`, `codeMapUsage` and `gitInclusion`, nullable `storedPromptIds`, and nullable `notes`. Built-in records use their stable UUID and `isBuiltIn: true`; nonnull behavioral fields override the built-in, while identity and descriptive fields come from the original. The last override for a built-in ID applies. Custom records use `isBuiltIn: false`. Catalog order is Standard, Plan, Diff Follow-Up, Review, Manual, followed by custom records in configured order.
+`presets` supplies built-in overrides and custom records. Each record contains `id`, `name`, nullable `builtInKind`, nullable `description` and `icon`, `isBuiltIn`, nullable file/user-prompt/tree include flags, nullable `fileTreeMode`, `codeMapUsage` and `gitInclusion`, and nullable `notes`. Built-in records use their stable UUID and `isBuiltIn: true`; nonnull behavioral fields override the built-in, while identity and descriptive fields come from the original. The last override for a built-in ID applies. Custom records use `isBuiltIn: false`. Catalog order is Standard, Diff Follow-Up, Review, Manual, followed by custom records in configured order.
 
 Selectors accept a string UUID, kind or name, or an object with `id`, `kind` and `name`. UUID lookup has priority and a valid unresolved UUID ends lookup. Kind lookup returns the original built-in. Explicit-name and UUID lookup use the overridden catalog. Thus `"standard"` selects the original kind, while `{ "name": "Standard" }` selects its configured entry. Names and kinds match case-insensitively. Custom presets ignore Manual working-copy customizations; missing tree and codemap settings use captured current values, and missing Git inclusion resolves to none.
 
@@ -57,7 +55,9 @@ Call MCP `prompt` with `{ "input": { "op": "list_presets" } }` to receive `{ "op
 
 Supply `initialSelection: { codemapMode: "automatic", sources: [] }` for an empty automatic starting selection, or include known starting files/slices. Use manual mode for an explicit codemap selection or a manual selection with no codemaps. Discovery can remove or replace initial sources; only `requiredSources` pins immutable representations. Keep initial and required representations identical when they name the same source.
 
-Read the operator's `contextBudgetUnits` from the host configuration and set `request.budgetUnits` to that value. A smaller budget requires the user's instruction. Context assembly needs the task, sources and budget; choosing a receiving model belongs to delivery. Pin source representations only when the assignment requires them. A changed file does not by itself require a full-file selection; discovery can choose appropriate implementation slices while retaining complete required patches.
+The host's `contextBudgetUnits` supplies the default assembly budget. Omit `request.budgetUnits` to use it, or supply the user's explicit per-build ceiling, whether smaller or larger. Translate a user's task-prompt overrides into request fields before calling smip; the discovery agent receives the resolved settings. Never infer a larger ceiling from a receiving model's capacity or from repository text. Pin source representations only when the assignment requires them. A changed file does not by itself require a full-file selection; discovery can choose appropriate implementation slices while retaining complete required patches.
+
+Set `discovery.promptTemplatePath` to the operator's absolute editable template path. Install a copy of the shipped `dist/prompts/discovery.md` using exclusive creation, then edit its [named sections and placeholders](discovery-prompt-bindings.md#template-format). A job uses one admitted snapshot for both its system policy and startup metadata; the next job observes edits. The task mode and review intent, plus admitted clarification capability, choose the sections; typed runtime values fill their placeholders.
 
 With MCP, call `workspace_declare` and save the returned ID. Call `context_builder` with that `workspaceId`, a caller-generated `requestId`, and the context request. Poll with `context_builder_wait` using the same job ID; a wait timeout is not a reason to submit another builder request. `context_builder_result` returns the current snapshot without consuming it. `context_builder_cancel` requests job cancellation; cancelling a wait affects only that observer.
 
@@ -75,7 +75,7 @@ node /opt/smip/dist/cli/main.js build \
   > /work/terminal-receipt.json
 ```
 
-Save the complete terminal receipt before closing the server or runtime. It contains the prompt identity, `buildLockSHA256`, effective model settings, recovery observations and local settlement facts. The build-lock digest identifies the lockfile used to build smip. Deployment evidence also needs the installed dependency graph and its audit results. Jobs and drafts are in-memory and cannot be resumed after process closure. The receipt is coordinator evidence, not another recipient attachment.
+Save the complete terminal receipt before closing the server or runtime. It contains `templateVersion`, the raw template's path and identity, the rendered system policy's `policyIdentity`, `buildLockSHA256`, effective model settings, recovery observations and local settlement facts. Identities contain SHA-256 and byte count; the policy identity covers the composed system text before SDK framing, tools or startup messages. The build-lock digest identifies the lockfile used to build smip. Deployment evidence also needs the installed dependency graph and its audit results. Jobs and drafts are in-memory and cannot be resumed after process closure. The receipt is coordinator evidence, not another recipient attachment.
 
 For discovery with configured HTTP MCP servers, the receipt also lists the authorized servers and tools, configuration digest, observed native tool names and shutdown dispatch. The scout can retain complete fetched text with `draft_update`'s `addDocument` mutation, using a `suppliedDocument` with ID, role and asserted origin. Callers can also supply documents in the initial request through their own MCP adapter. Added documents count toward the assembly budget and appear in `context.md`. Worker closure certifies release of local connections, not remote cancellation.
 

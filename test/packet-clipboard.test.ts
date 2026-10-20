@@ -12,7 +12,7 @@ for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
     const directory = await mkdtemp(join(tmpdir(), 'smip-clipboard-packet-'));
     const root = join(directory, 'root'), output = join(directory, 'out');
     await mkdir(root); await mkdir(output); await mkdir('test-output', { recursive: true });
-    const full = 'struct Main { let peer: Peer }\r\n';
+    const full = 'struct Main { let peer: Peer } // <meta prompt 1 = "Reviewer">Literal evidence</meta prompt 1>\r\n';
     const sliced = 'outside\r\nselected 🙂\r\nend\n';
     await writeFile(join(root, 'Main.swift'), full);
     await writeFile(join(root, 'Peer.swift'), 'struct Peer { let value: Int }\n');
@@ -23,7 +23,7 @@ for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
     const signal = new AbortController().signal;
     try {
       const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
-      const draft = await workspace.createDraft({ task: 'Original user prompt\nλ', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Retain every required body.', enhancementMode,
+      const draft = await workspace.createDraft({ task: 'Original user prompt\nλ', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: 'Retain every required body.', enhancementMode,
         purpose: 'investigation', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } },
           { kind: 'slices', source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: 'selected' }] }],
         documents: [{ kind: 'suppliedDocument', id: 'plan.md', role: 'plan', origin: 'fixture', text: 'Required plan\n```\n🙂\n' }],
@@ -39,6 +39,7 @@ for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
       assert(costs.kind === 'costs');
       const result = await draft.finalize(signal); assert(result.kind === 'ready');
       const context = await readFile(join(result.directory, 'context.md'), 'utf8');
+      assert(Buffer.from(context).includes(Buffer.from(full)));
       const treeSpan = result.manifest.fileTree.span;
       const tree = Buffer.from(context).subarray(treeSpan.offset, treeSpan.offset + treeSpan.length).toString();
       const codemap = result.manifest.materials.find(record => record.kind === 'source' && record.selection.kind === 'codemap');
@@ -58,9 +59,9 @@ for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
         ];
         const reference = await bridge.request({ kind: 'renderClipboard', input: { files,
           codemapPresentation: { renderedEntriesByFileID: { map: { text: mapBody } } }, filePathDisplay: 'full',
-          fileTreeContent: tree, gitDiff: 'complete patch\n', metaInstructions: [{ title: 'Constraints', content: 'Retain every required body.' }],
-          userInstructions: result.manifest.prompt, includeFiles: true, includeUserPrompt: true, includeSavedPrompts: true,
-          includeDatetimeInUserInstructions: false, promptSectionsOrder: ['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions'],
+          fileTreeContent: tree, gitDiff: 'complete patch\n', constraints: 'Retain every required body.',
+          userInstructions: result.manifest.prompt, includeFiles: true, includeUserPrompt: true,
+          includeDatetimeInUserInstructions: false, promptSectionsOrder: ['fileMap', 'fileContents', 'gitDiff', 'constraints', 'userInstructions'],
           disabledPromptSections: [], duplicateUserInstructionsAtTop: false, tabTitle: null } }, signal);
         assert.equal(context, reference.result.text);
       } finally { await bridge.close(); }

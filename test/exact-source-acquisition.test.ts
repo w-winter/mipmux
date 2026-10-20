@@ -11,7 +11,7 @@ const signal = () => new AbortController().signal;
 const body = 'struct Hidden { let value: Int }\nsecond line\n';
 const request: ContextBuildRequest = { task: 'Inspect explicit evidence', constraints: '', purpose: 'investigation',
   enhancementMode: 'preserve', initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [],
-  patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 200000,
+  patches: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 200000,
   discoveryHints: [], outputName: 'packet' };
 
 async function fixture() {

@@ -44,7 +44,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } },
       { kind: 'slices', source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: null }] },
       { kind: 'codemap', source: { root: 'r', path: 'code.swift' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'codeReview', storedPrompts: [],
+    requiredSources: [], documents: [], patches: [], copyPreset: 'codeReview',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };
@@ -147,7 +147,7 @@ test('real Pi dispatch publishes and auto-selects Git artifacts into its complet
     return { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 };
   });
   const runtime = new SmipRuntime({ ...f.options, copyContext: copyContext(), cachePath: f.options.cachePath + '-pi' });
-  const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
+  const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
     const job = client.build(workspace.id, 'scout-artifacts', { ...f.request, outputName: 'pi-packet' });

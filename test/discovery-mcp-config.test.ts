@@ -1,3 +1,4 @@
+import { nativeDiscoveryRenderer } from './fixtures/render-discovery-prompt.js';
 import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { chmod, mkdir, symlink, writeFile } from 'node:fs/promises';
@@ -14,7 +15,12 @@ const server = { url: 'https://example.invalid/mcp', exposure: 'hidden', toolExp
 test('MCP configuration rejects unsafe input before worker startup and keeps diagnostics free of values', async t => {
   const provider = await scriptedProvider(() => { throw new Error('No model permitted'); });
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 });
-  const spawn = t.mock.method(supervisor, 'spawn', () => { throw new Error('No spawn permitted'); });
+  const spawn = supervisor.spawn.bind(supervisor);
+  let piWorkers = 0;
+  t.mock.method(supervisor, 'spawn', (spec: Parameters<typeof spawn>[0]) => {
+    if (spec.args.some(arg => arg.endsWith('/pi-worker.js'))) { piWorkers++; throw new Error('No Pi spawn permitted'); }
+    return spawn(spec);
+  });
   const diagnostics: string[] = [];
   t.mock.method(process.stderr, 'write', (chunk: string | Uint8Array) => { diagnostics.push(chunk.toString()); return true; });
   try {
@@ -33,8 +39,8 @@ test('MCP configuration rejects unsafe input before worker startup and keeps dia
     for (const [index, [value, code]] of cases.entries()) {
       const agentDirectory = join(provider.directory, String(index)); await mkdir(agentDirectory, { mode: 0o700 });
       await writeFile(join(agentDirectory, 'mcp.json'), JSON.stringify(value));
-      await assert.rejects(new PiRunner({ ...provider.config, mcp: { agentDirectory } }, supervisor).run(
-        { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', roots: [], hints: [] }, { call: async () => {} }, new AbortController().signal, () => {}), { code });
+      await assert.rejects(new PiRunner({ ...provider.config, mcp: { agentDirectory } }, supervisor, nativeDiscoveryRenderer(supervisor)).run(
+        { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: [], hints: [] }, { call: async () => {} }, new AbortController().signal, () => {}), { code });
     }
     const agentDirectory = join(provider.directory, 'private'); await mkdir(agentDirectory, { mode: 0o700 });
     await assert.rejects(admitMcpConfiguration({ agentDirectory }, new AbortController().signal), { code: 'unreadableMcpConfiguration' });
@@ -42,7 +48,7 @@ test('MCP configuration rejects unsafe input before worker startup and keeps dia
     await assert.rejects(admitMcpConfiguration({ agentDirectory }, new AbortController().signal), { code: 'nonRegularMcpConfiguration' });
     await chmod(agentDirectory, 0o750);
     await assert.rejects(admitMcpConfiguration({ agentDirectory }, new AbortController().signal), { code: 'mcpDirectoryNotPrivate' });
-    assert.equal(spawn.mock.callCount(), 0); assert.equal(provider.requests.length, 0);
+    assert.equal(piWorkers, 0); assert.equal(provider.requests.length, 0);
     assert(diagnostics.some(line => line.includes('mcpConfigurationRejected'))); assert(!diagnostics.join('').includes('DO_NOT_LOG'));
   } finally { await supervisor.close(); await provider.close(); }
 });

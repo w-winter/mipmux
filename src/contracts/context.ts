@@ -5,7 +5,7 @@ import { SafeCount, SHA256, SourceIdentity, RelativePath, RootName } from './wor
 import { PatchInput, PatchReceipt } from './patches.js';
 import { ArtifactKey } from './artifact.js';
 import { Continuation } from './exploration.js';
-import { ClipboardPreset, CopyContext, StoredPrompt, CapturedClipboardPreset, PromptSectionsOrder } from './presentation.js';
+import { ClipboardPreset, CopyContext, CapturedClipboardPreset, PromptSectionsOrder } from './presentation.js';
 import { NativeFileTreeInput, NativeGitCheckout, AutomaticReviewGitCheckout, AutomaticReviewGitPathIssue, AutomaticReviewGitCompleteness } from './native.js';
 import { AutomaticCodemapOutcome } from './automatic-codemaps.js';
 import { Clarification } from './interaction.js';
@@ -58,23 +58,22 @@ export const ContextBuildRequest = Type.Object({
   includeDatetimeInUserInstructions: Type.Optional(Type.Boolean()),
   promptSectionsOrder: Type.Optional(PromptSectionsOrder),
   copyPreset: ClipboardPreset,
-  storedPrompts: Type.Array(StoredPrompt),
   reviewGitBase: Type.Optional(Type.String({ pattern: '^[^\u0000]*$' })),
-  contextBuilderPrompts: Type.Optional(Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, closed))),
   task: Type.String(),
   constraints: Type.String(),
-  enhancementMode: PromptEnhancementMode,
+  enhancementMode: Type.Optional(PromptEnhancementMode),
   purpose: Type.Enum(['planning', 'review', 'investigation']),
   initialSelection: InitialSelection,
   requiredSources: Type.Array(SourceSelection),
   documents: Type.Array(DocumentInput),
   patches: Type.Array(PatchInput),
-  budgetUnits: SafeCount,
+  budgetUnits: Type.Optional(SafeCount),
   discoveryHints: Type.Array(Type.String()),
   outputName: Type.String({ pattern: '^(?!\\.{1,2}$)[^/\\u0000]+$' }),
 }, closed);
 export type ContextBuildRequest = Static<typeof ContextBuildRequest>;
 export const CapturedContextBuildRequest = Type.Object({ ...ContextBuildRequest.properties,
+  enhancementMode: PromptEnhancementMode, budgetUnits: SafeCount,
   copyPreset: CapturedClipboardPreset, copyPresetSelector: ClipboardPreset, copyContext: CopyContext }, closed);
 export type CapturedContextBuildRequest = Static<typeof CapturedContextBuildRequest>;
 const promptOperations = [
@@ -198,7 +197,7 @@ export const ManualPresentation = Type.Object({ canonicalSources: Type.Array(Sou
   requested: Type.Array(SourcePath), ready: Type.Array(SourcePath), completeRootSet: Type.Boolean() }, closed);
 export type ManualPresentation = Static<typeof ManualPresentation>;
 export const Manifest = Type.Object({
-  schemaVersion: Type.Literal(24),
+  schemaVersion: Type.Literal(25),
   manualPresentation: Type.Union([ManualPresentation, Type.Null()]),
   codemapMode: CodemapMode,
   automaticCodemaps: Type.Array(AutomaticCodemapOutcome),

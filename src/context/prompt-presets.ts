@@ -15,7 +15,6 @@ export interface PresetListItem {
   icon?: string;
   include_files?: boolean;
   include_user_prompt?: boolean;
-  include_meta_prompts?: boolean;
   include_file_tree?: boolean;
   file_tree_mode?: Exclude<RawCopyPreset['fileTreeMode'], null>;
   codemap_usage?: Exclude<RawCopyPreset['codeMapUsage'], null>;
@@ -34,7 +33,6 @@ function presetListItem(raw: RawCopyPreset): PresetListItem {
   if (raw.icon !== null) result.icon = raw.icon;
   if (raw.includeFiles !== null) result.include_files = raw.includeFiles;
   if (raw.includeUserPrompt !== null) result.include_user_prompt = raw.includeUserPrompt;
-  if (raw.includeMetaPrompts !== null) result.include_meta_prompts = raw.includeMetaPrompts;
   if (raw.includeFileTree !== null) result.include_file_tree = raw.includeFileTree;
   if (raw.fileTreeMode !== null) result.file_tree_mode = raw.fileTreeMode;
   if (raw.codeMapUsage !== null) result.codemap_usage = raw.codeMapUsage;

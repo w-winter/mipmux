@@ -17,7 +17,7 @@ const staging = join(destination, 'package-input');
 mkdirSync(staging, { mode: 0o700 });
 const target = `${process.platform}-${process.arch}`;
 const paths = ['package.json', 'README.md', 'THIRD_PARTY_NOTICES.md',
-  `libexec/${target}/SmipBridge`, 'dist/dependency-identity.json'];
+  `libexec/${target}/SmipBridge`, 'dist/dependency-identity.json', 'dist/prompts/discovery.md'];
 for (const entry of readdirSync(join(root, 'src'), { recursive: true, withFileTypes: true })) {
   if (!entry.isFile() || !entry.name.endsWith('.ts')) continue;
   const relative = join(entry.parentPath, entry.name).slice(join(root, 'src').length + 1).slice(0, -3);

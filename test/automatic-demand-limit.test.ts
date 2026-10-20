@@ -37,7 +37,7 @@ test('automatic demand overflow clears only inferred codemaps and preserves sour
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
     const request: ContextBuildRequest = { task: 'Inspect the implementation', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       initialSelection: { codemapMode: 'automatic', sources: [] }, requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Seed.swift' } }],
-      documents: [], patches: [], storedPrompts: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
+      documents: [], patches: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
       discoveryHints: [], budgetUnits: 200000, outputName: 'overflow' };
     for (const count of [maximumCandidateDemandCount + 1, maximumCandidateDemandCount]) {
       if (count === maximumCandidateDemandCount) await writeFile(join(root, 'Peer' + maximumCandidateDemandCount + '.swift'), 'struct OtherRecord {}\n');

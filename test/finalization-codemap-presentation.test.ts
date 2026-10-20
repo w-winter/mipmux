@@ -13,7 +13,7 @@ const peerBody = 'struct PeerRecord { let value: Int }\n';
 const hiddenBody = 'struct HiddenRecord { let value: Int }\n';
 const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
   initialSelection: { codemapMode: 'automatic', sources: [] }, requiredSources: [{ kind: 'full', source: { root: 'a', path: 'Seed.swift' } }],
-  documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000,
+  documents: [], patches: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000,
   discoveryHints: [], outputName: 'packet' };
 
 async function fixture(before: (base: string, operation: NativeOperation) => Promise<void>, after: (base: string, operation: NativeOperation) => Promise<void>) {

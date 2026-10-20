@@ -5,11 +5,14 @@ import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { NativeDiscoveryMessageInput } from '../src/contracts/native.js';
 
-const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: NativeDiscoveryMessageInput, expected: Type.String() })));
+const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: Type.Object({
+  kind: Type.Literal('renderDiscoveryMessage'), tokenBudget: Type.Integer(), fileTree: Type.String(),
+  currentPrompt: Type.String(), discoveryInstructions: Type.String(),
+  contextBuilderPrompts: Type.Array(Type.Object({ title: Type.String(), content: Type.String() })),
+}), expected: Type.String() })));
 const reply = Compile(Type.Object({ kind: Type.Literal('terminal'), result: Type.Object({
-  kind: Type.Literal('discoveryMessage'), text: Type.String(),
+  kind: Type.Literal('discoveryPrompt'), message: Type.String(),
 }) }));
 
 const sourceCompressionClaim = '- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage';
@@ -17,11 +20,16 @@ const representationGuidance = '- Selected files use full content, slices, or co
 
 test('native startup renderer preserves RPCE ordering with the approved representation guidance correction', async () => {
   const cases = fixtures.Parse(JSON.parse(await readFile(resolve('test/fixtures/rpce-discovery-message/cases.json'), 'utf8')));
+  const template = await readFile('prompts/discovery.md', 'utf8');
   const proof: { name: string; bytes: number }[] = [];
-  for (const entry of cases) {
+  for (const entry of cases.filter(entry => entry.input.contextBuilderPrompts.length === 0)) {
     const generation = 'startup-reference';
-    const nativeFrame = callNative(entry.input, generation, entry.name);
-    const rendered = reply.Parse(nativeFrame).result.text;
+    const nativeFrame = callNative({ kind: 'renderDiscoveryPrompt', template, tokenBudget: entry.input.tokenBudget,
+      enhancementMode: 'preserve', purpose: 'investigation', task: entry.input.currentPrompt,
+      allowClarifyingQuestions: false, questionTimeoutSeconds: 300, restrictsReviewGitToExplicitReadOnly: true,
+      reviewRootNames: [], fileTree: entry.input.fileTree, currentPrompt: entry.input.currentPrompt,
+      discoveryInstructions: entry.input.discoveryInstructions }, generation, entry.name);
+    const rendered = reply.Parse(nativeFrame).result.message;
     assert.equal(rendered, entry.expected.replace(sourceCompressionClaim, representationGuidance), entry.name);
     proof.push({ name: entry.name, bytes: Buffer.byteLength(rendered) });
   }

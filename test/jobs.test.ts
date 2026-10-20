@@ -4,44 +4,62 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { SmipRuntime, type ContextBuildRequest } from '../src/index.js';
+import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
+import { contextRequestValidator } from '../src/contracts/context.js';
 import type { JobSnapshot } from '../src/contracts/jobs.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import { compose } from '../src/cli/config.js';
+import { WorkspaceFailure } from '../src/workspace/values.js';
 
-test('the user assembly ceiling rejects caller overrides before discovery and permits allowances at the ceiling', async () => {
+test('configured context defaults resolve omitted settings and explicit request overrides across drafts and jobs', async () => {
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(join(tmpdir(), 'smip-assembly-budget-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out'));
-  const contextBudgetUnits = 10000;
+  const contextBudgetUnits = 350000;
   const options = { copyContext: copyContext(), cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
-    contextBudgetUnits };
+    contextBudgetUnits, defaultEnhancementMode: 'preserve' as const };
   const { runtime } = compose({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000 }, null);
   const signal = new AbortController().signal;
-  let calls = 0;
-  const runner: DiscoveryRunner = { run: async () => { calls++; throw new Error('Unexpected discovery dispatch'); } };
-  const request: ContextBuildRequest = { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
-    documents: [], patches: [], budgetUnits: contextBudgetUnits,
-    discoveryHints: [], outputName: 'packet' };
+  const observed: { enhancementMode: string; tokenBudget: number }[] = [];
+  const runner: DiscoveryRunner = { run: async input => {
+    observed.push({ enhancementMode: input.enhancementMode, tokenBudget: input.tokenBudget });
+    throw new WorkspaceFailure('fixtureDefaultsObserved');
+  } };
+  const request = { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation' as const, requiredSources: [],
+    documents: [], patches: [], discoveryHints: [] };
+  const cases = [
+    { name: 'defaults', overrides: {}, enhancementMode: 'preserve', budgetUnits: contextBudgetUnits },
+    { name: 'mode', overrides: { enhancementMode: 'augment' }, enhancementMode: 'augment', budgetUnits: contextBudgetUnits },
+    { name: 'budget', overrides: { budgetUnits: 500000 }, enhancementMode: 'preserve', budgetUnits: 500000 },
+    { name: 'both', overrides: { enhancementMode: 'fullRewrite', budgetUnits: 123000 }, enhancementMode: 'fullRewrite', budgetUnits: 123000 },
+  ] as const;
   try {
     const client = runtime.createClient(runner);
-    const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'root') }], exclusions: [], outputRoot: join(directory, 'out') }, signal);
+    const spec = { roots: [{ name: 'r', absolutePath: join(directory, 'root') }], exclusions: [], outputRoot: join(directory, 'out') };
+    const workspace = await client.declare(spec, signal);
+    const manualWorkspace = await runtime.declare(spec, signal);
     const terminals: JobSnapshot[] = [];
-    for (const budgetUnits of [contextBudgetUnits + 1]) {
-      await assert.rejects(client.createDraft(workspace.id, { ...request, budgetUnits }, signal), /assemblyBudgetExceeded/);
-      const job = client.build(workspace.id, 'oversized', { ...request, budgetUnits });
+    for (const entry of cases) {
+      const input = contextRequestValidator.Parse({ ...request, ...entry.overrides, outputName: entry.name });
+      const draft = await manualWorkspace.createDraft(input, signal);
+      const result = await draft.finalize(signal);
+      assert(result.kind === 'ready');
+      assert.equal(result.manifest.request.enhancementMode, entry.enhancementMode);
+      assert.equal(result.manifest.request.budgetUnits, entry.budgetUnits);
+      assert.equal(result.manifest.accounting.allowance, entry.budgetUnits);
+      await verifyBundle(result.directory); await verifyCurrentBundle(result.directory, runtime, signal);
+      await draft.close();
+      const job = client.build(workspace.id, entry.name, input);
       const terminal = await client.wait(job.jobId, 10000, signal, () => {});
       assert.equal(terminal.state, 'failed');
       if (terminal.state !== 'failed') assert.fail('Not failed');
-      assert.equal(terminal.code, 'assemblyBudgetExceeded');
+      assert.equal(terminal.code, 'fixtureDefaultsObserved');
       terminals.push(terminal);
     }
-    assert.equal(calls, 0);
-    const draft = await client.createDraft(workspace.id, request, signal);
-    const inspection = (await client.inspect(draft.id, { view: 'metadata', continuation: null, maxOutputBytes: 10000 }, new AbortController().signal));
-    assert(inspection.kind === 'metadata'); assert.equal(inspection.measurement.allowance, contextBudgetUnits);
-    await writeFile(join(directory, 'assembly-budget-proof.json'), JSON.stringify({ contextBudgetUnits, calls, terminals, inspection }, null, 2));
+    await manualWorkspace.close();
+    assert.deepEqual(observed, cases.map(entry => ({ enhancementMode: entry.enhancementMode, tokenBudget: entry.budgetUnits - 1500 })));
+    await writeFile('test-output/configured-defaults.json', JSON.stringify({ contextBudgetUnits, cases, observed, terminals }, null, 2) + '\n');
   } finally { await runtime.close(); }
 });
 
@@ -61,7 +79,7 @@ test('client jobs deduplicate admission, isolate ids, release cancelled work', a
   const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
-  const request: ContextBuildRequest = { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+  const request: ContextBuildRequest = { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
     documents: [], patches: [], budgetUnits: 10000,
     discoveryHints: [], outputName: 'packet' };
   try {

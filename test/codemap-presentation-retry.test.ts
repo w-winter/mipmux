@@ -59,7 +59,7 @@ async function fixture(mode: CodemapMode, scenario: Scenario, maximumAttempts: n
     ? { codemapMode: mode, sources: [{ kind: 'codemap' as const, source: { root: 'b', path: 'h.swift' } }] }
     : { codemapMode: mode, sources: [{ kind: 'full' as const, source: { root: 'b', path: 'Seed.swift' } }] };
   const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-    initialSelection, requiredSources: [required], documents: [], patches: [], storedPrompts: [],
+    initialSelection, requiredSources: [required], documents: [], patches: [],
     duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: scenario }, signal);
   const get = () => client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
     op: 'get', view: 'content', maxOutputBytes: 30000,

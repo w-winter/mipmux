@@ -6,7 +6,7 @@ import { createAgentSession, createExtensionRuntime, ModelRuntime, SessionManage
 import { InMemoryModelsStore, lazyStream, type AssistantMessage } from '@earendil-works/pi-ai';
 import type { ThinkingLevel } from '@earendil-works/pi-agent-core';
 import type { Completion, DiscoveryEvent, DiscoveryReceipt } from '../contracts/discovery.js';
-import type { DiscoveryInput } from './runner.js';
+import type { DiscoverySessionInput as DiscoveryInput } from './pi-protocol.js';
 import type { Evidence, PiConfig } from './pi-protocol.js';
 import { canonicalJSON, sha256, freeze, WorkspaceFailure } from '../workspace/values.js';
 import { createCredentials, rejectCommands } from './pi-credentials.js';

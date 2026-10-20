@@ -16,9 +16,8 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .sliceReadText(input): input.render()
     case let .renderFileBlock(input): input.render()
     case let .selection(input): try await input.render()
-    case let .renderDiscoveryPrompt(input): input.render()
+    case let .renderDiscoveryPrompt(input): try input.render()
     case let .askUser(input): try input.render()
-    case let .renderDiscoveryMessage(input): input.render()
     case let .renderFileTree(input): input.render()
     case let .renderPromptAssembly(input): input.render()
     case let .calculateTokenStats(input): try input.render()
@@ -48,8 +47,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
             path: path,
             expected: expected,
             request: request,
-            extraction: extraction
-        )
+            extraction: extraction)
     case let .extract(ext, bytes, expected): try extraction.extract(extension: ext, bytes: bytes, expected: expected)
     case let .beginExport(root, name): try files.beginExport(root, name: name)
     case let .beginGitSnapshot(root, repoKey, snapshotID):
@@ -70,15 +68,13 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
             run,
             filename: filename,
             bytes: bytes,
-            publish: false
-        )
+            publish: false)
     case let .readExport(run, filename): try files.readExport(run, filename: filename)
     case let .publishManifest(run, bytes): try files.writeExport(
             run,
             filename: "manifest.json",
             bytes: bytes,
-            publish: true
-        )
+            publish: true)
     }
 }
 

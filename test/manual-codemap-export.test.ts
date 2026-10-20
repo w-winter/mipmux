@@ -47,7 +47,7 @@ async function fixture(effect: 'optional' | 'changed' | 'cancel') {
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'a', path: 'full.txt' } },
       { kind: 'codemap', source: { root: 'a', path: 'Ready.swift' } }, { kind: 'codemap', source: { root: 'a', path: 'Empty.swift' } },
       { kind: 'codemap', source: { root: 'b', path: 'Healthy.swift' } }] },
-    requiredSources: [], documents: [], patches: [], storedPrompts: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
     budgetUnits: 100000, discoveryHints: [], outputName: 'packet' }, signal());
   if (effect === 'changed') await writeFile(join(base, 'a/Ready.swift'), 'struct ChangedReadableSource {}\n');
   armed = effect === 'cancel';

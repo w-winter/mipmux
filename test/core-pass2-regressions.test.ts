@@ -31,7 +31,7 @@ async function fixture(prefix: string) {
   await writeFile(join(root, 'other.txt'), 'independent sibling body\n');
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: native, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
-  const request: ContextBuildRequest = { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
+  const request: ContextBuildRequest = { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [], discoveryHints: [],
     outputName: 'packet', budgetUnits: 100000 };
   return { base, root, options, request, spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot } };

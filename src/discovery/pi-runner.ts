@@ -6,7 +6,7 @@ import { failureResult, piToolResult } from '../runtime/tool-result.js';
 import { freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import type { DiscoveryReceipt, DiscoveryEvent } from '../contracts/discovery.js';
 import type { DiscoveryInput, DiscoveryOutcome, DiscoveryRunner, DiscoveryTools } from './runner.js';
-import { piConfigValidator, workerValidator, type PiConfig, type WorkerMessage } from './pi-protocol.js';
+import { piConfigValidator, workerValidator, type PiConfig, type WorkerMessage, type DiscoverySessionInput } from './pi-protocol.js';
 import { receive, send } from './pi-channel.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -14,13 +14,41 @@ import { SHA256 } from '../contracts/workspace.js';
 import { completeDiscovery } from './completion.js';
 import { readRegularFile } from '../runtime/host-files.js';
 import { admitMcpConfiguration, type AdmittedMcp } from './mcp-config.js';
-import { bindDiscoveryPrompt } from './prompt-bindings.js';
+import { prepareDiscoveryInput, type DiscoveryPromptRenderer } from '../context/discovery-input.js';
+import type { SourceIdentity } from '../contracts/workspace.js';
 
 const dependencyValidator = Compile(Type.Object({ buildLockSHA256: SHA256 }, { additionalProperties: false }));
+const systemFileFailure = Compile(Type.Object({ code: Type.String() }));
+
+async function readDiscoveryTemplate(path: string, signal: AbortSignal) {
+  let bytes: Buffer;
+  try { bytes = await readRegularFile(path, new WorkspaceFailure('nonRegularDiscoveryTemplate'), signal); }
+  catch (error) {
+    signal.throwIfAborted();
+    if (error instanceof WorkspaceFailure) throw error;
+    if (systemFileFailure.Check(error)) {
+      throw new WorkspaceFailure('discoveryTemplateReadFailed', { systemCode: error.code });
+    }
+    throw error;
+  }
+  try { return { bytes, text: new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }; }
+  catch (cause) {
+    const failure = new WorkspaceFailure('invalidDiscoveryTemplate', { kind: 'encoding' });
+    failure.cause = cause;
+    throw failure;
+  }
+}
+
+function logTemplateRejection(error: WorkspaceFailure, path: string, identity: SourceIdentity | null) {
+  const record = { level: 'error', event: 'discoveryTemplateRejected', code: error.code,
+    templatePath: path, ...error.details };
+  if (identity) Object.assign(record, { templateSHA256: identity.sha256 });
+  process.stderr.write(JSON.stringify(record) + '\n');
+}
 
 export class PiRunner implements DiscoveryRunner {
   readonly config: PiConfig;
-  constructor(config: PiConfig, private readonly supervisor: ProcessSupervisor) {
+  constructor(config: PiConfig, private readonly supervisor: ProcessSupervisor, private readonly renderPrompt: DiscoveryPromptRenderer) {
     if (!piConfigValidator.Check(config)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
     if (Object.keys(config.environment).some(name => name === 'NODE_OPTIONS' || name.startsWith('PI_'))) {
       throw new WorkspaceFailure('unsafeWorkerEnvironment');
@@ -30,20 +58,22 @@ export class PiRunner implements DiscoveryRunner {
   async run(input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal,
     progress: (event: DiscoveryEvent) => void): Promise<DiscoveryOutcome> {
     signal.throwIfAborted();
-    let prompt: Buffer, promptText: string, promptVersion: string;
-    if (this.config.prompt.kind === 'file') {
-      prompt = await readRegularFile(this.config.prompt.path, new WorkspaceFailure('nonRegularDiscoveryPrompt'), signal);
-      try { promptText = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(prompt); }
-      catch (cause) {
-        const failure = new WorkspaceFailure('invalidDiscoveryPrompt'); failure.cause = cause; throw failure;
-      }
-      // compat-ok: Explicit custom files require this single marker; no other format is accepted.
-      if (!promptText.startsWith('# smip discovery v1\n')) throw new WorkspaceFailure('invalidDiscoveryPrompt');
-      promptVersion = 'custom-file-v1';
-    } else {
-      promptText = bindDiscoveryPrompt(input.systemPrompt); prompt = Buffer.from(promptText);
-      promptVersion = 'rpce-43a9c29';
+    let admitted: Awaited<ReturnType<typeof readDiscoveryTemplate>>;
+    try { admitted = await readDiscoveryTemplate(this.config.promptTemplatePath, signal); }
+    catch (error) {
+      signal.throwIfAborted();
+      if (error instanceof WorkspaceFailure) logTemplateRejection(error, this.config.promptTemplatePath, null);
+      throw error;
     }
+    const templateIdentity = { sha256: sha256(admitted.bytes), byteCount: admitted.bytes.length };
+    let prepared: Awaited<ReturnType<typeof prepareDiscoveryInput>>;
+    try { prepared = await prepareDiscoveryInput(input, admitted.text, signal, this.renderPrompt); }
+    catch (error) {
+      signal.throwIfAborted();
+      if (error instanceof WorkspaceFailure) logTemplateRejection(error, this.config.promptTemplatePath, templateIdentity);
+      throw error;
+    }
+    signal.throwIfAborted();
     let mcp: AdmittedMcp | null;
     try { mcp = this.config.mcp ? await admitMcpConfiguration(this.config.mcp, signal) : null; }
     catch (error) {
@@ -54,8 +84,10 @@ export class PiRunner implements DiscoveryRunner {
     const dependency: unknown = JSON.parse(await readFile(new URL('../dependency-identity.json', import.meta.url), 'utf8'));
     if (!dependencyValidator.Check(dependency)) throw new WorkspaceFailure('invalidDependencyIdentity');
     const receipt: DiscoveryReceipt = {
-      adapter: 'smip-pi-v1', sdk: '1.0.2', buildLockSHA256: dependency.buildLockSHA256,
-      promptVersion, promptSHA256: sha256(prompt),
+      adapter: 'smip-pi-v2', sdk: '1.0.2', buildLockSHA256: dependency.buildLockSHA256,
+      templateVersion: 'smip-discovery-template-v1',
+      template: { path: this.config.promptTemplatePath, identity: templateIdentity },
+      policyIdentity: { sha256: sha256(prepared.systemPrompt), byteCount: Buffer.byteLength(prepared.systemPrompt) },
       requested: { provider: this.config.provider, model: this.config.model, thinking: this.config.thinking },
       effective: null, policy: structuredClone(this.config.policy), completions: [], events: [], prompt: 'notStarted',
       finalAssistant: null,
@@ -127,9 +159,11 @@ export class PiRunner implements DiscoveryRunner {
       void work.then(() => pending.delete(work), retire);
     }, retire);
     signal.addEventListener('abort', abort, { once: true });
+    const sessionInput: DiscoverySessionInput = { message: prepared.message, initialContext: input.initialContext };
+    if (input.clarification) sessionInput.clarification = input.clarification;
     if (signal.aborted) abort();
     else send(child.child.stdin, { ...scope, kind: 'start', config: this.config,
-      input: { ...input, hints: [...input.hints], roots: [...input.roots] }, prompt: promptText, mcp });
+      input: sessionInput, prompt: prepared.systemPrompt, mcp });
     const closed = await child.closed;
     admission = false; cancel.abort();
     await Promise.allSettled([...pending]);

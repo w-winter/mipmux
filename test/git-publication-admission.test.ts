@@ -30,7 +30,7 @@ test('production publication admits current checkout subsets but refuses changed
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const request = (sources: SourceSelection[], outputName: string): ContextBuildRequest => ({ task: 'Collect evidence', constraints: '',
     enhancementMode: 'preserve', purpose: 'review', initialSelection: { codemapMode: 'manual', sources }, requiredSources: [], documents: [], patches: [],
-    copyPreset: 'standard', storedPrompts: [], duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName });
+    copyPreset: 'standard', duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName });
   const input = gitValidator.Parse(gitValidator.Default({ op: 'diff', root: 'a', maxOutputBytes: 100000 })); assert(input.op === 'diff');
   const options = { mode: 'standard' as const, scope: 'all' as const, snapshotID: null,
     inlineMap: true, inlineMode: 'brief', inlineMaxLines: 120 };

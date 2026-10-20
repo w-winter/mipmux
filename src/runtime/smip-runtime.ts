@@ -3,7 +3,7 @@ import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { BridgeClient } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
 import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
-import { contextRequestValidator, type ContextBuildRequest } from '../contracts/context.js';
+import { contextRequestValidator, PromptEnhancementMode, type ContextBuildRequest } from '../contracts/context.js';
 import { CopyContext } from '../contracts/presentation.js';
 import { Compile } from 'typebox/compile';
 import type { NativeOperation, NativeHandle } from '../contracts/native.js';
@@ -28,8 +28,10 @@ interface GitSnapshotMutationOwner { tail: Promise<void>; bridge: BridgeClient |
 
 export interface RuntimeOptions {
   readonly copyContext: CopyContext;
-  /** User-owned maximum packet allowance in utf8-21-over-80-v1 units; larger request allowances are rejected. */
+  /** Default packet allowance in utf8-21-over-80-v1 units; an explicit request value takes precedence. */
   readonly contextBudgetUnits: number;
+  /** Default task mode; omission selects Augment. An explicit request mode takes precedence. */
+  readonly defaultEnhancementMode?: PromptEnhancementMode;
   readonly cachePath: string;
   readonly nativeExecutable: string;
   readonly nativeEnvironment: Readonly<Record<string, string>>;
@@ -41,6 +43,7 @@ export interface RuntimeOptions {
 }
 
 export class SmipRuntime {
+  readonly options: RuntimeOptions & { readonly defaultEnhancementMode: PromptEnhancementMode };
   readonly supervisor: ProcessSupervisor;
   readonly artifacts: ArtifactStore;
   readonly #owners = new Map<string, WorkspaceRuntime>();
@@ -52,9 +55,11 @@ export class SmipRuntime {
   #vcsBridge: BridgeClient | null = null;
   readonly #shutdown = new AbortController();
   #closing: Promise<void> | null = null;
-  constructor(readonly options: RuntimeOptions) {
+  constructor(options: RuntimeOptions) {
     if (!Compile(CopyContext).Check(options.copyContext)) throw new WorkspaceFailure('invalidCopyContext');
-    this.options = freeze(structuredClone(options));
+    const defaultEnhancementMode = options.defaultEnhancementMode === undefined ? 'augment' : options.defaultEnhancementMode;
+    if (!Compile(PromptEnhancementMode).Check(defaultEnhancementMode)) throw new WorkspaceFailure('invalidDefaultEnhancementMode');
+    this.options = freeze({ ...structuredClone(options), defaultEnhancementMode });
     if (!Number.isSafeInteger(options.contextBudgetUnits) || options.contextBudgetUnits < 1) {
       throw new WorkspaceFailure('invalidContextBudget');
     }
@@ -116,7 +121,7 @@ export class SmipRuntime {
     return work;
   }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
-  renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
+  renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const captured = structuredClone(input), combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const work = (async () => {
@@ -267,7 +272,10 @@ export class SmipRuntime {
   async createDraft(owner: WorkspaceRuntime, request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}): Promise<DraftRuntime> {
     if (this.#closing) throw new WorkspaceFailure('runtimeClosed');
     if (!contextRequestValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
-    const captured = freeze(structuredClone(request));
+    const snapshot = structuredClone(request);
+    const captured = freeze({ ...snapshot,
+      enhancementMode: snapshot.enhancementMode ?? this.options.defaultEnhancementMode,
+      budgetUnits: snapshot.budgetUnits ?? this.options.contextBudgetUnits });
     const release = owner.retain();
     const work = (async () => {
       const combined = AbortSignal.any([signal, this.#shutdown.signal]);

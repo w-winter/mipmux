@@ -63,7 +63,7 @@ async function fixture() {
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: repo }], exclusions: [], outputRoot: out }, signal());
   const draft = await workspace.createDraft({ task: 'Capture complete Git evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'tracked.txt' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [], duplicateUserInstructionsAtTop: false,
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
     discoveryHints: [], budgetUnits: 200000, outputName: 'packet' }, signal());
   const request = (compare: string, paths: string[] = []) => {
     const value = gitValidator.Parse(gitValidator.Default({ op: 'diff', root: 'r', compare, paths, detail: 'summary', maxOutputBytes: 1 }));

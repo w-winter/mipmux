@@ -11,3 +11,5 @@ await mkdir(out, { recursive: true });
 await writeFile(join(out, 'dependency-identity.json'), JSON.stringify({
   buildLockSHA256: createHash('sha256').update(await readFile(join(root, 'package-lock.json'))).digest('hex'),
 }) + '\n');
+await mkdir(join(out, 'prompts'), { recursive: true });
+await writeFile(join(out, 'prompts/discovery.md'), await readFile(join(root, 'prompts/discovery.md')));

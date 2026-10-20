@@ -22,10 +22,10 @@ test('built CLI warms, explores, renders, verifies, invalidates and emits failed
   const directory = provider.directory, root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'model.swift'), 'struct Example {\n let name: String\n}\n');
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };
-  const request = { task: 'Caller task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }],
-    documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
+  const request = { task: 'Caller task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'planning', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }],
+    documents: [], patches: [], discoveryHints: [], outputName: 'packet' };
   const config = { copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-    nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, git: null, discovery: provider.config };
+    nativeEnvironment: {}, contextBudgetUnits: 100000, defaultEnhancementMode: 'augment', credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, git: null, discovery: provider.config };
   const files = { config: join(directory, 'config.json'), spec: join(directory, 'spec.json'), input: join(directory, 'input.json'),
     request: join(directory, 'request.json'), draft: join(directory, 'draft.json'), build: join(directory, 'build.json') };
   await writeFile(files.config, JSON.stringify(config)); await writeFile(files.spec, JSON.stringify(spec));
@@ -45,7 +45,9 @@ test('built CLI warms, explores, renders, verifies, invalidates and emits failed
     assert.equal((await cli(['tool', 'get_file_tree', '--workspace', files.spec, '--input', files.input, '--config', files.config])).code, 1);
     const rendered = await cli(['render', '--request', files.request, '--draft', files.draft, '--config', files.config]);
     assert.equal(rendered.code, 0, rendered.out);
-    const bundle = JSON.parse(rendered.out).directory;
+    const result = JSON.parse(rendered.out), bundle = result.directory;
+    assert.equal(result.manifest.request.enhancementMode, 'augment');
+    assert.equal(result.manifest.request.budgetUnits, config.contextBudgetUnits);
     await verifyBundle(bundle);
     await promisify(execFile)(process.execPath, ['--experimental-loader', resolve('test/fixtures/reject-transport-imports.mjs'),
       resolveCommand, 'verify', '--bundle', bundle, '--mode', 'integrity'], { cwd: '/', maxBuffer: 10 * 1024 * 1024 });
@@ -90,7 +92,7 @@ test('CLI build interruption returns a settled cancelled receipt and exit 130', 
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
     nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, defaultMaxOutputBytes: 10000, git: null, discovery: provider.config }));
   await writeFile(request, JSON.stringify({ workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'one',
-    request: { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
+    request: { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
       outputName: 'packet', budgetUnits: 10000 } }));
   const child = spawn(process.execPath, [resolveCommand, 'build', '--request', request, '--config', config], { cwd: '/', stdio: 'pipe' });
   const stdout: Buffer[] = []; child.stdout.on('data', chunk => stdout.push(chunk)); child.stderr.resume();

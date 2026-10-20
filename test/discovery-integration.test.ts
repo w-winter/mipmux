@@ -1,3 +1,4 @@
+import { nativeDiscoveryRenderer } from './fixtures/render-discovery-prompt.js';
 import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -40,12 +41,17 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
   const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [provider.config.authPath, provider.config.modelsPath], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
-    const runner = new PiRunner(provider.config, runtime.supervisor), inputs: DiscoveryInput[] = [];
+    const messages: string[] = [];
+    const runner = new PiRunner(provider.config, runtime.supervisor, async (operation, signal) => {
+      const result = await runtime.renderPresentation(operation, signal);
+      if (result.kind === 'discoveryPrompt') messages.push(result.message);
+      return result;
+    }), inputs: DiscoveryInput[] = [];
     const client = runtime.createClient({ run: (input, tools, signal, progress) => {
       inputs.push(input); return runner.run(input, tools, signal, progress);
     } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] }, new AbortController().signal);
-    const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: 'Keep complete evidence', enhancementMode: 'augment' as const, purpose: 'investigation',
+    const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: 'Keep complete evidence', enhancementMode: 'augment' as const, purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'synthetic', text: report }], patches: [],
       budgetUnits: 100000, discoveryHints: [], outputName: 'packet' };
@@ -57,10 +63,11 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     const firstMessage = Compile(Type.Object({ content: Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() }), { minItems: 1 }) }))
       .Parse(provider.requests[0]!.messages[0]);
     const input = inputs[0]!;
-    assert.equal(firstMessage.content[0]!.text, input.message + '\n\n<smip_runtime>\n' + input.initialContext + '\n</smip_runtime>');
-    assert(input.message.includes('<current_prompt_content>\n' + request.task + '\n</current_prompt_content>'));
+    assert.equal(firstMessage.content[0]!.text, messages[0] + '\n\n<smip_runtime>\n' + input.initialContext + '\n</smip_runtime>');
+    assert.equal(input.currentPrompt, request.task);
+    assert(messages[0]?.includes('<current_prompt_content>\n' + request.task + '\n</current_prompt_content>'));
     assert(input.initialContext.includes(request.constraints));
-    assert.equal(input.tokenBudget, request.budgetUnits - 1500);
+    assert.equal(input.tokenBudget, result.bundle.manifest.request.budgetUnits - 1500);
     await verifyBundle(result.bundle.directory);
     const packet = await readFile(join(result.bundle.directory, 'context.md'), 'utf8');
     for (const text of [source.slice(1), report, request.task, request.constraints]) assert(packet.includes(text));
@@ -92,7 +99,7 @@ test('cancellation during blocked SDK preflight joins forced closure before any 
   await promisify(execFile)('mkfifo', [fifo]);
   provider.config.authPath = fifo;
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 }), abort = new AbortController();
-  const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', roots: [], hints: [] },
+  const work = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: [], hints: [] },
     { call: async () => { throw new Error('No tool permitted'); } }, abort.signal, () => {});
   // Opening the writer proves that the child is blocked in the matching read, without a timing delay.
   const writer = await open(fifo, 'w');
@@ -120,15 +127,15 @@ test('discovery material paging measures the real Pi result and returns every co
   const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
-    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
+    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
     const originalCall = client.inspect.bind(client);
-    const draft = await client.createDraft(workspace.id, { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+    const draft = await client.createDraft(workspace.id, { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'fixture', text }], patches: [], discoveryHints: [],
       outputName: 'packet', budgetUnits: 10000 }, new AbortController().signal);
-    const runner = new PiRunner(provider.config, runtime.supervisor);
+    const runner = new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal));
     const returned: string[] = [];
-    const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: ['r'] }, {
+    const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: ['r'] }, {
       call: async (call, _signal, encode) => {
         assert(call.name === 'draft_inspect');
         const page = await originalCall(draft.id, call.input, _signal, encode);
@@ -142,7 +149,7 @@ test('discovery material paging measures the real Pi result and returns every co
     }, new AbortController().signal, () => {});
     assert.equal(result.kind, 'complete'); assert.equal(returned.join(''), text); assert.equal(continuation, null);
     calls = 1;
-    const job = client.build(workspace.id, 'paging', { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
+    const job = client.build(workspace.id, 'paging', { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
       documents: [{ kind: 'suppliedDocument', id: 'report', role: 'report', origin: 'fixture', text }], patches: [], discoveryHints: [],
       outputName: 'builder', budgetUnits: 10000 });
     const built = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});
@@ -168,7 +175,7 @@ test('forced worker closure preserves observed preflight and waits for parent-ow
   const supervisor = new Supervisor({ terminationGraceMs: 0 }), abort = new AbortController();
   try {
     let finished = false;
-    const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: [] },
+    const work = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
       { call: async () => { entered(); await released; return { kind: 'metadata' }; } }, abort.signal, () => {});
     void work.then(() => { finished = true; });
     await entering; abort.abort(); await closure;
@@ -211,7 +218,7 @@ test('summary retry uses the same SDK stream observer, while incomplete output a
     if (scenario === 'clamping') provider.config.thinking = 'max';
     const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), abort = new AbortController();
     try {
-      const work = new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: ['r'] },
+      const work = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: ['r'] },
         { call: async () => { toolCalls++; return { kind: 'metadata', body: 'data '.repeat(1000) }; } }, abort.signal, () => {});
       if (scenario === 'cancel' || scenario === 'compactionCancel') { await started; abort.abort(); }
       const result = await work;
@@ -242,9 +249,9 @@ test('normally completed budget-blocked SDK builder retains every committed hand
   const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
   try {
-    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor)), other = runtime.createClient(null);
+    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal))), other = runtime.createClient(null);
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
-    const job = client.build(workspace.id, 'handoff', { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [], documents: [], patches: [],
+    const job = client.build(workspace.id, 'handoff', { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'planning', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'blocked', budgetUnits: 1 });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {}); assert(result.state === 'blocked');
     const small = (await client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 2000 }, new AbortController().signal));

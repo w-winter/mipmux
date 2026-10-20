@@ -1,13 +1,6 @@
 // Derived from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3 under Apache-2.0.
-// Modified: captured DTOs, executable-local owner and existing native file-block formatter.
-// Preserve original source function boundaries and argument labels.
-// swiftlint:disable line_length
+// Modified: captured DTOs, constraints-only formatting and the native file-block formatter.
 import Foundation
-
-struct MetaInstruction {
-    let title: String
-    let content: String
-}
 
 // swiftlint:disable:next type_body_length
 enum RPCEClipboardPackaging {
@@ -44,8 +37,9 @@ enum RPCEClipboardPackaging {
 
     /// Produce file contents as an array of strings, each with the file path + raw content
     static func partitionPromptEntriesForGitDiff(
-        _ entries: [ResolvedPromptFileEntry]
-    ) -> (diffEntries: [ResolvedPromptFileEntry], codeEntries: [ResolvedPromptFileEntry]) {
+        _ entries: [ResolvedPromptFileEntry]) -> (diffEntries: [ResolvedPromptFileEntry], codeEntries: [
+        ResolvedPromptFileEntry
+    ]) {
         guard !entries.isEmpty else { return ([], []) }
         var diffEntries: [ResolvedPromptFileEntry] = []
         var codeEntries: [ResolvedPromptFileEntry] = []
@@ -63,24 +57,21 @@ enum RPCEClipboardPackaging {
     }
 
     static func selectedGitDiffText(
-        fromDiffEntries diffEntries: [ResolvedPromptFileEntry]
-    ) -> String? {
+        fromDiffEntries diffEntries: [ResolvedPromptFileEntry]) -> String? {
         let rawParts = generateRawFileTexts(diffEntries)
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         return rawParts.isEmpty ? nil : rawParts.joined(separator: "\n\n")
     }
 
     static func selectedGitDiffText(
-        from entries: [ResolvedPromptFileEntry]
-    ) -> String? {
+        from entries: [ResolvedPromptFileEntry]) -> String? {
         let (diffEntries, _) = partitionPromptEntriesForGitDiff(entries)
         return selectedGitDiffText(fromDiffEntries: diffEntries)
     }
 
     static func resolveGitDiff(
         fromDiffEntries diffEntries: [ResolvedPromptFileEntry],
-        fallback: @Sendable () async -> String?
-    ) async -> String? {
+        fallback: @Sendable () async -> String?) async -> String? {
         if let selected = selectedGitDiffText(fromDiffEntries: diffEntries) {
             return selected
         }
@@ -89,8 +80,7 @@ enum RPCEClipboardPackaging {
 
     static func resolveGitDiff(
         from entries: [ResolvedPromptFileEntry],
-        fallback: @Sendable () async -> String?
-    ) async -> String? {
+        fallback: @Sendable () async -> String?) async -> String? {
         if let selected = selectedGitDiffText(from: entries) {
             return selected
         }
@@ -98,8 +88,7 @@ enum RPCEClipboardPackaging {
     }
 
     static func generateRawFileTexts(
-        _ entries: [ResolvedPromptFileEntry]
-    ) -> [String] {
+        _ entries: [ResolvedPromptFileEntry]) -> [String] {
         guard !entries.isEmpty else { return [] }
         var blocks: [String] = []
         blocks.reserveCapacity(entries.count)
@@ -128,16 +117,18 @@ enum RPCEClipboardPackaging {
         _ files: [ResolvedPromptFileEntry],
         filePathDisplay: FilePathDisplay = .full,
         codemapPresentation: WorkspaceCodemapOperationPresentation,
-        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil
-    ) -> [String] {
-        let (_, contentBlocks) = generatePartitionedFileBlocks(files, filePathDisplay: filePathDisplay, codemapPresentation: codemapPresentation, displayPathResolver: displayPathResolver)
+        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil) -> [String] {
+        let (_, contentBlocks) = generatePartitionedFileBlocks(
+            files,
+            filePathDisplay: filePathDisplay,
+            codemapPresentation: codemapPresentation,
+            displayPathResolver: displayPathResolver)
         return contentBlocks
     }
 
     static func combinedFileMapContent(
         fileTreeContent: String?,
-        codemapBlocks: [String]
-    ) -> String? {
+        codemapBlocks: [String]) -> String? {
         let codemapContent = codemapBlocks.filter { !$0.isEmpty }.joined(separator: "\n\n")
         let combined = [fileTreeContent ?? "", codemapContent]
             .filter { !$0.isEmpty }
@@ -149,10 +140,16 @@ enum RPCEClipboardPackaging {
         _ files: [ResolvedPromptFileEntry],
         filePathDisplay: FilePathDisplay,
         codemapPresentation: WorkspaceCodemapOperationPresentation,
-        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil
-    ) -> (codemapBlocks: [String], contentBlocks: [String]) {
+        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil)
+        -> (codemapBlocks: [String], contentBlocks: [
+            String
+        ]) {
         let (_, codeEntries) = partitionPromptEntriesForGitDiff(files)
-        let detailed = generateFileBlocksDetailed(files: codeEntries, filePathDisplay: filePathDisplay, codemapPresentation: codemapPresentation, displayPathResolver: displayPathResolver)
+        let detailed = generateFileBlocksDetailed(
+            files: codeEntries,
+            filePathDisplay: filePathDisplay,
+            codemapPresentation: codemapPresentation,
+            displayPathResolver: displayPathResolver)
         var codemapBlocks: [String] = []
         var contentBlocks: [String] = []
 
@@ -172,8 +169,7 @@ enum RPCEClipboardPackaging {
         files: [ResolvedPromptFileEntry],
         filePathDisplay: FilePathDisplay,
         codemapPresentation: WorkspaceCodemapOperationPresentation,
-        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil
-    ) -> [ResolvedPromptFileBlockRecord] {
+        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil) -> [ResolvedPromptFileBlockRecord] {
         var blocks: [ResolvedPromptFileBlockRecord] = []
         guard !files.isEmpty else { return blocks }
 
@@ -186,7 +182,11 @@ enum RPCEClipboardPackaging {
 
             if entry.isCodemap {
                 if let rendered = codemapPresentation.renderedEntriesByFileID[file.id] {
-                    blocks.append(ResolvedPromptFileBlockRecord(entry: entry, file: file, text: rendered.text, isCodemap: true))
+                    blocks.append(ResolvedPromptFileBlockRecord(
+                        entry: entry,
+                        file: file,
+                        text: rendered.text,
+                        isCodemap: true))
                 }
                 continue
             }
@@ -196,9 +196,17 @@ enum RPCEClipboardPackaging {
             let text: String
             if let ranges = entry.lineRanges, !ranges.isEmpty {
                 let assembly = SliceAssemblyBuilder.build(from: content, ranges: ranges)
-                text = RPCEPromptFileBlocks.renderFileBlock(selectedPath: selectedPath, startFence: startFence, content: content, assembly: assembly).text
+                text = RPCEPromptFileBlocks.renderFileBlock(
+                    selectedPath: selectedPath,
+                    startFence: startFence,
+                    content: content,
+                    assembly: assembly).text
             } else {
-                text = RPCEPromptFileBlocks.renderFileBlock(selectedPath: selectedPath, startFence: startFence, content: content, assembly: SliceAssemblyBuilder.build(from: content, ranges: nil)).text
+                text = RPCEPromptFileBlocks.renderFileBlock(
+                    selectedPath: selectedPath,
+                    startFence: startFence,
+                    content: content,
+                    assembly: SliceAssemblyBuilder.build(from: content, ranges: nil)).text
             }
             blocks.append(ResolvedPromptFileBlockRecord(entry: entry, file: file, text: text, isCodemap: false))
         }
@@ -208,12 +216,11 @@ enum RPCEClipboardPackaging {
 
     // swiftlint:disable:next function_parameter_count
     static func generateClipboardContent(
-        metaInstructions: [MetaInstruction],
+        constraints: String,
         userInstructions: String,
         files: [ResolvedPromptFileEntry],
         fileTreeContent: String?,
         gitDiff: String? = nil,
-        includeSavedPrompts: Bool,
         includeFiles: Bool,
         includeUserPrompt: Bool,
         filePathDisplay: FilePathDisplay,
@@ -223,37 +230,37 @@ enum RPCEClipboardPackaging {
         disabledPromptSections: Set<PromptSection>,
         duplicateUserInstructionsAtTop: Bool,
         tabTitle: String? = nil,
-        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil
-    ) async -> String {
+        displayPathResolver: ((ResolvedPromptFileEntry) -> String?)? = nil) async -> String {
         let (diffEntries, codeEntries) = partitionPromptEntriesForGitDiff(files)
-        let (codemapBlocks, contentBlocks) = generatePartitionedFileBlocks(codeEntries, filePathDisplay: filePathDisplay, codemapPresentation: codemapPresentation, displayPathResolver: displayPathResolver)
+        let (codemapBlocks, contentBlocks) = generatePartitionedFileBlocks(
+            codeEntries,
+            filePathDisplay: filePathDisplay,
+            codemapPresentation: codemapPresentation,
+            displayPathResolver: displayPathResolver)
         let effectiveGitDiff = await resolveGitDiff(fromDiffEntries: diffEntries) { gitDiff }
         return generatePreparedClipboardContent(
-            metaInstructions: metaInstructions, userInstructions: userInstructions,
+            constraints: constraints, userInstructions: userInstructions,
             codemapBlocks: codemapBlocks, contentBlocks: contentBlocks,
             fileTreeContent: fileTreeContent, gitDiff: effectiveGitDiff,
-            includeSavedPrompts: includeSavedPrompts, includeFiles: includeFiles,
+            includeFiles: includeFiles,
             includeUserPrompt: includeUserPrompt, includeDatetimeInUserInstructions: includeDatetimeInUserInstructions,
             promptSectionsOrder: promptSectionsOrder, disabledPromptSections: disabledPromptSections,
-            duplicateUserInstructionsAtTop: duplicateUserInstructionsAtTop, tabTitle: tabTitle
-        )
+            duplicateUserInstructionsAtTop: duplicateUserInstructionsAtTop, tabTitle: tabTitle)
     }
 
     // Captured blocks already retain whole-file/slice framing; no source reread is needed for export.
     // swiftlint:disable:next function_body_length function_parameter_count
     static func generatePreparedClipboardContent(
-        metaInstructions: [MetaInstruction], userInstructions: String,
+        constraints: String, userInstructions: String,
         codemapBlocks: [String], contentBlocks: [String], fileTreeContent: String?, gitDiff: String?,
-        includeSavedPrompts: Bool, includeFiles: Bool, includeUserPrompt: Bool,
+        includeFiles: Bool, includeUserPrompt: Bool,
         includeDatetimeInUserInstructions: Bool, promptSectionsOrder: [PromptSection],
-        disabledPromptSections: Set<PromptSection>, duplicateUserInstructionsAtTop: Bool, tabTitle: String?
-    ) -> String {
+        disabledPromptSections: Set<PromptSection>, duplicateUserInstructionsAtTop: Bool, tabTitle: String?) -> String {
         var snippets: [PromptSection: String] = [:]
 
         if let combinedMap = combinedFileMapContent(
             fileTreeContent: fileTreeContent,
-            codemapBlocks: codemapBlocks
-        ) {
+            codemapBlocks: codemapBlocks) {
             snippets[.fileMap] = """
             <file_map>
             \(combinedMap)
@@ -272,8 +279,8 @@ enum RPCEClipboardPackaging {
             snippets[.fileContents] = snippet
         }
 
-        if includeSavedPrompts, let metaSnippet = buildMetaPromptsSnippet(metaInstructions) {
-            snippets[.metaPrompts] = metaSnippet
+        if !constraints.isEmpty {
+            snippets[.constraints] = "<constraints>\n" + constraints + "\n</constraints>\n"
         }
 
         if let diff = gitDiff, !diff.isEmpty {
@@ -313,8 +320,7 @@ enum RPCEClipboardPackaging {
             order: promptSectionsOrder,
             disabled: disabledPromptSections,
             duplicateUserInstructionsAtTop: duplicateUserInstructionsAtTop,
-            snippets: snippets
-        )
+            snippets: snippets)
 
         let prefix = Self.titleSnippet(for: tabTitle) ?? ""
         return prefix + clipboardContent
@@ -323,8 +329,7 @@ enum RPCEClipboardPackaging {
     private static func selectedPath(
         for entry: ResolvedPromptFileEntry,
         filePathDisplay: FilePathDisplay,
-        hasMultipleRoots: Bool
-    ) -> String {
+        hasMultipleRoots: Bool) -> String {
         if filePathDisplay == .relative {
             if hasMultipleRoots,
                let rootFolderPath = entry.rootFolderPath,
@@ -336,24 +341,4 @@ enum RPCEClipboardPackaging {
         }
         return entry.file.fullPath
     }
-
-    // MARK: - Shared builder for <meta prompt> blocks
-
-    /// Builds a formatted string containing all meta prompts in XML format
-    /// Returns nil if the meta instructions array is empty
-    private static func buildMetaPromptsSnippet(_ metas: [MetaInstruction]) -> String? {
-        guard !metas.isEmpty else { return nil }
-        var snippet = ""
-        for (index, meta) in metas.enumerated() {
-            snippet += """
-            <meta prompt \(index + 1) = "\(meta.title)">
-            \(meta.content)
-            </meta prompt \(index + 1)>
-
-            """
-        }
-        return snippet
-    }
 }
-
-// swiftlint:enable line_length

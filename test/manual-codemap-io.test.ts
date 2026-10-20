@@ -52,7 +52,7 @@ async function fixture(effect: Effect) {
   const draft = await workspace.createDraft({ task: 'Keep readable code structure', constraints: '', purpose: 'investigation', enhancementMode: 'preserve',
     initialSelection: { codemapMode: 'manual', sources: [target, { kind: 'codemap', source: { root: 'a', path: 'Healthy.swift' } },
       { kind: 'codemap', source: { root: 'b', path: 'Other.swift' } }, { kind: 'full', source: { root: 'a', path: 'full.txt' } }] },
-    requiredSources: effect === 'required' ? [target] : [], documents: [], patches: [], storedPrompts: [], copyPreset: 'standard',
+    requiredSources: effect === 'required' ? [target] : [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 100000, outputName: 'packet' }, signal());
   if (effect === 'missing' || effect === 'directory' || effect === 'symlink' || effect === 'required') {
     await rename(join(base, 'a/Target.swift'), join(base, 'original.swift'));

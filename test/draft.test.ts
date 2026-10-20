@@ -20,7 +20,7 @@ const handoff = {
 };
 const request: ContextBuildRequest = {
   task: 'Original task',
-  initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
+  initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '',
   enhancementMode: 'augment' as const, purpose: 'planning',
   requiredSources: [],
   documents: [],
@@ -417,9 +417,8 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
     }
     const runtime = new Runtime(f.options);
     try {
-      const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft({
-        ...request, budgetUnits: scenario === 'freeze' ? 1 : request.budgetUnits,
-      }, signal());
+      const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft(
+        scenario === 'freeze' ? { ...request, budgetUnits: 1 } : request, signal());
       pause = true;
       const pending = draft.update({
         expectedRevision: 0,

@@ -24,7 +24,7 @@ import { failureCode } from '../src/runtime/tool-result.js';
 const signal = () => new AbortController().signal;
 const maxOutputBytes = 100000;
 const request: ContextBuildRequest = {
-  task: 'Inspect the selected implementation and its dependencies', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
+  task: 'Inspect the selected implementation and its dependencies', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
   requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
   budgetUnits: 100000,
 };
@@ -446,7 +446,7 @@ test('held inferred acquisition cannot commit across cancellation, close, compet
     const entering = new Promise<void>(resolve => { entered = resolve; }), held = new Promise<void>(resolve => { release = resolve; });
     const f = await fixture(async path => { if (armed && path === 'SharedA.swift') { armed = false; entered(); await held; } });
     try {
-      const draft = await f.workspace.createDraft({ ...request, budgetUnits: scenario === 'freeze' ? 1 : request.budgetUnits }, signal()), abort = new AbortController(); armed = true;
+      const draft = await f.workspace.createDraft(scenario === 'freeze' ? { ...request, budgetUnits: 1 } : request, signal()), abort = new AbortController(); armed = true;
       const pending = draft.update({ expectedRevision: 0, maxOutputBytes, mutation: { kind: 'upsert', selection: fullSeed } }, abort.signal);
       const rejected = assert.rejects(pending, scenario === 'revision' ? /revisionConflict/ : scenario === 'freeze' ? /draftFrozen/ : /cancelled|aborted/i);
       await Promise.race([entering, pending.then(() => { throw new Error('Inferred read was not reached'); })]);
@@ -513,7 +513,7 @@ test('a real scripted scout resolves supplied-patch inferred mismatches before t
   });
   const f = await fixture();
   try {
-    const client = f.runtime.createClient(new PiRunner(provider.config, f.runtime.supervisor));
+    const client = f.runtime.createClient(new PiRunner(provider.config, f.runtime.supervisor, (operation, signal) => f.runtime.renderPresentation(operation, signal)));
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.directory, 'r') }],
       exclusions: [], outputRoot: join(f.directory, 'out') }, signal());
     const job = client.build(workspace.id, 'supplied-review', { ...request, enhancementMode: 'augment' as const, purpose: 'review', requiredSources: [fullSeed],

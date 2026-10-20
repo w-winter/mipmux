@@ -35,7 +35,7 @@ async function setup() {
   };
   const request: ContextBuildRequest = {
     task: 'Task',
-    initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
+    initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '',
     enhancementMode: 'augment' as const, purpose: 'investigation',
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'source.txt' } }],
     documents: [{ kind: 'localDocument', id: 'plan', role: 'plan', source: { root: 'r', path: 'local.md' } }],

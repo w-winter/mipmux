@@ -74,8 +74,8 @@ export async function exportPrompt(capture: Capture, request: Extract<PromptRequ
   if (request.copy_preset !== undefined) {
     const resolved = await capture.owner.runtime.renderPresentation({ kind: 'resolveCopyPreset', context: capturedRequest.copyContext,
       selector: request.copy_preset }, signal);
-    if (resolved.hasSelector && resolved.preset === null) throw new WorkspaceFailure('copyPresetNotFound');
-    if (resolved.preset !== null) capturedRequest = { ...capturedRequest, copyPreset: resolved.preset, copyPresetSelector: request.copy_preset };
+    if (resolved.preset === null) throw new WorkspaceFailure('copyPresetNotFound');
+    capturedRequest = { ...capturedRequest, copyPreset: resolved.preset, copyPresetSelector: request.copy_preset };
   }
   const operation = await capture.owner.fork(signal), bridge = capture.owner.runtime.makeBridge();
   try {

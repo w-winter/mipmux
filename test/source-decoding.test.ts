@@ -70,7 +70,7 @@ test('decoded source drives reads, full exports, slices, codemaps and saved/curr
       assert.equal(read.kind, 'read');
       if (read.kind === 'read') assert.equal(read.content, text);
     } finally { await operation.close(); }
-    const request = { task: 'Retain decoded evidence', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve' as const,
+    const request = { task: 'Retain decoded evidence', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'preserve' as const,
       purpose: 'investigation' as const, requiredSources: [], documents: [], patches: [], discoveryHints: [],
       budgetUnits: 200000, outputName: 'decoded-full' };
     const full = await workspace.createDraft({ ...request, requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Model.swift' } }] }, signal());
@@ -124,7 +124,7 @@ test('malformed mandatory Git ignore text cannot silently change source visibili
       const snapshot = await workspace.refresh(signal());
       assert.equal(snapshot.enumeration.kind, 'incomplete');
       if (snapshot.enumeration.kind === 'incomplete') assert(snapshot.enumeration.failures.some(failure => failure.code === 'decodeFailed'));
-      await assert.rejects(workspace.createDraft({ task: 'Inspect mandatory visibility', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve',
+      await assert.rejects(workspace.createDraft({ task: 'Inspect mandatory visibility', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'preserve',
         purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [], budgetUnits: 200000,
         outputName: 'invalid-controls' }, signal()), /enumerationIncomplete/);
       await writeFile(join(f.directory, 'control-decode-receipt.json'), JSON.stringify(snapshot.enumeration, null, 2) + '\n');

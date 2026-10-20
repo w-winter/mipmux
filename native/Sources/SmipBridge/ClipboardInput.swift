@@ -31,14 +31,12 @@ struct ResolvedPromptFileBlockRecord {
     let isCodemap: Bool
 }
 
-struct CapturedMeta: Decodable { let title: String; let content: String }
 struct ClipboardInput: Decodable {
-    let metaInstructions: [CapturedMeta]
+    let constraints: String
     let userInstructions: String
     let files: [ResolvedPromptFileEntry]
     let fileTreeContent: String?
     let gitDiff: String?
-    let includeSavedPrompts: Bool
     let includeFiles: Bool
     let includeUserPrompt: Bool
     let includeDatetimeInUserInstructions: Bool
@@ -56,8 +54,8 @@ struct ClipboardOperation {
         let object = try WireObject(value, keys: ["kind", "input"])
         let raw = try object.value("input")
         _ = try WireObject(raw, keys: [
-            "metaInstructions", "userInstructions", "files", "fileTreeContent", "gitDiff",
-            "includeSavedPrompts", "includeFiles", "includeUserPrompt", "includeDatetimeInUserInstructions",
+            "constraints", "userInstructions", "files", "fileTreeContent", "gitDiff",
+            "includeFiles", "includeUserPrompt", "includeDatetimeInUserInstructions",
             "filePathDisplay", "codemapPresentation", "promptSectionsOrder", "disabledPromptSections",
             "duplicateUserInstructionsAtTop", "tabTitle"
         ])
@@ -69,15 +67,14 @@ struct ClipboardOperation {
 
     func render() async -> [String: Any] {
         let text = await RPCEClipboardPackaging.generateClipboardContent(
-            metaInstructions: input.metaInstructions.map { MetaInstruction(title: $0.title, content: $0.content) },
+            constraints: input.constraints,
             userInstructions: input.userInstructions, files: input.files, fileTreeContent: input.fileTreeContent,
-            gitDiff: input.gitDiff, includeSavedPrompts: input.includeSavedPrompts, includeFiles: input.includeFiles,
+            gitDiff: input.gitDiff, includeFiles: input.includeFiles,
             includeUserPrompt: input.includeUserPrompt, filePathDisplay: input.filePathDisplay,
             codemapPresentation: input.codemapPresentation,
             includeDatetimeInUserInstructions: input.includeDatetimeInUserInstructions,
             promptSectionsOrder: input.promptSectionsOrder, disabledPromptSections: Set(input.disabledPromptSections),
-            duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: input.tabTitle
-        )
+            duplicateUserInstructionsAtTop: input.duplicateUserInstructionsAtTop, tabTitle: input.tabTitle)
         return ["kind": "clipboard", "text": text]
     }
 }

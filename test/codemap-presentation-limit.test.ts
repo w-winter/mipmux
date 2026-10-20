@@ -32,7 +32,7 @@ test('exact codemap presentation limits ready entries per root before rendering,
       exclusions: [], outputRoot: output }, signal);
     const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [{ kind: 'codemap', source: { root: 'r', path: 'Required.swift' } }],
-      documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard',
+      documents: [], patches: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard',
       budgetUnits: 200000, discoveryHints: [], outputName: 'presentation-limit' }, signal);
     const limited = await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
       op: 'set', mode: 'codemap_only', paths: [root, peer], view: 'content', maxOutputBytes: 4 * 1024 * 1024,

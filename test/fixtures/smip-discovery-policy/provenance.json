@@ -1,0 +1,40 @@
+{
+  "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+  "source": "Sources/RepoPrompt/Infrastructure/AI/SystemPromptService.swift",
+  "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
+  "sourceRanges": [
+    [
+      7,
+      607
+    ],
+    [
+      1091,
+      1137
+    ],
+    [
+      1277,
+      1287
+    ]
+  ],
+  "generator": "scripts/generate-discovery-policy-fixtures.mjs",
+  "generatorIdentity": {
+    "sha256": "bc9f86a0f6aec57c5ec3be439b277d71e85cf9ff547d3961eaa08b2bdec369ec",
+    "byteCount": 5842
+  },
+  "bindings": "scripts/reference-discovery-bindings.mjs",
+  "bindingsIdentity": {
+    "sha256": "a3901ab334632512b8af1d2013eb79b17dafe49dc2b89d318c3ef9905635f8a7",
+    "byteCount": 6407
+  },
+  "generatedHarnessIdentity": {
+    "sha256": "abf7d286817a223faf37721832e08071fd5b307c0f22a75aead089b516290cb2",
+    "byteCount": 44681
+  },
+  "catalog": "__SUPPORTED_LANGUAGES__",
+  "caseCount": 24,
+  "changes": [
+    "Stub external types and language catalog",
+    "Remove the single diagnostic stdout print",
+    "Apply checked test-only smip tool/runtime bindings; production composer and template are not imported"
+  ]
+}

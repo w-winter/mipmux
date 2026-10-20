@@ -30,7 +30,7 @@ async function fixture() {
   let mode: NativeMode = 'normal';
   class Runtime extends SmipRuntime {
     override async renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' |
-      'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderDiscoveryMessage' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
+      'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
       const result = await super.renderPresentation(input, signal);
       changeNativeOutput(result, mode);
       return result;
@@ -51,8 +51,8 @@ for (const task of ['Literal prompt λ', '']) test(`datetime export preserves ca
     const input = { task, constraints: 'Keep the source.', purpose: 'investigation' as const, enhancementMode: 'preserve' as const,
       initialSelection: { codemapMode: 'manual' as const, sources: [] }, duplicateUserInstructionsAtTop: true,
       includeDatetimeInUserInstructions: true, promptSectionsOrder: ['userInstructions' as const, 'fileContents' as const,
-        'fileMap' as const, 'gitDiff' as const, 'metaPrompts' as const, 'userInstructions' as const],
-      copyPreset: 'standard' as const, storedPrompts: [], requiredSources: [{ kind: 'full' as const, source: { root: 'r', path: 'file.txt' } }],
+        'fileMap' as const, 'gitDiff' as const, 'constraints' as const, 'userInstructions' as const],
+      copyPreset: 'standard' as const, requiredSources: [{ kind: 'full' as const, source: { root: 'r', path: 'file.txt' } }],
       documents: [], patches: [], budgetUnits: 100000, discoveryHints: [], outputName: 'packet' };
     const before = new Date().toISOString().slice(0, 16);
     const draft = await f.workspace.createDraft(input, f.signal);

@@ -24,7 +24,7 @@ test('a replaced root does not prevent scoped reads from an independent admitted
   try {
     const create = (root: string, codemapMode: 'automatic' | 'manual', kind: 'full' | 'codemap') => workspace.createDraft({ task: 'Inspect root authority',
       initialSelection: { codemapMode, sources: [] }, duplicateUserInstructionsAtTop: false,
-      copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      copyPreset: 'standard', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [{ kind, source: { root, path: kind === 'full' ? 'note.txt' : 'model.swift' } }], documents: [], patches: [],
       discoveryHints: [], outputName: 'packet-' + root, budgetUnits: 100000 }, signal());
     const replacedDraft = await create('r', 'automatic', 'full'), healthyDraft = await create('s', 'automatic', 'full');

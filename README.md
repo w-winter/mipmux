@@ -56,11 +56,12 @@ import { SmipRuntime } from 'smip';
 const runtime = new SmipRuntime({
   copyContext: {
     current: { fileTreeMode: 'Auto', codeMapUsage: 'auto', gitInclusion: 'none' },
-    customizations: { includeFiles: null, includeUserPrompt: null, includeMetaPrompts: null,
+    customizations: { includeFiles: null, includeUserPrompt: null,
       includeFileTree: null, fileTreeMode: null, codeMapUsage: null, gitInclusion: null },
-    codeMapsGloballyDisabled: false, selectedPromptIds: [], activeGitRoot: null, presets: [],
+    codeMapsGloballyDisabled: false, activeGitRoot: null, presets: [],
   },
   contextBudgetUnits: 200000,
+  defaultEnhancementMode: 'augment',
   cachePath: '/var/tmp/private-smip-cache',
   nativeExecutable: '/opt/smip/libexec/darwin-arm64/SmipBridge',
   nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'auto' },
@@ -117,7 +118,6 @@ const draft = await workspace.createDraft({
   initialSelection: { codemapMode: 'automatic', sources: [] },
   duplicateUserInstructionsAtTop: false,
   copyPreset: 'standard',
-  storedPrompts: [],
   constraints: 'Keep every required document complete.',
   enhancementMode: 'augment',
   purpose: 'review',
@@ -148,11 +148,13 @@ try {
 
 `duplicateUserInstructionsAtTop` adds the complete resulting prompt before the context sections when true. The ordered user-instruction sections remain present; empty prompt text produces no user block. Set it to false for the source default. Every copy counts toward the assembly budget.
 
-Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `metaPrompts` and `userInstructions`. Each name must occur at least once; repeated names emit complete repeated sections. Omit the field to use that default order. Item costs aggregate repeated material bodies and file blocks. Complete-packet measurement includes all copies and wrappers.
+Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `constraints` and `userInstructions`. Each name must occur at least once; repeated names emit complete repeated sections. Omit the field to use that default order. Item costs aggregate repeated material bodies and file blocks. Complete-packet measurement includes all copies and wrappers.
 
 Set `includeDatetimeInUserInstructions` to true to add the native local datetime to each nonempty user-instruction block. The default is false. Repeated blocks share one timestamp, and its bytes count toward the budget. Saved packets retain that timestamp; current verification compares the remaining presentation independently of the clock.
 
-`copyPreset` selects `standard`, `plan`, `manual`, `diffFollowUp` or `codeReview`, a UUID, or a preset name. An object with `id`, `kind` or `name` selects explicitly by those fields, in that priority. Kind lookup uses the original built-in; UUID and explicit-name lookup use the configured catalog with built-in overrides. Standard includes ordinary context. Plan selects the saved architect prompt with ID `8e81aac2-79ce-4897-a59e-efd81eebb7e9`; Review selects ID `d7f1b2e4-3c5a-6b8d-cf8e-1f5d0e2a4c6b`. Supply the complete matching role in `storedPrompts`, an array of `{ id, title, content }` entries. Diff Follow-Up delivers Git evidence, caller constraints and literal user instructions. Use optional source selections to set its Git scope; required sources or documents produce `copyPresetRequiredMaterialConflict`.
+`copyPreset` selects `standard`, `manual`, `diffFollowUp` or `codeReview`, a UUID, or a preset name. An object with `id`, `kind` or `name` selects explicitly by those fields, in that priority. Kind lookup uses the original built-in; UUID and explicit-name lookup use the configured catalog with built-in overrides. Standard includes ordinary context; Review includes nonblank selected Git patches. Diff Follow-Up delivers Git evidence, caller constraints and literal user instructions. Use optional source selections to set its Git scope; required sources or documents produce `copyPresetRequiredMaterialConflict`.
+
+Packets contain evidence, fixed constraints and the resulting task prompt. The calling agent system supplies the recipient's role separately, for example through a Pi subagent definition. Send the verified `context.md` as that recipient's input.
 
 The required runtime or host `copyContext` configures current settings, Manual working-copy overrides, selected saved-prompt IDs, an active Git root and preset records. Each draft captures that context at admission. The [copy settings example](docs/context-protocol.md#copy-settings-and-presets) lists every field. Manual supports no codemaps, automatic related maps, selected-file maps or complete maps across all declared roots. Selected-file mode can replace directly selected bodies with maps; slice-only entries retain their slices. Required bodies that a setting would exclude or replace return `copyPresetRequiredMaterialConflict`.
 
@@ -162,7 +164,7 @@ Manual complete Git uses the explicit `activeGitRoot` and already-local comparis
 
 Review and Diff Follow-Up export nonblank selected patch artifacts first. When none supplies text, they acquire a Git diff for the selected full files and slices. A slice includes its file's complete diff. The optional `reviewGitBase` sets the comparison: omission, blank text and case-insensitive `HEAD` compare the working tree against captured HEAD; another ref compares against its merge base with captured HEAD. Each checkout's comparison is frozen before diff acquisition. Configure `git.executable` for Git-backed selections. Partial repository or comparison failures appear as explicit diagnostics in the Git section. Caller-supplied `patches` remain complete and follow the selected or automatic Git text in every preset.
 
-`task` records the original prompt; `enhancementMode` is `fullRewrite`, `augment` or `preserve`. Discovery uses literal prompt operations: `set` replaces the current text, `append` adds text exactly, `clear` empties it and `get` returns it. Rewrite delivers the replacement; Augment preserves the original at the beginning and adds discoveries; Preserve leaves the original unchanged. These modes guide discovery rather than restricting the caller's explicit prompt operations. Caller constraints and required inputs remain fixed. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an explicit optional selection. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
+`task` records the original prompt. Set `defaultEnhancementMode` in the host configuration to `fullRewrite`, `augment` or `preserve`; omission selects Augment. A request's optional `enhancementMode` overrides that default. Discovery uses literal prompt operations: `set` replaces the current text, `append` adds text exactly, `clear` empties it and `get` returns it. Rewrite delivers the replacement; Augment preserves the original at the beginning and adds discoveries; Preserve leaves the original unchanged. These modes guide discovery rather than restricting the caller's explicit prompt operations. Caller constraints and required inputs remain fixed. Optional source updates use `upsert` with a `full`, `slices`, or `codemap` selection; `remove` removes an explicit optional selection. Slice ranges use one-based inclusive endpoints and descriptions. Upsert replaces the file's representation. Required representations cannot be removed or changed.
 
 Drafts start in automatic mode unless a required source is a codemap. Automatic mode adds related codemaps for full and sliced sources. A codemap upsert or `clearCodemaps` enters manual mode; `clearSources` restores the required source baseline. Clear operations retain documents, patches and the current prompt. [Selection contracts](docs/contracts.md#drafts-and-material-ownership) describe promotion, inferred-source removal and comparison recovery.
 
@@ -170,7 +172,7 @@ Use `addDocument` with a `suppliedDocument` and a unique ID to retain complete t
 
 `draft.inspect` provides `metadata`, `costs`, and `material` views with `maxOutputBytes` and `continuation`. Material inspection names a material ID from metadata, such as `document:prior-report`. It pages complete lines against a material digest. Updates return the committed revision, changed-item costs, total measurement, and unresolved diagnostics. If detail does not fit, the receipt identifies incomplete detail and the costs view supplies the complete breakdown.
 
-Set `contextBudgetUnits` in the host configuration to the maximum assembly budget. Each request supplies numeric `budgetUnits`; larger values fail with `assemblyBudgetExceeded`. The scout receives `max(0, budgetUnits - 1500)`, following RPCE's reserve. Complete-packet measurement and publication use the requested `budgetUnits`. The estimate is `floor(21 × UTF-8 bytes / 80)`, rather than an exact tokenizer count. Over-budget results report the excess and retain all material for explicit correction.
+Set `contextBudgetUnits` in the host configuration to the default assembly budget. A request's optional `budgetUnits` overrides it, whether smaller or larger. For example, a 200000-unit default permits an explicitly requested 500000-unit build. The scout receives `max(0, budgetUnits - 1500)`, following RPCE's reserve. Complete-packet measurement and publication enforce the resolved `budgetUnits`. The estimate is `floor(21 × UTF-8 bytes / 80)`, rather than an exact tokenizer count. Over-budget results report the excess and retain all material for explicit correction.
 
 Ready output contains `context.md`, `handoff.md`, and `manifest.json` beneath the declared output directory. Send only `context.md` to the recipient. Its sections contain the file map and codemaps, full and sliced file blocks, selected Git evidence, caller constraints and the current literal prompt. Supplied documents appear as full-file blocks labeled with their role, origin and ID. The coordinator records retain the original request, current prompt, byte spans, hashes, accounting and complete comparison receipts, including scope, resolved revisions, policies and target fingerprints. Output creation is exclusive. Readback and final source checks precede manifest publication.
 
@@ -200,7 +202,7 @@ node dist/cli/main.js cache invalidate --kind artifact --key <sha256> --config /
 node dist/cli/main.js cache invalidate --kind membership --key <sha256> --config /etc/smip/config.json
 ```
 
-The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Every context request includes `enhancementMode`. Input files for `smip tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
+The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Omit `enhancementMode` and `budgetUnits` to use the configured defaults. Input files for `smip tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; membership targets name workspace inventory records. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateMembership(key)` for membership. Each method removes only its named record.
 
@@ -211,11 +213,10 @@ Host configuration uses this shape. The numbers are example host choices, not mo
   "copyContext": {
     "current": { "fileTreeMode": "Auto", "codeMapUsage": "auto", "gitInclusion": "none" },
     "customizations": {
-      "includeFiles": null, "includeUserPrompt": null, "includeMetaPrompts": null,
+      "includeFiles": null, "includeUserPrompt": null,
       "includeFileTree": null, "fileTreeMode": null, "codeMapUsage": null, "gitInclusion": null
     },
     "codeMapsGloballyDisabled": false,
-    "selectedPromptIds": [],
     "activeGitRoot": null,
     "presets": []
   },
@@ -227,13 +228,14 @@ Host configuration uses this shape. The numbers are example host choices, not mo
   "git": null,
   "defaultMaxOutputBytes": 12000,
   "contextBudgetUnits": 200000,
+  "defaultEnhancementMode": "augment",
   "discovery": {
     "provider": "openai-codex",
     "model": "gpt-6.1-sol",
     "thinking": "medium",
     "authPath": "/private/smip/auth.json",
     "modelsPath": "/private/smip/models.json",
-    "prompt": { "kind": "rpce" },
+    "promptTemplatePath": "/private/smip/discovery.md",
     "mcp": null,
     "environment": {},
     "policy": {
@@ -254,9 +256,21 @@ Host configuration uses this shape. The numbers are example host choices, not mo
 }
 ```
 
-Set `discovery.prompt` to `{ "kind": "rpce" }` to use the native RepoPrompt CE discovery factory. Each job selects its Rewrite, Augment or Preserve branch, review guidance and language catalog using the captured request and Git target. The numeric budget includes one 1500-unit startup reserve. The scout receives the source startup sections: file map, current prompt, selected context-builder meta prompts, discovery instructions and budget metadata. A runtime observation supplies root routing, revisions, fixed constraints and evidence accounting.
+Set `discovery.promptTemplatePath` to an absolute path to your editable discovery template. Install the shipped `dist/prompts/discovery.md` into an existing operator-owned directory using exclusive creation:
 
-To supply your own system prompt, select `{ "kind": "file", "path": "/private/smip/discovery.md" }`. Create a regular UTF-8 Markdown file beginning with `# smip discovery v1` followed by LF. Each job reads it once and records its raw-byte SHA-256 as `promptSHA256`; `promptVersion` identifies custom-file or RPCE policy. Edits apply to the next job on the running server. Missing, nonregular, invalid UTF-8 or wrong-version files fail before worker startup. A custom file replaces the system policy; startup data and server-enforced permissions still apply.
+```sh
+node --input-type=module <<'JS'
+import { constants, copyFileSync } from 'node:fs';
+copyFileSync('/opt/smip/dist/prompts/discovery.md',
+  '/private/smip/discovery.md', constants.COPYFILE_EXCL);
+JS
+```
+
+Edit that copy's named policy sections using the [template format](docs/discovery-prompt-bindings.md#template-format). Swift composes Rewrite, Augment or Preserve, review and clarification guidance from the template and captured facts. Both system policy and startup metadata use the budget after one 1500-unit reserve; complete-packet measurement uses the configured assembly allowance. Startup data contains the file map, current prompt and discovery instructions. A runtime observation supplies routing, revision, fixed constraints and evidence accounting.
+
+Each job admits one regular UTF-8 file and retains that snapshot through all its turns. Later jobs observe edits to the same path. Use atomic file replacement when updating policy during active work. Missing files, invalid encoding or template syntax, and nonregular paths produce admission errors before Pi discovery starts. Package builds update the shipped default; your configured copy remains operator-owned.
+
+The terminal receipt records `templateVersion`, the template path and raw-byte `template.identity`, and the rendered system policy's `policyIdentity`. Each identity contains SHA-256 and UTF-8 byte count. SDK working-directory framing, tools and startup messages are outside the policy digest.
 
 The worker reads the authorized authentication and model files; these paths and the host's configuration file are excluded from source discovery. The model file accepts a `providers` object with optional `baseUrl` and per-model `modelOverrides` containing `contextWindow` and `maxTokens`. Use `{ "providers": {} }` to select the bundled catalog explicitly. Other fields in model configuration and command-valued credentials are rejected. Supply the exact physical provider/model and supported thinking level; configuration errors require correction before another request.
 

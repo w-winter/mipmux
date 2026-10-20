@@ -40,7 +40,7 @@ test('MCP admission retains mutable initial selection and manual mode separately
     for (const codemapMode of ['automatic', 'manual']) {
       const created = await client.callTool({ name: 'draft_create', arguments: { workspaceId: workspace.id, request: {
         task: 'Preserve the task', constraints: '', enhancementMode: 'preserve', purpose: 'review',
-        duplicateUserInstructionsAtTop: false, copyPreset: 'standard', storedPrompts: [],
+        duplicateUserInstructionsAtTop: false, copyPreset: 'standard',
         initialSelection: { codemapMode, sources: [{ kind: 'full', source: { root: 'r', path: 'seed.txt' } }] },
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'required.txt' } }],
         documents: [], patches: [], discoveryHints: [], budgetUnits: 200000, outputName: codemapMode,

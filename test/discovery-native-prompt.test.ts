@@ -1,5 +1,6 @@
 import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -9,7 +10,6 @@ import { Compile } from 'typebox/compile';
 import { compose, hostValidator } from '../src/cli/config.js';
 import { verifyBundle } from '../src/index.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
-import { bindDiscoveryPrompt } from '../src/discovery/prompt-bindings.js';
 import { SmipRuntime } from '../src/runtime/smip-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
@@ -17,6 +17,7 @@ import type { NativeOperation } from '../src/contracts/native.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
 const content = Compile(Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() })));
+const policies = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Type.String() })));
 const cases = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Type.String(), input: Type.Object({
   currentPrompt: Type.String(), discoveryInstructions: Type.String(), fileTree: Type.String(),
   contextBuilderPrompts: Type.Array(Type.Object({ title: Type.String(), content: Type.String() })),
@@ -24,7 +25,10 @@ const cases = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Ty
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
 test('native default policy and source startup reach Pi for all prompt modes and preserve separate input authority', async t => {
-  const reference = cases.Parse(JSON.parse(await readFile('test/fixtures/rpce-discovery-message/cases.json', 'utf8')))[1]!;
+  const reference = cases.Parse(JSON.parse(await readFile('test/fixtures/rpce-discovery-message/cases.json', 'utf8')))[0]!;
+  const referencePolicies = policies.Parse(JSON.parse(await readFile('test/fixtures/smip-discovery-policy/cases.json', 'utf8')));
+  const promptTemplatePath = resolve('prompts/discovery.md');
+  const templateBytes = await readFile(promptTemplatePath);
   const proof: unknown[] = [];
   for (const mode of ['fullRewrite', 'augment', 'preserve'] as const) {
     const provider = await scriptedProvider((_summary, index) => index === 1 && mode !== 'preserve'
@@ -37,30 +41,33 @@ test('native default policy and source startup reach Pi for all prompt modes and
     const run = (args: string[]) => execFileSync(git, args, { cwd: root, env: { PATH: '/usr/bin:/bin', HOME: provider.directory,
       GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
     run(['init', '-q']); run(['add', '.']); run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'base']);
-    const discovery = { ...provider.config, prompt: { kind: 'rpce' } };
+    const discovery = { ...provider.config, promptTemplatePath };
     const config = hostValidator.Parse({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
-      contextBudgetUnits: 200000, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000 });
+      contextBudgetUnits: 200000, defaultEnhancementMode: mode, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000 });
     const { runtime, client } = compose(config, null);
     try {
       const signal = new AbortController().signal;
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
       const task = reference.input.currentPrompt;
-      const job = client.build(workspace.id, mode, contextRequestValidator.Parse({ task, constraints: 'FIXED_CALLER_CONSTRAINT', enhancementMode: mode,
+      const job = client.build(workspace.id, mode, contextRequestValidator.Parse({ task, constraints: 'FIXED_CALLER_CONSTRAINT',
         purpose: 'review', initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } }],
-        documents: [], patches: [], storedPrompts: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
-        contextBuilderPrompts: reference.input.contextBuilderPrompts, discoveryHints: [reference.input.discoveryInstructions], budgetUnits: 200000, outputName: mode }));
+        documents: [], patches: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
+        discoveryHints: [reference.input.discoveryInstructions], outputName: mode }));
       const result = await client.wait(job.jobId, 10000, signal, () => {});
       assert.equal(result.state, 'ready', JSON.stringify(result)); assert(result.state === 'ready');
       const first = provider.requests[0]!;
       const system = content.Parse(first.system).map(block => block.text).join('\n');
       const allowed = system.match(/^\*\*Available tools:\*\* (.*)$/m); assert(allowed);
       for (const name of first.tools) assert(allowed[1]!.includes('`' + name + '`'), name + ' must be allowed by the policy');
-      const referencePolicy = await readFile('test/fixtures/rpce-discovery/' + mode + '.md', 'utf8');
+      const referencePolicy = referencePolicies.find(entry => entry.name === mode + '-noninteractive-elected'); assert(referencePolicy);
       assert.equal(system.replace(/^\*\*Codemap coverage:\*\* .+$/m, '**Codemap coverage:** __SUPPORTED_LANGUAGES__'),
-        bindDiscoveryPrompt(referencePolicy) + '\n\n<cwd>\n/\n</cwd>');
+        referencePolicy.expected + '\n\n<cwd>\n/\n</cwd>');
       const message = Compile(Type.Object({ content: Type.Array(Type.Object({ text: Type.String() })) })).Parse(first.messages[0]).content[0]!.text;
-      assert.equal(result.discovery.promptVersion, 'rpce-43a9c29');
+      assert.equal(result.discovery.templateVersion, 'smip-discovery-template-v1');
+      assert.deepEqual(result.discovery.template.identity, { sha256: createHash('sha256').update(templateBytes).digest('hex'), byteCount: templateBytes.length });
+      const dispatchedPolicy = system.slice(0, -'\n\n<cwd>\n/\n</cwd>'.length);
+      assert.deepEqual(result.discovery.policyIdentity, { sha256: createHash('sha256').update(dispatchedPolicy).digest('hex'), byteCount: Buffer.byteLength(dispatchedPolicy) });
       assert(system.includes('198500')); assert(system.includes('## Review Mode')); assert(!system.includes('Assignment.'));
       assert(!system.includes('workspace_context')); assert(system.includes('draft_inspect'));
       assert(!system.includes('<taskname=')); assert(!system.includes('ask_user'));
@@ -80,8 +87,8 @@ test('native default policy and source startup reach Pi for all prompt modes and
   await writeFile('test-output/discovery-native-prompt-proof.json', JSON.stringify(proof, null, 2) + '\n');
 });
 
-test('native policy/startup failure and cancellation settle without static or custom prompt substitution', async () => {
-  for (const phase of ['renderDiscoveryPrompt', 'renderDiscoveryMessage', 'cancel'] as const) {
+test('native failure, template rejection and composition cancellation settle before Pi dispatch', async t => {
+  for (const phase of ['nativeFailure', 'invalidTemplate', 'cancel'] as const) {
     const provider = await scriptedProvider(() => { throw Error('No model dispatch expected'); });
     const root = join(provider.directory, 'root'), out = join(provider.directory, 'out');
     await mkdir(root); await mkdir(out);
@@ -95,7 +102,7 @@ test('native policy/startup failure and cancellation settle without static or cu
             if (phase === 'cancel' && operation.kind === 'renderDiscoveryPrompt') {
               entered(); await released; signal.throwIfAborted();
             }
-            if (operation.kind === phase) throw new NativeFailure('nativeIOFailed', null);
+            if (phase === 'nativeFailure' && operation.kind === 'renderDiscoveryPrompt') throw new NativeFailure('nativeIOFailed', null);
             return super.request(operation, signal);
           }
         }
@@ -105,19 +112,29 @@ test('native policy/startup failure and cancellation settle without static or cu
     const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
       contextBudgetUnits: 200000, terminationGraceMs: 100 });
-    const client = runtime.createClient(new PiRunner({ ...provider.config, prompt: { kind: 'rpce' } }, runtime.supervisor));
+    // compat-ok: This test checks that malformed input never reaches a provider
+    if (phase === 'invalidTemplate') await writeFile(provider.config.promptTemplatePath, '# smip discovery template v1\n');
+    let piWorkers = 0;
+    const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
+    t.mock.method(runtime.supervisor, 'spawn', (spec: Parameters<typeof spawn>[0]) => {
+      if (spec.args.some(arg => arg.endsWith('/pi-worker.js'))) piWorkers++;
+      return spawn(spec);
+    });
+    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor,
+      (operation, signal) => runtime.renderPresentation(operation, signal)));
     try {
       const signal = new AbortController().signal;
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
       const job = client.build(workspace.id, phase, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-        initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+        initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [],
         copyPreset: 'standard', duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: phase });
       if (phase === 'cancel') { await boundary; client.cancel(job.jobId); release(); }
       const result = await client.wait(job.jobId, 10000, signal, () => {});
       assert.equal(result.state, phase === 'cancel' ? 'cancelled' : 'failed');
       assert(result.state === 'failed' || result.state === 'cancelled');
-      assert.equal(result.code, phase === 'cancel' ? 'cancelled' : 'nativeIOFailed');
-      assert.equal(result.localSettled, true); assert.equal(provider.requests.length, 0);
+      assert.equal(result.code, phase === 'cancel' ? 'cancelled' : phase === 'invalidTemplate' ? 'invalidDiscoveryTemplate' : 'nativeIOFailed');
+      assert.equal(result.localSettled, true); assert.equal(result.discovery, null);
+      assert.equal(provider.requests.length, 0); assert.equal(piWorkers, 0);
     } finally { release(); await runtime.close(); await provider.close(); }
   }
 });

@@ -32,7 +32,7 @@ async function fixture(separateGitDirectory: boolean) {
     credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const request: ContextBuildRequest = { task: 'Collect worktree evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const diff = gitValidator.Parse(gitValidator.Default({ op: 'diff', maxOutputBytes: 100000 })); assert(diff.op === 'diff');
   const options = { scope: 'all' as const, mode: 'standard' as const, snapshotID: 'attached',

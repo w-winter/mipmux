@@ -1,3 +1,4 @@
+import { nativeDiscoveryRenderer } from './fixtures/render-discovery-prompt.js';
 import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -46,7 +47,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
   const mcp = await configure(provider.directory, server.url);
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source evidence\n');
-  const discovery = { ...provider.config, prompt: { kind: 'rpce' as const }, mcp };
+  const discovery = { ...provider.config, promptTemplatePath: resolve('prompts/discovery.md'), mcp };
   const { runtime, client } = compose({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     discovery, git: null, defaultMaxOutputBytes: 10000 }, null);
@@ -58,7 +59,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
   });
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
-    const job = client.build(workspace.id, 'mcp', { task: 'Inspect the ticket', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
+    const job = client.build(workspace.id, 'mcp', { task: 'Inspect the ticket', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
       budgetUnits: 10000 });
     const result = await client.wait(job.jobId, 10000, new AbortController().signal, () => {});
@@ -96,7 +97,7 @@ test('missing selected tools, unavailable servers and authentication failure sto
     try {
       const mcp = await configure(provider.directory, server.url);
       const discovery = { ...provider.config, mcp };
-      const result = await new PiRunner(discovery, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: [] },
+      const result = await new PiRunner(discovery, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
         { call: async () => { throw new Error('No parent tool permitted'); } }, new AbortController().signal, () => {});
       assert.equal(result.kind, 'failed'); assert(result.kind === 'failed'); assert.equal(result.code, 'mcpToolsUnavailable');
       assert.equal(result.receipt.mcp?.readiness.state, 'unavailable'); assert.equal(result.receipt.mcp?.shutdown, 'dispatched');
@@ -114,9 +115,9 @@ test('cancellation during MCP startup or a held call closes the worker and permi
     const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), abort = new AbortController();
     try {
       const mcp = await configure(provider.directory, server.url), discovery = { ...provider.config, mcp };
-      const runner = new PiRunner(discovery, supervisor);
+      const runner = new PiRunner(discovery, supervisor, nativeDiscoveryRenderer(supervisor));
       const tools = { call: async () => { throw new Error('No parent tool permitted'); } };
-      const input: DiscoveryInput = { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', hints: [], roots: [] };
+      const input: DiscoveryInput = { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] };
       const work = runner.run(input, tools, abort.signal, () => {});
       await server.held; abort.abort();
       const cancelled = await work; assert.equal(cancelled.kind, 'cancelled');

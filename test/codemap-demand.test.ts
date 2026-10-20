@@ -20,7 +20,7 @@ const referenceCases = readinessReferences.Parse(JSON.parse(await readFile('test
 for (const copyPreset of ['diffFollowUp', 'manual'] as const) {
 test(`${copyPreset === 'diffFollowUp' ? 'Diff Follow-Up' : 'Manual none'} publishes while an excluded optional codemap has independently retained demand`, async () => {
   const request = contextRequestValidator.Parse({ task: 'Discuss changes', constraints: '', enhancementMode: 'preserve', purpose: 'review',
-    initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+    initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [],
     duplicateUserInstructionsAtTop: false, copyPreset, budgetUnits: 100000, discoveryHints: [], outputName: 'diff-follow-up' });
   const settings = copyContext(); settings.current.fileTreeMode = 'None'; settings.current.codeMapUsage = 'none';
   const f = await fixture('held', null, settings), operation = await f.owner.openOperation(new AbortController().signal);
@@ -52,7 +52,7 @@ test(`${copyPreset === 'diffFollowUp' ? 'Diff Follow-Up' : 'Manual none'} publis
 
 for (const operationKind of ['finalize', 'export'] as const) test(`Manual complete ${operationKind} cancellation joins extraction and prevents publication`, async () => {
   const request = contextRequestValidator.Parse({ task: 'Inspect complete codemaps', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-    initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+    initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [],
     duplicateUserInstructionsAtTop: false, copyPreset: operationKind === 'finalize' ? 'manual' : 'standard',
     budgetUnits: 100000, discoveryHints: [], outputName: 'cancelled-manual' });
   const settings = copyContext(); settings.current.fileTreeMode = 'None'; settings.current.codeMapUsage = 'complete';
@@ -222,7 +222,7 @@ test('a readiness deadline releases only the reply observer while another demand
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.base, 'source') }], exclusions: [], outputRoot: join(f.base, 'out') }, signal);
     const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-      initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+      initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [],
       duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: 'deadline-observer' }, signal);
     const retained = await other.requestExplicitCodemap(f.source);
     await f.entering;
@@ -269,7 +269,7 @@ test('rendering an already-ready codemap may finish after the presentation readi
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.base, 'source') }], exclusions: [], outputRoot: join(f.base, 'out') }, signal);
     const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-      initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [], storedPrompts: [],
+      initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [], documents: [], patches: [],
       duplicateUserInstructionsAtTop: false, copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: 'ready-render' }, signal);
     f.release();
     await client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({

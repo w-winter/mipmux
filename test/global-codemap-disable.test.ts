@@ -40,7 +40,7 @@ for (const warm of [false, true]) test(`global codemap disable preserves ordinar
   const signal = () => new AbortController().signal;
   const request = contextRequestValidator.Parse({ task: 'Inspect Alpha', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
     initialSelection: { codemapMode: 'automatic', sources: [{ kind: 'full', source: { root: 'r', path: 'Alpha.swift' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [], duplicateUserInstructionsAtTop: false,
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
     budgetUnits: 200000, discoveryHints: [], outputName: 'packet' });
   let historical: string | null = null;
   if (warm) {

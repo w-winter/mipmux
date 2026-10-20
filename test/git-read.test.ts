@@ -109,10 +109,10 @@ test('real scripted SDK scout can inspect Git through the allowed tool boundary 
     : index === 4 ? { kind: 'tool', name: 'git', input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref: 'HEAD', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 5 ? { kind: 'tool', name: 'git', input: { op: 'diff', root: 'r', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
-  const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
+  const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
   try {
     const workspace = await client.declare(f.spec, signal());
-    const job = client.build(workspace.id, 'git-scout', { task: 'Inspect history', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', purpose: 'investigation', enhancementMode: 'preserve',
+    const job = client.build(workspace.id, 'git-scout', { task: 'Inspect history', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', enhancementMode: 'preserve',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [], budgetUnits: 10000, outputName: 'packet' });
     const terminal = await client.wait(job.jobId, 10000, signal(), () => {});
     assert.equal(terminal.state, 'ready', JSON.stringify(terminal)); assert.equal(terminal.localSettled, true);

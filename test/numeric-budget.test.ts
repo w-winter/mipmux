@@ -30,8 +30,8 @@ test('numeric assembly budget remains the packet limit while scout input receive
   try {
     const client = runtime.createClient(runner);
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
-    for (const budgetUnits of [200000, 1000]) {
-      const request = contextRequestValidator.Parse({ task: 'Inspect the empty fixture.', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '',
+    for (const budgetUnits of [200000, 1000, 500000]) {
+      const request = contextRequestValidator.Parse({ task: 'Inspect the empty fixture.', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '',
         enhancementMode: 'preserve', purpose: 'investigation', requiredSources: [], documents: [], patches: [],
         discoveryHints: [], outputName: `budget-${budgetUnits}`, budgetUnits });
       const job = client.build(workspace.id, `budget-${budgetUnits}`, request);

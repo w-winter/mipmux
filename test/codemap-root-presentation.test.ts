@@ -56,7 +56,7 @@ async function fixture(input: Static<typeof sourceCase>, beforeRead: (path: stri
   const workspace = await client.declare({ roots, exclusions: [], outputRoot: output }, signal);
   const draft = await client.createDraft(workspace.id, { task: 'Inspect', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
     initialSelection: { codemapMode: 'manual', sources: selections.reverse().filter(item => item.source.root !== required.source.root || item.source.path !== required.source.path) },
-    requiredSources: [required], documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false,
+    requiredSources: [required], documents: [], patches: [], duplicateUserInstructionsAtTop: false,
     copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: input.name }, signal);
   const get = (requestSignal = signal) => client.manageSelection(draft.id, selectionValidator.Parse(selectionValidator.Default({
     op: 'get', view: 'content', maxOutputBytes: 30000,

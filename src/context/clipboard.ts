@@ -38,14 +38,14 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
     duplicateUserInstructionsAtTop: input.request.duplicateUserInstructionsAtTop,
     includeDatetimeInUserInstructions: input.request.includeDatetimeInUserInstructions ?? false,
     promptSectionsOrder: [...(input.request.promptSectionsOrder ?? defaultPromptSectionsOrder)],
-    copyPreset: input.request.copyPreset, selectedPromptIds: input.request.copyContext.selectedPromptIds, storedPrompts: input.request.storedPrompts,
+    copyPreset: input.request.copyPreset,
     codemapBlocks: materials.codemaps.flatMap(material => material.bodies),
     contentBlocks: materials.contents.map(contentBlock),
     fileTreeContent: input.fileTree.text,
     selectedGitDiffs: materials.selectedPatches.map(material => ({ id: material.record.id, text: material.bodies.join('') })),
     gitDiff: materials.patches.length ? materials.patches.flatMap(material => material.bodies).join('\n\n') : null,
     automaticGitDiff: input.automaticGit?.text ?? null,
-    metaInstructions: input.request.constraints ? [{ title: 'Constraints', content: input.request.constraints }] : [],
+    constraints: input.request.constraints,
     userInstructions: input.prompt,
   } };
 }
@@ -89,14 +89,9 @@ function consumeFileMap(tree: string, codemaps: readonly Material[], consume: Co
   return span;
 }
 
-function consumeMetaInstructions(input: Omit<RenderInput, 'tokenInputs'>, consume: Consume) {
+function consumeConstraints(input: Omit<RenderInput, 'tokenInputs'>, consume: Consume) {
   if (canonicalJSON(input.clipboardPreset) !== canonicalJSON(input.request.copyPreset)) throw new WorkspaceFailure('invalidClipboard');
-  const ids = input.clipboardPreset.storedPromptIds?.length ? input.clipboardPreset.storedPromptIds
-    : input.clipboardPreset.includeMetaPrompts ? input.request.copyContext.selectedPromptIds : [];
-  const metas = input.request.storedPrompts.filter(prompt => ids !== null && ids.some(id => id.toLowerCase() === prompt.id.toLowerCase()))
-    .map(({ title, content }) => ({ title, content }));
-  if (input.request.constraints) metas.push({ title: 'Constraints', content: input.request.constraints });
-  for (const [index, meta] of metas.entries()) consume('<meta prompt ' + (index + 1) + ' = "' + meta.title + '">\n' + meta.content + '\n</meta prompt ' + (index + 1) + '>\n');
+  if (input.request.constraints) consume('<constraints>\n' + input.request.constraints + '\n</constraints>\n');
 }
 
 function consumeGitDiff(input: Omit<RenderInput, 'tokenInputs'>, patches: readonly Material[], consume: Consume, raw: (material: Material) => void,
@@ -186,7 +181,7 @@ export function parseClipboard(input: Omit<RenderInput, 'tokenInputs'>) {
       const span = consumeGitDiff(input, patches, consume, raw, charge);
       if (span && !capturedSpans.has('gitDiff')) capturedSpans.set('gitDiff', span);
     },
-    metaPrompts: () => { consumeMetaInstructions(input, consume); },
+    constraints: () => { consumeConstraints(input, consume); },
     userInstructions: () => {
       if (!input.prompt || !input.clipboardPreset.includeUserPrompt) return;
       if (!input.request.includeDatetimeInUserInstructions) {

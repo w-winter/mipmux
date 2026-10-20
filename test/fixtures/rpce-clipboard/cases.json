@@ -2526,5 +2526,295 @@
       "utf8Bytes": 275,
       "sha256": "ad80837f921006ca64748498ae9948aff0c5c6859f97b6ee63d00aba946097e0"
     }
+  },
+  {
+    "name": "review-selected-git-and-explicit-metas-without-saved-instructions",
+    "input": {
+      "includeDatetimeInUserInstructions": false,
+      "metaInstructions": [],
+      "userInstructions": "Original user text\nλ 😀\nDo not omit evidence.\n",
+      "files": [
+        {
+          "file": {
+            "id": "full",
+            "rootID": "one",
+            "name": "Example.swift",
+            "relativePath": "src/Example.swift",
+            "fullPath": "/fixture/one/src/Example.swift"
+          },
+          "role": "ordinary",
+          "isCodemap": false,
+          "loadedContent": "struct Example {}\n",
+          "lineRanges": null,
+          "rootFolderPath": "/fixture/one"
+        },
+        {
+          "file": {
+            "id": "map",
+            "rootID": "one",
+            "name": "Neighbor.swift",
+            "relativePath": "src/Neighbor.swift",
+            "fullPath": "/fixture/one/src/Neighbor.swift"
+          },
+          "role": "ordinary",
+          "isCodemap": true,
+          "loadedContent": null,
+          "lineRanges": null,
+          "rootFolderPath": "/fixture/one"
+        },
+        {
+          "file": {
+            "id": "slice",
+            "rootID": "one",
+            "name": "Notes.md",
+            "relativePath": "src/Notes.md",
+            "fullPath": "/fixture/one/src/Notes.md"
+          },
+          "role": "ordinary",
+          "isCodemap": false,
+          "loadedContent": "first\r\nsecond\nthird\rfourth",
+          "lineRanges": [
+            {
+              "start": 1,
+              "end": 1,
+              "description": "opening"
+            },
+            {
+              "start": 3,
+              "end": 4,
+              "description": null
+            }
+          ],
+          "rootFolderPath": "/fixture/one"
+        },
+        {
+          "file": {
+            "id": "patch",
+            "rootID": "one",
+            "name": "change.patch",
+            "relativePath": "src/change.patch",
+            "fullPath": "/fixture/one/src/change.patch"
+          },
+          "role": "authorizedGitDiffArtifact",
+          "isCodemap": false,
+          "loadedContent": "diff --git a/Example.swift b/Example.swift\n-old\n+new\n",
+          "lineRanges": null,
+          "rootFolderPath": "/fixture/one"
+        }
+      ],
+      "fileTreeContent": "one\n├── src\n│   ├── Example.swift *\n│   ├── Neighbor.swift +\n│   └── Notes.md *",
+      "gitDiff": "SUPPLIED DIFF MUST NOT WIN",
+      "includeSavedPrompts": true,
+      "includeFiles": true,
+      "includeUserPrompt": true,
+      "filePathDisplay": "relative",
+      "codemapPresentation": {
+        "renderedEntriesByFileID": {
+          "map": {
+            "text": "File: src/Neighbor.swift\n```swift\nstruct Neighbor\n```"
+          }
+        }
+      },
+      "promptSectionsOrder": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "disabledPromptSections": [],
+      "duplicateUserInstructionsAtTop": false,
+      "tabTitle": null
+    },
+    "expected": {
+      "kind": "clipboard",
+      "text": "<file_map>\none\n├── src\n│   ├── Example.swift *\n│   ├── Neighbor.swift +\n│   └── Notes.md *\n\nFile: src/Neighbor.swift\n```swift\nstruct Neighbor\n```\n</file_map>\n<file_contents>\nFile: src/Example.swift\n```swift\nstruct Example {}\n\n```\n\nFile: src/Notes.md\n(lines 1: opening)\n```md\nfirst\r\n\n```\n\n(lines 3-4)\n```md\nthird\rfourth\n```\n</file_contents>\n<git_diff>\ndiff --git a/Example.swift b/Example.swift\n-old\n+new\n\n</git_diff>\n<user_instructions>\nOriginal user text\nλ 😀\nDo not omit evidence.\n\n</user_instructions>\n",
+      "utf8Bytes": 538,
+      "sha256": "edd09bf80bc689062c53095b02d3655b4f5ffb2733a1fe64795de08f4ca32123"
+    }
+  },
+  {
+    "name": "review-supplied-git-no-selected-artifact-without-saved-instructions",
+    "input": {
+      "includeDatetimeInUserInstructions": false,
+      "metaInstructions": [],
+      "userInstructions": "Original user text\nλ 😀\nDo not omit evidence.\n",
+      "files": [
+        {
+          "file": {
+            "id": "full",
+            "rootID": "one",
+            "name": "Example.swift",
+            "relativePath": "src/Example.swift",
+            "fullPath": "/fixture/one/src/Example.swift"
+          },
+          "role": "ordinary",
+          "isCodemap": false,
+          "loadedContent": "struct Example {}\n",
+          "lineRanges": null,
+          "rootFolderPath": "/fixture/one"
+        },
+        {
+          "file": {
+            "id": "map",
+            "rootID": "one",
+            "name": "Neighbor.swift",
+            "relativePath": "src/Neighbor.swift",
+            "fullPath": "/fixture/one/src/Neighbor.swift"
+          },
+          "role": "ordinary",
+          "isCodemap": true,
+          "loadedContent": null,
+          "lineRanges": null,
+          "rootFolderPath": "/fixture/one"
+        },
+        {
+          "file": {
+            "id": "slice",
+            "rootID": "one",
+            "name": "Notes.md",
+            "relativePath": "src/Notes.md",
+            "fullPath": "/fixture/one/src/Notes.md"
+          },
+          "role": "ordinary",
+          "isCodemap": false,
+          "loadedContent": "first\r\nsecond\nthird\rfourth",
+          "lineRanges": [
+            {
+              "start": 1,
+              "end": 1,
+              "description": "opening"
+            },
+            {
+              "start": 3,
+              "end": 4,
+              "description": null
+            }
+          ],
+          "rootFolderPath": "/fixture/one"
+        }
+      ],
+      "fileTreeContent": "one\n├── src\n│   ├── Example.swift *\n│   ├── Neighbor.swift +\n│   └── Notes.md *",
+      "gitDiff": "supplied patch\n",
+      "includeSavedPrompts": true,
+      "includeFiles": true,
+      "includeUserPrompt": true,
+      "filePathDisplay": "relative",
+      "codemapPresentation": {
+        "renderedEntriesByFileID": {
+          "map": {
+            "text": "File: src/Neighbor.swift\n```swift\nstruct Neighbor\n```"
+          }
+        }
+      },
+      "promptSectionsOrder": [
+        "fileMap",
+        "fileContents",
+        "gitDiff",
+        "metaPrompts",
+        "userInstructions"
+      ],
+      "disabledPromptSections": [],
+      "duplicateUserInstructionsAtTop": false,
+      "tabTitle": null
+    },
+    "expected": {
+      "kind": "clipboard",
+      "text": "<file_map>\none\n├── src\n│   ├── Example.swift *\n│   ├── Neighbor.swift +\n│   └── Notes.md *\n\nFile: src/Neighbor.swift\n```swift\nstruct Neighbor\n```\n</file_map>\n<file_contents>\nFile: src/Example.swift\n```swift\nstruct Example {}\n\n```\n\nFile: src/Notes.md\n(lines 1: opening)\n```md\nfirst\r\n\n```\n\n(lines 3-4)\n```md\nthird\rfourth\n```\n</file_contents>\n<git_diff>\nsupplied patch\n\n</git_diff>\n<user_instructions>\nOriginal user text\nλ 😀\nDo not omit evidence.\n\n</user_instructions>\n",
+      "utf8Bytes": 500,
+      "sha256": "522629a8fc0e14383c374333d19cf4516a58cdea84412025b1bda5ceec29b258"
+    }
+  },
+  {
+    "name": "custom-reverse-order-without-saved-instructions",
+    "input": {
+      "includeDatetimeInUserInstructions": false,
+      "metaInstructions": [],
+      "userInstructions": "Original user text\nλ 😀\nDo not omit evidence.\n",
+      "files": [
+        {
+          "file": {
+            "id": "full",
+            "rootID": "one",
+            "name": "Example.swift",
+            "relativePath": "src/Example.swift",
+            "fullPath": "/fixture/one/src/Example.swift"
+          },
+          "role": "ordinary",
+          "isCodemap": false,
+          "loadedContent": "struct Example {}\n",
+          "lineRanges": null,
+          "rootFolderPath": "/fixture/one"
+        },
+        {
+          "file": {
+            "id": "map",
+            "rootID": "one",
+            "name": "Neighbor.swift",
+            "relativePath": "src/Neighbor.swift",
+            "fullPath": "/fixture/one/src/Neighbor.swift"
+          },
+          "role": "ordinary",
+          "isCodemap": true,
+          "loadedContent": null,
+          "lineRanges": null,
+          "rootFolderPath": "/fixture/one"
+        },
+        {
+          "file": {
+            "id": "slice",
+            "rootID": "one",
+            "name": "Notes.md",
+            "relativePath": "src/Notes.md",
+            "fullPath": "/fixture/one/src/Notes.md"
+          },
+          "role": "ordinary",
+          "isCodemap": false,
+          "loadedContent": "first\r\nsecond\nthird\rfourth",
+          "lineRanges": [
+            {
+              "start": 1,
+              "end": 1,
+              "description": "opening"
+            },
+            {
+              "start": 3,
+              "end": 4,
+              "description": null
+            }
+          ],
+          "rootFolderPath": "/fixture/one"
+        }
+      ],
+      "fileTreeContent": "one\n├── src\n│   ├── Example.swift *\n│   ├── Neighbor.swift +\n│   └── Notes.md *",
+      "gitDiff": "patch",
+      "includeSavedPrompts": true,
+      "includeFiles": true,
+      "includeUserPrompt": true,
+      "filePathDisplay": "relative",
+      "codemapPresentation": {
+        "renderedEntriesByFileID": {
+          "map": {
+            "text": "File: src/Neighbor.swift\n```swift\nstruct Neighbor\n```"
+          }
+        }
+      },
+      "promptSectionsOrder": [
+        "userInstructions",
+        "metaPrompts",
+        "gitDiff",
+        "fileContents",
+        "fileMap"
+      ],
+      "disabledPromptSections": [],
+      "duplicateUserInstructionsAtTop": false,
+      "tabTitle": null
+    },
+    "expected": {
+      "kind": "clipboard",
+      "text": "<user_instructions>\nOriginal user text\nλ 😀\nDo not omit evidence.\n\n</user_instructions>\n<git_diff>\npatch\n</git_diff>\n<file_contents>\nFile: src/Example.swift\n```swift\nstruct Example {}\n\n```\n\nFile: src/Notes.md\n(lines 1: opening)\n```md\nfirst\r\n\n```\n\n(lines 3-4)\n```md\nthird\rfourth\n```\n</file_contents>\n<file_map>\none\n├── src\n│   ├── Example.swift *\n│   ├── Neighbor.swift +\n│   └── Notes.md *\n\nFile: src/Neighbor.swift\n```swift\nstruct Neighbor\n```\n</file_map>\n",
+      "utf8Bytes": 490,
+      "sha256": "6d57492ae87b834af45c27669a2e300622c2183a3745f671d890a150089cf1bf"
+    }
   }
 ]

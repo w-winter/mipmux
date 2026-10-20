@@ -1,5 +1,6 @@
 import { IgnoreSettings } from '../contracts/inventory.js';
 import { CopyContext } from '../contracts/presentation.js';
+import { PromptEnhancementMode } from '../contracts/context.js';
 import { readFile } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
 import Type, { type Static, type TSchema } from 'typebox';
@@ -20,6 +21,7 @@ export const HostConfig = Type.Object({ copyContext: CopyContext, ignoreSettings
   git: Type.Union([executable, Type.Null()]), discovery: Type.Union([PiConfig, Type.Null()]),
   defaultMaxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   contextBudgetUnits: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+  defaultEnhancementMode: Type.Optional(PromptEnhancementMode),
 }, closed);
 export type HostConfig = Static<typeof HostConfig>;
 export const hostValidator = Compile(HostConfig);
@@ -43,7 +45,9 @@ export function compose(config: HostConfig, configurationPath: string | null) {
   };
   if (config.git) Object.assign(runtimeOptions, { git: config.git });
   if (config.ignoreSettings) Object.assign(runtimeOptions, { ignoreSettings: config.ignoreSettings });
+  if (config.defaultEnhancementMode !== undefined) Object.assign(runtimeOptions, { defaultEnhancementMode: config.defaultEnhancementMode });
   const runtime = new SmipRuntime(runtimeOptions);
-  const runner = config.discovery ? new PiRunner(config.discovery, runtime.supervisor) : null;
+  const runner = config.discovery ? new PiRunner(config.discovery, runtime.supervisor,
+    (operation, signal) => runtime.renderPresentation(operation, signal)) : null;
   return { runtime, client: runtime.createClient(runner) };
 }

@@ -43,7 +43,7 @@ for (const mode of ['manual', 'automatic'] as const) for (const preset of ['stan
           { kind: 'codemap', source: { root: 'b', path: 'Peer.swift' } }] };
       const draft = await workspace.createDraft({ task: 'Inspect both roots', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
         initialSelection, requiredSources: [], documents: [], patches: [], discoveryHints: [], budgetUnits: 200000,
-        outputName: 'packet', copyPreset: preset, storedPrompts: [], duplicateUserInstructionsAtTop: false }, signal());
+        outputName: 'packet', copyPreset: preset, duplicateUserInstructionsAtTop: false }, signal());
       try {
         const selected = draft.selectionProjection();
         await rename(a, join(base, 'old-a')); await mkdir(a);
@@ -84,7 +84,7 @@ test('unavailable required source stays selected and prevents packet publication
     const draft = await workspace.createDraft({ task: 'Keep required evidence', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'b', path: 'healthy.txt' } }] },
       requiredSources: [{ kind: 'full', source: { root: 'a', path: 'required.txt' } }], documents: [], patches: [], discoveryHints: [],
-      budgetUnits: 200000, outputName: 'packet', copyPreset: 'standard', storedPrompts: [], duplicateUserInstructionsAtTop: false }, signal());
+      budgetUnits: 200000, outputName: 'packet', copyPreset: 'standard', duplicateUserInstructionsAtTop: false }, signal());
     try {
       await rename(a, join(base, 'old-a'));
       const result = partial.Parse(await draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'content', maxOutputBytes: 100000 })), signal()));
@@ -112,7 +112,7 @@ test('content view loads full files and slices, withholding unreadable leaves wi
         { kind: 'slices', source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: null }] },
         { kind: 'full', source: { root: 'r', path: 'healthy.txt' } }] },
       requiredSources: [], documents: [], patches: [], discoveryHints: [], budgetUnits: 100000, outputName: 'packet',
-      copyPreset: 'standard', storedPrompts: [], duplicateUserInstructionsAtTop: false }, signal());
+      copyPreset: 'standard', duplicateUserInstructionsAtTop: false }, signal());
     const original = draft.selectionProjection();
     const get = () => draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'content', maxOutputBytes: 100000 })), signal());
     for (const path of ['full.txt', 'slice.txt']) await rename(join(root, path), join(base, path));

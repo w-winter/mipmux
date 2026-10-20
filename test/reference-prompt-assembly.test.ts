@@ -5,9 +5,14 @@ import { resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { NativeOperation } from '../src/contracts/native.js';
+import { NativePromptAssemblyInput } from '../src/contracts/native.js';
 
-const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: NativeOperation,
+const sourceSection = Type.Enum(['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions']);
+const sourceInput = Type.Object({ kind: Type.Literal('renderPromptAssembly'), order: Type.Array(sourceSection),
+  disabled: Type.Array(sourceSection), duplicateUserInstructionsAtTop: Type.Boolean(),
+  snippets: Type.Object({ ...Type.Omit(NativePromptAssemblyInput.properties.snippets, ['constraints']).properties,
+    metaPrompts: Type.Union([Type.String(), Type.Null()]) }) });
+const fixtures = Compile(Type.Array(Type.Object({ name: Type.String(), input: sourceInput,
   expected: Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }),
 })));
 const reply = Compile(Type.Object({ result: Type.Unknown() }));
@@ -17,7 +22,12 @@ test('native prompt assembly preserves original section order, inclusion and new
   const proof: { name: string; bytes: number }[] = [];
   for (const fixture of cases) {
     const generation = 'prompt-assembly';
-    const nativeFrame = callNative(fixture.input, generation, fixture.name);
+    const { metaPrompts, ...snippets } = fixture.input.snippets;
+    const nativeFrame = callNative({ kind: 'renderPromptAssembly',
+      order: fixture.input.order.map(section => section === 'metaPrompts' ? 'constraints' : section),
+      disabled: fixture.input.disabled.map(section => section === 'metaPrompts' ? 'constraints' : section),
+      duplicateUserInstructionsAtTop: fixture.input.duplicateUserInstructionsAtTop,
+      snippets: { ...snippets, constraints: metaPrompts } }, generation, fixture.name);
     assert.deepEqual(reply.Parse(nativeFrame).result, fixture.expected, fixture.name);
     proof.push({ name: fixture.name, bytes: Buffer.byteLength(fixture.expected.text) });
   }

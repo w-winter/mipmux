@@ -11,7 +11,7 @@ import type { NativeOperation } from '../src/contracts/native.js';
 import { identity } from '../src/context/material-store.js';
 import { canonicalJSON } from '../src/workspace/values.js';
 
-const sections = ['fileMap', 'fileContents', 'gitDiff', 'metaPrompts', 'userInstructions'] as const;
+const sections = ['fileMap', 'fileContents', 'gitDiff', 'constraints', 'userInstructions'] as const;
 type Section = typeof sections[number];
 const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
@@ -37,7 +37,7 @@ test('public packets preserve source section permutations and repetitions with e
     const check = async (order: Section[]) => {
       const input = { task: 'Literal prompt λ', constraints: 'Keep every body.', purpose: 'review' as const, enhancementMode: 'preserve' as const,
         initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: true,
-        copyPreset: 'codeReview' as const, storedPrompts: [], promptSectionsOrder: order,
+        copyPreset: 'codeReview' as const, promptSectionsOrder: order,
         requiredSources: [{ kind: 'full' as const, source: { root: 'r', path: 'Main.swift' } },
           { kind: 'slices' as const, source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: 'selected' }] }],
         documents: [{ kind: 'suppliedDocument' as const, id: 'plan.md', role: 'plan' as const, origin: 'fixture', text: document }],
@@ -69,8 +69,8 @@ test('public packets preserve source section permutations and repetitions with e
         const reference = await bridge.request({ kind: 'renderClipboard', input: { files, codemapPresentation: {
           renderedEntriesByFileID: { peer: { text: context.subarray(body.offset, body.offset + body.length).toString() } } },
           filePathDisplay: 'full', fileTreeContent: tree, gitDiff: gitText + '\n\n' + patch,
-          metaInstructions: [{ title: 'Constraints', content: input.constraints }], userInstructions: input.task,
-          includeFiles: true, includeUserPrompt: true, includeSavedPrompts: true, includeDatetimeInUserInstructions: false,
+          constraints: input.constraints, userInstructions: input.task,
+          includeFiles: true, includeUserPrompt: true, includeDatetimeInUserInstructions: false,
           promptSectionsOrder: order, disabledPromptSections: [], duplicateUserInstructionsAtTop: true, tabTitle: null } }, signal);
         assert.equal(context.toString(), reference.result.text);
       } finally { await bridge.close(); }

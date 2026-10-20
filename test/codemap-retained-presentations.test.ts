@@ -14,7 +14,7 @@ import { observe } from '../src/workspace/observe.js';
 const retainedLimit = 64;
 const request: ContextBuildRequest = { task: 'Inspect retained codemaps', constraints: '', enhancementMode: 'preserve',
   purpose: 'investigation', initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [],
-  documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard',
+  documents: [], patches: [], duplicateUserInstructionsAtTop: false, copyPreset: 'standard',
   budgetUnits: 100000, discoveryHints: [], outputName: 'retained-presentation' };
 const selection = selectionValidator.Parse(selectionValidator.Default({ op: 'get', view: 'content', maxOutputBytes: 100000 }));
 

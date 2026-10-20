@@ -1,18 +1,19 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SafeCount, SHA256 } from './workspace.js';
+import { SafeCount, SHA256, SourceIdentity } from './workspace.js';
 import { ReadRequest, TreeRequest, ScopedStructure, SearchRequest, ReadInput, StructureInput, SearchInput, Continuation } from './exploration.js';
 import { GitRequest, GitInput } from './git.js';
-import { ContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from './context.js';
+import { ContextBuildRequest, CapturedContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from './context.js';
 import { SelectionInput, SelectionRequest } from './selection.js';
 import { AskUserRequest } from './interaction.js';
 
 const closed = { additionalProperties: false };
 export const DiscoveryInput = Type.Object({ tokenBudget: SafeCount, purpose: ContextBuildRequest.properties.purpose,
   clarification: Type.Optional(Type.Object({ questionTimeoutSeconds: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }) }, closed)),
-  enhancementMode: ContextBuildRequest.properties.enhancementMode,
+  enhancementMode: CapturedContextBuildRequest.properties.enhancementMode,
   task: Type.String(), constraints: Type.String(), hints: Type.Array(Type.String()), roots: Type.Array(Type.String()),
-  initialContext: Type.String({ minLength: 1 }), systemPrompt: Type.String(), message: Type.String() }, closed);
+  initialContext: Type.String({ minLength: 1 }), fileTree: Type.String(), currentPrompt: Type.String(),
+  restrictsReviewGitToExplicitReadOnly: Type.Boolean() }, closed);
 type DiscoveryInputFields = Static<typeof DiscoveryInput>;
 export type DiscoveryInput = { readonly [K in keyof DiscoveryInputFields]: Readonly<DiscoveryInputFields[K]> };
 export const Positive = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
@@ -81,7 +82,9 @@ const McpReceipt = Type.Object({ configSHA256: SHA256,
 }, closed);
 export const DiscoveryReceipt = Type.Object({
   adapter: Type.String(), sdk: Type.String(), buildLockSHA256: SHA256,
-  promptVersion: Type.String(), promptSHA256: SHA256,
+  templateVersion: Type.Literal('smip-discovery-template-v1'),
+  template: Type.Object({ path: Type.String({ pattern: '^/[^\\u0000]*$' }), identity: SourceIdentity }, closed),
+  policyIdentity: SourceIdentity,
   requested: Type.Object({ provider: Type.String(), model: Type.String(), thinking: Type.String() }, closed),
   effective: Type.Union([Type.Null(), Type.Object({ identity: ModelIdentity, thinking: Type.String(),
     contextWindow: Positive, maxTokens: Positive, recordSHA256: SHA256,

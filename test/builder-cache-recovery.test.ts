@@ -23,7 +23,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [config], nativeEnvironment: {},
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
-  const request: ContextBuildRequest = { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
+  const request: ContextBuildRequest = { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
     discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
   await writeFile(config, JSON.stringify({ ...options, git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   try { await exercise(); } finally { await provider.close(); }
@@ -55,7 +55,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   await corrupt();
   const runtime = new SmipRuntime(options);
   try {
-    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
+    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
     const workspace = await client.declare(spec, signal());
     const job = client.build(workspace.id, 'one', request);
     const failed = await client.wait(job.jobId, 20000, signal(), () => {});

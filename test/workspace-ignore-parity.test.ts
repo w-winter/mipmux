@@ -47,7 +47,7 @@ test('loaded subroots inherit Git controls and retain the mandatory floor across
       await assert.rejects(operation.readComparisonSource({ root: 'r', path: 'git-denied.swift' }), /pathDenied/);
       assert.equal((await operation.readSource({ root: 'r', path: 'Main.swift' })).text, 'struct Record {}\n');
     } finally { await operation.close(); }
-    const draft = await workspace.createDraft({ task: 'Inspect inherited visibility', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'preserve',
+    const draft = await workspace.createDraft({ task: 'Inspect inherited visibility', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'preserve',
       purpose: 'investigation', requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } }],
       documents: [], patches: [], budgetUnits: 200000, discoveryHints: [], outputName: 'packet' }, signal());
     try {

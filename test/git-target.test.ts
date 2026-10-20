@@ -58,13 +58,13 @@ test('scout implicit Git uses frozen selected-file ownership rather than all loa
     const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache-' + scenario.name), contextBudgetUnits: 200000,
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
       credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
-    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
+    const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
     try {
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: outer }, { name: 'plain', absolutePath: plain }],
         exclusions: [], outputRoot: out }, signal());
       const job = client.build(workspace.id, scenario.name, { task: 'Inspect the selected checkout', constraints: '',
         purpose: 'review', enhancementMode: 'preserve', initialSelection: { codemapMode: 'manual', sources: scenario.sources },
-        duplicateUserInstructionsAtTop: false, copyPreset: 'standard', storedPrompts: [], requiredSources: [],
+        duplicateUserInstructionsAtTop: false, copyPreset: 'standard', requiredSources: [],
         documents: [], patches: [], discoveryHints: [], budgetUnits: 200000, outputName: scenario.name });
       const terminal = await client.wait(job.jobId, 10000, signal(), () => {});
       assert.equal(terminal.state, 'ready', JSON.stringify(terminal)); assert.equal(terminal.localSettled, true);

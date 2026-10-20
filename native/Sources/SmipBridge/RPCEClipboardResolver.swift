@@ -5,22 +5,21 @@ import Foundation
 struct PromptContextResolved: Codable {
     var includeFiles: Bool
     var includeUserPrompt: Bool
-    var includeMetaPrompts: Bool
     var includeFileTree: Bool
     var fileTreeMode: FileTreeOption
     var codeMapUsage: CodeMapUsage
     var gitInclusion: GitInclusion
-    var storedPromptIds: [UUID]?
 }
+
 struct CopyCustomizations: Decodable {
     let includeFiles: Bool?
     let includeUserPrompt: Bool?
-    let includeMetaPrompts: Bool?
     let includeFileTree: Bool?
     let fileTreeMode: FileTreeOption?
     let codeMapUsage: CodeMapUsage?
     let gitInclusion: GitInclusion?
 }
+
 enum GitDiffInclusionMode: String, Decodable { case none, selectedFiles, all }
 struct CapturedGitSettings: Decodable { let gitDiffInclusionMode: GitDiffInclusionMode }
 struct CapturedCopySettings: Decodable {
@@ -29,13 +28,14 @@ struct CapturedCopySettings: Decodable {
         let codeMapUsage: CodeMapUsage
         let gitInclusion: GitDiffInclusionMode
     }
+
     let current: Current
     let customizations: CopyCustomizations
     let codeMapsGloballyDisabled: Bool
-    let selectedPromptIds: [UUID]
     let activeGitRoot: String?
     let presets: [CopyPreset]
 }
+
 struct ClipboardPresetResolver {
     let fileTreeOption: FileTreeOption
     let codeMapUsage: CodeMapUsage
@@ -43,26 +43,24 @@ struct ClipboardPresetResolver {
     let gitViewModel: CapturedGitSettings
     nonisolated static func resolveCopyCodeMapUsage(
         isManualPreset: Bool,
-        customCodeMapUsage: CodeMapUsage?,
+        customCodeMapUsage _: CodeMapUsage?,
         presetCodeMapUsage: CodeMapUsage?,
         uiCodeMapUsage: CodeMapUsage,
-        globallyDisabled: Bool = false
-    ) -> CodeMapUsage {
+        globallyDisabled: Bool = false) -> CodeMapUsage {
         guard !globallyDisabled else { return .none }
         if isManualPreset {
             return uiCodeMapUsage
         }
         return presetCodeMapUsage ?? uiCodeMapUsage
     }
+
     func resolvePromptContext(_ preset: CopyPreset, custom: CopyCustomizations?) -> PromptContextResolved {
         // Manual preset is the only place where per-workspace overrides apply
         let isManualPreset = (preset.builtInKind == .manual) || (preset.id == BuiltInCopyPresets.manual.id)
         let effectiveCustom = isManualPreset ? custom : nil
 
-        // Merge include flags (force to true since UI elements were removed)
         let includeFiles = (effectiveCustom?.includeFiles ?? preset.includeFiles) ?? true
         let includeUserPrompt = (effectiveCustom?.includeUserPrompt ?? preset.includeUserPrompt) ?? true
-        let includeMetaPrompts = (effectiveCustom?.includeMetaPrompts ?? preset.includeMetaPrompts) ?? true
         let includeFileTree = (effectiveCustom?.includeFileTree ?? preset.includeFileTree) ?? true
 
         // File-tree and code-map behaviour (fallback to current UI)
@@ -73,34 +71,29 @@ struct ClipboardPresetResolver {
             customCodeMapUsage: effectiveCustom?.codeMapUsage,
             presetCodeMapUsage: preset.codeMapUsage,
             uiCodeMapUsage: codeMapUsage,
-            globallyDisabled: codeMapsGloballyDisabled
-        )
+            globallyDisabled: codeMapsGloballyDisabled)
 
         let desiredGitInclusion = Self.mapGitInclusion(
             custom: effectiveCustom?.gitInclusion,
             preset: preset.gitInclusion,
             uiMode: gitViewModel.gitDiffInclusionMode,
-            isManualPreset: isManualPreset
-        )
+            isManualPreset: isManualPreset)
 
         return PromptContextResolved(
             includeFiles: includeFiles,
             includeUserPrompt: includeUserPrompt,
-            includeMetaPrompts: includeMetaPrompts,
             includeFileTree: includeFileTree,
             fileTreeMode: desiredFileTreeMode,
             codeMapUsage: desiredCodeMapUsage,
-            gitInclusion: desiredGitInclusion,
-            storedPromptIds: preset.storedPromptIds
-        )
+            gitInclusion: desiredGitInclusion)
     }
+
     // swiftlint:disable identifier_name
     static func mapGitInclusion(
         custom: GitInclusion?,
         preset: GitInclusion?,
         uiMode: GitDiffInclusionMode,
-        isManualPreset: Bool
-    ) -> GitInclusion {
+        isManualPreset: Bool) -> GitInclusion {
         if let c = custom {
             return c
         }

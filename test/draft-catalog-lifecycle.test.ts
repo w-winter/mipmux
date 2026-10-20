@@ -16,7 +16,7 @@ const search = searchValidator.Parse(searchValidator.Default({ mode: 'content', 
 const read = readValidator.Parse(readValidator.Default({ root: 'r', path: 'new.ts', maxOutputBytes: 100000 }));
 const request: ContextBuildRequest = { task: 'Inspect current source', budgetUnits: 100000, outputName: 'packet',
   initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [{ kind: 'full', source: { root: 'r', path: 'old.ts' } }],
-  duplicateUserInstructionsAtTop: false, copyPreset: 'standard', storedPrompts: [], constraints: '',
+  duplicateUserInstructionsAtTop: false, copyPreset: 'standard', constraints: '',
   enhancementMode: 'preserve', purpose: 'investigation', documents: [], patches: [], discoveryHints: [] };
 
 for (const mutation of ['selection', 'update'] as const) test(`draft ${mutation} uses the reconciled catalog without replacing captured evidence`, async () => {

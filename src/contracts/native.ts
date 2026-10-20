@@ -1,4 +1,4 @@
-import { ClipboardPreset, CopyContext, RawCopyPreset, StoredPrompt, CapturedClipboardPreset, PromptSection as promptSection } from './presentation.js';
+import { ClipboardPreset, CopyContext, RawCopyPreset, CapturedClipboardPreset, PromptSection as promptSection } from './presentation.js';
 import { DecoderPolicy, IgnoreAuthority, IgnoreControl, IgnoreSettings } from './inventory.js';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -48,14 +48,14 @@ const snippetText = Type.Union([Type.String(), Type.Null()]);
 const clipboardLine = Type.Integer({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER });
 const clipboardRange = Type.Object({ start: clipboardLine, end: clipboardLine, description: snippetText }, { additionalProperties: false });
 export const NativeClipboardInput = Type.Object({ kind: Type.Literal('renderClipboard'), input: Type.Object({
-  metaInstructions: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
+  constraints: Type.String(),
   userInstructions: Type.String(), files: Type.Array(Type.Object({
     file: Type.Object({ id: Type.String(), rootID: Type.String(), name: Type.String(), relativePath: Type.String(),
       fullPath: Type.String() }, { additionalProperties: false }),
     role: Type.Enum(['ordinary', 'authorizedGitDiffArtifact']), isCodemap: Type.Boolean(), loadedContent: snippetText,
     lineRanges: Type.Union([Type.Array(clipboardRange), Type.Null()]), rootFolderPath: snippetText,
   }, { additionalProperties: false })), fileTreeContent: snippetText, gitDiff: snippetText,
-  includeSavedPrompts: Type.Boolean(), includeFiles: Type.Boolean(), includeUserPrompt: Type.Boolean(),
+  includeFiles: Type.Boolean(), includeUserPrompt: Type.Boolean(),
   includeDatetimeInUserInstructions: Type.Boolean(),
   filePathDisplay: Type.Enum(['full', 'relative']),
   codemapPresentation: Type.Object({ renderedEntriesByFileID: Type.Record(Type.String(),
@@ -67,21 +67,34 @@ export const NativePreparedClipboardInput = Type.Object({ kind: Type.Literal('re
   duplicateUserInstructionsAtTop: Type.Boolean(),
   includeDatetimeInUserInstructions: Type.Boolean(),
   promptSectionsOrder: Type.Array(promptSection),
-  copyPreset: CapturedClipboardPreset, selectedPromptIds: CopyContext.properties.selectedPromptIds, storedPrompts: Type.Array(StoredPrompt),
+  copyPreset: CapturedClipboardPreset,
   codemapBlocks: Type.Array(Type.String()), contentBlocks: Type.Array(Type.String()), fileTreeContent: Type.String(),
   selectedGitDiffs: Type.Array(Type.Object({ id: Type.String(), text: Type.String() }, { additionalProperties: false })),
   gitDiff: snippetText, automaticGitDiff: snippetText, userInstructions: Type.String(),
-  metaInstructions: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
+  constraints: Type.String(),
 }, { additionalProperties: false }) }, { additionalProperties: false });
 export const NativePromptAssemblyInput = Type.Object({ kind: Type.Literal('renderPromptAssembly'),
   order: Type.Array(promptSection), disabled: Type.Array(promptSection), duplicateUserInstructionsAtTop: Type.Boolean(),
   snippets: Type.Object({ fileMap: snippetText, fileContents: snippetText, gitDiff: snippetText,
-    metaPrompts: snippetText, userInstructions: snippetText }, { additionalProperties: false }),
+    constraints: snippetText, userInstructions: snippetText }, { additionalProperties: false }),
 }, { additionalProperties: false });
-export const NativeDiscoveryMessageInput = Type.Object({ kind: Type.Literal('renderDiscoveryMessage'), tokenBudget: SafeCount,
-  fileTree: Type.String(), currentPrompt: Type.String(), discoveryInstructions: Type.String(),
-  contextBuilderPrompts: Type.Array(Type.Object({ title: Type.String(), content: Type.String() }, { additionalProperties: false })),
-}, { additionalProperties: false });
+const DiscoveryTemplateSection = Type.Enum(['system', 'startup.metadata',
+  'mode.fullRewrite.handoff', 'mode.fullRewrite.success', 'mode.fullRewrite.antiPatterns', 'mode.fullRewrite.checklist',
+  'mode.augment.handoff', 'mode.augment.success', 'mode.augment.antiPatterns', 'mode.augment.checklist',
+  'mode.preserve.handoff', 'mode.preserve.success', 'mode.preserve.antiPatterns', 'mode.preserve.checklist',
+  'clarification.tool', 'clarification.guidance', 'clarification.approval', 'review.artifacts', 'review.readOnly',
+  'review.roots.named', 'review.roots.lookup']);
+const templateLine = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
+const NativeTemplateDiagnostic = Type.Union([
+  Type.Object({ kind: Type.Literal('header'), line: Type.Literal(1) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('missingSection'), section: DiscoveryTemplateSection }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('structure'), line: templateLine,
+    reason: Type.Enum(['unknownSection', 'unexpectedEnd', 'malformedMarker', 'outsideContent']) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('section'), line: templateLine, section: DiscoveryTemplateSection,
+    reason: Type.Enum(['duplicate', 'nested', 'unterminated']) }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('placeholder'), line: templateLine, section: DiscoveryTemplateSection,
+    reason: Type.Enum(['unknown', 'malformed', 'unclosed', 'disallowed']) }, { additionalProperties: false }),
+]);
 export const NativeSliceRange = Type.Object({ start: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   end: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }), description: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false });
 const canonicalSelectionPath = Type.String({ pattern: '^/[^\\u0000]*$' });
@@ -368,7 +381,6 @@ export const NativeOperation = Type.Union([
   NativePathMatchInput,
   NativeSliceRangesInput,
   NativeSelectionTransitionInput,
-  NativeDiscoveryMessageInput,
   Type.Object({ kind: Type.Literal('describe') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('openRoots'), roots: Type.Array(declaration, { minItems: 1 }) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('listDirectory'), root: handle, directory: DirectoryRef }, { additionalProperties: false }),
@@ -379,11 +391,12 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('writeExport'), run: handle, filename, bytes: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('readExport'), run: handle, filename }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('publishManifest'), run: handle, bytes: base64 }, { additionalProperties: false }),
-  Type.Object({ kind: Type.Literal('renderDiscoveryPrompt'), tokenBudget: SafeCount,
-    runtime: Type.Enum(['codexExec', 'generic']), enhancementMode: Type.Enum(['fullRewrite', 'augment', 'preserve']),
-    allowClarifyingQuestions: Type.Boolean(), responseType: Type.Union([Type.String(), Type.Null()]),
-    instructions: Type.Union([Type.String(), Type.Null()]), questionTimeoutSeconds: SafeCount,
+  Type.Object({ kind: Type.Literal('renderDiscoveryPrompt'), template: Type.String(), tokenBudget: SafeCount,
+    enhancementMode: Type.Enum(['fullRewrite', 'augment', 'preserve']),
+    allowClarifyingQuestions: Type.Boolean(), purpose: Type.Enum(['planning', 'review', 'investigation']),
+    task: Type.String(), questionTimeoutSeconds: templateLine,
     restrictsReviewGitToExplicitReadOnly: Type.Boolean(), reviewRootNames: Type.Array(Type.String()),
+    fileTree: Type.String(), currentPrompt: Type.String(), discoveryInstructions: Type.String(),
   }, { additionalProperties: false }),
   NativeFileTreeInput,
   NativePromptAssemblyInput,
@@ -467,7 +480,9 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('gitTarget'), state: Type.Literal('available'), checkouts: Type.Array(NativeGitCheckout, { minItems: 1 }),
     primary: NativeGitCheckout }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('preparedClipboard'), text: Type.String(), preset: CapturedClipboardPreset,
-    tokenInputs: Type.Object({ promptText: Type.String(), selectedInstructionsText: Type.String() }, { additionalProperties: false }),
+    tokenInputs: Type.Object({ promptText: Type.String(),
+      /** Fixed constraint body before framing and section duplication. */
+      selectedInstructionsText: Type.String() }, { additionalProperties: false }),
     selectedGitDiffIds: Type.Array(Type.String()), needsAutomaticGit: Type.Boolean() }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('automaticReviewGitPaths'), checkouts: Type.Array(AutomaticReviewGitCheckout),
     pathIssues: Type.Array(AutomaticReviewGitPathIssue), base: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
@@ -513,8 +528,8 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('selectionTransition'), selection: NativeSelectionState }, { additionalProperties: false }),
   NativeFileTreeResult,
   NativeStructureResult,
-  Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String() }, { additionalProperties: false }),
-  Type.Object({ kind: Type.Literal('discoveryMessage'), text: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String(), message: Type.String() }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('discoveryTemplateRejected'), diagnostic: NativeTemplateDiagnostic }, { additionalProperties: false }),
   ...NativeAskUserResult.anyOf,
   Type.Object({ kind: Type.Literal('description'), decoderPolicy: DecoderPolicy,
     regexEngineFingerprint: SHA256,

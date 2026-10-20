@@ -48,7 +48,7 @@ export interface Measurement {
 }
 
 /** Captures admitted state for the scout; per-file inferred details remain in paged inspection. */
-export function renderInitialContext(input: RenderInput & { readonly draftId: string; readonly revision: number; readonly contextBudgetUnits: number; readonly tree: string }): string {
+export function renderInitialContext(input: RenderInput & { readonly draftId: string; readonly revision: number; readonly tree: string }): string {
   const rendered = renderBundle(input);
   const sources = input.materials.flatMap(({ record }) => record.kind === 'source' ? [record] : []);
   const inferred = new Set(sources.filter(record => record.selectionOrigin === 'inferred').map(record => record.id));
@@ -56,7 +56,7 @@ export function renderInitialContext(input: RenderInput & { readonly draftId: st
     draftId: input.draftId, revision: input.revision, inventoryDigest: input.inventory.inventoryDigest, codemapMode: input.codemapMode,
     constraints: input.request.constraints,
     roots: input.inventory.roots.map(root => ({ name: root.name, path: root.identity.canonicalPath })),
-    contextBudgetUnits: input.contextBudgetUnits, tokenBudget: scoutTokenBudget(input.request.budgetUnits), accountingMethod: 'utf8-21-over-80-v1', measurement: rendered.measurement,
+    tokenBudget: scoutTokenBudget(input.request.budgetUnits), accountingMethod: 'utf8-21-over-80-v1', measurement: rendered.measurement,
     explicitSources: sources.filter(record => record.selectionOrigin === 'explicit').map(record => ({ selection: record.selection, required: record.required })),
     inferredCodemaps: { count: inferred.size, itemUnits: rendered.costs.filter(cost => inferred.has(cost.id)).reduce((sum, cost) => sum + cost.units, 0) },
     documents: input.materials.flatMap(({ record }) => record.kind === 'document' ? [{ id: record.id, role: record.input.role }] : []),

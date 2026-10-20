@@ -31,7 +31,7 @@ test('Review and implicit target election honor available Jujutsu while retainin
     nativeEnvironment: { PATH: join(base, 'bin') }, terminationGraceMs: 100, git: { executable: git } });
   const request: ContextBuildRequest = { task: 'Inspect selected VCS ownership', constraints: '', purpose: 'review', enhancementMode: 'preserve',
     initialSelection: { codemapMode: 'manual', sources: ['colocated', 'healthy', 'standalone'].map(root => ({ kind: 'full', source: { root, path: 'file.txt' } })) },
-    requiredSources: [], documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false,
+    requiredSources: [], documents: [], patches: [], duplicateUserInstructionsAtTop: false,
     copyPreset: 'codeReview', budgetUnits: 100000, discoveryHints: [], outputName: 'mixed' };
   try {
     const workspace = await runtime.declare({ roots: ['colocated', 'healthy', 'standalone'].map(name => ({ name, absolutePath: join(base, name) })),
@@ -87,7 +87,7 @@ test('VCS ownership retains successful path and root entries until runtime dispo
   const spec = { roots: ['repo', 'plain'].map(name => ({ name, absolutePath: join(base, name) })), exclusions: [], outputRoot: join(base, 'out') };
   const request = (root: string, path: string): ContextBuildRequest => ({ task: 'Inspect ownership caching', constraints: '', purpose: 'planning',
     enhancementMode: 'preserve', initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root, path } }] },
-    requiredSources: [], documents: [], patches: [], storedPrompts: [], duplicateUserInstructionsAtTop: false,
+    requiredSources: [], documents: [], patches: [], duplicateUserInstructionsAtTop: false,
     copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: 'cached' });
   const diff = gitValidator.Parse(gitValidator.Default({ op: 'diff', detail: 'full', maxOutputBytes: 100000 })); assert(diff.op === 'diff');
   const runtime = new SmipRuntime(options);

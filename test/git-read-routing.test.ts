@@ -144,12 +144,12 @@ test('real SDK Git status uses frozen multi-repository ownership and requires ex
     : index === 3 ? { kind: 'tool', name: 'git', input: { op: 'log', repositories: [{ root: 'a', path: null, worktree: f.linked }],
       maxOutputBytes: 100000 }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
-  const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor));
+  const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
   try {
     const workspace = await client.declare(f.spec, signal());
     const job = client.build(workspace.id, 'git-read-routing', { task: 'Inspect selected repositories', constraints: '',
       initialSelection: { codemapMode: 'manual', sources: [] }, duplicateUserInstructionsAtTop: false,
-      copyPreset: 'standard', storedPrompts: [], purpose: 'investigation', enhancementMode: 'preserve',
+      copyPreset: 'standard', purpose: 'investigation', enhancementMode: 'preserve',
       requiredSources: [{ kind: 'full', source: { root: 'a', path: 'file.txt' } },
         { kind: 'full', source: { root: 'b', path: 'file.txt' } }], documents: [], patches: [], discoveryHints: [],
       budgetUnits: 100000, outputName: 'packet' });

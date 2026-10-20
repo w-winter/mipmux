@@ -1,7 +1,7 @@
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:http';
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import type { PiConfig } from '../../src/discovery/pi-protocol.js';
@@ -44,12 +44,12 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(join(tmpdir(), 'smip-scripted-pi-'));
   const config: PiConfig = { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off',
-    authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), prompt: { kind: 'file', path: join(directory, 'discovery.md') }, environment: {}, mcp: null,
+    authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), promptTemplatePath: join(directory, 'discovery.md'), environment: {}, mcp: null,
     policy: { retry: { enabled: true, maxRetries: 1, baseDelayMs: 0, maxAgentDelayMs: 0,
       provider: { timeoutMs: 10000, maxRetries: 0, maxRetryDelayMs: 0 } },
       compaction: { enabled: true, reserveTokens: 1024, keepRecentTokens: 128 },
       transport: 'sse', httpIdleTimeoutMs: 10000, websocketConnectTimeoutMs: 1000, cacheWarming: 'off' } };
-  await writeFile(join(directory, 'discovery.md'), '# smip discovery v1\nFixture discovery policy\n');
+  await writeFile(config.promptTemplatePath, await readFile(resolve('test/fixtures/discovery-template.md'), 'utf8'));
   await writeFile(config.authPath, JSON.stringify({ anthropic: { type: 'api_key', key: 'synthetic' } }));
   await writeFile(config.modelsPath, JSON.stringify({ providers: { anthropic: { baseUrl: `http://127.0.0.1:${address.port}`,
     modelOverrides: { 'claude-sonnet-4-5': { contextWindow: 8192, maxTokens: 1024 } } } } }));

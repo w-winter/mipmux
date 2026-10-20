@@ -25,7 +25,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
   await writeFile(join(root, 'file.txt'), 'changed\n');
   const request: ContextBuildRequest = { task: 'Collect evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const runtime = makeRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),

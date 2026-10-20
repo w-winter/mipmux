@@ -51,7 +51,7 @@ async function fixture(point: 'capture' | 'merge') {
   const request: ContextBuildRequest = { task: 'Original', constraints: '', enhancementMode: 'fullRewrite', purpose: 'review',
     initialSelection: { codemapMode: 'automatic', sources: [
       { kind: 'full', source: { root: 'r', path: 'both.swift' } }, { kind: 'full', source: { root: 'r', path: 'anchor.txt' } }] },
-    requiredSources: [], documents: [], patches: [], copyPreset: 'standard', storedPrompts: [],
+    requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const draft = await workspace.createDraft(request, signal()), operation = await workspace.openOperation(signal());
   const select = (input: Partial<SelectionRequest>) => draft.manageSelection(

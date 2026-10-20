@@ -113,8 +113,8 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
     assert.equal(read.isError, false, JSON.stringify(read));
     assert(Buffer.byteLength(JSON.stringify(read)) <= 2000);
     const request = {
-      task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
-      budgetUnits: 10000, outputName: 'packet' };
+      task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
+      outputName: 'packet' };
     const first = await client.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'one', request } });
     const firstId = JSON.parse(JSON.stringify(first.structuredContent)).jobId;
     await started;

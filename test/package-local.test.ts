@@ -2,7 +2,7 @@ import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
+import { constants, copyFileSync, mkdtempSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
@@ -30,7 +30,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const receipt = JSON.parse(readFileSync(join(directory, 'inventory.json'), 'utf8'));
   const paths: string[] = receipt.files.map((file: { path: string }) => file.path);
   for (const path of ['dist/index.js', 'dist/index.d.ts', 'dist/cli/main.js', 'dist/discovery/pi-worker.js',
-    'dist/dependency-identity.json', `libexec/${process.platform}-${process.arch}/SmipBridge`,
+    'dist/dependency-identity.json', 'dist/prompts/discovery.md', `libexec/${process.platform}-${process.arch}/SmipBridge`,
     'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
   assert(!paths.some(path => /(?:\.DS_Store|\.env|test-output|prompt-exports|node_modules|\.build)/u.test(path)));
   const bytes = readFileSync(join(directory, receipt.filename));
@@ -50,7 +50,9 @@ test('local package audits resources and executes relocated library, native, CLI
   writeFileSync(join(installed, 'import.mjs'), 'import {SmipRuntime, verifyBundle} from "smip"; if (typeof SmipRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
   execFileSync(process.execPath, [join(installed, 'import.mjs')], { cwd: '/' });
   const remote = await controlledHttpMcp(); t.after(() => remote.close());
-  let phase: { kind: 'finish' } | { kind: 'question' | 'fetch'; calls: number } | { kind: 'hold'; entered: () => void } = { kind: 'finish' };
+  let phase: { kind: 'finish' } | { kind: 'question'; calls: number } |
+    { kind: 'fetch'; calls: number; templatePath: string; updatedTemplate: Buffer } |
+    { kind: 'hold'; entered: () => void } = { kind: 'finish' };
   const provider = await scriptedProvider(() => {
     if (phase.kind === 'hold') return { kind: 'hold', entered: phase.entered };
     if (phase.kind === 'question' && phase.calls++ === 0) return {
@@ -58,7 +60,10 @@ test('local package audits resources and executes relocated library, native, CLI
         allows_multiple: true, allows_custom: true }] }, stop: 'tool_use', tokens: 10 };
     if (phase.kind === 'fetch') {
       const call = phase.calls++;
-      if (call === 0) return { kind: 'tool', name: 'mcp__controlled__read_ticket', input: {}, stop: 'tool_use', tokens: 10 };
+      if (call === 0) {
+        writeFileSync(phase.templatePath, phase.updatedTemplate);
+        return { kind: 'tool', name: 'mcp__controlled__read_ticket', input: {}, stop: 'tool_use', tokens: 10 };
+      }
       if (call === 1) {
         assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('FETCHED_DOCUMENT_END'));
         return { kind: 'tool', name: 'draft_update', input: { expectedRevision: 0, maxOutputBytes: 10000,
@@ -74,17 +79,20 @@ test('local package audits resources and executes relocated library, native, CLI
     headers: { Authorization: 'Bearer synthetic$$$!mcp-token' },
   } } }));
   provider.config.mcp = { agentDirectory };
-  const prompt = join(directory, 'editable-discovery.md');
-  const promptBytes = Buffer.from('# smip discovery v1\nRELOCATED_EDITABLE_PROMPT\n');
+  const prompt = join(directory, 'discovery.md');
+  const shippedTemplate = join(packageRoot, 'dist/prompts/discovery.md');
+  copyFileSync(shippedTemplate, prompt, constants.COPYFILE_EXCL);
+  const stockBytes = readFileSync(prompt), systemMarker = '<!-- smip:section system -->\n';
+  const promptBytes = Buffer.from(stockBytes.toString().replace(systemMarker, systemMarker + 'RELOCATED_EDITABLE_PROMPT\n'));
   writeFileSync(prompt, promptBytes);
-  provider.config.prompt = { kind: 'file', path: prompt };
+  provider.config.promptTemplatePath = prompt;
   const root = join(directory, 'source'), output = join(directory, 'out');
   mkdirSync(root); mkdirSync(output); writeFileSync(join(root, 'model.swift'), 'struct Relocated { let title: String }\n');
   const config = join(directory, 'config.json'), specPath = join(directory, 'spec.json'), requestPath = join(directory, 'request.json');
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output };
   writeFileSync(specPath, JSON.stringify(spec));
   writeFileSync(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
-    terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
+    terminationGraceMs: 100, contextBudgetUnits: 1000000, defaultEnhancementMode: 'augment', credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/smip'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
@@ -102,27 +110,28 @@ test('local package audits resources and executes relocated library, native, CLI
     const tools = await client.listTools();
     for (const name of ['draft_dispose', 'context_builder_dispose']) assert(tools.tools.some(tool => tool.name === name));
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'relocation', request: {
-      task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, storedPrompts: [], constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
-      discoveryHints: [], outputName: 'packet', budgetUnits: 10000 } }));
+      task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [],
+      discoveryHints: [], outputName: 'packet' } }));
     const result = await new Promise<string>((resolveResult, reject) => {
       execFile(process.execPath,
         [command, 'build', '--request', requestPath, '--config', config], { cwd: '/' }, (error, stdout) => {
           if (error && error.code !== 2) reject(error); else resolveResult(stdout);
         });
     });
-    const terminal = JSON.parse(result);
+    const terminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt,
+      bundle: Type.Object({ manifest: Manifest }) })).Parse(JSON.parse(result));
+    assert.equal(terminal.bundle.manifest.request.budgetUnits, 1000000);
+    assert.equal(terminal.bundle.manifest.request.enhancementMode, 'augment');
     assert.equal(terminal.state, 'ready'); assert.equal(terminal.discovery.acceptedRuns, 1);
     assert.equal(terminal.discovery.workerClosed, true); assert.equal(terminal.discovery.prompt, 'resolved');
     assert.equal(terminal.discovery.buildLockSHA256, receipt.buildLockSHA256);
-    assert.equal(terminal.discovery.promptSHA256, createHash('sha256').update(promptBytes).digest('hex'));
+    assert.deepEqual(terminal.discovery.template.identity, { sha256: createHash('sha256').update(promptBytes).digest('hex'), byteCount: promptBytes.length });
+    assert.notEqual(terminal.discovery.policyIdentity.sha256, terminal.discovery.template.identity.sha256);
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('RELOCATED_EDITABLE_PROMPT'));
-    provider.config.prompt = { kind: 'rpce' };
-    writeFileSync(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
-      terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null,
-      discovery: provider.config, defaultMaxOutputBytes: 10000 }));
+    writeFileSync(prompt, stockBytes);
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'native-relocation', request: {
       task: 'Inspect', initialSelection: { codemapMode: 'automatic', sources: [] }, duplicateUserInstructionsAtTop: false,
-      copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      copyPreset: 'standard', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'native-packet', budgetUnits: 10000 } }));
     const nativeResult = await new Promise<string>((resolveResult, reject) => {
       execFile(process.execPath, [command, 'build', '--request', requestPath, '--config', config], { cwd: '/' }, (error, stdout) => {
@@ -132,7 +141,8 @@ test('local package audits resources and executes relocated library, native, CLI
     const nativeTerminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt,
       bundle: Type.Object({ directory: Type.String() }) })).Parse(JSON.parse(nativeResult));
     assert.equal(nativeTerminal.state, 'ready'); assert(nativeTerminal.state === 'ready');
-    assert.equal(nativeTerminal.discovery.promptVersion, 'rpce-43a9c29');
+    assert.equal(nativeTerminal.discovery.templateVersion, 'smip-discovery-template-v1');
+    assert.equal(nativeTerminal.discovery.template.identity.sha256, createHash('sha256').update(stockBytes).digest('hex'));
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('Leave the prompt COMPLETELY unchanged'));
     assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('<current_prompt_content>'));
     const verification = ['integrity', 'current'].map(mode => {
@@ -155,7 +165,7 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(search.counts.matchingLines, 1);
     const request = {
       task: 'Inspect', initialSelection: { codemapMode: 'manual', sources: [] }, duplicateUserInstructionsAtTop: false,
-      copyPreset: 'standard', storedPrompts: [], constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
+      copyPreset: 'standard', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [],
       discoveryHints: [], outputName: 'interactive-packet', budgetUnits: 10000,
     };
@@ -167,9 +177,11 @@ test('local package audits resources and executes relocated library, native, CLI
     const interactiveValidator = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: DiscoveryReceipt }));
     assert(interactiveValidator.Check(interactiveReply.structuredContent), JSON.stringify(interactiveReply));
     const interactive = interactiveReply.structuredContent;
-    assert.equal(questions, 1); assert.equal(interactive.discovery.promptVersion, 'custom-file-v1');
+    assert.equal(questions, 1); assert.equal(interactive.discovery.templateVersion, 'smip-discovery-template-v1');
     assert(JSON.stringify(provider.requests.at(-1)!.messages).includes('installed custom context'));
-    phase = { kind: 'fetch', calls: 0 };
+    const updatedTemplate = Buffer.from(stockBytes.toString().replace(systemMarker, systemMarker + 'UPDATED_EXTERNAL_TEMPLATE\n'));
+    const fetchRequestStart = provider.requests.length;
+    phase = { kind: 'fetch', calls: 0, templatePath: prompt, updatedTemplate };
     const fetchedId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
       arguments: { workspaceId, requestId: 'http-relocation', request: { ...request, outputName: 'http-packet' } } })).structuredContent).jobId;
     const fetched = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: DiscoveryReceipt,
@@ -183,6 +195,8 @@ test('local package audits resources and executes relocated library, native, CLI
     for (const span of document.spans) assert.deepEqual(context.subarray(span.offset, span.offset + span.length), Buffer.from(remote.text));
     assert.deepEqual(remote.calls, ['read_ticket']);
     assert.equal(fetched.discovery.mcp?.shutdown, 'dispatched');
+    assert.equal(fetched.discovery.template.identity.sha256, createHash('sha256').update(stockBytes).digest('hex'));
+    for (const request of provider.requests.slice(fetchRequestStart)) assert(!JSON.stringify(request.system).includes('UPDATED_EXTERNAL_TEMPLATE'));
     const observed = Compile(Type.Object({ state: Type.Literal('ready') })).Parse((await client.callTool({
       name: 'context_builder_result', arguments: { jobId: fetchedId },
     })).structuredContent);
@@ -198,6 +212,8 @@ test('local package audits resources and executes relocated library, native, CLI
     const cancelled = Compile(Type.Object({ state: Type.Literal('cancelled'), localSettled: Type.Literal(true),
       discovery: DiscoveryReceipt })).Parse((await waiting).structuredContent);
     assert.equal(cancelled.discovery.workerClosed, true); assert.equal(cancelled.discovery.parentToolsSettled, true);
+    assert.equal(cancelled.discovery.template.identity.sha256, createHash('sha256').update(updatedTemplate).digest('hex'));
+    assert(JSON.stringify(provider.requests.at(-1)?.system).includes('UPDATED_EXTERNAL_TEMPLATE'));
     assert.deepEqual(readdirSync(output).sort(), beforeCancel);
     writeFileSync(join(directory, 'relocation-receipt.json'), JSON.stringify({ installed, packageSHA256: receipt.sha256,
       installLockSHA256, terminal, nativeTerminal, verification, read, search, interactive, fetched, observed, cancelled }));

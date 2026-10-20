@@ -49,7 +49,7 @@ async function createFixture(scenario: Scenario, t: TestContext) {
   await writeFile(configPath, JSON.stringify({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 200000, credentialPaths: [], git: null,
-    discovery: { ...provider.config, prompt: { kind: 'rpce' } }, defaultMaxOutputBytes: 12000 }));
+    discovery: { ...provider.config, promptTemplatePath: resolve('prompts/discovery.md') }, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', configPath], cwd: '/', stderr: 'pipe' });
   const diagnostics: Buffer[] = []; transport.stderr?.on('data', bytes => diagnostics.push(Buffer.from(bytes)));
@@ -77,7 +77,7 @@ async function createFixture(scenario: Scenario, t: TestContext) {
   const request = contextRequestValidator.Parse({ task: 'Inspect the selected context', constraints: '', enhancementMode: 'augment',
     purpose: 'investigation', initialSelection: { codemapMode: 'manual', sources: [] },
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } }], documents: [], patches: [],
-    storedPrompts: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false, discoveryHints: [],
+    copyPreset: 'standard', duplicateUserInstructionsAtTop: false, discoveryHints: [],
     budgetUnits: 10000, outputName: 'packet' });
   if (scenario !== 'disabled') request.clarification = { questionTimeoutSeconds: scenario === 'timeout' ? 1 : 300 };
   return { scenario, provider, client, transport, diagnostics, request, workspace, outputRoot,

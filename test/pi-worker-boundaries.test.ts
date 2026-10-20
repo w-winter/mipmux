@@ -1,3 +1,4 @@
+import { nativeDiscoveryRenderer } from './fixtures/render-discovery-prompt.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolve } from 'node:path';
@@ -12,12 +13,13 @@ test('untrusted worker generations, late records and premature completion cannot
       let calls = 0;
       class Supervisor extends ProcessSupervisor {
         override spawn(spec: ProcessSpec) {
+          if (!spec.args.some(arg => arg.endsWith('/pi-worker.js'))) return super.spawn(spec);
           return super.spawn({ ...spec, args: [resolve('test/fixtures/pi-worker.mjs')], env: { SCENARIO: scenario } });
         }
       }
       const supervisor = new Supervisor({ terminationGraceMs: 0 });
       try {
-        const result = await new PiRunner(provider.config, supervisor).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', systemPrompt: 'Fixture policy', message: 'Fixture message', constraints: '', roots: [], hints: [] },
+        const result = await new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: [], hints: [] },
           { call: async (_call, signal) => {
             calls++;
             await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }));

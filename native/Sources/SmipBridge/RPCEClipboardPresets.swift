@@ -3,9 +3,6 @@ import Foundation
 
 // Modified: retain the supported preset declarations and their referenced UUIDs.
 enum BuiltInCopyPresets {
-    private static let architectPromptId = UUID(uuidString: "8E81AAC2-79CE-4897-A59E-EFD81EEBB7E9")!
-    private static let reviewPromptId = UUID(uuidString: "D7F1B2E4-3C5A-6B8D-CF8E-1F5D0E2A4C6B")!
-    private static let planUUID = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
     private static let standardUUID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
     private static let manualUUID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
     private static let diffFollowUpUUID = UUID(uuidString: "55555555-5555-5555-5555-555555555555")!
@@ -20,30 +17,10 @@ enum BuiltInCopyPresets {
         isBuiltIn: true,
         includeFiles: true,
         includeUserPrompt: true,
-        includeMetaPrompts: false, // No stored prompts
         includeFileTree: true,
         fileTreeMode: .auto,
         codeMapUsage: .auto,
-        gitInclusion: GitInclusion.none,
-        storedPromptIds: [] // No stored prompts
-    )
-    /// Plan preset - Architecture & design
-    static let plan = CopyPreset(
-        id: planUUID,
-        name: "Plan",
-        builtInKind: .plan,
-        description: "Architecture design and implementation planning",
-        icon: "🏗️",
-        isBuiltIn: true,
-        includeFiles: true,
-        includeUserPrompt: true,
-        includeMetaPrompts: true,
-        includeFileTree: true,
-        fileTreeMode: .auto,
-        codeMapUsage: .auto,
-        gitInclusion: GitInclusion.none,
-        storedPromptIds: [architectPromptId] // Reference the [Architect] stored prompt
-    )
+        gitInclusion: GitInclusion.none)
     /// Manual preset - Full control (uses current UI state)
     static let manual = CopyPreset(
         id: manualUUID,
@@ -54,7 +31,6 @@ enum BuiltInCopyPresets {
         isBuiltIn: true,
         includeFiles: nil, // All nil = use current UI state
         includeUserPrompt: nil,
-        includeMetaPrompts: nil,
         includeFileTree: nil,
         fileTreeMode: nil,
         codeMapUsage: nil,
@@ -70,7 +46,6 @@ enum BuiltInCopyPresets {
         isBuiltIn: true,
         includeFiles: false, // No files
         includeUserPrompt: true, // Include user instructions
-        includeMetaPrompts: false,
         includeFileTree: false,
         fileTreeMode: FileTreeOption.none,
         codeMapUsage: CodeMapUsage.none,
@@ -86,11 +61,9 @@ enum BuiltInCopyPresets {
         isBuiltIn: true,
         includeFiles: true,
         includeUserPrompt: true,
-        includeMetaPrompts: true,
         includeFileTree: true,
         fileTreeMode: .auto,
         codeMapUsage: .auto,
-        gitInclusion: .selected, // Include git diff for review
-        storedPromptIds: [reviewPromptId] // Reference the [Review] stored prompt
+        gitInclusion: .selected // Include git diff for review
     )
 }
