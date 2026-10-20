@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import type { NativeOperation, NativeResult } from '../src/contracts/native.js';
 import { canonicalJSON } from '../src/workspace/values.js';
 import { identity } from '../src/context/material-store.js';
@@ -24,11 +24,11 @@ function changeNativeOutput(result: NativeResult, mode: NativeMode): void {
 }
 
 async function fixture() {
-  const base = await mkdtemp(join(tmpdir(), 'smip-datetime-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-datetime-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out')); await mkdir('test-output', { recursive: true });
   await writeFile(join(base, 'root/file.txt'), sourceBody);
   let mode: NativeMode = 'normal';
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override async renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' |
       'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
       const result = await super.renderPresentation(input, signal);
@@ -37,7 +37,7 @@ async function fixture() {
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { TZ: 'UTC', LC_ALL: 'en_US.UTF-8' }, terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }],

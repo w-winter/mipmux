@@ -4,21 +4,21 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
-async function fixture(Runtime: typeof SmipRuntime = SmipRuntime) {
+async function fixture(Runtime: typeof MipmuxRuntime = MipmuxRuntime) {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-final-map-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-final-map-'));
   for (const name of ['r', 's', 'out']) await mkdir(join(directory, name));
   await writeFile(join(directory, 'r/Main.swift'), 'struct Main { let peer: Peer }\n');
   await writeFile(join(directory, 'r/Peer.swift'), 'struct Peer { let value: Int }\n');
   await writeFile(join(directory, 'r/Neighbor.swift'), 'struct Neighbor { let other: String }\n');
   await writeFile(join(directory, 's/Other.swift'), 'struct Other {}\n');
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   const client = runtime.createClient(null);
   const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
@@ -61,7 +61,7 @@ for (const boundary of ['cancellation', 'revision', 'freeze'] as const) test(`${
   let armed = false, entered!: () => void, release!: () => void;
   const started = new Promise<void>(resolve => { entered = resolve; });
   const held = new Promise<void>(resolve => { release = resolve; });
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(input: O, signal: AbortSignal) {

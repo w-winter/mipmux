@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/index.js';
+import { MipmuxRuntime } from '../src/index.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import { WorkspaceFailure } from '../src/workspace/values.js';
@@ -15,7 +15,7 @@ const scoutBudget = Compile(Type.Object({ tokenBudget: Type.Integer(), initialCo
 
 test('numeric assembly budget remains the packet limit while scout input receives the source reserve exactly once', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-numeric-budget-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-numeric-budget-'));
   const root = join(base, 'root'), output = join(base, 'out');
   await mkdir(root); await mkdir(output);
   const received: { tokenBudget: number; initialContext: string }[] = [];
@@ -24,8 +24,8 @@ test('numeric assembly budget remains the packet limit while scout input receive
     throw new WorkspaceFailure('fixtureBudgetObserved');
   } };
   const contextBudgetUnits = 200000;
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits, credentialPaths: [],
-    terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits, credentialPaths: [],
+    terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
   try {
     const client = runtime.createClient(runner);

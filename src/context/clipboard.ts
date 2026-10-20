@@ -1,7 +1,7 @@
 import type { MaterialRecord, Span } from '../contracts/context.js';
 import type { NativeOperation } from '../contracts/native.js';
 import type { Material } from './material-store.js';
-import type { SmipRuntime } from '../runtime/smip-runtime.js';
+import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import type { RenderInput, ItemCost } from './render.js';
 import { canonicalJSON, compareBytes, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { estimateUnits } from './budget.js';
@@ -50,7 +50,7 @@ export function preparedClipboardInput(input: PacketInput): ClipboardInput {
   } };
 }
 
-export async function prepareClipboard(runtime: SmipRuntime, input: Omit<PacketInput, 'automaticGit'>,
+export async function prepareClipboard(runtime: MipmuxRuntime, input: Omit<PacketInput, 'automaticGit'>,
   signal: AbortSignal, source: AutomaticReviewGitSource): Promise<RenderInput> {
   let automaticGit = source.kind === 'captured' ? source.capture : null;
   let clipboard = await runtime.renderPresentation(preparedClipboardInput({ ...input, automaticGit }), signal);

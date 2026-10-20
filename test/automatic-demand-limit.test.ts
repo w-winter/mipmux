@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest, type DraftRuntime } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest, type DraftRuntime } from '../src/index.js';
 import type { Continuation } from '../src/contracts/exploration.js';
 
 const maximumCandidateDemandCount = 1024;
@@ -24,13 +24,13 @@ async function sourceCounts(draft: DraftRuntime) {
 }
 
 test('automatic demand overflow clears only inferred codemaps and preserves source selection and Native-free verification', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-automatic-demand-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-automatic-demand-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   await writeFile(join(root, 'Seed.swift'), 'struct Seed { let shared: SharedRecord }\n');
   await Promise.all(Array.from({ length: maximumCandidateDemandCount + 1 }, (_, index) =>
     writeFile(join(root, 'Peer' + index + '.swift'), 'struct SharedRecord { let value: Int }\n')));
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {} });
   const proof: unknown[] = [];
   try {

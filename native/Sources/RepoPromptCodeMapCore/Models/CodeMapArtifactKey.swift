@@ -1,4 +1,4 @@
-// Modified for smip: portable hashing and dependency-aware canonical identity.
+// Modified for mipmux: portable hashing and dependency-aware canonical identity.
 import Crypto
 import Foundation
 

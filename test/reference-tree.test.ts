@@ -17,7 +17,7 @@ test('native file tree preserves original RPCE renderer outputs across modes, su
   const raw: unknown = JSON.parse(await readFile(resolve('test/fixtures/rpce-tree/cases.json'), 'utf8'));
   const fixtures = fixtureValidator.Parse(raw);
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     env: {}, supervisor });
   const proof: { name: string; bytes: number }[] = [];
   try {

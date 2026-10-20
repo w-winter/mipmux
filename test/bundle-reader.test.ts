@@ -5,7 +5,7 @@ import { execFileSync, fork } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 
 async function probe(directory: string, mode: string, scenario: string, component: string) {
   const child = fork(resolve('test/fixtures/bundle-reader-probe.mjs'), [directory, mode, scenario, component], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
@@ -31,9 +31,9 @@ async function probe(directory: string, mode: string, scenario: string, componen
 
 test('saved bundle reader rejects writerless FIFOs and settles cancellation with descriptor cleanup', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-bundle-reader-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-bundle-reader-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'source.txt'), 'exact source\r\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   const proofs: unknown[] = [];

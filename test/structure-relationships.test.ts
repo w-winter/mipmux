@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/index.js';
+import { MipmuxRuntime } from '../src/index.js';
 
 const structureReply = Compile(Type.Object({ kind: Type.Literal('structure'), roots: Type.Array(Type.Object({
   edges: Type.Array(Type.Object({ from: Type.String(), to: Type.String(), symbols: Type.Array(Type.String()) })),
@@ -15,15 +15,15 @@ const structureReply = Compile(Type.Object({ kind: Type.Literal('structure'), ro
 
 test('structural exploration preserves each source relationship when seeds share defined and unresolved names', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-structure-relationships-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-structure-relationships-'));
   const root = join(directory, 'source'), output = join(directory, 'out');
   await mkdir(root); await mkdir(output);
   for (const name of ['A', 'B']) await writeFile(join(root, `${name}.swift`),
     `struct ${name}Record {\n let shared: SharedRecord\n let missing: MissingRecord\n}\n`);
   await writeFile(join(root, 'Shared.swift'), 'struct SharedRecord {\n let value: Int\n}\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000,
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000,
     credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);

@@ -5,21 +5,21 @@ import { mkdir, mkdtemp, readFile, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { selectionValidator, type SelectionRequest } from '../src/contracts/selection.js';
-import type { RuntimeOptions } from '../src/runtime/smip-runtime.js';
+import type { RuntimeOptions } from '../src/runtime/mipmux-runtime.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import { identity } from '../src/context/material-store.js';
 import { canonicalJSON } from '../src/workspace/values.js';
 
 const signal = () => new AbortController().signal;
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
-async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options),
+async function fixture(makeRuntime: (options: RuntimeOptions) => MipmuxRuntime = options => new MipmuxRuntime(options),
   presentation: Pick<ContextBuildRequest, 'copyPreset' | 'patches' | 'reviewGitBase'> = { copyPreset: 'codeReview', patches: [] }) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-selection-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-selection-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -31,7 +31,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
     requiredSources: [], documents: [], ...presentation,
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const runtime = makeRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
   const draft = await workspace.createDraft(request, signal());
@@ -124,7 +124,7 @@ test('automatic Git uses merge-base intent and retains required patches independ
 test('token inspection acquires automatic Git independently of selected export patches', async () => {
   let acquisitions = 0;
   const f = await fixture(options => {
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -154,7 +154,7 @@ test('token inspection acquires automatic Git independently of selected export p
 test('automatic Git cancellation never publishes partial diff text', async () => {
   const controller = new AbortController(); let armed = false;
   const f = await fixture(options => {
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -213,7 +213,7 @@ test('automatic Git freezes every checkout before diff capture and publishes aga
   const prepared: string[] = []; let armed = false, firstCapture = true;
   let advance: () => void = () => {};
   const f = await fixture(options => {
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -343,7 +343,7 @@ test('mutable exact Git aliases retain historical export order, MAP framing and 
     assert(!context.includes(wholeText + '\n\n' + wholeText));
     assert.equal(finalized.manifest.materials.length, 2);
     await verifyBundle(finalized.directory); await verifyCurrentBundle(finalized.directory, f.runtime, signal());
-    const deniedRuntime = new SmipRuntime({ ...f.runtime.options, credentialPaths: [f.out] });
+    const deniedRuntime = new MipmuxRuntime({ ...f.runtime.options, credentialPaths: [f.out] });
     try { await assert.rejects(verifyCurrentBundle(finalized.directory, deniedRuntime, signal()), /pathDenied/); }
     finally { await deniedRuntime.close(); }
     await writeFile('test-output/git-artifact-selection-proof.json', JSON.stringify({ directory: finalized.directory,
@@ -422,7 +422,7 @@ test('artifact refresh cancellation and changed export inputs reject without pub
     const controller = new AbortController();
     let armed = false, alter: () => Promise<void> = async () => {};
     const f = await fixture(options => {
-      class Runtime extends SmipRuntime {
+      class Runtime extends MipmuxRuntime {
         override makeBridge() {
           class Bridge extends BridgeClient {
             override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {

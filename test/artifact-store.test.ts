@@ -11,7 +11,7 @@ test('artifact publication agrees across owners; corruption is diagnosed and exp
   await mkdir('test-output', { recursive: true });
   const cache = await mkdtemp(resolve('test-output/cache-'));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const native = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), supervisor,
+  const native = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), supervisor,
     env: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   try {
     const bytes = Buffer.from('struct CacheRecord {\n let value: String\n}');

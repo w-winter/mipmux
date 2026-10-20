@@ -48,7 +48,7 @@ const cases = [
   fixture('duplicate-section-order', { order: ['userInstructions', 'fileMap', 'userInstructions'] }),
   fixture('empty-order', { order: [], duplicateUserInstructionsAtTop: true }),
 ];
-const output = runReference(source.toString() + harness, JSON.stringify(cases), ['-parse-as-library', '-package-name', 'SmipReference']);
+const output = runReference(source.toString() + harness, JSON.stringify(cases), ['-parse-as-library', '-package-name', 'MipmuxReference']);
 const directory = 'test/fixtures/rpce-prompt-assembly/';
 mkdirSync(directory, { recursive: true });
 writeFileSync(directory + 'cases.json', JSON.stringify(JSON.parse(output), null, 2) + '\n');

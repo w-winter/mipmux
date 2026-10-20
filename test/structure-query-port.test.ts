@@ -22,14 +22,14 @@ const graphReply = Compile(Type.Object({ status: Type.String(), size: Type.Strin
 
 test('public structural query exposes source graph evidence with signatures disabled and the requested output size', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-structure-query-port-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-structure-query-port-'));
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(root); await mkdir(output);
   for (const name of ['A', 'B']) await writeFile(join(root, `${name}.swift`),
     `struct ${name}Record {\n let shared: SharedRecord\n let missing: MissingRecord\n}\n`);
   await writeFile(join(root, 'Shared.swift'), 'struct SharedRecord {\n let value: Int\n}\n');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 30000 }));
   const client = new Client({ name: 'structure-query-port', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,

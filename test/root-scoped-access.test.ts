@@ -4,19 +4,19 @@ import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime } from '../src/index.js';
+import { MipmuxRuntime } from '../src/index.js';
 import { readValidator } from '../src/contracts/exploration.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 
 test('a replaced root does not prevent scoped reads from an independent admitted root', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'smip-root-scope-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-root-scope-'));
   const first = join(directory, 'first'), second = join(directory, 'second'), output = join(directory, 'out');
   for (const path of [first, second, output]) await mkdir(path);
   await writeFile(join(first, 'note.txt'), 'Original first root\n');
   await writeFile(join(second, 'note.txt'), 'Healthy second root\n');
   for (const root of [first, second]) await writeFile(join(root, 'model.swift'), 'struct Model { let value: Int }\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 100000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 100000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = () => new AbortController().signal;
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: first }, { name: 's', absolutePath: second }],
     outputRoot: output, exclusions: [] }, signal());

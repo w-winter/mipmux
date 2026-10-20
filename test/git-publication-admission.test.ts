@@ -7,15 +7,15 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import type { ContextBuildRequest, SourceSelection } from '../src/contracts/context.js';
 import { gitValidator } from '../src/contracts/git.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 const full = (root: string, path = 'file.txt'): SourceSelection => ({ kind: 'full', source: { root, path } });
 
 test('production publication admits current checkout subsets but refuses changed, empty and deferred ownership', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-publication-fence-')), out = join(base, 'out'); await mkdir(out);
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-publication-fence-')), out = join(base, 'out'); await mkdir(out);
   const roots = [];
   for (const name of ['a', 'b', 'c']) {
     const path = join(base, name); await mkdir(path); await writeFile(join(path, 'file.txt'), 'base\n');
@@ -26,7 +26,7 @@ test('production publication admits current checkout subsets but refuses changed
     run(['add', '.']); run(['commit', '-qm', 'base']); await writeFile(join(path, 'file.txt'), 'changed ' + name + '\n');
     roots.push({ name, absolutePath: path });
   }
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const request = (sources: SourceSelection[], outputName: string): ContextBuildRequest => ({ task: 'Collect evidence', constraints: '',
     enhancementMode: 'preserve', purpose: 'review', initialSelection: { codemapMode: 'manual', sources }, requiredSources: [], documents: [], patches: [],

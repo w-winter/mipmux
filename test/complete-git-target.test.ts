@@ -5,11 +5,11 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { contextRequestValidator, manifestValidator } from '../src/contracts/context.js';
 
 test('complete Git resolves an explicitly declared metadata directory and retains protected-path exclusions', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-complete-git-target-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-complete-git-target-'));
   const metadata = join(base, 'metadata'), worktree = join(base, 'worktree'), output = join(base, 'output');
   for (const path of [metadata, worktree, output]) await mkdir(path);
   const git = (cwd: string, args: string[]) => execFileSync('/usr/bin/git', args, { cwd, encoding: 'utf8',
@@ -23,11 +23,11 @@ test('complete Git resolves an explicitly declared metadata directory and retain
   git(worktree, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'test: initialize complete Git fixture']);
   await writeFile(join(worktree, 'file.txt'), 'after\n');
   await writeFile(join(worktree, 'private.txt'), 'PROTECTED_BODY_MUST_NOT_APPEAR\n');
-  const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+  const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
   const settings = copyContext();
   settings.current = { fileTreeMode: 'None', codeMapUsage: 'none', gitInclusion: 'all' };
   settings.activeGitRoot = 'r';
-  const runtime = new SmipRuntime({ copyContext: settings, cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
+  const runtime = new MipmuxRuntime({ copyContext: settings, cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     credentialPaths: [join(worktree, 'private.txt')], nativeExecutable, nativeEnvironment: {},
     terminationGraceMs: 100, git: { executable: '/usr/bin/git' } });
   const signal = () => new AbortController().signal;

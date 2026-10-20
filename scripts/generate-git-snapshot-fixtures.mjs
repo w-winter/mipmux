@@ -62,7 +62,7 @@ const text = adapter + sources.map(entry => {
     : entry.bytes;
   return adaptations(original);
 }).join('\n') + layouts.replaceAll('package ', '') + main;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-git-snapshot-reference-'));
+const scratch = mkdtempSync(join(tmpdir(), 'mipmux-git-snapshot-reference-'));
 writeFileSync(join(scratch, 'original.swift'), text);
 try {
   execFileSync('swiftc', ['-parse-as-library', join(scratch, 'original.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });

@@ -11,7 +11,7 @@ export function createMcpServer(input: HostConfig, configurationPath: string | n
   if (!hostValidator.Check(input)) throw new WorkspaceFailure('invalidConfiguration');
   const config = freeze(structuredClone(input));
   const state: { application: ReturnType<typeof compose> | null; closing: Promise<void> | null } = { application: null, closing: null };
-  const server = new McpServer({ name: 'smip', version: '0.1.0' });
+  const server = new McpServer({ name: 'mipmux', version: '0.1.0' });
   let settled!: () => void, rejected!: (error: unknown) => void;
   const closed = new Promise<void>((resolve, reject) => { settled = resolve; rejected = reject; });
   void closed.catch(() => {});
@@ -28,7 +28,7 @@ export function createMcpServer(input: HostConfig, configurationPath: string | n
   return { server, close, closed };
 }
 
-export function serveSmipStdio(config: HostConfig, configurationPath: string | null = null) {
+export function serveMipmuxStdio(config: HostConfig, configurationPath: string | null = null) {
   const instances = new Set<ReturnType<typeof createMcpServer>>();
   const outputCancelled = new Error('mcpOutputCancelled');
   let outputFailed = false;

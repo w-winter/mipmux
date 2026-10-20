@@ -1,7 +1,7 @@
 import type { CodemapMode, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { InventorySnapshot } from '../contracts/inventory.js';
 import type { NativeOperation } from '../contracts/native.js';
-import type { SmipRuntime } from '../runtime/smip-runtime.js';
+import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import type { Material } from './material-store.js';
 import { sourceId } from './material-store.js';
 import type { RenderInput } from './render.js';
@@ -79,7 +79,7 @@ export function capturedFileTreeInput(input: FileTreeCapture): TreeInput | null 
   return tree;
 }
 
-export async function prepareRenderInput(runtime: SmipRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs' | 'manualPresentation'>,
+export async function prepareRenderInput(runtime: MipmuxRuntime, input: Omit<RenderInput, 'fileTree' | 'clipboard' | 'clipboardPreset' | 'selectedGitDiffIds' | 'automaticGit' | 'tokenInputs' | 'manualPresentation'>,
   signal: AbortSignal, gitSource: AutomaticReviewGitSource, canonical: CanonicalSelection): Promise<RenderInput> {
   assertClipboardRequiredMaterials(input.request, input.materials);
   const preset = input.request.copyPreset;

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, type RuntimeOptions } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime, type RuntimeOptions } from '../src/runtime/mipmux-runtime.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
@@ -16,14 +16,14 @@ function barrier() {
 
 test('warming satisfies a later barrier, cancelled observers release only their interest, and caches survive restart', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-barrier-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-barrier-'));
   const root = join(base, 'root'); await mkdir(root); await mkdir(join(base, 'out'));
   await writeFile(join(root, 'model.swift'), 'struct First {\n let value: String\n}');
   const entered = barrier(), resume = barrier();
   let blocked = false, extractions = 0;
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
-  class ObservedRuntime extends SmipRuntime {
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+  class ObservedRuntime extends MipmuxRuntime {
     override makeBridge() {
       class ObservedBridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -76,14 +76,14 @@ test('warming satisfies a later barrier, cancelled observers release only their 
 
 test('different declarations share pending extraction while public and operation leases close independently', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-shared-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-shared-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'outA')); await mkdir(join(base, 'outB'));
   await writeFile(join(base, 'root/shared.swift'), 'struct SharedRecord {\n let value: String\n}');
   const extractionEntered = barrier(), releaseExtraction = barrier(), secondRead = barrier();
   let extractions = 0, reads = 0;
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
-  class ObservedRuntime extends SmipRuntime {
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+  class ObservedRuntime extends MipmuxRuntime {
     override makeBridge() {
       class ObservedBridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -117,15 +117,15 @@ test('different declarations share pending extraction while public and operation
 
 test('settled inventory distinguishes unavailable acquisition, decoding, unsupported and no-symbol outcomes', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-coverage-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-coverage-'));
   await mkdir(join(base, 'root/cases'), { recursive: true }); await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/cases/victim.swift'), 'struct Victim {\n let value: String\n}');
   await writeFile(join(base, 'root/cases/invalid.swift'), Buffer.from([0xff, 0xfe, 0x00, 0xd8]));
   await writeFile(join(base, 'root/cases/empty.swift'), '');
   await writeFile(join(base, 'root/cases/note.txt'), 'unsupported');
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
-  class ObservedRuntime extends SmipRuntime {
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+  class ObservedRuntime extends MipmuxRuntime {
     override makeBridge() {
       class ObservedBridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -154,14 +154,14 @@ test('settled inventory distinguishes unavailable acquisition, decoding, unsuppo
 
 test('closing a held physical operation joins pending work and leaves a sibling usable', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-operation-close-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-operation-close-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/file.txt'), 'sibling body');
   const entered = barrier(), resume = barrier(), aborted = barrier();
   let hold = false;
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} };
-  class Runtime extends SmipRuntime {
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} };
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -194,11 +194,11 @@ test('closing a held physical operation joins pending work and leaves a sibling 
 
 test('incomplete enumeration permits known-source exploration but refuses draft admission', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-partial-inventory-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-partial-inventory-'));
   const root = join(base, 'root'), output = join(base, 'out');
   await mkdir(join(root, 'blocked'), { recursive: true }); await mkdir(output);
   await writeFile(join(root, 'known.swift'), 'struct KnownRecord {\n let absent: AbsentRecord\n}\n');
-  class PartialRuntime extends SmipRuntime {
+  class PartialRuntime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -212,7 +212,7 @@ test('incomplete enumeration permits known-source exploration but refuses draft 
     }
   }
   const runtime = new PartialRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, credentialPaths: [] });
   const signal = new AbortController().signal;
   try {

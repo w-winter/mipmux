@@ -9,19 +9,19 @@ import { join, resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 
 const command = resolve('dist/cli/main.js');
 test('MCP exposes nonsecret artifact and membership targets usable by explicit CLI recovery', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-mcp-cache-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-mcp-cache-'));
   const root = join(base, 'root'), outputRoot = join(base, 'out'), config = join(base, 'config.json');
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let title: String\n}');
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [config], nativeEnvironment: {},
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) };
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`) };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
-  const runtime = new SmipRuntime(options);
+  const runtime = new MipmuxRuntime(options);
   const handle = await runtime.declare(spec, new AbortController().signal);
   const inventory = await handle.refresh(new AbortController().signal);
   await handle.close(); await runtime.close();
@@ -57,7 +57,7 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
 });
 test('official MCP probes accept disabled provider deadlines and create no workspace; CLI inputs are explicit', async t => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-mcp-cli-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-mcp-cli-'));
   const provider = await scriptedProvider(() => { throw new Error('No discovery request permitted during probes'); });
   t.after(() => provider.close());
   provider.config.policy.retry.provider.timeoutMs = 0;
@@ -96,7 +96,7 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'source\n');
   const config = join(provider.directory, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 2000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'test', version: '1' });

@@ -5,11 +5,11 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, symlink } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 
 test('ordered ignore negation, excluded parents, nested aliases and new control inputs share one policy', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-policy-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-policy-'));
   const root = join(base, 'root'); await mkdir(root); await mkdir(join(root, 'out'));
   await mkdir(join(root, 'nested')); await mkdir(join(root, 'denied'));
   await writeFile(join(root, '.gitignore'), '*.txt\ndenied/\n.gitignore\n');
@@ -20,8 +20,8 @@ test('ordered ignore negation, excluded parents, nested aliases and new control 
   await writeFile(join(root, 'denied/keep.txt'), 'denied');
   await writeFile(join(root, 'data.swift'), 'struct Record {\n let value: String\n}');
   await mkdir(join(root, 'fresh')); await writeFile(join(root, 'fresh/model.swift'), 'struct Model {\n let value: String\n}');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(root, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(root, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   const spec = { roots: [{ name: 'outer', absolutePath: root }, { name: 'inner', absolutePath: join(root, 'denied') }], exclusions: [], outputRoot: join(root, 'out') };
   try {
     const handle = await runtime.declare(spec, new AbortController().signal);
@@ -39,7 +39,7 @@ test('ordered ignore negation, excluded parents, nested aliases and new control 
     await assert.rejects(op.readSource({ root: 'outer', path: 'nested/keep.txt' }), /policyChanged/);
     await op.close(); await handle.close();
     await mkdir(join(base, 'symlink-policy')); await symlink(join(root, '.gitignore'), join(base, 'symlink-policy/.gitignore'));
-    const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+    const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
     execFileSync(git, ['init', '-q'], { cwd: join(base, 'symlink-policy'), env: { PATH: '/usr/bin:/bin', HOME: base,
       GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
     const bad = await runtime.declare({ ...spec, roots: [{ name: 'bad', absolutePath: join(base, 'symlink-policy') }] }, new AbortController().signal);
@@ -53,15 +53,15 @@ test('ordered ignore negation, excluded parents, nested aliases and new control 
 
 test('credential denies through a containing root alias apply to ordinary declaration and all confined readers', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-credential-alias-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-credential-alias-'));
   const root = join(base, 'root'), alias = join(base, 'alias');
   await mkdir(join(root, 'nested'), { recursive: true }); await mkdir(join(base, 'out'));
   await symlink(root, alias);
   await writeFile(join(root, 'nested/private.txt'), 'synthetic denied body');
   await writeFile(join(root, 'nested/public.txt'), 'admitted');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100,
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [join(base, 'credential-link')],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   const signal = new AbortController().signal;
   await symlink(join(root, 'nested/private.txt'), join(base, 'credential-link'));
@@ -83,7 +83,7 @@ test('credential denies through a containing root alias apply to ordinary declar
 
 test('later control negation reopens a parent before admitting its children', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-parent-ignore-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-parent-ignore-'));
   const root = join(base, 'root');
   const directories = ['nested', 'nested[\n]'];
   for (const directory of directories) await mkdir(join(root, directory, 'cache'), { recursive: true });
@@ -94,8 +94,8 @@ test('later control negation reopens a parent before admitting its children', as
     await writeFile(join(root, directory, 'cache/file.txt'), 'public');
     await writeFile(join(root, directory, 'cache/\t'), 'ignored tab name');
   }
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);
     const snapshot = await handle.refresh(new AbortController().signal);

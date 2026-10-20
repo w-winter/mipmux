@@ -6,17 +6,17 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/index.js';
+import { MipmuxRuntime } from '../src/index.js';
 
 test('initial context supplies all roots, explicit inputs and budget facts without embedding document bodies', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-initial-context-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-initial-context-'));
   for (const name of ['r', 's', 'out']) await mkdir(join(directory, name));
   await writeFile(join(directory, 'r/notes.txt'), 'REQUIRED_DOCUMENT_BODY_NOT_STARTUP_METADATA');
   await writeFile(join(directory, 's/other.txt'), 'Other source');
   await writeFile(join(directory, 's/Ready.swift'), 'struct Ready { let value: Int }');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), credentialPaths: [], contextBudgetUnits: 200000,
-    terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), credentialPaths: [], contextBudgetUnits: 200000,
+    terminationGraceMs: 100, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
       { name: 's', absolutePath: join(directory, 's') }], outputRoot: join(directory, 'out'), exclusions: [] }, new AbortController().signal);

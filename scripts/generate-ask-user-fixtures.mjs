@@ -53,7 +53,7 @@ let output = try inputs.map { entry -> [String: Any] in
 let bytes = try JSONSerialization.data(withJSONObject: output, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
 FileHandle.standardOutput.write(bytes)
 `;
-withReferenceDirectory('smip-ask-user-reference-', scratch => {
+withReferenceDirectory('mipmux-ask-user-reference-', scratch => {
   writeFileSync(join(scratch, 'main.swift'), text);
   execFileSync('swiftc', ['-swift-version', '6', join(scratch, 'main.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });
   const input = openSync(directory + 'cases.json', 'r'), output = openSync(join(scratch, 'outputs.json'), 'w');

@@ -107,13 +107,13 @@ function inspectBinary(binary, symbolPath) {
 if (operation !== 'dependency') {
   const expectedPins = JSON.parse(readFileSync(join(root, 'docs/vendor-provenance.json'))).dependencies;
   assert.deepEqual(JSON.parse(readFileSync(join(root, 'native/Package.resolved'))).pins, expectedPins, 'Unexpected native dependency graph.');
-  writeFileSync(join(root, 'native/Sources/SmipBridge/EngineRecipe.swift'),
+  writeFileSync(join(root, 'native/Sources/MipmuxBridge/EngineRecipe.swift'),
     '// Generated dependency metadata by scripts/build-native.mjs.\n' +
     `enum EngineRecipe { static let canonicalBase64 = "${recipeBytes.toString('base64')}" }\n`);
   const pkgConfig = join(prefix, 'lib/pkgconfig');
-  const env = { ...process.env, PKG_CONFIG_PATH: '', PKG_CONFIG_LIBDIR: pkgConfig, SMIP_PCRE2_PREFIX: prefix };
+  const env = { ...process.env, PKG_CONFIG_PATH: '', PKG_CONFIG_LIBDIR: pkgConfig, MIPMUX_PCRE2_PREFIX: prefix };
   const swiftArgs = operation === 'resolve' ? ['package', 'resolve'] : [operation];
-  const sourcePathFlags = operation === 'resolve' ? [] : ['-Xcc', `-ffile-prefix-map=${join(root, 'native/.build')}=smip-native`];
+  const sourcePathFlags = operation === 'resolve' ? [] : ['-Xcc', `-ffile-prefix-map=${join(root, 'native/.build')}=mipmux-native`];
   run('swift', [...swiftArgs, '--package-path', join(root, 'native'),
     '--scratch-path', join(root, 'native/.build', target), '--pkg-config-path', pkgConfig, ...sourcePathFlags, ...args], env);
   assert.deepEqual(JSON.parse(readFileSync(join(root, 'native/Package.resolved'))).pins, expectedPins, 'Native dependency resolution changed the approved graph.');
@@ -122,7 +122,7 @@ if (operation !== 'dependency') {
     const configuration = configurationIndex === -1 ? 'debug' : args[configurationIndex + 1];
     assert(['debug', 'release'].includes(configuration), 'Unsupported build configuration.');
     const directory = join(root, 'native/.build', target, configuration);
-    const binary = join(directory, 'SmipBridge');
+    const binary = join(directory, 'MipmuxBridge');
     const { linkedImages, description } = inspectBinary(binary, join(directory, 'symbols.txt'));
     writeFileSync(join(directory, 'linkage.json'), JSON.stringify({
       binarySHA256: digest(readFileSync(binary)), recipeSHA256, sourcePathFlags,
@@ -131,7 +131,7 @@ if (operation !== 'dependency') {
     if (configuration === 'release') {
       const destination = join(root, 'libexec', target);
       mkdirSync(destination, { recursive: true });
-      const packaged = join(destination, 'SmipBridge');
+      const packaged = join(destination, 'MipmuxBridge');
       copyFileSync(binary, packaged);
       run('strip', [process.platform === 'darwin' ? '-S' : '--strip-debug', packaged]);
       const { linkedImages: packagedImages, description: packagedDescription } = inspectBinary(packaged, join(directory, 'packaged-symbols.txt'));

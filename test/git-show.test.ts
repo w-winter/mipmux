@@ -10,10 +10,10 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
-const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
 const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()), message: Type.Optional(Type.String()),
   exclusions: Type.Optional(Type.Array(Type.String())), show: Type.Optional(Type.Object({
@@ -24,7 +24,7 @@ const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Typ
       new_start: Type.Integer(), patch: Type.String() }))) }))) })) }));
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-show-')), repo = join(base, 'repo'), root = join(repo, 'sub');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-show-')), repo = join(base, 'repo'), root = join(repo, 'sub');
   await mkdir(root, { recursive: true }); await mkdir(join(base, 'out'));
   const run = (args: string[]) => execFileSync(git, args, { cwd: repo, encoding: 'utf8', env: { PATH: '/usr/bin:/bin', HOME: base,
     GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_AUTHOR_DATE: '2026-10-11T10:00:00Z', GIT_COMMITTER_DATE: '2026-10-11T10:00:00Z' } });
@@ -79,14 +79,14 @@ test('public show preserves metadata, full hunks, root-commit source behavior an
   } finally { await client.close(); }
 });
 test('cancelling show between Git phases joins its process and preserves workspace usability', async t => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor), held: OwnedProcess[] = [];
   let armed = false, entered!: () => void;
   const holding = new Promise<void>(resolve => { entered = resolve; });
   t.mock.method(runtime.supervisor, 'spawn', (spec: ProcessSpec) => {
     if (armed && spec.executable === git && spec.args.includes('--numstat')) {
       const child = spawn({ ...spec, executable: process.execPath, args: [resolve('test/fixtures/held-git-read.mjs')] }); held.push(child);
-      child.child.stderr.on('data', data => { if (data.toString().includes('SMIP_GIT_READ_HELD')) entered(); }); return child;
+      child.child.stderr.on('data', data => { if (data.toString().includes('MIPMUX_GIT_READ_HELD')) entered(); }); return child;
     }
     return spawn(spec);
   });
@@ -142,7 +142,7 @@ test('public show excludes protected files and both protected rename endpoints w
 });
 
 test('malformed show metadata stops before subsequent diff commands', async t => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let diffCommands = 0;
   t.mock.method(runtime.supervisor, 'spawn', (spec: ProcessSpec) => {

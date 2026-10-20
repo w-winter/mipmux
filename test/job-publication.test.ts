@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { SmipRuntime, verifyBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
@@ -19,10 +19,10 @@ test('builder cancellation shares the finalizer claim and runtime close waits fo
       : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
     const root = join(provider.directory, 'root'), output = join(provider.directory, 'out');
     await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'body');
-    const options = { nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    const options = { nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), terminationGraceMs: 100 };
     let pause = true;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {

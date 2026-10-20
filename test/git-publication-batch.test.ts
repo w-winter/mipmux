@@ -9,14 +9,14 @@ import type { ContextBuildRequest } from '../src/contracts/context.js';
 import { gitValidator } from '../src/contracts/git.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 
 async function fixture() {
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-batch-')), output = join(base, 'out'); await mkdir(output);
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-batch-')), output = join(base, 'out'); await mkdir(output);
   const roots = [];
   for (const name of ['a', 'b', 'c', 'd']) {
     const path = join(base, name); await mkdir(path); await writeFile(join(path, 'file.txt'), 'base\n');
@@ -26,7 +26,7 @@ async function fixture() {
     run(['add', '.']); run(['commit', '-qm', 'base']); await writeFile(join(path, 'file.txt'), 'changed ' + name + '\n');
     roots.push({ name, absolutePath: path });
   }
-  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };
   const request: ContextBuildRequest = { task: 'Collect repository evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: ['b', 'd', 'a', 'c'].map(root => ({ kind: 'full', source: { root, path: 'file.txt' } })) },
@@ -39,7 +39,7 @@ async function fixture() {
 }
 
 test('implicit publication retains frozen repository order, selected skips and per-repository pathspecs', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare({ roots: f.roots, exclusions: [], outputRoot: f.output }, signal());
     const draft = await workspace.createDraft(f.request, signal());
@@ -75,7 +75,7 @@ test('implicit publication retains frozen repository order, selected skips and p
 
 test('a repository write failure retains sibling snapshots and projects a per-repository error', async () => {
   const f = await fixture();
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -101,13 +101,13 @@ test('a repository write failure retains sibling snapshots and projects a per-re
 });
 
 test('batch cancellation joins admitted Git work and cannot publish an aggregate reply', async t => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), controller = new AbortController(), held: OwnedProcess[] = [];
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), controller = new AbortController(), held: OwnedProcess[] = [];
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let entered!: () => void; const holding = new Promise<void>(resolve => { entered = resolve; });
   t.mock.method(runtime.supervisor, 'spawn', (spec: ProcessSpec) => {
     if (spec.executable === git && spec.args.includes('--porcelain')) {
       const child = spawn({ ...spec, executable: process.execPath, args: [resolve('test/fixtures/held-git-read.mjs')] }); held.push(child);
-      child.child.stderr.on('data', data => { if (data.toString().includes('SMIP_GIT_READ_HELD')) entered(); }); return child;
+      child.child.stderr.on('data', data => { if (data.toString().includes('MIPMUX_GIT_READ_HELD')) entered(); }); return child;
     }
     return spawn(spec);
   });

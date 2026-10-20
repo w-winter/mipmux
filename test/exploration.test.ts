@@ -4,19 +4,19 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 
 test('real exploration preserves queries, Unicode paths, counts, context and digest-bound pages', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-exploration-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-exploration-'));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
   const name = 'line\né.txt';
   await writeFile(join(base, 'root', name), '\uFEFFstart\r\né café\rneedle needle\nneedle\nlast');
   await writeFile(join(base, 'root/A.swift'), 'struct OwnerRecord {\n let peer: PeerRecord\n let missing: MissingRecord\n}\n');
   await writeFile(join(base, 'root/B.swift'), 'struct PeerRecord {\n let owner: OwnerRecord\n}\n');
   await writeFile(join(base, 'root/C.swift'), 'struct PeerRecord {\n let label: String\n}\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);

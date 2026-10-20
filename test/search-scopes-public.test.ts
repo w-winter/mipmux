@@ -8,7 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { searchValidator } from '../src/contracts/exploration.js';
 import type { ProcessSpec } from '../src/runtime/process-supervisor.js';
 
@@ -18,7 +18,7 @@ const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), scopedFi
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String(), message: Type.String() }));
 
 test('public raw scopes use RPCE clauses and preserve protected paths and ambiguity diagnostics', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-public-scopes-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-public-scopes-'));
   const a = join(base, 'a'), b = join(base, 'b'), out = join(base, 'out');
   await mkdir(a); await mkdir(b); await mkdir(out);
   for (const [root, paths] of [[a, ['src/a.ts', 'src/nested/b.ts', 'srcish/c.ts', 'shared.ts', 'protected.txt']],
@@ -27,7 +27,7 @@ test('public raw scopes use RPCE clauses and preserve protected paths and ambigu
   }
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeEnvironment: {},
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [join(a, 'protected.txt')],
     git: null, discovery: null, defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
@@ -78,12 +78,12 @@ test('public raw scopes use RPCE clauses and preserve protected paths and ambigu
 });
 
 for (const boundary of ['catalog', 'body'] as const) test(`search handles disappearance during ${boundary} acquisition`, async t => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-scope-refresh-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-scope-refresh-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'victim.ts'), 'needle\n');
   const healthy = join(base, 'healthy'); await mkdir(healthy); await writeFile(join(healthy, 'safe.ts'), 'needle\n');
-  const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
+  const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [] });
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let entered!: () => void;
@@ -93,10 +93,10 @@ for (const boundary of ['catalog', 'body'] as const) test(`search handles disapp
     if (spec.executable !== nativeExecutable) return spawn(spec);
     const owned = spawn({ ...spec, executable: process.execPath,
       args: [resolve('test/fixtures/search-freshness-proxy.mjs'), ...spec.args],
-      env: { ...spec.env, SMIP_NATIVE: nativeExecutable, SMIP_SCOPE_ARM: arm, SMIP_SCOPE_RELEASE: release,
-        SMIP_SCOPE_BOUNDARY: boundary } });
+      env: { ...spec.env, MIPMUX_NATIVE: nativeExecutable, MIPMUX_SCOPE_ARM: arm, MIPMUX_SCOPE_RELEASE: release,
+        MIPMUX_SCOPE_BOUNDARY: boundary } });
     let stderr = '';
-    owned.child.stderr.on('data', bytes => { stderr += bytes.toString(); if (stderr.includes('SMIP_SCOPE_FRESHNESS_HELD')) entered(); });
+    owned.child.stderr.on('data', bytes => { stderr += bytes.toString(); if (stderr.includes('MIPMUX_SCOPE_FRESHNESS_HELD')) entered(); });
     return owned;
   });
   try {
@@ -129,13 +129,13 @@ for (const boundary of ['catalog', 'body'] as const) test(`search handles disapp
 });
 
 test('fresh searches retain healthy roots when another registered root is replaced', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-scope-roots-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-scope-roots-'));
   const a = join(base, 'a'), b = join(base, 'b'), out = join(base, 'out');
   await mkdir(a); await mkdir(b); await mkdir(out);
   await writeFile(join(a, 'healthy.txt'), 'needle\n');
   await writeFile(join(b, '.repo_ignore'), 'hidden.txt\n'); await writeFile(join(b, 'hidden.txt'), 'needle\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeEnvironment: {},
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [] });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'a', absolutePath: a }, { name: 'b', absolutePath: b }],

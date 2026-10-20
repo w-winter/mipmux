@@ -11,14 +11,14 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type, { type Static } from 'typebox';
 import type { GitInput } from '../src/contracts/git.js';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
-const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
 const result = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()), root: Type.Optional(Type.String()),
   op: Type.Optional(Type.String()), status: Type.Optional(Type.Object({ branch: Type.Optional(Type.String()),
@@ -31,7 +31,7 @@ const result = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Ty
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-read-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-read-'));
   const repo = join(base, 'repo'), root = join(repo, 'sub'), outputRoot = join(base, 'out');
   await mkdir(root, { recursive: true }); await mkdir(outputRoot);
   const run = (args: string[]) => execFileSync(git, args, { cwd: repo, encoding: 'utf8',
@@ -109,7 +109,7 @@ test('real scripted SDK scout can inspect Git through the allowed tool boundary 
     : index === 4 ? { kind: 'tool', name: 'git', input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref: 'HEAD', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : index === 5 ? { kind: 'tool', name: 'git', input: { op: 'diff', root: 'r', detail: 'full', maxOutputBytes: 24000 }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
-  const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
+  const runtime = new MipmuxRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
   try {
     const workspace = await client.declare(f.spec, signal());
     const job = client.build(workspace.id, 'git-scout', { task: 'Inspect history', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', enhancementMode: 'preserve',
@@ -126,7 +126,7 @@ test('real scripted SDK scout can inspect Git through the allowed tool boundary 
 });
 
 test('cancelling a held Git process joins it and leaves the workspace usable', async t => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   const held: OwnedProcess[] = [];
   let armed = false, entered!: () => void;
@@ -135,7 +135,7 @@ test('cancelling a held Git process joins it and leaves the workspace usable', a
     if (armed && spec.executable === git && spec.args.includes('log')) {
       const process = spawn({ ...spec, executable: globalThis.process.execPath, args: [resolve('test/fixtures/held-git-read.mjs')] });
       held.push(process);
-      process.child.stderr.on('data', data => { if (data.toString().includes('SMIP_GIT_READ_HELD')) entered(); });
+      process.child.stderr.on('data', data => { if (data.toString().includes('MIPMUX_GIT_READ_HELD')) entered(); });
       return process;
     }
     return spawn(spec);

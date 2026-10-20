@@ -1,6 +1,6 @@
-# smip
+# mipmux
 
-smip indexes explicit filesystem roots, provides source exploration, and prepares verified context packets on macOS and Linux. Use its library, stdio MCP server or CLI. Swift owns extraction and descriptor-relative filesystem access. TypeScript owns workspace policy, inventory generations, persistent artifacts, drafts, Git comparisons, rendering, and verification. An isolated Pi discovery agent can curate a draft through scoped tools before the parent verifies and publishes it.
+mipmux indexes explicit filesystem roots, provides source exploration, and prepares verified context packets on macOS and Linux. Use its library, stdio MCP server or CLI. Swift owns extraction and descriptor-relative filesystem access. TypeScript owns workspace policy, inventory generations, persistent artifacts, drafts, Git comparisons, rendering, and verification. An isolated Pi discovery agent can curate a draft through scoped tools before the parent verifies and publishes it.
 
 A ready code map is a syntax-derived summary. Its symbols and referenced type names are structural hints, subject to the retained parser's limits and heuristics.
 
@@ -22,14 +22,14 @@ Run native commands through `scripts/build-native.mjs`. It supplies SwiftPM's ex
 
 Search uses the native executable's Foundation and statically linked PCRE2 matching implementations. The native dependency receipt and linkage checks identify the engine used by both extraction and search.
 
-The native executable is `native/.build/<platform>-<architecture>/<configuration>/SmipBridge`, with Node's platform and architecture names, such as `darwin-arm64` and `linux-arm64`. Its first argument is a process-generation identifier. Requests and responses use JSON Lines on stdin/stdout; each request includes that generation, wire version 1, and a request ID.
+The native executable is `native/.build/<platform>-<architecture>/<configuration>/MipmuxBridge`, with Node's platform and architecture names, such as `darwin-arm64` and `linux-arm64`. Its first argument is a process-generation identifier. Requests and responses use JSON Lines on stdin/stdout; each request includes that generation, wire version 1, and a request ID.
 
-Release builds also copy the verified executable to `libexec/<platform>-<architecture>/SmipBridge`. Native filesystem tests retain synthetic files beneath the excluded `test-output/` directory for inspection.
+Release builds also copy the verified executable to `libexec/<platform>-<architecture>/MipmuxBridge`. Native filesystem tests retain synthetic files beneath the excluded `test-output/` directory for inspection.
 
 ```sh
 target="$(node -p 'process.platform + "-" + process.arch')"
 printf '%s\n' '{"wireVersion":1,"requestId":"describe","generation":"example","operation":{"kind":"describe"}}' |
-  "native/.build/$target/debug/SmipBridge" example
+  "native/.build/$target/debug/MipmuxBridge" example
 ```
 
 `describe` reports supported extensions, extraction limits, decoder policy, regex-engine checks, and Swift's canonical pipeline identities. [The native contract](docs/contracts.md) describes acquisition, extraction, export, and cancellation.
@@ -39,21 +39,21 @@ printf '%s\n' '{"wireVersion":1,"requestId":"describe","generation":"example","o
 Create an unpublished package in an absolute output directory:
 
 ```sh
-npm run package:local -- /var/tmp/smip-local-package
+npm run package:local -- /var/tmp/mipmux-local-package
 ```
 
-The command builds TypeScript and the native release executable, verifies source history, and packs the runtime files and notices through npm. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. That digest identifies the package-lock.json used to build smip; installed dependency graphs have their own lockfiles and audit results. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
+The command builds TypeScript and the native release executable, verifies source history, and packs the runtime files and notices through npm. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. That digest identifies the package-lock.json used to build mipmux; installed dependency graphs have their own lockfiles and audit results. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
 
-Install the resulting `.tgz` with `npm install --ignore-scripts /absolute/path/smip-0.1.0.tgz`. The installed CLI is available as `smip`. Set `nativeExecutable` in the host configuration to the installed package's absolute `libexec/<platform>-<architecture>/SmipBridge` path. Cache, source roots, output, Git, and authentication paths remain explicit host inputs. The package includes the discovery prompt and dependency identity beside its compiled modules.
+Install the resulting `.tgz` with `npm install --ignore-scripts /absolute/path/mipmux-0.1.0.tgz`. The installed CLI is available as `mipmux`. Set `nativeExecutable` in the host configuration to the installed package's absolute `libexec/<platform>-<architecture>/MipmuxBridge` path. Cache, source roots, output, Git, and authentication paths remain explicit host inputs. The package includes the discovery prompt and dependency identity beside its compiled modules.
 
 ## Workspace API
 
-Importing `smip` starts no processes and creates no storage. Construct `SmipRuntime` with absolute cache/native paths, explicit native environment, credential-file exclusions, and a termination grace. Search uses the configured native executable. The cache directory must be private; source roots and the output directory must already exist.
+Importing `mipmux` starts no processes and creates no storage. Construct `MipmuxRuntime` with absolute cache/native paths, explicit native environment, credential-file exclusions, and a termination grace. Search uses the configured native executable. The cache directory must be private; source roots and the output directory must already exist.
 
 ```ts
-import { SmipRuntime } from 'smip';
+import { MipmuxRuntime } from 'mipmux';
 
-const runtime = new SmipRuntime({
+const runtime = new MipmuxRuntime({
   copyContext: {
     current: { fileTreeMode: 'Auto', codeMapUsage: 'auto', gitInclusion: 'none' },
     customizations: { includeFiles: null, includeUserPrompt: null,
@@ -62,8 +62,8 @@ const runtime = new SmipRuntime({
   },
   contextBudgetUnits: 200000,
   defaultEnhancementMode: 'augment',
-  cachePath: '/var/tmp/private-smip-cache',
-  nativeExecutable: '/opt/smip/libexec/darwin-arm64/SmipBridge',
+  cachePath: '/var/tmp/private-mipmux-cache',
+  nativeExecutable: '/opt/mipmux/libexec/darwin-arm64/MipmuxBridge',
   nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'auto' },
   credentialPaths: [],
   terminationGraceMs: 1000,
@@ -73,7 +73,7 @@ try {
   const workspace = await runtime.declare({
     roots: [{ name: 'repo', absolutePath: '/repos/sample' }],
     exclusions: [],
-    outputRoot: '/exports/smip',
+    outputRoot: '/exports/mipmux',
   }, signal);
   await workspace.refresh(signal);
   const operation = await workspace.openOperation(signal);
@@ -184,25 +184,25 @@ Import `verifyBundle` to verify saved bytes without source access. `verifyCurren
 
 Supplied patches retain complete UTF-8 patch text, declared changed paths, source history, and target byte/mode evidence. Every selected source in an associated root must have matching target evidence. This verifies source coherence, not the external producer's underlying comparison.
 
-Configure `git: { executable: '/absolute/path/to/git' }` on `SmipRuntime` for local patches. `PatchInput` supports explicit worktree, staged, and commit-endpoint comparisons, with an explicit commit or empty baseline and an all-paths or prefix-path scope. Worktree requests choose whether to include untracked files. The helper reads repository objects and generates patches from captured byte/mode pairs in private directories. Patches preserve deletion, addition, binary, empty-file, executable-mode, and quoted-name changes. Local symlink, gitlink, and unmerged entries produce errors. Staged and historical comparisons check selected supporting sources against the target as well as changed files.
+Configure `git: { executable: '/absolute/path/to/git' }` on `MipmuxRuntime` for local patches. `PatchInput` supports explicit worktree, staged, and commit-endpoint comparisons, with an explicit commit or empty baseline and an all-paths or prefix-path scope. Worktree requests choose whether to include untracked files. The helper reads repository objects and generates patches from captured byte/mode pairs in private directories. Patches preserve deletion, addition, binary, empty-file, executable-mode, and quoted-name changes. Local symlink, gitlink, and unmerged entries produce errors. Staged and historical comparisons check selected supporting sources against the target as well as changed files.
 
 ## CLI and MCP
 
 Build with `npm run build`, then run `node dist/cli/main.js`. Every input/configuration path is absolute. Progress goes to stderr; one-shot commands write a JSON result to stdout. MCP mode reserves stdout for protocol traffic.
 
 ```sh
-node dist/cli/main.js mcp --config /etc/smip/config.json
-node dist/cli/main.js workspace --spec /work/spec.json --config /etc/smip/config.json
-node dist/cli/main.js tool read_file --workspace /work/spec.json --input /work/read.json --config /etc/smip/config.json
-node dist/cli/main.js build --request /work/build.json --config /etc/smip/config.json > /work/terminal-receipt.json
-node dist/cli/main.js render --request /work/render.json --draft /work/draft.json --config /etc/smip/config.json
+node dist/cli/main.js mcp --config /etc/mipmux/config.json
+node dist/cli/main.js workspace --spec /work/spec.json --config /etc/mipmux/config.json
+node dist/cli/main.js tool read_file --workspace /work/spec.json --input /work/read.json --config /etc/mipmux/config.json
+node dist/cli/main.js build --request /work/build.json --config /etc/mipmux/config.json > /work/terminal-receipt.json
+node dist/cli/main.js render --request /work/render.json --draft /work/draft.json --config /etc/mipmux/config.json
 node dist/cli/main.js verify --bundle /exports/packet --mode integrity
-node dist/cli/main.js verify --bundle /exports/packet --mode current --config /etc/smip/config.json
-node dist/cli/main.js cache invalidate --kind artifact --key <sha256> --config /etc/smip/config.json
-node dist/cli/main.js cache invalidate --kind membership --key <sha256> --config /etc/smip/config.json
+node dist/cli/main.js verify --bundle /exports/packet --mode current --config /etc/mipmux/config.json
+node dist/cli/main.js cache invalidate --kind artifact --key <sha256> --config /etc/mipmux/config.json
+node dist/cli/main.js cache invalidate --kind membership --key <sha256> --config /etc/mipmux/config.json
 ```
 
-The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Omit `enhancementMode` and `budgetUnits` to use the configured defaults. Input files for `smip tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
+The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Omit `enhancementMode` and `budgetUnits` to use the configured defaults. Input files for `mipmux tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; membership targets name workspace inventory records. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateMembership(key)` for membership. Each method removes only its named record.
 
@@ -220,8 +220,8 @@ Host configuration uses this shape. The numbers are example host choices, not mo
     "activeGitRoot": null,
     "presets": []
   },
-  "cachePath": "/var/tmp/private-smip-cache",
-  "nativeExecutable": "/opt/smip/libexec/darwin-arm64/SmipBridge",
+  "cachePath": "/var/tmp/private-mipmux-cache",
+  "nativeExecutable": "/opt/mipmux/libexec/darwin-arm64/MipmuxBridge",
   "nativeEnvironment": { "REPOPROMPT_PCRE2_JIT": "auto" },
   "terminationGraceMs": 1000,
   "credentialPaths": [],
@@ -233,9 +233,9 @@ Host configuration uses this shape. The numbers are example host choices, not mo
     "provider": "openai-codex",
     "model": "gpt-6.1-sol",
     "thinking": "medium",
-    "authPath": "/private/smip/auth.json",
-    "modelsPath": "/private/smip/models.json",
-    "promptTemplatePath": "/private/smip/discovery.md",
+    "authPath": "/private/mipmux/auth.json",
+    "modelsPath": "/private/mipmux/models.json",
+    "promptTemplatePath": "/private/mipmux/discovery.md",
     "mcp": null,
     "environment": {},
     "policy": {
@@ -261,8 +261,8 @@ Set `discovery.promptTemplatePath` to an absolute path to your editable discover
 ```sh
 node --input-type=module <<'JS'
 import { constants, copyFileSync } from 'node:fs';
-copyFileSync('/opt/smip/dist/prompts/discovery.md',
-  '/private/smip/discovery.md', constants.COPYFILE_EXCL);
+copyFileSync('/opt/mipmux/dist/prompts/discovery.md',
+  '/private/mipmux/discovery.md', constants.COPYFILE_EXCL);
 JS
 ```
 
@@ -276,7 +276,7 @@ The worker reads the authorized authentication and model files; these paths and 
 
 ### Discovery MCP access
 
-Set `discovery.mcp` to `{ "agentDirectory": "/private/smip/scout-mcp" }` to let discovery use selected tools from HTTP MCP servers. Use a dedicated directory with permissions `0700` containing `mcp.json`; set `mcp` to `null` to use only smip tools. Replace the URL and tool name in this example with your server's values:
+Set `discovery.mcp` to `{ "agentDirectory": "/private/mipmux/scout-mcp" }` to let discovery use selected tools from HTTP MCP servers. Use a dedicated directory with permissions `0700` containing `mcp.json`; set `mcp` to `null` to use only mipmux tools. Replace the URL and tool name in this example with your server's values:
 
 ```json
 {
@@ -290,12 +290,12 @@ Set `discovery.mcp` to `{ "agentDirectory": "/private/smip/scout-mcp" }` to let 
 }
 ```
 
-For OAuth, sign in before starting discovery jobs using the Pi executable from smip's dependency installation. Run `mcp list` to check the connection and find exact tool names:
+For OAuth, sign in before starting discovery jobs using the Pi executable from mipmux's dependency installation. Run `mcp list` to check the connection and find exact tool names:
 
 ```sh
-cd /private/smip/scout-mcp
-PI_CODING_AGENT_DIR="$PWD" /opt/smip/node_modules/.bin/pi mcp login tickets
-PI_CODING_AGENT_DIR="$PWD" /opt/smip/node_modules/.bin/pi mcp list
+cd /private/mipmux/scout-mcp
+PI_CODING_AGENT_DIR="$PWD" /opt/mipmux/node_modules/.bin/pi mcp login tickets
+PI_CODING_AGENT_DIR="$PWD" /opt/mipmux/node_modules/.bin/pi mcp list
 ```
 
 If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private directory to diagnose connection or sign-in problems. See the [discovery contract](docs/contracts.md#discovery-and-client-ownership) for configuration options and lifecycle details.
@@ -326,15 +326,15 @@ MCP puts optional `maxOutputBytes` beside `input`; omitted caps use the host def
 
 `context_builder` takes `workspaceId`, `requestId` and `request`. Repeating a request ID with identical input returns the same job; different input fails. Wait with `{ "jobId": "...", "durationMs": 10000 }`; timeout or cancellation of that wait leaves the job running. Cancel the job explicitly with `context_builder_cancel`. Closing the connection or runtime cancels and joins active work. A claimed publication finishes before shutdown returns.
 
-The terminal receipt separates requested, locally dispatched, SDK-reported and independently returned model identities. It records the prompt hash, `buildLockSHA256`, the effective model record and thinking/recovery policy, ordinary and summary completions, and local settlement. `buildLockSHA256` identifies smip's build lockfile; audit the installed graph separately when deploying a local package. Endpoint and header values are represented by hashes rather than copied into the receipt. Codex's independent server identity is unavailable; provider-internal attempts may be unobserved. Local closure does not establish remote cancellation or billing cessation. Only a verified ready bundle is transferable context. See [the context protocol](docs/context-protocol.md) for delivery and receipt capture.
+The terminal receipt separates requested, locally dispatched, SDK-reported and independently returned model identities. It records the prompt hash, `buildLockSHA256`, the effective model record and thinking/recovery policy, ordinary and summary completions, and local settlement. `buildLockSHA256` identifies mipmux's build lockfile; audit the installed graph separately when deploying a local package. Endpoint and header values are represented by hashes rather than copied into the receipt. Codex's independent server identity is unavailable; provider-internal attempts may be unobserved. Local closure does not establish remote cancellation or billing cessation. Only a verified ready bundle is transferable context. See [the context protocol](docs/context-protocol.md) for delivery and receipt capture.
 
-Library hosts call `runtime.createClient(runner)` with a `DiscoveryRunner`, or null for manual-only work. The default library entry loads neither Pi nor MCP. `smip/mcp` exports `createMcpServer` and `serveSmipStdio`; factory construction registers handlers and validates configuration without opening workspaces or starting discovery.
+Library hosts call `runtime.createClient(runner)` with a `DiscoveryRunner`, or null for manual-only work. The default library entry loads neither Pi nor MCP. `mipmux/mcp` exports `createMcpServer` and `serveMipmuxStdio`; factory construction registers handlers and validates configuration without opening workspaces or starting discovery.
 
 ## Linux validation and runtime
 
 ```sh
-docker build -f test/linux/Dockerfile -t smip-validation .
-docker run --rm smip-validation
+docker build -f test/linux/Dockerfile -t mipmux-validation .
+docker run --rm mipmux-validation
 ```
 
 The image for validation fixes Swift 6.2.4 on Ubuntu Noble and Node 22.22.1 by image digest. It builds dependencies and executables inside Linux. The release executable dynamically requires the Swift runtime, Foundation, Dispatch, Foundation ICU, glibc, libstdc++, and libgcc supplied by that environment. The exact linked-library inventory is in `linkage.json`; PCRE2 is statically linked. A machine running the executable must supply those runtime libraries.

@@ -18,13 +18,13 @@
   ],
   "generator": "scripts/generate-discovery-policy-fixtures.mjs",
   "generatorIdentity": {
-    "sha256": "bc9f86a0f6aec57c5ec3be439b277d71e85cf9ff547d3961eaa08b2bdec369ec",
-    "byteCount": 5842
+    "sha256": "a5b43804126fc3cd1fb96c1404a9113af5b103053e385732491ba0c15cd35130",
+    "byteCount": 5848
   },
   "bindings": "scripts/reference-discovery-bindings.mjs",
   "bindingsIdentity": {
-    "sha256": "a3901ab334632512b8af1d2013eb79b17dafe49dc2b89d318c3ef9905635f8a7",
-    "byteCount": 6407
+    "sha256": "f63550e0078fa9ce1d0efd2684f15217282b93487bc9efb25ec8ae40b61e29ee",
+    "byteCount": 6413
   },
   "generatedHarnessIdentity": {
     "sha256": "abf7d286817a223faf37721832e08071fd5b307c0f22a75aead089b516290cb2",
@@ -35,6 +35,6 @@
   "changes": [
     "Stub external types and language catalog",
     "Remove the single diagnostic stdout print",
-    "Apply checked test-only smip tool/runtime bindings; production composer and template are not imported"
+    "Apply checked test-only mipmux tool/runtime bindings; production composer and template are not imported"
   ]
 }

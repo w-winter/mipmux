@@ -11,7 +11,7 @@ const residentNodeLimit = 100000;
 
 test('a small structural output cannot bypass the source resident graph node limit', async () => {
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     env: {}, supervisor });
   const input: NativeStructureInput = { kind: 'queryStructure', inventoryDigest: 'a'.repeat(64), codeMapsGloballyDisabled: false,
     roots: [{ id: uuid(0), name: 'r', canonicalPath: '/fixture/r', complete: true, directories: [],

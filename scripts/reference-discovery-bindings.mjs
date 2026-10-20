@@ -36,8 +36,8 @@ export function bindReferenceDiscoveryPolicy(source, input) {
   return source
     .replaceAll(toolList, '`manage_selection`, `prompt`, `draft_inspect`, `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`, `draft_update`, `draft_validate`')
     .replace("This prompt comes directly from RepoPrompt. The MCP server's workspace state already matches what you see here—codemaps for selected files, the selected-mode file tree, and the `<current_prompt_content>` (user's prompt) are embedded.",
-      "This prompt uses RepoPrompt CE's discovery policy. The captured smip observation identifies the admitted roots, selection, costs and evidence; the file tree and `<current_prompt_content>` are embedded. Use the context tools for complete material bodies.")
-    .replaceAll('RepoPrompt MCP tools', 'smip context tools and configured HTTP MCP tools')
+      "This prompt uses RepoPrompt CE's discovery policy. The captured mipmux observation identifies the admitted roots, selection, costs and evidence; the file tree and `<current_prompt_content>` are embedded. Use the context tools for complete material bodies.")
+    .replaceAll('RepoPrompt MCP tools', 'mipmux context tools and configured HTTP MCP tools')
     .replace("These tools provide complete access to the user's project—attempting to use any other approach will fail.",
       'Context tools enforce declared roots and protected-path policy. Configured HTTP MCP tools have their separately authorized capabilities.')
     .replaceAll('any non-MCP tools', 'any unexposed tools')
@@ -68,7 +68,7 @@ export function bindReferenceDiscoveryPolicy(source, input) {
       call.args.maxOutputBytes = exampleOutputBytes;
       return JSON.stringify(call);
     })
-    .replaceAll('workspace_context', 'draft_inspect') + '\n\n## smip runtime bindings\n\n' +
+    .replaceAll('workspace_context', 'draft_inspect') + '\n\n## mipmux runtime bindings\n\n' +
     'The user message contains the source startup sections followed by a captured runtime observation. Its constraints are fixed caller requirements. ' +
     'Use draft_inspect with view "costs" for complete-packet accounting and view "metadata" for committed state. ' +
     'Supply maxOutputBytes for tool replies. Prompt mutations also require the latest expectedRevision from the observation or a mutation reply; 0 in examples is a placeholder. ' +

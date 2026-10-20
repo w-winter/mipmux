@@ -7,7 +7,7 @@ import { structuralFile, structuralRoots } from './fixtures/structural-inventory
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { SmipRuntime, verifyBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 
 test('automatic source and root limits reject the whole input before target demand', () => {
@@ -86,7 +86,7 @@ test('shared query allocation uses root UUID order rather than root alias order'
 });
 
 test('source admission overflow preserves explicit files and a verifiable packet through the public workspace API', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-auto-source-budget-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-auto-source-budget-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const sources = [{ kind: 'full' as const, source: { root: 'r', path: 'Seed.swift' } }];
   await writeFile(join(root, 'Seed.swift'), 'struct Seed { let value: Peer }\n');
@@ -95,8 +95,8 @@ test('source admission overflow preserves explicit files and a verifiable packet
     const path = 'Note' + index + '.txt'; await writeFile(join(root, path), '');
     sources.push({ kind: 'full', source: { root: 'r', path } });
   }
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const signal = new AbortController().signal;
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);

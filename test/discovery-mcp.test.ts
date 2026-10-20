@@ -49,7 +49,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source evidence\n');
   const discovery = { ...provider.config, promptTemplatePath: resolve('prompts/discovery.md'), mcp };
   const { runtime, client } = compose({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     discovery, git: null, defaultMaxOutputBytes: 10000 }, null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let workerEnvironment: Readonly<Record<string, string>> | null = null;

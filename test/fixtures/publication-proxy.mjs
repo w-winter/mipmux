@@ -2,7 +2,7 @@
 import { spawn } from 'node:child_process';
 import { open } from 'node:fs/promises';
 
-const child = spawn(process.env.SMIP_NATIVE, [process.argv[2]], { stdio: 'pipe', env: process.env });
+const child = spawn(process.env.MIPMUX_NATIVE, [process.argv[2]], { stdio: 'pipe', env: process.env });
 let input = '', output = '', publication = null;
 process.stdin.on('data', bytes => {
   input += bytes.toString();
@@ -15,8 +15,8 @@ async function forward() {
     const request = JSON.parse(line);
     if (request.operation.kind === 'publishManifest') {
       publication = request.requestId;
-      if (process.env.SMIP_PUBLICATION === 'refuse') {
-        const file = await open(process.env.SMIP_MANIFEST, 'wx');
+      if (process.env.MIPMUX_PUBLICATION === 'refuse') {
+        const file = await open(process.env.MIPMUX_MANIFEST, 'wx');
         await file.writeFile('existing completion marker'); await file.sync(); await file.close();
       }
     }
@@ -29,9 +29,9 @@ child.stdout.on('data', bytes => {
   while ((newline = output.indexOf('\n')) !== -1) {
     const line = output.slice(0, newline); output = output.slice(newline + 1);
     const frame = JSON.parse(line);
-    if (frame.requestId === publication && process.env.SMIP_PUBLICATION !== 'refuse') {
+    if (frame.requestId === publication && process.env.MIPMUX_PUBLICATION !== 'refuse') {
       if (frame.result.kind !== 'manifestPublished') throw Error('publication did not complete');
-      if (process.env.SMIP_PUBLICATION === 'malformed') process.stdout.write('{malformed acknowledgement}\n');
+      if (process.env.MIPMUX_PUBLICATION === 'malformed') process.stdout.write('{malformed acknowledgement}\n');
       child.kill('SIGTERM'); child.once('close', () => process.exit(23));
     } else process.stdout.write(line + '\n');
   }

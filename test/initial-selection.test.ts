@@ -19,13 +19,13 @@ const readyReply = Compile(Type.Object({ kind: Type.Literal('ready'), directory:
 
 test('MCP admission retains mutable initial selection and manual mode separately from required evidence', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-initial-selection-')), root = join(base, 'repo'), output = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-initial-selection-')), root = join(base, 'repo'), output = join(base, 'out');
   await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'seed.txt'), 'MUTABLE INITIAL EVIDENCE\n');
   await writeFile(join(root, 'required.txt'), 'REQUIRED EVIDENCE\n');
   const config = join(base, 'host.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath,

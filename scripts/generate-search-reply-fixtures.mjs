@@ -40,7 +40,7 @@ ${totals}
     }
 }
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-search-reply-source-'));
+const scratch = mkdtempSync(join(tmpdir(), 'mipmux-search-reply-source-'));
 try {
   writeFileSync(join(scratch, 'reference.swift'), source);
   execFileSync('swiftc', ['-parse-as-library', '-module-cache-path', join(scratch, 'cache'),

@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { canonicalJSON, sha256 } from '../src/workspace/values.js';
@@ -16,7 +16,7 @@ const omissions = Compile(Type.Object({ unavailableRoots: Type.Array(Type.Object
   sources: Type.Array(Type.Object({ id: Type.String(), selection: Type.Object({ kind: Type.String() }), identity: Type.Object({ sha256: Type.String() }) })) })) }));
 
 async function fixture(mode: 'manual' | 'automatic', required: boolean, restoreBeforeClaim: boolean) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-optional-source-export-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-optional-source-export-'));
   const r = join(base, 'r'), s = join(base, 's'), out = join(base, 'out'); await mkdir(r); await mkdir(s); await mkdir(out);
   for (const [root, name] of [[r, 'Omitted'], [s, 'Delivered']] as const) {
     await writeFile(join(root, 'Seed.swift'), `struct ${name}Seed { let value: ${name}Peer }\n`);
@@ -25,7 +25,7 @@ async function fixture(mode: 'manual' | 'automatic', required: boolean, restoreB
   await writeFile(join(r, 'slice.txt'), 'first\nomitted slice content\nlast\n');
   const restore = async () => { await rename(r, join(base, 'replacement')); await rename(join(base, 'original'), r); };
   let armed = restoreBeforeClaim;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -37,7 +37,7 @@ async function fixture(mode: 'manual' | 'automatic', required: boolean, restoreB
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: r }, { name: 's', absolutePath: s }], exclusions: [], outputRoot: out }, signal());
   const sources = [{ kind: 'full' as const, source: { root: 'r', path: 'Seed.swift' } },
     { kind: 'slices' as const, source: { root: 'r', path: 'slice.txt' }, ranges: [{ start: 2, end: 2, description: 'Omitted slice' }] },

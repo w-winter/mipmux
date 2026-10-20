@@ -1,6 +1,6 @@
 export type { DirectoryRef, RootIdentity, SourceIdentity } from './contracts/workspace.js';
 export type { SyntaxOutcome } from './contracts/artifact.js';
-export { SmipRuntime, WorkspaceHandle, type RuntimeOptions } from './runtime/smip-runtime.js';
+export { MipmuxRuntime, WorkspaceHandle, type RuntimeOptions } from './runtime/mipmux-runtime.js';
 export type { WorkspaceOperation } from './workspace/workspace-operation.js';
 export { WorkspaceSpec, type InventorySnapshot, type SourcePath } from './contracts/inventory.js';
 export { ReadRequest, TreeRequest, StructureRequest, SearchRequest, type Continuation } from './contracts/exploration.js';

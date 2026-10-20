@@ -30,7 +30,7 @@
   "command": "node scripts/generate-tree-fixtures.mjs <pinned-rpce-checkout>",
   "bindings": [
     "Original renderer, snapshot models and token estimator are compiled from pinned RPCE source.",
-    "The immutable root/entry adapter and native field parser are reused from the recorded smip adapter revision; these fixtures do not independently verify trie construction. Selected-root filtering and marker flags are passed explicitly to the original snapshot renderer.",
+    "The immutable root/entry adapter and native field parser are reused from the recorded mipmux adapter revision; these fixtures do not independently verify trie construction. Selected-root filtering and marker flags are passed explicitly to the original snapshot renderer.",
     "Logical root labels are supplied as data. Empty selection uses the MCP provider message."
   ],
   "limits": [

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 import type { ContextBuildRequest } from '../src/contracts/context.js';
@@ -20,8 +20,8 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
   const root = join(provider.directory, 'root'), outputRoot = join(provider.directory, 'out');
   if (boundary === 'search') search.query = { kind: 'literal', text: 'source\\(', caseSensitive: true, wholeWord: false };
   await mkdir(root); await mkdir(outputRoot); await writeFile(join(root, 'file.txt'), boundary === 'search' ? 'source(\n' : 'source\n');
-  const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+  const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable, nativeEnvironment: {}, terminationGraceMs: 100 });
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let armed = false;
@@ -33,11 +33,11 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     if (armed && spec.executable === nativeExecutable) {
       const process = spawn({ ...spec, executable: globalThis.process.execPath,
         args: [resolve('test/fixtures/held-native-proxy.mjs'), ...spec.args],
-        env: { ...spec.env, SMIP_NATIVE: nativeExecutable, SMIP_HELD_OPERATION: boundary === 'read' ? 'readSource' : 'scanLiteralLines',
-          SMIP_HELD_PATTERN: 'source(' } });
+        env: { ...spec.env, MIPMUX_NATIVE: nativeExecutable, MIPMUX_HELD_OPERATION: boundary === 'read' ? 'readSource' : 'scanLiteralLines',
+          MIPMUX_HELD_PATTERN: 'source(' } });
       held.push(process);
       let stderr = '';
-      process.child.stderr.on('data', bytes => { stderr += bytes.toString(); if (stderr.includes(boundary === 'read' ? 'SMIP_READ_HELD' : 'SMIP_SEARCH_HELD')) entered(); });
+      process.child.stderr.on('data', bytes => { stderr += bytes.toString(); if (stderr.includes(boundary === 'read' ? 'MIPMUX_READ_HELD' : 'MIPMUX_SEARCH_HELD')) entered(); });
       return process;
     }
     const process = spawn(boundary === 'search' && spec.args.some(arg => arg.endsWith('/pi-worker.js'))

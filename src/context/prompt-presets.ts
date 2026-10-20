@@ -1,5 +1,5 @@
 import type { RawCopyPreset } from '../contracts/presentation.js';
-import type { SmipRuntime } from '../runtime/smip-runtime.js';
+import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import { serializedBytes, type ResultEncoding } from '../exploration/output-budget.js';
 import { freeze, WorkspaceFailure } from '../workspace/values.js';
 
@@ -46,7 +46,7 @@ export function admitPromptReply<T>(reply: T, maxOutputBytes: number, encode: Re
   return freeze(reply);
 }
 
-export async function listPromptPresets(runtime: SmipRuntime, signal: AbortSignal, maxOutputBytes: number, encode: ResultEncoding) {
+export async function listPromptPresets(runtime: MipmuxRuntime, signal: AbortSignal, maxOutputBytes: number, encode: ResultEncoding) {
   const catalog = await runtime.renderPresentation({ kind: 'listCopyPresets', context: runtime.options.copyContext }, signal);
   const presets = catalog.presets.map(presetListItem);
   return admitPromptReply({ op: 'list_presets' as const, presets_list: { presets } }, maxOutputBytes, encode);

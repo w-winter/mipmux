@@ -2,13 +2,15 @@
 import Foundation
 import PackageDescription
 
-guard let prefix = ProcessInfo.processInfo.environment["SMIP_PCRE2_PREFIX"],
+guard let prefix = ProcessInfo.processInfo.environment["MIPMUX_PCRE2_PREFIX"],
       prefix.hasPrefix("/"),
       FileManager.default.fileExists(atPath: prefix + "/lib/libpcre2-8.a"),
       FileManager.default.fileExists(atPath: prefix + "/lib/pkgconfig/libpcre2-8.pc")
 else { fatalError("Build through node scripts/build-native.mjs using the verified private PCRE2 prefix.") }
 let swift6LanguageMode: [SwiftSetting] = [.swiftLanguageMode(.v6)]
-let package = Package(name: "SmipNative", platforms: [.macOS(.v14)], products: [.executable(name: "SmipBridge", targets: ["SmipBridge"])], dependencies: [
+let package = Package(name: "MipmuxNative", platforms: [.macOS(.v14)], products: [
+    .executable(name: "MipmuxBridge", targets: ["MipmuxBridge"])
+], dependencies: [
     .package(url: "https://github.com/apple/swift-crypto.git", exact: "4.5.1"),
     .package(url: "https://github.com/repoprompt/swift-tree-sitter.git", revision: "a778ef4fb7f0d3ad00185f42ce83c688373c4361"),
     .package(url: "https://github.com/tree-sitter/tree-sitter", exact: "0.25.10"),
@@ -26,7 +28,7 @@ let package = Package(name: "SmipNative", platforms: [.macOS(.v14)], products: [
     .package(url: "https://github.com/tree-sitter/tree-sitter-typescript", exact: "0.23.2"),
 ], targets: [
     .executableTarget(
-        name: "SmipBridge",
+        name: "MipmuxBridge",
         dependencies: ["RepoPromptCodeMapCore", "RepoPromptRegexCore", "RepoPromptC",
                        "UniversalCharsetDetection", "CPCRE2",
                        .product(name: "Crypto", package: "swift-crypto")],

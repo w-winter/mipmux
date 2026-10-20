@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
 import { join } from 'node:path';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../../dist-test/src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../../dist-test/src/index.js';
 import { copyContext } from '../../dist-test/test/fixtures/copy-context.js';
 
 const [directory, mode, scenario, component] = process.argv.slice(2);
@@ -39,7 +39,7 @@ fs.readFile = (path, ...args) => {
 };
 syncBuiltinESMExports();
 const abort = new AbortController();
-const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'unused-cache'), nativeExecutable: '/unavailable-native',
+const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'unused-cache'), nativeExecutable: '/unavailable-native',
   nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 0 });
 let closing = null;
 process.on('message', async message => {

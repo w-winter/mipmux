@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
 import { readValidator, searchValidator, treeValidator } from '../src/contracts/exploration.js';
 import { copyContext } from './fixtures/copy-context.js';
 
@@ -15,16 +15,16 @@ const request: ContextBuildRequest = { task: 'Inspect explicit evidence', constr
   discoveryHints: [], outputName: 'packet' };
 
 async function fixture() {
-  const base = await mkdtemp(join(tmpdir(), 'smip-exact-acquisition-')), root = join(base, 'root'), output = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-exact-acquisition-')), root = join(base, 'root'), output = join(base, 'out');
   await mkdir(join(root, 'private'), { recursive: true }); await mkdir(join(root, 'cursor')); await mkdir(output);
   await writeFile(join(root, '.repo_ignore'), 'private/\n'); await writeFile(join(root, '.cursorignore'), 'cursor/\n');
   for (const path of ['private/Hidden.swift', 'cursor/Hidden.swift', 'private/Excluded.swift', 'private/Credential.swift']) {
     await writeFile(join(root, path), body);
   }
   await symlink(join(root, 'private/Hidden.swift'), join(root, 'private/Link.swift'));
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     credentialPaths: [join(root, 'private/Credential.swift')], nativeEnvironment: {}, terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`) });
   const client = runtime.createClient(null);
   const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output,
     exclusions: [{ kind: 'prefix', root: 'r', path: 'private/Excluded.swift' }] }, signal());

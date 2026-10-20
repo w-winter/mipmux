@@ -82,7 +82,7 @@ const McpReceipt = Type.Object({ configSHA256: SHA256,
 }, closed);
 export const DiscoveryReceipt = Type.Object({
   adapter: Type.String(), sdk: Type.String(), buildLockSHA256: SHA256,
-  templateVersion: Type.Literal('smip-discovery-template-v1'),
+  templateVersion: Type.Literal('mipmux-discovery-template-v1'),
   template: Type.Object({ path: Type.String({ pattern: '^/[^\\u0000]*$' }), identity: SourceIdentity }, closed),
   policyIdentity: SourceIdentity,
   requested: Type.Object({ provider: Type.String(), model: Type.String(), thinking: Type.String() }, closed),

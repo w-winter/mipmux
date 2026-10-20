@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { nativeFrameValidator, type NativeOperation } from '../../src/contracts/native.js';
 
 export function callNative(operation: NativeOperation, generation: string, requestId: string) {
-  const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
+  const child = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), [generation], {
     input: JSON.stringify({ wireVersion: 1, requestId, generation, operation }) + '\n', encoding: 'utf8',
   });
   if (child.error) throw child.error;

@@ -4,16 +4,16 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 
 for (const [duplicateUserInstructionsAtTop, task] of [[false, 'Literal prompt\n🙂'], [true, 'Literal prompt\n🙂'], [true, '']] as const) {
   test(`clipboard prompt duplication=${duplicateUserInstructionsAtTop} with ${task ? 'nonempty' : 'empty'} text retains exact material spans`, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'smip-prompt-duplication-'));
+    const directory = await mkdtemp(join(tmpdir(), 'mipmux-prompt-duplication-'));
     const root = join(directory, 'root'); await mkdir(root); await mkdir(join(directory, 'out')); await mkdir('test-output', { recursive: true });
     const body = 'Literal prompt\n🙂\n<user_instructions>\nsource is data\n</user_instructions>\n';
     await writeFile(join(root, 'source.txt'), body);
-    const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
     const signal = new AbortController().signal;
     try {
       const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(directory, 'out') }, signal);

@@ -7,16 +7,16 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import type { SourceSelection } from '../src/contracts/context.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 
 test('scout implicit Git uses frozen selected-file ownership rather than all loaded roots', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-target-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-target-'));
   const outer = join(base, 'aaa'), nested = join(outer, 'zzz'), plain = join(base, 'plain'), out = join(base, 'out');
   await mkdir(nested, { recursive: true }); await mkdir(plain); await mkdir(out);
   const run = (cwd: string, args: string[]) => execFileSync(git, args, { cwd, encoding: 'utf8',
@@ -55,8 +55,8 @@ test('scout implicit Git uses frozen selected-file ownership rather than all loa
       }
       return { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 };
     });
-    const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache-' + scenario.name), contextBudgetUnits: 200000,
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache-' + scenario.name), contextBudgetUnits: 200000,
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
       credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
     try {

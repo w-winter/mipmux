@@ -4,7 +4,7 @@ This fixture is for implementers comparing Context Builder codemap presentation 
 
 ## Reproduce
 
-From the smip checkout, with Node, `swiftc` and `trash` on `PATH`, run:
+From the mipmux checkout, with Node, `swiftc` and `trash` on `PATH`, run:
 
 ```sh
 node test/fixtures/rpce-root-presentation/generate.mjs /absolute/path/to/repoprompt-ce

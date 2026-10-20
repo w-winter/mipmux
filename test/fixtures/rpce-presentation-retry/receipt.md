@@ -4,7 +4,7 @@ This executable reference is for implementers comparing Context Builder presenta
 
 ## Reproduce
 
-From the smip checkout, with Node, `swiftc` and `trash` on `PATH`, run:
+From the mipmux checkout, with Node, `swiftc` and `trash` on `PATH`, run:
 
 ```sh
 node test/fixtures/rpce-presentation-retry/generate.mjs /absolute/path/to/repoprompt-ce

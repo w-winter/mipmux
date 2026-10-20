@@ -19,7 +19,7 @@ const warnings = new Map([
 ]);
 
 test('public content recovery retries the whole query only after zero primary matches', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-search-recovery-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-search-recovery-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   const files = {
     'recover/a.txt': 'frame(\ntag.value\nitem[ab].\nnormalize\n',
@@ -34,7 +34,7 @@ test('public content recovery retries the whole query only after zero primary ma
   }
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],

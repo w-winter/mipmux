@@ -42,7 +42,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address(); if (!address || typeof address === 'string') throw new Error('Missing port');
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-scripted-pi-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-scripted-pi-'));
   const config: PiConfig = { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off',
     authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), promptTemplatePath: join(directory, 'discovery.md'), environment: {}, mcp: null,
     policy: { retry: { enabled: true, maxRetries: 1, baseDelayMs: 0, maxAgentDelayMs: 0,

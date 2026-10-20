@@ -14,7 +14,7 @@ const fixturesValidator = Compile(Type.Array(Type.Object({ name: Type.String(),
 test('native structural queries preserve RPCE traversal, size, signature and unavailable evidence', async () => {
   const fixtures = fixturesValidator.Parse(JSON.parse(await readFile(resolve('test/fixtures/rpce-structure/cases.json'), 'utf8')));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     env: {}, supervisor });
   const proof: string[] = [];
   try {
@@ -38,7 +38,7 @@ test('native folder seed admission keeps direct-file priority and RPCE overflow 
       { kind: 'file', root: 'r', path: 'bulk/08193.swift' }] },
     expand: 'none', depth: 1, signatures: false, size: 'small' });
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     env: {}, supervisor });
   try {
     const { result } = await bridge.request(input, new AbortController().signal);

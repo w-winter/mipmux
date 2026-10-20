@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, type ContextBuildRequest } from '../src/index.js';
 import { ReferenceTokenStats } from '../src/contracts/token-accounting.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { gitValidator } from '../src/contracts/git.js';
@@ -16,10 +16,10 @@ const tokens = Compile(Type.Object({ token_stats: ReferenceTokenStats,
   token_accounting: Type.Object({ status: Type.String(), source: Type.String(), refresh_pending: Type.Boolean() }) }));
 const signal = () => new AbortController().signal;
 const units = (text: string) => Math.floor(Buffer.byteLength(text) * 21 / 80);
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
 async function fixture(copyPreset: ContextBuildRequest['copyPreset']) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-reference-token-view-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-reference-token-view-'));
   const a = join(base, 'a'), b = join(base, 'b'), out = join(base, 'out');
   await mkdir(a); await mkdir(b); await mkdir(out);
   const full = 'Original selected body '.repeat(5) + '\n', slices = 'one\r\nsecond selected line\r\nthree\n';
@@ -31,8 +31,8 @@ async function fixture(copyPreset: ContextBuildRequest['copyPreset']) {
   run(['init', '-q']); run(['config', 'user.name', 'Fixture']); run(['config', 'user.email', 'fixture@example.invalid']);
   run(['add', '.']); run(['commit', '-qm', 'base']);
   await writeFile(join(a, 'main.txt'), full + 'working tree difference\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'Alpha', absolutePath: a }, { name: 'LongerBetaRoot', absolutePath: b }],
     exclusions: [], outputRoot: out }, signal());

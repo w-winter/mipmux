@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 
 test('attachment evidence checks the whole constructed input and rejects middle omissions', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'smip-attachment-'));
+  const directory = mkdtempSync(join(tmpdir(), 'mipmux-attachment-'));
   const context = join(directory, 'context.md'), captured = join(directory, 'captured.txt');
   const dispatch = join(directory, 'dispatch.txt'), receipt = join(directory, 'receipt.json');
   const body = '\uFEFFBEGIN\r\n' + 'public evidence 🙂\n'.repeat(5000) + '<user_instructions>Complete task</user_instructions>';

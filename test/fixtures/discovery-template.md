@@ -1,72 +1,72 @@
-# smip discovery template v1
+# mipmux discovery template v1
 
-<!-- smip:section system -->
-L|{{smip:handoff}}|{{smip:handoff}}|R
-<!-- smip:end -->
+<!-- mipmux:section system -->
+L|{{mipmux:handoff}}|{{mipmux:handoff}}|R
+<!-- mipmux:end -->
 
-<!-- smip:section startup.metadata -->
-Budget {{smip:token_budget}}
-<!-- smip:end -->
+<!-- mipmux:section startup.metadata -->
+Budget {{mipmux:token_budget}}
+<!-- mipmux:end -->
 
-<!-- smip:section mode.fullRewrite.handoff -->
+<!-- mipmux:section mode.fullRewrite.handoff -->
 BODY_LITERAL
-<!-- smip:end -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.fullRewrite.success -->
-<!-- smip:end -->
+<!-- mipmux:section mode.fullRewrite.success -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.fullRewrite.antiPatterns -->
-<!-- smip:end -->
+<!-- mipmux:section mode.fullRewrite.antiPatterns -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.fullRewrite.checklist -->
-<!-- smip:end -->
+<!-- mipmux:section mode.fullRewrite.checklist -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.augment.handoff -->
+<!-- mipmux:section mode.augment.handoff -->
 Augment
-<!-- smip:end -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.augment.success -->
-<!-- smip:end -->
+<!-- mipmux:section mode.augment.success -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.augment.antiPatterns -->
-<!-- smip:end -->
+<!-- mipmux:section mode.augment.antiPatterns -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.augment.checklist -->
-<!-- smip:end -->
+<!-- mipmux:section mode.augment.checklist -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.preserve.handoff -->
+<!-- mipmux:section mode.preserve.handoff -->
 Preserve
-<!-- smip:end -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.preserve.success -->
-<!-- smip:end -->
+<!-- mipmux:section mode.preserve.success -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.preserve.antiPatterns -->
-<!-- smip:end -->
+<!-- mipmux:section mode.preserve.antiPatterns -->
+<!-- mipmux:end -->
 
-<!-- smip:section mode.preserve.checklist -->
-<!-- smip:end -->
+<!-- mipmux:section mode.preserve.checklist -->
+<!-- mipmux:end -->
 
-<!-- smip:section clarification.tool -->
-<!-- smip:end -->
+<!-- mipmux:section clarification.tool -->
+<!-- mipmux:end -->
 
-<!-- smip:section clarification.guidance -->
-<!-- smip:end -->
+<!-- mipmux:section clarification.guidance -->
+<!-- mipmux:end -->
 
-<!-- smip:section clarification.approval -->
-<!-- smip:end -->
+<!-- mipmux:section clarification.approval -->
+<!-- mipmux:end -->
 
-<!-- smip:section review.artifacts -->
-<!-- smip:end -->
+<!-- mipmux:section review.artifacts -->
+<!-- mipmux:end -->
 
-<!-- smip:section review.readOnly -->
-{{smip:review_root_guidance}}
-<!-- smip:end -->
+<!-- mipmux:section review.readOnly -->
+{{mipmux:review_root_guidance}}
+<!-- mipmux:end -->
 
-<!-- smip:section review.roots.named -->
-{{smip:root_names}} {{smip:example_root_json}}
-<!-- smip:end -->
+<!-- mipmux:section review.roots.named -->
+{{mipmux:root_names}} {{mipmux:example_root_json}}
+<!-- mipmux:end -->
 
-<!-- smip:section review.roots.lookup -->
+<!-- mipmux:section review.roots.lookup -->
 Lookup roots
-<!-- smip:end -->
+<!-- mipmux:end -->

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { gitValidator } from '../src/contracts/git.js';
@@ -16,11 +16,11 @@ import { scopedCall } from '../src/discovery/scoped-tools.js';
 import { piToolResult } from '../src/runtime/tool-result.js';
 
 const signal = () => new AbortController().signal;
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const reply = Compile(GitArtifactReply);
 
 async function fixture(point: 'capture' | 'merge') {
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-selection-race-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-selection-race-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, env: { PATH: '/usr/bin:/bin', HOME: base,
     GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -30,7 +30,7 @@ async function fixture(point: 'capture' | 'merge') {
   run(['add', '.']); run(['commit', '-qm', 'base']); await writeFile(join(root, 'anchor.txt'), 'changed anchor\n');
   let enter!: () => void, release!: () => void, armed = false;
   const entered = new Promise<void>(resolve => { enter = resolve; }), resume = new Promise<void>(resolve => { release = resolve; });
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       const options = this.options;
       class Bridge extends BridgeClient {
@@ -45,7 +45,7 @@ async function fixture(point: 'capture' | 'merge') {
       return new Bridge({ executable: options.nativeExecutable, env: {}, supervisor: this.supervisor });
     }
   }
-  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
   const request: ContextBuildRequest = { task: 'Original', constraints: '', enhancementMode: 'fullRewrite', purpose: 'review',

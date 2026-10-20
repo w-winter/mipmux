@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { WorkspaceOperation } from '../src/workspace/workspace-operation.js';
 
 const signal = () => new AbortController().signal;
@@ -14,10 +14,10 @@ const request: ContextBuildRequest = { task: 'Review', initialSelection: { codem
   discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-context-pass2-')), root = join(directory, 'root'), out = join(directory, 'out');
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-context-pass2-')), root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out);
-  const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' } });

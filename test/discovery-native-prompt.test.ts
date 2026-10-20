@@ -10,7 +10,7 @@ import { Compile } from 'typebox/compile';
 import { compose, hostValidator } from '../src/cli/config.js';
 import { verifyBundle } from '../src/index.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
@@ -22,11 +22,11 @@ const cases = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Ty
   currentPrompt: Type.String(), discoveryInstructions: Type.String(), fileTree: Type.String(),
   contextBuilderPrompts: Type.Array(Type.Object({ title: Type.String(), content: Type.String() })),
 }) })));
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
 test('native default policy and source startup reach Pi for all prompt modes and preserve separate input authority', async t => {
   const reference = cases.Parse(JSON.parse(await readFile('test/fixtures/rpce-discovery-message/cases.json', 'utf8')))[0]!;
-  const referencePolicies = policies.Parse(JSON.parse(await readFile('test/fixtures/smip-discovery-policy/cases.json', 'utf8')));
+  const referencePolicies = policies.Parse(JSON.parse(await readFile('test/fixtures/mipmux-discovery-policy/cases.json', 'utf8')));
   const promptTemplatePath = resolve('prompts/discovery.md');
   const templateBytes = await readFile(promptTemplatePath);
   const proof: unknown[] = [];
@@ -43,7 +43,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
     run(['init', '-q']); run(['add', '.']); run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'base']);
     const discovery = { ...provider.config, promptTemplatePath };
     const config = hostValidator.Parse({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       contextBudgetUnits: 200000, defaultEnhancementMode: mode, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000 });
     const { runtime, client } = compose(config, null);
     try {
@@ -64,7 +64,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
       assert.equal(system.replace(/^\*\*Codemap coverage:\*\* .+$/m, '**Codemap coverage:** __SUPPORTED_LANGUAGES__'),
         referencePolicy.expected + '\n\n<cwd>\n/\n</cwd>');
       const message = Compile(Type.Object({ content: Type.Array(Type.Object({ text: Type.String() })) })).Parse(first.messages[0]).content[0]!.text;
-      assert.equal(result.discovery.templateVersion, 'smip-discovery-template-v1');
+      assert.equal(result.discovery.templateVersion, 'mipmux-discovery-template-v1');
       assert.deepEqual(result.discovery.template.identity, { sha256: createHash('sha256').update(templateBytes).digest('hex'), byteCount: templateBytes.length });
       const dispatchedPolicy = system.slice(0, -'\n\n<cwd>\n/\n</cwd>'.length);
       assert.deepEqual(result.discovery.policyIdentity, { sha256: createHash('sha256').update(dispatchedPolicy).digest('hex'), byteCount: Buffer.byteLength(dispatchedPolicy) });
@@ -95,7 +95,7 @@ test('native failure, template rejection and composition cancellation settle bef
     let entered!: () => void, release!: () => void;
     const boundary = new Promise<void>(resolve => { entered = resolve; });
     const released = new Promise<void>(resolve => { release = resolve; });
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -110,10 +110,10 @@ test('native failure, template rejection and composition cancellation settle bef
       }
     }
     const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       contextBudgetUnits: 200000, terminationGraceMs: 100 });
     // compat-ok: This test checks that malformed input never reaches a provider
-    if (phase === 'invalidTemplate') await writeFile(provider.config.promptTemplatePath, '# smip discovery template v1\n');
+    if (phase === 'invalidTemplate') await writeFile(provider.config.promptTemplatePath, '# mipmux discovery template v1\n');
     let piWorkers = 0;
     const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
     t.mock.method(runtime.supervisor, 'spawn', (spec: Parameters<typeof spawn>[0]) => {

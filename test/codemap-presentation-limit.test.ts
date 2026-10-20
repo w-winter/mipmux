@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 
 const referenceOutput = Compile(Type.Object({ directGuardCases: Type.Array(Type.Object({ name: Type.String(), requestCount: Type.Integer() })) }));
@@ -14,7 +14,7 @@ const referenceOutput = Compile(Type.Object({ directGuardCases: Type.Array(Type.
 test('exact codemap presentation limits ready entries per root before rendering, preserving required selection', async () => {
   const reference = referenceOutput.Parse(JSON.parse(await readFile('test/fixtures/rpce-presentation-limit/expected.json', 'utf8')));
   const sourceEntryLimit = reference.directGuardCases.find(entry => entry.name === 'at-limit')!.requestCount;
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-presentation-limit-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-presentation-limit-')));
   const root = join(base, 'source'), peer = join(base, 'peer'), output = join(base, 'out');
   await mkdir(root); await mkdir(peer); await mkdir(output);
   await writeFile(join(root, 'Required.swift'), 'struct Required { let value: Int }\n');
@@ -23,8 +23,8 @@ test('exact codemap presentation limits ready entries per root before rendering,
   for (let index = 0; index < sourceEntryLimit; index++) {
     await writeFile(join(root, 'Peer' + String(index).padStart(4, '0') + '.swift'), index === 0 ? '' : 'struct Peer { let value: Int }\n');
   }
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal, client = runtime.createClient(null);
   try {

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest, type DraftRuntime } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest, type DraftRuntime } from '../src/index.js';
 import { codemapRepresentation, identity, sourceId } from '../src/context/material-store.js';
 import { loadVerifiedBundle } from '../src/context/verify.js';
 import { renderBundle } from '../src/context/render.js';
@@ -35,7 +35,7 @@ const handoff = { clarifiedTask: 'Inspect the graph', architecture: 'Seed refere
 
 async function fixture(beforeRead?: (path: string, pinned: boolean) => Promise<void>) {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-automatic-codemaps-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-automatic-codemaps-'));
   for (const name of ['r', 's', 'out']) await mkdir(join(directory, name));
   const files = {
     'Seed.swift': 'struct SeedRecord {\n let peer: PeerRecord\n let shared: SharedRecord\n let missing: MissingRecord\n}\n',
@@ -47,7 +47,7 @@ async function fixture(beforeRead?: (path: string, pinned: boolean) => Promise<v
   };
   for (const [name, text] of Object.entries(files)) await writeFile(join(directory, 'r', name), text);
   await writeFile(join(directory, 's/Peer.swift'), 'struct PeerRecord {\n let other: String\n}\n');
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -60,7 +60,7 @@ async function fixture(beforeRead?: (path: string, pinned: boolean) => Promise<v
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 100000,
     credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(directory, 'r') },
     { name: 's', absolutePath: join(directory, 's') }], exclusions: [], outputRoot: join(directory, 'out') }, signal());
   return { directory, runtime, workspace, files };

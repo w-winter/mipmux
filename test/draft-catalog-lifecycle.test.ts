@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle } from '../src/index.js';
 import type { ContextBuildRequest } from '../src/contracts/context.js';
 import { readValidator, searchValidator, treeValidator } from '../src/contracts/exploration.js';
 import { selectionValidator } from '../src/contracts/selection.js';
@@ -20,11 +20,11 @@ const request: ContextBuildRequest = { task: 'Inspect current source', budgetUni
   enhancementMode: 'preserve', purpose: 'investigation', documents: [], patches: [], discoveryHints: [] };
 
 for (const mutation of ['selection', 'update'] as const) test(`draft ${mutation} uses the reconciled catalog without replacing captured evidence`, async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-draft-catalog-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-draft-catalog-'));
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'old.ts'), 'export const old = "needle old";\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100 });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal());
@@ -75,11 +75,11 @@ for (const mutation of ['selection', 'update'] as const) test(`draft ${mutation}
 });
 
 test('catalog reconciliation cannot refreeze required source evidence', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-draft-required-catalog-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-draft-required-catalog-'));
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'required.txt'), 'needle original\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100 });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal());
@@ -96,11 +96,11 @@ test('catalog reconciliation cannot refreeze required source evidence', async ()
 });
 
 test('managed source refresh advances new operations without changing an admitted source identity', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-managed-catalog-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-managed-catalog-'));
   const root = join(base, 'root'), output = join(base, 'out'); await mkdir(root); await mkdir(output);
   await writeFile(join(root, '.repo_ignore'), 'hidden.txt\n'); await writeFile(join(root, 'hidden.txt'), 'original\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100 });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal());

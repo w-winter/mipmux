@@ -5,16 +5,16 @@ import { chmod, mkdir, mkdtemp, readFile, realpath, rename, writeFile } from 'no
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 
 test('Review and implicit target election honor available Jujutsu while retaining nearer and independent Git checkouts', async () => {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-selected-vcs-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-selected-vcs-')));
   for (const path of ['colocated', 'colocated/nested', 'healthy', 'standalone', 'bin', 'out']) await mkdir(join(base, path));
   await writeFile(join(base, 'bin/jj'), '#!/bin/sh\nexit 99\n'); await chmod(join(base, 'bin/jj'), 0o755);
   const run = (root: string, args: string[]) => execFileSync(git, args, { cwd: join(base, root), encoding: 'utf8',
@@ -26,8 +26,8 @@ test('Review and implicit target election honor available Jujutsu while retainin
   }
   for (const root of ['colocated', 'standalone']) await mkdir(join(base, root, '.jj'));
   await writeFile(join(base, 'standalone/file.txt'), 'standalone evidence\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { PATH: join(base, 'bin') }, terminationGraceMs: 100, git: { executable: git } });
   const request: ContextBuildRequest = { task: 'Inspect selected VCS ownership', constraints: '', purpose: 'review', enhancementMode: 'preserve',
     initialSelection: { codemapMode: 'manual', sources: ['colocated', 'healthy', 'standalone'].map(root => ({ kind: 'full', source: { root, path: 'file.txt' } })) },
@@ -72,7 +72,7 @@ test('Review and implicit target election honor available Jujutsu while retainin
 });
 
 test('VCS ownership retains successful path and root entries until runtime disposal, but never caches absence', async () => {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-vcs-cache-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-vcs-cache-')));
   for (const path of ['repo', 'plain', 'bin', 'out']) await mkdir(join(base, path));
   await writeFile(join(base, 'bin/jj'), '#!/bin/sh\nexit 99\n'); await chmod(join(base, 'bin/jj'), 0o755);
   const run = (root: string, args: string[]) => execFileSync(git, args, { cwd: join(base, root), encoding: 'utf8',
@@ -82,7 +82,7 @@ test('VCS ownership retains successful path and root entries until runtime dispo
   run('repo', ['add', '.']); run('repo', ['commit', '-qm', 'base']);
   await writeFile(join(base, 'repo/a.txt'), 'changed\n'); await writeFile(join(base, 'plain/a.txt'), 'plain\n');
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { PATH: join(base, 'bin') }, terminationGraceMs: 100, git: { executable: git } };
   const spec = { roots: ['repo', 'plain'].map(name => ({ name, absolutePath: join(base, name) })), exclusions: [], outputRoot: join(base, 'out') };
   const request = (root: string, path: string): ContextBuildRequest => ({ task: 'Inspect ownership caching', constraints: '', purpose: 'planning',
@@ -90,7 +90,7 @@ test('VCS ownership retains successful path and root entries until runtime dispo
     requiredSources: [], documents: [], patches: [], duplicateUserInstructionsAtTop: false,
     copyPreset: 'standard', budgetUnits: 100000, discoveryHints: [], outputName: 'cached' });
   const diff = gitValidator.Parse(gitValidator.Default({ op: 'diff', detail: 'full', maxOutputBytes: 100000 })); assert(diff.op === 'diff');
-  const runtime = new SmipRuntime(options);
+  const runtime = new MipmuxRuntime(options);
   try {
     const workspace = await runtime.declare(spec, signal());
     const first = await workspace.createDraft(request('repo', 'a.txt'), signal());
@@ -112,7 +112,7 @@ test('VCS ownership retains successful path and root entries until runtime dispo
       assert.equal((await operation.electGitTarget([join(base, 'plain/a.txt')])).state, 'available');
     } finally { await operation.close(); }
   } finally { await runtime.close(); }
-  const restarted = new SmipRuntime(options);
+  const restarted = new MipmuxRuntime(options);
   try {
     const workspace = await restarted.declare(spec, signal());
     const draft = await workspace.createDraft(request('repo', 'b.txt'), signal());
@@ -124,7 +124,7 @@ test('VCS ownership retains successful path and root entries until runtime dispo
 });
 
 test('cancelling a VCS observer leaves the shared resolver available to later operations', async () => {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-vcs-observer-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-vcs-observer-')));
   await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
   execFileSync(git, ['init', '-q'], { cwd: join(base, 'root') });
   await writeFile(join(base, 'root/file.txt'), 'content\n');
@@ -136,9 +136,9 @@ test('cancelling a VCS observer leaves the shared resolver available to later op
   const entered = barrier(), gate = barrier();
   let gated = false;
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100, git: { executable: git } };
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {

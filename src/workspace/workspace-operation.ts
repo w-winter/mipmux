@@ -1,7 +1,7 @@
 import type { InventorySnapshot, SourcePath, PolicySnapshot } from '../contracts/inventory.js';
 import type { ReadRequest, TreeRequest, StructureRequest, SearchRequest } from '../contracts/exploration.js';
 import type { BridgeClient } from '../native/bridge-client.js';
-import type { SmipRuntime } from '../runtime/smip-runtime.js';
+import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import { NativeAccess, unavailableFileCode } from './source-access.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { RootPolicy, contains, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
@@ -36,7 +36,7 @@ export class WorkspaceOperation {
   #closing: Promise<void> | null = null;
   constructor(snapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
     signal: AbortSignal,
-    readonly runtime: SmipRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal, snapshot: InventorySnapshot) => Promise<WorkspaceOperation>,
+    readonly runtime: MipmuxRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal, snapshot: InventorySnapshot) => Promise<WorkspaceOperation>,
     private readonly catalog: { kind: 'workspace'; owner: WorkspaceRuntime } | { kind: 'verification' }) {
     this.#snapshot = snapshot; this.signal = AbortSignal.any([signal, this.#controller.signal]);
   }

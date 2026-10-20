@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
@@ -12,7 +12,7 @@ import { selectionValidator } from '../src/contracts/selection.js';
 import { failureCode } from '../src/runtime/tool-result.js';
 import { copyContext } from './fixtures/copy-context.js';
 
-class DisabledEngineRuntime extends SmipRuntime {
+class DisabledEngineRuntime extends MipmuxRuntime {
   override makeBridge() {
     class Bridge extends BridgeClient {
       override async request<O extends NativeOperation>(input: O, signal: AbortSignal) {
@@ -25,7 +25,7 @@ class DisabledEngineRuntime extends SmipRuntime {
 }
 
 for (const warm of [false, true]) test(`global codemap disable preserves ordinary context with a ${warm ? 'warm' : 'cold'} artifact cache`, async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-global-codemap-disable-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-global-codemap-disable-'));
   const root = join(base, 'source'), output = join(base, 'output');
   await mkdir(root); await mkdir(output);
   const text = 'public struct Alpha { let beta: Beta }\n';
@@ -35,7 +35,7 @@ for (const warm of [false, true]) test(`global codemap disable preserves ordinar
   await writeFile(join(root, '.repo_ignore'), 'private/\n');
   await writeFile(join(root, 'private/Hidden.swift'), 'struct Hidden {}\n');
   const options = { cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 };
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 };
   const spec = { roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] };
   const signal = () => new AbortController().signal;
   const request = contextRequestValidator.Parse({ task: 'Inspect Alpha', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
@@ -44,7 +44,7 @@ for (const warm of [false, true]) test(`global codemap disable preserves ordinar
     budgetUnits: 200000, discoveryHints: [], outputName: 'packet' });
   let historical: string | null = null;
   if (warm) {
-    const enabled = new SmipRuntime({ ...options, copyContext: copyContext() });
+    const enabled = new MipmuxRuntime({ ...options, copyContext: copyContext() });
     try {
       const workspace = await enabled.declare(spec, signal()); await workspace.refresh(signal());
       const draft = await workspace.createDraft({ ...request, outputName: 'historical' }, signal()), ready = await draft.finalize(signal());

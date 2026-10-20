@@ -16,7 +16,7 @@ const sources = provenance.sources.map(entry => {
   return bytes.toString();
 });
 const lines = (source, start, end) => sources[source].split('\n').slice(start - 1, end).join('\n');
-withReferenceDirectory('smip-ignore-reference-', scratch => {
+withReferenceDirectory('mipmux-ignore-reference-', scratch => {
 mkdirSync(scratch + '/include');
 writeFileSync(scratch + '/include/wildmatch.h', sources[5]);
 writeFileSync(scratch + '/include/repo_gitignore.h', sources[6]);

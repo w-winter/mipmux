@@ -5,19 +5,19 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 
 const signal = () => new AbortController().signal;
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-ignore-parity-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-ignore-parity-'));
   const repo = join(directory, 'repo'), root = join(repo, 'src'), out = join(directory, 'out');
   await mkdir(root, { recursive: true }); await mkdir(out);
   const options = { copyContext: copyContext(), cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
-    credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {} };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };
-  const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+  const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
   const run = (args: string[]) => execFileSync(git, args, { cwd: repo, encoding: 'utf8', env: {
     PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null',
   } });
@@ -34,7 +34,7 @@ test('loaded subroots inherit Git controls and retain the mandatory floor across
   for (const path of ['Main.swift', 'git-denied.swift', 'Other.swift', 'nested/Kept.swift']) {
     await writeFile(join(f.root, path), 'struct Record {}\n');
   }
-  const runtime = new SmipRuntime(f.options);
+  const runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const snapshot = await workspace.refresh(signal());
@@ -70,7 +70,7 @@ test('source global defaults and ordinary-crawl negation reachability govern the
   await writeFile(join(f.root, '.repo_ignore'), 'ignored/\n!ignored/keep.swift\n');
   await writeFile(join(f.root, 'ignored/keep.swift'), 'struct Kept {}\n');
   await writeFile(join(f.root, 'ignored/drop.swift'), 'struct Dropped {}\n');
-  const runtime = new SmipRuntime(f.options);
+  const runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const snapshot = await workspace.refresh(signal());
@@ -92,7 +92,7 @@ test('an ignored ancestor prevents deeper control acquisition when no crawl is a
   await writeFile(join(f.repo, '.gitignore'), 'src/excluded/\n');
   await writeFile(join(f.root, 'excluded/.gitignore'), Buffer.from([0xff, 0xfe, 0x00, 0xd8]));
   await writeFile(join(f.root, 'excluded/hidden.swift'), 'struct Hidden {}\n');
-  const runtime = new SmipRuntime(f.options);
+  const runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const operation = await workspace.openOperation(signal());
@@ -124,7 +124,7 @@ test('configured ignore layers and hierarchy switches control public source acce
   ];
   const receipts = [];
   for (const { paths, ...switches } of cases) {
-    const runtime = new SmipRuntime({ ...f.options, ignoreSettings: { global: 'global.swift\n', ...switches } });
+    const runtime = new MipmuxRuntime({ ...f.options, ignoreSettings: { global: 'global.swift\n', ...switches } });
     try {
       const workspace = await runtime.declare(f.spec, signal());
       const operation = await workspace.openOperation(signal());
@@ -148,7 +148,7 @@ test('separate Git administration directories retain containing-repository ignor
   await writeFile(join(f.repo, '.gitignore'), 'src/hidden.swift\n');
   await writeFile(join(f.root, '.repo_ignore'), '!hidden.swift\n');
   for (const path of ['Main.swift', 'hidden.swift']) await writeFile(join(f.root, path), 'struct Record {}\n');
-  const runtime = new SmipRuntime(f.options);
+  const runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const operation = await workspace.openOperation(signal());

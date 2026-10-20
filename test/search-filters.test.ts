@@ -13,7 +13,7 @@ const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), files: Type.Array(Type.Object({ path: Type.String() })) }));
 
 test('public search filters preserve source dotted extensions and literal/wildmatch exclusions', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-search-filters-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-search-filters-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   const names = ['plain.swift', 'caps.SWIFT', 'README', 'sub/Ignore.swift', 'nested/deep/skip.swift', '[ab].swift', 'a.swift', 'drop/inner.swift'];
   for (const name of names) {
@@ -22,7 +22,7 @@ test('public search filters preserve source dotted extensions and literal/wildma
   }
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

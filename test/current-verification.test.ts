@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { chmod, readFile, mkdir, mkdtemp, rename, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { type ContextBuildRequest, SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { type ContextBuildRequest, MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
@@ -19,7 +19,7 @@ function barrier() {
 
 test('current verification admits only recorded material, applies current denies, and checks fresh native keys and root aliases', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-current-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-current-'));
   const root = join(base, 'source'), out = join(base, 'out'), alias = join(base, 'alias');
   await mkdir(root);
   await mkdir(out);
@@ -31,7 +31,7 @@ test('current verification admits only recorded material, applies current denies
     copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };
   const request: ContextBuildRequest = {
@@ -45,7 +45,7 @@ test('current verification admits only recorded material, applies current denies
     outputName: 'packet',
     budgetUnits: 100000,
   };
-  const writer = new SmipRuntime(options);
+  const writer = new MipmuxRuntime(options);
   try {
     const workspace = await writer.declare({
       roots: [{ name: 'r', absolutePath: alias }],
@@ -86,7 +86,7 @@ test('current verification admits only recorded material, applies current denies
     await workspace.close();
     await chmod(join(root, 'unrelated'), 0);
     let enumeration = 0;
-    class VerificationRuntime extends SmipRuntime {
+    class VerificationRuntime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -116,14 +116,14 @@ test('current verification admits only recorded material, applies current denies
     const credentialAlias = join(base, 'credential-alias');
     await symlink(join(root, 'model.swift'), credentialAlias);
     for (const credentialPath of [join(root, 'model.swift'), join(alias, 'model.swift'), credentialAlias]) {
-      const denied = new SmipRuntime({ ...options, credentialPaths: [credentialPath] });
+      const denied = new MipmuxRuntime({ ...options, credentialPaths: [credentialPath] });
       try {
         await assert.rejects(verifyCurrentBundle(result.directory, denied, signal()), /policyChanged|pathDenied/);
       } finally {
         await denied.close();
       }
     }
-    const pipeline = new SmipRuntime({ ...options, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'required' } });
+    const pipeline = new MipmuxRuntime({ ...options, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'required' } });
     try {
       await assert.rejects(verifyCurrentBundle(result.directory, pipeline, signal()), /pipelineChanged/);
     } finally {
@@ -143,7 +143,7 @@ test('current verification admits only recorded material, applies current denies
 
 test('current verification cancellation and runtime shutdown join native work and reject further admission', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-current-cancel-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-current-cancel-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root);
   await mkdir(out);
@@ -152,10 +152,10 @@ test('current verification cancellation and runtime shutdown join native work an
     copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };
-  const writer = new SmipRuntime(options);
+  const writer = new MipmuxRuntime(options);
   const request: ContextBuildRequest = {
     task: 'Review',
     initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '',
@@ -186,7 +186,7 @@ test('current verification cancellation and runtime shutdown join native work an
     for (const shutdown of [false, true]) {
       const entered = barrier(), resume = barrier();
       let pause = true;
-      class Runtime extends SmipRuntime {
+      class Runtime extends MipmuxRuntime {
         override makeBridge() {
           class Bridge extends BridgeClient {
             override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {

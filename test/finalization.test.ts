@@ -4,12 +4,12 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { type ContextBuildRequest, SmipRuntime, verifyBundle } from '../src/index.js';
+import { type ContextBuildRequest, MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { sha256 } from '../src/workspace/values.js';
 
 test('required full source, complete report and patch reach verified output; stale and absent material cannot be ready', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-fidelity-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-fidelity-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root);
   await mkdir(out);
@@ -19,11 +19,11 @@ test('required full source, complete report and patch reach verified output; sta
     'diff --git a/deleted.txt b/deleted.txt\ndeleted file mode 100644\n--- a/deleted.txt\n+++ /dev/null\n@@ -1 +0,0 @@\n-deleted\n';
   await writeFile(join(root, 'model.swift'), body);
   await writeFile(join(root, 'empty.txt'), '');
-  const runtime = new SmipRuntime({
+  const runtime = new MipmuxRuntime({
     copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   });
   const signal = new AbortController().signal;

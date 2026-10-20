@@ -1,4 +1,4 @@
-// Modified for smip: extraction state and capture handlers separated.
+// Modified for mipmux: extraction state and capture handlers separated.
 import Foundation
 import CoreFoundation
 import SwiftTreeSitter

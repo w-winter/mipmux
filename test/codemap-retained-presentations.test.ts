@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest, type DraftRuntime } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest, type DraftRuntime } from '../src/index.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { selectionValidator } from '../src/contracts/selection.js';
@@ -21,7 +21,7 @@ const selection = selectionValidator.Parse(selectionValidator.Default({ op: 'get
 type PresentationBehavior = 'off' | 'hold' | 'fail' | 'retry';
 
 async function fixture() {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-retained-presentations-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-retained-presentations-')));
   for (const name of ['a', 'b', 'out']) await mkdir(join(base, name));
   for (const name of ['a', 'b']) {
     const type = name === 'a' ? 'FirstRecord' : 'HealthyRecord';
@@ -31,7 +31,7 @@ async function fixture() {
   let behavior: PresentationBehavior = 'off', invalidate = false;
   let entered: (release: () => void) => void = () => { throw new Error('Unexpected presentation'); };
   const gates: (() => void)[] = [];
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -57,7 +57,7 @@ async function fixture() {
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   const calls: Promise<unknown>[] = [];
   const get = (draft: DraftRuntime, signal: AbortSignal) => {

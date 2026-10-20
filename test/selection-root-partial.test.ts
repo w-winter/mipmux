@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, type ContextBuildRequest } from '../src/index.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 
 const signal = () => new AbortController().signal;
@@ -15,11 +15,11 @@ const partial = Compile(Type.Object({ revision: Type.Integer(), files: Type.Arra
   blocks: Type.Array(Type.String()), measurement: Type.Object({ complete: Type.Boolean() }),
   token_accounting: Type.Object({ incomplete_components: Type.Array(Type.String()) }),
   unavailable_sources: Type.Array(Type.Object({ root: Type.String(), path: Type.String(), code: Type.String(), required: Type.Boolean() })) }));
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
 for (const mode of ['manual', 'automatic'] as const) for (const preset of ['standard', 'codeReview'] as const) {
   test(`${mode} ${preset} selection retains healthy content when another root is replaced`, async () => {
-    const base = await mkdtemp(join(tmpdir(), 'smip-selection-partial-'));
+    const base = await mkdtemp(join(tmpdir(), 'mipmux-selection-partial-'));
     const a = join(base, 'a'), b = join(base, 'b'), out = join(base, 'out'); await mkdir(a); await mkdir(b); await mkdir(out);
     for (const [root, name] of [[a, 'Unavailable'], [b, 'Healthy']] as const) {
       await writeFile(join(root, 'Seed.swift'), `struct ${name}Seed { let peer: ${name}Peer }\n`);
@@ -30,8 +30,8 @@ for (const mode of ['manual', 'automatic'] as const) for (const preset of ['stan
       env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
     run(['init', '-q']); run(['config', 'user.name', 'Fixture']); run(['config', 'user.email', 'fixture@example.invalid']);
     run(['add', '.']); run(['commit', '-qm', 'base']);
-    const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
       terminationGraceMs: 100, git: { executable: git } });
     try {
       const workspace = await runtime.declare({ roots: [{ name: 'a', absolutePath: a }, { name: 'b', absolutePath: b }], exclusions: [], outputRoot: out }, signal());
@@ -74,11 +74,11 @@ for (const mode of ['manual', 'automatic'] as const) for (const preset of ['stan
 }
 
 test('unavailable required source stays selected and prevents packet publication', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-required-root-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-required-root-'));
   const a = join(base, 'a'), b = join(base, 'b'), out = join(base, 'out'); await mkdir(a); await mkdir(b); await mkdir(out);
   await writeFile(join(a, 'required.txt'), 'Required original\n'); await writeFile(join(b, 'healthy.txt'), 'Healthy body\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'a', absolutePath: a }, { name: 'b', absolutePath: b }], exclusions: [], outputRoot: out }, signal());
     const draft = await workspace.createDraft({ task: 'Keep required evidence', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
@@ -98,13 +98,13 @@ test('unavailable required source stays selected and prevents packet publication
 });
 
 test('content view loads full files and slices, withholding unreadable leaves without hiding healthy siblings', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-selection-leaf-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-selection-leaf-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'full.txt'), 'captured full content\n');
   await writeFile(join(root, 'slice.txt'), 'first\ncaptured slice content\nlast\n');
   await writeFile(join(root, 'healthy.txt'), 'healthy sibling content\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
     const draft = await workspace.createDraft({ task: 'Read selected content', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',

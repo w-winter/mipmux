@@ -12,7 +12,7 @@ import { Compile } from 'typebox/compile';
 import { BridgeClient, type NativeReply } from '../src/native/bridge-client.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
 const result = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()), message: Type.Optional(Type.String()),
@@ -20,7 +20,7 @@ const result = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Ty
 
 test('public snapshot comparisons use only the saved HEAD, precede named refs and stay repository-scoped', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-snapshot-compare-')), output = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-snapshot-compare-')), output = join(base, 'out');
   await mkdir(output);
   const repos: { repo: string; first: string; tip: string }[] = [];
   const run = (repo: string, args: string[]) => execFileSync(git, args, { cwd: repo, encoding: 'utf8',
@@ -37,7 +37,7 @@ test('public snapshot comparisons use only the saved HEAD, precede named refs an
   }
   const firstRepo = repos[0], secondRepo = repos[1]; assert(firstRepo && secondRepo);
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), env: {} });
+  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), env: {} });
   let repoKey: string;
   try {
     const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'out', absolutePath: output, access: 'output', expected: null }] }, signal());
@@ -58,7 +58,7 @@ test('public snapshot comparisons use only the saved HEAD, precede named refs an
   } finally { await bridge.close(); await supervisor.close(); }
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, terminationGraceMs: 100,
-    credentialPaths: repos.map(entry => join(entry.repo, 'denied.txt')), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    credentialPaths: repos.map(entry => join(entry.repo, 'denied.txt')), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, git: { executable: git }, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'snapshot-compare', version: '1' }), proof: unknown[] = [];
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

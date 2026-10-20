@@ -5,7 +5,7 @@ import type { DiscoveryPromptRenderer } from '../../src/context/discovery-input.
 
 export function nativeDiscoveryRenderer(supervisor: ProcessSupervisor): DiscoveryPromptRenderer {
   return async (operation, signal) => {
-    const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       env: {}, supervisor });
     try { return (await bridge.request(operation, signal)).result; }
     finally { await bridge.close(); }

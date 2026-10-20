@@ -15,7 +15,7 @@ const operation: Extract<NativeOperation, { kind: 'renderDiscoveryPrompt' }> = {
   purpose: 'investigation', task: '', allowClarifyingQuestions: false, questionTimeoutSeconds: 300,
   restrictsReviewGitToExplicitReadOnly: false, reviewRootNames: [], fileTree: '', currentPrompt: '', discoveryInstructions: '',
 };
-const inactiveSection = '<!-- smip:section mode.preserve.checklist -->';
+const inactiveSection = '<!-- mipmux:section mode.preserve.checklist -->';
 
 test('valid editable template composition returns its exact repeated body', () => {
   const frame = callNative(operation, 'template-valid', 'valid');
@@ -25,21 +25,21 @@ test('valid editable template composition returns its exact repeated body', () =
 
 test('invalid templates return correlated domain rejections, including inactive sections', () => {
   const invalid = [
-    { name: 'header', template: template.replace('# smip discovery template v1', 'UNRECOGNIZED_HEADER_CONTENT') },
-    { name: 'missing', template: template.replace(inactiveSection + '\n<!-- smip:end -->\n', '') },
-    { name: 'duplicate', template: template + '\n' + inactiveSection + '\n<!-- smip:end -->\n' },
-    { name: 'unknown', template: template + '\n<!-- smip:section unknown -->\n<!-- smip:end -->\n' },
-    { name: 'nested', template: template.replace('<!-- smip:section system -->', '<!-- smip:section system -->\n<!-- smip:section startup.metadata -->') },
-    { name: 'unmatched-end', template: template + '\n<!-- smip:end -->\n' },
-    { name: 'unclosed-section', template: template.slice(0, template.lastIndexOf('<!-- smip:end -->')) },
-    { name: 'outside', template: template.replace('# smip discovery template v1\n', '# smip discovery template v1\nOutside section\n') },
-    { name: 'malformed-marker', template: template.replace('<!-- smip:section system -->', '<!-- smip:section system-- >') },
+    { name: 'header', template: template.replace('# mipmux discovery template v1', 'UNRECOGNIZED_HEADER_CONTENT') },
+    { name: 'missing', template: template.replace(inactiveSection + '\n<!-- mipmux:end -->\n', '') },
+    { name: 'duplicate', template: template + '\n' + inactiveSection + '\n<!-- mipmux:end -->\n' },
+    { name: 'unknown', template: template + '\n<!-- mipmux:section unknown -->\n<!-- mipmux:end -->\n' },
+    { name: 'nested', template: template.replace('<!-- mipmux:section system -->', '<!-- mipmux:section system -->\n<!-- mipmux:section startup.metadata -->') },
+    { name: 'unmatched-end', template: template + '\n<!-- mipmux:end -->\n' },
+    { name: 'unclosed-section', template: template.slice(0, template.lastIndexOf('<!-- mipmux:end -->')) },
+    { name: 'outside', template: template.replace('# mipmux discovery template v1\n', '# mipmux discovery template v1\nOutside section\n') },
+    { name: 'malformed-marker', template: template.replace('<!-- mipmux:section system -->', '<!-- mipmux:section system-- >') },
     ...[
-      { name: 'unknown-placeholder', value: '{{smip:unknown}}' },
-      { name: 'unclosed-placeholder', value: '{{smip:token_budget' },
-      { name: 'malformed-placeholder', value: '{{smiptoken_budget}}' },
-      { name: 'section-slot-in-leaf', value: '{{smip:review_root_guidance}}' },
-      { name: 'root-scalar-outside-named-roots', value: '{{smip:root_names}}' },
+      { name: 'unknown-placeholder', value: '{{mipmux:unknown}}' },
+      { name: 'unclosed-placeholder', value: '{{mipmux:token_budget' },
+      { name: 'malformed-placeholder', value: '{{mipmuxtoken_budget}}' },
+      { name: 'section-slot-in-leaf', value: '{{mipmux:review_root_guidance}}' },
+      { name: 'root-scalar-outside-named-roots', value: '{{mipmux:root_names}}' },
     ].map(({ name, value }) => ({ name, template: template.replace(inactiveSection, inactiveSection + '\n' + value) })),
   ];
   const proof = [];
@@ -57,11 +57,11 @@ test('invalid templates return correlated domain rejections, including inactive 
 });
 
 test('edited template bodies retain literal UTF-8 bytes through reordered definitions and repeated insertions', () => {
-  const header = '# smip discovery template v1\n\n';
+  const header = '# mipmux discovery template v1\n\n';
   const reordered = header + template.slice(header.length).trimEnd().split('\n\n').reverse().join('\n\n') + '\n';
   const examples: [string][] = [[''], [' \t '], ['\nA\n'], ['A\r\nB'], ['e\u0301'], ['{"outer":{"value":1}}']];
   const proof: { body: string; expectedBase64: string; actualBase64: string }[] = [];
-  fc.assert(fc.property(fc.string({ unit: 'grapheme' }).filter(body => !body.includes('<!-- smip:') && !body.includes('{{smip')), body => {
+  fc.assert(fc.property(fc.string({ unit: 'grapheme' }).filter(body => !body.includes('<!-- mipmux:') && !body.includes('{{mipmux')), body => {
     const input = reordered.replace('\nBODY_LITERAL\n', '\n' + body + '\n');
     const frame = callNative({ ...operation, template: input }, 'template-bytes', 'literal-' + proof.length);
     const result = policy.Parse(frame.result);
@@ -75,9 +75,9 @@ test('edited template bodies retain literal UTF-8 bytes through reordered defini
 
 test('runtime task and hints remain literal while explicit timeout substitution uses the admitted value', () => {
   const questionTimeoutSeconds = 47;
-  const timeoutTemplate = template.replace('L|{{smip:handoff}}|{{smip:handoff}}|R', '{{smip:question_timeout_seconds}}');
-  const currentPrompt = 'Original\r\n{{smip:unknown}}\n<!-- smip:section unknown -->\ne\u0301';
-  const discoveryInstructions = 'Hints {{smip:token_budget}} <!-- smip:end -->';
+  const timeoutTemplate = template.replace('L|{{mipmux:handoff}}|{{mipmux:handoff}}|R', '{{mipmux:question_timeout_seconds}}');
+  const currentPrompt = 'Original\r\n{{mipmux:unknown}}\n<!-- mipmux:section unknown -->\ne\u0301';
+  const discoveryInstructions = 'Hints {{mipmux:token_budget}} <!-- mipmux:end -->';
   const frame = callNative({ ...operation, template: timeoutTemplate, questionTimeoutSeconds, currentPrompt, discoveryInstructions }, 'template-runtime', 'literal');
   const result = policy.Parse(frame.result);
   assert.equal(result.text, String(questionTimeoutSeconds));

@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, realpath, readdir, writeFile } from 'node:fs/
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { selectionValidator } from '../src/contracts/selection.js';
@@ -17,7 +17,7 @@ const request: ContextBuildRequest = { task: 'Inspect', constraints: '', enhance
   discoveryHints: [], outputName: 'packet' };
 
 async function fixture(before: (base: string, operation: NativeOperation) => Promise<void>, after: (base: string, operation: NativeOperation) => Promise<void>) {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-final-codemap-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-final-codemap-')));
   for (const name of ['a', 'b', 'out', 'a/private']) await mkdir(join(base, name));
   await writeFile(join(base, 'a/Seed.swift'), 'struct SeedRecord { let peer: PeerRecord }\n');
   await writeFile(join(base, 'a/Peer.swift'), peerBody);
@@ -25,7 +25,7 @@ async function fixture(before: (base: string, operation: NativeOperation) => Pro
   await writeFile(join(base, 'a/.repo_ignore'), 'private/\n');
   await writeFile(join(base, 'a/private/Hidden.swift'), hiddenBody);
   await writeFile(join(base, 'b/Healthy.swift'), 'struct HealthyRecord { let value: Int }\n');
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -39,7 +39,7 @@ async function fixture(before: (base: string, operation: NativeOperation) => Pro
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal, client = runtime.createClient(null);
   const workspace = await client.declare({ roots: [{ name: 'a', absolutePath: join(base, 'a') }, { name: 'b', absolutePath: join(base, 'b') }],
     exclusions: [], outputRoot: join(base, 'out') }, signal);

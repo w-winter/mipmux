@@ -7,7 +7,7 @@ import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 
 test('root reopening, alias retargeting and cancellation preserve owner boundaries', async () => {
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const options = { executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), supervisor, env: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+  const options = { executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), supervisor, env: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   const first = new BridgeClient(options), second = new BridgeClient(options);
   const artifacts = resolve('test-output');
   await mkdir(artifacts, { recursive: true });

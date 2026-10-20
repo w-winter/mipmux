@@ -6,17 +6,17 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import fc from 'fast-check';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { identity } from '../src/context/material-store.js';
 import { canonicalJSON } from '../src/workspace/values.js';
 
 const sections = ['fileMap', 'fileContents', 'gitDiff', 'constraints', 'userInstructions'] as const;
 type Section = typeof sections[number];
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
 test('public packets preserve source section permutations and repetitions with exact accounting and saved integrity', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-section-order-')), root = join(base, 'root'), output = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-section-order-')), root = join(base, 'root'), output = join(base, 'out');
   await mkdir(root); await mkdir(output); await mkdir('test-output', { recursive: true });
   const full = 'struct Main { let peer: Peer }\n// Exact raw body λ🙂\n', peer = 'struct Peer { let value: Int }\n';
   const sliced = 'outside\nselected 🙂\nend\n', document = 'Required document\n```\nλ\n', patch = 'Required patch\n';
@@ -26,8 +26,8 @@ test('public packets preserve source section permutations and repetitions with e
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
   runGit(['init', '-q']); runGit(['config', 'user.name', 'Fixture']); runGit(['config', 'user.email', 'fixture@example.invalid']);
   runGit(['add', '.']); runGit(['commit', '-qm', 'base']); await writeFile(join(root, 'Main.swift'), full);
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100, git: { executable: git } });
   const signal = new AbortController().signal;
   let caseIndex = 0;

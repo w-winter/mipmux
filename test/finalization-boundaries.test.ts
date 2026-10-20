@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { type ContextBuildRequest, SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { type ContextBuildRequest, MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { WorkspaceFailure } from '../src/workspace/values.js';
@@ -20,7 +20,7 @@ const signal = () => new AbortController().signal;
 const handoff = { clarifiedTask: 'Advisory', architecture: 'Files', relationships: [], ambiguities: [] };
 async function setup() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-finalization-boundary-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-finalization-boundary-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root);
   await mkdir(out);
@@ -30,7 +30,7 @@ async function setup() {
     copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };
   const request: ContextBuildRequest = {
@@ -58,7 +58,7 @@ test('native boundary failures, preclaim cancellation and postclaim runtime clos
   for (const scenario of ['cancelBefore', 'cancelAfter', 'writeFailure', 'readbackFailure', 'uncertain'] as const) {
     const f = await setup(), entered = barrier(), resume = barrier();
     let enabled = false;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -131,7 +131,7 @@ test('native boundary failures, preclaim cancellation and postclaim runtime clos
 });
 
 test('integrity is source-independent; current verification detects delivered sources and controls but ignores unrelated edits', async () => {
-  const f = await setup(), runtime = new SmipRuntime(f.options);
+  const f = await setup(), runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal()), draft = await workspace.createDraft(f.request, signal());
     await draft.prompt(
@@ -161,11 +161,11 @@ test('claimed publication reports uncertain acknowledgement loss after native sy
   for (const scenario of ['lost', 'malformed', 'refuse'] as const) {
     const f = await setup();
     let enabled = false;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         return enabled ? new BridgeClient({ executable: resolve('test/fixtures/publication-proxy.mjs'), supervisor: this.supervisor,
-          env: { ...f.options.nativeEnvironment, PATH: process.env.PATH!, SMIP_NATIVE: f.options.nativeExecutable,
-            SMIP_PUBLICATION: scenario, SMIP_MANIFEST: join(f.out, 'packet/manifest.json') } }) : super.makeBridge();
+          env: { ...f.options.nativeEnvironment, PATH: process.env.PATH!, MIPMUX_NATIVE: f.options.nativeExecutable,
+            MIPMUX_PUBLICATION: scenario, MIPMUX_MANIFEST: join(f.out, 'packet/manifest.json') } }) : super.makeBridge();
       }
     }
     const runtime = new Runtime(f.options);

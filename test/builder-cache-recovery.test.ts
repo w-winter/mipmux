@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import { promisify } from 'node:util';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
-import { SmipRuntime, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, type ContextBuildRequest } from '../src/index.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
@@ -21,7 +21,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let title: String\n}');
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [config], nativeEnvironment: {},
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) };
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`) };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
   const request: ContextBuildRequest = { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [], documents: [], patches: [],
     discoveryHints: [], outputName: 'packet', budgetUnits: 100000 };
@@ -29,7 +29,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   try { await exercise(); } finally { await provider.close(); }
 
   async function exercise() {
-  const warm = new SmipRuntime(options);
+  const warm = new MipmuxRuntime(options);
   let key: string, membershipPath: string;
   try {
     const client = warm.createClient(null);
@@ -53,7 +53,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   const proof: Record<string, unknown> = {};
 
   await corrupt();
-  const runtime = new SmipRuntime(options);
+  const runtime = new MipmuxRuntime(options);
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
     const workspace = await client.declare(spec, signal());

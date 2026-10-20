@@ -26,7 +26,7 @@ test('native mcpSelection path matching preserves original source exact, alias, 
 
 test('native path-match catalog rejects parent traversal instead of returning an escaped relative match', () => {
   const generation = 'path-boundary';
-  const result = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), [generation], {
+  const result = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), [generation], {
     input: JSON.stringify({ wireVersion: 1, requestId: 'escape', generation, operation: { kind: 'matchSelectionPath',
       query: 'escape.swift', roots: [{ name: 'Project', path: '/reference/project', files: ['../escape.swift'], directories: [] }] } }) + '\n', encoding: 'utf8',
   });

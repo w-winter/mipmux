@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 
 // Only expected native boundary outcomes are scripted; workspace admission and MCP dispatch remain real.
-const child = spawn(process.env.SMIP_NATIVE, process.argv.slice(2), { stdio: 'pipe', env: process.env });
+const child = spawn(process.env.MIPMUX_NATIVE, process.argv.slice(2), { stdio: 'pipe', env: process.env });
 const requests = new Map();
 const diagnostic = phase => ({ kind: 'pattern', issue: phase + ' fixture issue', suggestion: phase + ' fixture suggestion' });
 function pathResult(result, op) {

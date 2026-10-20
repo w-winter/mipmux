@@ -5,7 +5,7 @@ import type { SourcePath } from '../contracts/inventory.js';
 import type { NativeOperation } from '../contracts/native.js';
 import type { CanonicalSelection } from './selection-preparation.js';
 import type { RenderInput } from './render.js';
-import type { SmipRuntime } from '../runtime/smip-runtime.js';
+import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { codemapRepresentation, sourceId, prepareCodemapSelection, type Material } from './material-store.js';
 import { capturedSourceSelections } from './source-omissions.js';
@@ -80,7 +80,7 @@ function retainRequiredRepresentations(materials: Material[], request: CapturedC
 }
 
 /** Exact preset demand is a presentation lease, separate from canonical and inferred selection. */
-export async function withManualPresentation<T>(runtime: SmipRuntime, operation: WorkspaceOperation | null, input: Input,
+export async function withManualPresentation<T>(runtime: MipmuxRuntime, operation: WorkspaceOperation | null, input: Input,
   canonical: CanonicalSelection, signal: AbortSignal,
   complete: (materials: readonly Material[], proof: ManualPresentation, inventory: Input['inventory']) => Promise<T>): Promise<T> {
   const canonicalSources = capturedSourceSelections(input.materials, input.unavailableRoots, input.unavailableFiles);

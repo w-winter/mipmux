@@ -93,7 +93,7 @@ test('native input rejects invalid UTF-8, versions, generations and truncated re
     for (const bytes of [Buffer.from([0xff, 10]), Buffer.from('{'),
       Buffer.from(JSON.stringify({ ...valid, wireVersion: 2 }) + '\n'),
       Buffer.from(JSON.stringify({ ...valid, generation: 'foreign' }) + '\n')]) {
-      const process = supervisor.spawn({ executable: resolve(`native/.build/${globalThis.process.platform}-${globalThis.process.arch}/debug/SmipBridge`),
+      const process = supervisor.spawn({ executable: resolve(`native/.build/${globalThis.process.platform}-${globalThis.process.arch}/debug/MipmuxBridge`),
         args: ['test'], env: { REPOPROMPT_PCRE2_JIT: 'disabled' }, cwd: '/' });
       const output: Buffer[] = [];
       process.child.stdout.on('data', (data: Buffer) => output.push(data));
@@ -106,7 +106,7 @@ test('native input rejects invalid UTF-8, versions, generations and truncated re
 
 test('base64 framing preserves arbitrary bytes and failed decoding remains a source outcome', async () => {
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const client = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), supervisor, env: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+  const client = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), supervisor, env: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   try {
     await fc.assert(fc.asyncProperty(fc.uint8Array(), async data => {
       const bytes = Buffer.from(data);

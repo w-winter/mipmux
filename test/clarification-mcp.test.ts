@@ -47,7 +47,7 @@ async function createFixture(scenario: Scenario, t: TestContext) {
   await mkdir(root); await mkdir(outputRoot); await writeFile(join(root, 'Main.swift'), 'struct Main {}\n');
   const configPath = join(provider.directory, 'config.json');
   await writeFile(configPath, JSON.stringify({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 200000, credentialPaths: [], git: null,
     discovery: { ...provider.config, promptTemplatePath: resolve('prompts/discovery.md') }, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath,

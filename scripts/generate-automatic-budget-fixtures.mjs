@@ -38,7 +38,7 @@ const text = adapters + '\n' + types + `\nfinal class OriginalGraph {
 let cases = try JSONDecoder().decode([Case].self, from: FileHandle.standardInput.readDataToEndOfFile())
 FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: cases.map { $0.run() }, options: [.sortedKeys]))
 `;
-withReferenceDirectory('smip-automatic-budget-reference-', work => {
+withReferenceDirectory('mipmux-automatic-budget-reference-', work => {
   writeFileSync(join(work, 'main.swift'), text);
   execFileSync('swiftc', [join(work, 'main.swift'), '-o', join(work, 'oracle')], { stdio: 'inherit' });
   const output = execFileSync(join(work, 'oracle'), { input: JSON.stringify(automaticRootCases) });

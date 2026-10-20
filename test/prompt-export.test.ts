@@ -16,7 +16,7 @@ const finalized = Compile(Type.Object({ kind: Type.Literal('ready'), directory: 
 const removedPlanID = '11111111-1111-1111-1111-111111111111';
 
 test('real MCP lists presets before draft lookup and exports a nonterminal captured context', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-prompt-export-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-prompt-export-'));
   const root = join(base, 'source'), output = join(base, 'output'), config = join(base, 'host.json');
   await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'source.txt'), 'EXACT SOURCE λ\n');
@@ -31,7 +31,7 @@ test('real MCP lists presets before draft lookup and exports a nonterminal captu
       id: '00000000-0000-0000-0000-000000000000', name: 'Ignored override name', builtInKind: 'standard', isBuiltIn: true,
       includeFiles: false, includeUserPrompt: true }, custom] };
   await writeFile(config, JSON.stringify({ cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: 20000, copyContext }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

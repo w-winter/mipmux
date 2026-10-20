@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { ProcessSpec } from '../src/runtime/process-supervisor.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { Client } from '@modelcontextprotocol/client';
@@ -14,12 +14,12 @@ import { createMcpServer } from '../src/mcp/server.js';
 
 for (const trigger of ['EOF', 'SIGINT'] as const) test(`stdio ${trigger} propagates joined transport failure through the sanitized CLI outcome`, async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-failure-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-shutdown-failure-'));
   const config = join(directory, 'config.json'), proof = join(directory, 'proof.txt');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
   const child = spawn(process.execPath, ['--import', resolve('test/fixtures/shutdown-failure.mjs'), resolve('dist/cli/main.js'), 'mcp', '--config', config],
-    { stdio: 'pipe', env: { ...process.env, SMIP_SHUTDOWN_PROOF: proof } });
+    { stdio: 'pipe', env: { ...process.env, MIPMUX_SHUTDOWN_PROOF: proof } });
   const stdout: Buffer[] = [], stderr: Buffer[] = [];
   child.stdout.on('data', bytes => stdout.push(Buffer.from(bytes))); child.stderr.on('data', bytes => stderr.push(Buffer.from(bytes)));
   const closed = new Promise<number | null>(resolve => child.once('close', resolve));
@@ -43,7 +43,7 @@ for (const trigger of ['EOF', 'SIGINT'] as const) test(`stdio ${trigger} propaga
 
 test('MCP server-close rejects the exported closed outcome after joining application and client resources', async t => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-application-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-shutdown-application-'));
   const root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'source');
   const processes: Promise<unknown>[] = [];
@@ -57,7 +57,7 @@ test('MCP server-close rejects the exported closed outcome after joining applica
       return receipt;
     } };
   });
-  const instance = createMcpServer({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const instance = createMcpServer({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'shutdown', version: '1' });
@@ -77,7 +77,7 @@ test('MCP server-close rejects the exported closed outcome after joining applica
 
 test('a reported malformed MCP input does not turn later successful EOF cleanup into a shutdown failure', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-protocol-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-shutdown-protocol-'));
   const config = join(directory, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: '/unavailable/native', nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
@@ -102,11 +102,11 @@ test('a reported malformed MCP input does not turn later successful EOF cleanup 
 
 test('runtime joins all real child closures after a process cleanup failure', async t => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-shutdown-processes-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-shutdown-processes-'));
   const root = join(directory, 'root'), out = join(directory, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'source');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   let fail = false, injected = false;
   const processes: Promise<unknown>[] = [];

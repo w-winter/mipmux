@@ -25,7 +25,7 @@ const syntaxPath = 'Sources/RepoPromptCodeMapCore/CodeMapSyntaxEngine.swift';
 if (!provenance.sources.some(entry => entry.path === syntaxPath)) provenance.sources.push({ path: syntaxPath,
   sha256: createHash('sha256').update(readFileSync(resolve(checkout, syntaxPath))).digest('hex') });
 const index = path => provenance.sources.findIndex(entry => entry.path === path);
-const adapter = path => readFileSync('native/Sources/SmipBridge/' + path, 'utf8');
+const adapter = path => readFileSync('native/Sources/MipmuxBridge/' + path, 'utf8');
 const wire = adapter('Wire.swift');
 const helpers = adapter('RPCESelectionCandidateModels.swift').slice(adapter('RPCESelectionCandidateModels.swift').indexOf('enum WorkspaceLookupRootScope'));
 const syntaxIndex = index(syntaxPath);

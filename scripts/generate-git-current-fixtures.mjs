@@ -43,7 +43,7 @@ struct Input: Decodable { let name: String; let kind: String; let target: String
  FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: outputs, options: [.sortedKeys]))
 } }
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-current-reference-'));
+const scratch = mkdtempSync(join(tmpdir(), 'mipmux-current-reference-'));
 try {
   writeFileSync(join(scratch, 'original.swift'), program);
   execFileSync('swiftc', ['-parse-as-library', join(scratch, 'original.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });

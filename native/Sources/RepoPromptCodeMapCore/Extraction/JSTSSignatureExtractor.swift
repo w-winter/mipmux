@@ -1,4 +1,4 @@
-// Modified for smip: imports CoreFoundation for portable timing calls.
+// Modified for mipmux: imports CoreFoundation for portable timing calls.
 //
 //  JSTSSignatureExtractor.swift
 //  RepoPrompt

@@ -5,7 +5,7 @@ import { access, mkdir, mkdtemp, readFile, rename, writeFile } from 'node:fs/pro
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import fc from 'fast-check';
-import { type ContextBuildRequest, SmipRuntime, verifyBundle } from '../src/index.js';
+import { type ContextBuildRequest, MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { estimateUnits } from '../src/context/budget.js';
 import { normalizeRanges } from '../src/context/material-store.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
@@ -31,7 +31,7 @@ const request: ContextBuildRequest = {
 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-draft-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-draft-'));
   await mkdir(join(base, 'root'));
   await mkdir(join(base, 'out'));
   await writeFile(join(base, 'root/a.swift'), 'struct Alpha {\r\n let value: String\r}\n');
@@ -41,7 +41,7 @@ async function fixture() {
     copyContext: copyContext(), cachePath: join(base, 'cache'),
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };
   return {
@@ -59,7 +59,7 @@ function barrier() {
 }
 
 test('curated documents reject duplicates, invalid text, stale revisions and cancelled or oversized updates without partial commits', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const original = { kind: 'suppliedDocument' as const, id: 'original', role: 'report' as const, origin: 'caller', text: 'Original document' };
@@ -100,7 +100,7 @@ test('curated documents reject duplicates, invalid text, stale revisions and can
 });
 
 test('complete documents added during curation count toward the recipient allowance and block oversized publication', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const draft = await workspace.createDraft({ ...request, outputName: 'oversized-document',
@@ -120,7 +120,7 @@ test('complete documents added during curation count toward the recipient allowa
 });
 
 test('drafts isolate revisioned mutations, required contents, budgets, inspection, and deterministic representations', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const a = await workspace.createDraft(request, signal()), b = await workspace.createDraft(request, signal());
@@ -289,7 +289,7 @@ test('drafts isolate revisioned mutations, required contents, budgets, inspectio
 test('cancellation and revision changes during preparation prevent late commits; publication claim survives cancellation', async () => {
   const f = await fixture(), entered = barrier(), resume = barrier();
   let pause: NativeOperation['kind'] | null = null;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -367,7 +367,7 @@ test('range normalization preserves the union and accounting uses exact integer 
 });
 
 test('minimum mutation receipts commit omitted item costs but reject before commit when even metadata cannot fit', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare(f.spec, signal());
     const probe = await workspace.createDraft(request, signal()), draft = await workspace.createDraft(request, signal());
@@ -396,7 +396,7 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
   for (const scenario of ['freeze', 'revision'] as const) {
     const f = await fixture(), entered = barrier(), resume = barrier();
     let pause = false;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -445,7 +445,7 @@ test('prepared mutations cannot cross a freeze or a competing revision even afte
 });
 
 test('bounded metadata inspection exposes the current literal prompt and invalidates old pages', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options);
   try {
     const client = runtime.createClient(null), other = runtime.createClient(null);
     const workspace = await client.declare(f.spec, signal());

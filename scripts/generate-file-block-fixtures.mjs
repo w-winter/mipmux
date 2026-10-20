@@ -24,7 +24,7 @@ const h = source('Sources/RepoPromptC/include/string_extensions_wrapper.h');
 const headerStart = h.indexOf('struct repo_split_result {');
 const headerEnd = h.indexOf('void repo_free_split_result(struct repo_split_result *result);') + 'void repo_free_split_result(struct repo_split_result *result);'.length;
 const header = '#include <stddef.h>\n' + h.slice(headerStart, headerEnd) + '\n';
-withReferenceDirectory('smip-file-block-reference-', scratch => {
+withReferenceDirectory('mipmux-file-block-reference-', scratch => {
 writeFileSync(join(scratch, 'split.h'), header);
 writeFileSync(join(scratch, 'split.c'), '#include "split.h"\n#include <stdlib.h>\n#include <string.h>\n' + lines(c, 784, 961) + '\n');
 const functions = [lines(packaging, 13, 17), lines(packaging, 403, 443), lines(packaging, 449, 451)]
@@ -60,7 +60,7 @@ const text = [
 ].join('\n');
 writeFileSync(join(scratch, 'reference.swift'), text);
 execFileSync('cc', ['-c', join(scratch, 'split.c'), '-o', join(scratch, 'split.o')], { stdio: 'inherit' });
-execFileSync('swiftc', ['-parse-as-library', '-package-name', 'SmipReference', '-import-objc-header', join(scratch, 'split.h'), join(scratch, 'reference.swift'),
+execFileSync('swiftc', ['-parse-as-library', '-package-name', 'MipmuxReference', '-import-objc-header', join(scratch, 'split.h'), join(scratch, 'reference.swift'),
   join(scratch, 'split.o'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });
 const range = (start, end, description = null) => ({ start, end, description });
 const fixture = (name, content, ranges, fileName = 'Example.swift') => ({ name, input: {

@@ -9,15 +9,15 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import type { ContextBuildRequest } from '../src/contracts/context.js';
 import { gitValidator } from '../src/contracts/git.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 const manifest = Compile(Type.Object({ isWorktree: Type.Boolean(), mainWorktreeRoot: Type.Optional(Type.String()) }));
 
 async function fixture(separateGitDirectory: boolean) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-worktree-reply-')), main = join(base, 'main'), linked = join(base, 'linked');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-worktree-reply-')), main = join(base, 'main'), linked = join(base, 'linked');
   const output = join(base, 'out'); await mkdir(main); await mkdir(output);
   const run = (cwd: string, args: string[]) => execFileSync(git, args, { cwd, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -27,8 +27,8 @@ async function fixture(separateGitDirectory: boolean) {
   await writeFile(join(main, 'file.txt'), 'base\n'); run(main, ['add', '.']); run(main, ['commit', '-qm', 'base']);
   run(main, ['worktree', 'add', '-q', '-b', 'feature', linked]);
   await writeFile(join(main, 'file.txt'), 'main changed\n'); await writeFile(join(linked, 'file.txt'), 'linked changed\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const request: ContextBuildRequest = { task: 'Collect worktree evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
@@ -95,7 +95,7 @@ test('worktree metadata permits unavailable branch text and joins cancelled Git 
         const child = spawn({ ...spec, executable: process.execPath, args: cancel
           ? [resolve('test/fixtures/held-git-read.mjs')] : ['-e', 'process.exitCode = 1'] });
         held.push(child);
-        child.child.stderr.on('data', data => { if (data.toString().includes('SMIP_GIT_READ_HELD')) entered(); });
+        child.child.stderr.on('data', data => { if (data.toString().includes('MIPMUX_GIT_READ_HELD')) entered(); });
         return child;
       }
       return spawn(spec);

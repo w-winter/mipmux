@@ -13,23 +13,23 @@
   ],
   "bindings": [
     {
-      "path": "native/Sources/SmipBridge/StructureSnapshot.swift",
+      "path": "native/Sources/MipmuxBridge/StructureSnapshot.swift",
       "sha256": "88a8a25cd6bf83456270d5d3e42f766c6dd4b4f1940c75bc340e5b0ca79e7c1f"
     },
     {
-      "path": "native/Sources/SmipBridge/StructureAdjacency.swift",
+      "path": "native/Sources/MipmuxBridge/StructureAdjacency.swift",
       "sha256": "94c4ebd602e9ec733aaa20ea812b3df18c8b32ea4c134059ffab0877b5d077a9"
     },
     {
-      "path": "native/Sources/SmipBridge/RPCEGraphPolicy.swift",
+      "path": "native/Sources/MipmuxBridge/RPCEGraphPolicy.swift",
       "sha256": "d61674bf5e37eef22c3a6516deefa9f77e5e278e429625886c831b3da29f2754"
     },
     {
-      "path": "native/Sources/SmipBridge/RPCEGraphSizePolicy.swift",
+      "path": "native/Sources/MipmuxBridge/RPCEGraphSizePolicy.swift",
       "sha256": "4df9b3fe554f70a95723d9507e96e3c64142352e40783930c1d542a7c0b0a1fe"
     },
     {
-      "path": "native/Sources/SmipBridge/RPCEGraphOrdering.swift",
+      "path": "native/Sources/MipmuxBridge/RPCEGraphOrdering.swift",
       "sha256": "3fae8e334d3bb18d8b608b1e91faf6699d7870c194ef251858936adf9624c262"
     },
     {

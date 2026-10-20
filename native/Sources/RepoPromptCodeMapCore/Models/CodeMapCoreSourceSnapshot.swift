@@ -1,4 +1,4 @@
-// Modified for smip: identifies the approved Linux automatic-decoder mapping.
+// Modified for mipmux: identifies the approved Linux automatic-decoder mapping.
 import Foundation
 
 #if DEBUG

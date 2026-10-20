@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, realpath, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime } from '../src/index.js';
+import { MipmuxRuntime } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { selectionValidator } from '../src/contracts/selection.js';
@@ -74,7 +74,7 @@ for (const operationKind of ['finalize', 'export'] as const) test(`Manual comple
 
 async function fixture(outcome: 'held' | 'failFirst' = 'held',
   beforeRead: ((request: Extract<NativeOperation, { kind: 'readSource' }>) => Promise<void>) | null = null, settings = copyContext()) {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-codemap-demand-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-codemap-demand-')));
   const root = join(base, 'source'), output = join(base, 'out');
   await mkdir(join(root, 'private'), { recursive: true }); await mkdir(output);
   await writeFile(join(root, '.repo_ignore'), 'private/\n');
@@ -83,7 +83,7 @@ async function fixture(outcome: 'held' | 'failFirst' = 'held',
   const entering = new Promise<void>(resolve => { entered = resolve; });
   const held = new Promise<void>(resolve => { release = resolve; });
   let extractions = 0;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -99,7 +99,7 @@ async function fixture(outcome: 'held' | 'failFirst' = 'held',
     }
   }
   const runtime = new Runtime({ copyContext: settings, cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const owner = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, new AbortController().signal);
   await owner.refresh(new AbortController().signal);
   return { base, runtime, owner, entering, release, source: { root: 'r', path: 'private/Hidden.swift' }, extractions: () => extractions };

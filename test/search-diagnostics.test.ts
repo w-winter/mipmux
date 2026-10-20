@@ -24,16 +24,16 @@ const phaseDiagnostic = (phase: string) => ({ kind: 'pattern', issue: phase + ' 
 const regexWarning = 'The content-search pattern was auto-corrected before running. Results may reflect a repaired or escaped version of the requested regex rather than the exact pattern you entered.';
 
 async function connect(fixture: boolean) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-search-diagnostics-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-search-diagnostics-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'example.txt'), 'hello\n');
   await writeFile(join(root, 'other.ts'), 'unrelated\n');
-  const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+  const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
   const proxy = join(base, 'bridge');
   if (fixture) await writeFile(proxy, `#!/bin/sh\nexec "${process.execPath}" "${resolve('test/fixtures/search-diagnostics-proxy.mjs')}" "$@"\n`, { mode: 0o700 });
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
-    credentialPaths: [], nativeExecutable: fixture ? proxy : native, nativeEnvironment: fixture ? { SMIP_NATIVE: native } : {},
+    credentialPaths: [], nativeExecutable: fixture ? proxy : native, nativeEnvironment: fixture ? { MIPMUX_NATIVE: native } : {},
     terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

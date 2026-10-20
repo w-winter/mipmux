@@ -70,7 +70,7 @@
   "generator": "scripts/generate-read-fixtures.mjs",
   "bindings": [
     "Execute original scalar line splitting, read slicing and provider argument priority; omit app cache/scheduling and bind fixed diagnostic strings to the native result.",
-    "Returned line records add decoded UTF-8 offsets for smip continuation transport. No decoding or physical source-access equivalence follows from text fixtures."
+    "Returned line records add decoded UTF-8 offsets for mipmux continuation transport. No decoding or physical source-access equivalence follows from text fixtures."
   ],
   "cases": 26,
   "generatorSHA256": "bc199768f470a822194dd9685b41abf4c981ba9a3547d5559e9647e7f0351d3f"

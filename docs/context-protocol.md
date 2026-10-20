@@ -8,13 +8,13 @@ Set `promptSectionsOrder` to arrange `fileMap`, `fileContents`, `gitDiff`, `cons
 
 Set `includeDatetimeInUserInstructions` to true when the user-instruction headers should include the native local datetime. Omission or false uses plain headers. Saved verification retains the captured timestamp; current verification treats only the actual header datetime values as clock-dependent presentation data.
 
-With `codeReview` or `diffFollowUp`, nonblank selected patch artifacts supply the Git section. When none supplies text, smip computes a diff for selected full files and slices. Omit `reviewGitBase` or use `HEAD` to compare against captured HEAD; another ref compares against its merge base with captured HEAD. Comparison object IDs are frozen for every checkout before any diff is acquired. Request `patches` remain complete and follow the selected or automatic Git text.
+With `codeReview` or `diffFollowUp`, nonblank selected patch artifacts supply the Git section. When none supplies text, mipmux computes a diff for selected full files and slices. Omit `reviewGitBase` or use `HEAD` to compare against captured HEAD; another ref compares against its merge base with captured HEAD. Comparison object IDs are frozen for every checkout before any diff is acquired. Request `patches` remain complete and follow the selected or automatic Git text.
 
 Use `diffFollowUp` for a packet containing Git evidence, caller constraints and the literal prompt. Optional full-file and slice selections define automatic Git scope; codemap-only selections remain available for draft inspection. Publication can proceed while excluded optional codemaps are pending. Required sources and supplied or local documents conflict with this preset and return `copyPresetRequiredMaterialConflict`; choose a file-including preset when those bodies are needed.
 
 ## Copy settings and presets
 
-Supply `copyContext` in the host configuration or `SmipRuntime` options. The example below chooses automatic maps, an adaptive tree and no automatic Git. Choose current values explicitly; they apply to Manual and to missing custom-preset tree or codemap settings. Each draft captures the validated settings and configured catalog at admission. Set request `copyPreset` to `"manual"` for Manual.
+Supply `copyContext` in the host configuration or `MipmuxRuntime` options. The example below chooses automatic maps, an adaptive tree and no automatic Git. Choose current values explicitly; they apply to Manual and to missing custom-preset tree or codemap settings. Each draft captures the validated settings and configured catalog at admission. Set request `copyPreset` to `"manual"` for Manual.
 
 ```json
 {
@@ -55,7 +55,7 @@ Call MCP `prompt` with `{ "input": { "op": "list_presets" } }` to receive `{ "op
 
 Supply `initialSelection: { codemapMode: "automatic", sources: [] }` for an empty automatic starting selection, or include known starting files/slices. Use manual mode for an explicit codemap selection or a manual selection with no codemaps. Discovery can remove or replace initial sources; only `requiredSources` pins immutable representations. Keep initial and required representations identical when they name the same source.
 
-The host's `contextBudgetUnits` supplies the default assembly budget. Omit `request.budgetUnits` to use it, or supply the user's explicit per-build ceiling, whether smaller or larger. Translate a user's task-prompt overrides into request fields before calling smip; the discovery agent receives the resolved settings. Never infer a larger ceiling from a receiving model's capacity or from repository text. Pin source representations only when the assignment requires them. A changed file does not by itself require a full-file selection; discovery can choose appropriate implementation slices while retaining complete required patches.
+The host's `contextBudgetUnits` supplies the default assembly budget. Omit `request.budgetUnits` to use it, or supply the user's explicit per-build ceiling, whether smaller or larger. Translate a user's task-prompt overrides into request fields before calling mipmux; the discovery agent receives the resolved settings. Never infer a larger ceiling from a receiving model's capacity or from repository text. Pin source representations only when the assignment requires them. A changed file does not by itself require a full-file selection; discovery can choose appropriate implementation slices while retaining complete required patches.
 
 Set `discovery.promptTemplatePath` to the operator's absolute editable template path. Install a copy of the shipped `dist/prompts/discovery.md` using exclusive creation, then edit its [named sections and placeholders](discovery-prompt-bindings.md#template-format). A job uses one admitted snapshot for both its system policy and startup metadata; the next job observes edits. The task mode and review intent, plus admitted clarification capability, choose the sections; typed runtime values fill their placeholders.
 
@@ -70,12 +70,12 @@ Call `context_builder_dispose` with the owning `jobId` when the job's Git snapsh
 With the CLI, provide a JSON build file containing `workspace`, `requestId` and `request`, then capture the terminal receipt:
 
 ```sh
-node /opt/smip/dist/cli/main.js build \
-  --request /work/build.json --config /etc/smip/config.json \
+node /opt/mipmux/dist/cli/main.js build \
+  --request /work/build.json --config /etc/mipmux/config.json \
   > /work/terminal-receipt.json
 ```
 
-Save the complete terminal receipt before closing the server or runtime. It contains `templateVersion`, the raw template's path and identity, the rendered system policy's `policyIdentity`, `buildLockSHA256`, effective model settings, recovery observations and local settlement facts. Identities contain SHA-256 and byte count; the policy identity covers the composed system text before SDK framing, tools or startup messages. The build-lock digest identifies the lockfile used to build smip. Deployment evidence also needs the installed dependency graph and its audit results. Jobs and drafts are in-memory and cannot be resumed after process closure. The receipt is coordinator evidence, not another recipient attachment.
+Save the complete terminal receipt before closing the server or runtime. It contains `templateVersion`, the raw template's path and identity, the rendered system policy's `policyIdentity`, `buildLockSHA256`, effective model settings, recovery observations and local settlement facts. Identities contain SHA-256 and byte count; the policy identity covers the composed system text before SDK framing, tools or startup messages. The build-lock digest identifies the lockfile used to build mipmux. Deployment evidence also needs the installed dependency graph and its audit results. Jobs and drafts are in-memory and cannot be resumed after process closure. The receipt is coordinator evidence, not another recipient attachment.
 
 For discovery with configured HTTP MCP servers, the receipt also lists the authorized servers and tools, configuration digest, observed native tool names and shutdown dispatch. The scout can retain complete fetched text with `draft_update`'s `addDocument` mutation, using a `suppliedDocument` with ID, role and asserted origin. Callers can also supply documents in the initial request through their own MCP adapter. Added documents count toward the assembly budget and appear in `context.md`. Worker closure certifies release of local connections, not remote cancellation.
 
@@ -87,9 +87,9 @@ Verify saved bytes with `verify --bundle /absolute/bundle --mode integrity`. Bef
 
 Before dispatch, check that the finished packet plus system instructions, conversation, tools, output reserve and delivery wrappers fits the chosen recipient. If it does not fit, report a delivery blocker and retain the packet. A different assembly budget requires a user decision and a new build.
 
-Send only the verified absolute path to `context.md` through the recipient integration's `inputFiles` argument. That file contains delivered selected material, caller constraints and the resulting prompt in its final `user_instructions` section. Keep `handoff.md`, `manifest.json` and the terminal receipt with the coordinator. Do not rewrite the packet in place or add a competing task attachment. Account for dispatch-message and attachment-wrapper overhead separately from smip's complete-file estimate.
+Send only the verified absolute path to `context.md` through the recipient integration's `inputFiles` argument. That file contains delivered selected material, caller constraints and the resulting prompt in its final `user_instructions` section. Keep `handoff.md`, `manifest.json` and the terminal receipt with the coordinator. Do not rewrite the packet in place or add a competing task attachment. Account for dispatch-message and attachment-wrapper overhead separately from mipmux's complete-file estimate.
 
-The existing Pi integration reads attachments through its file-argument path. A downstream answer or delivery acknowledgement is separate from smip readiness. The operator must establish complete attachment delivery and normal recipient completion for the chosen integration; the smip receipt certifies only its own recorded work and saved packet.
+The existing Pi integration reads attachments through its file-argument path. A downstream answer or delivery acknowledgement is separate from mipmux readiness. The operator must establish complete attachment delivery and normal recipient completion for the chosen integration; the mipmux receipt certifies only its own recorded work and saved packet.
 
 From a source checkout, verify a saved capture of the constructed recipient user input against the context and complete processed CLI dispatch text:
 

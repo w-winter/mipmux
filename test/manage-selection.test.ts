@@ -8,7 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SourceSelection, verifyBundle, verifyCurrentBundle, SmipRuntime } from '../src/index.js';
+import { SourceSelection, verifyBundle, verifyCurrentBundle, MipmuxRuntime } from '../src/index.js';
 import { selectionValidator, SelectionInput } from '../src/contracts/selection.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
@@ -22,7 +22,7 @@ const inspection = Compile(Type.Object({ revision: Type.Integer(), codemapMode: 
 const ready = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String() }));
 
 async function fixture() {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-manage-selection-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-manage-selection-')));
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(join(root, 'zone'), { recursive: true }); await mkdir(output);
   await writeFile(join(root, 'Main.swift'), 'struct Main {\n  let value: Int\n}\n');
@@ -35,7 +35,7 @@ async function fixture() {
   await writeFile(join(root, '.repo_ignore'), 'private/\n');
   await writeFile(join(root, 'private/Hidden.swift'), 'struct ExplicitlyManaged {\n  let value: Int\n}\n');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 30000 }));
   const client = new Client({ name: 'source-selection', version: '1' });
@@ -184,7 +184,7 @@ test('selection commits before reply rendering and survives cancellation, failur
     const entering = new Promise<void>(resolve => { entered = resolve; });
     const held = new Promise<void>(resolve => { release = resolve; });
     let armed = true;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -199,7 +199,7 @@ test('selection commits before reply rendering and survives cancellation, failur
       }
     }
     const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, scenario + '-cache'), contextBudgetUnits: 200000, credentialPaths: [],
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
     try {
       const signal = () => new AbortController().signal;
       const owner = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.output }, signal());
@@ -303,8 +303,8 @@ test('undecodable codemap-only membership retains raw evidence and passes saved/
     code_structure: Type.Object({ unmapped_paths: Type.Array(Type.String()) }) }));
   const manifestSchema = Compile(Type.Object({ materials: Type.Array(Type.Object({ kind: Type.Literal('source'),
     selection: SourceSelection, decoding: Type.Object({ kind: Type.Literal('undecodable') }), spans: Type.Array(Type.Unknown()) })) }));
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(f.base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(f.base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   try {
     const reply = await f.select({ op: 'set', mode: 'codemap_only', paths: ['r/Undecodable.swift'], view: 'content' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
@@ -437,7 +437,7 @@ test('cancellation during codemap extraction retains committed membership and ge
   const entering = new Promise<void>(resolve => { entered = resolve; });
   const held = new Promise<void>(resolve => { release = resolve; });
   let armed = true;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -449,7 +449,7 @@ test('cancellation during codemap extraction retains committed membership and ge
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, 'cancel-cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = () => new AbortController().signal;
   armed = false;
   try {
@@ -511,7 +511,7 @@ test('the source readiness deadline reports pending codemaps and a later get com
   let release!: () => void;
   const held = new Promise<void>(resolve => { release = resolve; });
   let armed = false, timer: ReturnType<typeof setTimeout> | null = null;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -527,7 +527,7 @@ test('the source readiness deadline reports pending codemaps and a later get com
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, 'deadline-cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = () => new AbortController().signal;
   const client = runtime.createClient(null);
   try {
@@ -565,7 +565,7 @@ test('stale codemap completion reports pending committed membership and a later 
     const path = join(f.root, 'private/Hidden.swift'), original = await readFile(path, 'utf8');
     const control = join(f.root, '.repo_ignore'), originalControl = await readFile(control, 'utf8');
     let armed = false, extractions = 0;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -583,7 +583,7 @@ test('stale codemap completion reports pending committed membership and a later 
       }
     }
     const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(f.base, 'currentness-cache'), contextBudgetUnits: 200000, credentialPaths: [],
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
     const signal = () => new AbortController().signal;
     const client = runtime.createClient(null);
     try {

@@ -30,7 +30,7 @@ const reply = Compile(Type.Object({ kind: Type.Literal('search'), counts: Type.O
       text: Type.String(), matching: Type.Boolean() })) })) }));
 
 test('public search retains the source character cap before byte pagination and never continues into omitted matches', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-search-response-cap-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-search-response-cap-'));
   const root = join(base, 'source'), output = join(base, 'output'), config = join(base, 'host.json');
   await mkdir(root); await mkdir(output);
   for (const item of cases) {
@@ -43,7 +43,7 @@ test('public search retains the source character cap before byte pagination and 
   }
   await writeFile(join(root, 'needle-b.swift'), 'no content match\r\n');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: completeReplyBytes }));
   const client = new Client({ name: 'search-response-cap', version: '1' });
   const evidence = [];

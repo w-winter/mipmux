@@ -22,12 +22,12 @@ type PromptToolInput = { op: 'get' } | { op: 'set' | 'append'; text: string; exp
 
 test('public MCP literal prompt operations publish Rewrite, Augment and unchanged Preserve without an advisory handoff', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-prompt-state-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-prompt-state-'));
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(root); await mkdir(output);
   await writeFile(join(root, 'source.txt'), 'EXACT SOURCE\n');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 10000 }));
   const transport = new StdioClientTransport({ command: process.execPath,

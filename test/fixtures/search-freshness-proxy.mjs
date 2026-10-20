@@ -3,8 +3,8 @@ import { spawn } from 'node:child_process';
 import { existsSync, watch } from 'node:fs';
 import { dirname } from 'node:path';
 
-const child = spawn(process.env.SMIP_NATIVE, process.argv.slice(2), { stdio: 'pipe', env: process.env });
-const boundary = process.env.SMIP_SCOPE_BOUNDARY;
+const child = spawn(process.env.MIPMUX_NATIVE, process.argv.slice(2), { stdio: 'pipe', env: process.env });
+const boundary = process.env.MIPMUX_SCOPE_BOUNDARY;
 if (!['catalog', 'body'].includes(boundary)) throw new Error('Missing scope boundary');
 let input = '', held = false, querying = false, watcher;
 process.stdin.on('data', bytes => {
@@ -16,14 +16,14 @@ process.stdin.on('data', bytes => {
     if (request.operation.kind === 'refreshSearchScope') querying = true;
     const target = boundary === 'catalog' ? request.operation.kind === 'listDirectory'
       : querying && request.operation.kind === 'readSource' && request.operation.path === 'victim.ts';
-    if (!held && target && existsSync(process.env.SMIP_SCOPE_ARM)) {
+    if (!held && target && existsSync(process.env.MIPMUX_SCOPE_ARM)) {
       held = true;
-      watcher = watch(dirname(process.env.SMIP_SCOPE_RELEASE), () => {
-        if (existsSync(process.env.SMIP_SCOPE_RELEASE)) {
+      watcher = watch(dirname(process.env.MIPMUX_SCOPE_RELEASE), () => {
+        if (existsSync(process.env.MIPMUX_SCOPE_RELEASE)) {
           watcher.close(); child.stdin.write(line + '\n');
         }
       });
-      process.stderr.write('SMIP_SCOPE_FRESHNESS_HELD\n');
+      process.stderr.write('MIPMUX_SCOPE_FRESHNESS_HELD\n');
     } else child.stdin.write(line + '\n');
   }
 });

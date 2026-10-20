@@ -5,13 +5,13 @@ import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { test } from 'node:test';
-import { type ContextBuildRequest, type DraftRuntime, SmipRuntime, type RuntimeOptions, verifyCurrentBundle } from '../src/index.js';
+import { type ContextBuildRequest, type DraftRuntime, MipmuxRuntime, type RuntimeOptions, verifyCurrentBundle } from '../src/index.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 
 const signal = () => new AbortController().signal;
-const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const handoff = { clarifiedTask: 'Task', architecture: 'Files', relationships: [], ambiguities: [] };
 function barrier() {
   let release!: () => void;
@@ -24,7 +24,7 @@ function settles(work: Promise<unknown>): Promise<'settled' | 'held'> {
 }
 async function fixture(prefix: string) {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-' + prefix));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-' + prefix));
   const root = join(base, 'root'), outputRoot = join(base, 'out');
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');
@@ -45,7 +45,7 @@ test('an absent credential beneath an independently symlinked parent stays denie
   const credential = join(f.base, 'credential-dir/auth.json');
   const options = { ...f.options, credentialPaths: [credential] };
   const filters = { roots: [], paths: [], exclude: [], extensions: [] };
-  const runtime = new SmipRuntime(options);
+  const runtime = new MipmuxRuntime(options);
   try {
     const handle = await runtime.declare(f.spec, signal());
     const before = await handle.refresh(signal());
@@ -75,7 +75,7 @@ test('an absent credential beneath an independently symlinked parent stays denie
     await symlink(join(f.root, 'absent-config'), join(f.base, 'dangling-dir'));
     const unsafe = [unresolvable, join(f.base, 'dangling-auth'), join(f.base, 'dangling-dir/auth.json')];
     for (const credentialPath of [...unsafe, join(f.base, 'credential-dir/public.txt')]) {
-      const verifier = new SmipRuntime({ ...options, credentialPaths: [credentialPath] });
+      const verifier = new MipmuxRuntime({ ...options, credentialPaths: [credentialPath] });
       try {
         const expected = unsafe.includes(credentialPath) ? /credentialPathUnresolvable/ : /policyChanged|pathDenied/;
         await assert.rejects(verifyCurrentBundle(bundle.directory, verifier, signal()), expected);
@@ -92,7 +92,7 @@ test('draft admission uses its qualifying refresh snapshot while a later scan is
     const secondEntered = barrier(), secondResume = barrier(), thirdEntered = barrier(), thirdResume = barrier();
     let lists = 0;
     const held: { signal: AbortSignal | null } = { signal: null };
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -165,7 +165,7 @@ test('terminal manual finalization releases the workspace lease while blocked dr
     const bridges: BridgeClient[] = [], entered = barrier(), resume = barrier();
     const sourceBridges = new Set<BridgeClient>();
     let hold = false, fail = false;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {

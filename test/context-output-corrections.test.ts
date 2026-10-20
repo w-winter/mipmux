@@ -6,7 +6,7 @@ import { chmod, mkdir, mkdtemp, readFile, stat, symlink, unlink, writeFile } fro
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import fc from 'fast-check';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest, type Manifest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest, type Manifest } from '../src/index.js';
 import { acquireLocalPatch } from '../src/patches/local-git.js';
 import { identity } from '../src/context/material-store.js';
 import { loadVerifiedBundle } from '../src/context/verify.js';
@@ -23,14 +23,14 @@ const request: ContextBuildRequest = { task: 'Complete task', initialSelection: 
   budgetUnits: 1000000 };
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-context-corrections-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-context-corrections-'));
   const root = join(directory, 'source'), output = join(directory, 'out');
   await mkdir(root); await mkdir(output);
-  const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+  const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, git: { executable: git } });
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output };
   return { directory, root, output, runtime, spec, run };

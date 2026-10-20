@@ -14,7 +14,7 @@ const provenance = JSON.parse(readFileSync(path + 'provenance.json', 'utf8'));
 const source = readFileSync(resolve(checkout, 'Sources/RepoPromptFileSystem/FileSystemService+ContentLoading.swift'));
 assert.equal(createHash('sha256').update(source).digest('hex'), provenance.sourceSHA256);
 const decoder = source.toString().split('\n').slice(7, 51).join('\n').replace('package func ', 'func ');
-const run = mkdtempSync(join(tmpdir(), 'smip-decoding-reference-'));
+const run = mkdtempSync(join(tmpdir(), 'mipmux-decoding-reference-'));
 try {
   mkdirSync(join(run, 'Sources/ReferenceDecoder'), { recursive: true });
   writeFileSync(join(run, 'Package.swift'), `// swift-tools-version: 6.2

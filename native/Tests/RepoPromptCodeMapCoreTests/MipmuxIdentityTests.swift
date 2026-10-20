@@ -2,7 +2,7 @@ import Foundation
 import RepoPromptCodeMapCore
 import XCTest
 
-final class SmipIdentityTests: XCTestCase {
+final class MipmuxIdentityTests: XCTestCase {
     func testDependencyFingerprintAndDecoderParticipateInCanonicalKey() throws {
         let first = try CodeMapSyntaxEngine.shared.pipelineIdentity(
             for: .swift, decoderPolicy: .workspaceAutomaticLinuxV1,

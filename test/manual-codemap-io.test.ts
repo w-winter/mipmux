@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { selectionValidator } from '../src/contracts/selection.js';
@@ -17,7 +17,7 @@ const omissions = Compile(Type.Object({ unavailableFiles: Type.Array(Type.Object
   selection: Type.Object({ kind: Type.String(), source: Type.Object({ root: Type.String(), path: Type.String() }) }) })) }));
 
 async function fixture(effect: Effect) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-manual-io-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-manual-io-'));
   for (const path of ['a', 'b', 'out']) await mkdir(join(base, path));
   await writeFile(join(base, 'a/Target.swift'), 'struct UnavailableMap { let value: Int }\n');
   await writeFile(join(base, 'a/Healthy.swift'), 'struct SameRootMap { let value: String }\n');
@@ -27,7 +27,7 @@ async function fixture(effect: Effect) {
   let armed = false, lateRemoved = false, entered!: () => void, release!: () => void;
   const entering = new Promise<void>(resolve => { entered = resolve; });
   const held = new Promise<void>(resolve => { release = resolve; });
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -45,7 +45,7 @@ async function fixture(effect: Effect) {
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const workspace = await runtime.declare({ roots: ['a', 'b'].map(name => ({ name, absolutePath: join(base, name) })),
     exclusions: [], outputRoot: join(base, 'out') }, signal());
   const target = { kind: 'codemap' as const, source: { root: 'a', path: 'Target.swift' } };

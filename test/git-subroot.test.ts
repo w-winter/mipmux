@@ -5,16 +5,16 @@ import { mkdir, mkdtemp, readFile, realpath, unlink, writeFile } from 'node:fs/p
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import type { LocalComparison } from '../src/contracts/patches.js';
 import type { Static } from 'typebox';
 
 test('worktree, staged and commit patches for a declared subroot retain owning-checkout paths and exclude sibling evidence', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-git-subroot-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-git-subroot-'));
   const repo = join(directory, 'repo'), root = join(repo, 'src'), out = join(directory, 'out');
   await mkdir(repo); await mkdir(root); await mkdir(join(repo, 'src-copy')); await mkdir(out);
-  const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+  const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
   const run = (args: string[], cwd = repo) => execFileSync(git, args, { cwd, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
   run(['init']); run(['config', 'user.name', 'Fixture']); run(['config', 'user.email', 'fixture@example.invalid']);
@@ -26,8 +26,8 @@ test('worktree, staged and commit patches for a declared subroot retain owning-c
   run(['add', '-u']); run(['commit', '-m', 'target']); const target = run(['rev-parse', 'HEAD']).trim();
   await writeFile(join(root, 'added.txt'), 'added\n'); await writeFile(join(repo, 'outside-untracked.txt'), 'OUTSIDE UNTRACKED\n');
   const index = await readFile(join(repo, '.git/index'));
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    git: { executable: git }, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    git: { executable: git }, nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   const comparisons: Static<typeof LocalComparison>[] = [

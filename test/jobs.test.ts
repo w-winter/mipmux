@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
 import type { JobSnapshot } from '../src/contracts/jobs.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
@@ -13,11 +13,11 @@ import { WorkspaceFailure } from '../src/workspace/values.js';
 
 test('configured context defaults resolve omitted settings and explicit request overrides across drafts and jobs', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-assembly-budget-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-assembly-budget-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out'));
   const contextBudgetUnits = 350000;
   const options = { copyContext: copyContext(), cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     contextBudgetUnits, defaultEnhancementMode: 'preserve' as const };
   const { runtime } = compose({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000 }, null);
   const signal = new AbortController().signal;
@@ -65,7 +65,7 @@ test('configured context defaults resolve omitted settings and explicit request 
 
 test('client jobs deduplicate admission, isolate ids, release cancelled work', async () => {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-jobs-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-jobs-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out'));
   await writeFile(join(directory, 'root/file.txt'), 'source');
   let entered!: () => void;
@@ -76,8 +76,8 @@ test('client jobs deduplicate admission, isolate ids, release cancelled work', a
     await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }));
     throw new Error('Cancelled boundary');
   } };
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
   const request: ContextBuildRequest = { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
     documents: [], patches: [], budgetUnits: 10000,

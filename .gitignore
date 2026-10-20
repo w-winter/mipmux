@@ -3,8 +3,8 @@ prompt-exports/
 node_modules/
 dist/
 dist-test/
-.smip-cache/
-.smip-work/
+.mipmux-cache/
+.mipmux-work/
 native/.build/
 native/.swiftpm/
 native/.dependencies/
@@ -14,4 +14,4 @@ libexec/
 .DS_Store
 .env
 .env.*
-native/Sources/SmipBridge/EngineRecipe.swift
+native/Sources/MipmuxBridge/EngineRecipe.swift

@@ -61,7 +61,7 @@ for (const mode of ['fullRewrite', 'augment', 'preserve']) for (const questions 
       input: { tokenBudget: 198500, enhancementMode: mode, allowClarifyingQuestions: questions,
         responseType: review === 'none' ? 'clarify' : 'review', instructions: null, questionTimeoutSeconds: 300,
         restrictsReviewGitToExplicitReadOnly: review.startsWith('readOnly'),
-        reviewRootNames: review === 'readOnlyNamed' ? ['smip', 'repoprompt-ce'] : [] } });
+        reviewRootNames: review === 'readOnlyNamed' ? ['mipmux', 'repoprompt-ce'] : [] } });
   }
 }
 const originals = JSON.parse(runReference(program, Buffer.from(JSON.stringify(inputs))).toString());
@@ -73,7 +73,7 @@ for (const mode of ['fullRewrite', 'augment', 'preserve']) {
 }
 const cases = originals.map(entry => ({ name: entry.name, input: entry.input,
   originalIdentity: identity(entry.expected), expected: bindReferenceDiscoveryPolicy(entry.expected, entry.input) }));
-const directory = resolve(repo, 'test/fixtures/smip-discovery-policy');
+const directory = resolve(repo, 'test/fixtures/mipmux-discovery-policy');
 mkdirSync(directory, { recursive: true });
 writeFileSync(resolve(directory, 'cases.json'), JSON.stringify(cases, null, 2) + '\n');
 writeFileSync(resolve(directory, 'provenance.json'), JSON.stringify({
@@ -85,6 +85,6 @@ writeFileSync(resolve(directory, 'provenance.json'), JSON.stringify({
   bindingsIdentity: identity(readFileSync(fileURLToPath(new URL('./reference-discovery-bindings.mjs', import.meta.url)))),
   generatedHarnessIdentity: identity(program), catalog: '__SUPPORTED_LANGUAGES__', caseCount: cases.length,
   changes: ['Stub external types and language catalog', 'Remove the single diagnostic stdout print',
-    'Apply checked test-only smip tool/runtime bindings; production composer and template are not imported'],
+    'Apply checked test-only mipmux tool/runtime bindings; production composer and template are not imported'],
 }, null, 2) + '\n');
 console.log(JSON.stringify({ cases: cases.length, directory, originalModesMatched: 3 }));

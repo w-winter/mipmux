@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle, type CodemapMode } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type CodemapMode } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { selectionValidator } from '../src/contracts/selection.js';
@@ -18,14 +18,14 @@ const sourceBody = 'struct FirstRecord { let value: Int }\n';
 type Scenario = 'render-transient' | 'render-persistent' | 'publication-persistent';
 
 async function fixture(mode: CodemapMode, scenario: Scenario, maximumAttempts: number) {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-presentation-retry-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-presentation-retry-')));
   for (const name of ['a', 'b', 'out']) await mkdir(join(base, name));
   await writeFile(join(base, 'a/f.swift'), sourceBody);
   await writeFile(join(base, 'b/h.swift'), 'struct HealthyRecord { let value: Int }\n');
   await writeFile(join(base, 'a/Seed.swift'), 'struct SeedA { let value: FirstRecord }\n');
   await writeFile(join(base, 'b/Seed.swift'), 'struct SeedB { let value: HealthyRecord }\n');
   let armed = false, invalidations = 0, publicationInvalidated = false;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -49,7 +49,7 @@ async function fixture(mode: CodemapMode, scenario: Scenario, maximumAttempts: n
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal, client = runtime.createClient(null);
   const workspace = await client.declare({ roots: [{ name: 'a', absolutePath: join(base, 'a') }, { name: 'b', absolutePath: join(base, 'b') }],
     exclusions: [], outputRoot: join(base, 'out') }, signal);

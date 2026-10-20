@@ -8,7 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/index.js';
+import { MipmuxRuntime } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
@@ -19,7 +19,7 @@ interface HeldStartupRender { signal: AbortSignal | null }
 
 test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap markers and selected descendants', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-file-tree-port-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-file-tree-port-')));
   const root = join(base, 'r'), other = join(base, 's'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(join(root, 'zone/child'), { recursive: true });
   await mkdir(join(other, 'zone'), { recursive: true }); await mkdir(output);
@@ -29,7 +29,7 @@ test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap ma
   await writeFile(join(root, 'outside.txt'), 'Outside\n');
   await writeFile(join(other, 'zone/wrong-root.txt'), 'Other root\n');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100, credentialPaths: [], git: null,
     discovery: null, defaultMaxOutputBytes: 12000 }));
   const client = new Client({ name: 'tree-port', version: '1' });
@@ -68,14 +68,14 @@ test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap ma
 
 for (const nativeKind of ['renderFileTree', 'queryStructure'] as const) test(`closing a workspace operation joins its admitted ${nativeKind} work and leaves a sibling usable`, async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-tree-close-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-tree-close-'));
   const root = join(base, 'source'), output = join(base, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source\n');
   let entered!: () => void, release!: () => void, hold = true;
   const entering = new Promise<void>(resolve => { entered = resolve; });
   const held = new Promise<void>(resolve => { release = resolve; });
   const state: HeldRender = { active: null };
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -90,7 +90,7 @@ for (const nativeKind of ['renderFileTree', 'queryStructure'] as const) test(`cl
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
     credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   const signal = new AbortController().signal;
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal);
@@ -116,14 +116,14 @@ for (const nativeKind of ['renderFileTree', 'queryStructure'] as const) test(`cl
 
 test('job cancellation reaches a held startup tree before scout dispatch and terminal settlement', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-startup-tree-cancel-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-startup-tree-cancel-'));
   const root = join(base, 'source'), output = join(base, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'Source\n');
   let entered!: () => void, release!: () => void, scoutCalls = 0;
   const entering = new Promise<void>(resolve => { entered = resolve; });
   const held = new Promise<void>(resolve => { release = resolve; });
   const state: HeldStartupRender = { signal: null };
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -136,7 +136,7 @@ test('job cancellation reaches a held startup tree before scout dispatch and ter
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   try {
     const client = runtime.createClient({ run: async () => { scoutCalls++; throw new Error('Scout must not dispatch'); } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, new AbortController().signal);

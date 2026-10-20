@@ -4,14 +4,14 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
 
 for (const copyPreset of ['standard', 'codeReview', 'diffFollowUp', 'manual'] as const) test(`copy preset ${copyPreset} publishes a role-free packet with fixed constraints`, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'smip-copy-preset-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-copy-preset-'));
   await mkdir(join(directory, 'root')); await mkdir(join(directory, 'out')); await mkdir('test-output', { recursive: true });
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   try {

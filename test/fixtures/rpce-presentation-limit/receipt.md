@@ -4,7 +4,7 @@ This fixture is a source reference for implementers comparing RPCE's limit on re
 
 ## Reproduce
 
-From `/Users/ww/smip`, run:
+From `/Users/ww/mipmux`, run:
 
 ```sh
 node test/fixtures/rpce-presentation-limit/generate.mjs /Users/ww/repoprompt-ce

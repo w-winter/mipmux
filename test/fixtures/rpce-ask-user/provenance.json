@@ -75,11 +75,11 @@
   "outputSHA256": "b0729fdc2461327157e9a1eaeba482f43ea5893e5671a5244f4928ec3fc0c6f2",
   "valueDecoderSources": [
     {
-      "path": "native/Sources/SmipBridge/RPCEMCPSelectionJSONValue.swift",
+      "path": "native/Sources/MipmuxBridge/RPCEMCPSelectionJSONValue.swift",
       "sha256": "28e7608bf5107b420995431662eeee235e2f6aca470309348380a7c542ad8705"
     },
     {
-      "path": "native/Sources/SmipBridge/RPCEMCPDataURL.swift",
+      "path": "native/Sources/MipmuxBridge/RPCEMCPDataURL.swift",
       "sha256": "eb969e7d9d4bc2c293c87a3c411682960321bf4848ee26a55379ad3678a750e1"
     }
   ]

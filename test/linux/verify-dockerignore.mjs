@@ -4,8 +4,8 @@ import { copyFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const directory = await mkdtemp(join(tmpdir(), 'smip-dockerignore-'));
-const tag = 'smip-dockerignore-probe:' + process.pid;
+const directory = await mkdtemp(join(tmpdir(), 'mipmux-dockerignore-'));
+const tag = 'mipmux-dockerignore-probe:' + process.pid;
 try {
   await copyFile(resolve('.dockerignore'), join(directory, '.dockerignore'));
   await mkdir(join(directory, 'nested/deeper'), { recursive: true });

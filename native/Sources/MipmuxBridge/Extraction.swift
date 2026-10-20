@@ -46,7 +46,7 @@ struct Extraction {
         guard recipe.release == "10.49", recipe.unicodeVersion == unicode else { throw BridgeFailure("regexEngineMismatch") }
         engine = ["version": version, "unicode": unicode, "jitPolicy": policy, "jitCapability": true, "jitExecution": jitExecution]
         let identity: [String: Any] = [
-            "domain": "smip-regex-engine-v1", "release": recipe.release, "commit": recipe.commit,
+            "domain": "mipmux-regex-engine-v1", "release": recipe.release, "commit": recipe.commit,
             "archiveSHA256": recipe.archiveSHA256, "sljitCommit": recipe.sljitCommit,
             "patches": recipe.patches, "unicodeVersion": unicode, "codeUnitWidth": 8,
             "compileSettings": recipe.cmake, "jitPolicy": policy, "jitCapability": true, "jitExecution": jitExecution,

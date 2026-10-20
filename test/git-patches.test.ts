@@ -6,16 +6,16 @@ import { existsSync } from 'node:fs';
 import { chmod, mkdir, mkdtemp, readdir, readFile, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { type ContextBuildRequest, SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { type ContextBuildRequest, MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { gitProcess } from '../src/patches/git-process.js';
 import { bytePairDiff } from '../src/patches/byte-pair-diff.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 test('local exact-byte patches apply forward/reverse, remain read-only and enforce staged/commit source coherence', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-'));
   const root = join(base, 'repo');
   await mkdir(root);
   await mkdir(join(base, 'out'));
@@ -53,10 +53,10 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     git: { executable: git },
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
   };
-  const runtime = new SmipRuntime(options);
+  const runtime = new MipmuxRuntime(options);
   try {
     const workspace = await runtime.declare({
       roots: [{ name: 'r', absolutePath: root }],
@@ -279,7 +279,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
 
 test('Git exit one with missing input has diagnostics and no applicable patch', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-missing-diff-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-missing-diff-'));
   await writeFile(join(base, 'present'), 'body');
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   try {
@@ -301,7 +301,7 @@ test('Git exit one with missing input has diagnostics and no applicable patch', 
 
 test('byte-pair cleanup removes only its nested scratch after process closure on success, failure and cancellation', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-diff-cleanup-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-diff-cleanup-'));
   const workRoot = join(base, 'work');
   const sibling = join(workRoot, 'retained', 'evidence');
   await mkdir(join(workRoot, 'retained'), { recursive: true });

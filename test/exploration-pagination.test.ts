@@ -4,17 +4,17 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { SearchRequest } from '../src/contracts/exploration.js';
 import { serializedBytes } from '../src/exploration/output-budget.js';
 
 test('real search modes and output continuations preserve complete counts and reject stale inputs', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-pages-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-pages-'));
   const root = join(base, 'root'); await mkdir(root); await mkdir(join(base, 'out'));
   for (const name of ['a.txt', 'b.txt', 'c.txt']) await writeFile(join(root, name), '\uFEFFcafé\r\n ++ \rx café x\ncaféteria\nlast');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);
     const operation = await handle.openOperation(new AbortController().signal);

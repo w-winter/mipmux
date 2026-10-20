@@ -42,7 +42,7 @@ export interface RuntimeOptions {
   readonly git?: { readonly executable: string };
 }
 
-export class SmipRuntime {
+export class MipmuxRuntime {
   readonly options: RuntimeOptions & { readonly defaultEnhancementMode: PromptEnhancementMode };
   readonly supervisor: ProcessSupervisor;
   readonly artifacts: ArtifactStore;
@@ -152,7 +152,7 @@ export class SmipRuntime {
     const spec = structuredClone(input);
     const cache = await this.#admitCache();
     const bridge = this.makeBridge();
-    let adopted = false;
+    const bridgeOwnership = { adopted: false };
     try {
       const opened = await bridge.request({ kind: 'openRoots', roots: spec.roots.map(root => ({ ...root, access: 'source', expected: null })) }, signal);
       const output = await bridge.request({ kind: 'openRoots', roots: [{ name: 'output', absolutePath: spec.outputRoot, access: 'output', expected: null }] }, signal);
@@ -177,14 +177,14 @@ export class SmipRuntime {
             outcome: maintenance.result.outcome }) + '\n');
           const admitted = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => this.#owners.delete(key),
             () => this.makeBridge(), this.#shutdown.signal, this.options.copyContext.codeMapsGloballyDisabled);
-          this.#owners.set(key, admitted); adopted = true;
+          this.#owners.set(key, admitted); bridgeOwnership.adopted = true;
           return admitted;
         });
       }
       const handle = new WorkspaceHandle(this, owner, owner.retain());
-      if (adopted) owner.warm();
+      if (bridgeOwnership.adopted) owner.warm();
       return handle;
-    } finally { if (!adopted) await bridge.close(); }
+    } finally { if (!bridgeOwnership.adopted) await bridge.close(); }
   }
 
   openOperation(owner: WorkspaceRuntime, signal: AbortSignal): Promise<WorkspaceOperation> {
@@ -355,7 +355,7 @@ function validateWorkspaceSpec(spec: WorkspaceSpec): void {
 
 export class WorkspaceHandle {
   #closed = false;
-  constructor(private readonly runtime: SmipRuntime, private readonly owner: WorkspaceRuntime, private readonly release: () => Promise<void>) {}
+  constructor(private readonly runtime: MipmuxRuntime, private readonly owner: WorkspaceRuntime, private readonly release: () => Promise<void>) {}
   #check(): void { if (this.#closed) throw new WorkspaceFailure('workspaceClosed'); }
   async refresh(signal: AbortSignal) {
     this.#check(); const release = this.owner.retain();

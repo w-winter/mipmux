@@ -69,9 +69,9 @@ test('prompt admission rejects invalid files before spawn and closes descriptors
       ['utf8', 'invalidDiscoveryTemplate'], ['directory', 'nonRegularDiscoveryTemplate'], ['fifo', 'nonRegularDiscoveryTemplate']] as const) {
       const path = join(provider.directory, scenario);
       // compat-ok: This test checks that an unsupported header never reaches a provider
-      if (scenario === 'version') await writeFile(path, '# smip discovery template v2\n');
+      if (scenario === 'version') await writeFile(path, '# mipmux discovery template v2\n');
       // compat-ok: This test checks that invalid UTF-8 never reaches a provider
-      if (scenario === 'utf8') await writeFile(path, Buffer.concat([Buffer.from('# smip discovery template v1\n'), Buffer.from([0xff])]));
+      if (scenario === 'utf8') await writeFile(path, Buffer.concat([Buffer.from('# mipmux discovery template v1\n'), Buffer.from([0xff])]));
       if (scenario === 'fifo') execFileSync('mkfifo', [path]);
       const selected = scenario === 'directory' ? provider.directory : path;
       const config = { ...provider.config, promptTemplatePath: selected };

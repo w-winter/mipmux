@@ -1,2 +1,2 @@
-process.stderr.write('SMIP_GIT_READ_HELD\n');
+process.stderr.write('MIPMUX_GIT_READ_HELD\n');
 setInterval(() => {}, 1000);

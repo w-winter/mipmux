@@ -4,15 +4,15 @@ import { tmpdir } from 'node:os';
 import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { type ContextBuildRequest, SmipRuntime, verifyBundle } from '../src/index.js';
+import { type ContextBuildRequest, MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import type { RootIdentity } from '../src/contracts/workspace.js';
 
 const signal = () => new AbortController().signal;
-const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const limited = resolve('test/fixtures/limited-native.sh');
-const environment = (limit: number) => ({ SMIP_NATIVE: native, SMIP_FD_LIMIT: String(limit), REPOPROMPT_PCRE2_JIT: 'disabled' });
+const environment = (limit: number) => ({ MIPMUX_NATIVE: native, MIPMUX_FD_LIMIT: String(limit), REPOPROMPT_PCRE2_JIT: 'disabled' });
 
 test('repeated root revalidation keeps descriptor use bounded and preserves identity, access and generation authority', async () => {
   await mkdir('test-output', { recursive: true });
@@ -57,7 +57,7 @@ test('repeated root revalidation keeps descriptor use bounded and preserves iden
 
 test('two-phase finalization across many roots completes under a controlled descriptor budget', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-many-roots-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-many-roots-'));
   const count = 24, limit = 64, outputRoot = join(base, 'out');
   await mkdir(outputRoot);
   const roots: { name: string; absolutePath: string }[] = [];
@@ -66,7 +66,7 @@ test('two-phase finalization across many roots completes under a controlled desc
     await mkdir(absolutePath); await writeFile(join(absolutePath, 'file.txt'), 'body ' + name + '\n');
     roots.push({ name, absolutePath });
   }
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: limited, nativeEnvironment: environment(limit) });
   const request: ContextBuildRequest = { task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', documents: [], patches: [], discoveryHints: [],
     requiredSources: roots.map(root => ({ kind: 'full', source: { root: root.name, path: 'file.txt' } })), outputName: 'packet',

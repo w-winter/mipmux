@@ -1,4 +1,4 @@
-// Modified for smip: declarations relocated and cross-file access adjusted.
+// Modified for mipmux: declarations relocated and cross-file access adjusted.
 //
 //  LanguageTypeExtractor.swift
 //  RepoPrompt

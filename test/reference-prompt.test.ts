@@ -17,7 +17,7 @@ const cases = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Ty
 
 test('the shipped editable template preserves independent original-policy mode, clarification and review variants', async () => {
   const template = await readFile('prompts/discovery.md', 'utf8');
-  const references = cases.Parse(JSON.parse(await readFile('test/fixtures/smip-discovery-policy/cases.json', 'utf8')));
+  const references = cases.Parse(JSON.parse(await readFile('test/fixtures/mipmux-discovery-policy/cases.json', 'utf8')));
   const proof: { name: string; bytes: number }[] = [];
   for (const entry of references) {
     const nativeFrame = callNative({ kind: 'renderDiscoveryPrompt', template,
@@ -38,7 +38,7 @@ test('the shipped editable template preserves independent original-policy mode, 
 
 test('review purpose, phrase hotwords and separated git/diffs tokens retain their original distinctions', async () => {
   const template = await readFile('prompts/discovery.md', 'utf8');
-  const references = cases.Parse(JSON.parse(await readFile('test/fixtures/smip-discovery-policy/cases.json', 'utf8')));
+  const references = cases.Parse(JSON.parse(await readFile('test/fixtures/mipmux-discovery-policy/cases.json', 'utf8')));
   for (const input of [
     { purpose: 'review', task: 'Gather dependencies', review: true },
     { purpose: 'planning', task: 'Prepare a code review', review: true },
@@ -52,7 +52,7 @@ test('review purpose, phrase hotwords and separated git/diffs tokens retain thei
     assert(reference);
     const frame = callNative({ kind: 'renderDiscoveryPrompt', template, tokenBudget: 198500,
       enhancementMode: 'fullRewrite', purpose: input.purpose, task: input.task, allowClarifyingQuestions: false,
-      questionTimeoutSeconds: 300, restrictsReviewGitToExplicitReadOnly: true, reviewRootNames: ['smip', 'repoprompt-ce'],
+      questionTimeoutSeconds: 300, restrictsReviewGitToExplicitReadOnly: true, reviewRootNames: ['mipmux', 'repoprompt-ce'],
       fileTree: '', currentPrompt: '', discoveryInstructions: '',
     }, 'review-intent', input.purpose + '-' + input.task);
     const rendered = reply.Parse(frame).result.text.replace(/^\*\*Codemap coverage:\*\* .+$/m, '**Codemap coverage:** __SUPPORTED_LANGUAGES__');

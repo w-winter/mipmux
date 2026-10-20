@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { SmipRuntime, WorkspaceHandle } from './smip-runtime.js';
+import type { MipmuxRuntime, WorkspaceHandle } from './mipmux-runtime.js';
 import type { WorkspaceSpec } from '../contracts/inventory.js';
 import type { ContextBuildRequest, DraftInspection, DraftUpdate } from '../contracts/context.js';
 import type { DiscoveryCall } from '../contracts/discovery.js';
@@ -24,7 +24,7 @@ export class ClientRuntime {
   readonly #abort = new AbortController();
   readonly #pending = new Set<Promise<unknown>>();
   #closing: Promise<void> | null = null;
-  constructor(private readonly runtime: SmipRuntime, runner: DiscoveryRunner | null, private readonly released: () => void) {
+  constructor(private readonly runtime: MipmuxRuntime, runner: DiscoveryRunner | null, private readonly released: () => void) {
     this.#jobs = new JobRegistry(runner);
   }
   #check(): void { if (this.#abort.signal.aborted) throw new WorkspaceFailure('clientClosed'); }

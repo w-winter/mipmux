@@ -9,13 +9,13 @@ import { BridgeClient, type NativeReply } from '../src/native/bridge-client.js';
 import { ProcessSupervisor, type OwnedProcess, type ProcessSpec } from '../src/runtime/process-supervisor.js';
 
 const signal = () => new AbortController().signal;
-const executable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+const executable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const currentCases = Compile(Type.Array(Type.Object({ name: Type.String(), kind: Type.Enum(['file', 'symlink', 'absoluteSymlink', 'missing']),
   target: Type.String(), exists: Type.Boolean(), expected: Type.Union([Type.String(), Type.Null()]) })));
 
 test('snapshot naming and CURRENT are repo-scoped, replace named bodies and read both source pointer forms', async () => {
   await mkdir('test-output', { recursive: true });
-  const output = await mkdtemp(join(tmpdir(), 'smip-current-')), outside = await mkdtemp(join(tmpdir(), 'smip-current-outside-'));
+  const output = await mkdtemp(join(tmpdir(), 'mipmux-current-')), outside = await mkdtemp(join(tmpdir(), 'mipmux-current-outside-'));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), bridge = new BridgeClient({ supervisor, executable, env: {} });
   const proof: unknown[] = [];
   try {
@@ -72,7 +72,7 @@ test('snapshot naming and CURRENT are repo-scoped, replace named bodies and read
 });
 
 test('cancelling CURRENT publication retains the previous pointer and completed snapshot files', async t => {
-  const output = await mkdtemp(join(tmpdir(), 'smip-current-cancel-'));
+  const output = await mkdtemp(join(tmpdir(), 'mipmux-current-cancel-'));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), children: OwnedProcess[] = [];
   const spawn = supervisor.spawn.bind(supervisor);
   t.mock.method(supervisor, 'spawn', (spec: ProcessSpec) => { const child = spawn(spec); children.push(child); return child; });

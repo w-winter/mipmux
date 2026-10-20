@@ -24,7 +24,7 @@ const body = [slice(core, 615, 625), slice(core, 957, 1255), slice(core, 1448, 1
   .replaceAll('PromptEntriesEvaluation.EntryResult', 'CapturedEntryResult');
 const constructor = slice(core, 1350, 1370).replace('return ToolResultDTOs', 'let reply = ToolResultDTOs')
   .replace('codeStructure: nil', 'codeStructure: minimal').replace('collections.codemapAutoEnabled', 'input.codemapAutoEnabled');
-const adapter = path => readFileSync('native/Sources/SmipBridge/' + path, 'utf8');
+const adapter = path => readFileSync('native/Sources/MipmuxBridge/' + path, 'utf8');
 const input = adapter('SelectionReplyInput.swift').split('    func render()')[0].replaceAll('private ', '') + '\n}';
 const text = [
   'import Foundation', ranges.join('\n').replaceAll('package ', ''),

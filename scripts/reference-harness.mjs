@@ -20,7 +20,7 @@ export function withReferenceDirectory(prefix, body) {
 }
 
 export function runReference(source, input, compilerArguments = []) {
-  return withReferenceDirectory('smip-reference-', directory => {
+  return withReferenceDirectory('mipmux-reference-', directory => {
     const program = join(directory, 'reference.swift'), executable = join(directory, 'reference');
     writeFileSync(program, source);
     execFileSync('swiftc', [...compilerArguments, program, '-o', executable], { stdio: 'inherit' });

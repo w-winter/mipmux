@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { WorkspaceHandle } from './smip-runtime.js';
+import type { WorkspaceHandle } from './mipmux-runtime.js';
 import type { DraftRuntime } from '../context/draft-runtime.js';
 import type { ContextBuildRequest } from '../contracts/context.js';
 import { contextRequestValidator } from '../contracts/context.js';

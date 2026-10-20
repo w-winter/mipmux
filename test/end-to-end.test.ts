@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle } from '../src/index.js';
 import { prepareDeliveryFixture, verifyDeliveryMaterials } from './fixtures/delivery-fixture.js';
 
 test('public mixed packet preserves every original body and final task above ordinary Pi read limits', async () => {
   const fixture = await prepareDeliveryFixture();
-  const runtime = new SmipRuntime(fixture.options), signal = new AbortController().signal;
+  const runtime = new MipmuxRuntime(fixture.options), signal = new AbortController().signal;
   try {
     const workspace = await runtime.declare(fixture.input.workspace, signal);
     const draft = await workspace.createDraft(fixture.input.request, signal);

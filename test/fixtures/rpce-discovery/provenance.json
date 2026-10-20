@@ -11,7 +11,7 @@
     "instructions": null
   },
   "catalog": "__SUPPORTED_LANGUAGES__",
-  "origin": "Unmodified source rendering from the successful macOS/Linux portability probe, not smip output.",
+  "origin": "Unmodified source rendering from the successful macOS/Linux portability probe, not mipmux output.",
   "modes": [
     "fullRewrite",
     "augment",

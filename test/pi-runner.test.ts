@@ -80,7 +80,7 @@ test('SDK consumes the validated model snapshot and guards each locked credentia
     syncBuiltinESMExports();
     try {
       const result = await runPiSession(provider.config, { initialContext: 'Fixture context', message: 'Fixture message' }, [],
-        '# smip discovery v1\n', null, new AbortController().signal, () => {}, fact => observations.push(fact));
+        '# mipmux discovery v1\n', null, new AbortController().signal, () => {}, fact => observations.push(fact));
       assert.equal(substituted, true);
       await assert.rejects(originalRead(marker), { code: 'ENOENT' });
       if (kind === 'auth') {

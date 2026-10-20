@@ -11,10 +11,10 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { GitInput, gitValidator } from '../src/contracts/git.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
 const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Type.String()),
@@ -25,7 +25,7 @@ const reply = Compile(Type.Object({ kind: Type.String(), code: Type.Optional(Typ
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-scout-diff-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-scout-diff-'));
   await mkdir(join(base, 'repo/sub'), { recursive: true }); await mkdir(join(base, 'out'));
   const repo = await realpath(join(base, 'repo')), root = join(repo, 'sub');
   const run = (args: string[], cwd = repo) => execFileSync(git, args, { cwd, encoding: 'utf8',
@@ -44,7 +44,7 @@ async function fixture() {
   await writeFile(join(root, 'literal*.swift'), 'literal changed\n'); await writeFile(join(root, 'literal-other.swift'), 'other changed\n');
   await writeFile(join(root, 'added.swift'), 'new\nlast');
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
-    credentialPaths: [join(repo, 'credential.swift')], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    credentialPaths: [join(repo, 'credential.swift')], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, git: { executable: git } };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') };
   return { base, repo, root, run, first, tip, options, spec };
@@ -97,7 +97,7 @@ test('diff admits only freshly verified advertised same-repository worktrees and
   const f = await fixture(), linked = join(f.base, 'linked'), other = join(f.base, 'other');
   f.run(['worktree', 'add', '-q', '-b', 'linked', linked]); await mkdir(other); f.run(['init', '-q'], other);
   await writeFile(join(linked, 'outside.swift'), 'linked evidence\n'); await writeFile(join(linked, 'credential.swift'), 'PROTECTED_FIXTURE_LINKED\n');
-  const runtime = new SmipRuntime(f.options), client = runtime.createClient(null), proof: unknown[] = [];
+  const runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null), proof: unknown[] = [];
   try {
     const workspace = await client.declare({ ...f.spec, roots: [{ name: 'r', absolutePath: f.repo }] }, signal());
     const call = (worktree: string) => client.explore(workspace.id, { name: 'git', input: gitValidator.Parse(gitValidator.Default({
@@ -113,7 +113,7 @@ test('diff admits only freshly verified advertised same-repository worktrees and
 test('diff rejects both endpoints of a staged rename from a protected path before exposing patch bodies', async () => {
   const f = await fixture();
   f.run(['mv', '--', 'credential.swift', 'exposed.swift']);
-  const runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   try {
     const workspace = await client.declare(f.spec, signal());
     const input = gitValidator.Parse(gitValidator.Default({ op: 'diff', root: 'r', compare: 'staged', detail: 'full',
@@ -127,13 +127,13 @@ test('diff rejects both endpoints of a staged rename from a protected path befor
 });
 
 test('cancelling diff during body statistics joins its child and leaves the workspace usable', async t => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor), held: OwnedProcess[] = [];
   let armed = false, entered!: () => void; const holding = new Promise<void>(resolve => { entered = resolve; });
   t.mock.method(runtime.supervisor, 'spawn', (spec: ProcessSpec) => {
     if (armed && spec.executable === git && spec.args.includes('--numstat')) {
       const child = spawn({ ...spec, executable: process.execPath, args: [resolve('test/fixtures/held-git-read.mjs')] }); held.push(child);
-      child.child.stderr.on('data', data => { if (data.toString().includes('SMIP_GIT_READ_HELD')) entered(); }); return child;
+      child.child.stderr.on('data', data => { if (data.toString().includes('MIPMUX_GIT_READ_HELD')) entered(); }); return child;
     }
     return spawn(spec);
   });
@@ -151,7 +151,7 @@ test('cancelling diff during body statistics joins its child and leaves the work
 });
 
 test('public diff retains later chunk matches and follows the original stdin-error recovery predicate', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   const sourceChunkSize = 3000, sourceStdinThresholdBytes = 128 * 1024;
   const proof: unknown[] = [];
   try {

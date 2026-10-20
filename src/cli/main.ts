@@ -42,8 +42,8 @@ async function main(): Promise<void> {
     const path = required('config'), config = await loadJSON(path, HostConfig);
     if (command === 'mcp') {
       shape(['config'], 1);
-      const { serveSmipStdio } = await import('../mcp/server.js');
-      const server = serveSmipStdio(config, path);
+      const { serveMipmuxStdio } = await import('../mcp/server.js');
+      const server = serveMipmuxStdio(config, path);
       const stop = () => { void server.close().catch(() => {}); };
       abort.signal.addEventListener('abort', stop, { once: true });
       if (abort.signal.aborted) stop();

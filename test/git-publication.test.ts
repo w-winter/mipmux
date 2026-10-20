@@ -11,9 +11,9 @@ import type { ContextBuildRequest } from '../src/contracts/context.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
-import { SmipRuntime, type RuntimeOptions } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime, type RuntimeOptions } from '../src/runtime/mipmux-runtime.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 const metadata = Compile(Type.Object({ snapshotID: Type.String(), repoKey: Type.String(), repoRoot: Type.String(),
   tabID: Type.String(), generatedAt: Type.String(), scope: Type.String(), compare: Type.String() }));
@@ -21,7 +21,7 @@ type PublicationFailure = 'write' | 'current' | 'revision' | 'cancel';
 
 function interruptedRuntime(options: RuntimeOptions, failure: PublicationFailure, effect: () => Promise<void>) {
   let interrupt = false;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -54,7 +54,7 @@ async function assertRetainedFiles(output: string, snapshotID: string, failure: 
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-publish-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-publish-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'base\n');
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -65,13 +65,13 @@ async function fixture() {
     requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const diff = gitValidator.Parse(gitValidator.Default({ op: 'diff', maxOutputBytes: 1 })); assert(diff.op === 'diff');
-  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };
   return { base, root, out, options, request, diff, run };
 }
 
 test('draft publication persists complete source snapshots, CURRENT and projected aliases for all modes', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), proof: unknown[] = [];
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), proof: unknown[] = [];
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
     const draft = await workspace.createDraft(f.request, signal());
@@ -147,7 +147,7 @@ test('selected publication uses full and sliced membership, literal paths and ex
   await writeFile(join(f.root, 'code.swift'), 'struct Example { let value = 1 }\n');
   await writeFile(join(f.root, 'new[ab].txt'), 'new literal\n');
   await writeFile(join(f.root, 'newb.txt'), 'new glob\n');
-  const runtime = new SmipRuntime(f.options);
+  const runtime = new MipmuxRuntime(f.options);
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
     const draft = await workspace.createDraft({ ...f.request, initialSelection: { codemapMode: 'manual', sources: [

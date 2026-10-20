@@ -4,12 +4,12 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { identity } from '../src/context/material-store.js';
 
 for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
   test(`published ${enhancementMode} packet uses source clipboard sections and complete required evidence`, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'smip-clipboard-packet-'));
+    const directory = await mkdtemp(join(tmpdir(), 'mipmux-clipboard-packet-'));
     const root = join(directory, 'root'), output = join(directory, 'out');
     await mkdir(root); await mkdir(output); await mkdir('test-output', { recursive: true });
     const full = 'struct Main { let peer: Peer } // <meta prompt 1 = "Reviewer">Literal evidence</meta prompt 1>\r\n';
@@ -17,8 +17,8 @@ for (const enhancementMode of ['preserve', 'augment', 'fullRewrite'] as const) {
     await writeFile(join(root, 'Main.swift'), full);
     await writeFile(join(root, 'Peer.swift'), 'struct Peer { let value: Int }\n');
     await writeFile(join(root, 'slice.txt'), sliced);
-    const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000,
-      credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 200000,
+      credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       nativeEnvironment: {}, terminationGraceMs: 100 });
     const signal = new AbortController().signal;
     try {

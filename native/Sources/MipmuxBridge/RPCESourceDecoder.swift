@@ -72,7 +72,7 @@ enum RPCESourceDecoder {
             var count = 0
             let status = data.withUnsafeBytes { input in
                 encoding.withCString { label in
-                    smip_decode_utf8(input.baseAddress, input.count, label, &output, &count)
+                    mipmux_decode_utf8(input.baseAddress, input.count, label, &output, &count)
                 }
             }
             guard status == 0, let output else { return nil }

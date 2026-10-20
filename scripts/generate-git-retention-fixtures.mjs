@@ -110,7 +110,7 @@ const text = adapter + sources.map(entry => {
     ? entry.bytes.toString().split('\n').filter((_, index) => index < 11 || index > 14).join('\n') : entry.bytes;
   return adapt(body);
 }).join('\n') + adapt(layout) + main;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-retention-reference-'));
+const scratch = mkdtempSync(join(tmpdir(), 'mipmux-retention-reference-'));
 try {
   writeFileSync(join(scratch, 'original.swift'), text);
   execFileSync('swiftc', ['-parse-as-library', join(scratch, 'original.swift'), '-o', join(scratch, 'reference')], { stdio: 'inherit' });

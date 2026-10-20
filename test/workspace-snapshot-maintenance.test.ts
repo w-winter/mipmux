@@ -8,7 +8,7 @@ import { writeFileSync } from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 
 const object = Compile(Type.Record(Type.String(), Type.Unknown()));
 const reference = Compile(Type.Array(Type.Object({ expected: Type.Array(Type.Object({ path: Type.String(), bytes: Type.String() })) })));
@@ -16,7 +16,7 @@ const signal = () => new AbortController().signal;
 
 test('workspace admission applies full snapshot maintenance and shutdown retains completed snapshots', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-workspace-maintenance-')), root = join(base, 'root'), output = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-workspace-maintenance-')), root = join(base, 'root'), output = join(base, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'file.txt'), 'source\n');
   const fixtures = reference.Parse(JSON.parse(await readFile('test/fixtures/rpce-git-snapshot/cases.json', 'utf8')));
   const fixture = fixtures[0]; assert(fixture);
@@ -30,9 +30,9 @@ test('workspace admission applies full snapshot maintenance and shutdown retains
     await writeFile(join(directory, 'MAP.txt'), name);
   }
   await symlink('old', join(output, '_git_data/repos/a/CURRENT'));
-  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000 };
-  const runtime = new SmipRuntime(options);
+  const runtime = new MipmuxRuntime(options);
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal());
     assert.deepEqual((await readdir(join(output, '_git_data/repos/a'))).sort(), ['CURRENT', 'recent']);
@@ -40,7 +40,7 @@ test('workspace admission applies full snapshot maintenance and shutdown retains
     await workspace.close();
   } finally { await runtime.close(); }
   assert.equal(await readFile(join(output, '_git_data/repos/a/recent/MAP.txt'), 'utf8'), 'recent');
-  const reopened = new SmipRuntime(options);
+  const reopened = new MipmuxRuntime(options);
   try {
     const workspace = await reopened.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, signal());
     assert.equal(await readFile(join(output, '_git_data/repos/a/recent/MAP.txt'), 'utf8'), 'recent'); await workspace.close();
@@ -50,8 +50,8 @@ test('workspace admission applies full snapshot maintenance and shutdown retains
 });
 
 test('a cancelled queued snapshot mutation does not bypass its predecessor', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-snapshot-queue-')), output = join(base, 'out'); await mkdir(output);
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-snapshot-queue-')), output = join(base, 'out'); await mkdir(output);
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000 });
   const bridge = runtime.makeBridge(); let release!: () => void, entered!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; }), started = new Promise<void>(resolve => { entered = resolve; });

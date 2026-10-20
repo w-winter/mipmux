@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 
 const signal = () => new AbortController().signal;
@@ -18,7 +18,7 @@ const snapshots = Compile(Type.Array(Type.Object({ expected: Type.Array(Type.Obj
 const manifest = Compile(Type.Record(Type.String(), Type.Unknown()));
 
 test('distinct workspaces sharing an output root retain one authoritative retention cache', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-snapshot-owner-')), output = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-snapshot-owner-')), output = join(base, 'out');
   const roots = [join(base, 'a'), join(base, 'b')];
   await mkdir(output);
   for (const path of roots) { await mkdir(path); await writeFile(join(path, 'source.txt'), 'source\n'); }
@@ -36,7 +36,7 @@ test('distinct workspaces sharing an output root retain one authoritative retent
   const offset = Math.floor(Date.now() / 1000) - referenceClockSeconds;
   const shifted = (row: typeof input.entries[number]) => ({ ...row, generatedAt: row.generatedAt + offset });
   for (const row of input.entries) await seed(shifted(row));
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000 });
   try {
     const a = await runtime.declare({ roots: [{ name: 'a', absolutePath: roots[0]! }], exclusions: [], outputRoot: output }, signal());
@@ -69,8 +69,8 @@ test('distinct workspaces sharing an output root retain one authoritative retent
 
 test('active mutation cancellation settles its worker; the next request reopens the same root identity', async t => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-snapshot-owner-cancel-')), output = join(base, 'out'); await mkdir(output);
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-snapshot-owner-cancel-')), output = join(base, 'out'); await mkdir(output);
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000 });
   const children: OwnedProcess[] = [], spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
   t.mock.method(runtime.supervisor, 'spawn', (spec: ProcessSpec) => { const child = spawn(spec); children.push(child); return child; });

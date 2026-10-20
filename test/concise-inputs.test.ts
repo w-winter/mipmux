@@ -20,13 +20,13 @@ type ToolArguments = NonNullable<Parameters<Client['callTool']>[0]['arguments']>
 
 test('concise MCP exploration matches explicit options and preserves validation, caps and selection authority', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-concise-inputs-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-concise-inputs-'));
   const root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'greet.ts'), 'export function greet(name: string) { return `Hello ${name}`; }\n');
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

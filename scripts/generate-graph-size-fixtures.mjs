@@ -20,7 +20,7 @@ const sizeCode = 'enum RPCEGraphSizeAccounting {\n' +
     .replace('private static func fullSize', 'static func fullSize').replaceAll('PersistentHashMap', 'Dictionary').replaceAll('PersistentHashSet', 'Set') +
   original.slice(original.indexOf('    private static func checkedAdd('), original.indexOf('    private static func fileIDPrecedes(')) + '}';
 const bindingPaths = ['StructureSnapshot.swift', 'StructureAdjacency.swift', 'RPCEGraphPolicy.swift', 'RPCEGraphSizePolicy.swift', 'RPCEGraphOrdering.swift'];
-const bindings = bindingPaths.map(name => readFileSync('native/Sources/SmipBridge/' + name, 'utf8'));
+const bindings = bindingPaths.map(name => readFileSync('native/Sources/MipmuxBridge/' + name, 'utf8'));
 bindings[0] = bindings[0].slice(0, bindings[0].indexOf('struct WorkspaceCodemapGraphPinnedSnapshot'));
 const driverPath = 'test/fixtures/graph-size-oracle.swift', driver = readFileSync(driverPath, 'utf8');
 const text = [...bindings, sizeModel, sizeCode, driver].join('\n');
@@ -41,7 +41,7 @@ additional.push({ name: 'normalized-postings-matched-symbols-and-both-directions
 ] });
 inputs.push(...additional);
 specifications.push(...additional.map(entry => ({ name: entry.name, input: { kind: 'inline', files: entry.files } })));
-const work = mkdtempSync(join(tmpdir(), 'smip-size-reference-'));
+const work = mkdtempSync(join(tmpdir(), 'mipmux-size-reference-'));
 try {
   writeFileSync(join(work, 'main.swift'), text);
   execFileSync('swiftc', [join(work, 'main.swift'), '-o', join(work, 'oracle')], { stdio: 'inherit' });
@@ -52,7 +52,7 @@ try {
   const hash = bytes => createHash('sha256').update(bytes).digest('hex');
   writeFileSync(join(directory, 'provenance.json'), JSON.stringify({ revision, cases: inputs.length,
     sources: sourcePaths.map(path => ({ path, sha256: hash(readFileSync(join(reference, path))) })),
-    bindings: [...bindingPaths.map(name => 'native/Sources/SmipBridge/' + name), driverPath].map(path => ({ path, sha256: hash(readFileSync(path)) })),
+    bindings: [...bindingPaths.map(name => 'native/Sources/MipmuxBridge/' + name), driverPath].map(path => ({ path, sha256: hash(readFileSync(path)) })),
     generator: 'scripts/generate-graph-size-fixtures.mjs', generatorSHA256: hash(text),
     input: 'test/fixtures/rpce-structure/cases.json', inputSHA256: hash(readFileSync('test/fixtures/rpce-structure/cases.json')),
     scope: 'Original fullSize and checked arithmetic run on captured immutable declarations and the retained adjacency adapter; prices/counts are independent of the TypeScript accountant, not proof of app currentness.',

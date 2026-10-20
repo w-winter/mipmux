@@ -25,12 +25,12 @@ async function waitForSettlement(client: Client, jobId: string) {
 }
 
 test('local package audits resources and executes relocated library, native, CLI, MCP and discovery prompt', async t => {
-  const directory = mkdtempSync(join(tmpdir(), 'smip-package-'));
+  const directory = mkdtempSync(join(tmpdir(), 'mipmux-package-'));
   execFileSync(process.execPath, [resolve('scripts/package-local.mjs'), directory], { stdio: 'pipe' });
   const receipt = JSON.parse(readFileSync(join(directory, 'inventory.json'), 'utf8'));
   const paths: string[] = receipt.files.map((file: { path: string }) => file.path);
   for (const path of ['dist/index.js', 'dist/index.d.ts', 'dist/cli/main.js', 'dist/discovery/pi-worker.js',
-    'dist/dependency-identity.json', 'dist/prompts/discovery.md', `libexec/${process.platform}-${process.arch}/SmipBridge`,
+    'dist/dependency-identity.json', 'dist/prompts/discovery.md', `libexec/${process.platform}-${process.arch}/MipmuxBridge`,
     'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
   assert(!paths.some(path => /(?:\.DS_Store|\.env|test-output|prompt-exports|node_modules|\.build)/u.test(path)));
   const bytes = readFileSync(join(directory, receipt.filename));
@@ -44,10 +44,10 @@ test('local package audits resources and executes relocated library, native, CLI
   const installLockSHA256 = createHash('sha256').update(readFileSync(join(installed, 'package-lock.json'))).digest('hex');
   writeFileSync(join(directory, 'installed-dependencies.json'), execFileSync('npm', ['ls', '--all', '--json'], { cwd: installed }));
   writeFileSync(join(directory, 'installed-audit.json'), execFileSync('npm', ['audit', '--json'], { cwd: installed }));
-  const packageRoot = join(installed, 'node_modules/smip');
-  const native = join(packageRoot, `libexec/${process.platform}-${process.arch}/SmipBridge`);
+  const packageRoot = join(installed, 'node_modules/mipmux');
+  const native = join(packageRoot, `libexec/${process.platform}-${process.arch}/MipmuxBridge`);
   const command = join(packageRoot, 'dist/cli/main.js');
-  writeFileSync(join(installed, 'import.mjs'), 'import {SmipRuntime, verifyBundle} from "smip"; if (typeof SmipRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
+  writeFileSync(join(installed, 'import.mjs'), 'import {MipmuxRuntime, verifyBundle} from "mipmux"; if (typeof MipmuxRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
   execFileSync(process.execPath, [join(installed, 'import.mjs')], { cwd: '/' });
   const remote = await controlledHttpMcp(); t.after(() => remote.close());
   let phase: { kind: 'finish' } | { kind: 'question'; calls: number } |
@@ -82,7 +82,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const prompt = join(directory, 'discovery.md');
   const shippedTemplate = join(packageRoot, 'dist/prompts/discovery.md');
   copyFileSync(shippedTemplate, prompt, constants.COPYFILE_EXCL);
-  const stockBytes = readFileSync(prompt), systemMarker = '<!-- smip:section system -->\n';
+  const stockBytes = readFileSync(prompt), systemMarker = '<!-- mipmux:section system -->\n';
   const promptBytes = Buffer.from(stockBytes.toString().replace(systemMarker, systemMarker + 'RELOCATED_EDITABLE_PROMPT\n'));
   writeFileSync(prompt, promptBytes);
   provider.config.promptTemplatePath = prompt;
@@ -93,7 +93,7 @@ test('local package audits resources and executes relocated library, native, CLI
   writeFileSync(specPath, JSON.stringify(spec));
   writeFileSync(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, defaultEnhancementMode: 'augment', credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
-  const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/smip'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
+  const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/mipmux'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'relocation-test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } },
@@ -141,7 +141,7 @@ test('local package audits resources and executes relocated library, native, CLI
     const nativeTerminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt,
       bundle: Type.Object({ directory: Type.String() }) })).Parse(JSON.parse(nativeResult));
     assert.equal(nativeTerminal.state, 'ready'); assert(nativeTerminal.state === 'ready');
-    assert.equal(nativeTerminal.discovery.templateVersion, 'smip-discovery-template-v1');
+    assert.equal(nativeTerminal.discovery.templateVersion, 'mipmux-discovery-template-v1');
     assert.equal(nativeTerminal.discovery.template.identity.sha256, createHash('sha256').update(stockBytes).digest('hex'));
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('Leave the prompt COMPLETELY unchanged'));
     assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('<current_prompt_content>'));
@@ -177,7 +177,7 @@ test('local package audits resources and executes relocated library, native, CLI
     const interactiveValidator = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: DiscoveryReceipt }));
     assert(interactiveValidator.Check(interactiveReply.structuredContent), JSON.stringify(interactiveReply));
     const interactive = interactiveReply.structuredContent;
-    assert.equal(questions, 1); assert.equal(interactive.discovery.templateVersion, 'smip-discovery-template-v1');
+    assert.equal(questions, 1); assert.equal(interactive.discovery.templateVersion, 'mipmux-discovery-template-v1');
     assert(JSON.stringify(provider.requests.at(-1)!.messages).includes('installed custom context'));
     const updatedTemplate = Buffer.from(stockBytes.toString().replace(systemMarker, systemMarker + 'UPDATED_EXTERNAL_TEMPLATE\n'));
     const fetchRequestStart = provider.requests.length;

@@ -84,8 +84,8 @@ export class PiRunner implements DiscoveryRunner {
     const dependency: unknown = JSON.parse(await readFile(new URL('../dependency-identity.json', import.meta.url), 'utf8'));
     if (!dependencyValidator.Check(dependency)) throw new WorkspaceFailure('invalidDependencyIdentity');
     const receipt: DiscoveryReceipt = {
-      adapter: 'smip-pi-v2', sdk: '1.0.2', buildLockSHA256: dependency.buildLockSHA256,
-      templateVersion: 'smip-discovery-template-v1',
+      adapter: 'mipmux-pi-v2', sdk: '1.0.2', buildLockSHA256: dependency.buildLockSHA256,
+      templateVersion: 'mipmux-discovery-template-v1',
       template: { path: this.config.promptTemplatePath, identity: templateIdentity },
       policyIdentity: { sha256: sha256(prepared.systemPrompt), byteCount: Buffer.byteLength(prepared.systemPrompt) },
       requested: { provider: this.config.provider, model: this.config.model, thinking: this.config.thinking },

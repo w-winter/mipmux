@@ -8,8 +8,8 @@ import { setImmediate as turn, setTimeout as delay } from 'node:timers/promises'
 import { test } from 'node:test';
 import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
-import { serveSmipStdio } from '../src/mcp/server.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { serveMipmuxStdio } from '../src/mcp/server.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { ClientRuntime } from '../src/runtime/client-runtime.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import type { DiscoveryEvent } from '../src/contracts/discovery.js';
@@ -18,7 +18,7 @@ function barrier() { let release!: () => void; const promise = new Promise<void>
 const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
 for (const scenario of ['timeout', 'abort'] as const) {
   test(`production wait settles independently of held progress: ${scenario}`, async t => {
-    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'smip-mcp-wait-pass3-'));
+    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'mipmux-mcp-wait-pass3-'));
     const root = join(directory, 'root'), out = join(directory, 'out'); await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'source');
     const running = barrier(), aborted = barrier(), releaseRunner = barrier(), waitEntered = barrier(), outputEntered = barrier();
     let progress!: (event: DiscoveryEvent) => void;
@@ -28,8 +28,8 @@ for (const scenario of ['timeout', 'abort'] as const) {
       aborted.release(); await releaseRunner.promise; throw new Error('Cancelled runner boundary');
     } };
     let client!: ClientRuntime;
-    const createClient = SmipRuntime.prototype.createClient;
-    t.mock.method(SmipRuntime.prototype, 'createClient', function(this: SmipRuntime) {
+    const createClient = MipmuxRuntime.prototype.createClient;
+    t.mock.method(MipmuxRuntime.prototype, 'createClient', function(this: MipmuxRuntime) {
       client = createClient.call(this, runner); return client;
     });
     let handlerSettled = false, handlerResult: unknown;
@@ -57,7 +57,7 @@ for (const scenario of ['timeout', 'abort'] as const) {
       if (value && typeof value === 'object' && 'id' in value && typeof value.id === 'number') responses.get(value.id)?.(value);
       if (typeof callback === 'function') callback(); return true;
     });
-    const host = serveSmipStdio({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    const host = serveMipmuxStdio({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       nativeEnvironment: {}, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: 12000 });
     let id = 0;
     const call = async (name: string, args: unknown) => {

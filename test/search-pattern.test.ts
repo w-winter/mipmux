@@ -17,7 +17,7 @@ const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type
 const correctionReply = Compile(Type.Object({ warning: Type.String() }));
 
 test('public file_search uses source pattern inference, trimming and literal flexible spaces', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-search-pattern-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-search-pattern-'));
   const root = join(base, 'root'), out = join(base, 'out'); await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'example.txt'), 'anchor\n^anchor$\nfunc()\nlet\tfoo.bar\nlet\tfooXbar\none\ttwo\none\t two\nend\\E\tvalue\nANCHOR\n' +
     '++\na++b\n ++ \nleftover\nupright\nleft\nright\naleft\nrightward\ncafé\ncafétéria\ndécafé\néwordé\nword\nsword\n' +
@@ -26,7 +26,7 @@ test('public file_search uses source pattern inference, trimming and literal fle
     'nul\0spaced\tneedle\nfunc)\n');
   const config = join(base, 'config.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],

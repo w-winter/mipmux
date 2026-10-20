@@ -7,7 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, resolve } from 'node:path';
 import { prepareText } from '../src/exploration/lines.js';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import type { ProcessSpec } from '../src/runtime/process-supervisor.js';
@@ -38,8 +38,8 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
   const source = '\uFEFFsource\r\nlast line', report = 'START\n' + 'complete report evidence\n'.repeat(4000) + 'END';
   await writeFile(join(root, 'file.txt'), source);
   await writeFile(join(root, 'oversize.txt'), 'OPTIONAL'.repeat(100000));
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [provider.config.authPath, provider.config.modelsPath], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [provider.config.authPath, provider.config.modelsPath], terminationGraceMs: 100,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   try {
     const messages: string[] = [];
     const runner = new PiRunner(provider.config, runtime.supervisor, async (operation, signal) => {
@@ -63,7 +63,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     const firstMessage = Compile(Type.Object({ content: Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() }), { minItems: 1 }) }))
       .Parse(provider.requests[0]!.messages[0]);
     const input = inputs[0]!;
-    assert.equal(firstMessage.content[0]!.text, messages[0] + '\n\n<smip_runtime>\n' + input.initialContext + '\n</smip_runtime>');
+    assert.equal(firstMessage.content[0]!.text, messages[0] + '\n\n<mipmux_runtime>\n' + input.initialContext + '\n</mipmux_runtime>');
     assert.equal(input.currentPrompt, request.task);
     assert(messages[0]?.includes('<current_prompt_content>\n' + request.task + '\n</current_prompt_content>'));
     assert(input.initialContext.includes(request.constraints));
@@ -124,8 +124,8 @@ test('discovery material paging measures the real Pi result and returns every co
     : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
   let continuation: { digest: string; offset: number } | null = null;
   const root = join(provider.directory, 'source'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
@@ -246,8 +246,8 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     expectedRevision: 0, maxOutputBytes: 10000, op: 'append', text: '\n\n' + JSON.stringify(handoff)  }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'Completed handoff', stop: 'end_turn', tokens: 10 });
   const root = join(provider.directory, 'root'), output = join(provider.directory, 'out'); await mkdir(root); await mkdir(output);
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {} });
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   try {
     const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal))), other = runtime.createClient(null);
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);

@@ -4,15 +4,15 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest, type RuntimeOptions } from '../../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest, type RuntimeOptions } from '../../src/index.js';
 import { identity } from '../../src/context/material-store.js';
 
 export async function prepareDeliveryFixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-delivery-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-delivery-'));
   const root = join(directory, 'source'), output = join(directory, 'out');
   await mkdir(root); await mkdir(output);
-  const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+  const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
   const full = '\uFEFFpublic struct Delivery {\r\n public let title: String\r\n}\r\n';
@@ -42,7 +42,7 @@ export async function prepareDeliveryFixture() {
     budgetUnits: 100000, outputName: 'packet' };
   const input = { workspace: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, requestId: 'public-delivery', request };
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
-    nativeExecutable: resolve(`libexec/${process.platform}-${process.arch}/SmipBridge`), nativeEnvironment: {}, git: { executable: git } };
+    nativeExecutable: resolve(`libexec/${process.platform}-${process.arch}/MipmuxBridge`), nativeEnvironment: {}, git: { executable: git } };
   const handoff = { clarifiedTask: 'Inspect the complete public mixed-material packet.', architecture: 'Swift types and text evidence form a synthetic review packet.',
     relationships: ['Summary supplies retained syntactic structure; Delivery supplies complete source; the patch deletes old evidence and adds an untracked file.'], ambiguities: [] };
   await writeFile(join(directory, 'build.json'), JSON.stringify(input, null, 2) + '\n');
@@ -59,7 +59,7 @@ export async function verifyDeliveryMaterials(directory: string, fixture: Awaite
     const body = item.bodies[0]!;
     if (item.record.kind === 'source') {
       if (item.record.selection.kind === 'codemap') {
-        const runtime = new SmipRuntime(fixture.options), signal = new AbortController().signal;
+        const runtime = new MipmuxRuntime(fixture.options), signal = new AbortController().signal;
         try {
           const workspace = await runtime.declare(fixture.input.workspace, signal);
           const inventory = await workspace.refresh(signal);

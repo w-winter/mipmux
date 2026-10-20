@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
 import { gitValidator, type GitRequest } from '../src/contracts/git.js';
 import { GitArtifactReply } from '../src/contracts/git-artifact.js';
 import { selectionValidator } from '../src/contracts/selection.js';
@@ -15,7 +15,7 @@ import { scopedCall } from '../src/discovery/scoped-tools.js';
 import { piToolResult } from '../src/runtime/tool-result.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
-import type { RuntimeOptions } from '../src/runtime/smip-runtime.js';
+import type { RuntimeOptions } from '../src/runtime/mipmux-runtime.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import Type from 'typebox';
@@ -25,14 +25,14 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 
 const signal = () => new AbortController().signal;
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const replyValidator = Compile(GitArtifactReply);
 const readReplyValidator = Compile(Type.Object({ kind: Type.Literal('read'), content: Type.String(),
   firstLine: Type.Integer(), lastLine: Type.Integer(), returnedLineCount: Type.Integer(),
   continuation: Type.Union([Continuation, Type.Null()]) }));
 
-async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options)) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-scout-artifacts-')), root = join(base, 'root'), out = join(base, 'out');
+async function fixture(makeRuntime: (options: RuntimeOptions) => MipmuxRuntime = options => new MipmuxRuntime(options)) {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-scout-artifacts-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -46,7 +46,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
       { kind: 'codemap', source: { root: 'r', path: 'code.swift' } }] },
     requiredSources: [], documents: [], patches: [], copyPreset: 'codeReview',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
-  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };
   const runtime = makeRuntime(options);
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
@@ -93,7 +93,7 @@ test('failed or cancelled artifact replies retain publication and committed sele
   for (const effect of ['cap', 'cancelEncoding', 'cancelGrant', 'cancelPerFileGrant'] as const) {
     const controller = new AbortController(); let encoded = false;
     const f = await fixture(options => {
-      class Runtime extends SmipRuntime {
+      class Runtime extends MipmuxRuntime {
         override makeBridge() {
           class Bridge extends BridgeClient {
             publicationOwner = false;
@@ -146,7 +146,7 @@ test('real Pi dispatch publishes and auto-selects Git artifacts into its complet
     }
     return { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 };
   });
-  const runtime = new SmipRuntime({ ...f.options, copyContext: copyContext(), cachePath: f.options.cachePath + '-pi' });
+  const runtime = new MipmuxRuntime({ ...f.options, copyContext: copyContext(), cachePath: f.options.cachePath + '-pi' });
   const client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
   try {
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out }, signal());
@@ -167,7 +167,7 @@ test('real Pi dispatch publishes and auto-selects Git artifacts into its complet
 test('primary commit failure warns and later grant authorization failure retains the encoded publication reply', async () => {
   let denyPrimary = true;
   const f = await fixture(options => {
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -331,7 +331,7 @@ test('scout reads selected historical artifacts, not merely advertised aliases, 
 test('cancellation during selected-artifact authorization propagates instead of becoming a read denial', async () => {
   const controller = new AbortController(); let interrupt = false;
   const f = await fixture(options => {
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {

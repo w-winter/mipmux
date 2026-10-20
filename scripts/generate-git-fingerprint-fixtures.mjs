@@ -43,7 +43,7 @@ ${model}
  FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject: outputs, options: [.sortedKeys]))
 } }
 `;
-const scratch = mkdtempSync(join(tmpdir(), 'smip-git-fingerprint-reference-'));
+const scratch = mkdtempSync(join(tmpdir(), 'mipmux-git-fingerprint-reference-'));
 try {
   for (const file of files) { writeFileSync(join(scratch, file.path), file.text); utimesSync(join(scratch, file.path), mtime, mtime); }
   writeFileSync(join(scratch, 'original.swift'), adapter);

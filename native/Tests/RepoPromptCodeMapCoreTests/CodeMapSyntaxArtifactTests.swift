@@ -1,4 +1,4 @@
-// Modified for smip: uses portable Crypto hashing.
+// Modified for mipmux: uses portable Crypto hashing.
 import Crypto
 import Foundation
 import XCTest

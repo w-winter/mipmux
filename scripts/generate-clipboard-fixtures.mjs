@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const [checkout] = process.argv.slice(2);
 if (!checkout) throw new Error('Usage: node scripts/generate-clipboard-fixtures.mjs <pinned-rpce-checkout>');
 const fixtureDirectory = fileURLToPath(new URL('../test/fixtures/rpce-clipboard/', import.meta.url));
-withReferenceDirectory('smip-clipboard-reference-', directory => {
+withReferenceDirectory('mipmux-clipboard-reference-', directory => {
 writeFileSync(join(directory, 'adapters.swift'), readFileSync(join(fixtureDirectory, 'reference-adapters.swift')));
 const revision = '43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');

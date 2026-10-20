@@ -17,7 +17,7 @@ test('native automatic Review rendering matches original RPCE coordinator observ
   const raw: unknown = JSON.parse(await readFile(resolve('test/fixtures/rpce-automatic-review-git.json'), 'utf8'));
   assert(validator.Check(raw));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const bridge = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     env: {}, supervisor });
   try {
     for (const fixture of raw.cases) {

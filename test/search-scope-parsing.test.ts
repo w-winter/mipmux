@@ -72,7 +72,7 @@ test('native raw scopes use catalog ownership, source ambiguity and exact-clause
     [{ ...exact.exactClauses[0]!, clauseIndex: exact.spec.clauses.length }],
     [exact.exactClauses[0]!, exact.exactClauses[0]!],
   ]) {
-    const malformed = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), ['scope-parser'], {
+    const malformed = spawnSync(resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), ['scope-parser'], {
       input: JSON.stringify({ wireVersion: 1, requestId: 'invalid-scope', generation: 'scope-parser',
         operation: { kind: 'refreshSearchScope', roots, scope: { ...exact, exactClauses } } }) + '\n', encoding: 'utf8',
     });

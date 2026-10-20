@@ -61,11 +61,11 @@ test('confined retention matches original count, age, throttle and explicit owne
   await mkdir('test-output', { recursive: true });
   const cases = fixture.Parse(JSON.parse(await readFile('test/fixtures/rpce-git-retention/cases.json', 'utf8')));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), env: {} });
+  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), env: {} });
   const proof: unknown[] = [], shift = Math.floor(Date.now() / 1000) - 1700000000;
   try {
     for (const entry of cases) {
-      const output = await mkdtemp(join(tmpdir(), 'smip-retention-'));
+      const output = await mkdtemp(join(tmpdir(), 'mipmux-retention-'));
       const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'out', absolutePath: output, access: 'output', expected: null }] }, signal());
       const root = opened.result.roots[0]; assert(root);
       for (const row of entry.entries) await seedSnapshot(bridge, root.handle, row, shift);
@@ -96,12 +96,12 @@ test('confined retention matches original count, age, throttle and explicit owne
 });
 
 test('retention refuses source capabilities and obsolete state before changing stored bytes', async () => {
-  const output = await mkdtemp(join(tmpdir(), 'smip-retention-state-'));
+  const output = await mkdtemp(join(tmpdir(), 'mipmux-retention-state-'));
   await mkdir(join(output, '_git_data'));
   const bytes = JSON.stringify({ version: 1, lastCleanupAt: '2023-11-14T22:13:20Z' });
   await writeFile(join(output, '_git_data/maintenance.json'), bytes);
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), env: {} });
+  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), env: {} });
   try {
     const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'out', absolutePath: output, access: 'output', expected: null }] }, signal());
     const root = opened.result.roots[0]; assert(root);
@@ -115,11 +115,11 @@ test('retention refuses source capabilities and obsolete state before changing s
 });
 
 test('cancelling queued retention joins the worker and leaves completed snapshot files', async t => {
-  const output = await mkdtemp(join(tmpdir(), 'smip-retention-cancel-'));
+  const output = await mkdtemp(join(tmpdir(), 'mipmux-retention-cancel-'));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), children: OwnedProcess[] = [];
   const spawn = supervisor.spawn.bind(supervisor);
   t.mock.method(supervisor, 'spawn', (spec: ProcessSpec) => { const child = spawn(spec); children.push(child); return child; });
-  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), env: {} });
+  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), env: {} });
   try {
     const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'out', absolutePath: output, access: 'output', expected: null }] }, signal());
     const root = opened.result.roots[0]; assert(root);

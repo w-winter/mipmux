@@ -7,16 +7,16 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import type { ContextBuildRequest } from '../src/contracts/context.js';
 import { gitValidator } from '../src/contracts/git.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
-import type { RuntimeOptions } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
+import type { RuntimeOptions } from '../src/runtime/mipmux-runtime.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 
 const signal = () => new AbortController().signal;
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
-async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = options => new SmipRuntime(options)) {
-  const base = await mkdtemp(join(tmpdir(), 'smip-artifact-authority-')), root = join(base, 'root'), out = join(base, 'out');
+async function fixture(makeRuntime: (options: RuntimeOptions) => MipmuxRuntime = options => new MipmuxRuntime(options)) {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-artifact-authority-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -28,7 +28,7 @@ async function fixture(makeRuntime: (options: RuntimeOptions) => SmipRuntime = o
     requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
   const runtime = makeRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
   const draft = await workspace.createDraft(request, signal());
@@ -82,7 +82,7 @@ test('manifest ingress failure advertises no selectable authority and cancellati
   let interrupt: 'missing' | 'cancel' | null = 'missing';
   const controller = new AbortController();
   const f = await fixture(options => {
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -113,7 +113,7 @@ test('manifest ingress failure advertises no selectable authority and cancellati
 });
 
 test('Git artifact output access retains configured credential denies', async () => {
-  const f = await fixture(options => new SmipRuntime({ ...options,
+  const f = await fixture(options => new MipmuxRuntime({ ...options,
     credentialPaths: [join(options.cachePath, '../out/_git_data')] }));
   try {
     const published = await f.draft.publishGitSnapshot(f.diff, f.options, signal()); assert(published.kind === 'single');
@@ -129,7 +129,7 @@ test('advertisement replacement invalidates a pending read and checkout changes 
   const entered = new Promise<void>(resolve => { enter = resolve; }), resume = new Promise<void>(resolve => { release = resolve; });
   let hold = false, moved = false, moveCheckout: () => Promise<void> = async () => {};
   const f = await fixture(options => {
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {

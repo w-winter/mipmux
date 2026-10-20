@@ -10,7 +10,7 @@ const revision = '43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3';
 if (execFileSync('git', ['-C', checkout, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() !== revision) throw new Error('Reference revision differs.');
 const repo = resolve(fileURLToPath(new URL('..', import.meta.url)));
 process.chdir(repo);
-const run = mkdtempSync(join(tmpdir(), 'smip-structure-reference-'));
+const run = mkdtempSync(join(tmpdir(), 'mipmux-structure-reference-'));
 try {
   const reference = resolve(checkout, 'Sources/RepoPrompt/Infrastructure') + '/';
   const provenance = JSON.parse(readFileSync('test/fixtures/rpce-structure/provenance.json'));
@@ -19,7 +19,7 @@ try {
     if (actual !== entry.sha256) throw new Error('Modified reference source: ' + entry.path);
   }
   const source=(path,start,end)=>readFileSync(reference+path,'utf8').split('\n').slice(start-1,end).join('\n');
-  const native=name=>readFileSync('native/Sources/SmipBridge/'+name,'utf8');
+  const native=name=>readFileSync('native/Sources/MipmuxBridge/'+name,'utf8');
   const wc='WorkspaceContext/',mcp='MCP/';
   // Immutable metadata bindings are shared; bounded traversal and explicit resolver bodies come from RPCE.
   const graphSource = readFileSync(reference + wc + 'WorkspaceCodemapSelectionGraph.swift', 'utf8');

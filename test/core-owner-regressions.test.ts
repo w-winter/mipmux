@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { setImmediate } from 'node:timers/promises';
 import { test } from 'node:test';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
@@ -17,13 +17,13 @@ function barrier() {
 const signal = () => new AbortController().signal;
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-core-owner-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-core-owner-'));
   const root = join(base, 'root'), outputRoot = join(base, 'out');
   await mkdir(root); await mkdir(outputRoot);
   await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');
   return { base, root, spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot },
     options: { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+      nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } } };
 }
 
@@ -31,7 +31,7 @@ test('refresh observers settle on their publication while a later scan remains h
   const { spec, options } = await fixture();
   const entered = barrier(), resume = barrier(), firstEntered = barrier(), firstResume = barrier();
   let lists = 0, firstPublished = false;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -72,7 +72,7 @@ test('explicit refresh replaces a retired generation without rebinding a replace
     const { root, spec, options } = await fixture();
     const bridges: BridgeClient[] = [];
     let retireNextList = false;
-    class Runtime extends SmipRuntime {
+    class Runtime extends MipmuxRuntime {
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -114,7 +114,7 @@ test('closing a shared extraction consumer does not join the producer', async ()
   await mkdir(join(base, 'out-b'));
   const entered = barrier(), resume = barrier(), secondRead = barrier(), consumerClosed = barrier();
   let reads = 0, extractions = 0;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       let consumer = false;
       class Bridge extends BridgeClient {
@@ -150,7 +150,7 @@ test('runtime shutdown reaches an extraction producer retained by a client works
   await mkdir(join(base, 'out-b'));
   const entered = barrier(), aborted = barrier(), resume = barrier(), secondRead = barrier();
   let reads = 0;
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {

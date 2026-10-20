@@ -79,14 +79,14 @@ struct DiscoveryTemplate {
             // Splitting a valid String at ASCII LF keeps every UTF-8 fragment valid.
             // swiftlint:disable:next optional_data_string_conversion
             .map { String(decoding: $0, as: UTF8.self) }
-        guard lines.count > 1, lines.first == "# smip discovery template v1" else {
+        guard lines.count > 1, lines.first == "# mipmux discovery template v1" else {
             throw DiscoveryTemplateDiagnostic.header
         }
         var parsed: [Section: [Segment]] = [:]
         var active: OpenSection?
         for (index, line) in lines.dropFirst().enumerated() {
             let number = index + 2
-            if line == "<!-- smip:end -->" {
+            if line == "<!-- mipmux:end -->" {
                 guard let current = active else {
                     throw DiscoveryTemplateDiagnostic.structure(.unexpectedEnd, line: number)
                 }
@@ -94,8 +94,8 @@ struct DiscoveryTemplate {
                                                             section: current.name,
                                                             startingLine: current.openingLine + 1)
                 active = nil
-            } else if line.hasPrefix("<!-- smip:section "), line.hasSuffix(" -->") {
-                let name = String(line.dropFirst("<!-- smip:section ".count).dropLast(" -->".count))
+            } else if line.hasPrefix("<!-- mipmux:section "), line.hasSuffix(" -->") {
+                let name = String(line.dropFirst("<!-- mipmux:section ".count).dropLast(" -->".count))
                 guard let section = Section(rawValue: name) else {
                     throw DiscoveryTemplateDiagnostic.structure(.unknownSection, line: number)
                 }
@@ -106,7 +106,7 @@ struct DiscoveryTemplate {
                     throw DiscoveryTemplateDiagnostic.section(.duplicate, line: number, section: section)
                 }
                 active = OpenSection(name: section, openingLine: number)
-            } else if line.contains("<!-- smip:") {
+            } else if line.contains("<!-- mipmux:") {
                 throw DiscoveryTemplateDiagnostic.structure(.malformedMarker, line: number)
             } else if let current = active {
                 current.lines.append(line)
@@ -127,7 +127,7 @@ struct DiscoveryTemplate {
         var segments: [Segment] = []
         var cursor = body.startIndex
         var line = startingLine
-        while let start = body.range(of: "{{smip", options: .literal, range: cursor ..< body.endIndex) {
+        while let start = body.range(of: "{{mipmux", options: .literal, range: cursor ..< body.endIndex) {
             let literal = String(body[cursor ..< start.lowerBound])
             segments.append(.literal(literal))
             line += literal.utf8.count(where: { $0 == 0x0A })
@@ -135,10 +135,10 @@ struct DiscoveryTemplate {
                 throw DiscoveryTemplateDiagnostic.placeholder(.unclosed, line: line, section: section)
             }
             let token = String(body[start.lowerBound ..< end.upperBound])
-            guard token.hasPrefix("{{smip:") else {
+            guard token.hasPrefix("{{mipmux:") else {
                 throw DiscoveryTemplateDiagnostic.placeholder(.malformed, line: line, section: section)
             }
-            let name = String(token.dropFirst("{{smip:".count).dropLast(2))
+            let name = String(token.dropFirst("{{mipmux:".count).dropLast(2))
             guard let value = Value(rawValue: name) else {
                 throw DiscoveryTemplateDiagnostic.placeholder(.unknown, line: line, section: section)
             }

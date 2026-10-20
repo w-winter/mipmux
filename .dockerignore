@@ -7,8 +7,8 @@ dist-test
 native/.build
 native/.swiftpm
 native/.dependencies
-.smip-cache
-.smip-work
+.mipmux-cache
+.mipmux-work
 test-output
 local-packages
 libexec

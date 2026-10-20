@@ -8,10 +8,10 @@ import { getDefaultHighWaterMark } from 'node:stream';
 import { test } from 'node:test';
 import { McpServer, fromJsonSchema } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
-import { serveSmipStdio } from '../src/mcp/server.js';
+import { serveMipmuxStdio } from '../src/mcp/server.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import { verifyBundle } from '../src/context/verify.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
 const config = { copyContext: copyContext(), cachePath: '/unavailable/cache', nativeExecutable: '/unavailable/native', nativeEnvironment: {}, terminationGraceMs: 100,
@@ -47,9 +47,9 @@ for (const scenario of ['subscription', 'existing', 'progress', 'outputError', '
       }
       return register.call(this, ...args);
     });
-    t.mock.method(SmipRuntime.prototype, 'close', async () => { appEntered.release(); await resumeApp.promise; applicationJoined = true;
+    t.mock.method(MipmuxRuntime.prototype, 'close', async () => { appEntered.release(); await resumeApp.promise; applicationJoined = true;
       if (scenario === 'cleanupError') throw new Error('synthetic cleanup secret'); });
-    const host = serveSmipStdio(config);
+    const host = serveMipmuxStdio(config);
     wire.onmessage?.({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { _meta: meta, name: 'context_builder_result', arguments: { jobId: 'absent' } } });
     await turn();
     wire.onmessage?.({ jsonrpc: '2.0', id: 3, method: 'subscriptions/listen', params: { _meta: meta, notifications: { toolsListChanged: true } } });
@@ -86,14 +86,14 @@ for (const scenario of ['subscription', 'existing', 'progress', 'outputError', '
     await new Promise<void>(resolve => originalWrite('shared stdout remains usable\n', () => resolve()));
     // Callback completion after cancellation cannot resurrect a cancelled protocol write.
     callbacks.forEach(callback => callback());
-    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'smip-mcp-output-pass2-'));
+    await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'mipmux-mcp-output-pass2-'));
     await writeFile(join(directory, 'proof.json'), JSON.stringify({ scenario, applicationJoined, progressSettled, pendingSettled, sharedStdoutOpen: !process.stdout.destroyed,
       subscriptionAcknowledged: true, acceptedRecords: accepted.length }) + '\n');
   });
 }
 
 test('production stdio shutdown waits for real claimed publication before closing output', async t => {
-  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'smip-mcp-publication-pass2-'));
+  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'mipmux-mcp-publication-pass2-'));
   const root = join(directory, 'root'), out = join(directory, 'out'); await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'body');
   const published = barrier(), resume = barrier();
   const originalRequest = BridgeClient.prototype.request;
@@ -113,8 +113,8 @@ test('production stdio shutdown waits for real claimed publication before closin
     }
     const callback = args.find(arg => typeof arg === 'function'); if (typeof callback === 'function') callback(); return true;
   });
-  const host = serveSmipStdio({ ...config, copyContext: copyContext(), cachePath: join(directory, 'cache'),
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`) });
+  const host = serveMipmuxStdio({ ...config, copyContext: copyContext(), cachePath: join(directory, 'cache'),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`) });
   let id = 0;
   const call = async (name: string, args: unknown) => {
     const requestId = ++id;

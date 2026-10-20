@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { identity } from '../src/context/material-store.js';
 
 const casesValidator = Compile(Type.Array(Type.Object({
@@ -18,13 +18,13 @@ const signal = () => new AbortController().signal;
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const directory = await mkdtemp(join(tmpdir(), 'smip-source-decoding-'));
+  const directory = await mkdtemp(join(tmpdir(), 'mipmux-source-decoding-'));
   const root = join(directory, 'source'), outputRoot = join(directory, 'out');
   await mkdir(root); await mkdir(outputRoot);
-  const runtime = new SmipRuntime({
+  const runtime = new MipmuxRuntime({
     copyContext: copyContext(), cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 200000,
     credentialPaths: [], nativeEnvironment: {},
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
   });
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot };
   return { directory, root, runtime, spec };
@@ -114,7 +114,7 @@ test('decoded source drives reads, full exports, slices, codemaps and saved/curr
 test('malformed mandatory Git ignore text cannot silently change source visibility', async () => {
   const f = await fixture();
   try {
-    const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+    const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
     execFileSync(git, ['init', '-q'], { cwd: f.root, env: { PATH: '/usr/bin:/bin', HOME: f.directory,
       GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
     await writeFile(join(f.root, '.gitignore'), Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('*.swift\n', 'utf16le')]));

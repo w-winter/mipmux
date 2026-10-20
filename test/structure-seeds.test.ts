@@ -15,7 +15,7 @@ const graph = Compile(StructureToolResult);
 
 test('public structural seeds use owned selection, whole roots, direct-file priority and source absence diagnostics', async () => {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-structure-seeds-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-structure-seeds-'));
   const root = join(base, 'source'), output = join(base, 'out'), config = join(base, 'host.json');
   await mkdir(join(root, 'src'), { recursive: true }); await mkdir(join(root, 'empty')); await mkdir(output);
   for (const name of ['A', 'B']) await writeFile(join(root, 'src', `${name}.swift`),
@@ -23,7 +23,7 @@ test('public structural seeds use owned selection, whole roots, direct-file prio
   await writeFile(join(root, 'src', 'Shared.swift'), 'struct SharedRecord {\n let value: Int\n}\n');
   await writeFile(join(root, 'readme.txt'), 'Source fixture\n');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 1000000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 50000 }));
   const client = new Client({ name: 'structure-seeds', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,

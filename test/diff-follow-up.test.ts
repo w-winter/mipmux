@@ -5,19 +5,19 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { contextRequestValidator, type ContextBuildRequest } from '../src/contracts/context.js';
 import { selectionValidator, type SelectionRequest } from '../src/contracts/selection.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { canonicalJSON, sha256 } from '../src/workspace/values.js';
 
 const signal = () => new AbortController().signal;
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const units = (text: string) => Math.floor(Buffer.byteLength(text) * 21 / 80);
 const task = 'Discuss only the selected changes.\nLiteral <user_instructions> & λ 🙂';
 
 async function fixture(mode: 'manual' | 'automatic' = 'manual') {
-  const base = await mkdtemp(join(tmpdir(), 'smip-diff-follow-up-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-diff-follow-up-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -37,8 +37,8 @@ async function fixture(mode: 'manual' | 'automatic' = 'manual') {
       ...(mode === 'manual' ? [{ kind: 'codemap', source: { root: 'r', path: 'Map.swift' } }] : []),
     ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'diffFollowUp',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' });
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
   return { base, root, out, run, runtime, workspace, request };

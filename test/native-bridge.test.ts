@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 
-const executable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+const executable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const signal = () => new AbortController().signal;
 const identity = (bytes: Buffer) => ({ sha256: createHash('sha256').update(bytes).digest('hex'), byteCount: bytes.length });
 

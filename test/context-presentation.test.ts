@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { prepareDeliveryFixture, verifyDeliveryMaterials } from './fixtures/delivery-fixture.js';
 import { loadVerifiedBundle } from '../src/context/verify.js';
 import { renderBundle } from '../src/context/render.js';
@@ -12,7 +12,7 @@ import { canonicalJSON } from '../src/workspace/values.js';
 
 test('recipient Markdown retains the literal prompt and material paths with exact verified bodies', async () => {
   const fixture = await prepareDeliveryFixture();
-  const runtime = new SmipRuntime(fixture.options), signal = new AbortController().signal;
+  const runtime = new MipmuxRuntime(fixture.options), signal = new AbortController().signal;
   const addition = '\n\n<discovered_architecture>\nDelivery supplies complete source.\n' +
     'Summary supplies a code map; the patch covers deletion and addition.\n' +
     'These are syntax-derived relationships, not compiler-resolved dependencies.\n</discovered_architecture>';

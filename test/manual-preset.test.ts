@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { contextRequestValidator, type ContextBuildRequest } from '../src/contracts/context.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { gitValidator } from '../src/contracts/git.js';
@@ -30,7 +30,7 @@ async function fixture(copyPreset: ReturnType<typeof manual>, mode = 'manual') {
       ...(mode === 'manual' ? [{ kind: 'codemap', source: { root: 'r', path: 'Map.swift' } }] : []),
     ] }, requiredSources: [], documents: [], patches: [], copyPreset: 'manual',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' });
-  const base = await mkdtemp(join(tmpdir(), 'smip-manual-preset-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-manual-preset-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   await writeFile(join(root, 'Full.swift'), 'struct Full { let map: ManualPeer; func body() { print("FULL BODY") } }\n');
   await writeFile(join(root, 'Slice.swift'), 'struct Slice {\nlet value: Int\nfunc body() { print("SLICE TAIL") }\n}\n');
@@ -40,8 +40,8 @@ async function fixture(copyPreset: ReturnType<typeof manual>, mode = 'manual') {
   run(['init', '-q']); run(['add', '.']); run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-qm', 'base']);
   await writeFile(join(root, 'Full.swift'), 'struct Full { let map: ManualPeer; func body() { print("FULL CHANGED") } }\n');
   await writeFile(join(root, 'Other.swift'), 'struct Other { func body() { print("OTHER CHANGED") } }\n');
-  const runtime = new SmipRuntime({ copyContext: copyPreset, cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+  const runtime = new MipmuxRuntime({ copyContext: copyPreset, cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, git: { executable: git } });
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
@@ -306,7 +306,7 @@ test('Manual complete Git uses the explicit active repository, including a null 
     await writeFile(join(peer, 'peer.txt'), 'EXPLICIT PEER CHANGE\n');
     for (const activeGitRoot of ['other', null]) {
       const preset = manual('none', 'None', 'all'); preset.activeGitRoot = activeGitRoot;
-      const runtime = new SmipRuntime({ ...f.runtime.options, copyContext: preset });
+      const runtime = new MipmuxRuntime({ ...f.runtime.options, copyContext: preset });
       try {
       const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'other', absolutePath: peer }],
         exclusions: [], outputRoot: join(f.root, '../out') }, signal());

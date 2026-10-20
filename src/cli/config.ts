@@ -6,7 +6,7 @@ import { isAbsolute } from 'node:path';
 import Type, { type Static, type TSchema } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { PiConfig } from '../discovery/pi-protocol.js';
-import { SmipRuntime } from '../runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import { PiRunner } from '../discovery/pi-runner.js';
 import { freeze, WorkspaceFailure } from '../workspace/values.js';
 import { mcpProtectedPaths } from '../discovery/mcp-config.js';
@@ -46,7 +46,7 @@ export function compose(config: HostConfig, configurationPath: string | null) {
   if (config.git) Object.assign(runtimeOptions, { git: config.git });
   if (config.ignoreSettings) Object.assign(runtimeOptions, { ignoreSettings: config.ignoreSettings });
   if (config.defaultEnhancementMode !== undefined) Object.assign(runtimeOptions, { defaultEnhancementMode: config.defaultEnhancementMode });
-  const runtime = new SmipRuntime(runtimeOptions);
+  const runtime = new MipmuxRuntime(runtimeOptions);
   const runner = config.discovery ? new PiRunner(config.discovery, runtime.supervisor,
     (operation, signal) => runtime.renderPresentation(operation, signal)) : null;
   return { runtime, client: runtime.createClient(runner) };

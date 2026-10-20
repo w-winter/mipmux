@@ -39,7 +39,7 @@ ${retain(mcp + 'WindowTools/MCPGitToolProvider.swift', [[1399, 1417]])}
 }\n`;
 swift += '\n' + readFileSync(join(directory, 'runner.swift'), 'utf8');
 const corpusPath = join(root, 'test/fixtures/rpce-git-snapshot/cases.json');
-const scratch = mkdtempSync(join(tmpdir(), 'smip-artifact-projection-reference-'));
+const scratch = mkdtempSync(join(tmpdir(), 'mipmux-artifact-projection-reference-'));
 try {
   for (const name of ['requests.json', 'empty-reasons.json']) writeFileSync(join(scratch, name), readFileSync(join(directory, name)));
   for (const fixture of JSON.parse(readFileSync(corpusPath))) {

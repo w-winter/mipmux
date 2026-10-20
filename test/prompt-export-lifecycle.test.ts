@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { existsSync, mkdirSync, readdirSync, renameSync, statSync } from 'node:fs';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle, type ContextBuildRequest } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { copyContext } from './fixtures/copy-context.js';
@@ -16,9 +16,9 @@ const request: ContextBuildRequest = { task: 'CAPTURED PROMPT', constraints: '',
   copyPreset: 'standard', budgetUnits: 200000, discoveryHints: [], outputName: 'packet' };
 
 async function fixture(before: (operation: NativeOperation) => Promise<void>, after: (operation: NativeOperation) => Promise<void>, settings = copyContext()) {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-export-lifecycle-'))), root = join(base, 'source'), output = join(base, 'out');
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-export-lifecycle-'))), root = join(base, 'source'), output = join(base, 'out');
   await mkdir(root); await mkdir(output); await writeFile(join(root, 'Source.swift'), 'struct Source { let value: Int }\n');
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
@@ -31,7 +31,7 @@ async function fixture(before: (operation: NativeOperation) => Promise<void>, af
       return new Bridge({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
     }
   }
-  const runtime = new Runtime({ copyContext: settings, cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const runtime = new Runtime({ copyContext: settings, cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000 });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, signal());
   return { base, root, output, runtime, workspace };

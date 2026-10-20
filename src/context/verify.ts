@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { type Manifest, type MaterialRecord, manifestValidator } from '../contracts/context.js';
 import type { InventoryEntry } from '../contracts/inventory.js';
-import type { SmipRuntime } from '../runtime/smip-runtime.js';
+import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import { canonicalJSON, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { inventoryDigest } from '../workspace/artifact-store.js';
 import { codemapRepresentation, identity, type Material, normalizeRanges, sourceId } from './material-store.js';
@@ -246,7 +246,7 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   return materials;
 }
 
-/** Adds current root, delivered-source, policy and comparison checks without editing saved files. */
-export async function verifyCurrentBundle(directory: string, runtime: SmipRuntime, signal: AbortSignal) {
+/** Alias for the runtime's current root, delivered-source, policy and comparison checks. */
+export function verifyCurrentBundle(directory: string, runtime: MipmuxRuntime, signal: AbortSignal) {
   return runtime.verifyCurrentBundle(directory, signal);
 }

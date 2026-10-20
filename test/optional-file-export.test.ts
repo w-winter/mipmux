@@ -7,18 +7,18 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { SmipRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 
 const signal = () => new AbortController().signal;
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const omittedFiles = Compile(Type.Object({ unavailableRoots: Type.Array(Type.Unknown()), unavailableFiles: Type.Array(Type.Object({
   id: Type.String(), selection: Type.Object({ kind: Type.String(), source: Type.Object({ path: Type.String() }) }),
   code: Type.String(), selectionIndex: Type.Integer() })) }));
 
 async function fixture(mode: 'manual' | 'automatic', effect: 'missing' | 'required' | 'changed' | 'restoreBeforeClaim') {
-  const base = await mkdtemp(join(tmpdir(), 'smip-optional-file-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-optional-file-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out);
   await writeFile(join(root, 'Absent.swift'), 'struct AbsentSeed { let peer: AbsentPeer }\n');
   await writeFile(join(root, 'AbsentPeer.swift'), 'struct AbsentPeer { let value: Int }\n');
@@ -31,7 +31,7 @@ async function fixture(mode: 'manual' | 'automatic', effect: 'missing' | 'requir
   run(['add', '.']); run(['commit', '-qm', 'base']);
   const restore = async () => { for (const path of ['Absent.swift', 'slice.txt']) await rename(join(base, path), join(root, path)); };
   let armed = effect === 'restoreBeforeClaim';
-  class Runtime extends SmipRuntime {
+  class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
@@ -43,7 +43,7 @@ async function fixture(mode: 'manual' | 'automatic', effect: 'missing' | 'requir
     }
   }
   const runtime = new Runtime({ copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), nativeEnvironment: {},
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, git: { executable: git } });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal());
   const full = { kind: 'full' as const, source: { root: 'r', path: 'Absent.swift' } };

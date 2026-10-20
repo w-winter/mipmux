@@ -9,19 +9,19 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { Compile } from 'typebox/compile';
 import Type, { type Static } from 'typebox';
 import { GitResult, type GitInput } from '../src/contracts/git.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { copyContext } from './fixtures/copy-context.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
 const result = Compile(GitResult);
 const workspaceResult = Compile(Type.Object({ id: Type.String() }));
 
 async function fixture() {
-  const base = await realpath(await mkdtemp(join(tmpdir(), 'smip-git-routing-')));
+  const base = await realpath(await mkdtemp(join(tmpdir(), 'mipmux-git-routing-')));
   const a = join(base, 'a'), b = join(base, 'b'), linked = join(base, 'linked'), out = join(base, 'out');
   await mkdir(a); await mkdir(b); await mkdir(out);
   const run = (cwd: string, args: string[]) => execFileSync(git, args, { cwd, encoding: 'utf8',
@@ -41,7 +41,7 @@ async function fixture() {
   run(linked, ['commit', '-m', 'LINKED']);
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000,
     terminationGraceMs: 100, credentialPaths: [join(a, 'protected.txt')],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, git: { executable: git } };
   const spec = { roots: [{ name: 'a', absolutePath: a }, { name: 'b', absolutePath: b }], exclusions: [], outputRoot: out };
   return { base, a, b, linked, options, spec, run };
@@ -124,7 +124,7 @@ test('MCP Git reads route ordered repositories and linked checkouts with primary
 
 test('a declared subroot admits its owning checkout advertised worktree for read evidence', async () => {
   const f = await fixture(), sub = join(f.a, 'sub'); await mkdir(sub);
-  const runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   try {
     const workspace = await client.declare({ ...f.spec, roots: [{ name: 'sub', absolutePath: sub }] }, signal());
     const reply = await client.explore(workspace.id, { name: 'git', input: { op: 'status',
@@ -144,7 +144,7 @@ test('real SDK Git status uses frozen multi-repository ownership and requires ex
     : index === 3 ? { kind: 'tool', name: 'git', input: { op: 'log', repositories: [{ root: 'a', path: null, worktree: f.linked }],
       maxOutputBytes: 100000 }, stop: 'tool_use', tokens: 10 }
     : { kind: 'text', text: 'complete', stop: 'end_turn', tokens: 10 });
-  const runtime = new SmipRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
+  const runtime = new MipmuxRuntime(f.options), client = runtime.createClient(new PiRunner(provider.config, runtime.supervisor, (operation, signal) => runtime.renderPresentation(operation, signal)));
   try {
     const workspace = await client.declare(f.spec, signal());
     const job = client.build(workspace.id, 'git-read-routing', { task: 'Inspect selected repositories', constraints: '',
@@ -166,7 +166,7 @@ test('real SDK Git status uses frozen multi-repository ownership and requires ex
 });
 
 test('cancelling multi-repository status settles every supervised process and permits a later read', async t => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   const spawn = runtime.supervisor.spawn.bind(runtime.supervisor), held: OwnedProcess[] = [];
   let armed = true, entered!: () => void;
   const holding = new Promise<void>(resolve => { entered = resolve; });
@@ -174,7 +174,7 @@ test('cancelling multi-repository status settles every supervised process and pe
     if (armed && spec.executable === git && spec.args.includes('status')) {
       const child = spawn({ ...spec, executable: process.execPath, args: [resolve('test/fixtures/held-git-read.mjs')] });
       held.push(child);
-      child.child.stderr.on('data', data => { if (data.toString().includes('SMIP_GIT_READ_HELD')) entered(); });
+      child.child.stderr.on('data', data => { if (data.toString().includes('MIPMUX_GIT_READ_HELD')) entered(); });
       return child;
     }
     return spawn(spec);
@@ -198,7 +198,7 @@ test('implicit Git status resolves a declared metadata directory and skips only 
   await mkdir(worktree); await mkdir(plain);
   f.run(worktree, ['init', '--separate-git-dir', metadata]); f.run(worktree, ['config', 'core.worktree', worktree]);
   await writeFile(join(worktree, 'metadata.txt'), 'METADATA_WORKTREE\n');
-  const runtime = new SmipRuntime(f.options), proof: unknown[] = [];
+  const runtime = new MipmuxRuntime(f.options), proof: unknown[] = [];
   try {
     for (const roots of [[{ name: 'meta', absolutePath: metadata }],
       [{ name: 'plain', absolutePath: plain }, { name: 'meta', absolutePath: metadata }, { name: 'b', absolutePath: f.b }]]) {
@@ -227,7 +227,7 @@ test('implicit Git discovery does not skip security or protocol failures to read
     { code: 'gitProtocolError', script: 'process.stdout.write("unterminated")' }];
   const proof: string[] = [];
   for (const scenario of cases) {
-    const runtime = new SmipRuntime(f.options), spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
+    const runtime = new MipmuxRuntime(f.options), spawn = runtime.supervisor.spawn.bind(runtime.supervisor);
     t.mock.method(runtime.supervisor, 'spawn', (spec: ProcessSpec) => spec.executable === git && spec.cwd === plain && spec.args.includes('--show-toplevel')
       ? spawn({ ...spec, executable: process.execPath, args: ['-e', scenario.script] }) : spawn(spec));
     try {

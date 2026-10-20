@@ -15,10 +15,10 @@ const failureInput = Type.Object({ name: Type.String(), ...Type.Pick(NativeGitSn
   ['mode', 'scope', 'requestedPaths', 'compare', 'compareInput', 'diffText', 'perFile', 'changedFiles', 'summary']).properties });
 
 test('snapshot filesystem boundary preserves ordered bytes, rejects traversal and retains partial failures', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'smip-snapshot-files-')), output = join(base, 'out'), outside = join(base, 'outside');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-snapshot-files-')), output = join(base, 'out'), outside = join(base, 'outside');
   await mkdir(output); await mkdir(outside);
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), env: {} });
+  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), env: {} });
   const proof: unknown[] = [];
   const failures: { code: string; errno: number | null }[] = [];
   try {
@@ -81,11 +81,11 @@ test('snapshot filesystem boundary preserves ordered bytes, rejects traversal an
 });
 
 test('cancelling a snapshot request joins its worker and retains completed files', async t => {
-  const output = await mkdtemp(join(tmpdir(), 'smip-snapshot-cancel-'));
+  const output = await mkdtemp(join(tmpdir(), 'mipmux-snapshot-cancel-'));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), children: OwnedProcess[] = [];
   const spawn = supervisor.spawn.bind(supervisor);
   t.mock.method(supervisor, 'spawn', (spec: ProcessSpec) => { const child = spawn(spec); children.push(child); return child; });
-  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`), env: {} });
+  const bridge = new BridgeClient({ supervisor, executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), env: {} });
   try {
     const roots = await bridge.request({ kind: 'openRoots', roots: [{ name: 'out', absolutePath: output, access: 'output', expected: null }] }, signal());
     const destination = roots.result.roots[0]; assert(destination);

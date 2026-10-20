@@ -9,13 +9,13 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
-import { SmipRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
+import { MipmuxRuntime, verifyBundle, type ContextBuildRequest } from '../src/index.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { GitArtifactReply } from '../src/contracts/git-artifact.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 
 const signal = () => new AbortController().signal;
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const publication = Compile(GitArtifactReply);
 const identifier = Compile(Type.Object({ id: Type.String() }));
 const jobIdentifier = Compile(Type.Object({ jobId: Type.String() }));
@@ -23,7 +23,7 @@ const terminalReply = Compile(Type.Object({ state: Type.String(), localSettled: 
 const disposed = Compile(Type.Object({ kind: Type.Literal('disposed'), deletedSnapshots: Type.Integer() }));
 
 async function fixture() {
-  const base = await mkdtemp(join(tmpdir(), 'smip-context-disposal-')), root = join(base, 'root'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-context-disposal-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await mkdir('test-output', { recursive: true });
   const run = (args: string[]) => execFileSync(git, args, { cwd: root, encoding: 'utf8',
     env: { PATH: '/usr/bin:/bin', HOME: base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
@@ -34,14 +34,14 @@ async function fixture() {
     initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'file.txt' } }] },
     requiredSources: [], documents: [], patches: [], copyPreset: 'standard',
     duplicateUserInstructionsAtTop: false, discoveryHints: [], budgetUnits: 200000, outputName: 'packet' };
-  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`),
+  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, contextBudgetUnits: 200000, git: { executable: git } };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };
   return { base, root, out, request, options, spec };
 }
 
 test('explicit draft disposal removes only current owner manifests and retains packets and other contexts', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   const proof: unknown[] = [];
   try {
     const workspace = await client.declare(f.spec, signal());
@@ -76,7 +76,7 @@ test('explicit draft disposal removes only current owner manifests and retains p
 });
 
 test('disposal cancellation and replaced output roots retain snapshots and permit an explicit retry', async () => {
-  const f = await fixture(), runtime = new SmipRuntime(f.options), client = runtime.createClient(null);
+  const f = await fixture(), runtime = new MipmuxRuntime(f.options), client = runtime.createClient(null);
   try {
     const workspace = await client.declare(f.spec, signal()), draft = await client.createDraft(workspace.id, f.request, signal());
     const reply = publication.Parse(await client.explore(workspace.id, { name: 'git', input: gitValidator.Parse(gitValidator.Default({

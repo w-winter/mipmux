@@ -1,4 +1,4 @@
-// Modified for smip: portable hashing and a required regex-engine fingerprint.
+// Modified for mipmux: portable hashing and a required regex-engine fingerprint.
 import Crypto
 import Foundation
 import SwiftTreeSitter

@@ -18,9 +18,10 @@ const source = entry => {
   const bytes = readReferenceSource(checkout, entry);
   return bytes.toString().split('\n').slice(entry.start - 1, entry.end).join('\n');
 };
-const native = name => readFileSync('native/Sources/SmipBridge/' + name, 'utf8');
+const native = name => readFileSync('native/Sources/MipmuxBridge/' + name, 'utf8');
 const adapterRevision = '8abccaad4c3938036be31d178b3aaa6540c4cc50';
-const adapter = execFileSync('git', ['show', adapterRevision + ':native/Sources/SmipBridge/FileTreeInput.swift'], { encoding: 'utf8' })
+const adapterBlob = '2c5feeca9e88ba94abb870ac54c34f7587a91d5f';
+const adapter = execFileSync('git', ['show', adapterBlob], { encoding: 'utf8' })
   .replace('func render() -> [String: Any]', 'func render(onlyIncludeRootsWithSelectedFiles: Bool, showCodeMapMarkers: Bool) -> [String: Any]')
   .replace('onlyIncludeRootsWithSelectedFiles: mode == "selected"', 'onlyIncludeRootsWithSelectedFiles: onlyIncludeRootsWithSelectedFiles')
   .replace('showCodeMapMarkers: true', 'showCodeMapMarkers: showCodeMapMarkers');

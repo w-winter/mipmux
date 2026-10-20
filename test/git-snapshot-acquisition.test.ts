@@ -12,11 +12,11 @@ import { gitValidator, type GitRequest } from '../src/contracts/git.js';
 import { NativeGitSnapshotInput } from '../src/contracts/git-snapshot.js';
 import { BridgeClient, type NativeReply } from '../src/native/bridge-client.js';
 import { ProcessSupervisor, type OwnedProcess, type ProcessSpec } from '../src/runtime/process-supervisor.js';
-import { SmipRuntime } from '../src/runtime/smip-runtime.js';
+import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 
-const git = process.env.SMIP_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
+const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
-const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/SmipBridge`);
+const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const fixtures = Compile(Type.Object({ mtime: Type.Number(), files: Type.Array(Type.Object({ path: Type.String(), text: Type.String() })),
   cases: Type.Array(Type.Object({ name: Type.String(), compare: Type.String(), headSHA: Type.String(), baseRefSHA: Type.String(), status: Type.String(),
     expected: Type.Object({ headSHA: Type.String(), baseRef: Type.String(), statusHash: Type.String() }) })) }));
@@ -25,7 +25,7 @@ const manifest = Compile(Type.Object({ ...Type.Pick(NativeGitSnapshotInput, ['fi
 
 test('native fingerprints match original status, rename, missing-file and metadata hashing', async () => {
   const reference = fixtures.Parse(JSON.parse(await readFile('test/fixtures/rpce-git-fingerprint/cases.json', 'utf8')));
-  const base = await mkdtemp(join(tmpdir(), 'smip-git-fingerprint-'));
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-git-fingerprint-'));
   for (const file of reference.files) {
     await writeFile(join(base, file.path), file.text); await utimes(join(base, file.path), reference.mtime, reference.mtime);
   }
@@ -48,7 +48,7 @@ test('native fingerprints match original status, rename, missing-file and metada
 
 async function fixture() {
   await mkdir('test-output', { recursive: true });
-  const base = await mkdtemp(join(tmpdir(), 'smip-snapshot-acquire-')), repo = join(base, 'repo'), out = join(base, 'out');
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-snapshot-acquire-')), repo = join(base, 'repo'), out = join(base, 'out');
   await mkdir(repo); await mkdir(out);
   const run = (args: string[]) => execFileSync(git, args, { cwd: repo, encoding: 'utf8', env: { PATH: '/usr/bin:/bin', HOME: base,
     GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_OPTIONAL_LOCKS: '0' } });
@@ -58,7 +58,7 @@ async function fixture() {
   await writeFile(join(repo, 'tracked.txt'), 'staged\n'); run(['add', '--', 'tracked.txt']);
   await writeFile(join(repo, 'tracked.txt'), 'working\n'); await writeFile(join(repo, 'new.txt'), 'untracked\n');
   await writeFile(join(repo, 'denied.txt'), 'PROTECTED_BODY\n');
-  const runtime = new SmipRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable, nativeEnvironment: {},
     credentialPaths: [join(repo, 'denied.txt')], git: { executable: git }, terminationGraceMs: 100, contextBudgetUnits: 200000 });
   const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: repo }], exclusions: [], outputRoot: out }, signal());
   const draft = await workspace.createDraft({ task: 'Capture complete Git evidence', constraints: '', enhancementMode: 'preserve', purpose: 'review',
@@ -126,7 +126,7 @@ test('cancellation during snapshot fingerprinting joins Git work before draft se
   t.mock.method(f.runtime.supervisor, 'spawn', (spec: ProcessSpec) => {
     if (spec.executable === git && spec.args.includes('--porcelain')) {
       const child = spawn({ ...spec, executable: process.execPath, args: [resolve('test/fixtures/held-git-read.mjs')] }); held.push(child);
-      child.child.stderr.on('data', data => { if (data.toString().includes('SMIP_GIT_READ_HELD')) entered(); }); return child;
+      child.child.stderr.on('data', data => { if (data.toString().includes('MIPMUX_GIT_READ_HELD')) entered(); }); return child;
     }
     return spawn(spec);
   });

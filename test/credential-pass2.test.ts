@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { createCredentials } from '../src/discovery/pi-credentials.js';
 
 test('locked credential boundary rejects malformed initial and later data before callbacks and persistence', async () => {
-  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'smip-credential-pass2-')), path = join(directory, 'synthetic.json');
+  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(join(tmpdir(), 'mipmux-credential-pass2-')), path = join(directory, 'synthetic.json');
   const malformed: unknown[] = [[], null, 1, 'string', true, { p: [] }, { p: null }, { p: { type: 'unknown' } },
     { p: { type: 'api_key', key: 7 } }, { p: { type: 'api_key', env: [] } }, { p: { type: 'api_key', env: { X: false } } },
     { p: { type: 'oauth', access: 17, refresh: null, expires: 'later' } }, { p: { type: 'oauth', access: 'a', refresh: 'r', expires: null } }];
