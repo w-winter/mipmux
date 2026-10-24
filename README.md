@@ -44,7 +44,7 @@ npm run package:local -- /var/tmp/mipmux-local-package
 
 The command builds TypeScript and the native release executable, verifies source history, and packs the runtime files and notices through npm. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. That digest identifies the package-lock.json used to build mipmux; installed dependency graphs have their own lockfiles and audit results. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
 
-Install the resulting `.tgz` with `npm install --ignore-scripts /absolute/path/mipmux-0.1.0.tgz`. The installed CLI is available as `mipmux`. Set `nativeExecutable` in the host configuration to the installed package's absolute `libexec/<platform>-<architecture>/MipmuxBridge` path. Cache, source roots, output, Git, and authentication paths remain explicit host inputs. The package includes the discovery prompt and dependency identity beside its compiled modules.
+Install the resulting `.tgz` with `npm install --ignore-scripts /absolute/path/mipmux-0.1.0.tgz`. The installed CLI is available as `mipmux`. It runs the package's own `libexec/<platform>-<architecture>/MipmuxBridge` unless the configuration names another `nativeExecutable`. The package includes the discovery prompt and dependency identity beside its compiled modules.
 
 ## Workspace API
 
@@ -188,73 +188,65 @@ Configure `git: { executable: '/absolute/path/to/git' }` on `MipmuxRuntime` for 
 
 ## CLI and MCP
 
-Build with `npm run build`, then run `node dist/cli/main.js`. Every input/configuration path is absolute. Progress goes to stderr; one-shot commands write a JSON result to stdout. MCP mode reserves stdout for protocol traffic.
+Build with `npm run build`, then run `node dist/cli/main.js`. Every input path is absolute. Commands read the configuration file at `$XDG_CONFIG_HOME/mipmux/config.json`, or `~/.config/mipmux/config.json` when that variable is unset; `--config /absolute/file.json` selects another file. Progress goes to stderr; one-shot commands write a JSON result to stdout. MCP mode reserves stdout for protocol traffic.
 
 ```sh
-node dist/cli/main.js mcp --config /etc/mipmux/config.json
-node dist/cli/main.js workspace --spec /work/spec.json --config /etc/mipmux/config.json
-node dist/cli/main.js tool read_file --workspace /work/spec.json --input /work/read.json --config /etc/mipmux/config.json
-node dist/cli/main.js build --request /work/build.json --config /etc/mipmux/config.json > /work/terminal-receipt.json
-node dist/cli/main.js render --request /work/render.json --draft /work/draft.json --config /etc/mipmux/config.json
+node dist/cli/main.js mcp
+node dist/cli/main.js workspace --spec /work/spec.json
+node dist/cli/main.js tool read_file --workspace /work/spec.json --input /work/read.json
+node dist/cli/main.js build --request /work/build.json > /work/terminal-receipt.json
+node dist/cli/main.js render --request /work/render.json --draft /work/draft.json
 node dist/cli/main.js verify --bundle /exports/packet --mode integrity
-node dist/cli/main.js verify --bundle /exports/packet --mode current --config /etc/mipmux/config.json
-node dist/cli/main.js cache invalidate --kind artifact --key <sha256> --config /etc/mipmux/config.json
-node dist/cli/main.js cache invalidate --kind membership --key <sha256> --config /etc/mipmux/config.json
+node dist/cli/main.js verify --bundle /exports/packet --mode current
+node dist/cli/main.js cache invalidate --kind artifact --key <sha256>
+node dist/cli/main.js cache invalidate --kind membership --key <sha256>
 ```
 
 The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Omit `enhancementMode` and `budgetUnits` to use the configured defaults. Input files for `mipmux tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; membership targets name workspace inventory records. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateMembership(key)` for membership. Each method removes only its named record.
 
-Host configuration uses this shape. The numbers are example host choices, not model-derived limits. `git` can be null or `{ "executable": "/absolute/path" }`. Set `discovery` to null for model-free use.
+Every configuration field is optional. Enabling `discovery` requires `provider`, `model`, `thinking` and `modelsPath`, the path of the model file described below. A file sets only what differs from the defaults:
 
 ```json
 {
-  "copyContext": {
-    "current": { "fileTreeMode": "Auto", "codeMapUsage": "auto", "gitInclusion": "none" },
-    "customizations": {
-      "includeFiles": null, "includeUserPrompt": null,
-      "includeFileTree": null, "fileTreeMode": null, "codeMapUsage": null, "gitInclusion": null
-    },
-    "codeMapsGloballyDisabled": false,
-    "activeGitRoot": null,
-    "presets": []
-  },
-  "cachePath": "/var/tmp/private-mipmux-cache",
-  "nativeExecutable": "/opt/mipmux/libexec/darwin-arm64/MipmuxBridge",
-  "nativeEnvironment": { "REPOPROMPT_PCRE2_JIT": "auto" },
-  "terminationGraceMs": 1000,
-  "credentialPaths": [],
-  "git": null,
-  "defaultMaxOutputBytes": 12000,
   "contextBudgetUnits": 200000,
   "defaultEnhancementMode": "augment",
+  "credentialPaths": ["/private/notes/secrets.json"],
   "discovery": {
     "provider": "openai-codex",
     "model": "gpt-6.1-sol",
     "thinking": "medium",
-    "authPath": "/private/mipmux/auth.json",
     "modelsPath": "/private/mipmux/models.json",
     "promptTemplatePath": "/private/mipmux/discovery.md",
-    "mcp": null,
-    "environment": {},
-    "policy": {
-      "retry": {
-        "enabled": true,
-        "maxRetries": 3,
-        "baseDelayMs": 2000,
-        "maxAgentDelayMs": 60000,
-        "provider": { "timeoutMs": 300000, "maxRetries": 0, "maxRetryDelayMs": 60000 }
-      },
-      "compaction": { "enabled": true, "reserveTokens": 16384, "keepRecentTokens": 20000 },
-      "transport": "auto",
-      "httpIdleTimeoutMs": 300000,
-      "websocketConnectTimeoutMs": 15000,
-      "cacheWarming": "off"
-    }
+    "policy": { "compaction": { "reserveTokens": 9000 } }
   }
 }
 ```
+
+Omitted fields take these values:
+
+| Field | Default |
+|---|---|
+| `contextBudgetUnits` | `200000` estimated units for a complete packet |
+| `defaultEnhancementMode` | `augment` |
+| `credentialPaths` | none. Listed files and directories are excluded from context collection, in addition to the configuration, authentication and model files |
+| `copyContext` | RPCE's default copy state: Auto file tree, automatic codemaps, no Git inclusion, no customizations and no custom presets |
+| `ignoreSettings` | RPCE's default ignore behavior |
+| `cachePath` | `~/Library/Caches/mipmux` on macOS; elsewhere `$XDG_CACHE_HOME/mipmux` or `~/.cache/mipmux` |
+| `nativeExecutable` | the package's `libexec/<platform>-<architecture>/MipmuxBridge` |
+| `nativeEnvironment` | none |
+| `terminationGraceMs` | `1000` |
+| `git` | `{ "executable": "/usr/bin/git" }`. Set `null` to work without Git |
+| `defaultMaxOutputBytes` | `48000`, which keeps a default exploration reply below Pi's 50 KiB tool-output limit |
+| `discovery` | `null`, for model-free use |
+| `discovery.authPath` | `auth.json` in `$PI_CODING_AGENT_DIR`, or in `~/.pi/agent` when that variable is unset |
+| `discovery.promptTemplatePath` | the shipped `dist/prompts/discovery.md` |
+| `discovery.environment` | none |
+| `discovery.mcp` | `null` |
+| `discovery.policy` | Pi's defaults, merged field by field with the file's overrides: retries `enabled`, `maxRetries: 3`, `baseDelayMs: 2000`, `maxAgentDelayMs: 60000`; provider requests `timeoutMs` equal to `httpIdleTimeoutMs`, `maxRetries: 0`, `maxRetryDelayMs: 60000`; compaction `enabled`, `reserveTokens: 16384`, `keepRecentTokens: 20000`; `transport: "auto"`, `httpIdleTimeoutMs: 300000`, `websocketConnectTimeoutMs: 15000` |
+
+Discovery never warms prompt caches, because warming is billed; `policy.cacheWarming` accepts only `"off"`. `copyContext` accepts RPCE's copy-state record, with `current`, `customizations`, `codeMapsGloballyDisabled`, `activeGitRoot` and `presets`, when you need custom presets or customizations. Library hosts pass the resolved form, with every field explicit, to `createMcpServer`.
 
 Set `discovery.promptTemplatePath` to an absolute path to your editable discovery template. Install the shipped `dist/prompts/discovery.md` into an existing operator-owned directory using exclusive creation:
 

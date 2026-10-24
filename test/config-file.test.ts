@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { test } from 'node:test';
+import { ConfigFile, resolveHostConfig, type ConfigHost } from '../src/cli/config.js';
+import Type from 'typebox';
+import { Compile } from 'typebox/compile';
+
+const host: ConfigHost = { platform: 'linux', arch: 'x64', home: '/home/fixture', packageRoot: '/opt/mipmux',
+  env: { XDG_CACHE_HOME: '/var/cache/fixture' } };
+
+test('a partial configuration file resolves to explicit defaults and field-level policy overrides', () => {
+  const file = Compile(ConfigFile).Parse({ credentialPaths: ['/home/fixture/private.json'], discovery: { provider: 'openai-codex',
+    model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/home/fixture/models.json',
+    policy: { retry: { provider: { timeoutMs: 0 } }, compaction: { reserveTokens: 9000 } } } });
+  assert.deepEqual(resolveHostConfig(file, host), {
+    copyContext: { current: { fileTreeMode: 'Auto', codeMapUsage: 'auto', gitInclusion: 'none' },
+      customizations: { includeFiles: null, includeUserPrompt: null, includeFileTree: null, fileTreeMode: null, codeMapUsage: null, gitInclusion: null },
+      codeMapsGloballyDisabled: false, activeGitRoot: null, presets: [] },
+    cachePath: '/var/cache/fixture/mipmux', nativeExecutable: '/opt/mipmux/libexec/linux-x64/MipmuxBridge', nativeEnvironment: {},
+    terminationGraceMs: 1000, credentialPaths: ['/home/fixture/private.json'], git: { executable: '/usr/bin/git' },
+    defaultMaxOutputBytes: 48000, contextBudgetUnits: 200000,
+    discovery: { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/home/fixture/models.json',
+      authPath: '/home/fixture/.pi/agent/auth.json', promptTemplatePath: '/opt/mipmux/dist/prompts/discovery.md', environment: {}, mcp: null,
+      policy: { retry: { enabled: true, maxRetries: 3, baseDelayMs: 2000, maxAgentDelayMs: 60000,
+        provider: { timeoutMs: 0, maxRetries: 0, maxRetryDelayMs: 60000 } },
+      compaction: { enabled: true, reserveTokens: 9000, keepRecentTokens: 20000 },
+      transport: 'auto', httpIdleTimeoutMs: 300000, websocketConnectTimeoutMs: 15000, cacheWarming: 'off' } },
+  });
+  const macOS = resolveHostConfig({ git: null }, { ...host, platform: 'darwin', arch: 'arm64', env: { PI_CODING_AGENT_DIR: '/agent' } });
+  assert.equal(macOS.cachePath, '/home/fixture/Library/Caches/mipmux');
+  assert.equal(macOS.git, null);
+  assert.equal(resolveHostConfig({ discovery: { provider: 'p', model: 'm', thinking: 'off', modelsPath: '/m.json' } },
+    { ...host, env: { PI_CODING_AGENT_DIR: '/agent' } }).discovery?.authPath, '/agent/auth.json');
+});
+
+test('the CLI reads the default configuration path when --config is omitted', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-config-file-')), root = join(base, 'root'), configHome = join(base, 'config');
+  await mkdir(root); await mkdir(join(base, 'out')); await mkdir(join(configHome, 'mipmux'), { recursive: true });
+  await writeFile(join(root, 'notes.txt'), 'default configuration\n');
+  await writeFile(join(configHome, 'mipmux', 'config.json'), JSON.stringify({ cachePath: join(base, 'cache'), git: null,
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`) }));
+  const spec = join(base, 'spec.json');
+  await writeFile(spec, JSON.stringify({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: join(base, 'out') }));
+  const output = execFileSync(process.execPath, [resolve('dist/cli/main.js'), 'workspace', '--spec', spec], { cwd: '/', encoding: 'utf8',
+    env: { ...process.env, XDG_CONFIG_HOME: configHome } });
+  const inventory = Compile(Type.Object({ entries: Type.Array(Type.Object({ path: Type.String() })) })).Parse(JSON.parse(output));
+  assert(inventory.entries.some(entry => entry.path === 'notes.txt'));
+});

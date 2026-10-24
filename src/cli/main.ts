@@ -9,7 +9,7 @@ import { readValidator, treeValidator, searchValidator, structureValidator } fro
 import { verifyBundle, verifyCurrentBundle } from '../context/verify.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { failureCode, failureResult } from '../runtime/tool-result.js';
-import { HostConfig, compose, loadJSON } from './config.js';
+import { ConfigFile, compose, currentConfigHost, defaultConfigPath, loadJSON, resolveHostConfig } from './config.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 
 const closed = { additionalProperties: false };
@@ -39,7 +39,8 @@ async function main(): Promise<void> {
       const directory = required('bundle'); if (!isAbsolute(directory)) throw new WorkspaceFailure('absoluteConfigurationRequired');
       process.stdout.write(JSON.stringify(await verifyBundle(directory)) + '\n'); return;
     }
-    const path = required('config'), config = await loadJSON(path, HostConfig);
+    const host = currentConfigHost(), path = values.config ?? defaultConfigPath(host);
+    const config = resolveHostConfig(await loadJSON(path, ConfigFile), host);
     if (command === 'mcp') {
       shape(['config'], 1);
       const { serveMipmuxStdio } = await import('../mcp/server.js');
