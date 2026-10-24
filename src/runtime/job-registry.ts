@@ -80,8 +80,9 @@ export class JobRegistry {
     let terminal: JobTerminal;
     try {
       this.#publish(job, { state: 'reconciling' });
+      // As an RPCE MCP run starts in a fresh tab, discovery receives the task as its instructions and writes the prompt itself.
       const draft = await workspace.createDraft(request, job.abort.signal,
-        () => this.#publish(job, { state: 'acquiringMaterials' }));
+        () => this.#publish(job, { state: 'acquiringMaterials' }), '');
       job.draft = draft;
       job.abort.signal.throwIfAborted();
       this.#publish(job, { state: 'discovering' });

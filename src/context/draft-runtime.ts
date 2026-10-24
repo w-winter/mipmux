@@ -109,9 +109,10 @@ export class DraftRuntime {
     private readonly onClosed: () => void,
     private readonly gitTarget: FrozenGitTarget,
     selection: CanonicalSelection,
+    prompt: string,
   ) {
     this.#selection = freeze(selection);
-    this.#prompt = request.task;
+    this.#prompt = prompt;
     this.#finalizationCapture = { ...initialPacketCapture(operation.snapshot,
       { materials: this.#materials, automaticAcquisition: this.#automaticAcquisition }), referenceTokens: null };
   }
@@ -122,6 +123,7 @@ export class DraftRuntime {
   static async acquire(
     operation: WorkspaceOperation,
     input: CapturedContextBuildRequest,
+    prompt: string,
     signal: AbortSignal,
     onClosed: () => void,
   ): Promise<DraftRuntime> {
@@ -167,7 +169,7 @@ export class DraftRuntime {
       }
       const target = await FrozenGitTarget.capture(admission, materials);
       const mode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
-      const draft = new DraftRuntime(operation, request, onClosed, target, await captureSelection(admission, materials, mode));
+      const draft = new DraftRuntime(operation, request, onClosed, target, await captureSelection(admission, materials, mode), strictText(prompt));
       const derived = await draft.#derive(admission, materials, draft.#codemapMode, 0, await unavailableSelectionRoots(admission, materials));
       draft.#materials = derived.materials; draft.#automaticAcquisition = { kind: 'settled', outcomes: derived.automaticCodemaps };
       signal.throwIfAborted();

@@ -64,13 +64,14 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
       .Parse(provider.requests[0]!.messages[0]);
     const input = inputs[0]!;
     assert.equal(firstMessage.content[0]!.text, messages[0] + '\n\n<mipmux_runtime>\n' + input.initialContext + '\n</mipmux_runtime>');
-    assert.equal(input.currentPrompt, request.task);
-    assert(messages[0]?.includes('<current_prompt_content>\n' + request.task + '\n</current_prompt_content>'));
+    assert.equal(input.currentPrompt, '');
+    assert(messages[0]?.includes('<discover_instructions>\n' + request.task + '\n</discover_instructions>'));
+    assert(!messages[0]?.includes('<current_prompt_content>'));
     assert(input.initialContext.includes(request.constraints));
     assert.equal(input.tokenBudget, result.bundle.manifest.request.budgetUnits - 1500);
     await verifyBundle(result.bundle.directory);
     const packet = await readFile(join(result.bundle.directory, 'context.md'), 'utf8');
-    for (const text of [source.slice(1), report, request.task, request.constraints]) assert(packet.includes(text));
+    for (const text of [source.slice(1), report, request.constraints, '"clarifiedTask":"Inspect the example"']) assert(packet.includes(text));
     assert(!packet.includes('OPTIONAL'));
     assert(provider.requests.some(request => JSON.stringify(request.messages).includes('overBudget')));
     assert(!packet.includes('Diagnostic acknowledgement only'));
@@ -258,7 +259,7 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     assert.equal(small.kind, 'recordTooLarge');
     const recovered = (await client.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal));
     assert(recovered.kind === 'metadata'); assert.equal(recovered.revision, 1);
-    assert.deepEqual(recovered.items, [{ kind: 'prompt', prompt: 'Inspect\n\n' + JSON.stringify(handoff) }]);
+    assert.deepEqual(recovered.items, [{ kind: 'prompt', prompt: '\n\n' + JSON.stringify(handoff) }]);
     await assert.rejects(async () => (await other.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal)), /unknownDraft/);
     assert.equal(calls, 2); assert.equal(result.discovery.acceptedRuns, 1);
     await writeFile(join(provider.directory, 'blocked-handoff-proof.json'), JSON.stringify({ result, small, recovered, calls }) + '\n');

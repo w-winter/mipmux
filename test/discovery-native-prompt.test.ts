@@ -49,11 +49,11 @@ test('native default policy and source startup reach Pi for all prompt modes and
     try {
       const signal = new AbortController().signal;
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
-      const task = reference.input.currentPrompt;
+      const task = reference.input.discoveryInstructions;
       const job = client.build(workspace.id, mode, contextRequestValidator.Parse({ task, constraints: 'FIXED_CALLER_CONSTRAINT',
         purpose: 'review', initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } }],
         documents: [], patches: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
-        discoveryHints: [reference.input.discoveryInstructions], outputName: mode }));
+        discoveryHints: [], outputName: mode }));
       const result = await client.wait(job.jobId, 10000, signal, () => {});
       assert.equal(result.state, 'ready', JSON.stringify(result)); assert(result.state === 'ready');
       const first = provider.requests[0]!;
@@ -73,13 +73,14 @@ test('native default policy and source startup reach Pi for all prompt modes and
       assert(!system.includes('<taskname=')); assert(!system.includes('ask_user'));
       assert(system.includes(mode === 'preserve' ? 'Leave the prompt COMPLETELY unchanged' : mode === 'augment' ? 'Augment the handoff prompt' : 'Craft and set the handoff prompt'));
       const tree = message.match(/^<file_map>\n([\s\S]*?)\n<\/file_map>/); assert(tree); assert(tree[1]!.includes('Main.swift'));
-      const expected = reference.expected.replace('- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage',
+      // A build starts like a fresh RPCE tab, so its message omits the reference's current-prompt block.
+      const expected = reference.expected.replace('<current_prompt_content>\n' + reference.input.currentPrompt + '\n</current_prompt_content>\n', '').replace('- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage',
         '- Selected files use full content, slices, or codemaps (API signatures), according to their selected representation');
       assert(message.replace(tree[1]!, reference.input.fileTree).startsWith(expected));
       assert(message.includes('FIXED_CALLER_CONSTRAINT')); assert.equal(message.match(/<token_budget>/g)?.length, 1);
       assert(!message.includes('## Assignment'));
       const packet = await verifyBundle(result.bundle.directory);
-      assert.equal(packet.manifest.prompt, mode === 'fullRewrite' ? 'Discovered architecture' : mode === 'augment' ? task + 'Discovered architecture' : task);
+      assert.equal(packet.manifest.prompt, mode === 'preserve' ? '' : 'Discovered architecture');
       assert(first.tools.includes('prompt')); assert(!first.tools.includes('bash')); assert(!first.tools.includes('read'));
       proof.push({ mode, result, system, message });
     } finally { await runtime.close(); }

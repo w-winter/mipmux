@@ -36,7 +36,7 @@ export async function prepareDiscoveryInput(input: DiscoveryInput, template: str
     allowClarifyingQuestions: input.clarification !== undefined,
     questionTimeoutSeconds: input.clarification?.questionTimeoutSeconds ?? defaultQuestionTimeoutSeconds,
     restrictsReviewGitToExplicitReadOnly: input.restrictsReviewGitToExplicitReadOnly, reviewRootNames: [...input.roots],
-    fileTree: input.fileTree, currentPrompt: input.currentPrompt, discoveryInstructions: input.hints.join('\n\n') }, signal);
+    fileTree: input.fileTree, currentPrompt: input.currentPrompt, discoveryInstructions: [input.task, ...input.hints].join('\n\n') }, signal);
   if (result.kind === 'discoveryTemplateRejected') throw new WorkspaceFailure('invalidDiscoveryTemplate', result.diagnostic);
   return { systemPrompt: result.text, message: result.message };
 }

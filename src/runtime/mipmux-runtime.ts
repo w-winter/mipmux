@@ -326,7 +326,9 @@ export class MipmuxRuntime {
       return await work(check);
     } finally { await operation.close(); }
   }
-  async createDraft(owner: WorkspaceRuntime, request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}): Promise<DraftRuntime> {
+  /** Creates a draft whose prompt starts as `prompt`, which defaults to the request's task. */
+  async createDraft(owner: WorkspaceRuntime, request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {},
+    prompt: string = request.task): Promise<DraftRuntime> {
     if (this.#closing) throw new WorkspaceFailure('runtimeClosed');
     if (!contextRequestValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
     const snapshot = structuredClone(request);
@@ -347,7 +349,7 @@ export class MipmuxRuntime {
         if (resolved.preset === null) throw new WorkspaceFailure('copyPresetNotFound');
         const request = freeze({ ...captured, copyPresetSelector: captured.copyPreset, copyPreset: resolved.preset,
           copyContext: this.options.copyContext });
-        const draft = await DraftRuntime.acquire(operation, request, combined, () => this.#drafts.delete(draft));
+        const draft = await DraftRuntime.acquire(operation, request, prompt, combined, () => this.#drafts.delete(draft));
         combined.throwIfAborted(); this.#drafts.add(draft); return draft;
       } catch (error) { await operation.close(); throw error; }
     })().finally(release);
@@ -419,7 +421,9 @@ export class WorkspaceHandle {
     try { return await this.owner.refresh(signal); } finally { await release(); }
   }
   async openOperation(signal: AbortSignal) { this.#check(); return this.runtime.openOperation(this.owner, signal); }
-  async createDraft(request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}) { this.#check(); return this.runtime.createDraft(this.owner, request, signal, acquiring); }
+  async createDraft(request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}, prompt?: string) {
+    this.#check(); return this.runtime.createDraft(this.owner, request, signal, acquiring, prompt);
+  }
   async preparePacket(request: ContextPrepareRequest, signal: AbortSignal) { this.#check(); return this.runtime.preparePacket(this.owner, request, signal); }
   async close(): Promise<void> { if (!this.#closed) { this.#closed = true; await this.release(); } }
 }

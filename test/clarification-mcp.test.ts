@@ -159,7 +159,7 @@ async function checkCompletion(f: Fixture, jobId: string, waiting: Waiting) {
   const result = readyReply.Parse((scenario === 'timeout' ? await client.callTool({ name: 'context_builder_wait',
     arguments: { jobId, durationMs: 10000 } }) : first).structuredContent);
   const packet = await verifyBundle(result.bundle.directory);
-  assert.equal(packet.manifest.prompt, request.task);
+  assert.equal(packet.manifest.prompt, '');
   assert.equal(f.questions, scenario === 'accept' ? 2 : scenario === 'disabled' ? 0 : 1);
   const policy = JSON.stringify(provider.requests[0]!.system);
   assert.equal(provider.requests[0]!.tools.includes('ask_user'), scenario !== 'disabled');

@@ -144,7 +144,7 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(nativeTerminal.discovery.templateVersion, 'mipmux-discovery-template-v1');
     assert.equal(nativeTerminal.discovery.template.identity.sha256, createHash('sha256').update(stockBytes).digest('hex'));
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('Leave the prompt COMPLETELY unchanged'));
-    assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('<current_prompt_content>'));
+    assert(JSON.stringify(provider.requests.at(-1)?.messages).includes('<discover_instructions>'));
     const verification = ['integrity', 'current'].map(mode => {
       const args = [command, 'verify', '--bundle', nativeTerminal.bundle.directory, '--mode', mode];
       if (mode === 'current') args.push('--config', config);
