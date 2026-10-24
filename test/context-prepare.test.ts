@@ -158,6 +158,19 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     assert.equal(errorReply.Parse(mismatched.structuredContent).code, 'bundleWorkspaceMismatch');
     assert.equal(existsSync(join(f.out, 'foreign')), false);
 
+    const lateLedger = [{ kind: 'suppliedDocument' as const, id: 'late-ledger', role: 'evidence' as const, origin: 'fixture', text: 'LATE LEDGER\n' }];
+    const reviewAdded = readyReply.Parse((await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-added',
+      documents: lateLedger, patches: [{ kind: 'localPatch', id: 'full-swift', root: 'r', scope: { kind: 'paths', paths: ['Full.swift'] },
+        comparison: { kind: 'worktree', base: { kind: 'commit', ref: 'HEAD' }, includeUntracked: false } }] })).structuredContent);
+    const gitEvidence = (bundle: VerifiedBundle) => bundle.materials.flatMap(({ record, bodies }) =>
+      record.kind === 'gitMap' || record.kind === 'gitPatch' ? [{ record: { ...record, frame: null }, bodies }] : []);
+    const savedReview = gitEvidence(await loadVerifiedBundle(join(f.out, 'review')));
+    assert.equal(savedReview.length, 2);
+    assert.deepEqual(gitEvidence(await loadVerifiedBundle(reviewAdded.directory)), savedReview);
+    assert(reviewAdded.materials.some(material => material.kind === 'document' && material.id === 'late-ledger'));
+    assert(reviewAdded.materials.some(material => material.kind === 'patch' && material.id === 'full-swift'));
+    await verifyCurrentBundle(reviewAdded.directory, runtime, signal());
+
     await writeFile(join(f.root, 'Slice.txt'), 'first\nchanged\nthird\n');
     const changed = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'stale' });
     assert.deepEqual(changed.structuredContent, { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
@@ -173,6 +186,9 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     const added = readyReply.Parse((await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-added',
       documents: [{ kind: 'suppliedDocument', id: 'addendum', role: 'report', origin: 'fixture', text: 'ADDED REPORT\n' }] })).structuredContent);
     assert(added.materials.some(material => material.kind === 'document' && material.id === 'addendum'));
+    const staleAddition = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-added-stale', documents: lateLedger });
+    assert.deepEqual(staleAddition.structuredContent, { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
+    assert.equal(existsSync(join(f.out, 'review-added-stale')), false);
     const refused = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-refreshed', refresh: true });
     assert.equal(errorReply.Parse(refused.structuredContent).code, 'refreshRequiresDiscovery');
     assert.equal(existsSync(join(f.out, 'review-refreshed')), false);

@@ -9,6 +9,7 @@ import { bundleManifest, publishBundle } from './bundle-publication.js';
 import { verifySavedBundle, type VerifiedBundle } from './verify.js';
 import { sourceId } from './material-store.js';
 import { capturedSourceSelections } from './source-omissions.js';
+import type { SelectedGitArtifact } from './git-artifact-material.js';
 
 export type PreparedPacket =
   | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
@@ -62,16 +63,17 @@ export async function publishPreparedPacket(runtime: MipmuxRuntime, saved: Verif
   } finally { await bridge.close(); }
 }
 
+/** The saved bundle's selected Git snapshot artifacts, in packet order. */
+export function savedGitArtifacts(saved: VerifiedBundle): SelectedGitArtifact[] {
+  return saved.verified.manifest.materials.flatMap(record => record.kind === 'gitMap' || record.kind === 'gitPatch' ? [record] : []);
+}
+
 /**
  * The build request that reacquires a saved bundle's evidence from current files: its captured request, selection and
- * omitted sources, plus the caller's added required sources and documents. Selected Git snapshot artifacts cannot be
- * reselected by a new draft, so those bundles need a new Context Builder run.
+ * omitted sources, plus the caller's added required sources, documents and patches. Selected Git artifacts are adopted separately.
  */
 export function rebuildRequest(saved: VerifiedBundle, request: ContextPrepareRequest): ContextBuildRequest {
   const manifest = saved.verified.manifest;
-  if (manifest.materials.some(material => material.kind === 'gitMap' || material.kind === 'gitPatch')) {
-    throw new WorkspaceFailure('refreshRequiresDiscovery');
-  }
   const { copyContext: _context, copyPreset: _preset, copyPresetSelector, clarification: _clarification, ...captured } = manifest.request;
   const requiredSources = [...captured.requiredSources, ...request.requiredSources ?? []];
   const required = new Set(requiredSources.map(selection => sourceId(selection.source)));
@@ -79,7 +81,7 @@ export function rebuildRequest(saved: VerifiedBundle, request: ContextPrepareReq
     capturedSourceSelections(saved.materials, manifest.unavailableRoots, manifest.unavailableFiles))
     .filter(selection => !required.has(sourceId(selection.source)));
   return { ...captured, copyPreset: copyPresetSelector, outputName: request.outputName, requiredSources,
-    documents: [...captured.documents, ...request.documents ?? []],
+    documents: [...captured.documents, ...request.documents ?? []], patches: [...captured.patches, ...request.patches ?? []],
     // Automatic mode derives codemaps itself; only explicit full and sliced sources seed it.
     initialSelection: manifest.codemapMode === 'automatic' ? { codemapMode: 'automatic', sources: sources.filter(isFileContent) }
       : { codemapMode: 'manual', sources } };

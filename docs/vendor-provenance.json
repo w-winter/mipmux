@@ -6170,7 +6170,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "b92b8656d9af71b3838b6b4c5f956b2a3309e87d026ce916160f77fe255b4e05",
+      "sha256": "8148d8951c9b0365aa11cca7634c4177795a34384d77aa6b3beddd61cf3463f7",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6192,7 +6192,8 @@
         "Use captured copyContext.codeMapsGloballyDisabled to skip automatic candidate queries and suppress selected code_structure diagnostics, following WorkspaceFileContextStore.swift:13331-13337 and SelectionCore.swift:1513-1514 / SelectionReply.swift:769. Preserve selection revision and optional initial membership.",
         "Route draft-scoped Git reads through FrozenGitTarget.read while retaining the existing operation fork, cancellation, pending-work and close ownership. MCP and Pi dispatch share this path. Git read admission follows MCPContextBuilderGitReviewPolicy.swift:62-129 at revision 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3.",
         "Use manage_selection for path/slice operations and non-mutating preview, and prompt for literal prompt mutations. Keep baseline individual draft_update edits and supplied-document admission. Packet rendering uses proposed preview selection while component tree/Git costs use canonical selection. Adopt one progressive finalization capture and one cancellation/revision/freeze fence.",
-        "Treat the captured request budget as the packet ceiling. Resolve configured defaults in MipmuxRuntime and publish only the per-build budget in startup observations."
+        "Treat the captured request budget as the packet ceiling. Resolve configured defaults in MipmuxRuntime and publish only the per-build budget in startup observations.",
+        "Select Git artifacts recorded by a verified saved bundle after reauthorizing each from its snapshot manifest, through the same commit path as a fresh publication; this lets saved-packet preparation add inputs to review bundles."
       ]
     },
     {

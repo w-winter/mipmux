@@ -55,8 +55,8 @@ import { publishGitSnapshot, prepareGitPublicationMetadata } from './git-publica
 import { resolveDiffRepository } from '../exploration/git-repository.js';
 import { publishGitSnapshotBatch } from './git-publication-batch.js';
 import { GitSnapshotPublicationOptions } from '../contracts/git-snapshot.js';
-import { registerPublishedGitArtifacts, readCatalogedGitArtifact, type CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
-import { acquireGitArtifact, refreshGitArtifactMaterials, type GitArtifactMaterial } from './git-artifact-material.js';
+import { recatalogSavedGitArtifact, registerPublishedGitArtifacts, readCatalogedGitArtifact, type CatalogedGitArtifact } from '../workspace/git-artifact-catalog.js';
+import { acquireGitArtifact, refreshGitArtifactMaterials, type GitArtifactMaterial, type SelectedGitArtifact } from './git-artifact-material.js';
 import { decorateGitPublicationReply } from './git-publication-reply.js';
 import { ReadRequest } from '../contracts/exploration.js';
 import { readFileReply } from '../exploration/read.js';
@@ -286,6 +286,22 @@ export class DraftRuntime {
       if (candidate.changed) this.#commit(next.materials, state, prompt, candidate.revision, { kind: 'settled', outcomes: next.automaticCodemaps });
       return { revision: candidate.revision, aliases };
     }
+  }
+  /** Selects Git artifacts recorded by a verified saved bundle, each reauthorized from its snapshot manifest; returns the committed revision. */
+  adoptGitArtifacts(records: readonly SelectedGitArtifact[], signal: AbortSignal) {
+    const revision = this.#revision, generation = this.#freezeGeneration, captured = this.#materials, capturedSelection = this.#selection;
+    return this.#track((async () => {
+      this.#check(signal, revision);
+      const operation = await this.operation.fork(AbortSignal.any([signal, this.#cancel.signal]));
+      try {
+        const adopted = new Map<string, GitArtifactMaterial>();
+        for (const record of records) {
+          const material = await acquireGitArtifact(operation, await recatalogSavedGitArtifact(operation, record));
+          adopted.set(material.record.id, material);
+        }
+        return (await this.#commitGitSelection(operation, adopted, captured, capturedSelection, generation)).revision;
+      } finally { await operation.close(); }
+    })());
   }
   /** Commits mutable primary selection before reply admission; insertion grants are installed only after encoding succeeds. */
   publishGitArtifacts(input: Extract<GitRequest, { op: 'diff'; artifacts: true }>, signal: AbortSignal, encode: ResultEncoding) {

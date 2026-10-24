@@ -1,7 +1,8 @@
 import type { NativeGitCheckout, NativeResult } from '../contracts/native.js';
+import type { MaterialRecord } from '../contracts/context.js';
 import type { WorkspaceOperation } from './workspace-operation.js';
 import { NativeFailure } from '../native/bridge-client.js';
-import { freeze, WorkspaceFailure } from './values.js';
+import { canonicalJSON, freeze, WorkspaceFailure } from './values.js';
 import { failureCode } from '../runtime/tool-result.js';
 
 interface Publication {
@@ -58,6 +59,27 @@ export async function registerPublishedGitArtifacts(operation: WorkspaceOperatio
   process.stderr.write(JSON.stringify({ level: 'info', event: 'gitArtifactCatalogIngressCompleted', ownerID,
     snapshotDir: published.snapshotDir, cataloged: cataloged.size, selectable: ready.length, failures: warnings.length }) + '\n');
   return { ready, warning: parts.length ? parts.join('\n') : null };
+}
+
+/**
+ * Catalogs an artifact recorded by a verified saved bundle after its snapshot manifest authorizes it again and its bytes
+ * still match the recorded identity. Native authorization names the map `MAP.txt` and the whole patch `diff/all.patch`.
+ */
+export async function recatalogSavedGitArtifact(operation: WorkspaceOperation,
+  record: Pick<Extract<MaterialRecord, { kind: 'gitMap' | 'gitPatch' }>, 'kind' | 'reference' | 'identity'>): Promise<CatalogedGitArtifact> {
+  const { reference } = record;
+  const read = await readAuthorizedGitArtifact(operation, reference);
+  if (canonicalJSON(read.identity) !== canonicalJSON(record.identity)) throw new WorkspaceFailure('materialChanged');
+  const snapshot = { ownerID: reference.ownerID, checkout: reference.checkout, snapshotID: reference.snapshotID, snapshotDir: reference.snapshotDir };
+  operation.registerGitArtifact(freeze({ ...snapshot, path: 'manifest.json', artifact: { kind: 'manifest',
+    absolutePath: reference.absolutePath.slice(0, -reference.path.length) + 'manifest.json',
+    gitDataRelativePath: reference.snapshotDir + '/manifest.json', clientAlias: null, selectionDisposition: 'authorizationDependency' } }));
+  const entry: CatalogedGitArtifact = freeze({ ...snapshot, path: reference.path, artifact: {
+    kind: record.kind === 'gitMap' ? 'map' : reference.path === 'diff/all.patch' ? 'allPatch' : 'perFilePatch',
+    absolutePath: reference.absolutePath, gitDataRelativePath: reference.snapshotDir + '/' + reference.path,
+    clientAlias: reference.alias, selectionDisposition: 'advertisedSelectable' } });
+  operation.registerGitArtifact(entry);
+  return entry;
 }
 
 /** Reads registered historical bytes under current root/checkout authority, without comparing HEAD or working-tree state. */
