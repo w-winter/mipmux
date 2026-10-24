@@ -98,8 +98,10 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
   });
   register('context_builder_dispose', Type.Object({ jobId: id }, closed), (input, ctx) => client().disposeJob(input.jobId, ctx.mcpReq.signal));
   register('context_prepare', Type.Object({ workspaceId: id, ...ContextPrepareRequest.properties }, closed),
-    async (input, ctx) => publicationReceipt(await client().prepare(input.workspaceId,
-      { bundle: input.bundle, prompt: input.prompt, outputName: input.outputName }, ctx.mcpReq.signal)));
+    async (input, ctx) => {
+      const { workspaceId, ...request } = input;
+      return publicationReceipt(await client().prepare(workspaceId, request, ctx.mcpReq.signal));
+    });
   register('context_builder_wait', Type.Object({ jobId: id, durationMs: Type.Integer({ minimum: 0, maximum: 2147483647 }) }, closed),
     async (input, ctx) => {
       if (ctx.mcpReq.inputResponses !== undefined) {

@@ -11,7 +11,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
-import { contextRequestValidator } from '../src/contracts/context.js';
+import { contextRequestValidator, type ContextPrepareRequest } from '../src/contracts/context.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { loadVerifiedBundle, type VerifiedBundle } from '../src/context/verify.js';
@@ -26,7 +26,7 @@ const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const readyReply = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String(),
   context: Type.Object({ path: Type.String(), byteCount: Type.Integer(), sha256: Type.String() }),
   accounting: Type.Object({ units: Type.Integer(), allowance: Type.Integer() }),
-  materials: Type.Array(Type.Object({ kind: Type.String() })), omitted: Type.Array(Type.Unknown()) }));
+  materials: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()) })), omitted: Type.Array(Type.Unknown()) }));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String() }, { additionalProperties: true }));
 const instructions = (prompt: string) => '<user_instructions>\n' + prompt + '\n</user_instructions>\n';
 
@@ -75,6 +75,12 @@ async function saveBundles(f: Awaited<ReturnType<typeof fixture>>) {
     assert.equal(reviewReady.kind, 'ready', JSON.stringify(reviewReady.kind === 'blocked' ? reviewReady.diagnostics : null));
     const followUp = await workspace.createDraft(contextRequestValidator.Parse({ ...common, copyPreset: 'diffFollowUp', outputName: 'follow-up',
       initialSelection: { codemapMode: 'manual', sources: [{ kind: 'full', source: { root: 'r', path: 'Full.swift' } }] } }), signal());
+    const planning = await workspace.createDraft(contextRequestValidator.Parse({ ...common, copyPreset: 'standard', purpose: 'planning',
+      outputName: 'planning', documents: [{ kind: 'localDocument', id: 'plan', role: 'plan', source: { root: 'r', path: 'plan.md' } }],
+      initialSelection: { codemapMode: 'automatic', sources: [{ kind: 'full', source: { root: 'r', path: 'Full.swift' } },
+        { kind: 'slices', source: { root: 'r', path: 'Slice.txt' }, ranges: [{ start: 2, end: 2, description: 'Middle line' }] }] } }), signal());
+    const planningReady = await planning.finalize(signal());
+    assert.equal(planningReady.kind, 'ready', JSON.stringify(planningReady.kind === 'blocked' ? planningReady.diagnostics : null));
     const followUpReady = await followUp.finalize(signal());
     assert.equal(followUpReady.kind, 'ready', JSON.stringify(followUpReady.kind === 'blocked' ? followUpReady.diagnostics : null));
   } finally { await runtime.close(); }
@@ -91,7 +97,7 @@ function evidence(bundle: VerifiedBundle) {
     clipboardPreset: bundle.verified.manifest.clipboardPreset, unavailableFiles: bundle.verified.manifest.unavailableFiles };
 }
 
-test('MCP context_prepare replaces only the prompt of saved evidence and refuses changed or foreign bundles', async () => {
+test('MCP context_prepare reuses or rebuilds saved evidence with a replacement prompt and refuses changed or foreign bundles', async () => {
   const f = await fixture();
   await saveBundles(f);
   const config = join(f.base, 'host.json');
@@ -109,7 +115,7 @@ test('MCP context_prepare replaces only the prompt of saved evidence and refuses
     const declare = async (spec: typeof f.spec) => workspaceReply.Parse((await client.callTool({ name: 'workspace_declare',
       arguments: { spec } })).structuredContent).id;
     const workspaceId = await declare(f.spec);
-    const prepare = (args: { bundle: string; prompt: string; outputName: string }, id = workspaceId) =>
+    const prepare = (args: ContextPrepareRequest, id = workspaceId) =>
       client.callTool({ name: 'context_prepare', arguments: { workspaceId: id, ...args } });
 
     for (const [bundle, outputName] of [['review', 'review-task'], ['follow-up', 'follow-up-task']] as const) {
@@ -156,6 +162,20 @@ test('MCP context_prepare replaces only the prompt of saved evidence and refuses
     const changed = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'stale' });
     assert.deepEqual(changed.structuredContent, { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
     assert.equal(existsSync(join(f.out, 'stale')), false);
+
+    const refreshed = readyReply.Parse((await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-refreshed',
+      refresh: true })).structuredContent);
+    const refreshedContext = await readFile(refreshed.context.path, 'utf8');
+    assert(refreshedContext.includes('changed\n') && refreshedContext.endsWith(instructions(finalTask)));
+    await verifyCurrentBundle(refreshed.directory, runtime, signal());
+    const materialIds = async (directory: string) => (await loadVerifiedBundle(directory)).verified.manifest.materials.map(material => material.id).sort();
+    assert.deepEqual(await materialIds(refreshed.directory), await materialIds(join(f.out, 'planning')));
+    const added = readyReply.Parse((await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-added',
+      documents: [{ kind: 'suppliedDocument', id: 'addendum', role: 'report', origin: 'fixture', text: 'ADDED REPORT\n' }] })).structuredContent);
+    assert(added.materials.some(material => material.kind === 'document' && material.id === 'addendum'));
+    const refused = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-refreshed', refresh: true });
+    assert.equal(errorReply.Parse(refused.structuredContent).code, 'refreshRequiresDiscovery');
+    assert.equal(existsSync(join(f.out, 'review-refreshed')), false);
     await writeFile('test-output/context-prepare.json', JSON.stringify({ prepared: Object.fromEntries(proof.prepared),
       symlinkCode: proof.symlinkCode }, null, 2) + '\n');
   } finally { await client.close(); await runtime.close(); }

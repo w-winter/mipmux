@@ -109,12 +109,14 @@ async function main(): Promise<void> {
           const input = await loadJSON(required('request'), RenderInput), selection = await loadJSON(required('draft'), DraftInput);
           const workspace = await client.declare(input.workspace, abort.signal);
           const draft = await client.createDraft(workspace.id, input.request, abort.signal);
+          // These replies stay inside the command, so the exploration output cap does not apply.
+          const internalReplyBytes = Number.MAX_SAFE_INTEGER;
           let revision = draft.revision;
           for (const item of selection.selections) {
-            revision = (await client.update(draft.id, { expectedRevision: revision, maxOutputBytes: config.defaultMaxOutputBytes,
+            revision = (await client.update(draft.id, { expectedRevision: revision, maxOutputBytes: internalReplyBytes,
               mutation: { kind: 'upsert', selection: item } }, abort.signal)).revision;
           }
-          await client.prompt(draft.id, { expectedRevision: revision, maxOutputBytes: config.defaultMaxOutputBytes,
+          await client.prompt(draft.id, { expectedRevision: revision, maxOutputBytes: internalReplyBytes,
             op: 'set', text: selection.prompt }, abort.signal);
           const finalized = await client.finalize(draft.id, abort.signal); result = finalized;
           if (finalized.kind !== 'ready') process.exitCode = 2;

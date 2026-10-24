@@ -9,9 +9,8 @@ import { Compile } from 'typebox/compile';
 import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle, type VerifiedBundle } from '../context/verify.js';
-import { publishPreparedPacket, readSavedBundle, requireBundleWorkspace, type PreparedPacket } from '../context/packet-prepare.js';
+import { publishPreparedPacket, readSavedBundle, rebuildRequest, requireBundleWorkspace, type PreparedPacket } from '../context/packet-prepare.js';
 import { strictText } from '../context/material-store.js';
-import type { PolicyDeclaration } from '../workspace/root-policy.js';
 import { failureCode } from './tool-result.js';
 import { revalidateMaterials } from '../context/revalidate.js';
 import { revalidateAutomaticReviewGit } from '../context/automatic-review-git.js';
@@ -232,24 +231,29 @@ export class MipmuxRuntime {
     const saved = freeze(await loadVerifiedBundle(directory, signal));
     return this.#withCurrentBundle(saved, signal, async () => ({ ...saved.verified, kind: 'currentVerified' as const }));
   }
-  /** Publishes a new bundle from a saved bundle beneath the declaration's output root, replacing only its prompt. */
-  preparePacket(declaration: PolicyDeclaration, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
+  /**
+   * Publishes a new bundle from a saved bundle beneath the owner's output root with a replacement prompt. Saved bodies are
+   * reused after current verification; `refresh` or added inputs rebuild the packet from current files through a draft.
+   */
+  preparePacket(owner: WorkspaceRuntime, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
-    const work = this.#preparePacket(declaration, request, AbortSignal.any([signal, this.#shutdown.signal]));
+    const work = this.#preparePacket(owner, request, AbortSignal.any([signal, this.#shutdown.signal]));
     this.#admissions.add(work);
     void work.then(()=>this.#admissions.delete(work),()=>this.#admissions.delete(work));
     return work;
   }
-  async #preparePacket(declaration: PolicyDeclaration, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
+  async #preparePacket(owner: WorkspaceRuntime, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
+    const rebuild = request.refresh === true || (request.requiredSources?.length ?? 0) > 0 || (request.documents?.length ?? 0) > 0;
     const log = (level: string, outcome: string, code: string | null = null) => process.stderr.write(JSON.stringify({ level,
-      event: 'packetPrepare', outcome, outputName: request.outputName, code }) + '\n');
+      event: 'packetPrepare', outcome, outputName: request.outputName, rebuild, code }) + '\n');
     log('info', 'started');
     try {
       signal.throwIfAborted();
       strictText(request.prompt);
-      const saved = freeze(await readSavedBundle(this, declaration.outputRoot, request.bundle, signal));
-      requireBundleWorkspace(saved.verified.manifest, declaration);
-      const prepared = await this.#withCurrentBundle(saved, signal, recheck => publishPreparedPacket(this, saved, request, signal, recheck));
+      const saved = freeze(await readSavedBundle(this, owner.declaration.outputRoot, request.bundle, signal));
+      requireBundleWorkspace(saved.verified.manifest, owner.declaration);
+      const prepared = rebuild ? await this.#rebuildPacket(owner, saved, request, signal)
+        : await this.#withCurrentBundle(saved, signal, recheck => publishPreparedPacket(this, saved, request, signal, recheck));
       log(prepared.kind === 'ready' ? 'info' : 'warn', prepared.kind);
       return prepared;
     } catch (error) {
@@ -257,6 +261,16 @@ export class MipmuxRuntime {
       log(code === 'cancelled' ? 'info' : 'error', code === 'cancelled' ? 'cancelled' : 'failed', code);
       throw error;
     }
+  }
+  async #rebuildPacket(owner: WorkspaceRuntime, saved: VerifiedBundle, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
+    const draft = await this.createDraft(owner, rebuildRequest(saved, request), signal);
+    try {
+      // The prompt reply stays inside the runtime, so no caller output cap applies.
+      await draft.prompt({ op: 'set', text: request.prompt, expectedRevision: draft.revision, maxOutputBytes: Number.MAX_SAFE_INTEGER }, signal);
+      const result = await draft.finalize(signal);
+      return result.kind === 'ready' ? { kind: 'ready', directory: result.directory, manifest: result.manifest }
+        : { kind: 'blocked', diagnostics: result.diagnostics, measurement: result.measurement };
+    } finally { await draft.close(); }
   }
   /** Verifies a decoded bundle against current roots, sources, policies and presentation, then runs `work`; `recheck` repeats the checks with fresh reads. */
   async #withCurrentBundle<T>(saved: VerifiedBundle, signal: AbortSignal, work: (recheck: () => Promise<void>) => Promise<T>): Promise<T> {
@@ -401,6 +415,6 @@ export class WorkspaceHandle {
   }
   async openOperation(signal: AbortSignal) { this.#check(); return this.runtime.openOperation(this.owner, signal); }
   async createDraft(request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}) { this.#check(); return this.runtime.createDraft(this.owner, request, signal, acquiring); }
-  async preparePacket(request: ContextPrepareRequest, signal: AbortSignal) { this.#check(); return this.runtime.preparePacket(this.owner.declaration, request, signal); }
+  async preparePacket(request: ContextPrepareRequest, signal: AbortSignal) { this.#check(); return this.runtime.preparePacket(this.owner, request, signal); }
   async close(): Promise<void> { if (!this.#closed) { this.#closed = true; await this.release(); } }
 }

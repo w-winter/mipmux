@@ -72,11 +72,17 @@ export const ContextBuildRequest = Type.Object({
   outputName: Type.String({ pattern: '^(?!\\.{1,2}$)[^/\\u0000]+$' }),
 }, closed);
 export type ContextBuildRequest = Static<typeof ContextBuildRequest>;
-/** Saved bundle directory relative to the workspace output root, its complete replacement prompt and a new bundle name. */
+/**
+ * Saved bundle directory relative to the workspace output root, its complete replacement prompt and a new bundle name.
+ * `refresh` or added required sources and documents rebuild the packet from current files instead of reusing saved bodies.
+ */
 export const ContextPrepareRequest = Type.Object({
   bundle: RelativePath,
   prompt: Type.String(),
   outputName: ContextBuildRequest.properties.outputName,
+  refresh: Type.Optional(Type.Boolean()),
+  requiredSources: Type.Optional(ContextBuildRequest.properties.requiredSources),
+  documents: Type.Optional(ContextBuildRequest.properties.documents),
 }, closed);
 export type ContextPrepareRequest = Static<typeof ContextPrepareRequest>;
 export const CapturedContextBuildRequest = Type.Object({ ...ContextBuildRequest.properties,
