@@ -8,6 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), counts: Type.Object({ matchingLines: Type.Integer() }), files: Type.Array(Type.Object({
@@ -36,9 +37,9 @@ test('public file_search uses source pattern inference, trimming and literal fle
   const observations: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
+    const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
       spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out },
-    } })).structuredContent);
+    } })));
     const cases = [
       { query: { text: ' \n^anchor$\u0085' }, lines: [1, 9] },
       { query: { kind: 'literal', text: ' ^anchor$ ' }, lines: [2] },
@@ -68,13 +69,13 @@ test('public file_search uses source pattern inference, trimming and literal fle
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: item.query } } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const reply = searchReply.Parse(found.structuredContent);
+      const reply = searchReply.Parse(toolJSON(found));
       assert.deepEqual(reply.files.flatMap(file => file.lines.filter(line => line.matching).map(line => line.number)), item.lines, JSON.stringify(item.query));
       observations.push({ query: item.query, reply: found });
       const counted = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: item.query, countOnly: true } } });
       assert.equal(counted.isError, false, JSON.stringify(counted));
-      const totals = searchReply.Parse(counted.structuredContent);
+      const totals = searchReply.Parse(toolJSON(counted));
       assert.equal(totals.counts.matchingLines, item.lines.length, JSON.stringify(item.query));
       assert.deepEqual(totals.files, []);
       observations.push({ query: item.query, countOnly: counted });
@@ -88,17 +89,17 @@ test('public file_search uses source pattern inference, trimming and literal fle
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: { kind: 'regex', text: item.pattern }, countOnly } } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const result = searchReply.Parse(found.structuredContent);
+      const result = searchReply.Parse(toolJSON(found));
       assert.equal(result.counts.matchingLines, item.lines.length);
       assert.deepEqual(result.files.flatMap(file => file.lines.filter(line => line.matching).map(line => line.number)), countOnly ? [] : item.lines);
-      assert.equal(correctionReply.Parse(found.structuredContent).warning,
+      assert.equal(correctionReply.Parse(toolJSON(found)).warning,
         'The content-search pattern was auto-corrected before running. Results may reflect a repaired or escaped version of the requested regex rather than the exact pattern you entered.');
       observations.push({ repairedPattern: item.pattern, countOnly, reply: found });
     }
     const blank = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
       input: { query: { text: '\u0085 \r\n' } } } });
     assert.equal(blank.isError, true);
-    assert.deepEqual(errorReply.Parse(blank.structuredContent), { kind: 'error', code: 'invalidSearchPattern',
+    assert.deepEqual(errorReply.Parse(toolJSON(blank)), { kind: 'error', code: 'invalidSearchPattern',
       message: "pattern cannot be empty; provide a non-empty search term. If you intend to enumerate files, use get_file_tree or specify a path mode with a wildcard like '*.swift'." });
     observations.push({ blank });
     const admissionCases = [
@@ -118,10 +119,10 @@ test('public file_search uses source pattern inference, trimming and literal fle
         input: { mode: item.mode, query: { kind: 'literal', text: item.text, wholeWord: item.wholeWord }, countOnly } } });
       assert.equal(found.isError, item.rejected, JSON.stringify({ item, countOnly, found }));
       if (item.rejected) {
-        assert.deepEqual(errorReply.Parse(found.structuredContent), { kind: 'error', code: 'invalidSearchPattern',
+        assert.deepEqual(errorReply.Parse(toolJSON(found)), { kind: 'error', code: 'invalidSearchPattern',
           message: 'Search pattern was rejected because it is either excessively large or shaped in a way that is known to cause catastrophic back-tracking in the regex engine.  Please simplify the pattern or rewrite it using non-nested quantifiers.' });
       } else {
-        assert.equal(searchReply.Parse(found.structuredContent).counts.matchingLines, 0);
+        assert.equal(searchReply.Parse(toolJSON(found)).counts.matchingLines, 0);
       }
       observations.push({ admission: item, countOnly, reply: found });
     }

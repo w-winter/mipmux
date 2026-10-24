@@ -11,6 +11,7 @@ import { Compile } from 'typebox/compile';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { searchValidator } from '../src/contracts/exploration.js';
 import type { ProcessSpec } from '../src/runtime/process-supervisor.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), scopedFileCount: Type.Integer(),
@@ -37,9 +38,9 @@ test('public raw scopes use RPCE clauses and preserve protected paths and ambigu
   const observations: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
+    const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
       spec: { roots: [{ name: 'Alpha', absolutePath: a }, { name: 'Beta', absolutePath: b }], exclusions: [], outputRoot: out },
-    } })).structuredContent);
+    } })));
     const cases = [
       { paths: ['Alpha/src/a.ts'], expected: ['Alpha/src/a.ts'] },
       { paths: ['Alpha/src'], expected: ['Alpha/src/a.ts', 'Alpha/src/nested/b.ts'] },
@@ -56,7 +57,7 @@ test('public raw scopes use RPCE clauses and preserve protected paths and ambigu
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: { text: 'needle' }, filters: { paths: item.paths } } } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const result = searchReply.Parse(found.structuredContent);
+      const result = searchReply.Parse(toolJSON(found));
       assert.deepEqual(result.files.map(file => file.root + '/' + file.path), item.expected, JSON.stringify(item));
       assert.equal(result.scopedFileCount, item.expected.length);
       observations.push({ item, result });
@@ -64,13 +65,13 @@ test('public raw scopes use RPCE clauses and preserve protected paths and ambigu
     const ambiguous = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
       input: { query: { text: 'needle' }, filters: { paths: ['shared.ts'] } } } });
     assert.equal(ambiguous.isError, true);
-    assert.match(errorReply.Parse(ambiguous.structuredContent).message, /matches multiple workspace roots/);
+    assert.match(errorReply.Parse(toolJSON(ambiguous)).message, /matches multiple workspace roots/);
     observations.push({ ambiguous });
     await writeFile(join(a, 'added.ts'), 'needle\n');
     const added = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
       input: { mode: 'content', query: { text: 'needle' }, filters: { paths: ['added.ts'] } } } });
     assert.equal(added.isError, false, JSON.stringify(added));
-    assert.deepEqual(searchReply.Parse(added.structuredContent).files.map(file => file.path), ['added.ts']);
+    assert.deepEqual(searchReply.Parse(toolJSON(added)).files.map(file => file.path), ['added.ts']);
     observations.push({ added });
     await mkdir('test-output', { recursive: true });
     await writeFile('test-output/search-scopes-public.json', JSON.stringify(observations, null, 2) + '\n');

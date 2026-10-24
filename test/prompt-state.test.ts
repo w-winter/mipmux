@@ -9,6 +9,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { verifyBundle } from '../src/index.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const draftReply = Compile(Type.Object({ id: Type.String(), revision: Type.Integer() }));
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
@@ -39,7 +40,7 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
     const declaration = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
       roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } });
     assert.equal(declaration.isError, false);
-    const workspaceId = workspaceReply.Parse(declaration.structuredContent).id;
+    const workspaceId = workspaceReply.Parse(toolJSON(declaration)).id;
     for (const mode of ['fullRewrite', 'augment', 'preserve']) {
       const created = await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
         task: original, initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', enhancementMode: mode,
@@ -47,21 +48,21 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
         documents: [], patches: [], discoveryHints: [], outputName: mode,
         budgetUnits: 100000 } } });
       assert.equal(created.isError, false, JSON.stringify(created));
-      const draft = draftReply.Parse(created.structuredContent);
+      const draft = draftReply.Parse(toolJSON(created));
       const get = () => client.callTool({ name: 'prompt', arguments: { draftId: draft.id, input: { op: 'get' } } });
-      assert.equal(promptReply.Parse((await get()).structuredContent).prompt, original);
+      assert.equal(promptReply.Parse(toolJSON(await get())).prompt, original);
       const expected = mode === 'fullRewrite' ? rewritten : mode === 'augment' ? original + appended : original;
       if (mode !== 'preserve') {
         const result = await client.callTool({ name: 'prompt', arguments: { draftId: draft.id,
           input: { op: mode === 'augment' ? 'append' : 'set', text: mode === 'augment' ? appended : rewritten,
             expectedRevision: 0 } } });
         assert.equal(result.isError, false, JSON.stringify(result));
-        const changed = promptReply.Parse(result.structuredContent);
+        const changed = promptReply.Parse(toolJSON(result));
         assert.equal(changed.prompt, expected); assert.equal(changed.revision, 1);
       }
       const finalized = await client.callTool({ name: 'draft_finalize', arguments: { draftId: draft.id } });
       assert.equal(finalized.isError, false, JSON.stringify(finalized));
-      const ready = readyReply.Parse(finalized.structuredContent);
+      const ready = readyReply.Parse(toolJSON(finalized));
       const { manifest } = await verifyBundle(ready.directory);
       const packet = await readFile(join(ready.directory, 'context.md'), 'utf8');
       assert(packet.endsWith('<user_instructions>\n' + expected + '\n</user_instructions>\n'));
@@ -75,24 +76,24 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
       task: original, initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', enhancementMode: 'augment', requiredSources: [],
       documents: [], patches: [], discoveryHints: [], outputName: 'operations',
       budgetUnits: 100000 } } });
-    const draft = draftReply.Parse(created.structuredContent);
+    const draft = draftReply.Parse(toolJSON(created));
     const invoke = (input: PromptToolInput, maxOutputBytes = 10000) => client.callTool({ name: 'prompt',
       arguments: { draftId: draft.id, input, maxOutputBytes } });
     const invalidInputs: PromptToolInput[] = [{ op: 'set', text: '\ud800', expectedRevision: 0 },
       { op: 'append', text: 'NUL\0', expectedRevision: 0 }];
     for (const input of invalidInputs) {
       const rejected = await invoke(input); assert.equal(rejected.isError, true);
-      assert.match(JSON.stringify(rejected.structuredContent), /invalidEncoding/);
+      assert.match(JSON.stringify(toolJSON(rejected)), /invalidEncoding/);
     }
     assert.equal((await invoke({ op: 'set', text: 'Too large', expectedRevision: 0 }, 1)).isError, true);
-    assert.equal(promptReply.Parse((await invoke({ op: 'get' })).structuredContent).prompt, original);
-    const noOp = promptReply.Parse((await invoke({ op: 'set', text: original, expectedRevision: 0 })).structuredContent);
+    assert.equal(promptReply.Parse(toolJSON(await invoke({ op: 'get' }))).prompt, original);
+    const noOp = promptReply.Parse(toolJSON(await invoke({ op: 'set', text: original, expectedRevision: 0 })));
     assert.equal(noOp.revision, 0);
-    const cleared = promptReply.Parse((await invoke({ op: 'clear', expectedRevision: 0 })).structuredContent);
+    const cleared = promptReply.Parse(toolJSON(await invoke({ op: 'clear', expectedRevision: 0 })));
     assert.equal(cleared.prompt, ''); assert.equal(cleared.revision, 1);
     const stale = await invoke({ op: 'append', text: appended, expectedRevision: 0 });
-    assert.equal(stale.isError, true); assert.match(JSON.stringify(stale.structuredContent), /revisionConflict/);
-    const replaced = promptReply.Parse((await invoke({ op: 'set', text: original + appended, expectedRevision: 1 })).structuredContent);
+    assert.equal(stale.isError, true); assert.match(JSON.stringify(toolJSON(stale)), /revisionConflict/);
+    const replaced = promptReply.Parse(toolJSON(await invoke({ op: 'set', text: original + appended, expectedRevision: 1 })));
     assert.equal(replaced.prompt, original + appended); assert.equal(replaced.revision, 2);
     await writeFile(join(base, 'prompt-state-proof.json'), JSON.stringify({ evidence, cleared, replaced }, null, 2) + '\n');
   } finally { await client.close(); }

@@ -9,6 +9,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { verifyBundle } from '../src/index.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const draftReply = Compile(Type.Object({ id: Type.String(), revision: Type.Integer() }));
@@ -34,9 +35,9 @@ test('MCP admission retains mutable initial selection and manual mode separately
   const client = new Client({ name: 'initial-selection', version: '1' }), proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: {
+    const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: {
       roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [],
-    } } })).structuredContent);
+    } } })));
     for (const codemapMode of ['automatic', 'manual']) {
       const created = await client.callTool({ name: 'draft_create', arguments: { workspaceId: workspace.id, request: {
         task: 'Preserve the task', constraints: '', enhancementMode: 'preserve', purpose: 'review',
@@ -45,10 +46,10 @@ test('MCP admission retains mutable initial selection and manual mode separately
         requiredSources: [{ kind: 'full', source: { root: 'r', path: 'required.txt' } }],
         documents: [], patches: [], discoveryHints: [], budgetUnits: 200000, outputName: codemapMode,
       } } });
-      assert.equal(created.isError, false, JSON.stringify(created)); const draft = draftReply.Parse(created.structuredContent);
+      assert.equal(created.isError, false, JSON.stringify(created)); const draft = draftReply.Parse(toolJSON(created));
       const before = await client.callTool({ name: 'draft_inspect', arguments: { draftId: draft.id, input: { view: 'metadata', continuation: null } } });
       assert.equal(before.isError, false, JSON.stringify(before));
-      const inspected = metadataReply.Parse(before.structuredContent); assert.equal(inspected.codemapMode, codemapMode);
+      const inspected = metadataReply.Parse(toolJSON(before)); assert.equal(inspected.codemapMode, codemapMode);
       const seed = inspected.items.find(item => item.id === 'source:["r","seed.txt"]'); assert(seed); assert.equal(seed.required, false);
       assert.equal(inspected.items.find(item => item.id === 'source:["r","required.txt"]')?.required, true);
       const removed = await client.callTool({ name: 'manage_selection', arguments: { draftId: draft.id,
@@ -57,7 +58,7 @@ test('MCP admission retains mutable initial selection and manual mode separately
       const blocked = await client.callTool({ name: 'manage_selection', arguments: { draftId: draft.id,
         input: { op: 'remove', paths: ['required.txt'], expectedRevision: 1 } } }); assert.equal(blocked.isError, true);
       const finalized = await client.callTool({ name: 'draft_finalize', arguments: { draftId: draft.id } });
-      assert.equal(finalized.isError, false, JSON.stringify(finalized)); const ready = readyReply.Parse(finalized.structuredContent);
+      assert.equal(finalized.isError, false, JSON.stringify(finalized)); const ready = readyReply.Parse(toolJSON(finalized));
       const verified = await verifyBundle(ready.directory), text = await readFile(join(ready.directory, 'context.md'), 'utf8');
       assert(text.includes('REQUIRED EVIDENCE')); assert(!text.includes('MUTABLE INITIAL EVIDENCE'));
       proof.push({ codemapMode, before, removed, blocked, directory: ready.directory, verified: verified.kind });

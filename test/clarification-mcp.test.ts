@@ -11,6 +11,7 @@ import { contextRequestValidator } from '../src/contracts/context.js';
 import { AskUserResponse } from '../src/contracts/interaction.js';
 import { verifyBundle } from '../src/index.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
@@ -71,9 +72,9 @@ async function createFixture(scenario: Scenario, t: TestContext) {
       field.type === 'array' ? ['API'] : questions > 1 ? 'Yes' : scenario === 'accept' ? 'also docs' : 'API'])) };
   });
   await client.connect(transport);
-  const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
+  const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
     spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot },
-  } })).structuredContent);
+  } })));
   const request = contextRequestValidator.Parse({ task: 'Inspect the selected context', constraints: '', enhancementMode: 'augment',
     purpose: 'investigation', initialSelection: { codemapMode: 'manual', sources: [] },
     requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } }], documents: [], patches: [],
@@ -90,9 +91,9 @@ async function checkForeignAnswer(f: Fixture, firstJobId: string) {
   const { client, workspace, request } = f;
   const form = formReply.Parse(await client.callTool({ name: 'context_builder_wait', arguments: { jobId: firstJobId, durationMs: 10000 } },
     { allowInputRequired: true }));
-  const second = jobReply.Parse((await client.callTool({ name: 'context_builder', arguments: {
+  const second = jobReply.Parse(toolJSON(await client.callTool({ name: 'context_builder', arguments: {
     workspaceId: workspace.id, requestId: 'second', request: { ...request, outputName: 'second' },
-  } })).structuredContent);
+  } })));
   const secondForm = formReply.Parse(await client.callTool({ name: 'context_builder_wait', arguments: { jobId: second.jobId, durationMs: 10000 } },
     { allowInputRequired: true }));
   const firstId = Object.keys(form.inputRequests)[0]!, secondId = Object.keys(secondForm.inputRequests)[0]!;
@@ -100,13 +101,13 @@ async function checkForeignAnswer(f: Fixture, firstJobId: string) {
     form.inputRequests[firstId]!.params.requestedSchema.properties).map(key => [key, 'API'])) };
   const rejected = await client.request({ method: 'tools/call', params: { name: 'context_builder_wait',
     arguments: { jobId: second.jobId, durationMs: 10000 }, inputResponses: { [firstId]: answer } } });
-  assert.equal(rejected.isError, true); assert.equal(errorReply.Parse(rejected.structuredContent).code, 'interactionNotCurrent');
+  assert.equal(rejected.isError, true); assert.equal(errorReply.Parse(toolJSON(rejected)).code, 'interactionNotCurrent');
   const results: ReturnType<typeof readyReply.Parse>[] = [];
   const pendingAnswers: [string, string][] = [[firstJobId, firstId], [second.jobId, secondId]];
-  for (const [jobId, questionId] of pendingAnswers) results.push(readyReply.Parse((await client.request({
+  for (const [jobId, questionId] of pendingAnswers) results.push(readyReply.Parse(toolJSON(await client.request({
     method: 'tools/call', params: { name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 },
       inputResponses: { [questionId]: answer } },
-  })).structuredContent));
+  }))));
   await writeFile('test-output/clarification-foreign-answer-proof.json', JSON.stringify({ rejected, results }, null, 2) + '\n');
 }
 
@@ -127,7 +128,7 @@ async function checkCancellation(f: Fixture, jobId: string, waiting: Waiting) {
   f.releaseAnswer.release();
   await waiting.catch(() => {});
   if (f.scenario === 'job-cancel') {
-    const result = jobReply.Parse((await f.client.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 } })).structuredContent);
+    const result = jobReply.Parse(toolJSON(await f.client.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 } })));
     assert.equal(result.state, 'cancelled'); assert.equal(result.localSettled, true);
   }
   await assert.rejects(access(join(f.outputRoot, 'packet', 'manifest.json')));
@@ -154,10 +155,10 @@ async function checkCompletion(f: Fixture, jobId: string, waiting: Waiting) {
   const first = await waiting;
   if (scenario === 'timeout') {
     assert.equal(first.isError, true);
-    assert.equal(errorReply.Parse(first.structuredContent).code, 'interactionNotCurrent');
+    assert.equal(errorReply.Parse(toolJSON(first)).code, 'interactionNotCurrent');
   } else assert.equal(first.isError, false, JSON.stringify(first));
-  const result = readyReply.Parse((scenario === 'timeout' ? await client.callTool({ name: 'context_builder_wait',
-    arguments: { jobId, durationMs: 10000 } }) : first).structuredContent);
+  const result = readyReply.Parse(toolJSON(scenario === 'timeout' ? await client.callTool({ name: 'context_builder_wait',
+    arguments: { jobId, durationMs: 10000 } }) : first));
   const packet = await verifyBundle(result.bundle.directory);
   assert.equal(packet.manifest.prompt, '');
   assert.equal(f.questions, scenario === 'accept' ? 2 : scenario === 'disabled' ? 0 : 1);
@@ -176,10 +177,10 @@ for (const scenario of scenarios) {
       } });
       if (scenario === 'unavailable') {
         assert.equal(started.isError, true);
-        assert.equal(errorReply.Parse(started.structuredContent).code, 'elicitationUnavailable');
+        assert.equal(errorReply.Parse(toolJSON(started)).code, 'elicitationUnavailable');
         assert.equal(f.provider.requests.length, 0);
       } else {
-        const job = jobReply.Parse(started.structuredContent);
+        const job = jobReply.Parse(toolJSON(started));
         if (scenario === 'foreign-answer') await checkForeignAnswer(f, job.jobId);
         else {
           const waiting = f.client.callTool({ name: 'context_builder_wait', arguments: { jobId: job.jobId, durationMs: 10000 } });

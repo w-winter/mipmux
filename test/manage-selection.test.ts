@@ -13,6 +13,7 @@ import { selectionValidator, SelectionInput } from '../src/contracts/selection.j
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { inventoryValidator } from '../src/contracts/inventory.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const identifier = Compile(Type.Object({ id: Type.String() }));
 const sourceMetadata = Type.Object({ kind: Type.Literal('source'), selection: SourceSelection,
@@ -46,12 +47,12 @@ async function fixture() {
     roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output } } });
   assert.equal(declared.isError, false, JSON.stringify(declared));
   const created = await client.callTool({ name: 'draft_create', arguments: {
-    workspaceId: identifier.Parse(declared.structuredContent).id, request: {
+    workspaceId: identifier.Parse(toolJSON(declared)).id, request: {
       task: 'Inspect source selection behavior', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [], documents: [], patches: [], discoveryHints: [], budgetUnits: 100000, outputName: 'packet',
     } } });
   assert.equal(created.isError, false, JSON.stringify(created));
-  const draftId = identifier.Parse(created.structuredContent).id;
+  const draftId = identifier.Parse(toolJSON(created)).id;
   const select = (input: Static<typeof SelectionInput>, maxOutputBytes = 30000) => client.callTool({
     name: 'manage_selection', arguments: { draftId, input, maxOutputBytes },
   });
@@ -60,9 +61,9 @@ async function fixture() {
       draftId, input: { view: 'metadata', continuation: null }, maxOutputBytes: 30000,
     } });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    return inspection.Parse(reply.structuredContent);
+    return inspection.Parse(toolJSON(reply));
   };
-  return { base, root, output, client, draftId, select, inspect, workspaceId: identifier.Parse(declared.structuredContent).id };
+  return { base, root, output, client, draftId, select, inspect, workspaceId: identifier.Parse(toolJSON(declared)).id };
 }
 
 test('public selection coalesces slice descriptions and subtracts ranges before promotion', async () => {
@@ -135,7 +136,7 @@ test('selection receipts expose source summaries, slice DTOs and the codemaps-on
     assert.equal(reply.isError, false, JSON.stringify(reply));
     reply = await f.select({ op: 'add', mode: 'codemap_only', paths: ['r/zone/Peer.swift'], view: 'files' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    const full = replySchema.Parse(reply.structuredContent);
+    const full = replySchema.Parse(toolJSON(reply));
     assert.equal(full.code_map_usage, 'auto');
     assert.deepEqual([full.summary.full_count, full.summary.slice_count, full.summary.codemap_count], [1, 1, 1]);
     assert.equal(full.total_tokens, full.summary.full_tokens + full.summary.slice_tokens + full.summary.codemap_tokens);
@@ -146,7 +147,7 @@ test('selection receipts expose source summaries, slice DTOs and the codemaps-on
     const before = await f.inspect();
     reply = await f.client.callTool({ name: 'manage_selection', arguments: { draftId: f.draftId, input: { op: 'get', view: 'codemaps' } } });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    const filtered = replySchema.Parse(reply.structuredContent);
+    const filtered = replySchema.Parse(toolJSON(reply));
     assert.deepEqual(filtered.files, full.files.filter(file => file.render_mode === 'codemap'));
     assert.deepEqual(filtered.file_slices, []);
     assert.deepEqual(filtered.summary, { full_count: 0, slice_count: 0, codemap_count: 1,
@@ -163,14 +164,14 @@ test('selection content view uses the source full-file and described-slice block
   try {
     let reply = await f.select({ op: 'set', paths: ['r/Main.swift'], view: 'content' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    assert.deepEqual(blocks.Parse(reply.structuredContent).blocks,
+    assert.deepEqual(blocks.Parse(toolJSON(reply)).blocks,
       ['File: Main.swift\n```swift\nstruct Main {\n  let value: Int\n}\n\n```']);
     reply = await f.select({ op: 'clear' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
     reply = await f.select({ op: 'set', slices: [{ path: 'r/zone/notes.txt',
       ranges: [{ start_line: 2, end_line: 3, description: 'Selected notes' }] }], view: 'content' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    assert.deepEqual(blocks.Parse(reply.structuredContent).blocks,
+    assert.deepEqual(blocks.Parse(toolJSON(reply)).blocks,
       ['File: zone/notes.txt\n(lines 2-3: Selected notes)\n```txt\nSecond\nThird\n\n```']);
     await writeFile(join(f.base, 'selection-content-block-receipt.json'), JSON.stringify({ reply }, null, 2) + '\n');
   } finally { await f.client.close(); }
@@ -251,7 +252,7 @@ test('selection reply-size rejection retains a mutation but preview remains non-
     assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'Main.swift'));
     const reply = await f.select({ op: 'get' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    const current = Compile(Type.Object({ revision: Type.Integer(), files: Type.Array(Type.Object({ path: Type.String() })) })).Parse(reply.structuredContent);
+    const current = Compile(Type.Object({ revision: Type.Integer(), files: Type.Array(Type.Object({ path: Type.String() })) })).Parse(toolJSON(reply));
     assert.equal(current.revision, 1); assert.deepEqual(current.files.map(file => file.path), ['Main.swift']);
     const noOp = await f.select({ op: 'add', paths: ['r/Main.swift'] }, 1);
     assert.equal(noOp.isError, true); assert.deepEqual(await f.inspect(), state);
@@ -269,7 +270,7 @@ test('codemap-only selection retains a supported file with no rendered symbols a
   try {
     let reply = await f.select({ op: 'set', mode: 'codemap_only', paths: ['r/Empty.swift'], view: 'content' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    let projected = replySchema.Parse(reply.structuredContent);
+    let projected = replySchema.Parse(toolJSON(reply));
     assert.deepEqual(projected.files, []);
     assert.deepEqual(projected.blocks, []);
     assert.deepEqual(projected.code_structure, { file_count: 0, content: '', unmapped_paths: ['Empty.swift'] });
@@ -281,7 +282,7 @@ test('codemap-only selection retains a supported file with no rendered symbols a
     assert.equal(reply.isError, false, JSON.stringify(reply));
     reply = await f.select({ op: 'demote', paths: ['r/Empty.swift'], view: 'content' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    projected = replySchema.Parse(reply.structuredContent);
+    projected = replySchema.Parse(toolJSON(reply));
     assert.deepEqual(projected.files, []);
     assert.deepEqual(projected.code_structure.unmapped_paths, ['Empty.swift']);
     state = await f.inspect();
@@ -289,7 +290,7 @@ test('codemap-only selection retains a supported file with no rendered symbols a
     receipts.push(reply);
     const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
     assert.equal(finalized.isError, false, JSON.stringify(finalized));
-    const bundle = await verifyBundle(ready.Parse(finalized.structuredContent).directory);
+    const bundle = await verifyBundle(ready.Parse(toolJSON(finalized)).directory);
     const material = bundle.manifest.materials.find(record => record.kind === 'source' && record.selection.source.path === 'Empty.swift');
     assert(material?.kind === 'source' && material.selection.kind === 'codemap');
     assert.deepEqual(material.spans, []);
@@ -308,7 +309,7 @@ test('undecodable codemap-only membership retains raw evidence and passes saved/
   try {
     const reply = await f.select({ op: 'set', mode: 'codemap_only', paths: ['r/Undecodable.swift'], view: 'content' });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    const projected = replySchema.Parse(reply.structuredContent);
+    const projected = replySchema.Parse(toolJSON(reply));
     assert.deepEqual(projected.files, []);
     assert.deepEqual(projected.blocks, []);
     assert.deepEqual(projected.code_structure.unmapped_paths, ['Undecodable.swift']);
@@ -318,7 +319,7 @@ test('undecodable codemap-only membership retains raw evidence and passes saved/
     assert.deepEqual(await f.inspect(), before);
     const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
     assert.equal(finalized.isError, false, JSON.stringify(finalized));
-    const directory = ready.Parse(finalized.structuredContent).directory;
+    const directory = ready.Parse(toolJSON(finalized)).directory;
     const verified = await verifyBundle(directory);
     const material = manifestSchema.Parse(verified.manifest).materials[0]!;
     assert.equal(material.selection.kind, 'codemap');
@@ -359,7 +360,7 @@ test('strict selection failures retain source path hints and leave selection unc
     for (const op of ['add', 'remove', 'preview'] as const) {
       const reply = await f.select({ op, paths, strict: true });
       assert.equal(reply.isError, true, JSON.stringify(reply));
-      assert.equal(failure.Parse(reply.structuredContent).message,
+      assert.equal(failure.Parse(toolJSON(reply)).message,
         "No provided paths matched any files or folders for '" + op + "'. Loaded roots: r → " + f.root +
         " Provide either: (a) Root-name + relative path (e.g., 'Root/Sub/Path.swift'), or (b) a full absolute path under a loaded root." +
         ' Not under any loaded root: /outside-one/File.swift, /outside-two/File.swift');
@@ -367,16 +368,16 @@ test('strict selection failures retain source path hints and leave selection unc
     }
     const invalidSlices = await f.select({ op: 'add', paths: ['r/Main.swift'], slices: [null], strict: true });
     assert.equal(invalidSlices.isError, true, JSON.stringify(invalidSlices));
-    assert.equal(failure.Parse(invalidSlices.structuredContent).message, 'No valid slices parsed from provided specification');
+    assert.equal(failure.Parse(toolJSON(invalidSlices)).message, 'No valid slices parsed from provided specification');
     for (const op of ['promote', 'demote'] as const) {
       const reply = await f.select({ op, paths: ['r/zone'] });
       assert.equal(reply.isError, true, JSON.stringify(reply));
-      assert(failure.Parse(reply.structuredContent).message.startsWith('Invalid selection inputs: '));
+      assert(failure.Parse(toolJSON(reply)).message.startsWith('Invalid selection inputs: '));
       receipts.push(reply);
     }
     const emptyPreview = await f.select({ op: 'preview', mode: 'codemap_only', paths: ['r/Empty.swift'], strict: true });
     assert.equal(emptyPreview.isError, true, JSON.stringify(emptyPreview));
-    assert(failure.Parse(emptyPreview.structuredContent).message.startsWith("No provided paths matched any files or folders for 'preview'."));
+    assert(failure.Parse(toolJSON(emptyPreview)).message.startsWith("No provided paths matched any files or folders for 'preview'."));
     const state = await f.inspect();
     assert.equal(state.revision, 0);
     assert(!state.items.some(item => item.kind === 'source'));
@@ -395,7 +396,7 @@ test('absolute explicit selection admits ignored regular sources and preserves s
       && item.selection.kind === 'full'));
     const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
     assert.equal(finalized.isError, false, JSON.stringify(finalized));
-    const packet = ready.Parse(finalized.structuredContent);
+    const packet = ready.Parse(toolJSON(finalized));
     const verified = await verifyBundle(packet.directory);
     assert(verified.manifest.materials.some(record => record.kind === 'source'
       && record.selection.source.path === 'private/Hidden.swift'));
@@ -417,7 +418,7 @@ test('a rejected selection retains explicit workspace registration but ordinary 
     const tree = await f.client.callTool({ name: 'get_file_tree', arguments: { workspaceId: f.workspaceId,
       input: { type: 'files', mode: 'full' } } });
     assert.equal(tree.isError, false, JSON.stringify(tree));
-    const decoded = Compile(Type.Object({ tree: Type.String() })).Parse(tree.structuredContent);
+    const decoded = Compile(Type.Object({ tree: Type.String() })).Parse(toolJSON(tree));
     assert(!decoded.tree.includes('Hidden.swift'));
     await writeFile(join(f.root, 'private/Hidden.swift'), 'struct RefreshedManaged {}\n');
     await writeFile(join(f.root, '.repo_ignore'), 'private/\n# refreshed control\n');
@@ -426,7 +427,7 @@ test('a rejected selection retains explicit workspace registration but ordinary 
     const reread = await f.client.callTool({ name: 'read_file', arguments: { workspaceId: f.workspaceId,
       input: { root: 'r', path: 'private/Hidden.swift' } } });
     assert.equal(reread.isError, false, JSON.stringify(reread));
-    assert(JSON.stringify(reread.structuredContent).includes('RefreshedManaged'));
+    assert(JSON.stringify(toolJSON(reread)).includes('RefreshedManaged'));
     await writeFile(join(f.base, 'rejected-registration-receipt.json'), JSON.stringify({ before, exact, tree }, null, 2) + '\n');
   } finally { await f.client.close(); }
 });
@@ -498,7 +499,7 @@ test('get, clear and rejected representation syntax do not acquire unrelated exp
       assert.equal(reply.isError, op === 'demote', JSON.stringify(reply));
       const refreshed = await f.client.callTool({ name: 'workspace_refresh', arguments: { workspaceId: f.workspaceId } });
       assert.equal(refreshed.isError, false, JSON.stringify(refreshed));
-      const snapshot = inventoryValidator.Parse(refreshed.structuredContent);
+      const snapshot = inventoryValidator.Parse(toolJSON(refreshed));
       assert(!snapshot.entries.some(entry => entry.kind === 'file' && entry.path === 'private/Hidden.swift'), op);
       await writeFile(join(f.base, 'non-acquiring-selection-receipt.json'), JSON.stringify({ op, reply, inventory: snapshot.inventoryDigest }, null, 2) + '\n');
     } finally { await f.client.close(); }
@@ -621,15 +622,15 @@ test('selection get revalidates an already rendered optional codemap before retu
     assert.equal(stale.isError, false, JSON.stringify(stale));
     const pending = Compile(Type.Object({ revision: Type.Literal(initial.revision), files: Type.Array(Type.Unknown(), { maxItems: 0 }),
       blocks: Type.Array(Type.String(), { maxItems: 0 }), code_structure: Type.Object({ pending_paths: Type.Array(Type.Literal('private/Hidden.swift'), { minItems: 1, maxItems: 1 }) }),
-      measurement: Type.Object({ complete: Type.Literal(false) }) })).Parse(stale.structuredContent);
+      measurement: Type.Object({ complete: Type.Literal(false) }) })).Parse(toolJSON(stale));
     assert.equal((await f.inspect()).revision, initial.revision);
     await writeFile(path, original);
     const restored = await f.select({ op: 'get', view: 'content' });
     assert.equal(restored.isError, false, JSON.stringify(restored));
-    assert(JSON.stringify(restored.structuredContent).includes('ExplicitlyManaged'));
+    assert(JSON.stringify(toolJSON(restored)).includes('ExplicitlyManaged'));
     const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
     assert.equal(finalized.isError, false, JSON.stringify(finalized));
-    const bundle = ready.Parse(finalized.structuredContent); await verifyBundle(bundle.directory);
+    const bundle = ready.Parse(toolJSON(finalized)); await verifyBundle(bundle.directory);
     await writeFile('test-output/codemap-get-currentness-proof.json', JSON.stringify({ selected, pending, restored, bundle }, null, 2) + '\n');
   } finally { await f.client.close(); }
 });

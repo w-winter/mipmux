@@ -15,6 +15,7 @@ import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
@@ -65,10 +66,10 @@ test('public Git log/blame use the nearest owning checkout, retain source fields
   const proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })));
     const call = async (input: Static<typeof GitInput>, maxOutputBytes = 24000) => {
       const reply = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input, maxOutputBytes } });
-      proof.push({ input, result: reply }); return { reply, value: result.Parse(reply.structuredContent) };
+      proof.push({ input, result: reply }); return { reply, value: result.Parse(toolJSON(reply)) };
     };
     const log = await call({ op: 'log', repositories: [{ root: 'r', path: null, worktree: null }] });
     assert.equal(log.reply.isError, false, JSON.stringify(log.reply));
@@ -182,10 +183,10 @@ test('public Git status returns coherent source categories for a subdirectory ro
   const client = new Client({ name: 'git-status-source', version: '1' });
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })));
     const reply = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input: { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }] } } });
     assert.equal(reply.isError, false, JSON.stringify(reply));
-    const value = result.Parse(reply.structuredContent);
+    const value = result.Parse(toolJSON(reply));
     assert.equal(value.kind, 'git'); assert.equal(value.op, 'status'); assert(value.status);
     assert.equal(value.status.branch, branch);
     assert.deepEqual(value.status.staged, ['sub/Renamed file.txt', 'sub/delete-me.txt', 'sub/file.txt']);
@@ -193,8 +194,8 @@ test('public Git status returns coherent source categories for a subdirectory ro
     assert.deepEqual(value.status.untracked, ['outside-root.txt', 'sub/' + unusual]);
     assert.equal(value.status.summary, branch + ' | 3 staged, 1 modified, 2 untracked');
     assert.equal(value.status.upstream, undefined); assert.equal(value.status.ahead, undefined); assert.equal(value.status.behind, undefined);
-    const cap = result.Parse((await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
-      input: { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }] }, maxOutputBytes: 1 } })).structuredContent);
+    const cap = result.Parse(toolJSON(await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
+      input: { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }] }, maxOutputBytes: 1 } })));
     assert.equal(cap.kind, 'outputBudgetTooSmall');
     assert.deepEqual(await readFile(join(f.repo, '.git/index')), before);
     assert.equal(existsSync(fsmonitorMarker), false, 'Status must not execute a repository fsmonitor hook');

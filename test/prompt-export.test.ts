@@ -7,6 +7,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const identifier = Compile(Type.Object({ id: Type.String() }));
 const revision = Compile(Type.Object({ revision: Type.Integer() }));
@@ -41,9 +42,9 @@ test('real MCP lists presets before draft lookup and exports a nonterminal captu
   async function call(name: string, args: NonNullable<Parameters<Client['callTool']>[0]['arguments']>) {
     const result = await client.callTool({ name, arguments: args });
     assert.equal(result.isError, false, JSON.stringify(result));
-    assert(result.structuredContent);
-    evidence.push({ name, result: result.structuredContent });
-    return result.structuredContent;
+    assert(toolJSON(result));
+    evidence.push({ name, result: toolJSON(result) });
+    return toolJSON(result);
   }
   try {
     await client.connect(transport);

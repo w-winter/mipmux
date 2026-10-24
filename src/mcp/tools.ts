@@ -13,7 +13,7 @@ import { toolResult, failureResult } from '../runtime/tool-result.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { ClientQuestionResponse } from '../contracts/interaction.js';
 import { questionForm, sourceQuestionResponse } from './question-form.js';
-import { jobReceipt, publicationReceipt } from './receipts.js';
+import { jobReceipt, prepareReceipt, publicationReceipt } from './receipts.js';
 
 const closed = { additionalProperties: false }, id = Type.String({ minLength: 1 });
 const formCapability = Compile(Type.Object({ [CLIENT_CAPABILITIES_META_KEY]: Type.Object({
@@ -100,7 +100,7 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
   register('context_prepare', Type.Object({ workspaceId: id, ...ContextPrepareRequest.properties }, closed),
     async (input, ctx) => {
       const { workspaceId, ...request } = input;
-      return publicationReceipt(await client().prepare(workspaceId, request, ctx.mcpReq.signal));
+      return prepareReceipt(await client().prepare(workspaceId, request, ctx.mcpReq.signal));
     });
   register('context_builder_wait', Type.Object({ jobId: id, durationMs: Type.Integer({ minimum: 0, maximum: 2147483647 }) }, closed),
     async (input, ctx) => {

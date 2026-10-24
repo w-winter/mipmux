@@ -10,6 +10,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { MipmuxRuntime, type ContextBuildRequest } from '../src/index.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const command = resolve('dist/cli/main.js');
 const signal = () => new AbortController().signal;
@@ -81,18 +82,18 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
   try {
     await mcp.connect(transport);
     const declared = await mcp.callTool({ name: 'workspace_declare', arguments: { spec } });
-    const workspaceId = JSON.parse(JSON.stringify(declared.structuredContent)).id;
+    const workspaceId = JSON.parse(JSON.stringify(toolJSON(declared))).id;
     const started = await mcp.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'one', request } });
-    const jobId = JSON.parse(JSON.stringify(started.structuredContent)).jobId;
-    const waited = JSON.parse(JSON.stringify((await mcp.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 20000 } })).structuredContent));
-    const result = JSON.parse(JSON.stringify((await mcp.callTool({ name: 'context_builder_result', arguments: { jobId } })).structuredContent));
+    const jobId = JSON.parse(JSON.stringify(toolJSON(started))).jobId;
+    const waited = JSON.parse(JSON.stringify(toolJSON(await mcp.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 20000 } }))));
+    const result = JSON.parse(JSON.stringify(toolJSON(await mcp.callTool({ name: 'context_builder_result', arguments: { jobId } }))));
     for (const snapshot of [waited, result]) {
       assert.equal(snapshot.state, 'failed'); assert.equal(snapshot.code, 'cacheCorrupt');
       assert.deepEqual(snapshot.target, target); assert.deepEqual(Object.keys(snapshot).sort(), [...terminalKeys].sort());
     }
     await invalidate(() => promisify(execFile)(process.execPath, [command, 'cache', 'invalidate', '--kind', 'artifact', '--key', key, '--config', config], { cwd: '/' }));
-    const second = JSON.parse(JSON.stringify((await mcp.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'two', request: { ...request, outputName: 'mcp-two' } } })).structuredContent));
-    const reconciled = JSON.parse(JSON.stringify((await mcp.callTool({ name: 'context_builder_wait', arguments: { jobId: second.jobId, durationMs: 20000 } })).structuredContent));
+    const second = JSON.parse(JSON.stringify(toolJSON(await mcp.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'two', request: { ...request, outputName: 'mcp-two' } } }))));
+    const reconciled = JSON.parse(JSON.stringify(toolJSON(await mcp.callTool({ name: 'context_builder_wait', arguments: { jobId: second.jobId, durationMs: 20000 } }))));
     assert.equal(reconciled.state, 'ready');
     proof.mcp = waited;
   } finally { await mcp.close(); }

@@ -6,12 +6,13 @@ import { resolve, join } from 'node:path';
 import { setImmediate as turn } from 'node:timers/promises';
 import { getDefaultHighWaterMark } from 'node:stream';
 import { test } from 'node:test';
-import { McpServer, fromJsonSchema } from '@modelcontextprotocol/server';
+import { McpServer, fromJsonSchema, isCallToolResult } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { serveMipmuxStdio } from '../src/mcp/server.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import { verifyBundle } from '../src/context/verify.js';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
 const config = { copyContext: copyContext(), cachePath: '/unavailable/cache', nativeExecutable: '/unavailable/native', nativeEnvironment: {}, terminationGraceMs: 100,
@@ -122,8 +123,9 @@ test('production stdio shutdown waits for real claimed publication before closin
     wire.onmessage?.({ jsonrpc: '2.0', id: requestId, method: 'tools/call', params: { _meta: meta, name, arguments: args } });
     const value = await result;
     assert(value && typeof value === 'object' && 'result' in value);
-    const body = value.result; assert(body && typeof body === 'object' && 'structuredContent' in body);
-    return body.structuredContent;
+    // The JSON arrives once, as text: a structuredContent copy would double what the caller's model reads.
+    const body = value.result; assert(isCallToolResult(body)); assert.equal(body.structuredContent, undefined);
+    return toolJSON(body);
   };
   try {
     const workspace = await call('workspace_declare', { spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } });

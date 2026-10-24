@@ -16,6 +16,7 @@ import { gitValidator } from '../src/contracts/git.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { loadVerifiedBundle, type VerifiedBundle } from '../src/context/verify.js';
 import { sha256 } from '../src/workspace/values.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const signal = () => new AbortController().signal;
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
@@ -26,7 +27,10 @@ const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const readyReply = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String(),
   context: Type.Object({ path: Type.String(), byteCount: Type.Integer(), sha256: Type.String() }),
   accounting: Type.Object({ units: Type.Integer(), allowance: Type.Integer() }),
-  materials: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()) })), omitted: Type.Array(Type.Unknown()) }));
+  added: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()) })),
+  removed: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()) })), omitted: Type.Array(Type.Unknown()) }));
+const changes = (receipt: { added: { kind: string; id?: string }[]; removed: { kind: string; id?: string }[] }) =>
+  [receipt.added, receipt.removed].map(entries => entries.map(entry => entry.kind + ':' + (entry.id ?? '')));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String() }, { additionalProperties: true }));
 const instructions = (prompt: string) => '<user_instructions>\n' + prompt + '\n</user_instructions>\n';
 
@@ -112,8 +116,8 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
   const proof = { prepared: new Map<string, { receipt: unknown; materialKinds: string[]; automaticGit: boolean }>(), symlinkCode: '' };
   try {
     await client.connect(transport);
-    const declare = async (spec: typeof f.spec) => workspaceReply.Parse((await client.callTool({ name: 'workspace_declare',
-      arguments: { spec } })).structuredContent).id;
+    const declare = async (spec: typeof f.spec) => workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare',
+      arguments: { spec } }))).id;
     const workspaceId = await declare(f.spec);
     const prepare = (args: ContextPrepareRequest, id = workspaceId) =>
       client.callTool({ name: 'context_prepare', arguments: { workspaceId: id, ...args } });
@@ -122,8 +126,9 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
       const savedHashes = await fileHashes(join(f.out, bundle));
       const reply = await prepare({ bundle, prompt: finalTask, outputName });
       assert.equal(reply.isError, false, JSON.stringify(reply));
-      const receipt = readyReply.Parse(reply.structuredContent);
+      const receipt = readyReply.Parse(toolJSON(reply));
       assert.equal(receipt.directory, join(f.out, outputName));
+      assert.deepEqual(changes(receipt), [[], []]);
       const saved = await loadVerifiedBundle(join(f.out, bundle)), prepared = await loadVerifiedBundle(receipt.directory);
       assert.deepEqual(evidence(prepared), evidence(saved));
       assert.equal(prepared.verified.manifest.request.outputName, outputName);
@@ -143,54 +148,54 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     const blocked = await prepare({ bundle: 'review', prompt: 'x'.repeat(1_000_000), outputName: 'too-large' });
     assert.equal(blocked.isError, false, JSON.stringify(blocked).slice(0, 2000));
     const blockedReply = Compile(Type.Object({ kind: Type.Literal('blocked'), diagnostics: Type.Array(Type.Object({ code: Type.String() },
-      { additionalProperties: true })) }, { additionalProperties: true })).Parse(blocked.structuredContent);
+      { additionalProperties: true })) }, { additionalProperties: true })).Parse(toolJSON(blocked));
     assert.deepEqual(blockedReply.diagnostics.map(diagnostic => diagnostic.code), ['overBudget']);
     assert.equal(existsSync(join(f.out, 'too-large')), false);
 
     await symlink(join(f.out, 'review'), join(f.out, 'linked'));
     const linked = await prepare({ bundle: 'linked', prompt: finalTask, outputName: 'via-link' });
-    assert.equal(linked.isError, true); proof.symlinkCode = errorReply.Parse(linked.structuredContent).code;
+    assert.equal(linked.isError, true); proof.symlinkCode = errorReply.Parse(toolJSON(linked)).code;
     assert.equal(existsSync(join(f.out, 'via-link')), false);
 
     const extra = join(f.base, 'extra'); await mkdir(extra);
     const foreign = await declare({ ...f.spec, roots: [...f.spec.roots, { name: 'extra', absolutePath: extra }] });
     const mismatched = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'foreign' }, foreign);
-    assert.equal(errorReply.Parse(mismatched.structuredContent).code, 'bundleWorkspaceMismatch');
+    assert.equal(errorReply.Parse(toolJSON(mismatched)).code, 'bundleWorkspaceMismatch');
     assert.equal(existsSync(join(f.out, 'foreign')), false);
 
     const lateLedger = [{ kind: 'suppliedDocument' as const, id: 'late-ledger', role: 'evidence' as const, origin: 'fixture', text: 'LATE LEDGER\n' }];
-    const reviewAdded = readyReply.Parse((await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-added',
+    const reviewAdded = readyReply.Parse(toolJSON(await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-added',
       documents: lateLedger, patches: [{ kind: 'localPatch', id: 'full-swift', root: 'r', scope: { kind: 'paths', paths: ['Full.swift'] },
-        comparison: { kind: 'worktree', base: { kind: 'commit', ref: 'HEAD' }, includeUntracked: false } }] })).structuredContent);
+        comparison: { kind: 'worktree', base: { kind: 'commit', ref: 'HEAD' }, includeUntracked: false } }] })));
     const gitEvidence = (bundle: VerifiedBundle) => bundle.materials.flatMap(({ record, bodies }) =>
       record.kind === 'gitMap' || record.kind === 'gitPatch' ? [{ record: { ...record, frame: null }, bodies }] : []);
     const savedReview = gitEvidence(await loadVerifiedBundle(join(f.out, 'review')));
     assert.equal(savedReview.length, 2);
     assert.deepEqual(gitEvidence(await loadVerifiedBundle(reviewAdded.directory)), savedReview);
-    assert(reviewAdded.materials.some(material => material.kind === 'document' && material.id === 'late-ledger'));
-    assert(reviewAdded.materials.some(material => material.kind === 'patch' && material.id === 'full-swift'));
+    assert.deepEqual(changes(reviewAdded), [['document:late-ledger', 'patch:full-swift'], []]);
     await verifyCurrentBundle(reviewAdded.directory, runtime, signal());
 
     await writeFile(join(f.root, 'Slice.txt'), 'first\nchanged\nthird\n');
     const changed = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'stale' });
-    assert.deepEqual(changed.structuredContent, { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
+    assert.deepEqual(toolJSON(changed), { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
     assert.equal(existsSync(join(f.out, 'stale')), false);
 
-    const refreshed = readyReply.Parse((await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-refreshed',
-      refresh: true })).structuredContent);
+    const refreshed = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-refreshed',
+      refresh: true })));
+    assert.deepEqual(changes(refreshed), [[], []]);
     const refreshedContext = await readFile(refreshed.context.path, 'utf8');
     assert(refreshedContext.includes('changed\n') && refreshedContext.endsWith(instructions(finalTask)));
     await verifyCurrentBundle(refreshed.directory, runtime, signal());
     const materialIds = async (directory: string) => (await loadVerifiedBundle(directory)).verified.manifest.materials.map(material => material.id).sort();
     assert.deepEqual(await materialIds(refreshed.directory), await materialIds(join(f.out, 'planning')));
-    const added = readyReply.Parse((await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-added',
-      documents: [{ kind: 'suppliedDocument', id: 'addendum', role: 'report', origin: 'fixture', text: 'ADDED REPORT\n' }] })).structuredContent);
-    assert(added.materials.some(material => material.kind === 'document' && material.id === 'addendum'));
+    const added = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-added',
+      documents: [{ kind: 'suppliedDocument', id: 'addendum', role: 'report', origin: 'fixture', text: 'ADDED REPORT\n' }] })));
+    assert.deepEqual(changes(added), [['document:addendum'], []]);
     const staleAddition = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-added-stale', documents: lateLedger });
-    assert.deepEqual(staleAddition.structuredContent, { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
+    assert.deepEqual(toolJSON(staleAddition), { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
     assert.equal(existsSync(join(f.out, 'review-added-stale')), false);
     const refused = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-refreshed', refresh: true });
-    assert.equal(errorReply.Parse(refused.structuredContent).code, 'refreshRequiresDiscovery');
+    assert.equal(errorReply.Parse(toolJSON(refused)).code, 'refreshRequiresDiscovery');
     assert.equal(existsSync(join(f.out, 'review-refreshed')), false);
     await writeFile('test-output/context-prepare.json', JSON.stringify({ prepared: Object.fromEntries(proof.prepared),
       symlinkCode: proof.symlinkCode }, null, 2) + '\n');

@@ -8,6 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const argument = Type.Union([Type.Integer(), Type.String(), Type.Null()]);
 const casesSchema = Compile(Type.Array(Type.Object({ name: Type.String(), input: Type.Object({
@@ -42,15 +43,15 @@ test('public MCP exact reads acquire ignored files with source bounds and diagno
   const proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
       spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out },
-    } })).structuredContent);
+    } })));
     for (const [index, entry] of cases.entries()) {
       const { start_line, offset, limit } = entry.input;
       const found = await client.callTool({ name: 'read_file', arguments: { workspaceId: workspace.id,
         input: { root: 'r', path: 'private/' + index + '.txt', start_line, offset, limit } } });
-      assert.equal(found.isError, entry.expected.kind === 'readTextRangeError', entry.name + ': ' + JSON.stringify(found.structuredContent));
-      const value = reply.Parse(found.structuredContent);
+      assert.equal(found.isError, entry.expected.kind === 'readTextRangeError', entry.name + ': ' + JSON.stringify(toolJSON(found)));
+      const value = reply.Parse(toolJSON(found));
       if (entry.expected.kind === 'readTextRangeError') {
         assert.equal(found.isError, true); assert.equal(value.kind, 'error');
         if (value.kind !== 'error') assert.fail(entry.name);

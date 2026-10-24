@@ -12,7 +12,7 @@ import { capturedSourceSelections } from './source-omissions.js';
 import type { SelectedGitArtifact } from './git-artifact-material.js';
 
 export type PreparedPacket =
-  | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest }
+  | { readonly kind: 'ready'; readonly directory: string; readonly manifest: Manifest; readonly saved: Manifest }
   | { readonly kind: 'blocked'; readonly diagnostics: readonly Diagnostic[]; readonly measurement: Measurement };
 
 /** Reads and verifies a saved bundle beneath the output root through confined, no-follow native reads. */
@@ -59,7 +59,7 @@ export async function publishPreparedPacket(runtime: MipmuxRuntime, saved: Verif
   try {
     const directory = await publishBundle(bridge, manifest.inventory.outputRoot, request.outputName, rendered, prepared,
       signal, recheck, () => {});
-    return { kind: 'ready', directory, manifest: prepared };
+    return { kind: 'ready', directory, manifest: prepared, saved: manifest };
   } finally { await bridge.close(); }
 }
 

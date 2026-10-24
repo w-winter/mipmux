@@ -11,6 +11,7 @@ import { Compile } from 'typebox/compile';
 import { MipmuxRuntime } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const identifier = Compile(Type.Object({ id: Type.String() }));
 const treeReply = Compile(Type.Object({ kind: Type.Literal('tree'), tree: Type.String(), rootsCount: Type.Integer() }));
@@ -39,28 +40,28 @@ test('public MCP tree uses RPCE folder depth, scoped roots, available-codemap ma
     await client.connect(transport);
     const declaration = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
       roots: [{ name: 'alpha', absolutePath: root }, { name: 'beta', absolutePath: other }], exclusions: [], outputRoot: output } } });
-    const workspaceId = identifier.Parse(declaration.structuredContent).id;
+    const workspaceId = identifier.Parse(toolJSON(declaration)).id;
     const scope = { root: 'alpha', directory: { kind: 'descendant', path: 'zone' } };
     const full = await client.callTool({ name: 'get_file_tree', arguments: { workspaceId,
       input: { type: 'files', mode: 'full', scope, maxDepth: 0 } } });
     assert.equal(full.isError, false, JSON.stringify(full));
-    const fullTree = treeReply.Parse(full.structuredContent);
+    const fullTree = treeReply.Parse(toolJSON(full));
     assert.equal(fullTree.rootsCount, 1);
     assert.equal(fullTree.tree, 'alpha/zone\n├── child\n│   └── ...\n├── Shared.swift +\n└── direct.txt\n');
-    const roots = treeReply.Parse((await client.callTool({ name: 'get_file_tree', arguments: { workspaceId,
-      input: { type: 'roots' } } })).structuredContent);
+    const roots = treeReply.Parse(toolJSON(await client.callTool({ name: 'get_file_tree', arguments: { workspaceId,
+      input: { type: 'roots' } } })));
     assert.equal(roots.tree, root + '\n' + other); assert.equal(roots.rootsCount, 2);
-    const draft = identifier.Parse((await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
+    const draft = identifier.Parse(toolJSON(await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
       task: 'Keep the selected source', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'alpha', path: 'zone/child/deep.txt' } }],
       documents: [], patches: [], discoveryHints: [], outputName: 'packet',
-      budgetUnits: 100000 } } })).structuredContent);
-    const selected = treeReply.Parse((await client.callTool({ name: 'get_file_tree', arguments: { workspaceId,
-      draftId: draft.id, input: { type: 'files', mode: 'selected', scope, maxDepth: 0 } } })).structuredContent);
+      budgetUnits: 100000 } } })));
+    const selected = treeReply.Parse(toolJSON(await client.callTool({ name: 'get_file_tree', arguments: { workspaceId,
+      draftId: draft.id, input: { type: 'files', mode: 'selected', scope, maxDepth: 0 } } })));
     assert.equal(selected.tree, 'alpha/zone\n└── child\n    └── deep.txt *\n');
     assert.equal(selected.rootsCount, 1);
-    const folders = treeReply.Parse((await client.callTool({ name: 'get_file_tree', arguments: { workspaceId,
-      input: { type: 'files', mode: 'folders', scope } } })).structuredContent);
+    const folders = treeReply.Parse(toolJSON(await client.callTool({ name: 'get_file_tree', arguments: { workspaceId,
+      input: { type: 'files', mode: 'folders', scope } } })));
     assert.equal(folders.tree, 'alpha/zone\n└── child\n');
     await writeFile(join(base, 'file-tree-port-proof.json'), JSON.stringify({ fullTree, roots, selected, folders }, null, 2) + '\n');
   } finally { await client.close(); }

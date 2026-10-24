@@ -23,6 +23,7 @@ import { GitArtifactReposReply } from '../src/contracts/git-artifact.js';
 import { Continuation, readValidator, type ReadRequest } from '../src/contracts/exploration.js';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const signal = () => new AbortController().signal;
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
@@ -240,28 +241,28 @@ test('MCP publication requires an owned draft and uses the same source commit an
     const identifier = Compile(Type.Object({ id: Type.String() }));
     const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
       roots: [{ name: 'r', absolutePath: f.root }], exclusions: [], outputRoot: f.out } } });
-    assert.equal(declared.isError, false); const workspaceId = identifier.Parse(declared.structuredContent).id;
+    assert.equal(declared.isError, false); const workspaceId = identifier.Parse(toolJSON(declared)).id;
     const denied = await client.callTool({ name: 'git', arguments: { workspaceId, input: { op: 'diff', artifacts: true } } });
     assert.equal(denied.isError, true); assert(JSON.stringify(denied).includes('draftRequired'));
     const created = await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: f.request } });
-    assert.equal(created.isError, false); const draftId = identifier.Parse(created.structuredContent).id;
+    assert.equal(created.isError, false); const draftId = identifier.Parse(toolJSON(created)).id;
     const published = await client.callTool({ name: 'git', arguments: { workspaceId, draftId,
       input: { op: 'diff', artifacts: true, snapshot_id: '../invalid', mode: 'QUICK' } } });
     assert.equal(published.isError, false, JSON.stringify(published));
-    const reply = replyValidator.Parse(published.structuredContent);
+    const reply = replyValidator.Parse(toolJSON(published));
     assert.notEqual(reply.snapshot_id, '../invalid'); assert(!reply.primary_artifacts.all_patch);
     assert.deepEqual(reply.primary_artifacts.auto_selected, [reply.primary_artifacts.map]);
     const selected = await client.callTool({ name: 'manage_selection', arguments: { draftId, input: { op: 'get' } } });
-    assert.equal(selected.isError, false); assert(JSON.stringify(selected.structuredContent).includes(reply.primary_artifacts.map));
+    assert.equal(selected.isError, false); assert(JSON.stringify(toolJSON(selected)).includes(reply.primary_artifacts.map));
     const artifactRead = await client.callTool({ name: 'read_file', arguments: { workspaceId, draftId,
       input: { path: reply.primary_artifacts.map, start_line: 1, limit: 1 } } });
     assert.equal(artifactRead.isError, false, JSON.stringify(artifactRead));
-    assert.equal(readReplyValidator.Parse(artifactRead.structuredContent).content, '# MAP.txt v1\n');
+    assert.equal(readReplyValidator.Parse(toolJSON(artifactRead)).content, '# MAP.txt v1\n');
     const unownedRead = await client.callTool({ name: 'read_file', arguments: { workspaceId,
       input: { path: reply.primary_artifacts.map } } });
     assert.equal(unownedRead.isError, true); assert(JSON.stringify(unownedRead).includes('draftRequired'));
-    const other = identifier.Parse((await client.callTool({ name: 'draft_create', arguments: { workspaceId,
-      request: { ...f.request, outputName: 'other' } } })).structuredContent);
+    const other = identifier.Parse(toolJSON(await client.callTool({ name: 'draft_create', arguments: { workspaceId,
+      request: { ...f.request, outputName: 'other' } } })));
     const unselectedRead = await client.callTool({ name: 'read_file', arguments: { workspaceId, draftId: other.id,
       input: { path: reply.primary_artifacts.map } } });
     assert.equal(unselectedRead.isError, true); assert(JSON.stringify(unselectedRead).includes('already be selected and authorized'));

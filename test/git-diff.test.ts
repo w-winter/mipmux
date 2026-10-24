@@ -13,6 +13,7 @@ import { Compile } from 'typebox/compile';
 import { GitInput, gitValidator } from '../src/contracts/git.js';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
@@ -58,11 +59,11 @@ test('public diff preserves comparison states, source pathspec semantics and rep
   const client = new Client({ name: 'scout-diff', version: '1' }), proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })));
     const call = async (input: Omit<Static<typeof GitInput.anyOf[4]>, 'op' | 'root'>, maxOutputBytes = 100000) => {
       const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
         input: { op: 'diff', root: 'r', ...input }, maxOutputBytes } });
-      proof.push(result); return reply.Parse(result.structuredContent);
+      proof.push(result); return reply.Parse(toolJSON(result));
     };
     const comparisons: readonly (readonly [string, string, string])[] = [
       ['uncommitted', 'worktree', 'committed'], ['staged', 'staged', 'committed'], ['unstaged', 'worktree', 'staged'],

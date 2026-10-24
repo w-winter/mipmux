@@ -9,6 +9,7 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { copyContext } from './fixtures/copy-context.js';
 import { SearchInput } from '../src/contracts/exploration.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const reply = Compile(Type.Object({ kind: Type.Literal('search'), error: Type.Optional(Type.String()),
@@ -40,8 +41,8 @@ async function connect(fixture: boolean) {
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'source-search-diagnostics', version: '1' });
   await client.connect(transport);
-  const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
-    spec: { roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] } } })).structuredContent);
+  const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
+    spec: { roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] } } })));
   return { client, search: (input: Static<typeof SearchInput>) => client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id, input } }) };
 }
 
@@ -53,12 +54,12 @@ test('public search diagnostics and searched-file metadata follow Source DTO sem
       const found = await search({ mode: 'content', query: { kind: 'regex', text: '[' } });
       observations.push({ found });
       assert.equal(found.isError, false);
-      const result = reply.Parse(found.structuredContent);
+      const result = reply.Parse(toolJSON(found));
       assert.equal(result.error, bracketIssue); assert.equal(result.suggestion, bracketSuggestion);
       assert.equal(result.searchedFiles, undefined); assert.equal(result.counts.totalMatches, 0);
       assert.deepEqual(result.files, []);
       const next = await search({ mode: 'content', query: { kind: 'literal', text: 'hello' } });
-      assert.equal(next.isError, false); assert.equal(reply.Parse(next.structuredContent).counts.totalMatches, 1);
+      assert.equal(next.isError, false); assert.equal(reply.Parse(toolJSON(next)).counts.totalMatches, 1);
       observations.push({ next });
     });
     const cases = [
@@ -71,7 +72,7 @@ test('public search diagnostics and searched-file metadata follow Source DTO sem
     for (const item of cases) for (const countOnly of [false, true]) await t.test(`${item.name}, countOnly=${countOnly}`, async () => {
       const found = await search({ mode: 'content', query: { kind: 'literal', text: item.text }, filters: item.filters, countOnly });
       observations.push({ item, countOnly, found }); assert.equal(found.isError, false);
-      const result = reply.Parse(found.structuredContent);
+      const result = reply.Parse(toolJSON(found));
       assert.equal(result.scopedFileCount, item.scoped); assert.equal(result.searchedFiles, item.searched);
       assert.equal(result.suggestion, item.suggestion); assert.equal(result.counts.totalMatches, item.matches);
       assert.equal(result.counts.totalFiles, item.matches); assert.equal(result.counts.matchedFiles, countOnly ? 0 : item.matches);
@@ -103,7 +104,7 @@ test('public search preserves healthy phases and per-file pattern diagnostics at
     for (const item of cases) await t.test(item.text + ':' + item.mode, async () => {
       const found = await search({ mode: item.mode, query: { kind: 'regex', text: item.text }, filters: { extensions: ['.txt'] } });
       observations.push({ item, found }); assert.equal(found.isError, false);
-      const result = reply.Parse(found.structuredContent);
+      const result = reply.Parse(toolJSON(found));
       assert.equal(result.counts.totalMatches, item.matches); assert.equal(result.error, item.error);
       assert.deepEqual(result.pathError, item.pathError); assert.deepEqual(result.contentError, item.contentError);
       if (!item.error) assert.equal(result.searchedFiles, 1);
@@ -112,31 +113,31 @@ test('public search preserves healthy phases and per-file pattern diagnostics at
     await t.test('per-file failure is retained after all-zero recovery, not promoted to a phase failure', async () => {
       const found = await search({ mode: 'content', query: { kind: 'regex', text: 'fixture-per-file' } });
       observations.push({ found }); assert.equal(found.isError, false);
-      const result = reply.Parse(found.structuredContent);
+      const result = reply.Parse(toolJSON(found));
       assert.equal(result.error, undefined); assert.equal(result.contentError, undefined);
       assert.deepEqual(result.perFileErrors, [{ root: 'r', path: 'example.txt', diagnostic: phaseDiagnostic('file') }]);
     });
     await t.test('recovery phase failure keeps the compilation correction and healthy path phase', async () => {
       const found = await search({ mode: 'both', query: { kind: 'regex', text: 'fixture-recovery\\.fail' } });
       observations.push({ found }); assert.equal(found.isError, false);
-      const result = reply.Parse(found.structuredContent);
+      const result = reply.Parse(toolJSON(found));
       assert.equal(result.error, undefined); assert.deepEqual(result.contentError, phaseDiagnostic('content'));
       assert.equal(result.warning, regexWarning);
     });
     await t.test('both-phase failure during recovery still selects content', async () => {
       const found = await search({ mode: 'both', query: { kind: 'regex', text: 'fixture-both-recovery\\.fail' } });
       observations.push({ found }); assert.equal(found.isError, false);
-      const result = reply.Parse(found.structuredContent);
+      const result = reply.Parse(toolJSON(found));
       assert.equal(result.error, 'content fixture issue'); assert.equal(result.suggestion, 'content fixture suggestion');
     });
     for (const [text, code] of [['fixture-native-failure', 'nativeOperationFailed'], ['fixture-protocol-failure', 'nativeProtocolError'],
       ['fixture-authorization-failure', 'invalidSourceCapability']] as const) await t.test(text, async () => {
       const found = await search({ mode: 'content', query: { kind: 'regex', text } });
       observations.push({ text, found }); assert.equal(found.isError, true);
-      assert.deepEqual(found.structuredContent, { kind: 'error', code });
+      assert.deepEqual(toolJSON(found), { kind: 'error', code });
       assert.equal(JSON.stringify(found).includes('PRIVATE_DETAIL'), false);
       const next = await search({ mode: 'content', query: { kind: 'literal', text: 'hello' } });
-      assert.equal(next.isError, false); assert.equal(reply.Parse(next.structuredContent).counts.totalMatches, 1);
+      assert.equal(next.isError, false); assert.equal(reply.Parse(toolJSON(next)).counts.totalMatches, 1);
     });
   } finally {
     await client.close(); await mkdir('test-output', { recursive: true });

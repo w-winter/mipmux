@@ -14,12 +14,16 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DiscoveryReceipt } from '../src/contracts/discovery.js';
 import { Manifest } from '../src/contracts/context.js';
+import { toolJSON } from './fixtures/tool-json.js';
+
+// MCP ready snapshots give the number of discovery completions instead of their records.
+const readyDiscovery = Type.Object({ ...DiscoveryReceipt.properties, completions: Type.Integer({ minimum: 1 }) }, { additionalProperties: false });
 
 async function waitForSettlement(client: Client, jobId: string) {
   const observation = Compile(Type.Object({ localSettled: Type.Boolean() }));
   for (;;) {
     const reply = await client.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 } });
-    const snapshot = observation.Parse(reply.structuredContent);
+    const snapshot = observation.Parse(toolJSON(reply));
     if (snapshot.localSettled) return reply;
   }
 }
@@ -153,15 +157,15 @@ test('local package audits resources and executes relocated library, native, CLI
       return { mode, requestDigest: result.manifest.requestDigest };
     });
     phase = { kind: 'question', calls: 0 };
-    const workspaceId = Compile(Type.Object({ id: Type.String() })).Parse((await client.callTool({ name: 'workspace_declare',
-      arguments: { spec } })).structuredContent).id;
-    const read = Compile(Type.Object({ kind: Type.Literal('read'), content: Type.String() })).Parse((await client.callTool({
+    const workspaceId = Compile(Type.Object({ id: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'workspace_declare',
+      arguments: { spec } }))).id;
+    const read = Compile(Type.Object({ kind: Type.Literal('read'), content: Type.String() })).Parse(toolJSON(await client.callTool({
       name: 'read_file', arguments: { workspaceId, input: { root: 'r', path: 'model.swift' } },
-    })).structuredContent);
+    })));
     assert.equal(read.content, 'struct Relocated { let title: String }\n');
     const search = Compile(Type.Object({ kind: Type.Literal('search'), counts: Type.Object({ matchingLines: Type.Integer() }) })).Parse(
-      (await client.callTool({ name: 'file_search', arguments: { workspaceId,
-        input: { mode: 'content', query: { kind: 'literal', text: 'Relocated' } } } })).structuredContent);
+      toolJSON(await client.callTool({ name: 'file_search', arguments: { workspaceId,
+        input: { mode: 'content', query: { kind: 'literal', text: 'Relocated' } } } })));
     assert.equal(search.counts.matchingLines, 1);
     const request = {
       task: 'Inspect', initialSelection: { codemapMode: 'manual', sources: [] }, duplicateUserInstructionsAtTop: false,
@@ -169,23 +173,23 @@ test('local package audits resources and executes relocated library, native, CLI
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [],
       discoveryHints: [], outputName: 'interactive-packet', budgetUnits: 10000,
     };
-    const jobId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
+    const jobId = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
       arguments: { workspaceId, requestId: 'interactive-relocation', request: { ...request, clarification: {} } },
-    })).structuredContent).jobId;
+    }))).jobId;
     const interactiveReply = await waitForSettlement(client, jobId);
     writeFileSync(join(directory, 'interactive-wait.json'), JSON.stringify(interactiveReply));
-    const interactiveValidator = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: DiscoveryReceipt }));
-    assert(interactiveValidator.Check(interactiveReply.structuredContent), JSON.stringify(interactiveReply));
-    const interactive = interactiveReply.structuredContent;
+    const interactiveValidator = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: readyDiscovery }));
+    const interactive = toolJSON(interactiveReply);
+    assert(interactiveValidator.Check(interactive), JSON.stringify(interactiveReply));
     assert.equal(questions, 1); assert.equal(interactive.discovery.templateVersion, 'mipmux-discovery-template-v1');
     assert(JSON.stringify(provider.requests.at(-1)!.messages).includes('installed custom context'));
     const updatedTemplate = Buffer.from(stockBytes.toString().replace(systemMarker, systemMarker + 'UPDATED_EXTERNAL_TEMPLATE\n'));
     const fetchRequestStart = provider.requests.length;
     phase = { kind: 'fetch', calls: 0, templatePath: prompt, updatedTemplate };
-    const fetchedId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
-      arguments: { workspaceId, requestId: 'http-relocation', request: { ...request, outputName: 'http-packet' } } })).structuredContent).jobId;
-    const fetched = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: DiscoveryReceipt,
-      bundle: Type.Object({ directory: Type.String() }) })).Parse((await waitForSettlement(client, fetchedId)).structuredContent);
+    const fetchedId = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
+      arguments: { workspaceId, requestId: 'http-relocation', request: { ...request, outputName: 'http-packet' } } }))).jobId;
+    const fetched = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: readyDiscovery,
+      bundle: Type.Object({ directory: Type.String() }) })).Parse(toolJSON(await waitForSettlement(client, fetchedId)));
     const verified = Compile(Type.Object({ kind: Type.Literal('verified'), manifest: Manifest })).Parse(JSON.parse(execFileSync(
       process.execPath, [command, 'verify', '--bundle', fetched.bundle.directory, '--mode', 'integrity'], { cwd: '/', encoding: 'utf8' })));
     const document = verified.manifest.materials.find(material => material.id === 'document:installed-ticket');
@@ -197,20 +201,20 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(fetched.discovery.mcp?.shutdown, 'dispatched');
     assert.equal(fetched.discovery.template.identity.sha256, createHash('sha256').update(stockBytes).digest('hex'));
     for (const request of provider.requests.slice(fetchRequestStart)) assert(!JSON.stringify(request.system).includes('UPDATED_EXTERNAL_TEMPLATE'));
-    const observed = Compile(Type.Object({ state: Type.Literal('ready') })).Parse((await client.callTool({
+    const observed = Compile(Type.Object({ state: Type.Literal('ready') })).Parse(toolJSON(await client.callTool({
       name: 'context_builder_result', arguments: { jobId: fetchedId },
-    })).structuredContent);
+    })));
     let entered!: () => void;
     const entering = new Promise<void>(resolveEntered => { entered = resolveEntered; });
     phase = { kind: 'hold', entered };
     const beforeCancel = readdirSync(output).sort();
-    const cancelledId = Compile(Type.Object({ jobId: Type.String() })).Parse((await client.callTool({ name: 'context_builder',
-      arguments: { workspaceId, requestId: 'cancel-relocation', request: { ...request, outputName: 'cancel-packet' } } })).structuredContent).jobId;
+    const cancelledId = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
+      arguments: { workspaceId, requestId: 'cancel-relocation', request: { ...request, outputName: 'cancel-packet' } } }))).jobId;
     const waiting = waitForSettlement(client, cancelledId);
     await Promise.race([entering, waiting.then(() => { throw new Error('Installed job settled before the provider hold'); })]);
     await client.callTool({ name: 'context_builder_cancel', arguments: { jobId: cancelledId } });
     const cancelled = Compile(Type.Object({ state: Type.Literal('cancelled'), localSettled: Type.Literal(true),
-      discovery: DiscoveryReceipt })).Parse((await waiting).structuredContent);
+      discovery: DiscoveryReceipt })).Parse(toolJSON(await waiting));
     assert.equal(cancelled.discovery.workerClosed, true); assert.equal(cancelled.discovery.parentToolsSettled, true);
     assert.equal(cancelled.discovery.template.identity.sha256, createHash('sha256').update(updatedTemplate).digest('hex'));
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('UPDATED_EXTERNAL_TEMPLATE'));

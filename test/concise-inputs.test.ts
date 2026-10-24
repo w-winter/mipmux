@@ -13,6 +13,7 @@ import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import type { DiscoveryCall } from '../src/contracts/discovery.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const record = Compile(Type.Record(Type.String(), Type.Unknown()));
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
@@ -35,7 +36,7 @@ test('concise MCP exploration matches explicit options and preserves validation,
   try {
     await client.connect(transport);
     const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } } });
-    const value = declaration.Parse(declared.structuredContent);
+    const value = declaration.Parse(toolJSON(declared));
     const workspaceId = value.id;
     const call = (name: string, args: ToolArguments) => client.callTool({ name, arguments: { workspaceId, ...args } });
     const filters = { roots: [], paths: [], exclude: [], extensions: [] };
@@ -50,16 +51,16 @@ test('concise MCP exploration matches explicit options and preserves validation,
     for (const [name, concise, explicit] of pairs) {
       const result = await call(name, concise);
       assert.equal(result.isError, false, JSON.stringify(result));
-      assert.deepEqual(result.structuredContent, (await call(name, explicit)).structuredContent);
+      assert.deepEqual(result, await call(name, explicit));
       results.push({ name, concise, explicit, result });
     }
     const regex = await call('file_search', { input: { query: { kind: 'regex', text: '^export', caseSensitive: true }, filters: { extensions: ['.ts'] }, after: 1 } });
     assert.equal(regex.isError, false, JSON.stringify(regex));
-    assert.equal(record.Parse(regex.structuredContent).returnedMatchingLines, 1);
+    assert.equal(record.Parse(toolJSON(regex)).returnedMatchingLines, 1);
     const whitespace = await call('file_search', { input: { query: { text: ' greet ' } } });
-    assert.equal(record.Parse(whitespace.structuredContent).returnedMatchingLines, 1);
+    assert.equal(record.Parse(toolJSON(whitespace)).returnedMatchingLines, 1);
     const cap = await call('read_file', { input: { root: 'r', path: 'greet.ts' }, maxOutputBytes: 1 });
-    assert.equal(record.Parse(cap.structuredContent).kind, 'outputBudgetTooSmall');
+    assert.equal(record.Parse(toolJSON(cap)).kind, 'outputBudgetTooSmall');
     for (const [name, args] of [
       ['get_file_tree', { input: { type: 'files', mode: 'selected' } }],
       ['get_file_tree', { input: { type: 'files', mode: 'selected' }, draftId: 'foreign' }],

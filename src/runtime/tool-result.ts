@@ -10,9 +10,10 @@ const structureKind = Compile(Type.Pick(StructureToolResult, ['kind']));
 const structureResult = Compile(StructureToolResult);
 const sourcePath = Compile(SourcePath);
 
+/** One text block of compact JSON; a structure result's block is its rendered text, with the data as structuredContent. */
 export function toolResult(value: unknown) {
-  const text = structureKind.Check(value) ? structureResult.Parse(value).text : JSON.stringify(value);
-  return { content: [{ type: 'text' as const, text }], structuredContent: value, isError: false };
+  if (!structureKind.Check(value)) return { content: [{ type: 'text' as const, text: JSON.stringify(value) }], isError: false };
+  return { content: [{ type: 'text' as const, text: structureResult.Parse(value).text }], structuredContent: value, isError: false };
 }
 
 export function piToolResult(value: unknown) {

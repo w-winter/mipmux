@@ -8,6 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), files: Type.Array(Type.Object({ path: Type.String() })) }));
@@ -31,9 +32,9 @@ test('public search filters preserve source dotted extensions and literal/wildma
   const observations: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
+    const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
       spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out },
-    } })).structuredContent);
+    } })));
     const cases = [
       { filters: { extensions: ['.swift'] }, expected: names.filter(name => name.endsWith('.swift')) },
       { filters: { extensions: ['.SWIFT'] }, expected: ['caps.SWIFT'] },
@@ -48,7 +49,7 @@ test('public search filters preserve source dotted extensions and literal/wildma
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
         input: { mode: 'content', query: { text: 'needle', caseSensitive: true }, filters: item.filters } } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const result = searchReply.Parse(found.structuredContent);
+      const result = searchReply.Parse(toolJSON(found));
       assert.deepEqual(result.files.map(file => file.path), item.expected.toSorted(), JSON.stringify(item.filters));
       observations.push({ filters: item.filters, result: found });
     }
@@ -56,7 +57,7 @@ test('public search filters preserve source dotted extensions and literal/wildma
       input: { query: { kind: 'glob', text: '*.swift' }, maxResults: 1,
         filters: { extensions: ['.swift'], exclude: ['IGNORE', '[ab].swift'] } } } });
     assert.equal(paths.isError, false);
-    assert.deepEqual(searchReply.Parse(paths.structuredContent).files.map(file => file.path), ['a.swift']);
+    assert.deepEqual(searchReply.Parse(toolJSON(paths)).files.map(file => file.path), ['a.swift']);
     observations.push({ paths });
     await mkdir('test-output', { recursive: true });
     await writeFile('test-output/search-filters-public.json', JSON.stringify(observations, null, 2) + '\n');

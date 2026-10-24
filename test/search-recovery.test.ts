@@ -8,6 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const searchReply = Compile(Type.Object({ counts: Type.Object({ matchingLines: Type.Integer() }),
@@ -44,9 +45,9 @@ test('public content recovery retries the whole query only after zero primary ma
   const observations: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
+    const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
       spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out },
-    } })).structuredContent);
+    } })));
     const cases = [
       { kind: 'literal', text: 'frame\\(', directory: 'recover', paths: ['recover/a.txt', 'recover/z.txt'], lines: [1, 1], corrected: true },
       { kind: 'literal', text: 'frame\\\\(', directory: 'recover', paths: ['recover/a.txt', 'recover/z.txt'], lines: [1, 1], corrected: true },
@@ -65,7 +66,7 @@ test('public content recovery retries the whole query only after zero primary ma
         input: { mode: 'content', query: { kind: item.kind, text: item.text }, countOnly,
           filters: { paths: [item.directory] } } } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const result = searchReply.Parse(found.structuredContent);
+      const result = searchReply.Parse(toolJSON(found));
       assert.equal(result.counts.matchingLines, item.lines.length, JSON.stringify(item));
       assert.deepEqual(result.files.map(file => file.path), countOnly ? [] : item.paths, JSON.stringify(item));
       assert.deepEqual(result.files.flatMap(file => file.lines.filter(line => line.matching).map(line => line.number)), countOnly ? [] : item.lines);
@@ -77,7 +78,7 @@ test('public content recovery retries the whole query only after zero primary ma
         input: { mode: 'content', query: { kind: 'literal', text: 'frame\\(' }, maxResults,
           filters: { paths: ['recover'] } } } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const result = searchReply.Parse(found.structuredContent);
+      const result = searchReply.Parse(toolJSON(found));
       assert.equal(result.counts.matchingLines, maxResults);
       assert.equal(result.warning !== undefined, maxResults > 0);
       observations.push({ maxResults, result });
@@ -89,7 +90,7 @@ test('public content recovery retries the whole query only after zero primary ma
         input: { mode: 'content', query: { kind: 'regex', text } } } });
       assert.equal(invalid.isError, text === quoteOverflow);
       if (text !== quoteOverflow) {
-        assert.equal(searchReply.Parse(invalid.structuredContent).counts.matchingLines, 0);
+        assert.equal(searchReply.Parse(toolJSON(invalid)).counts.matchingLines, 0);
       }
       observations.push({ text, invalid });
     }

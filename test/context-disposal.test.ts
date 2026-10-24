@@ -13,6 +13,7 @@ import { MipmuxRuntime, verifyBundle, type ContextBuildRequest } from '../src/in
 import { gitValidator } from '../src/contracts/git.js';
 import { GitArtifactReply } from '../src/contracts/git-artifact.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const signal = () => new AbortController().signal;
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
@@ -110,22 +111,22 @@ test('MCP job disposal joins real Pi discovery before owner cleanup and retains 
       cwd: '/', stderr: 'pipe' });
     try {
       await client.connect(transport);
-      const workspaceId = identifier.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent).id;
+      const workspaceId = identifier.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } }))).id;
       const args = { workspaceId, requestId: 'job', request: f.request };
-      const job = jobIdentifier.Parse((await client.callTool({ name: 'context_builder', arguments: args })).structuredContent);
+      const job = jobIdentifier.Parse(toolJSON(await client.callTool({ name: 'context_builder', arguments: args })));
       if (finish) {
         const waited = await client.callTool({ name: 'context_builder_wait', arguments: { jobId: job.jobId, durationMs: 10000 } });
-        assert.equal(terminalReply.Parse(waited.structuredContent).state, 'ready');
+        assert.equal(terminalReply.Parse(toolJSON(waited)).state, 'ready');
       }
       else await waiting;
       const result = await client.callTool({ name: 'context_builder_dispose', arguments: { jobId: job.jobId } });
-      assert.equal(result.isError, false); assert.equal(disposed.Parse(result.structuredContent).deletedSnapshots, 1);
+      assert.equal(result.isError, false); assert.equal(disposed.Parse(toolJSON(result)).deletedSnapshots, 1);
       const receipt = await client.callTool({ name: 'context_builder_result', arguments: { jobId: job.jobId } });
-      const terminal = terminalReply.Parse(receipt.structuredContent); assert.equal(terminal.localSettled, true);
+      const terminal = terminalReply.Parse(toolJSON(receipt)); assert.equal(terminal.localSettled, true);
       assert.equal(terminal.state, finish ? 'ready' : 'cancelled');
       const repeated = await client.callTool({ name: 'context_builder_dispose', arguments: { jobId: job.jobId } });
-      assert.equal(disposed.Parse(repeated.structuredContent).deletedSnapshots, 0);
-      assert.equal(jobIdentifier.Parse((await client.callTool({ name: 'context_builder', arguments: args })).structuredContent).jobId, job.jobId);
+      assert.equal(disposed.Parse(toolJSON(repeated)).deletedSnapshots, 0);
+      assert.equal(jobIdentifier.Parse(toolJSON(await client.callTool({ name: 'context_builder', arguments: args }))).jobId, job.jobId);
       if (finish) await verifyBundle(join(f.out, 'packet'));
       else await assert.rejects(readFile(join(f.out, 'packet/manifest.json')), { code: 'ENOENT' });
       proof.push({ finish, result, receipt, repeated });
@@ -142,15 +143,15 @@ test('MCP draft_dispose performs owner cleanup after finalization and workspace 
     cwd: '/', stderr: 'pipe' });
   try {
     await client.connect(transport);
-    const workspaceId = identifier.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent).id;
-    const draftId = identifier.Parse((await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: f.request } })).structuredContent).id;
+    const workspaceId = identifier.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } }))).id;
+    const draftId = identifier.Parse(toolJSON(await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: f.request } }))).id;
     const published = await client.callTool({ name: 'git', arguments: { workspaceId, draftId,
       input: { op: 'diff', artifacts: true, snapshot_id: 'mcp' } } }); assert.equal(published.isError, false);
-    const reply = publication.Parse(published.structuredContent);
+    const reply = publication.Parse(toolJSON(published));
     assert.equal((await client.callTool({ name: 'draft_finalize', arguments: { draftId } })).isError, false);
     await client.callTool({ name: 'workspace_close', arguments: { workspaceId } });
     const result = await client.callTool({ name: 'draft_dispose', arguments: { draftId } }); assert.equal(result.isError, false);
-    assert.equal(disposed.Parse(result.structuredContent).deletedSnapshots, 1);
+    assert.equal(disposed.Parse(toolJSON(result)).deletedSnapshots, 1);
     await assert.rejects(readFile(join(f.out, reply.primary_artifacts.map)), { code: 'ENOENT' });
     await verifyBundle(join(f.out, 'packet'));
     await writeFile('test-output/context-disposal-mcp-proof.json', JSON.stringify({ published, result, packetRetained: true }, null, 2) + '\n');

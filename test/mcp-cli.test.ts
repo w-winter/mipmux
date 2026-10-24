@@ -10,6 +10,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const command = resolve('dist/cli/main.js');
 test('MCP exposes nonsecret artifact and membership targets usable by explicit CLI recovery', async () => {
@@ -44,9 +45,9 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
       await client.connect(transport);
       const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec } });
       const result = kind === 'membership' ? declared : await client.callTool({ name: 'workspace_refresh',
-        arguments: { workspaceId: JSON.parse(JSON.stringify(declared.structuredContent)).id } });
+        arguments: { workspaceId: JSON.parse(JSON.stringify(toolJSON(declared))).id } });
       assert.equal(result.isError, true);
-      assert.deepEqual(result.structuredContent, { kind: 'error', code: kind === 'artifact' ? 'cacheCorrupt' : 'membershipCorrupt', target: { kind, key } });
+      assert.deepEqual(toolJSON(result), { kind: 'error', code: kind === 'artifact' ? 'cacheCorrupt' : 'membershipCorrupt', target: { kind, key } });
       await writeFile(join(base, kind + '-diagnostic.json'), JSON.stringify(result));
     } finally { await client.close(); }
     await promisify(execFile)(process.execPath, [command, 'cache', 'invalidate', '--kind', kind, '--key', key, '--config', config], { cwd: '/' });
@@ -72,7 +73,7 @@ test('official MCP probes accept disabled provider deadlines and create no works
     for (const name of ['draft_dispose', 'context_builder_dispose']) assert(tools.tools.some(tool => tool.name === name));
     const result = await client.callTool({ name: 'context_builder_result', arguments: { jobId: 'foreign' } });
     assert.equal(result.isError, true);
-    assert.match(JSON.stringify(result.structuredContent), /unknownJob/);
+    assert.match(JSON.stringify(toolJSON(result)), /unknownJob/);
     await assert.rejects(access(join(base, 'cache')));
   } finally { await client.close(); }
   const eof = spawn(process.execPath, [command, 'mcp', '--config', config], { cwd: '/', stdio: 'pipe' });
@@ -107,7 +108,7 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
     const closed = new Promise<void>(resolve => { transport.onclose = () => { protocolClose?.(); resolve(); }; });
     const declaration = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
       roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } });
-    const workspaceId = JSON.parse(JSON.stringify(declaration.structuredContent)).id;
+    const workspaceId = JSON.parse(JSON.stringify(toolJSON(declaration))).id;
     const read = await client.callTool({ name: 'read_file', arguments: { workspaceId,
       input: { root: 'r', path: 'file.txt', start_line: null, offset: null, limit: null, continuation: null } } });
     assert.equal(read.isError, false, JSON.stringify(read));
@@ -116,25 +117,25 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
       task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
       outputName: 'packet' };
     const first = await client.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'one', request } });
-    const firstId = JSON.parse(JSON.stringify(first.structuredContent)).jobId;
+    const firstId = JSON.parse(JSON.stringify(toolJSON(first))).jobId;
     await started;
     const observer = new AbortController();
     const waiting = client.callTool({ name: 'context_builder_wait', arguments: { jobId: firstId, durationMs: 10000 } }, { signal: observer.signal });
     const refused = assert.rejects(waiting);
     await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } });
     observer.abort(); await refused;
-    assert.equal(JSON.parse(JSON.stringify((await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } })).structuredContent)).state, 'discovering');
+    assert.equal(JSON.parse(JSON.stringify(toolJSON(await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } })))).state, 'discovering');
     const second = await client.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'two', request: { ...request, outputName: 'packet-two' } } });
-    const secondId = JSON.parse(JSON.stringify(second.structuredContent)).jobId;
+    const secondId = JSON.parse(JSON.stringify(toolJSON(second))).jobId;
     await startedTwo;
     const progress: number[] = [];
     const secondWait = client.callTool({ name: 'context_builder_wait', arguments: { jobId: secondId, durationMs: 10000 } },
       { onprogress: value => { progress.push(value.progress); } });
     await client.callTool({ name: 'context_builder_result', arguments: { jobId: secondId } });
     await client.callTool({ name: 'context_builder_cancel', arguments: { jobId: secondId } });
-    assert.equal(JSON.parse(JSON.stringify((await secondWait).structuredContent)).state, 'cancelled');
+    assert.equal(JSON.parse(JSON.stringify(toolJSON(await secondWait))).state, 'cancelled');
     assert(progress.length > 0); assert(progress.every((value, index) => index === 0 || value > progress[index - 1]!));
-    assert.equal(JSON.parse(JSON.stringify((await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } })).structuredContent)).state, 'discovering');
+    assert.equal(JSON.parse(JSON.stringify(toolJSON(await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } })))).state, 'discovering');
     await client.close(); await closed;
     const records = Buffer.concat(diagnostics).toString().trim().split('\n').map(line => JSON.parse(line));
     const spawned = records.filter(record => record.event === 'processSpawned').map(record => record.id).sort();

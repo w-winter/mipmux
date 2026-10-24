@@ -12,6 +12,7 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
+import { toolJSON } from './fixtures/tool-json.js';
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
@@ -50,11 +51,11 @@ test('public show preserves metadata, full hunks, root-commit source behavior an
   const client = new Client({ name: 'git-show-source', version: '1' }), proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })));
     const call = async (ref: string, detail = 'summary', maxOutputBytes = 24000) => {
       const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
         input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref, detail }, maxOutputBytes } });
-      proof.push(result); return { response: result, value: reply.Parse(result.structuredContent) };
+      proof.push(result); return { response: result, value: reply.Parse(toolJSON(result)) };
     };
     const summary = await call('  HEAD  '); assert.equal(summary.response.isError, false, JSON.stringify(summary.response));
     assert(summary.value.show); assert.equal(summary.value.show.sha, f.second);
@@ -120,12 +121,12 @@ test('public show excludes protected files and both protected rename endpoints w
   const client = new Client({ name: 'protected-show', version: '1' }), proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: { ...f.spec,
-      exclusions: [{ kind: 'prefix', root: 'r', path: 'skip.txt' }] } } })).structuredContent);
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: { ...f.spec,
+      exclusions: [{ kind: 'prefix', root: 'r', path: 'skip.txt' }] } } })));
     const call = async (ref: string, detail: string) => {
       const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
         input: { op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref, detail, detectRenames: true } } });
-      assert.equal(result.isError, false, JSON.stringify(result)); proof.push(result); return reply.Parse(result.structuredContent);
+      assert.equal(result.isError, false, JSON.stringify(result)); proof.push(result); return reply.Parse(toolJSON(result));
     };
     const full = await call(evidence, 'full'); assert(full.show?.files);
     assert(!JSON.stringify(full).includes('PROTECTED_SHOW_FIXTURE')); assert(!JSON.stringify(full).includes('EXCLUDED_SHOW_FIXTURE'));
@@ -176,11 +177,11 @@ test('public MCP retains source diagnostics for malformed Git show and status ou
   const client = new Client({ name: 'git-diagnostics-source', version: '1' }), proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })));
     for (const input of [{ op: 'show', repositories: [{ root: 'r', path: null, worktree: null }], ref: 'HEAD' }, { op: 'status', repositories: [{ root: 'r', path: null, worktree: null }] }]) {
       const result = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input } });
       assert.equal(result.isError, true);
-      const value = reply.Parse(result.structuredContent);
+      const value = reply.Parse(toolJSON(result));
       assert.equal(value.code, input.op === 'show' ? 'gitShowMalformed' : 'gitStatusMalformed');
       if (input.op === 'show') assert.equal(value.message, 'Unexpected git show output format');
       else assert.equal(value.message, 'Failed to parse VCS output: unsupported porcelain-v2 record type: i');

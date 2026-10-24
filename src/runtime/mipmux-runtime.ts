@@ -273,7 +273,7 @@ export class MipmuxRuntime {
       // The prompt reply stays inside the runtime, so no caller output cap applies.
       await draft.prompt({ op: 'set', text: request.prompt, expectedRevision: draft.revision, maxOutputBytes: Number.MAX_SAFE_INTEGER }, signal);
       const result = await draft.finalize(signal);
-      return result.kind === 'ready' ? { kind: 'ready', directory: result.directory, manifest: result.manifest }
+      return result.kind === 'ready' ? { kind: 'ready', directory: result.directory, manifest: result.manifest, saved: saved.verified.manifest }
         : { kind: 'blocked', diagnostics: result.diagnostics, measurement: result.measurement };
     } finally { await draft.close(); }
   }

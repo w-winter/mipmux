@@ -8,6 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const identifier = Compile(Type.Object({ id: Type.String() }));
 const graphReply = Compile(Type.Object({ status: Type.String(), size: Type.String(),
@@ -36,8 +37,8 @@ test('public structural query exposes source graph evidence with signatures disa
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   try {
     await client.connect(transport);
-    const workspaceId = identifier.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: {
-      roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } })).structuredContent).id;
+    const workspaceId = identifier.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: {
+      roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } }))).id;
     const result = await client.callTool({ name: 'get_code_structure', arguments: { workspaceId, input: {
       seeds: [{ root: 'r', path: 'A.swift', kind: 'file' }, { root: 'r', path: 'B.swift', kind: 'file' }],
       expand: 'uses', depth: 1, signatures: false, size: 'small' } } });

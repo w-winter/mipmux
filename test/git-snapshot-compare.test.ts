@@ -11,6 +11,7 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { BridgeClient, type NativeReply } from '../src/native/bridge-client.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
@@ -66,12 +67,12 @@ test('public snapshot comparisons use only the saved HEAD, precede named refs an
   const index = await readFile(join(firstRepo.repo, '.git/index'));
   try {
     await client.connect(transport);
-    const workspace = declaration.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: {
-      roots: [{ name: 'a', absolutePath: join(firstRepo.repo, 'sub') }, { name: 'b', absolutePath: secondRepo.repo }], exclusions: [], outputRoot: output } } })).structuredContent);
+    const workspace = declaration.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: {
+      roots: [{ name: 'a', absolutePath: join(firstRepo.repo, 'sub') }, { name: 'b', absolutePath: secondRepo.repo }], exclusions: [], outputRoot: output } } })));
     const call = async (compare: string, root = 'a') => {
       const response = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id,
         input: { op: 'diff', root, compare, detail: 'full' }, maxOutputBytes: 100000 } });
-      proof.push(response); return { parsed: result.Parse(response.structuredContent), response };
+      proof.push(response); return { parsed: result.Parse(toolJSON(response)), response };
     };
     for (const compare of ['last', ' LAST ', 'named', '2026-10-14/1000']) {
       const { parsed, response } = await call(compare); assert.equal(parsed.kind, 'git', JSON.stringify(parsed));

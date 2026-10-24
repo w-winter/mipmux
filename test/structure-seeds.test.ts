@@ -9,6 +9,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { StructureToolResult } from '../src/contracts/structure.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const identifier = Compile(Type.Object({ id: Type.String() }));
 const graph = Compile(StructureToolResult);
@@ -31,18 +32,18 @@ test('public structural seeds use owned selection, whole roots, direct-file prio
   try {
     await client.connect(transport);
     const spec = { roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] };
-    const workspaceId = identifier.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec } })).structuredContent).id;
+    const workspaceId = identifier.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec } }))).id;
     const blankReply = await client.callTool({ name: 'get_code_structure', arguments: { workspaceId } });
     assert.equal(blankReply.isError, false, JSON.stringify(blankReply));
     const blank = graph.Parse(blankReply.structuredContent);
     assert.equal(blank.status, 'unavailable'); assert.equal(blank.issues[0]?.code, 'path_not_found');
-    const draftId = identifier.Parse((await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
+    const draftId = identifier.Parse(toolJSON(await client.callTool({ name: 'draft_create', arguments: { workspaceId, request: {
       task: 'Inspect fixture structure.', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [{ kind: 'full', source: { root: 'r', path: 'src/A.swift' } },
         { kind: 'slices', source: { root: 'r', path: 'src/B.swift' }, ranges: [{ start: 1, end: 1, description: 'Declaration' }] }],
       documents: [], patches: [], discoveryHints: [], outputName: 'selected-structure',
       budgetUnits: 100000,
-    } } })).structuredContent).id;
+    } } }))).id;
     const selectedReply = await client.callTool({ name: 'get_code_structure', arguments: {
       workspaceId, draftId, input: { expand: 'uses', signatures: false } } });
     assert.equal(selectedReply.isError, false, JSON.stringify(selectedReply));

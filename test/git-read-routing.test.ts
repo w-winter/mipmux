@@ -14,6 +14,7 @@ import { PiRunner } from '../src/discovery/pi-runner.js';
 import { copyContext } from './fixtures/copy-context.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import type { OwnedProcess, ProcessSpec } from '../src/runtime/process-supervisor.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 const signal = () => new AbortController().signal;
@@ -61,28 +62,28 @@ test('MCP Git reads route ordered repositories and linked checkouts with primary
   const client = new Client({ name: 'git-routing', version: '1' }), proof: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = workspaceResult.Parse((await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })).structuredContent);
+    const workspace = workspaceResult.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } })));
     const call = async (input: Static<typeof GitInput>, maxOutputBytes = 100000) => {
       const reply = await client.callTool({ name: 'git', arguments: { workspaceId: workspace.id, input, maxOutputBytes } });
       proof.push({ input, reply }); return reply;
     };
     const nestedReply = await call({ op: 'log', repositories: [{ root: 'a', path: 'nested', worktree: nestedLinked }] });
     assert.equal(nestedReply.isError, false, JSON.stringify(nestedReply));
-    const nestedValue = result.Parse(nestedReply.structuredContent);
+    const nestedValue = result.Parse(toolJSON(nestedReply));
     assert(nestedValue.op === 'log' && nestedValue.worktree);
     assert.equal(await realpath(nestedValue.worktree.worktree_root), nestedLinked);
     assert(nestedValue.log.commits.some(commit => commit.message === 'NESTED'));
     const repositories = [{ root: 'b' }, { root: 'a' }, { root: 'b' }];
     const multi = await call({ op: 'status', repositories });
     assert.equal(multi.isError, false, JSON.stringify(multi));
-    const value = result.Parse(multi.structuredContent);
+    const value = result.Parse(toolJSON(multi));
     assert(value.op === 'status' && 'repos' in value);
     assert.deepEqual(value.repos.map(repo => repo.root), ['b', 'a']);
     assert(value.repos.every(repo => 'status' in repo && repo.status.modified.includes('file.txt')));
     const historyInputs: Static<typeof GitInput>[] = [{ op: 'log', repositories }, { op: 'show', repositories, ref: 'HEAD' },
       { op: 'blame', repositories, path: 'file.txt' }];
     for (const input of historyInputs) {
-      const reply = result.Parse((await call(input)).structuredContent);
+      const reply = result.Parse(toolJSON(await call(input)));
       assert('root' in reply && reply.root === 'b');
       assert('warning' in reply && reply.warning?.includes('Multiple repos detected'));
       assert(JSON.stringify(reply).includes('BETA'));
@@ -92,7 +93,7 @@ test('MCP Git reads route ordered repositories and linked checkouts with primary
       { op: 'log', repositories: linkedRepositories }, { op: 'show', repositories: linkedRepositories, ref: 'HEAD', detail: 'full' },
       { op: 'blame', repositories: linkedRepositories, path: 'file.txt' }];
     for (const input of linkedInputs) {
-      const reply = result.Parse((await call(input)).structuredContent);
+      const reply = result.Parse(toolJSON(await call(input)));
       assert('worktree' in reply && reply.worktree);
       assert.equal(await realpath(reply.worktree.worktree_root), f.linked);
       assert(reply.worktree.main_worktree_root); assert.equal(await realpath(reply.worktree.main_worktree_root), f.a);
@@ -110,7 +111,7 @@ test('MCP Git reads route ordered repositories and linked checkouts with primary
     assert.match(JSON.stringify(await call({ op: 'status', repositories }, 1)), /outputBudgetTooSmall/);
     const index = await readFile(join(f.b, '.git/index'));
     await writeFile(join(f.b, '.git/index'), 'corrupt synthetic index');
-    const failed = result.Parse((await call({ op: 'status', repositories })).structuredContent);
+    const failed = result.Parse(toolJSON(await call({ op: 'status', repositories })));
     assert(failed.op === 'status' && 'repos' in failed);
     assert('error' in failed.repos[0]!); assert('status' in failed.repos[1]!);
     await writeFile(join(f.b, '.git/index'), index);

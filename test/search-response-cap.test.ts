@@ -8,6 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const cases = Compile(Type.Array(Type.Object({ name: Type.String(), maxResults: Type.Integer(), paths: Type.Array(Type.String()),
   matches: Type.Array(Type.Object({ filePath: Type.String(), lineNumber: Type.Integer(), lineText: Type.String() })),
@@ -53,7 +54,7 @@ test('public search retains the source character cap before byte pagination and 
     const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
       roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } });
     assert.equal(declared.isError, false);
-    const workspaceId = workspace.Parse(declared.structuredContent).id;
+    const workspaceId = workspace.Parse(toolJSON(declared)).id;
     for (const item of cases) {
       evidence.push(await verifyCase(client, workspaceId, item));
     }
@@ -64,8 +65,8 @@ test('public search retains the source character cap before byte pagination and 
       const response = await client.callTool({ name: 'file_search', arguments: { workspaceId,
         input: { mode: 'both', query: { kind: 'literal', text: 'summaryNeedle' }, countOnly } } });
       assert.equal(response.isError, false, JSON.stringify(response));
-      assert(summaryReply.Check(response.structuredContent), 'Search must retain distinct file counts and path identities');
-      const result = summaryReply.Parse(response.structuredContent);
+      assert(summaryReply.Check(toolJSON(response)), 'Search must retain distinct file counts and path identities');
+      const result = summaryReply.Parse(toolJSON(response));
       assert.deepEqual(result.counts, { totalMatches: 4, matchingLines: 2, totalFiles: 2,
         matchedFiles: countOnly ? 2 : 3, pathMatches: 2 });
       if (countOnly) {
@@ -90,8 +91,8 @@ async function verifyCase(client: Client, workspaceId: string, item: typeof case
       maxOutputBytes: item.name === 'display-cap-before-transport-pagination' ? paginatedReplyBytes : completeReplyBytes,
       input: { ...input, continuation } } });
     assert.equal(result.isError, false, JSON.stringify(result));
-    assert(reply.Check(result.structuredContent), `${item.name}: missing search reply fields`);
-    const page = reply.Parse(result.structuredContent);
+    assert(reply.Check(toolJSON(result)), `${item.name}: missing search reply fields`);
+    const page = reply.Parse(toolJSON(result));
     assert.equal(page.counts.matchingLines, item.expected.includedLines.length);
     assert.equal(page.limitHit, item.expected.limitHit);
     assert.equal(page.sizeLimitHit ?? false, item.expected.sizeLimitHit);
@@ -107,7 +108,7 @@ async function verifyCase(client: Client, workspaceId: string, item: typeof case
   assert.deepEqual(foundPaths, item.expected.includedPaths, item.name);
   const counted = await client.callTool({ name: 'file_search', arguments: { workspaceId, input: { ...input, countOnly: true } } });
   assert.equal(counted.isError, false);
-  const count = reply.Parse(counted.structuredContent);
+  const count = reply.Parse(toolJSON(counted));
   assert.equal(count.counts.matchingLines, item.matches.length);
   assert.equal(count.limitHit, false); assert.equal(count.sizeLimitHit ?? false, false); assert.deepEqual(count.files, []);
   return { name: item.name, foundLines, foundPaths, count: count.counts };

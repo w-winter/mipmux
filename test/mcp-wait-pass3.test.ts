@@ -6,13 +6,14 @@ import { join, resolve } from 'node:path';
 import { getDefaultHighWaterMark } from 'node:stream';
 import { setImmediate as turn, setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
-import { McpServer } from '@modelcontextprotocol/server';
+import { McpServer, isCallToolResult } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { serveMipmuxStdio } from '../src/mcp/server.js';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import type { ClientRuntime } from '../src/runtime/client-runtime.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import type { DiscoveryEvent } from '../src/contracts/discovery.js';
+import { toolJSON } from './fixtures/tool-json.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
 const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
@@ -64,7 +65,7 @@ for (const scenario of ['timeout', 'abort'] as const) {
       const requestId = ++id, result = new Promise<unknown>(resolve => responses.set(requestId, resolve));
       wire.onmessage?.({ jsonrpc: '2.0', id: requestId, method: 'tools/call', params: { _meta: meta, name, arguments: args } });
       const value = await result; assert(value && typeof value === 'object' && 'result' in value);
-      const body = value.result; assert(body && typeof body === 'object' && 'structuredContent' in body); return body.structuredContent;
+      const body = value.result; assert(isCallToolResult(body)); return toolJSON(body);
     };
     try {
       const workspace = await call('workspace_declare', { spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } });
@@ -92,10 +93,8 @@ for (const scenario of ['timeout', 'abort'] as const) {
       await writeFile(join(directory, 'proof.json'), JSON.stringify({ scenario, independentlySettled, handlerResult, active,
         applicationJoined: true, sharedStdoutOpen: !process.stdout.destroyed }) + '\n');
       assert.equal(independentlySettled, true);
-      assert(handlerResult && typeof handlerResult === 'object' && 'structuredContent' in handlerResult);
-      const body = handlerResult.structuredContent; assert(body && typeof body === 'object');
-      if (scenario === 'abort') { assert('code' in body); assert.equal(body.code, 'cancelled'); }
-      else assert.deepEqual(body, active);
+      assert(isCallToolResult(handlerResult));
+      assert.deepEqual(toolJSON(handlerResult), scenario === 'abort' ? { kind: 'error', code: 'cancelled' } : active);
     } finally { releaseRunner.release(); await host.close().catch(() => {}); }
   });
 }

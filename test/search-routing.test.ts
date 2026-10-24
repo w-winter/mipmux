@@ -8,6 +8,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
+import { toolJSON } from './fixtures/tool-json.js';
 
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const searchReply = Compile(Type.Object({ kind: Type.Literal('search'), counts: Type.Object({ matchingLines: Type.Integer() }),
@@ -43,9 +44,9 @@ test('public search routes auto patterns and preserves native path candidates, p
   const observations: unknown[] = [];
   try {
     await client.connect(transport);
-    const workspace = workspaceReply.Parse((await client.callTool({ name: 'workspace_declare', arguments: {
+    const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
       spec: { roots: [{ name: 'zAlias', absolutePath: a }, { name: 'aAlias', absolutePath: z }], exclusions: [], outputRoot: out },
-    } })).structuredContent);
+    } })));
     const swiftFiles = ['zAlias/Foo.swift', 'zAlias/Needle.swift', 'zAlias/nested/Foo.swift', 'zAlias/src/Foo.swift.more', 'aAlias/Foo.swift', 'aAlias/src/BAR.SWIFT'];
     const cases = [
       { input: { query: { text: '*.swift' } }, paths: swiftFiles },
@@ -69,7 +70,7 @@ test('public search routes auto patterns and preserves native path candidates, p
     for (const item of cases) {
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id, input: item.input } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const result = searchReply.Parse(found.structuredContent);
+      const result = searchReply.Parse(toolJSON(found));
       assert.deepEqual(result.files.map(file => file.root + '/' + file.path), item.paths, JSON.stringify(item.input));
       assert(result.files.every(file => file.pathMatch));
       observations.push({ input: item.input, result });
@@ -78,17 +79,17 @@ test('public search routes auto patterns and preserves native path candidates, p
       const input = { mode: 'content', query: { text: 'Needle' }, maxResults: limit };
       const found = await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id, input } });
       assert.equal(found.isError, false, JSON.stringify(found));
-      const result = searchReply.Parse(found.structuredContent);
+      const result = searchReply.Parse(toolJSON(found));
       assert.equal(result.counts.matchingLines, Math.min(65, Math.max(0, limit)));
       assert.equal(result.limitHit, limit <= 65);
       observations.push({ input, result });
     }
-    const inferred = searchReply.Parse((await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
-      input: { query: { text: 'Needle' } } } })).structuredContent);
+    const inferred = searchReply.Parse(toolJSON(await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
+      input: { query: { text: 'Needle' } } } })));
     assert.equal(inferred.counts.matchingLines, 50); assert.equal(inferred.limitHit, true);
     assert(inferred.files.some(file => file.path === 'Needle.swift' && file.pathMatch));
-    const counted = searchReply.Parse((await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
-      input: { query: { text: 'Needle' }, countOnly: true, maxResults: 2 } } })).structuredContent);
+    const counted = searchReply.Parse(toolJSON(await client.callTool({ name: 'file_search', arguments: { workspaceId: workspace.id,
+      input: { query: { text: 'Needle' }, countOnly: true, maxResults: 2 } } })));
     assert.equal(counted.counts.matchingLines, 65); assert.equal(counted.limitHit, false); assert.deepEqual(counted.files, []);
     observations.push({ inferred, counted });
     await mkdir('test-output', { recursive: true });

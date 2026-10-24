@@ -39,14 +39,29 @@ function materialSummary(record: MaterialRecord) {
   }
 }
 
-/** A ready job snapshot carries a bundle receipt and the resulting prompt in place of the manifest. */
+/**
+ * A ready job snapshot carries a bundle receipt and the resulting prompt in place of the manifest. Ready and blocked
+ * snapshots count discovery completions: every one matched the effective model, or the job would have failed.
+ */
 export function jobReceipt(snapshot: JobSnapshot) {
-  if (!snapshot.localSettled || snapshot.state !== 'ready') return snapshot;
+  if (!snapshot.localSettled || (snapshot.state !== 'ready' && snapshot.state !== 'blocked')) return snapshot;
+  const discovery = { ...snapshot.discovery, completions: snapshot.discovery.completions.length };
+  if (snapshot.state === 'blocked') return { ...snapshot, discovery };
   const { bundle, ...rest } = snapshot;
-  return { ...rest, bundle: { ...bundleReceipt(bundle.directory, bundle.manifest), prompt: bundle.manifest.prompt } };
+  return { ...rest, discovery, bundle: { ...bundleReceipt(bundle.directory, bundle.manifest), prompt: bundle.manifest.prompt } };
 }
 
-/** A ready publication returns its bundle receipt; a blocked one is returned unchanged. */
-export function publicationReceipt(result: FinalizationResult | PreparedPacket) {
+/** A ready finalization returns its bundle receipt; a blocked one is returned unchanged. */
+export function publicationReceipt(result: FinalizationResult) {
   return result.kind === 'ready' ? bundleReceipt(result.directory, result.manifest) : result;
+}
+
+/** A ready preparation lists only the materials it added to or removed from the saved bundle; a blocked one is returned unchanged. */
+export function prepareReceipt(result: PreparedPacket) {
+  if (result.kind !== 'ready') return result;
+  const { materials: _materials, ...receipt } = bundleReceipt(result.directory, result.manifest);
+  const key = (record: MaterialRecord) => { const { units: _units, ...entry } = materialSummary(record); return JSON.stringify(entry); };
+  const saved = new Set(result.saved.materials.map(key)), current = new Set(result.manifest.materials.map(key));
+  return { ...receipt, added: result.manifest.materials.filter(record => !saved.has(key(record))).map(materialSummary),
+    removed: result.saved.materials.filter(record => !current.has(key(record))).map(materialSummary) };
 }
