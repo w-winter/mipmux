@@ -3,7 +3,7 @@ import type { WorkspaceHandle } from './mipmux-runtime.js';
 import type { DraftRuntime } from '../context/draft-runtime.js';
 import type { ContextBuildRequest } from '../contracts/context.js';
 import { contextRequestValidator } from '../contracts/context.js';
-import type { DiscoveryReceipt, DiscoveryEvent } from '../contracts/discovery.js';
+import type { DiscoveryCall, DiscoveryReceipt, DiscoveryEvent } from '../contracts/discovery.js';
 import type { JobPhase, JobSnapshot, JobTerminal } from '../contracts/jobs.js';
 import type { DiscoveryRunner } from '../discovery/runner.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
@@ -13,6 +13,16 @@ import { defaultQuestionTimeoutSeconds, type AskUserRequest, type ClientQuestion
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 
 type QuestionResponse = ClientQuestionResponse | { readonly action: 'timeout' };
+
+/** A discovery call's tool name and the fields that say how it changes the draft. */
+function callSummary(call: DiscoveryCall) {
+  switch (call.name) {
+    case 'manage_selection': return { name: call.name, op: call.input.op, mode: call.input.mode, paths: call.input.paths.length };
+    case 'draft_update': return { name: call.name, mutation: call.input.mutation.kind };
+    case 'prompt': return { name: call.name, op: call.input.op };
+    default: return { name: call.name };
+  }
+}
 type QuestionState = { readonly kind: 'idle' } | { readonly kind: 'preparing' | 'answering'; readonly id: string } |
   { readonly kind: 'pending'; readonly question: PendingQuestion; readonly respond: (response: ClientQuestionResponse) => boolean };
 // Node treats larger setTimeout delays as 1 ms; long source timeouts need segmented scheduling.
@@ -93,6 +103,7 @@ export class JobRegistry {
         const outcome = await runner.run(await draft.discoveryInput(job.abort.signal), {
           call: (call, signal, encode) => {
             if (!admitted || job.abort.signal.aborted) return Promise.reject(new WorkspaceFailure('cancelled'));
+            process.stderr.write(JSON.stringify({ level: 'debug', event: 'discoveryToolCall', jobId: job.id, ...callSummary(call) }) + '\n');
             const combined = AbortSignal.any([signal, job.abort.signal]);
             const cancel = () => operation.cancel();
             combined.addEventListener('abort', cancel, { once: true });
