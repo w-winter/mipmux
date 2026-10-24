@@ -4,9 +4,11 @@ import { StructureToolResult } from '../contracts/structure.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { NativeFailure, NativeWorkerFailure } from '../native/bridge-client.js';
 import type { CacheRecoveryTarget } from '../contracts/errors.js';
+import { SourcePath } from '../contracts/inventory.js';
 
 const structureKind = Compile(Type.Pick(StructureToolResult, ['kind']));
 const structureResult = Compile(StructureToolResult);
+const sourcePath = Compile(SourcePath);
 
 export function toolResult(value: unknown) {
   const text = structureKind.Check(value) ? structureResult.Parse(value).text : JSON.stringify(value);
@@ -45,6 +47,9 @@ export function failureResult(error: unknown) {
     return { kind: 'error', code, message: error.details.message };
   }
   if (target) return { kind: 'error', code, target };
+  if (error instanceof WorkspaceFailure && ['sourceChanged', 'pipelineChanged'].includes(code) && sourcePath.Check(error.details)) {
+    return { kind: 'error', code, source: error.details };
+  }
   if (error instanceof WorkspaceFailure && code === 'outputBudgetTooSmall') {
     return { kind: 'outputBudgetTooSmall', requiredBytes: error.details.requiredBytes };
   }

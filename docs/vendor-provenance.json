@@ -1634,7 +1634,7 @@
         ]
       ],
       "destination": "native/Sources/RepoPromptCodeMapCore/Extraction/CodeMapGenerator.swift",
-      "sha256": "62b2c7270d423f598eecfd89dae211af536c5a31e32628a6066fdab8172b9240",
+      "sha256": "0526672f5713909571834a9e0856e868057b71804f4f0e47bf3ab143ec55118b",
       "changes": [
         "declaration relocation",
         "CoreFoundation timing import",
@@ -6414,7 +6414,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
-      "sha256": "f063046ef6487a99c041ab9f9db7eae054e8546cfca6297f8a229866fcff46d0",
+      "sha256": "be626bb721a64659716836984db91414658ed3732ee9e03c36e138928d4fac9f",
       "classification": "handwritten",
       "changes": [
         "Bind the bound-tab clipboard route at WorkspaceContext.swift278-345 to existing finalization: acquire a fresh default nil-count presentation, build and measure candidate text inside its assembly callback, then accept the shared serving checks before creating output. Preserve exclusive files, readback, required-input revalidation and irreversible manifest publication. The finalization owner captures materials and automatic acquisition state together; blocked results update that observation and reopen editing. Do not import generated-review authorization or alternate export-count behavior.",
@@ -6425,7 +6425,29 @@
         "Capture per-file omissions during body assembly and verify their absence before assembly and before publication. Preserve canonical materials separately for terminal inspection, with delivered-body measurement and explicit incomplete component estimates.",
         "Archive the canonical version-25 pending-map omission variant. The existing root-atomic presentation and shared-deadline readiness owners run unchanged before packet partitioning.",
         "Finalization and interim export share packet-assembly.ts for artifact refresh, omission capture, material validation, native preparation and retained presentation. Finalization records partial capture at the original points, computes reference tokens inside the retained callback and publishes canonical manifest schema25 without the unused excludedSources field.",
-        "Publish version25 role-free request/preset captures and constraints framing together; older manifest versions remain explicit invalidManifest results."
+        "Publish version25 role-free request/preset captures and constraints framing together; older manifest versions remain explicit invalidManifest results.",
+        "Delegate version-25 manifest construction and the exclusive-create, readback, final-revalidation and manifest-last publication sequence to src/context/bundle-publication.ts; finalization keeps its publication claim and cancellation ownership."
+      ]
+    },
+    {
+      "destination": "src/context/bundle-publication.ts",
+      "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextPreAssemblyService.swift",
+      "ranges": [
+        [
+          236,
+          284
+        ],
+        [
+          308,
+          360
+        ]
+      ],
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "bd91939ccc150de218f537da201ad306468ce5e276e5ea86cf99f8d3f4ddb8d4",
+      "sha256": "3d3b103ad777431f071dfa7d2f85644cd11162977967a9c739f1c2b8051fb59e",
+      "classification": "handwritten",
+      "changes": [
+        "Extracted unchanged from src/context/finalize.ts: the version-25 manifest builder and the exclusive-create, readback, final-revalidation, claim and manifest-last publication sequence, shared by draft finalization and saved-packet preparation."
       ]
     },
     {

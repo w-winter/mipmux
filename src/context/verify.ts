@@ -34,15 +34,15 @@ export async function verifyBundle(directory: string) {
 }
 
 export async function loadVerifiedBundle(directory: string, signal?: AbortSignal) {
-  const raw = await readBundleFile(directory, 'manifest.json', signal);
-  let manifest: unknown;
-  try {
-    manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(raw));
-  } catch (error) {
-    if (!(error instanceof SyntaxError || error instanceof TypeError)) throw error;
-    throw new WorkspaceFailure('invalidManifest');
-  }
-  if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
+  return verifySavedBundle(filename => readBundleFile(directory, filename, signal));
+}
+
+export type BundleFilename = 'manifest.json' | 'context.md' | 'handoff.md';
+export type VerifiedBundle = Awaited<ReturnType<typeof verifySavedBundle>>;
+
+/** Verifies one saved bundle from the files `read` supplies, reading the manifest before context and handoff. */
+export async function verifySavedBundle(read: (filename: BundleFilename) => Promise<Buffer>) {
+  const manifest = parseManifest(await read('manifest.json'));
   verifySourceOmissions(manifest);
   requireEqual(manifest.deniedAbsolutePaths.includes(manifest.inventory.outputRoot.canonicalPath), true);
   const inventoryPaths = new Set<string>();
@@ -52,8 +52,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
     inventoryPaths.add(id);
   }
   requireEqual(manifest.decoder, manifest.inventory.decoderPolicy);
-  const context = await readBundleFile(directory, 'context.md', signal),
-    handoff = await readBundleFile(directory, 'handoff.md', signal);
+  const context = await read('context.md'), handoff = await read('handoff.md');
   requireEqual(identity(context), manifest.files.context);
   requireEqual(identity(handoff), manifest.files.handoff);
   requireEqual(sha256(canonicalJSON(manifest.request)), manifest.requestDigest);
@@ -65,11 +64,7 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   requireEqual(identity(treeBytes), { byteCount: treeSpan.length, sha256: treeSpan.sha256 });
   const fileTree = { input: manifest.fileTree.input, text: decodedBody(treeBytes) };
   if (fileTree.input === null) requireEqual(fileTree.text, '');
-  const automaticSpan = manifest.automaticGit?.span;
-  const automaticText = automaticSpan ? context.subarray(automaticSpan.offset, automaticSpan.offset + automaticSpan.length) : null;
-  if (automaticText && automaticSpan) requireEqual(identity(automaticText), { byteCount: automaticSpan.length, sha256: automaticSpan.sha256 });
-  const automaticGit = manifest.automaticGit === null ? null : { evidence: manifest.automaticGit.evidence,
-    text: automaticText === null ? null : decodedBody(automaticText) };
+  const automaticGit = savedAutomaticGit(manifest, context);
   let rendered: ReturnType<typeof renderBundle>;
   try { rendered = renderBundle({
     manualPresentation: manifest.manualPresentation,
@@ -104,6 +99,24 @@ export async function loadVerifiedBundle(directory: string, signal?: AbortSignal
   }, { bytes: manifest.accounting.bytes, units: manifest.accounting.units, allowance: manifest.accounting.allowance });
   return { verified: { kind: 'verified' as const, manifest }, materials, fileTree, automaticGit, clipboard: decodedBody(context),
     comparisonText: rendered.comparisonText };
+}
+function parseManifest(raw: Buffer): Manifest {
+  let manifest: unknown;
+  try {
+    manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(raw));
+  } catch (error) {
+    if (!(error instanceof SyntaxError || error instanceof TypeError)) throw error;
+    throw new WorkspaceFailure('invalidManifest');
+  }
+  if (!manifestValidator.Check(manifest)) throw new WorkspaceFailure('invalidManifest');
+  return manifest;
+}
+function savedAutomaticGit(manifest: Manifest, context: Buffer) {
+  const automaticSpan = manifest.automaticGit?.span;
+  const automaticText = automaticSpan ? context.subarray(automaticSpan.offset, automaticSpan.offset + automaticSpan.length) : null;
+  if (automaticText && automaticSpan) requireEqual(identity(automaticText), { byteCount: automaticSpan.length, sha256: automaticSpan.sha256 });
+  return manifest.automaticGit === null ? null : { evidence: manifest.automaticGit.evidence,
+    text: automaticText === null ? null : decodedBody(automaticText) };
 }
 function readBundleFile(directory: string, filename: string, signal: AbortSignal | undefined): Promise<Buffer> {
   return readRegularFile(join(directory, filename), new WorkspaceFailure('nonRegularBundleFile', { component: filename }), signal);

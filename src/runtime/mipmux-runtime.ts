@@ -3,12 +3,16 @@ import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { BridgeClient } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
 import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
-import { contextRequestValidator, PromptEnhancementMode, type ContextBuildRequest } from '../contracts/context.js';
+import { contextRequestValidator, PromptEnhancementMode, type ContextBuildRequest, type ContextPrepareRequest } from '../contracts/context.js';
 import { CopyContext } from '../contracts/presentation.js';
 import { Compile } from 'typebox/compile';
 import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
-import { loadVerifiedBundle } from '../context/verify.js';
+import { loadVerifiedBundle, type VerifiedBundle } from '../context/verify.js';
+import { publishPreparedPacket, readSavedBundle, requireBundleWorkspace, type PreparedPacket } from '../context/packet-prepare.js';
+import { strictText } from '../context/material-store.js';
+import type { PolicyDeclaration } from '../workspace/root-policy.js';
+import { failureCode } from './tool-result.js';
 import { revalidateMaterials } from '../context/revalidate.js';
 import { revalidateAutomaticReviewGit } from '../context/automatic-review-git.js';
 import { ArtifactStore } from '../workspace/artifact-store.js';
@@ -225,7 +229,38 @@ export class MipmuxRuntime {
   }
   async #verifyCurrentBundle(directory: string, signal: AbortSignal) {
     signal.throwIfAborted();
-    const { verified,materials,fileTree,automaticGit,comparisonText: savedComparison } = freeze(await loadVerifiedBundle(directory, signal)), manifest = verified.manifest;
+    const saved = freeze(await loadVerifiedBundle(directory, signal));
+    return this.#withCurrentBundle(saved, signal, async () => ({ ...saved.verified, kind: 'currentVerified' as const }));
+  }
+  /** Publishes a new bundle from a saved bundle beneath the declaration's output root, replacing only its prompt. */
+  preparePacket(declaration: PolicyDeclaration, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
+    if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
+    const work = this.#preparePacket(declaration, request, AbortSignal.any([signal, this.#shutdown.signal]));
+    this.#admissions.add(work);
+    void work.then(()=>this.#admissions.delete(work),()=>this.#admissions.delete(work));
+    return work;
+  }
+  async #preparePacket(declaration: PolicyDeclaration, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
+    const log = (level: string, outcome: string, code: string | null = null) => process.stderr.write(JSON.stringify({ level,
+      event: 'packetPrepare', outcome, outputName: request.outputName, code }) + '\n');
+    log('info', 'started');
+    try {
+      signal.throwIfAborted();
+      strictText(request.prompt);
+      const saved = freeze(await readSavedBundle(this, declaration.outputRoot, request.bundle, signal));
+      requireBundleWorkspace(saved.verified.manifest, declaration);
+      const prepared = await this.#withCurrentBundle(saved, signal, recheck => publishPreparedPacket(this, saved, request, signal, recheck));
+      log(prepared.kind === 'ready' ? 'info' : 'warn', prepared.kind);
+      return prepared;
+    } catch (error) {
+      const code = failureCode(error);
+      log(code === 'cancelled' ? 'info' : 'error', code === 'cancelled' ? 'cancelled' : 'failed', code);
+      throw error;
+    }
+  }
+  /** Verifies a decoded bundle against current roots, sources, policies and presentation, then runs `work`; `recheck` repeats the checks with fresh reads. */
+  async #withCurrentBundle<T>(saved: VerifiedBundle, signal: AbortSignal, work: (recheck: () => Promise<void>) => Promise<T>): Promise<T> {
+    const { verified,materials,fileTree,automaticGit,comparisonText: savedComparison } = saved, manifest = verified.manifest;
     const resolved = await this.renderPresentation({ kind: 'resolveCopyPreset', context: manifest.request.copyContext,
       selector: manifest.request.copyPresetSelector }, signal);
     if (canonicalJSON(resolved.preset) !== canonicalJSON(manifest.clipboardPreset)) throw new WorkspaceFailure('presentationChanged');
@@ -243,7 +278,7 @@ export class MipmuxRuntime {
     const operation = new WorkspaceOperation(snapshot,declaration,signal,this,
       async()=>{this.#operations.delete(operation);},()=>Promise.reject(new WorkspaceFailure('verificationOperationOnly')), { kind: 'verification' });
     this.#operations.add(operation);
-    try {
+    const check = async () => {
       await revalidateMaterials(operation,materials, manifest.unavailableRoots, manifest.unavailableFiles);
       await revalidateCanonicalSources(operation, manifest);
       const selections = manifest.manualPresentation?.canonicalSources ?? capturedSourceSelections(materials, manifest.unavailableRoots, manifest.unavailableFiles);
@@ -266,7 +301,10 @@ export class MipmuxRuntime {
         throw error;
       }
       if (canonicalJSON(manifest.clipboardPreset) !== canonicalJSON(clipboard.preset) || savedComparison !== comparison) throw new WorkspaceFailure('presentationChanged');
-      return {...verified,kind:'currentVerified' as const};
+    };
+    try {
+      await check();
+      return await work(check);
     } finally { await operation.close(); }
   }
   async createDraft(owner: WorkspaceRuntime, request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}): Promise<DraftRuntime> {
@@ -363,5 +401,6 @@ export class WorkspaceHandle {
   }
   async openOperation(signal: AbortSignal) { this.#check(); return this.runtime.openOperation(this.owner, signal); }
   async createDraft(request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}) { this.#check(); return this.runtime.createDraft(this.owner, request, signal, acquiring); }
+  async preparePacket(request: ContextPrepareRequest, signal: AbortSignal) { this.#check(); return this.runtime.preparePacket(this.owner.declaration, request, signal); }
   async close(): Promise<void> { if (!this.#closed) { this.#closed = true; await this.release(); } }
 }

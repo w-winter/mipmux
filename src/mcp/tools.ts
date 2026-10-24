@@ -3,7 +3,7 @@ import { Compile } from 'typebox/compile';
 import { fromJsonSchema, inputRequired, isInputRequiredResult, CLIENT_CAPABILITIES_META_KEY,
   type McpServer, type ServerContext } from '@modelcontextprotocol/server';
 import { WorkspaceSpec } from '../contracts/inventory.js';
-import { ContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from '../contracts/context.js';
+import { ContextBuildRequest, ContextPrepareRequest, DraftInspection, DraftUpdate, PromptRequest } from '../contracts/context.js';
 import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, ScopedStructure, toolDescription } from '../contracts/exploration.js';
 import { GitInput, gitValidator } from '../contracts/git.js';
 import { SelectionInput, selectionValidator } from '../contracts/selection.js';
@@ -13,6 +13,7 @@ import { toolResult, failureResult } from '../runtime/tool-result.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { ClientQuestionResponse } from '../contracts/interaction.js';
 import { questionForm, sourceQuestionResponse } from './question-form.js';
+import { jobReceipt, publicationReceipt } from './receipts.js';
 
 const closed = { additionalProperties: false }, id = Type.String({ minLength: 1 });
 const formCapability = Compile(Type.Object({ [CLIENT_CAPABILITIES_META_KEY]: Type.Object({
@@ -85,14 +86,20 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     (input, ctx) => client().prompt(input.draftId ?? null, { ...input.input, maxOutputBytes: input.maxOutputBytes ?? defaultMaxOutputBytes }, ctx.mcpReq.signal, toolResult));
   register('draft_validate', Type.Object({ draftId: id, ...budget }, closed),
     (input, ctx) => client().validate(input.draftId, input.maxOutputBytes ?? defaultMaxOutputBytes, ctx.mcpReq.signal, toolResult));
-  register('draft_finalize', Type.Object({ draftId: id }, closed), (input, ctx) => client().finalize(input.draftId, ctx.mcpReq.signal));
+  register('draft_finalize', Type.Object({ draftId: id }, closed), async (input, ctx) => publicationReceipt(await client().finalize(input.draftId, ctx.mcpReq.signal)));
   register('draft_dispose', Type.Object({ draftId: id }, closed), (input, ctx) => client().disposeDraft(input.draftId, ctx.mcpReq.signal));
   register('context_builder', Type.Object({ workspaceId: id, requestId: id, request: ContextBuildRequest }, closed),
-    (input, ctx) => client().build(input.workspaceId, input.requestId, input.request,
-      formCapability.Check(ctx.mcpReq.envelope) ? 'form' : 'unavailable'));
-  register('context_builder_result', Type.Object({ jobId: id }, closed), input => client().result(input.jobId));
-  register('context_builder_cancel', Type.Object({ jobId: id }, closed), input => client().cancel(input.jobId));
+    (input, ctx) => jobReceipt(client().build(input.workspaceId, input.requestId, input.request,
+      formCapability.Check(ctx.mcpReq.envelope) ? 'form' : 'unavailable')));
+  register('context_builder_result', Type.Object({ jobId: id }, closed), input => jobReceipt(client().result(input.jobId)));
+  register('context_builder_cancel', Type.Object({ jobId: id }, closed), input => {
+    const result = client().cancel(input.jobId);
+    return 'localSettled' in result ? jobReceipt(result) : result;
+  });
   register('context_builder_dispose', Type.Object({ jobId: id }, closed), (input, ctx) => client().disposeJob(input.jobId, ctx.mcpReq.signal));
+  register('context_prepare', Type.Object({ workspaceId: id, ...ContextPrepareRequest.properties }, closed),
+    async (input, ctx) => publicationReceipt(await client().prepare(input.workspaceId,
+      { bundle: input.bundle, prompt: input.prompt, outputName: input.outputName }, ctx.mcpReq.signal)));
   register('context_builder_wait', Type.Object({ jobId: id, durationMs: Type.Integer({ minimum: 0, maximum: 2147483647 }) }, closed),
     async (input, ctx) => {
       if (ctx.mcpReq.inputResponses !== undefined) {
@@ -110,7 +117,7 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
           params: { progressToken, progress: snapshot.sequence, message: snapshot.state } }).catch(() => {});
       });
       const question = client().pendingQuestion(input.jobId);
-      if (!question) return result;
+      if (!question) return jobReceipt(result);
       if (!formCapability.Check(ctx.mcpReq.envelope)) throw new WorkspaceFailure('elicitationUnavailable');
       return inputRequired({ inputRequests: { [question.id]: inputRequired.elicit(questionForm(question)) } });
     });

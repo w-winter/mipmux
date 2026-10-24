@@ -72,6 +72,13 @@ export const ContextBuildRequest = Type.Object({
   outputName: Type.String({ pattern: '^(?!\\.{1,2}$)[^/\\u0000]+$' }),
 }, closed);
 export type ContextBuildRequest = Static<typeof ContextBuildRequest>;
+/** Saved bundle directory relative to the workspace output root, its complete replacement prompt and a new bundle name. */
+export const ContextPrepareRequest = Type.Object({
+  bundle: RelativePath,
+  prompt: Type.String(),
+  outputName: ContextBuildRequest.properties.outputName,
+}, closed);
+export type ContextPrepareRequest = Static<typeof ContextPrepareRequest>;
 export const CapturedContextBuildRequest = Type.Object({ ...ContextBuildRequest.properties,
   enhancementMode: PromptEnhancementMode, budgetUnits: SafeCount,
   copyPreset: CapturedClipboardPreset, copyPresetSelector: ClipboardPreset, copyContext: CopyContext }, closed);

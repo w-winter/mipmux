@@ -8,18 +8,29 @@ import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import { revalidateGitArtifact } from './git-artifact-material.js';
 import type { UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import { revalidateFileAvailability, revalidateRootAvailability } from './source-omissions.js';
+import { NativeFailure } from '../native/bridge-client.js';
+import type { SourcePath } from '../contracts/inventory.js';
+
+/** Native identity checks report sourceChanged without a path; revalidation names the changed source. */
+async function currentRead<T>(source: SourcePath, read: () => Promise<T>): Promise<T> {
+  try { return await read(); }
+  catch (error) {
+    if (error instanceof NativeFailure && error.code === 'sourceChanged') throw new WorkspaceFailure('sourceChanged', source);
+    throw error;
+  }
+}
 
 async function revalidateSource(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'source' }>, bodies: readonly string[]): Promise<void> {
   const source = record.selection.source;
   if (record.decoding.kind === 'undecodable') {
-    const read = await operation.readRawSource(source);
+    const read = await currentRead(source, () => operation.readRawSource(source));
     if (read.decoding.kind !== 'undecodable' || canonicalJSON(read.key) !== canonicalJSON(record.artifactKey)) {
       throw new WorkspaceFailure('pipelineChanged', source);
     }
     if (descriptorGitMode(read.fingerprint.mode) !== record.mode) throw new WorkspaceFailure('sourceChanged', source);
     return;
   }
-  const read = await operation.readSource(source);
+  const read = await currentRead(source, () => operation.readSource(source));
   if (canonicalJSON(read.identity) !== canonicalJSON(record.identity) || descriptorGitMode(read.fingerprint.mode) !== record.mode) {
     throw new WorkspaceFailure('sourceChanged', source);
   }
@@ -78,7 +89,7 @@ export async function revalidateMaterials(
 async function revalidateDocument(operation: WorkspaceOperation, record: Extract<Material['record'], { kind: 'document' }>, bodies: readonly string[]): Promise<void> {
   if ('sourceIdentity' in record) {
     const source = record.input.source;
-    const read = await operation.readSource(source);
+    const read = await currentRead(source, () => operation.readSource(source));
     if (canonicalJSON(read.identity) !== canonicalJSON(record.sourceIdentity)) throw new WorkspaceFailure('sourceChanged', source);
     if (canonicalJSON(identity(read.text)) !== canonicalJSON(record.identity)) throw new WorkspaceFailure('pipelineChanged', source);
   }

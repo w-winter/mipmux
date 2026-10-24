@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { MipmuxRuntime, WorkspaceHandle } from './mipmux-runtime.js';
 import type { WorkspaceSpec } from '../contracts/inventory.js';
-import type { ContextBuildRequest, DraftInspection, DraftUpdate } from '../contracts/context.js';
+import type { ContextBuildRequest, ContextPrepareRequest, DraftInspection, DraftUpdate } from '../contracts/context.js';
 import type { DiscoveryCall } from '../contracts/discovery.js';
 import type { DiscoveryRunner } from '../discovery/runner.js';
 import type { DraftRuntime } from '../context/draft-runtime.js';
@@ -126,6 +126,11 @@ export class ClientRuntime {
         }
       } finally { await operation.close(); }
     });
+  }
+  /** Publishes a new bundle from a saved bundle beneath this workspace's output root, replacing only its prompt. */
+  prepare(id: string, request: ContextPrepareRequest, signal: AbortSignal) {
+    const workspace = this.#workspace(id);
+    return this.#track(signal, combined => workspace.preparePacket(request, combined));
   }
   /** Enabled clarification requires the caller's form capability or throws elicitationUnavailable before admission. */
   build(workspaceId: string, requestId: string, request: ContextBuildRequest, elicitation: 'form' | 'unavailable' = 'unavailable') {
