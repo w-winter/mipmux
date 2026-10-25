@@ -9,7 +9,7 @@ reader.once('line', line => {
     const completion = { dispatched: identity, reported: identity, serverModel: null,
       stopReason: process.env.SCENARIO === 'empty' ? 'stop' : process.env.SCENARIO,
       channel: 'ordinary', textBytes: 0, textSHA256: '0'.repeat(64), textOnly: true,
-      nonempty: process.env.SCENARIO !== 'empty', diagnostics: [] };
+      nonempty: process.env.SCENARIO !== 'empty', diagnostics: [], usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } };
     emit({ ...scope, kind: 'evidence', fact: { kind: 'preflight', effective: { identity, thinking: start.config.thinking,
       contextWindow: 8192, maxTokens: 1024, recordSHA256: '0'.repeat(64), modelRecord: {}, endpointSHA256: '0'.repeat(64), headersSHA256: null },
       policy: start.config.policy } });

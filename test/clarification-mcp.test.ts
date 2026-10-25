@@ -17,7 +17,9 @@ function barrier() { let release!: () => void; const promise = new Promise<void>
 const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const jobReply = Compile(Type.Object({ jobId: Type.String(), state: Type.String(), localSettled: Type.Boolean() }));
 const readyReply = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true),
-  bundle: Type.Object({ directory: Type.String() }) }));
+  bundle: Type.Object({ directory: Type.String() }),
+  discovery: Type.Object({ completions: Type.Integer(), usage: Type.Object({ input: Type.Integer(), output: Type.Integer(),
+    cacheRead: Type.Integer(), cacheWrite: Type.Integer() }) }) }));
 const errorReply = Compile(Type.Object({ code: Type.String() }));
 const sourceAnswer = Compile(AskUserResponse);
 const toolMessage = Compile(Type.Object({ role: Type.Literal('user'), content: Type.Array(Type.Object({
@@ -161,6 +163,10 @@ async function checkCompletion(f: Fixture, jobId: string, waiting: Waiting) {
     arguments: { jobId, durationMs: 10000 } }) : first));
   const packet = await verifyBundle(result.bundle.directory);
   assert.equal(packet.manifest.prompt, '');
+  // The scripted provider reports 10 input and 4 output tokens for every request.
+  const requests = provider.requests.length;
+  assert.equal(result.discovery.completions, requests);
+  assert.deepEqual(result.discovery.usage, { input: 10 * requests, output: 4 * requests, cacheRead: 0, cacheWrite: 0 });
   assert.equal(f.questions, scenario === 'accept' ? 2 : scenario === 'disabled' ? 0 : 1);
   const policy = JSON.stringify(provider.requests[0]!.system);
   assert.equal(provider.requests[0]!.tools.includes('ask_user'), scenario !== 'disabled');

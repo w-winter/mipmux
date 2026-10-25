@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import type { Manifest, MaterialRecord } from '../contracts/context.js';
 import type { JobSnapshot } from '../contracts/jobs.js';
+import type { TokenUsage } from '../contracts/discovery.js';
 import type { FinalizationResult } from '../context/finalize.js';
 import { materialPath, type PreparedPacket } from '../context/packet-prepare.js';
 import { estimateUnits } from '../context/budget.js';
@@ -41,11 +42,15 @@ function materialSummary(record: MaterialRecord) {
 
 /**
  * A ready job snapshot carries a bundle receipt and the resulting prompt in place of the manifest. Ready and blocked
- * snapshots count discovery completions: every one matched the effective model, or the job would have failed.
+ * snapshots replace the discovery completions with their count and summed token usage: every completion matched the
+ * effective model, or the job would have failed.
  */
 export function jobReceipt(snapshot: JobSnapshot) {
   if (!snapshot.localSettled || (snapshot.state !== 'ready' && snapshot.state !== 'blocked')) return snapshot;
-  const discovery = { ...snapshot.discovery, completions: snapshot.discovery.completions.length };
+  const { completions } = snapshot.discovery;
+  const total = (field: keyof TokenUsage) => completions.reduce((sum, completion) => sum + completion.usage[field], 0);
+  const discovery = { ...snapshot.discovery, completions: completions.length,
+    usage: { input: total('input'), output: total('output'), cacheRead: total('cacheRead'), cacheWrite: total('cacheWrite') } };
   if (snapshot.state === 'blocked') return { ...snapshot, discovery };
   const { bundle, ...rest } = snapshot;
   return { ...rest, discovery, bundle: { ...bundleReceipt(bundle.directory, bundle.manifest), prompt: bundle.manifest.prompt } };

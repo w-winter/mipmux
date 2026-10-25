@@ -59,11 +59,14 @@ export const RecoveryPolicy = Type.Object({
   httpIdleTimeoutMs: SafeCount, websocketConnectTimeoutMs: SafeCount, cacheWarming: Type.Literal('off'),
 }, closed);
 export const ModelIdentity = Type.Object({ provider: Type.String(), model: Type.String(), api: Type.String() }, closed);
+/** Token counts as the provider reports them for one model response; `input` excludes cached input. */
+export const TokenUsage = Type.Object({ input: SafeCount, output: SafeCount, cacheRead: SafeCount, cacheWrite: SafeCount }, closed);
+export type TokenUsage = Static<typeof TokenUsage>;
 export const Completion = Type.Object({ dispatched: ModelIdentity, reported: ModelIdentity,
   serverModel: Type.Union([Type.String(), Type.Null()]),
   stopReason: Type.Enum(['pending', 'stop', 'length', 'toolUse', 'error', 'aborted', 'deferred']),
   channel: Type.Enum(['ordinary', 'summary']), textBytes: SafeCount, textSHA256: SHA256,
-  textOnly: Type.Boolean(), nonempty: Type.Boolean(), diagnostics: Type.Array(Type.String()),
+  textOnly: Type.Boolean(), nonempty: Type.Boolean(), diagnostics: Type.Array(Type.String()), usage: TokenUsage,
 }, closed);
 export type Completion = Static<typeof Completion>;
 export const DiscoveryEvent = Type.Object({ kind: Type.String(),
