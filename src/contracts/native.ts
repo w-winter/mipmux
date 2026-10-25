@@ -82,7 +82,7 @@ const DiscoveryTemplateSection = Type.Enum(['system', 'startup.metadata',
   'mode.fullRewrite.handoff', 'mode.fullRewrite.success', 'mode.fullRewrite.antiPatterns', 'mode.fullRewrite.checklist',
   'mode.augment.handoff', 'mode.augment.success', 'mode.augment.antiPatterns', 'mode.augment.checklist',
   'mode.preserve.handoff', 'mode.preserve.success', 'mode.preserve.antiPatterns', 'mode.preserve.checklist',
-  'clarification.tool', 'clarification.guidance', 'clarification.approval', 'review.artifacts', 'review.readOnly',
+  'codemode.tool', 'clarification.tool', 'clarification.guidance', 'clarification.approval', 'review.artifacts', 'review.readOnly',
   'review.roots.named', 'review.roots.lookup']);
 const templateLine = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
 const NativeTemplateDiagnostic = Type.Union([
@@ -392,7 +392,7 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('readExport'), run: handle, filename }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('publishManifest'), run: handle, bytes: base64 }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('renderDiscoveryPrompt'), template: Type.String(), tokenBudget: SafeCount,
-    enhancementMode: Type.Enum(['fullRewrite', 'augment', 'preserve']),
+    enhancementMode: Type.Enum(['fullRewrite', 'augment', 'preserve']), codemode: Type.Boolean(),
     allowClarifyingQuestions: Type.Boolean(), purpose: Type.Enum(['planning', 'review', 'investigation']),
     task: Type.String(), questionTimeoutSeconds: templateLine,
     restrictsReviewGitToExplicitReadOnly: Type.Boolean(), reviewRootNames: Type.Array(Type.String()),

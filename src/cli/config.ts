@@ -87,7 +87,7 @@ const defaultGitExecutable = '/usr/bin/git';
  * state, the platform cache directory (`~/Library/Caches/mipmux` on macOS, otherwise `$XDG_CACHE_HOME/mipmux` or
  * `~/.cache/mipmux`), the package's own native executable, `/usr/bin/git`, a 200000-unit budget, 48000-byte exploration
  * replies and a 1000 ms termination grace. Discovery takes Pi's `auth.json` from `$PI_CODING_AGENT_DIR` or `~/.pi/agent`,
- * the shipped discovery template and Pi's recovery defaults, merged field by field with the file's overrides.
+ * the shipped discovery template, codemode and Pi's recovery defaults, merged field by field with the file's overrides.
  */
 export function resolveHostConfig(file: ConfigFile, host: ConfigHost): HostConfig {
   const cacheRoot = host.platform === 'darwin' ? join(host.home, 'Library', 'Caches') : host.env.XDG_CACHE_HOME ?? join(host.home, '.cache');
@@ -116,6 +116,7 @@ function resolveDiscovery(file: Static<typeof DiscoveryFile>, host: ConfigHost):
     promptTemplatePath: file.promptTemplatePath ?? join(host.packageRoot, 'dist', 'prompts', 'discovery.md'),
     environment: file.environment ?? {},
     mcp: file.mcp ?? null,
+    codemode: file.codemode ?? true,
     policy: {
       retry: { ...piPolicyDefaults.retry, ...policy.retry,
         provider: { timeoutMs: httpIdleTimeoutMs, ...piPolicyDefaults.retry.provider, ...policy.retry?.provider } },

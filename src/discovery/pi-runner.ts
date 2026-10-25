@@ -67,7 +67,7 @@ export class PiRunner implements DiscoveryRunner {
     }
     const templateIdentity = { sha256: sha256(admitted.bytes), byteCount: admitted.bytes.length };
     let prepared: Awaited<ReturnType<typeof prepareDiscoveryInput>>;
-    try { prepared = await prepareDiscoveryInput(input, admitted.text, signal, this.renderPrompt); }
+    try { prepared = await prepareDiscoveryInput(input, admitted.text, this.config.codemode, signal, this.renderPrompt); }
     catch (error) {
       signal.throwIfAborted();
       if (error instanceof WorkspaceFailure) logTemplateRejection(error, this.config.promptTemplatePath, templateIdentity);

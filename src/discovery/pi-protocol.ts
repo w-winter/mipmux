@@ -9,7 +9,7 @@ export const PiConfig = Type.Object({ provider: Type.String({ minLength: 1 }), m
   thinking: Type.Enum(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']),
   authPath: absolute, modelsPath: absolute, promptTemplatePath: absolute,
   environment: Type.Record(Type.String(), Type.String()),
-  policy: RecoveryPolicy, mcp: Type.Union([McpReference, Type.Null()]) }, closed);
+  policy: RecoveryPolicy, mcp: Type.Union([McpReference, Type.Null()]), codemode: Type.Boolean() }, closed);
 export type PiConfig = Static<typeof PiConfig>;
 export const piConfigValidator = Compile(PiConfig);
 const scope = { generation: Type.String({ minLength: 1 }), job: Type.String({ minLength: 1 }) };

@@ -22,6 +22,7 @@ enum RPCEContextBuilderPrompt {
         let success = try template.render(mode.success, resolve: scalar)
         let antiPatterns = try template.render(mode.antiPatterns, resolve: scalar)
         let checklist = try template.render(mode.checklist, resolve: scalar)
+        let codemodeTool = input.codemode ? try template.render(.codemodeTool, resolve: scalar) : ""
         let questionTool = input.questions ? try template.render(.clarificationTool, resolve: scalar) : ""
         let questionGuidance = input.questions ? try template.render(.clarificationGuidance, resolve: scalar) : ""
         let approval = input.questions ? try template.render(.clarificationApproval, resolve: scalar) : ""
@@ -37,7 +38,8 @@ enum RPCEContextBuilderPrompt {
             ""
         }
         let slots: [Value: String] = [.handoff: handoff, .handoffSuccess: success, .handoffAntiPatterns: antiPatterns,
-                                      .handoffChecklist: checklist, .clarificationTool: questionTool,
+                                      .handoffChecklist: checklist, .codemodeTool: codemodeTool,
+                                      .clarificationTool: questionTool,
                                       .clarificationGuidance: questionGuidance,
                                       .approvalStep: approval, .reviewGuidance: review]
         let system = try template.render(.system) { value in

@@ -25,7 +25,7 @@ test('native startup renderer preserves RPCE ordering with the approved represen
   for (const entry of cases.filter(entry => entry.input.contextBuilderPrompts.length === 0)) {
     const generation = 'startup-reference';
     const nativeFrame = callNative({ kind: 'renderDiscoveryPrompt', template, tokenBudget: entry.input.tokenBudget,
-      enhancementMode: 'preserve', purpose: 'investigation', task: entry.input.currentPrompt,
+      enhancementMode: 'preserve', codemode: true, purpose: 'investigation', task: entry.input.currentPrompt,
       allowClarifyingQuestions: false, questionTimeoutSeconds: 300, restrictsReviewGitToExplicitReadOnly: true,
       reviewRootNames: [], fileTree: entry.input.fileTree, currentPrompt: entry.input.currentPrompt,
       discoveryInstructions: entry.input.discoveryInstructions }, generation, entry.name);

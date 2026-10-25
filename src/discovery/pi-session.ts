@@ -59,7 +59,7 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     const model = freeze(structuredClone(selected));
     const identity = { provider: model.provider, model: model.id, api: model.api };
     const settings = SettingsManager.inMemory(config.policy);
-    const extensions = await loadDiscoveryExtensions(mcp, settings);
+    const extensions = await loadDiscoveryExtensions(mcp, settings, config.codemode);
     const resources: ResourceLoader = {
       getExtensions: () => extensions,
       getSkills: () => ({ skills: [], diagnostics: [] }), getPrompts: () => ({ prompts: [], diagnostics: [] }),
@@ -69,14 +69,14 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
       extendResources: () => {}, reload: async () => {},
     };
     const thinking: ThinkingLevel = config.thinking;
-    // The model is offered mipmux's tools and codemode; scripts can call only mipmux's tools.
-    const scriptable = tools.map(tool => tool.name), toolNames = [...scriptable, CODEMODE_TOOL];
+    // The model is offered mipmux's tools and, when configured, codemode; scripts can call only mipmux's tools.
+    const scriptable = tools.map(tool => tool.name), toolNames = config.codemode ? [...scriptable, CODEMODE_TOOL] : scriptable;
     const created = await createAgentSession({ cwd: '/', agentDir: '/', modelRuntime: runtime, model,
       thinkingLevel: thinking, sessionManager: SessionManager.inMemory('/'), settingsManager: settings,
       resourceLoader: resources, ...(mcp ? { noTools: 'builtin' as const } : { tools: toolNames }), customTools: tools });
     session = created.session;
     // Naming codemode in the allowlist activates it; without an allowlist, as with MCP, it registers inactive.
-    if (mcp) session.setActiveToolsByName([...session.getActiveToolNames(), CODEMODE_TOOL]);
+    if (mcp && config.codemode) session.setActiveToolsByName([...session.getActiveToolNames(), CODEMODE_TOOL]);
     if (created.modelFallbackMessage || session.thinkingLevel !== thinking || JSON.stringify(session.model) !== JSON.stringify(model)) {
       throw new WorkspaceFailure('modelSelectionChanged');
     }

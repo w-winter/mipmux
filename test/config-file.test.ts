@@ -23,7 +23,7 @@ test('a partial configuration file resolves to explicit defaults and field-level
     terminationGraceMs: 1000, credentialPaths: ['/home/fixture/private.json'], git: { executable: '/usr/bin/git' },
     defaultMaxOutputBytes: 48000, contextBudgetUnits: 200000,
     discovery: { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/home/fixture/models.json',
-      authPath: '/home/fixture/.pi/agent/auth.json', promptTemplatePath: '/opt/mipmux/dist/prompts/discovery.md', environment: {}, mcp: null,
+      authPath: '/home/fixture/.pi/agent/auth.json', promptTemplatePath: '/opt/mipmux/dist/prompts/discovery.md', environment: {}, mcp: null, codemode: true,
       policy: { retry: { enabled: true, maxRetries: 3, baseDelayMs: 2000, maxAgentDelayMs: 60000,
         provider: { timeoutMs: 0, maxRetries: 0, maxRetryDelayMs: 60000 } },
       compaction: { enabled: true, reserveTokens: 9000, keepRecentTokens: 20000 },

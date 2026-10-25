@@ -283,3 +283,18 @@ test('discovery scripts reach mipmux tools through codemode', async () => {
     assert(JSON.stringify(provider.requests[1]!.messages.at(-1)).includes('reached-mipmux'));
   } finally { await supervisor.close(); await provider.close(); }
 });
+
+test('discovery configured without codemode offers no codemode tool and its policy never names one', async () => {
+  const provider = await scriptedProvider(() => ({ kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 }));
+  const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 });
+  try {
+    const config = { ...provider.config, promptTemplatePath: resolve('prompts/discovery.md'), codemode: false };
+    const result = await new PiRunner(config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
+      { call: async () => ({ kind: 'metadata' }) }, new AbortController().signal, () => {});
+    assert.equal(result.kind, 'complete', JSON.stringify(result.kind === 'complete' ? null : result.code));
+    const request = provider.requests[0]!;
+    assert(!request.tools.includes('codemode'), request.tools.join(','));
+    const system = Compile(Type.Array(Type.Object({ text: Type.String() }))).Parse(request.system).map(block => block.text).join('\n');
+    assert(system.includes('`draft_validate`') && !system.includes('codemode'));
+  } finally { await supervisor.close(); await provider.close(); }
+});

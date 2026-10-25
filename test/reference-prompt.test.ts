@@ -21,7 +21,7 @@ test('the shipped editable template preserves independent original-policy mode, 
   const proof: { name: string; bytes: number }[] = [];
   for (const entry of references) {
     const nativeFrame = callNative({ kind: 'renderDiscoveryPrompt', template,
-      tokenBudget: entry.input.tokenBudget, enhancementMode: entry.input.enhancementMode,
+      tokenBudget: entry.input.tokenBudget, enhancementMode: entry.input.enhancementMode, codemode: true,
       allowClarifyingQuestions: entry.input.allowClarifyingQuestions,
       purpose: entry.input.responseType === 'review' ? 'review' : 'investigation', task: '',
       questionTimeoutSeconds: entry.input.questionTimeoutSeconds,
@@ -51,7 +51,7 @@ test('review purpose, phrase hotwords and separated git/diffs tokens retain thei
     const reference = references.find(entry => entry.name === 'fullRewrite-noninteractive-' + (input.review ? 'readOnlyNamed' : 'none'));
     assert(reference);
     const frame = callNative({ kind: 'renderDiscoveryPrompt', template, tokenBudget: 198500,
-      enhancementMode: 'fullRewrite', purpose: input.purpose, task: input.task, allowClarifyingQuestions: false,
+      enhancementMode: 'fullRewrite', codemode: true, purpose: input.purpose, task: input.task, allowClarifyingQuestions: false,
       questionTimeoutSeconds: 300, restrictsReviewGitToExplicitReadOnly: true, reviewRootNames: ['mipmux', 'repoprompt-ce'],
       fileTree: '', currentPrompt: '', discoveryInstructions: '',
     }, 'review-intent', input.purpose + '-' + input.task);

@@ -76,7 +76,7 @@ export function bindReferenceDiscoveryPolicy(source, input) {
     'The user message contains the source startup sections followed by a captured runtime observation. Its constraints are fixed caller requirements. ' +
     'Use draft_inspect with view "costs" for complete-packet accounting and view "metadata" for committed state. ' +
     'Supply maxOutputBytes for tool replies. Prompt mutations also require the latest expectedRevision from the observation or a mutation reply; 0 in examples is a placeholder. ' +
-    'codemode runs a JavaScript script that calls these tools and returns only the script\'s output; use it to chain dependent calls or to filter large replies. Each draft change commits against the draft\'s current revision, so make manage_selection, draft_update and prompt changes one at a time, not in parallel. ' +
+    'Each draft change commits against the draft\'s current revision, so make manage_selection, draft_update and prompt changes one at a time, not in parallel. ' +
     'For Git status/log/show/blame, use repositories:[{root,path?,worktree?}] for explicit targets; diff uses root and worktree directly. ' +
     'Omitting repositories uses the frozen selected checkouts; multi-repository log/show/blame require an explicit target. ' +
     'Use draft_validate for the final publication check, then acknowledge completion. The parent verifies and publishes the packet; the final assistant text is not the packet. ' +

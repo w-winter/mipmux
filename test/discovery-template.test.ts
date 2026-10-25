@@ -11,7 +11,7 @@ const template = readFileSync('test/fixtures/discovery-template.md', 'utf8');
 const policy = Compile(Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String(), message: Type.String() }));
 const rejection = Compile(Type.Object({ kind: Type.Literal('discoveryTemplateRejected'), diagnostic: Type.Unknown() }));
 const operation: Extract<NativeOperation, { kind: 'renderDiscoveryPrompt' }> = {
-  kind: 'renderDiscoveryPrompt', template, tokenBudget: 198500, enhancementMode: 'fullRewrite',
+  kind: 'renderDiscoveryPrompt', template, tokenBudget: 198500, enhancementMode: 'fullRewrite', codemode: false,
   purpose: 'investigation', task: '', allowClarifyingQuestions: false, questionTimeoutSeconds: 300,
   restrictsReviewGitToExplicitReadOnly: false, reviewRootNames: [], fileTree: '', currentPrompt: '', discoveryInstructions: '',
 };

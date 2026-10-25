@@ -47,6 +47,9 @@ Preserve
 <!-- mipmux:section mode.preserve.checklist -->
 <!-- mipmux:end -->
 
+<!-- mipmux:section codemode.tool -->
+<!-- mipmux:end -->
+
 <!-- mipmux:section clarification.tool -->
 <!-- mipmux:end -->
 

@@ -12,6 +12,7 @@ struct DiscoveryPromptInput {
     let budget: Int
     let template: String
     let mode: PromptEnhancementMode
+    let codemode: Bool
     let questions: Bool
     let purpose: DiscoveryPurpose
     let task: String
@@ -24,7 +25,7 @@ struct DiscoveryPromptInput {
 
     init(_ value: Any) throws {
         let object = try WireObject(value, keys: [
-            "kind", "template", "tokenBudget", "enhancementMode", "allowClarifyingQuestions",
+            "kind", "template", "tokenBudget", "enhancementMode", "codemode", "allowClarifyingQuestions",
             "purpose", "task", "questionTimeoutSeconds", "restrictsReviewGitToExplicitReadOnly",
             "reviewRootNames", "fileTree", "currentPrompt", "discoveryInstructions"
         ])
@@ -36,6 +37,7 @@ struct DiscoveryPromptInput {
         self.purpose = purpose
         template = try object.text("template")
         self.mode = mode
+        codemode = try object.boolean("codemode")
         questions = try object.boolean("allowClarifyingQuestions")
         restrictReviewGit = try object.boolean("restrictsReviewGitToExplicitReadOnly")
         reviewRoots = roots

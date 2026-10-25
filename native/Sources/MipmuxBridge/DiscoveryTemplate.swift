@@ -16,6 +16,7 @@ struct DiscoveryTemplate {
         case preserveSuccess = "mode.preserve.success"
         case preserveAntiPatterns = "mode.preserve.antiPatterns"
         case preserveChecklist = "mode.preserve.checklist"
+        case codemodeTool = "codemode.tool"
         case clarificationTool = "clarification.tool"
         case clarificationGuidance = "clarification.guidance"
         case clarificationApproval = "clarification.approval"
@@ -36,6 +37,7 @@ struct DiscoveryTemplate {
         case handoffSuccess = "handoff_success"
         case handoffAntiPatterns = "handoff_anti_patterns"
         case handoffChecklist = "handoff_checklist"
+        case codemodeTool = "codemode_tool"
         case clarificationTool = "clarification_tool"
         case clarificationGuidance = "clarification_guidance"
         case approvalStep = "approval_step"
@@ -46,7 +48,7 @@ struct DiscoveryTemplate {
             switch self {
             case .rootNames, .exampleRootJSON: section == .reviewRootsNamed
             case .reviewRootGuidance: section == .reviewReadOnly
-            case .handoff, .handoffSuccess, .handoffAntiPatterns, .handoffChecklist,
+            case .handoff, .handoffSuccess, .handoffAntiPatterns, .handoffChecklist, .codemodeTool,
                  .clarificationTool, .clarificationGuidance, .approvalStep, .reviewGuidance:
                 section == .system
             default: true

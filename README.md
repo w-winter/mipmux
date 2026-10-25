@@ -244,6 +244,7 @@ Omitted fields take these values:
 | `discovery.promptTemplatePath` | the shipped `dist/prompts/discovery.md` |
 | `discovery.environment` | none |
 | `discovery.mcp` | `null` |
+| `discovery.codemode` | `true`, which also offers the agent Pi's `codemode` tool; its scripts call the same discovery tools |
 | `discovery.policy` | Pi's defaults, merged field by field with the file's overrides: retries `enabled`, `maxRetries: 3`, `baseDelayMs: 2000`, `maxAgentDelayMs: 60000`; provider requests `timeoutMs` equal to `httpIdleTimeoutMs`, `maxRetries: 0`, `maxRetryDelayMs: 60000`; compaction `enabled`, `reserveTokens: 16384`, `keepRecentTokens: 20000`; `transport: "auto"`, `httpIdleTimeoutMs: 300000`, `websocketConnectTimeoutMs: 15000` |
 
 Discovery never warms prompt caches, because warming is billed; `policy.cacheWarming` accepts only `"off"`. `copyContext` accepts RPCE's copy-state record, with `current`, `customizations`, `codeMapsGloballyDisabled`, `activeGitRoot` and `presets`, when you need custom presets or customizations. Library hosts pass the resolved form, with every field explicit, to `createMcpServer`.

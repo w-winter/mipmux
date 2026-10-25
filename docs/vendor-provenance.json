@@ -1793,9 +1793,10 @@
       "changes": [
         "Retain original review-intent detection, including explicit review purpose, phrase hotwords and independent git/diff token detection.",
         "Compose admitted Markdown sections with typed mode/capability/root facts and the retained native language catalog. The policy prose is mapped separately to prompts/discovery.md.",
-        "Use one restricted execution profile matching actual Pi tool access. Template parsing and safe domain rejection are owned by DiscoveryTemplate.swift and DiscoveryPromptInput.render; no prose substitutions or embedded policy are performed."
+        "Use one restricted execution profile matching actual Pi tool access. Template parsing and safe domain rejection are owned by DiscoveryTemplate.swift and DiscoveryPromptInput.render; no prose substitutions or embedded policy are performed.",
+        "Insert the codemode.tool section into both tool lists when discovery offers codemode."
       ],
-      "sha256": "2647e10987ac394e8915c748c9239a778691d23c2f13c7ac7021d15047484ce1",
+      "sha256": "f2f5173491e46d91ea557fffd727457f1d7979697d3db31c67d5ca07196ba357",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8349,7 +8350,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
       "destination": "prompts/discovery.md",
-      "sha256": "78a189e983607e5440017e144ad2efaad538ec1c19e3eb61cdf1c0a7b0dbfe33",
+      "sha256": "52666579906e6df7e63818aa3bb8b37f03e40fe414c351b830d697c2bc7c7cda",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8374,7 +8375,7 @@
         "Extract applicable restricted hard-budget policy, all three task modes, optional clarification, elected/read-only review variants and startup metadata into finite named sections. Empty Gemini/run-ID fragments, generic/nil-budget branches and the unused timeout formatter contribute no default text.",
         "Apply the explicit mipmux tool/runtime bindings independently captured by scripts/reference-discovery-bindings.mjs, including tool examples, state wording, task-name removal and parent publication. Keep all remaining source wording, literal whitespace and emphasis.",
         "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases.",
-        "List codemode among the available tools, and state in the mipmux runtime bindings that its scripts chain or filter tool calls and that draft changes are made one at a time.",
+        "List codemode among the available tools through the codemode.tool section when discovery offers it, and state in the mipmux runtime bindings that draft changes are made one at a time.",
         "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on."
       ]
     }

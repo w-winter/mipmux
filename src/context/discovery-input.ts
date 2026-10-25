@@ -29,9 +29,10 @@ type DiscoveryPromptOperation = Extract<NativeOperation, { kind: 'renderDiscover
 export type DiscoveryPromptRenderer = (operation: DiscoveryPromptOperation, signal: AbortSignal) =>
   Promise<Extract<NativeResult, { kind: 'discoveryPrompt' | 'discoveryTemplateRejected' }>>;
 
-/** Composes both startup channels from admitted template text and the captured facts. */
-export async function prepareDiscoveryInput(input: DiscoveryInput, template: string, signal: AbortSignal, render: DiscoveryPromptRenderer) {
-  const result = await render({ kind: 'renderDiscoveryPrompt', template, tokenBudget: input.tokenBudget,
+/** Composes both startup channels from admitted template text, the captured facts and whether the session offers codemode. */
+export async function prepareDiscoveryInput(input: DiscoveryInput, template: string, codemode: boolean, signal: AbortSignal,
+  render: DiscoveryPromptRenderer) {
+  const result = await render({ kind: 'renderDiscoveryPrompt', template, tokenBudget: input.tokenBudget, codemode,
     enhancementMode: input.enhancementMode, purpose: input.purpose, task: input.task,
     allowClarifyingQuestions: input.clarification !== undefined,
     questionTimeoutSeconds: input.clarification?.questionTimeoutSeconds ?? defaultQuestionTimeoutSeconds,
