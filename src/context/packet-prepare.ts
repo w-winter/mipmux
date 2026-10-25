@@ -9,6 +9,7 @@ import { renderBundle, type Diagnostic, type Measurement } from './render.js';
 import { bundleManifest, publishBundle } from './bundle-publication.js';
 import { verifySavedBundle, type VerifiedBundle } from './verify.js';
 import { sourceId } from './material-store.js';
+import { estimateUnits } from './budget.js';
 import { capturedSourceSelections } from './source-omissions.js';
 import type { SelectedGitArtifact } from './git-artifact-material.js';
 
@@ -38,19 +39,23 @@ export function requireBundleWorkspace(manifest: Manifest, declaration: Pick<Pol
 }
 
 /**
- * Renders the saved evidence, constraints, formatting and budget with the replacement prompt and publishes it as a
- * new bundle in the same output root. `recheck` repeats current verification before the manifest is published.
+ * Renders the saved evidence, constraints and formatting with the replacement prompt and publishes it as a new bundle in
+ * the same output root. `recheck` repeats current verification before the manifest is published. A caller's `budgetUnits`
+ * limits the packet; otherwise the saved budget is raised as far as the packet needs, since only the task changed.
  */
 export async function publishPreparedPacket(runtime: MipmuxRuntime, saved: VerifiedBundle, request: ContextPrepareRequest,
   signal: AbortSignal, recheck: () => Promise<void>): Promise<PreparedPacket> {
   const manifest = saved.verified.manifest;
-  const input = await prepareClipboard(runtime, { request: { ...manifest.request, outputName: request.outputName,
-    budgetUnits: request.budgetUnits ?? manifest.request.budgetUnits },
+  const clipboard = await prepareClipboard(runtime, { request: { ...manifest.request, outputName: request.outputName },
     prompt: request.prompt, manualPresentation: manifest.manualPresentation, inventory: manifest.inventory,
     codemapMode: manifest.codemapMode, materials: saved.materials, fileTree: saved.fileTree,
     unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
     automaticAcquisition: { kind: 'settled', outcomes: manifest.automaticCodemaps } }, signal,
   { kind: 'captured', capture: saved.automaticGit });
+  // A published bundle must fit its recorded allowance, which verification re-renders against.
+  const budgetUnits = request.budgetUnits ??
+    Math.max(manifest.request.budgetUnits, estimateUnits(Buffer.byteLength(clipboard.clipboard)));
+  const input = { ...clipboard, request: { ...clipboard.request, budgetUnits } };
   const rendered = renderBundle(input);
   // A preset that omits user instructions would publish a packet without the task the caller supplied.
   const diagnostics: readonly Diagnostic[] = request.prompt !== '' && !input.clipboardPreset.includeUserPrompt

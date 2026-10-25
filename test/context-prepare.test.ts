@@ -149,10 +149,13 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     assert.deepEqual([...new Set(proof.prepared.get('review')?.materialKinds)].sort(), ['document', 'gitMap', 'gitPatch', 'patch', 'source']);
     assert.equal(proof.prepared.get('follow-up')?.automaticGit, true);
 
-    const blocked = await prepare({ bundle: 'review', prompt: 'x'.repeat(1_000_000), outputName: 'too-large' });
-    assert.equal(blocked.isError, false, JSON.stringify(blocked).slice(0, 2000));
-    assert.deepEqual(blockedReply.Parse(toolJSON(blocked)).diagnostics.map(diagnostic => diagnostic.code), ['overBudget']);
-    assert.equal(existsSync(join(f.out, 'too-large')), false);
+    // Replacing only the task is not limited by the saved budget: the allowance rises to fit and the bundle still verifies.
+    const longTask = await prepare({ bundle: 'review', prompt: 'x'.repeat(1_000_000), outputName: 'long-task' });
+    assert.equal(longTask.isError, false, JSON.stringify(longTask).slice(0, 2000));
+    const longReceipt = readyReply.Parse(toolJSON(longTask));
+    assert(longReceipt.accounting.units > 200000, String(longReceipt.accounting.units));
+    assert.equal(longReceipt.accounting.allowance, longReceipt.accounting.units);
+    await verifyBundle(longReceipt.directory); await verifyCurrentBundle(longReceipt.directory, runtime, signal());
 
     await symlink(join(f.out, 'review'), join(f.out, 'linked'));
     const linked = await prepare({ bundle: 'linked', prompt: finalTask, outputName: 'via-link' });
@@ -177,7 +180,7 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     assert.deepEqual(changes(reviewAdded), [['document:late-ledger', 'patch:full-swift'], []]);
     await verifyCurrentBundle(reviewAdded.directory, runtime, signal());
 
-    // A replacement budget applies to reused evidence: a small one blocks publication, and a larger one is recorded.
+    // An explicit budget applies to reused evidence: a small one blocks publication, and a larger one is recorded.
     const smallBudget = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-small', budgetUnits: 100 });
     assert.deepEqual(blockedReply.Parse(toolJSON(smallBudget)).diagnostics.map(diagnostic => diagnostic.code), ['overBudget']);
     assert.equal(existsSync(join(f.out, 'review-small')), false);

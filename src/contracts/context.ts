@@ -76,7 +76,8 @@ export type ContextBuildRequest = Static<typeof ContextBuildRequest>;
  * Saved bundle directory relative to the workspace output root, its complete replacement prompt and a new bundle name.
  * `refresh`, added required sources, documents and patches, or `remove` and `demote` edits rebuild the packet from current
  * files instead of reusing saved bodies. The edits name saved materials by path: `root/path` for a source, or a Git
- * artifact alias. `budgetUnits` replaces the saved assembly budget.
+ * artifact alias. `budgetUnits` replaces the saved assembly budget. Without it, a prompt-only preparation raises the saved
+ * budget to fit the packet, and a rebuild keeps the saved budget.
  */
 export const ContextPrepareRequest = Type.Object({
   bundle: RelativePath,
