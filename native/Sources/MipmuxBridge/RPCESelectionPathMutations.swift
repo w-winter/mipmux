@@ -36,11 +36,12 @@ extension RPCESelectionCandidateResolver {
                 slices.removeValue(forKey: path)
                 if manualSet.insert(path).inserted { manualPaths.append(path) }
             }
+            // Unlike RPCE, choosing codemaps keeps automatic codemaps on; only clearing codemaps turns them off.
             let selection = StoredSelection(
                 selectedPaths: selectedPaths,
                 manualCodemapPaths: manualPaths,
                 slices: slices,
-                codemapAutoEnabled: false
+                codemapAutoEnabled: existing.codemapAutoEnabled
             )
             return WorkspaceAddSelectionResult(
                 selection: selection,
@@ -208,11 +209,12 @@ extension RPCESelectionCandidateResolver {
             _ = removeSliceEntries(for: file, in: &slices)
             if manualSet.insert(path).inserted { manualCodemapPaths.append(path) }
         }
+        // Unlike RPCE, demotion keeps automatic codemaps on for the files the remaining selection references.
         let selection = StoredSelection(
             selectedPaths: selectedPaths,
             manualCodemapPaths: manualCodemapPaths,
             slices: slices,
-            codemapAutoEnabled: false
+            codemapAutoEnabled: existing.codemapAutoEnabled
         )
         return WorkspaceDemoteSelectionResult(
             selection: selection,

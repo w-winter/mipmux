@@ -168,8 +168,8 @@ export class DraftRuntime {
         materials.set(material.record.id, material);
       }
       const target = await FrozenGitTarget.capture(admission, materials);
-      const mode = request.requiredSources.some(selection => selection.kind === 'codemap') ? 'manual' : request.initialSelection.codemapMode;
-      const draft = new DraftRuntime(operation, request, onClosed, target, await captureSelection(admission, materials, mode), strictText(prompt));
+      const draft = new DraftRuntime(operation, request, onClosed, target,
+        await captureSelection(admission, materials, request.initialSelection.codemapMode), strictText(prompt));
       const derived = await draft.#derive(admission, materials, draft.#codemapMode, 0, await unavailableSelectionRoots(admission, materials));
       draft.#materials = derived.materials; draft.#automaticAcquisition = { kind: 'settled', outcomes: derived.automaticCodemaps };
       signal.throwIfAborted();
@@ -617,10 +617,12 @@ export class DraftRuntime {
     const seeds = [...explicit.values()].flatMap(({ record }) =>
       record.kind === 'source' && record.selection.kind !== 'codemap' && catalog.has(record.id) ? [record.selection.source] : []);
     if (!seeds.length) return { kind: 'ready', targets: [], coverage: aggregateAutomaticCoverage([]) };
+    const chosen = [...explicit.values()].flatMap(({ record }) =>
+      record.kind === 'source' && record.selection.kind === 'codemap' ? [record.selection.source] : []);
     if (this.#structure?.digest !== snapshot.inventoryDigest) {
       this.#structure = { digest: snapshot.inventoryDigest, index: new StructureIndex(snapshot) };
     }
-    const resolution = this.#structure.index.resolveAutomaticCodemapTargets(seeds, unavailableRoots);
+    const resolution = this.#structure.index.resolveAutomaticCodemapTargets(seeds, chosen, unavailableRoots);
     if (resolution.kind === 'targetDemandLimit') {
       process.stderr.write(JSON.stringify({ level: 'warn', event: 'automaticCodemapDemandRejected', draftId: this.id,
         revision, inventoryDigest: snapshot.inventoryDigest, attempted: resolution.attempted, limit: resolution.limit }) + '\n');

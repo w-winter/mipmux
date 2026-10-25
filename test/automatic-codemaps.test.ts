@@ -18,8 +18,9 @@ import { PiRunner } from '../src/discovery/pi-runner.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { selectionValidator } from '../src/contracts/selection.js';
+import { selectionValidator, type SelectionRequest } from '../src/contracts/selection.js';
 import { failureCode } from '../src/runtime/tool-result.js';
+import { prepareReceipt } from '../src/mcp/receipts.js';
 
 const signal = () => new AbortController().signal;
 const maxOutputBytes = 100000;
@@ -72,6 +73,19 @@ async function sources(draft: DraftRuntime) {
   return inspection.items.flatMap(item => 'kind' in item && item.kind === 'source' ? [item] : []);
 }
 
+/** The draft's codemap mode and each selected source as a sorted `path:representation:origin` label. */
+async function selection(draft: DraftRuntime) {
+  const inspection = await draft.inspect({ view: 'metadata', maxOutputBytes, continuation: null }, signal());
+  assert(inspection.kind === 'metadata');
+  const labels = inspection.items.flatMap(item => 'kind' in item && item.kind === 'source'
+    ? [item.selection.source.path + ':' + item.selection.kind + ':' + item.selectionOrigin] : []).sort();
+  return { mode: inspection.codemapMode, labels };
+}
+
+function select(draft: DraftRuntime, input: Partial<SelectionRequest>) {
+  return draft.manageSelection(selectionValidator.Parse(selectionValidator.Default({ view: 'files', maxOutputBytes, ...input })), signal());
+}
+
 test('required admission and full upsert include one-hop root-local related codemaps', async t => {
   for (const admission of [true, false]) await t.test(admission ? 'required admission' : 'upsert', async () => {
     const f = await fixture();
@@ -102,6 +116,55 @@ test('required admission and full upsert include one-hop root-local related code
   });
 });
 
+test('demotion and chosen codemaps keep the automatic codemaps that the rest of the selection references', async () => {
+  const f = await fixture();
+  try {
+    const both = ['Leaf.swift:codemap:inferred', 'Peer.swift:full:explicit', 'Seed.swift:full:explicit',
+      'SharedA.swift:codemap:inferred', 'SharedB.swift:codemap:inferred'];
+    const saved = await f.workspace.createDraft(request, signal());
+    await select(saved, { op: 'set', paths: ['r/Seed.swift', 'r/Peer.swift'] });
+    assert.deepEqual((await selection(saved)).labels, both);
+    const packet = await saved.finalize(signal()); assert(packet.kind === 'ready');
+
+    // Only Peer.swift references Leaf.swift, so demoting it drops that automatic codemap and keeps Seed.swift's.
+    const demoted = await f.workspace.preparePacket({ bundle: 'packet', prompt: 'Final task', outputName: 'demoted',
+      demote: ['r/Peer.swift'] }, signal());
+    assert(demoted.kind === 'ready', JSON.stringify(demoted));
+    assert.equal(demoted.manifest.codemapMode, 'automatic');
+    assert.deepEqual(demoted.manifest.automaticCodemaps.map(item => item.source.path), ['SharedA.swift', 'SharedB.swift']);
+    const receipt = prepareReceipt(demoted); assert(receipt.kind === 'ready');
+    assert.deepEqual([receipt.added, receipt.removed].map(entries => entries.map(entry => entry.kind + ':' + ('path' in entry ? entry.path : '')
+      + ':' + ('origin' in entry ? entry.origin : '')).sort()),
+    [['codemap:r/Peer.swift:explicit'], ['codemap:r/Leaf.swift:inferred', 'full:r/Peer.swift:explicit']]);
+    await verifyBundle(demoted.directory); await verifyCurrentBundle(demoted.directory, f.runtime, signal());
+
+    const draft = await f.workspace.createDraft({ ...request, outputName: 'chosen' }, signal());
+    await select(draft, { op: 'set', paths: ['r/Seed.swift', 'r/Peer.swift'] });
+    await select(draft, { op: 'demote', paths: ['r/Peer.swift'] });
+    assert.equal((await selection(draft)).mode, 'automatic');
+    assert.deepEqual((await selection(draft)).labels, ['Peer.swift:codemap:explicit', 'Seed.swift:full:explicit',
+      'SharedA.swift:codemap:inferred', 'SharedB.swift:codemap:inferred']);
+    // A chosen codemap replaces the automatic one for its file and leaves the others.
+    await select(draft, { op: 'add', mode: 'codemap_only', paths: ['r/SharedA.swift'] });
+    assert.equal((await selection(draft)).mode, 'automatic');
+    assert.deepEqual((await selection(draft)).labels, ['Peer.swift:codemap:explicit', 'Seed.swift:full:explicit',
+      'SharedA.swift:codemap:explicit', 'SharedB.swift:codemap:inferred']);
+    const chosen = await draft.finalize(signal()); assert(chosen.kind === 'ready');
+    assert.equal(chosen.manifest.codemapMode, 'automatic');
+    assert.deepEqual(chosen.manifest.automaticCodemaps.map(item => item.source.path), ['SharedB.swift']);
+    await verifyBundle(chosen.directory); await verifyCurrentBundle(chosen.directory, f.runtime, signal());
+
+    // Clearing codemaps is the operation that switches automatic codemaps off.
+    const cleared = await f.workspace.createDraft({ ...request, outputName: 'cleared' }, signal());
+    await select(cleared, { op: 'set', paths: ['r/Seed.swift'] });
+    await select(cleared, { op: 'add', mode: 'codemap_only', paths: ['r/Leaf.swift'] });
+    await select(cleared, { op: 'clear', mode: 'codemap_only' });
+    assert.equal((await selection(cleared)).mode, 'manual');
+    assert.deepEqual((await selection(cleared)).labels, ['Seed.swift:full:explicit']);
+    await writeFile(join(f.directory, 'narrow-demotion-proof.json'), JSON.stringify({ demoted: receipt, chosen: chosen.manifest.materials }, null, 2));
+  } finally { await f.runtime.close(); }
+});
+
 test('promotion, inferred removal and manual clear operations preserve intent and report real delivered costs', async () => {
   const f = await fixture();
   try {
@@ -125,9 +188,10 @@ test('promotion, inferred removal and manual clear operations preserve intent an
     assert.equal(removed.changedCosts.find(item => item.id === sourceId({ root: 'r', path: 'Leaf.swift' }))!.units, 0);
     assert.equal((await sources(draft)).find(item => item.selection.source.path === peer.path)!.selectionOrigin, 'inferred');
     await update({ kind: 'upsert', selection: { kind: 'codemap', source: { root: 'r', path: 'SharedA.swift' } } });
-    assert(!(await sources(draft)).some(item => item.selectionOrigin === 'inferred'));
+    assert.deepEqual((await selection(draft)).labels, ['Peer.swift:codemap:inferred', 'Seed.swift:full:explicit',
+      'SharedA.swift:codemap:explicit', 'SharedB.swift:codemap:inferred']);
     await update({ kind: 'upsert', selection: { kind: 'full', source: peer } });
-    assert(!(await sources(draft)).some(item => item.selection.source.path === 'Leaf.swift'));
+    assert(((await selection(draft)).labels).includes('Leaf.swift:codemap:inferred'));
     const cleared = await update({ kind: 'clearCodemaps' }); assert.equal(cleared.codemapMode, 'manual');
     assert((await sources(draft)).every(item => item.selection.kind !== 'codemap'));
     const reset = await update({ kind: 'clearSources' }); assert.equal(reset.codemapMode, 'automatic');
@@ -138,7 +202,7 @@ test('promotion, inferred removal and manual clear operations preserve intent an
   } finally { await f.runtime.close(); }
 });
 
-test('required codemap intent stays manual and clear operations preserve all required material and handoff', async () => {
+test('a required codemap joins automatic codemaps and clear operations preserve all required material and handoff', async () => {
   const f = await fixture();
   try {
     const draft = await f.workspace.createDraft({ ...request, requiredSources: [fullSeed,
@@ -146,16 +210,22 @@ test('required codemap intent stays manual and clear operations preserve all req
       documents: [{ kind: 'suppliedDocument', id: 'evidence', role: 'evidence', origin: 'fixture', text: 'Required evidence' }] }, signal());
     const update = (mutation: Parameters<DraftRuntime['update']>[0]['mutation']) =>
       draft.update({ expectedRevision: draft.revision, maxOutputBytes, mutation }, signal());
-    const initial = (await draft.inspect({ view: 'metadata', maxOutputBytes, continuation: null }, new AbortController().signal));
-    assert(initial.kind === 'metadata'); assert.equal(initial.codemapMode, 'manual');
+    assert.equal((await selection(draft)).mode, 'automatic');
+    const required = ['Seed.swift:full:explicit', 'SharedA.swift:codemap:explicit'];
+    assert.deepEqual((await selection(draft)).labels, [required[0], 'Peer.swift:codemap:inferred', required[1], 'SharedB.swift:codemap:inferred'].sort());
     await draft.prompt({ expectedRevision: draft.revision, maxOutputBytes, op: 'append', text: '\n\n' + JSON.stringify(handoff) }, signal());
     await update({ kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'Peer.swift' } } });
-    assert(!(await sources(draft)).some(item => item.selection.source.path === 'Leaf.swift'));
-    await update({ kind: 'clearCodemaps' }); await update({ kind: 'clearSources' });
-    assert.equal((await sources(draft)).length, 2); assert((await sources(draft)).every(item => item.required));
+    assert(((await selection(draft)).labels).includes('Leaf.swift:codemap:inferred'));
+    await update({ kind: 'clearCodemaps' });
+    assert.equal((await selection(draft)).mode, 'manual');
+    assert.deepEqual((await selection(draft)).labels, ['Peer.swift:full:explicit', ...required]);
+    await update({ kind: 'clearSources' });
+    assert.equal((await selection(draft)).mode, 'automatic');
+    assert.deepEqual((await sources(draft)).filter(item => item.required).map(item => item.selection.source.path).sort(), ['Seed.swift', 'SharedA.swift']);
+    assert.deepEqual((await selection(draft)).labels, [required[0], 'Peer.swift:codemap:inferred', required[1], 'SharedB.swift:codemap:inferred'].sort());
     await assert.rejects(update({ kind: 'remove', source: seed }), /requiredMaterialMutation/);
     const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
-    assert.equal(ready.manifest.codemapMode, 'manual');
+    assert.equal(ready.manifest.codemapMode, 'automatic');
     assert.equal(ready.manifest.materials.filter(item => item.kind === 'document').length, 1);
     assert.equal(ready.manifest.prompt, request.task + '\n\n' + JSON.stringify(handoff)); await verifyBundle(ready.directory);
   } finally { await f.runtime.close(); }

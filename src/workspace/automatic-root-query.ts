@@ -22,10 +22,13 @@ type AutomaticRootResult =
 
 const targetFixedBytes = 64;
 
-/** Queries unique admitted seeds in one root; returns the first budget rejection or all path-ordered targets. */
-export function resolveAutomaticRoot(input: { readonly seeds: readonly StructureFile[];
+/**
+ * Queries unique admitted seeds in one root; returns the first budget rejection or all path-ordered targets. `chosen`
+ * holds the root-relative paths already selected as codemaps, which are never targets.
+ */
+export function resolveAutomaticRoot(input: { readonly seeds: readonly StructureFile[]; readonly chosen: ReadonlySet<string>;
   readonly definitions: ReadonlyMap<string, readonly StructureFile[]>; readonly budget: AutomaticQueryBudget }): AutomaticRootResult {
-  const selected = new Set(input.seeds.map(seed => seed.path)), targets = new Map<string, StructureFile>();
+  const selected = new Set([...input.seeds.map(seed => seed.path), ...input.chosen]), targets = new Map<string, StructureFile>();
   let resolutions = 0, referenceFailures = 0;
   for (const seed of input.seeds) {
     if (seed.visibility === 'managedOnly' || seed.structural.kind !== 'artifact' || seed.structural.record.outcome.kind !== 'ready') continue;

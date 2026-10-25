@@ -1,4 +1,4 @@
-import type { CodemapMode, Manifest, MaterialRecord, SourceSelection, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
+import type { Manifest, MaterialRecord, SourceSelection, UnavailableFile, UnavailableRoot } from '../contracts/context.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import type { Material } from './material-store.js';
 import { sourceId } from './material-store.js';
@@ -109,14 +109,13 @@ export function verifySourceOmissions(manifest: Manifest): void {
   for (const root of manifest.unavailableRoots) {
     if (!roots.has(root.root) || seenRoots.has(root.root)) throw new WorkspaceFailure('bundleIntegrityFailed');
     seenRoots.add(root.root);
-    verifyRootSources(root, manifest.codemapMode, sources, required);
+    verifyRootSources(root, sources, required);
   }
   for (const file of manifest.unavailableFiles) {
     if (!roots.has(file.selection.source.root) || seenRoots.has(file.selection.source.root) ||
       file.id !== sourceId(file.selection.source) || sources.has(file.id) || required.has(file.id)) throw new WorkspaceFailure('bundleIntegrityFailed');
     sources.add(file.id);
     if (file.code === 'codemapPending') verifyPendingCodemap(manifest, file);
-    if (file.selection.kind === 'codemap' && manifest.codemapMode !== 'manual') throw new WorkspaceFailure('bundleIntegrityFailed');
   }
   const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles];
   const count = manifest.manualPresentation?.canonicalSources.length ?? manifest.materials.filter(record => record.kind === 'source' && record.selectionOrigin === 'explicit').length + omitted.length;
@@ -131,19 +130,18 @@ export function verifySourceOmissions(manifest: Manifest): void {
 
 function verifyPendingCodemap(manifest: Manifest, file: Extract<UnavailableFile, { code: 'codemapPending' }>): void {
   const entry = manifest.inventory.entries.find(entry => entry.root === file.selection.source.root && entry.path === file.selection.source.path);
-  if (manifest.codemapMode !== 'manual' || entry?.kind !== 'file' ||
+  if (entry?.kind !== 'file' ||
     (entry.structural.kind !== 'pending' && entry.structural.kind !== 'artifact') ||
     canonicalJSON([entry.identity, entry.structural.key]) !== canonicalJSON([file.identity, file.artifactKey])) {
     throw new WorkspaceFailure('bundleIntegrityFailed');
   }
 }
 
-function verifyRootSources(root: UnavailableRoot, mode: CodemapMode, sources: Set<string>, required: ReadonlySet<string>): void {
+function verifyRootSources(root: UnavailableRoot, sources: Set<string>, required: ReadonlySet<string>): void {
   for (const source of root.sources) {
     if (source.selection.source.root !== root.root || source.id !== sourceId(source.selection.source) || sources.has(source.id) || required.has(source.id)) {
       throw new WorkspaceFailure('bundleIntegrityFailed');
     }
-    if (mode === 'automatic' && source.selection.kind === 'codemap') throw new WorkspaceFailure('bundleIntegrityFailed');
     sources.add(source.id);
   }
 }

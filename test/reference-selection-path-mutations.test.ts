@@ -17,7 +17,9 @@ test('ordinary source path mutations preserve slices, manual membership, promoti
     const generation = 'ordinary-path-selection';
     const nativeFrame = callNative(entry.input, generation, entry.name);
     const found = reply.Parse(nativeFrame);
-    assert.deepEqual(found.result, entry.expected, entry.name);
+    // RPCE turns automatic codemaps off for codemap-only edits; mipmux keeps the input's mode, which only clearing codemaps changes.
+    assert.deepEqual(found.result, { ...entry.expected,
+      selection: { ...entry.expected.selection, codemapAutoEnabled: entry.input.selection.codemapAutoEnabled } }, entry.name);
     proof.push({ name: entry.name, result: found.result });
   }
   await writeFile(resolve('test-output/reference-selection-path-mutations-proof.json'), JSON.stringify(proof, null, 2) + '\n');

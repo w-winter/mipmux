@@ -24,14 +24,14 @@ export const SourceSelection = Type.Union([
   Type.Object({ kind: Type.Literal('codemap'), source: SourcePath }, closed),
 ]);
 export type SourceSelection = Static<typeof SourceSelection>;
-/** Automatic mode derives one-hop related codemaps; manual mode retains explicit material only. */
+/**
+ * Automatic mode adds a codemap for each root-local file that the selected full files and slices reference, unless the
+ * file is itself selected in any representation; manual mode retains explicit material only.
+ */
 export const CodemapMode = Type.Enum(['automatic', 'manual']);
 export type CodemapMode = Static<typeof CodemapMode>;
 /** Mutable starting selection; required evidence is declared separately. */
-export const InitialSelection = Type.Union([
-  Type.Object({ codemapMode: Type.Literal('automatic'), sources: Type.Array(Type.Union([SourceSelection.anyOf[0], SourceSelection.anyOf[1]])) }, closed),
-  Type.Object({ codemapMode: Type.Literal('manual'), sources: Type.Array(SourceSelection) }, closed),
-]);
+export const InitialSelection = Type.Object({ codemapMode: CodemapMode, sources: Type.Array(SourceSelection) }, closed);
 const SuppliedDocument = Type.Object({
   kind: Type.Literal('suppliedDocument'),
   id: Type.String({ minLength: 1 }),

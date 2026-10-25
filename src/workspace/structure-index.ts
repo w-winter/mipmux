@@ -57,8 +57,11 @@ export class StructureIndex {
     }
   }
 
-  /** One-hop, root-local targets, excluding seeds; common-name suppression precedes seed exclusion. */
-  resolveAutomaticCodemapTargets(seeds: readonly SourcePath[], unavailableRoots: ReadonlySet<string>): AutomaticCodemapTargets {
+  /**
+   * One-hop, root-local targets, excluding seeds and the sources already chosen as codemaps; common-name suppression
+   * precedes that exclusion.
+   */
+  resolveAutomaticCodemapTargets(seeds: readonly SourcePath[], chosen: readonly SourcePath[], unavailableRoots: ReadonlySet<string>): AutomaticCodemapTargets {
     const grouped = this.#groupSources(seeds);
     const sourceCount = [...grouped.values()].reduce((sum, group) => sum + group.length, 0);
     if (sourceCount > maximumRawSourceCount) return { kind: 'queryBudget', targets: [], rejections: [
@@ -80,7 +83,8 @@ export class StructureIndex {
         rejections.push({ kind: 'graphRevoked', root: name, reason: root.residency.reason });
         coverageRoots.push({ status: 'unavailable', sourceIssues: [], targetCount: 0 }); continue;
       }
-      const result = resolveAutomaticRoot({ seeds: sources, definitions: root.definitions, budget: remaining });
+      const result = resolveAutomaticRoot({ seeds: sources, definitions: root.definitions, budget: remaining,
+        chosen: new Set(chosen.flatMap(source => source.root === name ? [source.path] : [])) });
       if (result.kind === 'budget') {
         rejections.push({ root: name, ...result.reason });
         coverageRoots.push({ status: 'unavailable', sourceIssues: [], targetCount: 0 }); continue;

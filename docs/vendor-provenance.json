@@ -2204,10 +2204,10 @@
       "changes": [
         "Extract the two pre-resolved mutation methods into an operation-local value owner.",
         "Wire input validates canonical absolute keys once; normalization helpers deduplicate ordered paths and filter empty slices without desktop raw/legacy-key recovery.",
-        "Retain all exclusive-representation transitions and automatic-mode effects.",
+        "Retain all exclusive-representation transitions. A transition to codemap-only keeps the automatic codemap mode, which RPCE turns off.",
         "Apply SwiftFormat layout."
       ],
-      "sha256": "f0ac657c382cb6da7aa15c2e7c26ef1d198bcb7a492b9d5f953eed5d2cc1809b",
+      "sha256": "6d9b6ed3e7ec1102ffd1672a49d064df1cf8105ac2998c4510e474d40e580a1c",
       "classification": "handwritten",
       "ranges": [
         [
@@ -2649,7 +2649,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
       "destination": "native/Sources/MipmuxBridge/RPCESelectionPathMutations.swift",
-      "sha256": "c4b0ffbac763580d1499dd93b4d9243fb6a96d7751767036b9ecbffb8f4ec2cd",
+      "sha256": "1e0c4c8a91d82532338bf1672dee7c039bab599ab330d3638134f4abf906828d",
       "classification": "handwritten",
       "ranges": [
         [
@@ -2662,7 +2662,7 @@
         ]
       ],
       "changes": [
-        "Retain ordinary full/codemap add/remove and file-only promotion/demotion with source result, ordering and automatic-mode behavior.",
+        "Retain ordinary full/codemap add/remove and file-only promotion/demotion with source result and ordering. Codemap-only addition and demotion keep the automatic codemap mode, which RPCE turns off; only clearing codemaps turns it off.",
         "Remove app performance instrumentation and the test-only remove-existing capture hook.",
         "Captured StoredSelection requires canonical absolute keys. Slice removal uses that established key instead of desktop raw/relative-key recovery.",
         "Apply source-layout SwiftLint exceptions; configured CCCC limits remain enabled."
@@ -2690,7 +2690,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "37d9786ba53262622618caca19ce38c936ca2dc6ce5e28366f4266614ad8614c",
       "destination": "native/Sources/MipmuxBridge/RPCESelectionPreparation.swift",
-      "sha256": "71f72afdf23c13474332566157130a4be59bff4d5bc284405aeaca81b8fec593",
+      "sha256": "d2c549be9b2efd4a6233a30f818a831719df8c2a98c788b6e73d835d31e33a6d",
       "classification": "handwritten",
       "ranges": [
         [
@@ -2704,7 +2704,8 @@
       ],
       "changes": [
         "Retain buildSelection/buildManageSelectionSet whole replacement, slice-local replacement and diagnostics over canonical captured state.",
-        "Apply scoped source-layout SwiftLint exceptions; configured CCCC complexity checks remain enabled."
+        "Apply scoped source-layout SwiftLint exceptions; configured CCCC complexity checks remain enabled.",
+        "Codemap-only replacement keeps the automatic codemap mode, which RPCE turns off."
       ]
     },
     {
@@ -5893,7 +5894,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "e821e78a86d96c64601b9801dd9ff70d8671c185f94543930958a405d62171d8",
       "destination": "src/workspace/automatic-root-query.ts",
-      "sha256": "58830a96637f8dbc84ca988de82ca03b5915b393988beee12fc5f7b04c529cbe",
+      "sha256": "e1b0bf58b3b1d65e6267c84cafc15186b74c3b39f2514b440420dbe3a57a2a91",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5903,7 +5904,8 @@
       ],
       "changes": [
         "Translate settled automaticSelectionLatest counting and ordered budget rejection into the pure headless matcher so saved verification needs no native executable. Distinct per-source targets count resolutions before seed exclusion; normalized missing/over-fanout names count failures.",
-        "Preserve resolution/reference-failure/target/byte rejection order, all-or-none root targets and64-byte-plus-UTF8-path materialized charges. Captured identities replace app fences/generations; full currentness remains a separate contract."
+        "Preserve resolution/reference-failure/target/byte rejection order, all-or-none root targets and64-byte-plus-UTF8-path materialized charges. Captured identities replace app fences/generations; full currentness remains a separate contract.",
+        "Exclude sources already chosen as codemaps from targets at the same point as seeds, so an automatic codemap never replaces a chosen one."
       ]
     },
     {
@@ -5911,7 +5913,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
       "destination": "src/workspace/structure-index.ts",
-      "sha256": "1eb840243bb4b067de95f42e69ac9b89c10a1af5a2ef689a7fc2448323eb6ebe",
+      "sha256": "0b0b0bead4955329f8015ca85751f8b03b5ad80a8f6f0980527846fb2dbb0fc3",
       "classification": "handwritten",
       "ranges": [
         [
@@ -5935,7 +5937,8 @@
         "Bind admitted discoverable identities to immutable inventory and shared headless UUID ordering. Source/root admission and shared budgets retain production defaults from Models/WorkspaceCodemapAutomaticSelectionModels.swift:315-391.",
         "Reject a refused root without charging counters, retain useful later roots, then apply the existing1024-target demand gate from Selection/WorkspaceSelectionMutationService.swift:107-143. Return typed rejections rather than throwing or truncating accepted targets.",
         "Project admitted captured source slots into source aggregate coverage separately from query admission. Rejected roots spend no allowance and contribute no issues for individual source files; target-demand rejection has unavailable aggregate coverage.",
-        "Accept captured unavailable-root observations. Limits on source/root inputs precede per-root admission; an unavailable root contributes pending coverage and consumes no shared graph-query budget."
+        "Accept captured unavailable-root observations. Limits on source/root inputs precede per-root admission; an unavailable root contributes pending coverage and consumes no shared graph-query budget.",
+        "Pass each root's chosen codemap paths to the root query, so chosen and automatic codemaps coexist."
       ]
     },
     {
@@ -6170,7 +6173,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "ee5062fbdeff1b8b27b5bff644f91ad4513ccc27b42270afe4dd6aa2c9092bea",
       "destination": "src/context/draft-runtime.ts",
-      "sha256": "963630d65ae67765ad087fce031f2f47f0b6a9d433669b4013ea1642cc52f198",
+      "sha256": "c605a239e8fa443845a9cc8f6169e49368d84434134517c99f6957e21e794a8f",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6194,7 +6197,8 @@
         "Use manage_selection for path/slice operations and non-mutating preview, and prompt for literal prompt mutations. Keep baseline individual draft_update edits and supplied-document admission. Packet rendering uses proposed preview selection while component tree/Git costs use canonical selection. Adopt one progressive finalization capture and one cancellation/revision/freeze fence.",
         "Treat the captured request budget as the packet ceiling. Resolve configured defaults in MipmuxRuntime and publish only the per-build budget in startup observations.",
         "Select Git artifacts recorded by a verified saved bundle after reauthorizing each from its snapshot manifest, through the same commit path as a fresh publication; this lets saved-packet preparation add inputs to review bundles.",
-        "Take the draft's starting prompt from its creator, so a Context Builder job can start empty like a new RPCE tab while manual drafts start with the task."
+        "Take the draft's starting prompt from its creator, so a Context Builder job can start empty like a new RPCE tab while manual drafts start with the task.",
+        "Take the codemap mode from the starting selection alone and pass chosen codemaps to automatic target resolution, so a chosen or required codemap leaves automatic codemaps on."
       ]
     },
     {
@@ -7613,9 +7617,10 @@
         "Saved verification checks omission shape, source/root linkage, uniqueness and required-input preservation using packet bytes. It does not attest to historical filesystem failure.",
         "Capture optional full/slice I/O failures through the canonical source-availability boundary, alongside unavailable-root omissions. Preserve identity, representation, mode and explicit selection index. Required bodies reject. Revalidation requires the same file-failure code, including after catalog removal; readable or differently failing files invalidate the capture.",
         "Omit optional manual pending codemaps from final delivery while preserving their source identity, mode, explicit index and artifact key. Keep required pending maps in the candidate so existing diagnostics block publication. codemapPending is a historical presentation observation, like automatic acquisition evidence; current verification binds its readable source and key rather than repeating readiness. Saved verification requires matching captured inventory metadata.",
-        "Archive optional explicit codemap I/O outcomes with their original identity, mode, artifact key and observed pending/unmapped disposition. Revalidate the same I/O cause before assembly, claim and current verification. Required sources reject and recovered/differently failing sources invalidate the candidate."
+        "Archive optional explicit codemap I/O outcomes with their original identity, mode, artifact key and observed pending/unmapped disposition. Revalidate the same I/O cause before assembly, claim and current verification. Required sources reject and recovered/differently failing sources invalidate the candidate.",
+        "Accept omitted explicit codemaps, including pending ones, in automatic mode as in manual mode."
       ],
-      "sha256": "7a75fb8ae1d1d8b5bd428fa6197e84783724ae7d9e088cf62836d6f447d691bc"
+      "sha256": "0dbc3b38d2aeba551403909f0a4d53789ef7e238a93a3cf35ae350fa0dfc6ae1"
     },
     {
       "source": "Sources/RepoPrompt/Features/ContextBuilder/Services/ContextBuilderReviewTarget.swift",
@@ -7793,9 +7798,10 @@
       "changes": [
         "Bind exact/automatic/none intent to existing readiness, root-atomic rendering, shared deadlines, per-root capacity, serving-currentness checks and retainers. Prepare temporary map materials as presentation evidence; preserve canonical selection and revision. Complete uses exact supported catalog membership, not automatic graph target/query limits. Capture canonical/direct/requested/ready scope for native-free verification and reject required representation loss explicitly.",
         "Separate settings, selection, readiness, projection and required-evidence phases within the existing owner to meet enforced function-complexity limits; policy and schema remain unchanged.",
-        "Generalize the captured presentation owner to Manual, custom presets and built-in configurations requiring file/map/tree projection after native admission resolution. Ordinary automatic built-ins retain their existing presentation path. Projected presets archive canonical/direct selections in manualPresentation; excludedSources is empty. Preserve inferred origins for automatic graph maps and exact presentation origins for selected/complete maps. Automatic observations are projected without a second readiness wait."
+        "Generalize the captured presentation owner to Manual, custom presets and built-in configurations requiring file/map/tree projection after native admission resolution. Ordinary automatic built-ins retain their existing presentation path. Projected presets archive canonical/direct selections in manualPresentation; excludedSources is empty. Preserve inferred origins for automatic graph maps and exact presentation origins for selected/complete maps. Automatic observations are projected without a second readiness wait.",
+        "In automatic mode, give chosen codemaps the presentation origin they have in manual mode; only automatic targets keep the inferred origin."
       ],
-      "sha256": "c7d2b4aadbd10f9d42290d75b2974c472fc4016dd7f7f42ab0d49ae73a7d311d"
+      "sha256": "c5f252a3eef443666c6351584c2f52a14ba0b9899b6781a75f6d9cef28a9c073"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Services/PromptContextAccountingService.swift",
@@ -7822,9 +7828,10 @@
         "Retain selection order for selected representations and native presentation order for complete maps. Saved verification checks canonical source order, requested/ready order and delivered block order.",
         "Separate settings, selection, readiness, projection and required-evidence phases within the existing owner to meet enforced function-complexity limits; policy and schema remain unchanged.",
         "Generalize the captured presentation owner to Manual, custom presets and built-in configurations requiring file/map/tree projection after native admission resolution. Ordinary automatic built-ins retain their existing presentation path. Projected presets archive canonical/direct selections in manualPresentation; excludedSources is empty. Preserve inferred origins for automatic graph maps and exact presentation origins for selected/complete maps. Automatic observations are projected without a second readiness wait.",
-        "Replay the role-free resolved preset and fixed constraints under schema25; no recipient-field or previous-version interpretation is accepted."
+        "Replay the role-free resolved preset and fixed constraints under schema25; no recipient-field or previous-version interpretation is accepted.",
+        "Expect the inferred origin only for presented maps that are not chosen codemaps."
       ],
-      "sha256": "760534d4ea77014811da6b6c552d38af08fba8a04e5baa8d04696c69f25ca946"
+      "sha256": "ba37429f507cfd0c4197e87487f9fd9084658048fc5d75e889c996ec3b1ae9f6"
     },
     {
       "source": "Sources/RepoPrompt/Infrastructure/MCP/WindowTools/MCPFileToolProvider.swift",
@@ -7971,7 +7978,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "6493dfa51a6e1bd8f6255a1aab2ba3d9fa45efe3732e7d2cc2dc6188746721cb",
       "destination": "src/context/prompt-export.ts",
-      "sha256": "4a25bb6ce4a4820a0c12895ed36afb1485b1c5ec3e069dd2fb32e1054ccb7f92",
+      "sha256": "3c278a7e34595dbbb2df9ebd1143eec94553ff68b8a5132b166f84938c9ed23e",
       "classification": "handwritten",
       "ranges": [
         [
@@ -7985,7 +7992,8 @@
         "Replace app ingress wait with operation/bridge settlement because exported output is excluded from source inventory. Use relative path display and declared root aliases, source byte/token/file/preset envelope fields and the retained selected-file assembler. Canonical selected paths and ready presented maps supply captured metadata; includeFiles false yields an empty metadata list.",
         "Recognize both the declared output-root alias and its canonical identity when routing an absolute destination. Native confinement remains anchored to the single admitted output descriptor; absolute source-root destinations remain denied.",
         "Interim export uses the shared packet assembly and pre-write validation, while retaining its own destination admission, response-size check, exclusive write and open-draft lifecycle.",
-        "An explicitly supplied copy_preset must resolve to a nonnull preset even when native parsing reports hasSelector false. Fail with copyPresetNotFound before assembly/write; omission alone retains the active draft preset."
+        "An explicitly supplied copy_preset must resolve to a nonnull preset even when native parsing reports hasSelector false. Fail with copyPresetNotFound before assembly/write; omission alone retains the active draft preset.",
+        "Label chosen codemaps manual in export file listings while automatic codemaps are on."
       ],
       "sourceDependencies": [
         {
@@ -8163,7 +8171,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "5a3d5f975378215e220275ccadaad183d57737ddef816d701bbd9a48bf22085d",
       "destination": "src/context/draft-source-edits.ts",
-      "sha256": "48619b851f391a6d44a217839fb9194d49943031d2404213b979cb609e54881f",
+      "sha256": "c077886dd3972eecace40155ecb9c60afcbfa40a0fa7b1dd6747a95fcaf5bf79",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8172,7 +8180,8 @@
         ]
       ],
       "changes": [
-        "Apply the disabled codemap-only ingress rejection to new codemap source edits through the shared source-edit owner. Keep initial optional membership and required acquisition separate from mutations."
+        "Apply the disabled codemap-only ingress rejection to new codemap source edits through the shared source-edit owner. Keep initial optional membership and required acquisition separate from mutations.",
+        "clearSources restores required sources with automatic codemaps on, including when a required source is a codemap."
       ]
     },
     {
@@ -8340,7 +8349,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
       "destination": "prompts/discovery.md",
-      "sha256": "229d289e59477ddcb58e802800b83a183150f0c75b1ebd166bff9f4066ea139f",
+      "sha256": "78a189e983607e5440017e144ad2efaad538ec1c19e3eb61cdf1c0a7b0dbfe33",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8365,7 +8374,8 @@
         "Extract applicable restricted hard-budget policy, all three task modes, optional clarification, elected/read-only review variants and startup metadata into finite named sections. Empty Gemini/run-ID fragments, generic/nil-budget branches and the unused timeout formatter contribute no default text.",
         "Apply the explicit mipmux tool/runtime bindings independently captured by scripts/reference-discovery-bindings.mjs, including tool examples, state wording, task-name removal and parent publication. Keep all remaining source wording, literal whitespace and emphasis.",
         "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases.",
-        "List codemode among the available tools, and state in the mipmux runtime bindings that its scripts chain or filter tool calls and that draft changes are made one at a time."
+        "List codemode among the available tools, and state in the mipmux runtime bindings that its scripts chain or filter tool calls and that draft changes are made one at a time.",
+        "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on."
       ]
     }
   ],

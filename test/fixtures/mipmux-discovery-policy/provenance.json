@@ -23,8 +23,8 @@
   },
   "bindings": "scripts/reference-discovery-bindings.mjs",
   "bindingsIdentity": {
-    "sha256": "f63550e0078fa9ce1d0efd2684f15217282b93487bc9efb25ec8ae40b61e29ee",
-    "byteCount": 6413
+    "sha256": "46aa7cb68d7ce1e924dfa37e7e733f96118603adbe9f514d73361b4e41e27f68",
+    "byteCount": 7406
   },
   "generatedHarnessIdentity": {
     "sha256": "abf7d286817a223faf37721832e08071fd5b307c0f22a75aead089b516290cb2",

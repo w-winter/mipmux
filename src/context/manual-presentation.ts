@@ -41,6 +41,9 @@ function sourcesForIDs(inventory: Input['inventory'], ids: readonly string[]): S
 
 function projectMaterials(input: Input, includeFiles: boolean, maps: ReadonlySet<string>, readyMaterials: readonly Material[]): Material[] {
   const readyByID = new Map(readyMaterials.map(material => [material.record.id, material]));
+  // The preset presents chosen codemaps, as in manual mode; only automatic targets keep the inferred origin.
+  const chosen = new Set(input.materials.flatMap(({ record }) =>
+    record.kind === 'source' && record.selectionOrigin === 'explicit' && record.selection.kind === 'codemap' ? [record.id] : []));
   const materials: Material[] = [];
   for (const material of input.materials) {
     const record = material.record;
@@ -60,7 +63,7 @@ function projectMaterials(input: Input, includeFiles: boolean, maps: ReadonlySet
     if (!material || material.availability !== 'settled' || material.record.kind !== 'source' || material.record.decoding.kind !== 'decoded' || material.record.artifactKey === null) {
       throw new WorkspaceFailure('invalidArtifact');
     }
-    const selectionOrigin = input.codemapMode === 'automatic' && input.request.copyPreset.codeMapUsage === 'auto' ? 'inferred' : 'presentation';
+    const selectionOrigin = input.codemapMode === 'automatic' && input.request.copyPreset.codeMapUsage === 'auto' && !chosen.has(id) ? 'inferred' : 'presentation';
     materials.push({ availability: 'settled', bodies: material.bodies, sourceBlock: null, record: { ...material.record, decoding: material.record.decoding, selectionOrigin, required: false,
       selection: { kind: 'codemap', source: material.record.selection.source }, normalized: [], artifactKey: material.record.artifactKey } });
   }

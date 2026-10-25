@@ -45,5 +45,5 @@ export function automaticRootInput(entry: typeof automaticRootCases[number]) {
     ? file.structural.record.projection.definedTypeNames.map(name => name.normalize('NFC')) : [])) {
     const matches = definitions.get(name) ?? []; matches.push(file); definitions.set(name, matches);
   }
-  return { seeds: files.filter(file => file.selected).map(file => file.file), definitions, budget: entry.budget };
+  return { seeds: files.filter(file => file.selected).map(file => file.file), chosen: new Set<string>(), definitions, budget: entry.budget };
 }

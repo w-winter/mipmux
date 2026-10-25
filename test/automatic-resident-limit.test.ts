@@ -14,10 +14,10 @@ test('automatic membership rejects an oversized resident root without suppressin
   const entries = [seed, peer, ...Array.from({ length: maximumResidentNodes - 1 }, (_, index) =>
     structuralFile('r', 'Empty' + index + '.swift', [], [])), otherSeed, other];
   const roots = structuralRoots('r', 's');
-  const rejected = new StructureIndex({ roots, entries }).resolveAutomaticCodemapTargets([seed, otherSeed], new Set());
+  const rejected = new StructureIndex({ roots, entries }).resolveAutomaticCodemapTargets([seed, otherSeed], [], new Set());
   assert.deepEqual(rejected.targets, [other]);
   entries.splice(maximumResidentNodes, 1);
-  const admitted = new StructureIndex({ roots, entries }).resolveAutomaticCodemapTargets([seed, otherSeed], new Set());
+  const admitted = new StructureIndex({ roots, entries }).resolveAutomaticCodemapTargets([seed, otherSeed], [], new Set());
   assert.deepEqual(admitted.targets.map(file => file.root + '/' + file.path).sort(), ['r/Peer.swift', 's/Other.swift']);
   await mkdir('test-output', { recursive: true });
   await writeFile('test-output/automatic-resident-limit-proof.json', JSON.stringify({

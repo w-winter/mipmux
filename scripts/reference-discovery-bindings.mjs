@@ -5,6 +5,9 @@ import { Compile } from 'typebox/compile';
 const example = Compile(Type.Object({ tool: Type.String(), args: Type.Record(Type.String(), Type.Unknown()) }));
 const exampleOutputBytes = 12000;
 const toolList = '`manage_selection`, `prompt`, `workspace_context`, `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`';
+// RPCE turns automatic codemaps off for these edits; mipmux turns them off only when codemaps are cleared.
+const manualCodemapMode = '- **Manual mode**: Using `mode="codemap_only"`, `promote`, or `demote` disables auto-management; budget becomes precise sum of your selections';
+const narrowManualCodemapMode = '- **Manual mode**: `op="clear"` with `mode="codemap_only"` disables auto-management; budget becomes precise sum of your selections. Adding codemaps, `promote` and `demote` keep auto-management on, so demoting a file drops only the auto-codemaps it alone referenced';
 
 export function bindReferenceDiscoveryPolicy(source, input) {
   const handoff = input.enhancementMode !== 'preserve';
@@ -23,7 +26,7 @@ export function bindReferenceDiscoveryPolicy(source, input) {
     ['`repo_root`/`repo_key`', restrictedReview ? 1 : 0],
     ['`repo_root`', restrictedReview ? 3 : 0], ['`<discovery_agent-guidelines>`', 1],
     ['architectural clarity, symbol relationships, and taskname metadata', input.enhancementMode === 'fullRewrite' ? 1 : 0],
-    ['workspace_context', 9],
+    ['workspace_context', 9], [manualCodemapMode, 1],
   ]) assert.equal(source.split(pattern).length - 1, count, 'Unexpected pinned policy shape for ' + pattern);
   for (const [pattern, count] of [
     [/^\*\*Task Naming:\*\*[^\n]*\n/gm, 1],
@@ -34,6 +37,7 @@ export function bindReferenceDiscoveryPolicy(source, input) {
   ]) assert.equal([...source.matchAll(pattern)].length, count, 'Unexpected pinned policy shape for ' + String(pattern));
 
   return source
+    .replace(manualCodemapMode, narrowManualCodemapMode)
     .replaceAll(toolList, '`manage_selection`, `prompt`, `draft_inspect`, `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`, `draft_update`, `draft_validate`, `codemode`')
     .replace("This prompt comes directly from RepoPrompt. The MCP server's workspace state already matches what you see here—codemaps for selected files, the selected-mode file tree, and the `<current_prompt_content>` (user's prompt) are embedded.",
       "This prompt uses RepoPrompt CE's discovery policy. The captured mipmux observation identifies the admitted roots, selection, costs and evidence; the file tree and `<current_prompt_content>` are embedded. Use the context tools for complete material bodies.")

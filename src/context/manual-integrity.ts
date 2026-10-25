@@ -91,7 +91,8 @@ function verifyDeliveredMaterials(manifest: Manifest, materials: readonly Materi
   if (canonicalJSON(actual.filter(record => record.selection.kind === 'codemap').map(record => record.id)) !== canonicalJSON(orderedMaps) ||
     canonicalJSON(actual.filter(record => record.selection.kind !== 'codemap').map(record => record.id)) !== canonicalJSON([...expected.keys()])) invalid();
   const required = new Set(manifest.request.requiredSources.filter(source => source.kind === 'codemap').map(source => sourceId(source.source)));
-  for (const record of actual) verifyDeliveredSource(record, maps, expected, required, manifest.codemapMode === 'automatic' && usage === 'auto');
+  for (const record of actual) verifyDeliveredSource(record, maps, expected, required,
+    manifest.codemapMode === 'automatic' && usage === 'auto' && canonical.get(record.id)?.kind !== 'codemap');
   if (!cfg.includeFiles && materials.some(material => material.record.kind === 'document' || material.record.kind === 'gitMap')) invalid();
 }
 

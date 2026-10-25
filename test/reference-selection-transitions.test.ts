@@ -19,7 +19,8 @@ test('native pre-resolved selection transitions retain source representation, or
     const generation = 'selection-reference';
     const nativeFrame = callNative(entry.input, generation, entry.name);
     const selected = reply.Parse(nativeFrame).result.selection;
-    assert.deepEqual(selected, entry.expected, entry.name);
+    // RPCE turns automatic codemaps off for codemap-only edits; mipmux keeps the input's mode, which only clearing codemaps changes.
+    assert.deepEqual(selected, { ...entry.expected, codemapAutoEnabled: entry.input.selection.codemapAutoEnabled }, entry.name);
     proof.push({ name: entry.name, selection: selected });
   }
   await writeFile(resolve('test-output/reference-selection-transitions-proof.json'), JSON.stringify(proof, null, 2) + '\n');

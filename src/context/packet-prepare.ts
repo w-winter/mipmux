@@ -1,4 +1,4 @@
-import type { ContextBuildRequest, ContextPrepareRequest, Manifest, MaterialRecord, SourceSelection } from '../contracts/context.js';
+import type { ContextBuildRequest, ContextPrepareRequest, Manifest, MaterialRecord } from '../contracts/context.js';
 import type { SourcePath } from '../contracts/inventory.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
@@ -144,16 +144,10 @@ export function rebuildRequest(saved: VerifiedBundle, request: ContextPrepareReq
     capturedSourceSelections(saved.materials, manifest.unavailableRoots, manifest.unavailableFiles))
     .filter(selection => !required.has(sourceId(selection.source)) && !edits.removedSources.has(sourceId(selection.source)))
     .map(selection => edits.demotedSources.has(sourceId(selection.source)) ? { kind: 'codemap' as const, source: selection.source } : selection);
-  // As in the selection editor, a demoted file selects manual codemaps, so automatically derived codemaps drop out.
-  const automatic = manifest.codemapMode === 'automatic' && edits.demotedSources.size === 0;
+  // Automatic mode re-derives its codemaps from the rebuilt selection, so a demotion drops only those that the demoted
+  // file alone referenced.
   return { ...captured, copyPreset: copyPresetSelector, outputName: request.outputName, requiredSources,
     budgetUnits: request.budgetUnits ?? captured.budgetUnits,
     documents: [...captured.documents, ...request.documents ?? []], patches: [...captured.patches, ...request.patches ?? []],
-    // Automatic mode derives codemaps itself; only explicit full and sliced sources seed it.
-    initialSelection: automatic ? { codemapMode: 'automatic', sources: sources.filter(isFileContent) }
-      : { codemapMode: 'manual', sources } };
-}
-
-function isFileContent(selection: SourceSelection): selection is Exclude<SourceSelection, { kind: 'codemap' }> {
-  return selection.kind !== 'codemap';
+    initialSelection: { codemapMode: manifest.codemapMode, sources } };
 }

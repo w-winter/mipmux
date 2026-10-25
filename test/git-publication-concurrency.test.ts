@@ -77,7 +77,7 @@ test('Git publication retains captured full and latest manual membership through
       assert.equal(published.primary_artifacts.auto_selected?.length, 2);
       const merged = await f.select({ op: 'get' });
       assert(merged.files.some(file => file.path === 'both.swift' && file.render_mode === 'full'));
-      assert.equal(merged.codemap_auto_enabled, false);
+      assert.equal(merged.codemap_auto_enabled, true);
       await f.draft.update({ expectedRevision: f.draft.revision, maxOutputBytes: 100000,
         mutation: { kind: 'upsert', selection: { kind: 'full', source: { root: 'r', path: 'later.txt' } } } }, signal());
       const removed = await f.select({ op: 'remove', paths: ['r/both.swift'], mode: 'full' });

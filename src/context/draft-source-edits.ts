@@ -40,7 +40,7 @@ class SourceEditPreparation {
       if (record.kind === 'source' && !record.required && (kind === 'clearSources' || record.selection.kind === 'codemap')) this.explicit.delete(id);
     }
     const required = new Map([...this.explicit].filter(([, material]) => material.record.kind === 'source' && material.record.required));
-    const baseline = capturedState(this.selection.roots, required, this.requiredSources.some(value => value.kind === 'codemap') ? 'manual' : 'automatic');
+    const baseline = capturedState(this.selection.roots, required, 'automatic');
     this.state = kind === 'clearSources' ? baseline : { ...this.state, manualCodemapPaths: baseline.manualCodemapPaths, codemapAutoEnabled: false };
   }
 }

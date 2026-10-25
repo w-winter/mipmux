@@ -75,7 +75,7 @@ struct RPCESelectionTransitions {
             selectedPaths: selectedPaths,
             manualCodemapPaths: manualCodemapPaths,
             slices: slices,
-            codemapAutoEnabled: targetState == .codemapOnly ? false : base.codemapAutoEnabled
+            codemapAutoEnabled: base.codemapAutoEnabled
         )
     }
 }

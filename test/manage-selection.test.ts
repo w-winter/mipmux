@@ -89,7 +89,7 @@ test('public selection coalesces slice descriptions and subtracts ranges before 
   } finally { await f.client.close(); }
 });
 
-test('public source selection preserves slices on full add and source promotion/manual-mode semantics', async () => {
+test('public source selection preserves slices on full add and keeps automatic codemaps through demotion and promotion', async () => {
   const f = await fixture();
   const receipts = [];
   try {
@@ -104,7 +104,7 @@ test('public source selection preserves slices on full add and source promotion/
     assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'));
     reply = await f.select({ op: 'demote', paths: ['r/zone/Peer.swift'] });
     assert.equal(reply.isError, false, JSON.stringify(reply)); receipts.push(reply);
-    state = await f.inspect(); assert.equal(state.codemapMode, 'manual');
+    state = await f.inspect(); assert.equal(state.codemapMode, 'automatic');
     assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'
       && item.selection.kind === 'codemap'));
     reply = await f.select({ op: 'remove', paths: ['r/zone/Peer.swift'], mode: 'full', strict: true });
@@ -113,7 +113,7 @@ test('public source selection preserves slices on full add and source promotion/
       && item.selection.kind === 'codemap'));
     reply = await f.select({ op: 'promote', paths: ['r/zone/Peer.swift'] });
     assert.equal(reply.isError, false, JSON.stringify(reply)); receipts.push(reply);
-    state = await f.inspect(); assert.equal(state.codemapMode, 'manual');
+    state = await f.inspect(); assert.equal(state.codemapMode, 'automatic');
     assert(state.items.some(item => item.kind === 'source' && item.selection.source.path === 'zone/Peer.swift'
       && item.selection.kind === 'full'));
     await writeFile(join(f.base, 'representation-receipt.json'), JSON.stringify({ receipts, state }, null, 2) + '\n');
@@ -286,7 +286,7 @@ test('codemap-only selection retains a supported file with no rendered symbols a
     assert.deepEqual(projected.files, []);
     assert.deepEqual(projected.code_structure.unmapped_paths, ['Empty.swift']);
     state = await f.inspect();
-    assert.equal(state.codemapMode, 'manual');
+    assert.equal(state.codemapMode, 'automatic');
     receipts.push(reply);
     const finalized = await f.client.callTool({ name: 'draft_finalize', arguments: { draftId: f.draftId } });
     assert.equal(finalized.isError, false, JSON.stringify(finalized));

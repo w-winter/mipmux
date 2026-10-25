@@ -10,7 +10,7 @@ test('automatic query applies the RP candidate threshold before seed exclusion',
     const candidates = Array.from({ length: count - 1 }, (_, index) => structuralFile('r', `${index}.swift`, ['Shared'], []));
     const index = new StructureIndex({ entries: [seed, ...candidates], roots: structuralRoots('r') });
     const selectedSeeds = [seed, ...candidates.slice(0, count - 1025)];
-    assert.equal(index.resolveAutomaticCodemapTargets(selectedSeeds, new Set()).targets.length, count === 4096 ? 1024 : 0);
+    assert.equal(index.resolveAutomaticCodemapTargets(selectedSeeds, [], new Set()).targets.length, count === 4096 ? 1024 : 0);
   }
 });
 
@@ -28,8 +28,8 @@ test('automatic membership matches a root-local normalized oracle and is indepen
         seed.references.some(reference => inputs[index]!.definitions.some(definition => definition.normalize('NFC') === reference.normalize('NFC')))))
       .map(file => file.root + '/' + file.path).sort();
     const index = new StructureIndex({ entries: files, roots: structuralRoots('r', 's') });
-    const selected = index.resolveAutomaticCodemapTargets(seeds, new Set());
+    const selected = index.resolveAutomaticCodemapTargets(seeds, [], new Set());
     assert.deepEqual(selected.targets.map(file => file.root + '/' + file.path).sort(), expected);
-    assert.deepEqual(index.resolveAutomaticCodemapTargets([...seeds].reverse(), new Set()), selected);
+    assert.deepEqual(index.resolveAutomaticCodemapTargets([...seeds].reverse(), [], new Set()), selected);
   }));
 });

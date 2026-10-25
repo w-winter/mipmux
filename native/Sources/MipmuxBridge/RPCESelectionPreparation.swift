@@ -21,7 +21,7 @@ extension RPCESelectionCandidateResolver {
             return WorkspaceBuildSelectionResult(
                 selection: StoredSelection(
                     manualCodemapPaths: resolution.candidates.map(\.standardizedFullPath),
-                    codemapAutoEnabled: false
+                    codemapAutoEnabled: existing.codemapAutoEnabled
                 ),
                 invalidPaths: sliceErrors + resolution.invalidPaths,
                 codemapUnavailable: resolution.codemapUnavailable

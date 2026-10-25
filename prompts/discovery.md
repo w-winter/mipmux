@@ -122,7 +122,7 @@ When selecting files with `mode="full"` or `mode="slices"`, the system auto-adds
 
 **Budget Planning:**
 - **Auto mode**: Expect ~1.5-2x token overhead from auto-codemaps; check actual selection with `op="get"` `view="files"`
-- **Manual mode**: Using `mode="codemap_only"`, `promote`, or `demote` disables auto-management; budget becomes precise sum of your selections
+- **Manual mode**: `op="clear"` with `mode="codemap_only"` disables auto-management; budget becomes precise sum of your selections. Adding codemaps, `promote` and `demote` keep auto-management on, so demoting a file drops only the auto-codemaps it alone referenced
 
 ## Reference: Mode Selection Guide
 - **Full files**: The default for ALL relevant files — editing candidates, references, and dependencies. Always start here.

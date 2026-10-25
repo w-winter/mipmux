@@ -233,18 +233,20 @@ function decodeMaterials(manifest: Manifest, context: Buffer): Extract<Material,
   const sources = materials.flatMap(material => material.record.kind === 'source' ? [material.record] : []);
   const explicit = sources.filter(record => record.selectionOrigin === 'explicit');
   const preset = manifest.request.copyPreset;
+  const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles];
+  // The selection's own choices, delivered or omitted; chosen codemaps are never automatic targets.
+  const canonical = manifest.manualPresentation?.canonicalSources ?? [...explicit, ...omitted].map(record => record.selection);
+  const chosen = canonical.flatMap(selection => selection.kind === 'codemap' ? [selection.source] : []);
+  const chosenIds = new Set(chosen.map(sourceId));
   const inferred = sources.filter(record => record.selectionOrigin === 'inferred' || manifest.codemapMode === 'automatic' && manifest.manualPresentation !== null && record.selectionOrigin === 'presentation' &&
-    preset.codeMapUsage === 'auto').map(record => record.id).sort();
+    preset.codeMapUsage === 'auto' && !chosenIds.has(record.id)).map(record => record.id).sort();
   if (manifest.codemapMode === 'manual' || preset.codeMapUsage !== 'auto') {
     requireEqual(inferred, []); requireEqual(manifest.automaticCodemaps, []);
   }
   else {
-    if (explicit.some(record => record.selection.kind === 'codemap')) throw new WorkspaceFailure('bundleIntegrityFailed');
     const catalog = new Set(manifest.inventory.entries.filter(entry => entry.kind === 'file').map(sourceId));
-    const omitted = [...manifest.unavailableRoots.flatMap(root => root.sources), ...manifest.unavailableFiles].filter(source => source.selection.kind !== 'codemap');
-    const seeds = manifest.manualPresentation !== null ? manifest.manualPresentation.canonicalSources.filter(selection => selection.kind !== 'codemap' && catalog.has(sourceId(selection.source))).map(selection => selection.source)
-      : [...explicit, ...omitted].filter(record => catalog.has(record.id)).map(record => record.selection.source);
-    const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds,
+    const seeds = canonical.flatMap(selection => selection.kind !== 'codemap' && catalog.has(sourceId(selection.source)) ? [selection.source] : []);
+    const candidates = seeds.length ? new StructureIndex(manifest.inventory).resolveAutomaticCodemapTargets(seeds, chosen,
       new Set(manifest.unavailableRoots.map(root => root.root))).targets : [];
     const byId = new Map(candidates.map(candidate => [sourceId(candidate), candidate]));
     requireEqual(manifest.automaticCodemaps.map(item => sourceId(item.source)).sort(), [...byId.keys()].sort());

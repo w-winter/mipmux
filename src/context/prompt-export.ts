@@ -10,7 +10,7 @@ import type { CodemapPresentation } from './codemap-readiness.js';
 import { renderBundle, type RenderInput } from './render.js';
 import { estimateUnits } from './budget.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
-import { identity, type Material } from './material-store.js';
+import { identity, sourceId, type Material } from './material-store.js';
 import { admitPromptReply, presetDescriptor } from './prompt-presets.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
 import { contains } from '../workspace/root-policy.js';
@@ -47,6 +47,9 @@ function destinationPath(path: string, output: RootIdentity): string {
 
 async function fileInfos(operation: WorkspaceOperation, input: RenderInput) {
   if (!input.clipboardPreset.includeFiles) return [];
+  // Codemaps the selection chose are manual even while automatic codemaps are on.
+  const chosen = new Set((input.manualPresentation?.canonicalSources ?? []).flatMap(selection =>
+    selection.kind === 'codemap' ? [sourceId(selection.source)] : []));
   const entries: FileEntry[] = input.materials.flatMap(material => {
     const record = material.record;
     if (record.kind === 'gitMap' || record.kind === 'gitPatch') return [{ kind: 'full' as const,
@@ -58,7 +61,7 @@ async function fileInfos(operation: WorkspaceOperation, input: RenderInput) {
       rootPath: source.root, pathWithinRoot: source.path, tokens: estimateUnits(Buffer.byteLength(material.bodies.join(''))) };
     const entry = selectionFileEntry(record, fields);
     if (entry.kind === 'codemap') entry.origin = input.clipboardPreset.codeMapUsage === 'selected' ? 'selected_mode'
-      : input.codemapMode === 'automatic' ? 'auto' : 'manual';
+      : input.codemapMode === 'automatic' && record.selectionOrigin !== 'explicit' && !chosen.has(record.id) ? 'auto' : 'manual';
     return [entry];
   });
   const reply = await operation.renderSelectionReply({ kind: 'renderSelectionReply', entries, status: 'ok',
