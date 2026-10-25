@@ -27,10 +27,14 @@ const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const readyReply = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String(),
   context: Type.Object({ path: Type.String(), byteCount: Type.Integer(), sha256: Type.String() }),
   accounting: Type.Object({ units: Type.Integer(), allowance: Type.Integer() }),
-  added: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()) })),
-  removed: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()) })), omitted: Type.Array(Type.Unknown()) }));
-const changes = (receipt: { added: { kind: string; id?: string }[]; removed: { kind: string; id?: string }[] }) =>
-  [receipt.added, receipt.removed].map(entries => entries.map(entry => entry.kind + ':' + (entry.id ?? '')));
+  added: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()), path: Type.Optional(Type.String()) })),
+  removed: Type.Array(Type.Object({ kind: Type.String(), id: Type.Optional(Type.String()), path: Type.Optional(Type.String()) })),
+  omitted: Type.Array(Type.Unknown()) }));
+type Change = { kind: string; id?: string; path?: string };
+const changes = (receipt: { added: Change[]; removed: Change[] }) =>
+  [receipt.added, receipt.removed].map(entries => entries.map(entry => entry.kind + ':' + (entry.id ?? entry.path ?? '')).sort());
+const blockedReply = Compile(Type.Object({ kind: Type.Literal('blocked'), diagnostics: Type.Array(Type.Object({ code: Type.String() },
+  { additionalProperties: true })) }, { additionalProperties: true }));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String() }, { additionalProperties: true }));
 const instructions = (prompt: string) => '<user_instructions>\n' + prompt + '\n</user_instructions>\n';
 
@@ -147,9 +151,7 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
 
     const blocked = await prepare({ bundle: 'review', prompt: 'x'.repeat(1_000_000), outputName: 'too-large' });
     assert.equal(blocked.isError, false, JSON.stringify(blocked).slice(0, 2000));
-    const blockedReply = Compile(Type.Object({ kind: Type.Literal('blocked'), diagnostics: Type.Array(Type.Object({ code: Type.String() },
-      { additionalProperties: true })) }, { additionalProperties: true })).Parse(toolJSON(blocked));
-    assert.deepEqual(blockedReply.diagnostics.map(diagnostic => diagnostic.code), ['overBudget']);
+    assert.deepEqual(blockedReply.Parse(toolJSON(blocked)).diagnostics.map(diagnostic => diagnostic.code), ['overBudget']);
     assert.equal(existsSync(join(f.out, 'too-large')), false);
 
     await symlink(join(f.out, 'review'), join(f.out, 'linked'));
@@ -175,6 +177,23 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     assert.deepEqual(changes(reviewAdded), [['document:late-ledger', 'patch:full-swift'], []]);
     await verifyCurrentBundle(reviewAdded.directory, runtime, signal());
 
+    // A replacement budget applies to reused evidence: a small one blocks publication, and a larger one is recorded.
+    const smallBudget = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-small', budgetUnits: 100 });
+    assert.deepEqual(blockedReply.Parse(toolJSON(smallBudget)).diagnostics.map(diagnostic => diagnostic.code), ['overBudget']);
+    assert.equal(existsSync(join(f.out, 'review-small')), false);
+    const largeBudget = readyReply.Parse(toolJSON(await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-large',
+      budgetUnits: 300000 })));
+    assert.equal(largeBudget.accounting.allowance, 300000);
+    await verifyBundle(largeBudget.directory); await verifyCurrentBundle(largeBudget.directory, runtime, signal());
+
+    // Removing one saved Git artifact by its alias leaves the other byte-identical.
+    const mapAlias = savedReview.flatMap(({ record }) => record.kind === 'gitMap' ? [record.reference.alias] : [])[0]!;
+    const withoutMap = readyReply.Parse(toolJSON(await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-without-map',
+      remove: [mapAlias] })));
+    assert.deepEqual(changes(withoutMap), [[], ['gitMap:' + mapAlias]]);
+    assert.deepEqual(gitEvidence(await loadVerifiedBundle(withoutMap.directory)), savedReview.filter(({ record }) => record.kind === 'gitPatch'));
+    await verifyCurrentBundle(withoutMap.directory, runtime, signal());
+
     await writeFile(join(f.root, 'Slice.txt'), 'first\nchanged\nthird\n');
     const changed = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'stale' });
     assert.deepEqual(toolJSON(changed), { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
@@ -191,6 +210,29 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     const added = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-added',
       documents: [{ kind: 'suppliedDocument', id: 'addendum', role: 'report', origin: 'fixture', text: 'ADDED REPORT\n' }] })));
     assert.deepEqual(changes(added), [['document:addendum'], []]);
+
+    // Removal and demotion name materials by their receipt paths and rebuild from current files.
+    const trimmed = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-trimmed',
+      remove: ['r/Slice.txt'] })));
+    assert.deepEqual(changes(trimmed), [[], ['slices:r/Slice.txt']]);
+    await verifyCurrentBundle(trimmed.directory, runtime, signal());
+    const demoted = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-demoted',
+      demote: ['r/Full.swift'], budgetUnits: 250000 })));
+    assert.deepEqual(changes(demoted), [['codemap:r/Full.swift'], ['full:r/Full.swift']]);
+    assert.equal(demoted.accounting.allowance, 250000);
+    await verifyCurrentBundle(demoted.directory, runtime, signal());
+    const unknown = await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-unknown', remove: ['r/missing.swift'] });
+    const unknownError = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.Literal('invalidSelection'), message: Type.String() }))
+      .Parse(toolJSON(unknown));
+    assert(unknownError.message.includes('r/missing.swift'), unknownError.message);
+    assert.equal(existsSync(join(f.out, 'planning-unknown')), false);
+    const required = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-required',
+      requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Map.swift' } }] })));
+    assert.deepEqual(changes(required), [['full:r/Map.swift'], []]);
+    const requiredRemoval = await prepare({ bundle: 'planning-required', prompt: finalTask, outputName: 'planning-required-removed',
+      remove: ['r/Map.swift'] });
+    assert.equal(errorReply.Parse(toolJSON(requiredRemoval)).code, 'invalidSelection');
+    assert.equal(existsSync(join(f.out, 'planning-required-removed')), false);
     const staleAddition = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-added-stale', documents: lateLedger });
     assert.deepEqual(toolJSON(staleAddition), { kind: 'error', code: 'sourceChanged', source: { root: 'r', path: 'Slice.txt' } });
     assert.equal(existsSync(join(f.out, 'review-added-stale')), false);

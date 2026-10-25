@@ -74,7 +74,9 @@ export const ContextBuildRequest = Type.Object({
 export type ContextBuildRequest = Static<typeof ContextBuildRequest>;
 /**
  * Saved bundle directory relative to the workspace output root, its complete replacement prompt and a new bundle name.
- * `refresh` or added required sources, documents and patches rebuild the packet from current files instead of reusing saved bodies.
+ * `refresh`, added required sources, documents and patches, or `remove` and `demote` edits rebuild the packet from current
+ * files instead of reusing saved bodies. The edits name saved materials by path: `root/path` for a source, or a Git
+ * artifact alias. `budgetUnits` replaces the saved assembly budget.
  */
 export const ContextPrepareRequest = Type.Object({
   bundle: RelativePath,
@@ -84,6 +86,9 @@ export const ContextPrepareRequest = Type.Object({
   requiredSources: Type.Optional(ContextBuildRequest.properties.requiredSources),
   documents: Type.Optional(ContextBuildRequest.properties.documents),
   patches: Type.Optional(ContextBuildRequest.properties.patches),
+  remove: Type.Optional(Type.Array(Type.String())),
+  demote: Type.Optional(Type.Array(Type.String())),
+  budgetUnits: Type.Optional(SafeCount),
 }, closed);
 export type ContextPrepareRequest = Static<typeof ContextPrepareRequest>;
 export const CapturedContextBuildRequest = Type.Object({ ...ContextBuildRequest.properties,

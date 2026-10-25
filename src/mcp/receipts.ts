@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import type { Manifest, MaterialRecord } from '../contracts/context.js';
 import type { JobSnapshot } from '../contracts/jobs.js';
 import type { FinalizationResult } from '../context/finalize.js';
-import type { PreparedPacket } from '../context/packet-prepare.js';
+import { materialPath, type PreparedPacket } from '../context/packet-prepare.js';
 import { estimateUnits } from '../context/budget.js';
 
 /**
@@ -27,7 +27,7 @@ function materialSummary(record: MaterialRecord) {
   const units = estimateUnits(record.spans.reduce((sum, span) => sum + span.length, 0));
   switch (record.kind) {
     case 'source': {
-      const { selection } = record, path = selection.source.root + '/' + selection.source.path;
+      const { selection } = record, path = materialPath(record);
       const fields = { path, origin: record.selectionOrigin, required: record.required };
       return selection.kind === 'slices'
         ? { kind: selection.kind, ...fields, lines: record.normalized.map(range => range.start + '-' + range.end).join(','), units }
@@ -35,7 +35,7 @@ function materialSummary(record: MaterialRecord) {
     }
     case 'document': return { kind: 'document' as const, id: record.input.id, role: record.input.role, units };
     case 'patch': return { kind: 'patch' as const, id: record.receipt.input.id, root: record.receipt.input.root, units };
-    case 'gitMap': case 'gitPatch': return { kind: record.kind, path: record.reference.alias, units };
+    case 'gitMap': case 'gitPatch': return { kind: record.kind, path: materialPath(record), units };
   }
 }
 

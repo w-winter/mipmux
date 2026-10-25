@@ -9,7 +9,7 @@ import { Compile } from 'typebox/compile';
 import type { NativeOperation, NativeHandle } from '../contracts/native.js';
 import { DraftRuntime } from '../context/draft-runtime.js';
 import { loadVerifiedBundle, type VerifiedBundle } from '../context/verify.js';
-import { publishPreparedPacket, readSavedBundle, rebuildRequest, requireBundleWorkspace, savedGitArtifacts, type PreparedPacket } from '../context/packet-prepare.js';
+import { publishPreparedPacket, readSavedBundle, rebuildRequest, requireBundleWorkspace, savedGitArtifacts, selectionEdits, type PreparedPacket } from '../context/packet-prepare.js';
 import { strictText } from '../context/material-store.js';
 import { failureCode } from './tool-result.js';
 import { revalidateMaterials } from '../context/revalidate.js';
@@ -243,7 +243,8 @@ export class MipmuxRuntime {
     return work;
   }
   async #preparePacket(owner: WorkspaceRuntime, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
-    const rebuild = request.refresh === true || [request.requiredSources, request.documents, request.patches].some(added => (added?.length ?? 0) > 0);
+    const rebuild = request.refresh === true ||
+      [request.requiredSources, request.documents, request.patches, request.remove, request.demote].some(edit => (edit?.length ?? 0) > 0);
     const log = (level: string, outcome: string, code: string | null = null) => process.stderr.write(JSON.stringify({ level,
       event: 'packetPrepare', outcome, outputName: request.outputName, rebuild, code }) + '\n');
     log('info', 'started');
@@ -263,11 +264,12 @@ export class MipmuxRuntime {
     }
   }
   async #rebuildPacket(owner: WorkspaceRuntime, saved: VerifiedBundle, request: ContextPrepareRequest, signal: AbortSignal): Promise<PreparedPacket> {
+    const edits = selectionEdits(saved, request);
     // Selected Git artifacts are diffs captured at discovery, so they are carried only beside unchanged evidence.
-    const artifacts = savedGitArtifacts(saved);
+    const artifacts = savedGitArtifacts(saved).filter(record => !edits.removedArtifacts.has(record.reference.alias));
     if (artifacts.length && request.refresh === true) throw new WorkspaceFailure('refreshRequiresDiscovery');
     if (artifacts.length) await this.#withCurrentBundle(saved, signal, async () => {});
-    const draft = await this.createDraft(owner, rebuildRequest(saved, request), signal);
+    const draft = await this.createDraft(owner, rebuildRequest(saved, request, edits), signal);
     try {
       if (artifacts.length) await draft.adoptGitArtifacts(artifacts, signal);
       // The prompt reply stays inside the runtime, so no caller output cap applies.

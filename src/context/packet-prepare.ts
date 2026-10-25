@@ -1,4 +1,5 @@
-import type { ContextBuildRequest, ContextPrepareRequest, Manifest, SourceSelection } from '../contracts/context.js';
+import type { ContextBuildRequest, ContextPrepareRequest, Manifest, MaterialRecord, SourceSelection } from '../contracts/context.js';
+import type { SourcePath } from '../contracts/inventory.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import type { PolicyDeclaration } from '../workspace/root-policy.js';
@@ -43,7 +44,8 @@ export function requireBundleWorkspace(manifest: Manifest, declaration: Pick<Pol
 export async function publishPreparedPacket(runtime: MipmuxRuntime, saved: VerifiedBundle, request: ContextPrepareRequest,
   signal: AbortSignal, recheck: () => Promise<void>): Promise<PreparedPacket> {
   const manifest = saved.verified.manifest;
-  const input = await prepareClipboard(runtime, { request: { ...manifest.request, outputName: request.outputName },
+  const input = await prepareClipboard(runtime, { request: { ...manifest.request, outputName: request.outputName,
+    budgetUnits: request.budgetUnits ?? manifest.request.budgetUnits },
     prompt: request.prompt, manualPresentation: manifest.manualPresentation, inventory: manifest.inventory,
     codemapMode: manifest.codemapMode, materials: saved.materials, fileTree: saved.fileTree,
     unavailableRoots: manifest.unavailableRoots, unavailableFiles: manifest.unavailableFiles,
@@ -63,6 +65,61 @@ export async function publishPreparedPacket(runtime: MipmuxRuntime, saved: Verif
   } finally { await bridge.close(); }
 }
 
+// Root names begin with a letter, so a source path never equals a Git artifact alias, which begins with `_git_data/`.
+function sourcePath(source: SourcePath): string { return source.root + '/' + source.path; }
+
+type NamedMaterial = Extract<MaterialRecord, { kind: 'source' | 'gitMap' | 'gitPatch' }>;
+
+/** How callers name a source or Git artifact material: `root/path` for a source, or the artifact's alias. */
+export function materialPath(record: NamedMaterial): string {
+  return record.kind === 'source' ? sourcePath(record.selection.source) : record.reference.alias;
+}
+
+/** Saved sources (by source ID) and Git artifacts (by alias) that a preparation removes or demotes. */
+export interface SelectionEdits {
+  readonly removedSources: ReadonlySet<string>;
+  readonly demotedSources: ReadonlySet<string>;
+  readonly removedArtifacts: ReadonlySet<string>;
+}
+
+type EditOutcome = { readonly kind: 'problem'; readonly reason: string }
+  | { readonly kind: 'source'; readonly id: string } | { readonly kind: 'artifact'; readonly alias: string };
+
+function editOutcome(edit: 'remove' | 'demote', record: NamedMaterial | undefined, addedAsRequired: boolean): EditOutcome {
+  const problem = (reason: string) => ({ kind: 'problem' as const, reason });
+  if (record === undefined) return problem('not a material of the saved bundle');
+  if (record.kind !== 'source') {
+    return edit === 'remove' ? { kind: 'artifact', alias: record.reference.alias } : problem('Git artifacts cannot be demoted');
+  }
+  if (record.required || addedAsRequired) return problem('required material');
+  if (record.selectionOrigin === 'inferred') return problem('codemap added automatically for a selected file');
+  if (record.selectionOrigin === 'presentation') return problem('codemap added by the copy preset');
+  if (edit === 'demote' && record.selection.kind === 'codemap') return problem('already a codemap');
+  return { kind: 'source', id: sourceId(record.selection.source) };
+}
+
+/**
+ * Resolves `remove` and `demote` paths against the saved bundle's delivered materials. Removal accepts optional sources
+ * the selection names directly and selected Git artifacts; demotion accepts optional full files and slices. Required
+ * material, including sources this request adds as required, stays fixed. Every problem is reported together.
+ */
+export function selectionEdits(saved: VerifiedBundle, request: ContextPrepareRequest): SelectionEdits {
+  const records = new Map(saved.verified.manifest.materials.flatMap(record =>
+    record.kind === 'document' || record.kind === 'patch' ? [] : [[materialPath(record), record] as const]));
+  const added = new Set((request.requiredSources ?? []).map(selection => sourcePath(selection.source)));
+  const requested = [...(request.remove ?? []).map(path => ({ edit: 'remove' as const, path })),
+    ...(request.demote ?? []).map(path => ({ edit: 'demote' as const, path }))];
+  const paths = requested.map(item => item.path);
+  const outcomes = requested.map(({ edit, path }, index) => ({ edit, path, outcome: paths.indexOf(path) === index
+    ? editOutcome(edit, records.get(path), added.has(path)) : { kind: 'problem' as const, reason: 'named more than once' } }));
+  const problems = outcomes.flatMap(({ path, outcome }) => outcome.kind === 'problem' ? [path + ': ' + outcome.reason] : []);
+  if (problems.length) throw new WorkspaceFailure('invalidSelection', { message: problems.join('; ') });
+  const sources = (edit: 'remove' | 'demote') =>
+    new Set(outcomes.flatMap(item => item.edit === edit && item.outcome.kind === 'source' ? [item.outcome.id] : []));
+  return { removedSources: sources('remove'), demotedSources: sources('demote'),
+    removedArtifacts: new Set(outcomes.flatMap(({ outcome }) => outcome.kind === 'artifact' ? [outcome.alias] : [])) };
+}
+
 /** The saved bundle's selected Git snapshot artifacts, in packet order. */
 export function savedGitArtifacts(saved: VerifiedBundle): SelectedGitArtifact[] {
   return saved.verified.manifest.materials.flatMap(record => record.kind === 'gitMap' || record.kind === 'gitPatch' ? [record] : []);
@@ -70,20 +127,25 @@ export function savedGitArtifacts(saved: VerifiedBundle): SelectedGitArtifact[] 
 
 /**
  * The build request that reacquires a saved bundle's evidence from current files: its captured request, selection and
- * omitted sources, plus the caller's added required sources, documents and patches. Selected Git artifacts are adopted separately.
+ * omitted sources, with the caller's edits, budget and added required sources, documents and patches. Selected Git
+ * artifacts are adopted separately.
  */
-export function rebuildRequest(saved: VerifiedBundle, request: ContextPrepareRequest): ContextBuildRequest {
+export function rebuildRequest(saved: VerifiedBundle, request: ContextPrepareRequest, edits: SelectionEdits): ContextBuildRequest {
   const manifest = saved.verified.manifest;
   const { copyContext: _context, copyPreset: _preset, copyPresetSelector, clarification: _clarification, ...captured } = manifest.request;
   const requiredSources = [...captured.requiredSources, ...request.requiredSources ?? []];
   const required = new Set(requiredSources.map(selection => sourceId(selection.source)));
   const sources = (manifest.manualPresentation?.canonicalSources ??
     capturedSourceSelections(saved.materials, manifest.unavailableRoots, manifest.unavailableFiles))
-    .filter(selection => !required.has(sourceId(selection.source)));
+    .filter(selection => !required.has(sourceId(selection.source)) && !edits.removedSources.has(sourceId(selection.source)))
+    .map(selection => edits.demotedSources.has(sourceId(selection.source)) ? { kind: 'codemap' as const, source: selection.source } : selection);
+  // As in the selection editor, a demoted file selects manual codemaps, so automatically derived codemaps drop out.
+  const automatic = manifest.codemapMode === 'automatic' && edits.demotedSources.size === 0;
   return { ...captured, copyPreset: copyPresetSelector, outputName: request.outputName, requiredSources,
+    budgetUnits: request.budgetUnits ?? captured.budgetUnits,
     documents: [...captured.documents, ...request.documents ?? []], patches: [...captured.patches, ...request.patches ?? []],
     // Automatic mode derives codemaps itself; only explicit full and sliced sources seed it.
-    initialSelection: manifest.codemapMode === 'automatic' ? { codemapMode: 'automatic', sources: sources.filter(isFileContent) }
+    initialSelection: automatic ? { codemapMode: 'automatic', sources: sources.filter(isFileContent) }
       : { codemapMode: 'manual', sources } };
 }
 
