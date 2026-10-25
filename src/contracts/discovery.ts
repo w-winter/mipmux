@@ -67,6 +67,8 @@ export const Completion = Type.Object({ dispatched: ModelIdentity, reported: Mod
   stopReason: Type.Enum(['pending', 'stop', 'length', 'toolUse', 'error', 'aborted', 'deferred']),
   channel: Type.Enum(['ordinary', 'summary']), textBytes: SafeCount, textSHA256: SHA256,
   textOnly: Type.Boolean(), nonempty: Type.Boolean(), diagnostics: Type.Array(Type.String()), usage: TokenUsage,
+  /** Names of the tools this response called, in order; calls made inside a codemode script are not listed. */
+  toolCalls: Type.Array(Type.String()),
 }, closed);
 export type Completion = Static<typeof Completion>;
 export const DiscoveryEvent = Type.Object({ kind: Type.String(),

@@ -98,7 +98,8 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
         stopReason: message.stopReason, channel, textBytes: Buffer.byteLength(text), textSHA256: sha256(text),
         textOnly: message.content.every(block => block.type === 'text' || block.type === 'thinking'),
         nonempty: text.trim().length > 0, diagnostics: message.diagnostics?.map(item => item.type) ?? [],
-        usage: { input: message.usage.input, output: message.usage.output, cacheRead: message.usage.cacheRead, cacheWrite: message.usage.cacheWrite } };
+        usage: { input: message.usage.input, output: message.usage.output, cacheRead: message.usage.cacheRead, cacheWrite: message.usage.cacheWrite },
+        toolCalls: message.content.flatMap(block => block.type === 'toolCall' ? [block.name] : []) };
     };
     const activeSession = session;
     const stream = session.agent.streamFunction;

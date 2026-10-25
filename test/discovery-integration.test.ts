@@ -279,6 +279,7 @@ test('discovery scripts reach mipmux tools through codemode', async () => {
     assert.equal(result.kind, 'complete', JSON.stringify(result.kind === 'complete' ? null : result.code));
     assert(provider.requests[0]!.tools.includes('codemode'), provider.requests[0]!.tools.join(','));
     assert.deepEqual(calls, ['draft_inspect']);
+    assert.deepEqual(result.receipt.completions.map(completion => completion.toolCalls), [['codemode'], []]);
     assert(JSON.stringify(provider.requests[1]!.messages.at(-1)).includes('reached-mipmux'));
   } finally { await supervisor.close(); await provider.close(); }
 });

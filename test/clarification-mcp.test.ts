@@ -19,7 +19,7 @@ const jobReply = Compile(Type.Object({ jobId: Type.String(), state: Type.String(
 const readyReply = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true),
   bundle: Type.Object({ directory: Type.String() }),
   discovery: Type.Object({ completions: Type.Integer(), usage: Type.Object({ input: Type.Integer(), output: Type.Integer(),
-    cacheRead: Type.Integer(), cacheWrite: Type.Integer() }) }) }));
+    cacheRead: Type.Integer(), cacheWrite: Type.Integer() }), toolCalls: Type.Record(Type.String(), Type.Integer()) }) }));
 const errorReply = Compile(Type.Object({ code: Type.String() }));
 const sourceAnswer = Compile(AskUserResponse);
 const toolMessage = Compile(Type.Object({ role: Type.Literal('user'), content: Type.Array(Type.Object({
@@ -167,6 +167,7 @@ async function checkCompletion(f: Fixture, jobId: string, waiting: Waiting) {
   const requests = provider.requests.length;
   assert.equal(result.discovery.completions, requests);
   assert.deepEqual(result.discovery.usage, { input: 10 * requests, output: 4 * requests, cacheRead: 0, cacheWrite: 0 });
+  assert.deepEqual(result.discovery.toolCalls, scenario === 'disabled' ? {} : { ask_user: scenario === 'accept' ? 2 : 1 });
   assert.equal(f.questions, scenario === 'accept' ? 2 : scenario === 'disabled' ? 0 : 1);
   const policy = JSON.stringify(provider.requests[0]!.system);
   assert.equal(provider.requests[0]!.tools.includes('ask_user'), scenario !== 'disabled');

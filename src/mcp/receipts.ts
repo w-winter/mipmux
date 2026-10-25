@@ -40,17 +40,24 @@ function materialSummary(record: MaterialRecord) {
   }
 }
 
+function countByName(names: readonly string[]) {
+  const counts = new Map<string, number>();
+  for (const name of names) counts.set(name, (counts.get(name) ?? 0) + 1);
+  return Object.fromEntries(counts);
+}
+
 /**
  * A ready job snapshot carries a bundle receipt and the resulting prompt in place of the manifest. Ready and blocked
- * snapshots replace the discovery completions with their count and summed token usage: every completion matched the
- * effective model, or the job would have failed.
+ * snapshots replace the discovery completions with their count, summed token usage and tool calls counted by name: every
+ * completion matched the effective model, or the job would have failed.
  */
 export function jobReceipt(snapshot: JobSnapshot) {
   if (!snapshot.localSettled || (snapshot.state !== 'ready' && snapshot.state !== 'blocked')) return snapshot;
   const { completions } = snapshot.discovery;
   const total = (field: keyof TokenUsage) => completions.reduce((sum, completion) => sum + completion.usage[field], 0);
   const discovery = { ...snapshot.discovery, completions: completions.length,
-    usage: { input: total('input'), output: total('output'), cacheRead: total('cacheRead'), cacheWrite: total('cacheWrite') } };
+    usage: { input: total('input'), output: total('output'), cacheRead: total('cacheRead'), cacheWrite: total('cacheWrite') },
+    toolCalls: countByName(completions.flatMap(completion => completion.toolCalls)) };
   if (snapshot.state === 'blocked') return { ...snapshot, discovery };
   const { bundle, ...rest } = snapshot;
   return { ...rest, discovery, bundle: { ...bundleReceipt(bundle.directory, bundle.manifest), prompt: bundle.manifest.prompt } };

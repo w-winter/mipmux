@@ -16,9 +16,10 @@ import { DiscoveryReceipt, TokenUsage } from '../src/contracts/discovery.js';
 import { Manifest } from '../src/contracts/context.js';
 import { toolJSON } from './fixtures/tool-json.js';
 
-// MCP ready snapshots give the number of discovery completions and their summed token usage instead of their records.
-const readyDiscovery = Type.Object({ ...DiscoveryReceipt.properties, completions: Type.Integer({ minimum: 1 }), usage: TokenUsage },
-  { additionalProperties: false });
+// MCP ready snapshots give the number of discovery completions, their summed token usage and their tool calls counted by
+// name instead of their records.
+const readyDiscovery = Type.Object({ ...DiscoveryReceipt.properties, completions: Type.Integer({ minimum: 1 }), usage: TokenUsage,
+  toolCalls: Type.Record(Type.String(), Type.Integer({ minimum: 1 })) }, { additionalProperties: false });
 
 async function waitForSettlement(client: Client, jobId: string) {
   const observation = Compile(Type.Object({ localSettled: Type.Boolean() }));
