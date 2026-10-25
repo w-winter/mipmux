@@ -1,6 +1,6 @@
 # mipmux
 
-mipmux indexes explicit filesystem roots, provides source exploration, and prepares verified context packets on macOS and Linux. Use its library, stdio MCP server or CLI. Swift owns extraction and descriptor-relative filesystem access. TypeScript owns workspace policy, inventory generations, persistent artifacts, drafts, Git comparisons, rendering, and verification. An isolated Pi discovery agent can curate a draft through scoped tools before the parent verifies and publishes it.
+mipmux indexes explicit filesystem roots, provides source exploration, and prepares verified context packets on macOS and Linux. Use its library, stdio MCP server or CLI. Swift owns extraction and descriptor-relative filesystem access. TypeScript owns workspace policy, inventory generations, persistent artifacts, drafts, Git comparisons, rendering, and verification. An isolated Pi discovery agent can curate a draft through scoped tools, called directly or from Pi `codemode` scripts, before the parent verifies and publishes it.
 
 A ready code map is a syntax-derived summary. Its symbols and referenced type names are structural hints, subject to the retained parser's limits and heuristics.
 

@@ -79,7 +79,7 @@ test('native HTTP reads add complete fetched documents to a verified packet whil
     await assert.rejects(access(join(ambientHome, '.pi')), { code: 'ENOENT' });
     assert.deepEqual(server.calls, ['read_ticket']);
     for (const request of provider.requests) assert.deepEqual(request.tools.sort(), [
-      ...Object.keys(toolSchemas).filter(name => name !== 'ask_user'), 'mcp__controlled__read_ticket',
+      ...Object.keys(toolSchemas).filter(name => name !== 'ask_user'), 'codemode', 'mcp__controlled__read_ticket',
     ].sort());
     assert(JSON.stringify(provider.requests).includes('not found'));
     assert(!JSON.stringify({ result, requests: provider.requests }).includes('synthetic$!mcp-token'));

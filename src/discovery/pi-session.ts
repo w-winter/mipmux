@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { createAgentSession, createExtensionRuntime, ModelRuntime, SessionManager, SettingsManager,
+import { createAgentSession, ModelRuntime, SessionManager, SettingsManager,
   type AgentSession, type ResourceLoader, type ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { InMemoryModelsStore, lazyStream, type AssistantMessage } from '@earendil-works/pi-ai';
 import type { ThinkingLevel } from '@earendil-works/pi-agent-core';
@@ -11,7 +11,7 @@ import type { Evidence, PiConfig } from './pi-protocol.js';
 import { canonicalJSON, sha256, freeze, WorkspaceFailure } from '../workspace/values.js';
 import { createCredentials, rejectCommands } from './pi-credentials.js';
 import type { AdmittedMcp } from './mcp-config.js';
-import { loadDiscoveryMcp } from './mcp-extension.js';
+import { CODEMODE_TOOL, loadDiscoveryExtensions } from './discovery-extensions.js';
 
 const closed = { additionalProperties: false };
 const modelsValidator = Compile(Type.Object({ providers: Type.Record(Type.String(), Type.Object({
@@ -59,9 +59,9 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     const model = freeze(structuredClone(selected));
     const identity = { provider: model.provider, model: model.id, api: model.api };
     const settings = SettingsManager.inMemory(config.policy);
-    const extensions = mcp ? await loadDiscoveryMcp(mcp, settings) : null;
+    const extensions = await loadDiscoveryExtensions(mcp, settings);
     const resources: ResourceLoader = {
-      getExtensions: () => extensions ?? ({ extensions: [], errors: [], runtime: createExtensionRuntime() }),
+      getExtensions: () => extensions,
       getSkills: () => ({ skills: [], diagnostics: [] }), getPrompts: () => ({ prompts: [], diagnostics: [] }),
       getThemes: () => ({ themes: [], diagnostics: [] }), getAgentsFiles: () => ({ agentsFiles: [] }),
       getSystemPrompt: () => prompt, getSystemPromptSource: () => undefined,
@@ -69,15 +69,19 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
       extendResources: () => {}, reload: async () => {},
     };
     const thinking: ThinkingLevel = config.thinking;
+    // The model is offered mipmux's tools and codemode; scripts can call only mipmux's tools.
+    const scriptable = tools.map(tool => tool.name), toolNames = [...scriptable, CODEMODE_TOOL];
     const created = await createAgentSession({ cwd: '/', agentDir: '/', modelRuntime: runtime, model,
       thinkingLevel: thinking, sessionManager: SessionManager.inMemory('/'), settingsManager: settings,
-      resourceLoader: resources, ...(mcp ? { noTools: 'builtin' as const } : { tools: tools.map(tool => tool.name) }), customTools: tools });
+      resourceLoader: resources, ...(mcp ? { noTools: 'builtin' as const } : { tools: toolNames }), customTools: tools });
     session = created.session;
+    // Naming codemode in the allowlist activates it; without an allowlist, as with MCP, it registers inactive.
+    if (mcp) session.setActiveToolsByName([...session.getActiveToolNames(), CODEMODE_TOOL]);
     if (created.modelFallbackMessage || session.thinkingLevel !== thinking || JSON.stringify(session.model) !== JSON.stringify(model)) {
       throw new WorkspaceFailure('modelSelectionChanged');
     }
-    if (canonicalJSON(session.getActiveToolNames().sort()) !== canonicalJSON(tools.map(tool => tool.name).sort()) ||
-        canonicalJSON(session.getCallableToolNames().sort()) !== canonicalJSON(tools.map(tool => tool.name).sort())) {
+    if (canonicalJSON(session.getActiveToolNames().sort()) !== canonicalJSON([...toolNames].sort()) ||
+        canonicalJSON(session.getCallableToolNames().sort()) !== canonicalJSON([...scriptable].sort())) {
       throw new WorkspaceFailure('unexpectedToolAccess');
     }
     const { baseUrl, headers, ...metadata } = model;
@@ -102,10 +106,10 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
       if (JSON.stringify(dispatched) !== JSON.stringify(model)) throw new WorkspaceFailure('modelSelectionChanged');
       if (mcp) {
         const direct = activeSession.getAllTools().filter(tool => tool.name.startsWith('mcp__') && tool.exposure === 'direct');
-        const expected = [...tools.map(tool => tool.name), ...direct.map(tool => tool.name)].sort();
+        const directNames = direct.map(tool => tool.name);
         const selectedCount = Object.values(mcp.configuration.mcpServers).reduce((count, server) => count + Object.keys(server.toolExposure).length, 0);
-        if (failure || direct.length !== selectedCount || canonicalJSON(activeSession.getActiveToolNames().sort()) !== canonicalJSON(expected) ||
-            canonicalJSON(activeSession.getCallableToolNames().sort()) !== canonicalJSON(expected)) {
+        if (failure || direct.length !== selectedCount || canonicalJSON(activeSession.getActiveToolNames().sort()) !== canonicalJSON([...toolNames, ...directNames].sort()) ||
+            canonicalJSON(activeSession.getCallableToolNames().sort()) !== canonicalJSON([...scriptable, ...directNames].sort())) {
           failure ??= 'mcpToolsUnavailable';
           observe({ kind: 'mcpReadiness', value: { state: 'unavailable' } });
           const code = failure;

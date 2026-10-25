@@ -266,3 +266,19 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     await client.close(); await other.close();
   } finally { await runtime.close(); await provider.close(); }
 });
+
+test('discovery scripts reach mipmux tools through codemode', async () => {
+  const script = 'const reply = await tools.draft_inspect({ view: "metadata", maxOutputBytes: 10000, continuation: null }); return reply;';
+  const provider = await scriptedProvider((_summary, index) => index === 1
+    ? { kind: 'tool', name: 'codemode', input: { code: script }, stop: 'tool_use', tokens: 10 }
+    : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
+  const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 }), calls: string[] = [];
+  try {
+    const result = await new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
+      { call: async call => { calls.push(call.name); return { kind: 'metadata', marker: 'reached-mipmux' }; } }, new AbortController().signal, () => {});
+    assert.equal(result.kind, 'complete', JSON.stringify(result.kind === 'complete' ? null : result.code));
+    assert(provider.requests[0]!.tools.includes('codemode'), provider.requests[0]!.tools.join(','));
+    assert.deepEqual(calls, ['draft_inspect']);
+    assert(JSON.stringify(provider.requests[1]!.messages.at(-1)).includes('reached-mipmux'));
+  } finally { await supervisor.close(); await provider.close(); }
+});

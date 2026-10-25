@@ -8340,7 +8340,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
       "destination": "prompts/discovery.md",
-      "sha256": "c20a867c4d01eec79186a1f2fd2475601f680df22867162ca3bf9f977113b462",
+      "sha256": "229d289e59477ddcb58e802800b83a183150f0c75b1ebd166bff9f4066ea139f",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8364,7 +8364,8 @@
       "changes": [
         "Extract applicable restricted hard-budget policy, all three task modes, optional clarification, elected/read-only review variants and startup metadata into finite named sections. Empty Gemini/run-ID fragments, generic/nil-budget branches and the unused timeout formatter contribute no default text.",
         "Apply the explicit mipmux tool/runtime bindings independently captured by scripts/reference-discovery-bindings.mjs, including tool examples, state wording, task-name removal and parent publication. Keep all remaining source wording, literal whitespace and emphasis.",
-        "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases."
+        "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases.",
+        "List codemode among the available tools, and state in the mipmux runtime bindings that its scripts chain or filter tool calls and that draft changes are made one at a time."
       ]
     }
   ],
