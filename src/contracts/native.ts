@@ -566,6 +566,7 @@ export const NativeFrame = Type.Union([
   Type.Object({ ...envelope, kind: Type.Literal('bytes'), bytes: base64 }, { additionalProperties: false }),
   Type.Object({ ...envelope, kind: Type.Literal('entry'), name: Type.String({ minLength: 1, pattern: '^[^/\\u0000]+$' }),
     entryKind: Type.Union([Type.Literal('file'), Type.Literal('directory'), Type.Literal('symlink'), Type.Literal('other')]),
+    fingerprint: DescriptorFingerprint,
   }, { additionalProperties: false }),
 ]);
 export type NativeFrame = Static<typeof NativeFrame>;

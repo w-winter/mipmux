@@ -6397,13 +6397,14 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "61de9af09bcdf7e92245d7f5242034529686a3a6849e8cb29f3ac78fcf5ccd85",
+      "sha256": "d3c722923a9bda23d9e1e860788a931baae8101c417a4f91b523d0dfd9f0937c",
       "classification": "handwritten",
       "changes": [
         "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework.",
         "WorkspaceFileContextStore.swift:372-373,15031-15034,15386-15400: Bind the number of retained presentations to the existing workspace owner, with an idempotent release for each reservation. Logical root aliases identify the already-pinned physical roots for the workspace lifetime. Operations and drafts share reservations, separately from artifact demands and the per-presentation entry limit.",
         "Capture an existing latest publication without waiting for an unrelated unfinished scan; explicit refresh barriers still wait for their requested publication.",
-        "Capture the immutable runtime global disable value and pass it to ordinary inventory and managed-file completion. Source WorkspaceFileContextStore.swift:10992-11033,13331-13337,13410-13425 suspends generation and graph authority; dynamic app transition machinery is unnecessary for immutable headless settings."
+        "Capture the immutable runtime global disable value and pass it to ordinary inventory and managed-file completion. Source WorkspaceFileContextStore.swift:10992-11033,13331-13337,13410-13425 suspends generation and graph authority; dynamic app transition machinery is unnecessary for immutable headless settings.",
+        "Keep the previous scan's files with their read-time descriptor fingerprints and pass them to the next inventory scan, which reuses an unchanged file's entry as RPCE's content cache trusts an unchanged FileContentFingerprint (FileSystemService+ContentLoading.swift contentFingerprint)."
       ]
     },
     {
@@ -7680,9 +7681,10 @@
       ],
       "changes": [
         "Only inspectSource corresponds to this metadata-admission boundary. Reuse existing confined descriptors and no-follow parent traversal, then fstatat the leaf without reading bytes. Missing, symlink and nonregular metadata is separate from subsequent read failure. The original mipmux read/export/snapshot substrate remains in this file and is not claimed as copied source.",
-        "Revalidate the output root and destination parent device/inode after atomic interim export creation and before acknowledging its path, reusing the existing snapshot writer identity-check contract."
+        "Revalidate the output root and destination parent device/inode after atomic interim export creation and before acknowledging its path, reusing the existing snapshot writer identity-check contract.",
+        "Report each listed entry's descriptor fingerprint from the existing no-follow fstatat, so inventory scans can reuse files whose fingerprint is unchanged."
       ],
-      "sha256": "35e5da1248aa71712e5676c42ef66f2cf2235c984bb5d9acf7d57a1d442d9db1"
+      "sha256": "016df6d7bb44d67a53294b3057e7a4a3fd9ff88206a3589632f48b97eeffee91"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",

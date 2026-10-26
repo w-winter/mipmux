@@ -92,7 +92,8 @@ final class ConfinedFiles {
         guard duplicate >= 0 else { throw ioFailure() }
         guard let stream = fdopendir(duplicate) else { close(duplicate); throw ioFailure() }
         defer { closedir(stream) }
-        var entries: [(String, String)] = []
+        struct Listed { let name: String; let kind: String; let fingerprint: DescriptorFingerprint }
+        var entries: [Listed] = []
         while true {
             errno = 0
             guard let entry = readdir(stream) else {
@@ -114,13 +115,14 @@ final class ConfinedFiles {
             case mode_t(S_IFLNK): "symlink"
             default: "other"
             }
-            entries.append((name, kind))
+            entries.append(Listed(name: name, kind: kind, fingerprint: DescriptorFingerprint(info)))
         }
-        entries.sort { Array($0.0.utf8).lexicographicallyPrecedes(Array($1.0.utf8)) }
+        entries.sort { Array($0.name.utf8).lexicographicallyPrecedes(Array($1.name.utf8)) }
         var digest = SHA256()
-        for (name, kind) in entries {
-            digest.update(data: Data((kind + "\0" + name + "\0").utf8))
-            try request.emit(["kind": "entry", "name": name, "entryKind": kind])
+        for entry in entries {
+            digest.update(data: Data((entry.kind + "\0" + entry.name + "\0").utf8))
+            try request.emit(["kind": "entry", "name": entry.name, "entryKind": entry.kind,
+                              "fingerprint": entry.fingerprint.json])
         }
         guard try fingerprint(directory.value) == before else { throw BridgeFailure("sourceChanged") }
         try validate(root)
@@ -943,6 +945,18 @@ private struct DescriptorFingerprint: Equatable {
     let changedSeconds: String
     let changedNanoseconds: Int
 
+    init(_ info: stat) {
+        #if canImport(Darwin)
+            let modified = info.st_mtimespec, changed = info.st_ctimespec
+        #else
+            let modified = info.st_mtim, changed = info.st_ctim
+        #endif
+        device = String(info.st_dev); inode = String(info.st_ino)
+        size = Int64(info.st_size); mode = UInt32(info.st_mode)
+        modifiedSeconds = String(modified.tv_sec); modifiedNanoseconds = Int(modified.tv_nsec)
+        changedSeconds = String(changed.tv_sec); changedNanoseconds = Int(changed.tv_nsec)
+    }
+
     var json: [String: Any] {
         ["device": device, "inode": inode, "size": size, "mode": mode,
          "modifiedSeconds": modifiedSeconds, "modifiedNanoseconds": modifiedNanoseconds,
@@ -951,16 +965,7 @@ private struct DescriptorFingerprint: Equatable {
 }
 
 private func fingerprint(_ fd: Int32) throws -> DescriptorFingerprint {
-    let info = try status(fd)
-    #if canImport(Darwin)
-        let modified = info.st_mtimespec, changed = info.st_ctimespec
-    #else
-        let modified = info.st_mtim, changed = info.st_ctim
-    #endif
-    return DescriptorFingerprint(device: String(info.st_dev), inode: String(info.st_ino),
-                                 size: Int64(info.st_size), mode: UInt32(info.st_mode),
-                                 modifiedSeconds: String(modified.tv_sec), modifiedNanoseconds: Int(modified.tv_nsec),
-                                 changedSeconds: String(changed.tv_sec), changedNanoseconds: Int(changed.tv_nsec))
+    try DescriptorFingerprint(status(fd))
 }
 
 func ioFailure() -> BridgeFailure {

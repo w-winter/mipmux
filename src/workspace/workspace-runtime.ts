@@ -1,7 +1,7 @@
 import type { BridgeClient } from '../native/bridge-client.js';
 import type { InventorySnapshot, PolicySnapshot } from '../contracts/inventory.js';
 import { ArtifactStore } from './artifact-store.js';
-import { scanInventory } from './inventory.js';
+import { scanInventory, type ReusableFiles } from './inventory.js';
 import { NativeAccess, unavailableRootCode, type OpenRoot } from './source-access.js';
 import type { PolicyDeclaration } from './root-policy.js';
 import { canonicalJSON, freeze, WorkspaceFailure } from './values.js';
@@ -29,6 +29,7 @@ export class WorkspaceRuntime {
   #published = 0;
   #flight: Promise<void> | null = null;
   #snapshot: InventorySnapshot | null = null;
+  #reusable: ReusableFiles = new Map();
   #failure: unknown = null;
   #closing: Promise<void> | null = null;
   readonly #observers = new Set<{ target: number; resolve: (snapshot: InventorySnapshot) => void; reject: (error: unknown) => void }>();
@@ -185,11 +186,11 @@ export class WorkspaceRuntime {
         const target = this.#requested;
         process.stderr.write(JSON.stringify({ level: 'info', event: 'inventoryStarted', workspaceKey: this.key, generation: target }) + '\n');
         const access = new NativeAccess(this.bridge, this.roots, this.#controller.signal);
-        const snapshot = await scanInventory(access,
-          this.declaration, this.key, target, this.artifacts, () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled);
+        const { snapshot, reusable } = await scanInventory(access, this.declaration, this.key, target, this.artifacts,
+          () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled, this.#reusable);
         await this.#refreshManaged(access);
         this.#controller.signal.throwIfAborted();
-        this.#snapshot = snapshot; this.#published = target; this.#failure = null;
+        this.#snapshot = snapshot; this.#reusable = reusable; this.#published = target; this.#failure = null;
         for (const observer of this.#observers) {
           if (observer.target <= target) { this.#observers.delete(observer); observer.resolve(snapshot); }
         }

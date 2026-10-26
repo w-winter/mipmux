@@ -1,26 +1,48 @@
 import { extname } from 'node:path';
 import type { InventoryEntry, InventorySnapshot, SourcePath } from '../contracts/inventory.js';
 import type { DirectoryRef } from '../contracts/workspace.js';
+import type { DescriptorFingerprint } from '../contracts/native.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { ArtifactStore, inventoryDigest } from './artifact-store.js';
 import { RootPolicy, type PolicyDeclaration } from './root-policy.js';
 import { NativeAccess } from './source-access.js';
-import { compareBytes, freeze, WorkspaceFailure } from './values.js';
-import { capturedFile, completeFile } from './inventory-file.js';
+import { canonicalJSON, compareBytes, freeze, WorkspaceFailure } from './values.js';
+import { capturedFile, completeFile, type FileEntry } from './inventory-file.js';
 
+/** Files from the previous scan, keyed by `reusableKey`, with the descriptor fingerprint observed when each was read. */
+export type ReusableFiles = ReadonlyMap<string, { readonly fingerprint: DescriptorFingerprint; readonly entry: FileEntry }>;
+const reusableKey = (source: SourcePath) => source.root + '\0' + source.path;
+
+/**
+ * Scans the declared roots. A file whose listed descriptor fingerprint equals the one recorded when the previous scan read it,
+ * and whose codemap record is still cached, keeps its previous entry without being read again, as RPCE trusts unchanged
+ * file metadata; every other file is read. Returns the snapshot and the files the next scan may reuse.
+ */
 export async function scanInventory(access: NativeAccess, declaration: PolicyDeclaration, workspaceKey: string,
   generation: number, artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal,
-  codeMapsGloballyDisabled: boolean): Promise<InventorySnapshot> {
+  codeMapsGloballyDisabled: boolean, reusable: ReusableFiles): Promise<{ snapshot: InventorySnapshot; reusable: ReusableFiles }> {
   const description = (await access.bridge.request({ kind: 'describe' }, access.signal)).result;
   const supportedExtensions = new Set(description.extensions.map(entry => entry.extension));
   const policy = new RootPolicy(declaration, access);
   const entries: InventoryEntry[] = [];
   const failures: { root: string; directory: DirectoryRef; code: string }[] = [];
-  async function acquire(source: SourcePath): Promise<void> {
+  const next = new Map<string, { fingerprint: DescriptorFingerprint; entry: FileEntry }>();
+  async function reuse(source: SourcePath, listed: DescriptorFingerprint): Promise<FileEntry | null> {
+    const previous = reusable.get(reusableKey(source));
+    if (!previous || canonicalJSON(previous.fingerprint) !== canonicalJSON(listed)) return null;
+    const structural = previous.entry.structural;
+    if (structural.kind !== 'artifact') return previous.entry;
+    const record = await artifacts.read(structural.key);
+    return record === null ? null : freeze({ ...previous.entry, structural: { ...structural, record } });
+  }
+  async function acquire(source: SourcePath, listed: DescriptorFingerprint): Promise<void> {
+    const reused = await reuse(source, listed);
+    if (reused) { entries.push(reused); next.set(reusableKey(source), { fingerprint: listed, entry: reused }); return; }
     try {
       const acquired = await access.read(source, null);
-      entries.push(await completeFile(access, capturedFile(source, acquired, 'discoverable'), acquired, artifacts, retainExtraction,
-        artifactBuildSignal, codeMapsGloballyDisabled));
+      const entry = await completeFile(access, capturedFile(source, acquired, 'discoverable'), acquired, artifacts, retainExtraction,
+        artifactBuildSignal, codeMapsGloballyDisabled);
+      entries.push(entry); next.set(reusableKey(source), { fingerprint: acquired.fingerprint, entry });
     } catch (error) {
       if (!(error instanceof NativeFailure) || ['cancelled', 'nativeWorkerClosed', 'nativeProtocolError'].includes(error.code)) throw error;
       const supported = supportedExtensions.has(extname(source.path).slice(1).toLowerCase());
@@ -51,7 +73,7 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
         if (child.entryKind === 'directory') {
           entries.push({ kind: 'directory', ...source, visibility: 'discoverable' }); await walk(root, source.path); continue;
         }
-        await acquire(source);
+        await acquire(source, child.fingerprint);
       }
     } catch (error) {
       if (!(error instanceof NativeFailure || error instanceof WorkspaceFailure) ||
@@ -67,5 +89,5 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   const snapshot = freeze({ ...body, inventoryDigest: inventoryDigest(body) });
   access.signal.throwIfAborted();
   await artifacts.publishMembership(snapshot);
-  return snapshot;
+  return { snapshot, reusable: next };
 }
