@@ -78,30 +78,42 @@ export class RootPolicy {
     return captured;
   }
 
+  /** The captured controls of the paths' ancestor directories, parents first, for reuse by a hierarchy query. */
+  #capturedAncestors(root: string, paths: readonly string[]): { path: string; controls: CapturedIgnoreInputs['controls'] }[] {
+    // Captured directories are ancestor-closed and each path's ancestors run shallow first, so parents precede children.
+    const directories = new Map<string, CapturedIgnoreInputs['controls']>();
+    for (const path of paths) for (const ancestor of ancestors(path)) {
+      const captured = ancestor && !directories.has(ancestor) ? this.#directories.get(canonicalJSON([root, ancestor])) : undefined;
+      if (captured) directories.set(ancestor, captured.controls);
+    }
+    return [...directories].map(([path, controls]) => ({ path, controls }));
+  }
+
+  /** Evaluates root-relative paths under one root with a single hierarchy query; returns whether each path is admitted. */
+  async #query(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<boolean[]> {
+    const rootInputs = await this.#capture(root, '');
+    const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs,
+      directories: rootInputs.settings.enableHierarchicalIgnores ? this.#capturedAncestors(root, queries.map(query => query.path)) : [],
+      capture: { kind: 'captureIgnoreInputs', root: (await this.access.openRoot(root)).handle, directory: { kind: 'root' },
+        settings: rootInputs.settings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths] },
+      queries: [...queries] }, this.access.signal);
+    for (const captured of result.result.directories) {
+      const value = { ...rootInputs, controls: captured.controls };
+      this.#directories.set(canonicalJSON([root, captured.path]), value);
+      for (const control of captured.controls) {
+        const input = { root, ...control };
+        this.#inputs.set(inputKey(input), input);
+      }
+    }
+    if (result.result.paths.length !== queries.length) throw new WorkspaceFailure('nativeProtocolError');
+    return result.result.paths.map(verdict => !(verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored));
+  }
+
   async admitted(source: SourcePath, directory: boolean): Promise<boolean> {
     if (this.denied(source)) return false;
     for (const binding of this.#bindings(source)) {
-      const rootInputs = await this.#capture(binding.root, '');
-      const directories: { path: string; controls: CapturedIgnoreInputs['controls'] }[] = [];
-      if (rootInputs.settings.enableHierarchicalIgnores) for (const ancestor of ancestors(binding.path)) {
-        if (!ancestor) continue;
-        const captured = this.#directories.get(canonicalJSON([binding.root, ancestor]));
-        if (captured) directories.push({ path: ancestor, controls: captured.controls });
-      }
-      const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs, directories,
-        capture: { kind: 'captureIgnoreInputs', root: (await this.access.openRoot(binding.root)).handle, directory: { kind: 'root' },
-          settings: rootInputs.settings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths] },
-        queries: [{ path: binding.path, isDirectory: directory }] }, this.access.signal);
-      for (const captured of result.result.directories) {
-        const value = { ...rootInputs, controls: captured.controls };
-        this.#directories.set(canonicalJSON([binding.root, captured.path]), value);
-        for (const control of captured.controls) {
-          const input = { root: binding.root, ...control };
-          this.#inputs.set(inputKey(input), input);
-        }
-      }
-      const verdict = result.result.paths[0]!;
-      if (verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored) return false;
+      const [included] = await this.#query(binding.root, [{ path: binding.path, isDirectory: directory }]);
+      if (!included) return false;
     }
     return true;
   }
@@ -122,17 +134,40 @@ export class RootPolicy {
   async revalidate(source: SourcePath, snapshot: PolicySnapshot, visibility: 'discoverable' | 'managedOnly' = 'discoverable'): Promise<void> {
     const admitted = await this.admitted(source, false);
     if (!admitted && visibility === 'discoverable' || this.denied(source)) throw new WorkspaceFailure('policyChanged', source);
+    this.#matchSnapshot(this.#bindings(source).map(binding => ({ root: binding.root, source })), snapshot);
+  }
+
+  /** Revalidates discoverable sources as `revalidate` does, querying each root binding once for all of them. */
+  async revalidateAll(sources: readonly SourcePath[], snapshot: PolicySnapshot): Promise<void> {
+    const byRoot = new Map<string, { source: SourcePath; path: string }[]>();
+    for (const source of sources) {
+      if (this.denied(source)) throw new WorkspaceFailure('policyChanged', source);
+      for (const binding of this.#bindings(source)) {
+        const bound = byRoot.get(binding.root) ?? [];
+        bound.push({ source, path: binding.path }); byRoot.set(binding.root, bound);
+      }
+    }
+    for (const [root, bound] of byRoot) {
+      const included = await this.#query(root, bound.map(({ path }) => ({ path, isDirectory: false })));
+      const excluded = bound.find((_, index) => !included[index]);
+      if (excluded) throw new WorkspaceFailure('policyChanged', excluded.source);
+    }
+    this.#matchSnapshot([...byRoot].map(([root, bound]) => ({ root, source: bound[0]!.source })), snapshot);
+  }
+
+  /** Requires each binding root's captured policy and controlling inputs to equal the snapshot's. */
+  #matchSnapshot(bindings: readonly { root: string; source: SourcePath }[], snapshot: PolicySnapshot): void {
     const captured = this.snapshot();
-    for (const binding of this.#bindings(source)) {
-      const root = captured.roots.find(root => root.root === binding.root);
+    for (const { root: name, source } of bindings) {
+      const root = captured.roots.find(root => root.root === name);
       if (!root) continue;
-      const previousRoot = snapshot.roots.find(root => root.root === binding.root);
+      const previousRoot = snapshot.roots.find(root => root.root === name);
       if (!previousRoot || canonicalJSON(root) !== canonicalJSON(previousRoot)) {
         throw new WorkspaceFailure('policyChanged', source);
       }
-      const relevant = captured.inputs.filter(input => input.root === binding.root);
+      const relevant = captured.inputs.filter(input => input.root === name);
       for (const control of relevant) {
-        const previous = snapshot.inputs.find(input => input.root === binding.root && input.path === control.path);
+        const previous = snapshot.inputs.find(input => input.root === name && input.path === control.path);
         if (!previous || canonicalJSON(control) !== canonicalJSON(previous)) {
           throw new WorkspaceFailure('policyChanged', source);
         }

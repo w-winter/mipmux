@@ -2,7 +2,7 @@ import type { InventorySnapshot, SourcePath, PolicySnapshot } from '../contracts
 import type { ReadRequest, TreeRequest, StructureRequest, SearchRequest } from '../contracts/exploration.js';
 import type { BridgeClient } from '../native/bridge-client.js';
 import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
-import { NativeAccess, unavailableFileCode } from './source-access.js';
+import { NativeAccess, unavailableFileCode, unavailableRootCode } from './source-access.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { RootPolicy, contains, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
 import { canonicalJSON, WorkspaceFailure } from './values.js';
@@ -273,6 +273,30 @@ export class WorkspaceOperation {
       const policy = new RootPolicy(this.declaration, access);
       await policy.revalidate(source, this.snapshot.policy, entry.visibility);
       return access.read(source, entry.identity);
+    });
+  }
+  /**
+   * Revalidates search candidates' controlling policy, querying each root once. Returns the roots whose capability became
+   * unavailable, with their failure; other failures are thrown.
+   */
+  revalidateSearchSources(sources: readonly SourcePath[]) {
+    const captured = structuredClone(sources);
+    return this.#track(async () => {
+      const policy = new RootPolicy(this.declaration, await (this.#access ??= this.#openAccess()));
+      const byRoot = new Map<string, SourcePath[]>();
+      for (const source of captured) {
+        const group = byRoot.get(source.root) ?? [];
+        group.push(source); byRoot.set(source.root, group);
+      }
+      const unavailable = new Map<string, NativeFailure>();
+      for (const [root, group] of byRoot) {
+        try { await policy.revalidateAll(group, this.snapshot.policy); }
+        catch (error) {
+          if (!(error instanceof NativeFailure) || unavailableRootCode(error) === null) throw error;
+          unavailable.set(root, error);
+        }
+      }
+      return unavailable;
     });
   }
   readSource(source: SourcePath) {

@@ -48,9 +48,16 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
     }
     current++; text = null; matching = new Set();
   };
+  if (content === null) {
+    // A path-only pass reads no file contents; it revalidates every candidate's controlling policy.
+    const unavailable = await operation.revalidateSearchSources(candidates);
+    const failure = candidates.map(candidate => unavailable.get(candidate.root)).find(failure => failure !== undefined);
+    if (failure) throw failure;
+    while (current < candidates.length) flush();
+    return { records, limitations, contentMatches, contentFiles, perFileErrors };
+  }
   for (const [index, candidate] of candidates.entries()) {
-    // Each candidate is revalidated even for count-only and path-only continuations.
-    if (content === null) { await operation.readRawSource(candidate); continue; }
+    // Each candidate is revalidated even for count-only continuations.
     try {
       const source = await operation.readSource(candidate);
       const prepared = prepareText(source.text);
