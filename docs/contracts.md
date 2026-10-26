@@ -409,6 +409,8 @@ MCP hosts use the official 2.3.0 `serveStdio` factory and negotiation. Factories
 
 `@earendil-works/pi-codemode` is pinned directly to 1.0.2 alongside Pi 1.0.2. Pi imports the `MCP_TYPESCRIPT_PREAMBLE` declaration exported by that version; the installed-package test exercises this import through the actual discovery worker.
 
+Pi pins `undici` to exactly 8.10.2, which has advisories GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472 and GHSA-xjj6-f33q-929c. `package.json` overrides that pin with 8.12.2. The discovery worker loads `undici` through Pi's settings module but sends model requests through Node's built-in `fetch`, because mipmux does not call Pi's `configureHttpDispatcher`. npm applies `overrides` only in the root project, so a project that installs the mipmux package resolves Pi's pinned 8.10.2 unless that project declares the same override.
+
 The embedded dependency identity and terminal receipt use `buildLockSHA256` for the SHA-256 of the package-lock.json consumed by the build. Installed packages may resolve a different transitive graph; its lockfile and audit are separate deployment evidence.
 
 MCP factory and stdio host `closed` promises resolve after successful cleanup or reject after cleanup failure. EOF, server-close and signal shutdown join application and transport cleanup. Cleanup continues after a failure, then the CLI reports a sanitized failure on stderr and exits nonzero; protocol stdout contains only MCP messages.
