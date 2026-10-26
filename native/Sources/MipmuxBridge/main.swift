@@ -26,6 +26,7 @@ private func execute(_ request: Request, files: ConfinedFiles, extraction: Extra
     case let .scanLiteralLines(input): try input.render()
     case let .scanRegexContent(input): try input.render()
     case let .compileRegexContent(input): try input.render()
+    case let .scanSearchSources(input): try input.render(files: files)
     case let .prepareSearchRecovery(input): input.render()
     case let .projectSearchReply(input): try input.render()
     case let .countSearchReply(input): input.render()

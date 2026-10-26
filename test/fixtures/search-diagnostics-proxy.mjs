@@ -26,17 +26,25 @@ function compileFrame(frame, op) {
   if (op.pattern === 'fixture-protocol-failure') return { ...frame, result: { kind: 'regexCompilation', correction: { kind: 'PRIVATE_DETAIL' } } };
   return frame;
 }
-function scanResult(result, op) {
-  if (op.pattern === 'fixture-path-failure') return { kind: 'regexSearch', matchingLines: 1, matches: [1] };
-  if (op.pattern === 'fixture-per-file' && op.text === 'hello\n') return { kind: 'regexSearchError', diagnostic: diagnostic('file') };
-  return result;
+// Fixture file text, which a scripted match returns as the native scan does for matched files.
+const fixtureText = { 'example.txt': 'hello\n' };
+function scanOutcome(outcome, file, op) {
+  if (outcome.kind !== 'decoded') return outcome;
+  if (op.pattern === 'fixture-path-failure') {
+    return { ...outcome, result: { kind: 'regexSearch', matchingLines: 1, matches: [1] }, text: fixtureText[file.path] };
+  }
+  if (op.pattern === 'fixture-per-file' && file.path === 'example.txt') {
+    return { ...outcome, result: { kind: 'regexSearchError', diagnostic: diagnostic('file') }, text: null };
+  }
+  return outcome;
 }
 function fixtureFrame(frame, op) {
   if (frame.kind !== 'terminal' || !op?.pattern?.includes('fixture-')) return frame;
   switch (op.kind) {
     case 'matchSearchPaths': return { ...frame, result: pathResult(frame.result, op) };
     case 'compileRegexContent': return compileFrame(frame, op);
-    case 'scanRegexContent': return { ...frame, result: scanResult(frame.result, op) };
+    case 'scanSearchSources': return { ...frame, result: { ...frame.result,
+      files: frame.result.files.map((outcome, index) => scanOutcome(outcome, op.files[index], op)) } };
     default: return frame;
   }
 }

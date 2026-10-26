@@ -15,7 +15,7 @@ process.stdin.on('data', bytes => {
     const request = JSON.parse(line);
     if (request.operation.kind === 'refreshSearchScope') querying = true;
     const target = boundary === 'catalog' ? request.operation.kind === 'listDirectory'
-      : querying && request.operation.kind === 'readSource' && request.operation.path === 'victim.ts';
+      : querying && request.operation.kind === 'scanSearchSources' && request.operation.files.some(file => file.path === 'victim.ts');
     if (!held && target && existsSync(process.env.MIPMUX_SCOPE_ARM)) {
       held = true;
       watcher = watch(dirname(process.env.MIPMUX_SCOPE_RELEASE), () => {

@@ -3,7 +3,8 @@ import { spawn } from 'node:child_process';
 
 const child = spawn(process.env.MIPMUX_NATIVE, process.argv.slice(2), { stdio: 'pipe', env: process.env });
 const operation = process.env.MIPMUX_HELD_OPERATION;
-if (!['readSource', 'scanLiteralLines'].includes(operation)) throw new Error('Missing held native operation');
+const terminal = { readSource: 'sourceComplete', scanSearchSources: 'searchSourceScan' }[operation];
+if (!terminal) throw new Error('Missing held native operation');
 let input = '', output = '';
 const held = new Set();
 process.stdin.on('data', bytes => {
@@ -25,7 +26,7 @@ child.stdout.on('data', bytes => {
     const line = output.slice(0, newline); output = output.slice(newline + 1);
     const frame = JSON.parse(line);
     if (held.has(frame.requestId)) {
-      if (frame.result?.kind === (operation === 'readSource' ? 'sourceComplete' : 'literalSearch')) {
+      if (frame.result?.kind === terminal) {
         process.stderr.write(operation === 'readSource' ? 'MIPMUX_READ_HELD\n' : 'MIPMUX_SEARCH_HELD\n');
       }
     }

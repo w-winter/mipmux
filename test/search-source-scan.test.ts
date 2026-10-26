@@ -64,3 +64,12 @@ test('a path-only search reads no file contents', async () => {
     assert.deepEqual(requests.filter(kind => kind === 'readSource'), []);
   } finally { await runtime.close(); }
 });
+
+test('a content search skips RPCE-binary files without reporting them, and searches always-text files', async () => {
+  const { runtime, search } = await fixture();
+  try {
+    const found = await search({ mode: 'content', query: { kind: 'literal', text: 'needle' } });
+    assert.deepEqual(found.files.map(file => file.path).sort(), ['Main.swift', 'notes.md']);
+    assert.deepEqual(found.limitations, []);
+  } finally { await runtime.close(); }
+});

@@ -6,13 +6,38 @@ import { WorkspaceFailure } from '../workspace/values.js';
 import { prepareText, type PreparedText } from './lines.js';
 import type { prepareSearch } from './search-query.js';
 import type { SearchFile } from './search.js';
-import { scanLiteralContent, scanRegexContent } from './content-search.js';
+import { validateMatches } from './content-search.js';
 import { unavailableRootCode } from '../workspace/source-access.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { matchedContext } from './search-reply.js';
 import { SearchPatternFailure } from './search-diagnostic.js';
 
 type SearchPlan = Awaited<ReturnType<typeof prepareSearch>>;
+type Candidate = SearchPlan['candidates'][number];
+type SourceOutcome = Awaited<ReturnType<WorkspaceOperation['scanSearchSources']>>[number];
+// A file returned without text has no matches to place, so only match order and counts are checked.
+const unknownLineCount = Number.MAX_SAFE_INTEGER;
+
+/** An unavailable-root failure becomes a limitation on a first page; any other failure, or one on a continuation, fails the search. */
+function unavailableLimitation(request: SearchRequest, candidate: Candidate, error: NativeFailure) {
+  const code = unavailableRootCode(error);
+  if (request.continuation !== null || code === null) throw error;
+  return { root: candidate.root, path: candidate.path, code };
+}
+
+/** Checks a decoded file against its snapshot decoding and the scanner's protocol; returns its diagnostic or matches. */
+function decodedScan(candidate: Candidate, outcome: Extract<SourceOutcome, { kind: 'decoded' }>, countOnly: boolean) {
+  const { decoding } = candidate, { textIdentity } = outcome;
+  if (decoding.kind !== 'decoded' || decoding.identity.sha256 !== textIdentity.sha256 || decoding.identity.byteCount !== textIdentity.byteCount) {
+    throw new WorkspaceFailure('pipelineChanged', { root: candidate.root, path: candidate.path });
+  }
+  const found = outcome.result;
+  if (found.kind === 'regexSearchError' || found.kind === 'literalSearchError') return found;
+  if (!countOnly && found.matchingLines > 0 && outcome.text === null) throw new WorkspaceFailure('searchProtocolError');
+  const text = outcome.text === null ? null : prepareText(outcome.text);
+  validateMatches(found, text?.lines.length ?? unknownLineCount, countOnly);
+  return { ...found, text };
+}
 type RecoveryAttempt = Extract<NativeResult, { kind: 'searchRecovery' }>['attempts'][number];
 interface ContentCorrection { current: SearchCorrection }
 
@@ -48,40 +73,33 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
     }
     current++; text = null; matching = new Set();
   };
+  // Every candidate's controlling policy is revalidated, even for path-only and count-only continuations.
+  const unavailable = await operation.revalidateSearchSources(candidates);
   if (content === null) {
-    // A path-only pass reads no file contents; it revalidates every candidate's controlling policy.
-    const unavailable = await operation.revalidateSearchSources(candidates);
+    // A path-only pass reads no file contents.
     const failure = candidates.map(candidate => unavailable.get(candidate.root)).find(failure => failure !== undefined);
     if (failure) throw failure;
     while (current < candidates.length) flush();
     return { records, limitations, contentMatches, contentFiles, perFileErrors };
   }
+  // One native request reads, decodes and scans the available candidates; binary and undecodable files are skipped unreported.
+  const scanned = await operation.scanSearchSources(candidates.filter(candidate => !unavailable.has(candidate.root))
+    .map(({ root, path, identity }) => ({ root, path, identity })), { pattern: content.text, isRegex: content.isRegex,
+    caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
+    countOnly: request.countOnly, limit: request.maxResults });
+  let next = 0;
   for (const [index, candidate] of candidates.entries()) {
-    // Each candidate is revalidated even for count-only continuations.
-    try {
-      const source = await operation.readSource(candidate);
-      const prepared = prepareText(source.text);
-      const found = content.isRegex
-        ? await scanRegexContent(operation, source.text, prepared.lines.length, { pattern: content.text,
-          caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
-          countOnly: request.countOnly, limit: request.maxResults - contentMatches })
-        : await scanLiteralContent(operation, source.text, prepared.lines.length, { pattern: content.text,
-          caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
-          countOnly: request.countOnly, limit: request.maxResults - contentMatches });
-      if (found.kind === 'regexSearchError' || found.kind === 'literalSearchError') {
-        perFileErrors.push({ root: candidate.root, path: candidate.path, diagnostic: found.diagnostic });
-      } else {
+    const failure = unavailable.get(candidate.root);
+    const outcome = failure ? null : scanned[next++]!;
+    if (failure) limitations.push(unavailableLimitation(request, candidate, failure));
+    else if (outcome?.kind === 'failed') limitations.push(unavailableLimitation(request, candidate, new NativeFailure(outcome.code, outcome.errno)));
+    else if (outcome?.kind === 'decoded') {
+      const found = decodedScan(candidate, outcome, request.countOnly);
+      if ('diagnostic' in found) perFileErrors.push({ root: candidate.root, path: candidate.path, diagnostic: found.diagnostic });
+      else {
         matches[index]!.matchingLines = found.matchingLines;
         contentMatches += found.matchingLines;
-        if (!request.countOnly) { text = prepared; matching = new Set(found.matches); }
-      }
-    } catch (error) {
-      if (error instanceof WorkspaceFailure && ['binarySource', 'decodeFailed'].includes(error.code)) {
-        limitations.push({ root: candidate.root, path: candidate.path, code: error.code });
-      } else {
-        const code = error instanceof NativeFailure ? unavailableRootCode(error) : null;
-        if (request.continuation !== null || code === null) throw error;
-        limitations.push({ root: candidate.root, path: candidate.path, code });
+        if (!request.countOnly) { text = found.text; matching = new Set(found.matches); }
       }
     }
     flush();

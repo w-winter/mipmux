@@ -33,7 +33,7 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     if (armed && spec.executable === nativeExecutable) {
       const process = spawn({ ...spec, executable: globalThis.process.execPath,
         args: [resolve('test/fixtures/held-native-proxy.mjs'), ...spec.args],
-        env: { ...spec.env, MIPMUX_NATIVE: nativeExecutable, MIPMUX_HELD_OPERATION: boundary === 'read' ? 'readSource' : 'scanLiteralLines',
+        env: { ...spec.env, MIPMUX_NATIVE: nativeExecutable, MIPMUX_HELD_OPERATION: boundary === 'read' ? 'readSource' : 'scanSearchSources',
           MIPMUX_HELD_PATTERN: 'source(' } });
       held.push(process);
       let stderr = '';

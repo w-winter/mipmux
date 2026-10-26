@@ -13,13 +13,15 @@ struct LiteralSearchInput {
         let input = try WireObject(value, keys: [
             "kind", "text", "pattern", "caseSensitive", "wholeWord", "countOnly", "limit"
         ])
-        text = try input.text("text")
-        pattern = try input.text("pattern")
+        try self.init(text: input.text("text"), pattern: input.text("pattern"),
+                      caseSensitive: input.boolean("caseSensitive"), wholeWord: input.boolean("wholeWord"),
+                      countOnly: input.boolean("countOnly"), limit: input.integer("limit"))
+    }
+
+    init(text: String, pattern: String, caseSensitive: Bool, wholeWord: Bool, countOnly: Bool, limit: Int) throws {
         guard !pattern.isEmpty else { throw BridgeFailure("nativeProtocolError") }
-        caseSensitive = try input.boolean("caseSensitive")
-        wholeWord = try input.boolean("wholeWord")
-        countOnly = try input.boolean("countOnly")
-        limit = try input.integer("limit")
+        self.text = text; self.pattern = pattern; self.caseSensitive = caseSensitive
+        self.wholeWord = wholeWord; self.countOnly = countOnly; self.limit = limit
     }
 
     func render() throws -> [String: Any] {

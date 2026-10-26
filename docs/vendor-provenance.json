@@ -6087,11 +6087,12 @@
         "Observe per-file availability under original root capabilities and protected-path checks, even after catalog removal. Existing catalog entries retain policy revalidation. Normalize only expected native unreadability into typed observations; worker, policy, changed-root and cancellation failures propagate.",
         "Add a protected, original-root metadata inspection before byte acquisition. Metadata and read observations remain separate so the source demand classifier is not inferred from an ambiguous read exception.",
         "Settle globally disabled explicit codemap demand with the registered source entry before retaining any extraction. Shared completion independently uses the same captured flag. Optional supported sources remain pending, not unsupported. Source WorkspaceFileContextStore.swift:13331-13337 revokes globally suspended graph authority.",
-        "Revalidate search candidates' controlling policy with one ignore-hierarchy query per root, returning roots whose capability became unavailable."
+        "Revalidate search candidates' controlling policy with one ignore-hierarchy query per root, returning roots whose capability became unavailable.",
+        "Read, decode and scan search candidates in one native request after their policy revalidation."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "0e1f1f8ce8ebb7ce4b02e3fb16808328afe894215915d459d04f38e68fe92851",
+      "sha256": "93450b7e0cfd1e75c2ca2312cd9d405308175a57eba72c69fbe43f2d665fd9df",
       "classification": "handwritten"
     },
     {
@@ -7042,9 +7043,10 @@
       "classification": "handwritten",
       "changes": [
         "Decode captured original text and explicit literal/whole-word/case/collection flags. Validate the source pattern policy and invoke the retained count-only path or collected literal scanner. Return one-based Source hit lines, original count-only summary totals and typed known regex diagnostics. The MCP binding enables fuzzy-space matching when spaces are present; it exposes no independent fuzzy toggle.",
-        "Return the shared SearchDiagnostic wire payload for caught RegexPatternFailure/PCRE2Error values. The unchanged source formatter owns recognized issue/suggestion text; rejection remains distinct. Other failures and cancellation are not converted into diagnostics."
+        "Return the shared SearchDiagnostic wire payload for caught RegexPatternFailure/PCRE2Error values. The unchanged source formatter owns recognized issue/suggestion text; rejection remains distinct. Other failures and cancellation are not converted into diagnostics.",
+        "Add a memberwise initializer so the native search-source scan reuses the literal scanner for each file."
       ],
-      "sha256": "30b737766177ba1268963668775f63bb1fb5997e01c811e90315d2fa5d257445"
+      "sha256": "d897b3a0d766190ba28a62544c82311449e87c8d1fccef9198f12c90a0bf1bb4"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7068,9 +7070,10 @@
       "classification": "handwritten",
       "changes": [
         "Pass captured original decoded text and raw query flags to native literal and regex owners. Validate ordered in-range hit lines and source summary/collection semantics once before grouped presentation.",
-        "Return expected per-file scanner diagnostics as typed data after native schema parsing; validate line summaries only for successful scans. Do not promote a file failure to a global compilation failure."
+        "Return expected per-file scanner diagnostics as typed data after native schema parsing; validate line summaries only for successful scans. Do not promote a file failure to a global compilation failure.",
+        "Keep only the scanner-result validation; content scanning moved into the native search-source scan."
       ],
-      "sha256": "4b422277715ea62e37668f49d1fff4d014c935e33620a65207f89837b9fc9aff"
+      "sha256": "0768b436f768e0791c3ee4931d5d66e1501564e4caa2d14d49fe52abbf8406a4"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7166,9 +7169,10 @@
       "classification": "handwritten",
       "changes": [
         "Decode raw captured content, original pattern/whole-word/case flags and collection policy. Return source matching-line counts and one-based hit lines; collected counts derive from delivered hits, while count-only preserves summary totals. Convert known regex failures into typed results.",
-        "Return the shared SearchDiagnostic wire payload for caught RegexPatternFailure/PCRE2Error values. The unchanged source formatter owns recognized issue/suggestion text; rejection remains distinct. Other failures and cancellation are not converted into diagnostics."
+        "Return the shared SearchDiagnostic wire payload for caught RegexPatternFailure/PCRE2Error values. The unchanged source formatter owns recognized issue/suggestion text; rejection remains distinct. Other failures and cancellation are not converted into diagnostics.",
+        "Add a memberwise initializer so the native search-source scan reuses the regex scanner for each file."
       ],
-      "sha256": "2c6277c0a34f27f06adc7b6d0e8d6a848c1fce10ad92e66a0a5bbe0d15c6044d"
+      "sha256": "2d1343f4c350ad4857b9d59edc0adea8ef6a793ef4d9227b2dcf89fe226e9494"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -7321,9 +7325,10 @@
         "Raw source bytes are revalidated and decoded for every attempted pass. No document collection, retry-result cache, alternate search backend, or new resource limit is introduced.",
         "Preserve expected per-file pattern failures separately from phase failures, with empty hits for the failed file and continued scanning of healthy files. Primary per-file diagnostics survive all-zero regex recovery; positive/literal recovery retains the source result-replacement rules. Expected query-wide recovery compilation failures participate in the same both-mode phase rule. Normalized-stage suppression is limited to the search-local typed failure; host authority, native/protocol failures and cancellation propagate.",
         "Keep correction state across failed content recovery, matching the source inout wasAutoCorrected flag and StoreBackedWorkspaceSearch.swift490-493 warning projection. A healthy both-mode path phase retains the compilation warning even when content recovery subsequently fails.",
-        "A path-only pass reads no file contents, as the source path scan uses only catalog paths (SearchMatch.swift scanPath); it revalidates every candidate's controlling policy and still fails when a candidate root became unavailable."
+        "A path-only pass reads no file contents, as the source path scan uses only catalog paths (SearchMatch.swift scanPath); it revalidates every candidate's controlling policy and still fails when a candidate root became unavailable.",
+        "Scan a content pass's available candidates in one native request that reads, decodes and scans them in order with the running result limit; binary and undecodable files are skipped without a limitation, as the source search returns no content for them (SearchMatch.swift scanFileWithErrorHandling)."
       ],
-      "sha256": "8db68fbc365a8f242688afd2bfe544a39d881e4ab0dfbfb05168ec949747c18b"
+      "sha256": "f9b3f73848ae06254e12e344bea57f28262ffea6ab6123914b99eb3519117cca"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
@@ -7684,9 +7689,10 @@
       "changes": [
         "Only inspectSource corresponds to this metadata-admission boundary. Reuse existing confined descriptors and no-follow parent traversal, then fstatat the leaf without reading bytes. Missing, symlink and nonregular metadata is separate from subsequent read failure. The original mipmux read/export/snapshot substrate remains in this file and is not claimed as copied source.",
         "Revalidate the output root and destination parent device/inode after atomic interim export creation and before acknowledging its path, reusing the existing snapshot writer identity-check contract.",
-        "Report each listed entry's descriptor fingerprint from the existing no-follow fstatat, so inventory scans can reuse files whose fingerprint is unchanged."
+        "Report each listed entry's descriptor fingerprint from the existing no-follow fstatat, so inventory scans can reuse files whose fingerprint is unchanged.",
+        "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, before reading its contents."
       ],
-      "sha256": "016df6d7bb44d67a53294b3057e7a4a3fd9ff88206a3589632f48b97eeffee91"
+      "sha256": "b1dc726d2d9f8f582fc8d6634fed5c49ba97da28d8bfddb38a743e1633ec2134"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",
@@ -8381,6 +8387,36 @@
         "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases.",
         "List codemode among the available tools through the codemode.tool section when discovery offers it, and state in the mipmux runtime bindings that draft changes are made one at a time.",
         "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on."
+      ]
+    },
+    {
+      "source": "Sources/RepoPromptFileSystem/FileSystemService+ContentLoading.swift",
+      "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
+      "sourceSHA256": "21dbd91451a0e9831894b5563008016b79c71e59ccdae70a1b7945f857b3cecc",
+      "destination": "native/Sources/MipmuxBridge/RPCEBinaryProbe.swift",
+      "changes": [
+        "Retain the validated content read's binary probe: always-text extensions and extensionless names skip it, and an 8,192-byte sample with a NUL byte or more than 30% control bytes is binary.",
+        "Sample the opened confined descriptor with pread in place of FileHandle read and seek; the always-binary extension shortcut is not retained because the validated read used by search does not apply it."
+      ],
+      "sha256": "86dbe8c72b77ceb117bf069f82d101407525fbc80bbf68363fc059eb25c8ee73",
+      "classification": "handwritten",
+      "ranges": [
+        [
+          2064,
+          2078
+        ],
+        [
+          2361,
+          2365
+        ],
+        [
+          2592,
+          2618
+        ],
+        [
+          2676,
+          2701
+        ]
       ]
     }
   ],

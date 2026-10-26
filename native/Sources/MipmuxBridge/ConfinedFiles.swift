@@ -165,6 +165,20 @@ final class ConfinedFiles {
     }
 
     func readSource(_ handle: NativeHandle, path: String, expected: SourceIdentity?, request: Request, extraction: Extraction) throws -> [String: Any] {
+        let emit: (Data) throws -> Void = { try request.emit(["kind": "bytes", "bytes": $0.base64EncodedString()]) }
+        let read = try readConfinedSource(handle, path: path, expected: expected, skip: { _ in false }, chunk: emit)
+        guard let read else { throw BridgeFailure("nativeProtocolError") }
+        let ext = (path as NSString).pathExtension
+        return try ["kind": "sourceComplete", "identity": read.identity.json, "fingerprint": read.fingerprint.json,
+                    "decoding": RPCESourceDecoder.describe(RPCESourceDecoder.decode(read.content)),
+                    "key": extraction.key(read.digest, byteCount: read.content.count, extension: ext)]
+    }
+
+    /// Reads a confined regular source that is unchanged across the read and equals `expected` when given. Returns nil,
+    /// without reading the contents, when `skip` declines the opened descriptor.
+    func readConfinedSource(_ handle: NativeHandle, path: String, expected: SourceIdentity?,
+                            skip: (Int32) throws -> Bool,
+                            chunk: (Data) throws -> Void = { _ in }) throws -> ConfinedSource? {
         let root = try sourceRoot(handle)
         var parts = try components(path)
         let leaf = parts.removeLast()
@@ -172,22 +186,19 @@ final class ConfinedFiles {
         let file = try Descriptor(openat(parent.value, leaf, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC))
         let before = try fingerprint(file.value)
         guard try status(file.value).st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw BridgeFailure("nonRegularFile") }
+        if try skip(file.value) { try validate(root); return nil }
         var digest = SHA256()
-        var count = 0
         var content = Data()
         try readChunks(file.value) { bytes in
-            content.append(bytes)
-            digest.update(data: bytes); count += bytes.count
-            try request.emit(["kind": "bytes", "bytes": bytes.base64EncodedString()])
+            content.append(bytes); digest.update(data: bytes)
+            try chunk(bytes)
         }
         let rawDigest = CodeMapRawSourceDigest(bytes: Data(digest.finalize()))
-        let identity = SourceIdentity(sha256: rawDigest.lowercaseHex, byteCount: count)
+        let identity = SourceIdentity(sha256: rawDigest.lowercaseHex, byteCount: content.count)
         guard try fingerprint(file.value) == before else { throw BridgeFailure("sourceChanged") }
         if let expected, expected != identity { throw BridgeFailure("sourceChanged") }
         try validate(root)
-        return try ["kind": "sourceComplete", "identity": identity.json, "fingerprint": before.json,
-                    "decoding": RPCESourceDecoder.describe(RPCESourceDecoder.decode(content)),
-                    "key": extraction.key(rawDigest, byteCount: count, extension: (path as NSString).pathExtension)]
+        return ConfinedSource(content: content, digest: rawDigest, identity: identity, fingerprint: before)
     }
 
     func captureIgnoreInputs(_ input: IgnoreCaptureInput) throws -> [String: Any] {
@@ -935,7 +946,7 @@ private func status(_ fd: Int32) throws -> stat {
     return result
 }
 
-private struct DescriptorFingerprint: Equatable {
+struct DescriptorFingerprint: Equatable {
     let device: String
     let inode: String
     let size: Int64

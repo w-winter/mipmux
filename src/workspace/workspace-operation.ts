@@ -14,7 +14,7 @@ import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
 import type { NativeOperation, NativeHandle } from '../contracts/native.js';
-import type { RootIdentity } from '../contracts/workspace.js';
+import type { RootIdentity, SourceIdentity } from '../contracts/workspace.js';
 import type { WorkspaceRuntime } from './workspace-runtime.js';
 import { capturedFile, completeFile } from './inventory-file.js';
 import { observe } from './observe.js';
@@ -297,6 +297,22 @@ export class WorkspaceOperation {
         }
       }
       return unavailable;
+    });
+  }
+  /**
+   * Reads, decodes and scans search candidates, each expected to have its snapshot identity, in one native request whose
+   * outcomes follow candidate order. Call after `revalidateSearchSources`, with candidates in available roots only.
+   */
+  scanSearchSources(candidates: readonly { root: string; path: string; identity: SourceIdentity }[],
+    scan: Omit<Extract<NativeOperation, { kind: 'scanSearchSources' }>, 'kind' | 'files'>) {
+    const captured = structuredClone({ candidates, scan });
+    return this.#track(async () => {
+      const access = await (this.#access ??= this.#openAccess());
+      const files = [];
+      for (const { root, path, identity } of captured.candidates) files.push({ root: (await access.openRoot(root)).handle, path, expected: identity });
+      const reply = await access.bridge.request({ kind: 'scanSearchSources', files, ...captured.scan }, this.signal);
+      if (reply.result.files.length !== files.length) throw new WorkspaceFailure('searchProtocolError');
+      return reply.result.files;
     });
   }
   readSource(source: SourcePath) {

@@ -12,6 +12,7 @@ const resultKinds = {
   scanLiteralLines: ['literalSearch', 'literalSearchError'],
   scanRegexContent: ['regexSearch', 'regexSearchError'],
   compileRegexContent: ['regexCompilation', 'regexSearchError'],
+  scanSearchSources: ['searchSourceScan'],
   prepareSearchRecovery: ['searchRecovery'],
   projectSearchReply: ['searchReply'],
   countSearchReply: ['searchReply'],
