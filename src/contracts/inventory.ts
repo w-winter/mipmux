@@ -60,9 +60,15 @@ const disposition = Type.Union([
   Type.Object({ kind: Type.Literal('pending'), key: ArtifactKey }, closed),
 ]);
 const visibility = Type.Enum(['discoverable', 'managedOnly']);
+const fileFields = { kind: Type.Literal('file'), root: RootName, path: RelativePath, visibility, identity: SourceIdentity, decoding: SourceDecoding };
+/** A file entry kept for a later scan's reuse; an artifact's record is reloaded from the artifact store by its key. */
+export const ReusableFileEntry = Type.Object({ ...fileFields, structural: Type.Union([
+  Type.Object({ kind: Type.Literal('artifact'), key: ArtifactKey }, closed),
+  Type.Object({ kind: Type.Literal('unsupported') }, closed),
+  Type.Object({ kind: Type.Literal('pending'), key: ArtifactKey }, closed),
+]) }, closed);
 export const InventoryEntry = Type.Union([
-  Type.Object({ kind: Type.Literal('file'), root: RootName, path: RelativePath, visibility,
-    identity: SourceIdentity, decoding: SourceDecoding, structural: disposition }, closed),
+  Type.Object({ ...fileFields, structural: disposition }, closed),
   Type.Object({ kind: Type.Literal('directory'), root: RootName, path: RelativePath, visibility }, closed),
   Type.Object({ kind: Type.Literal('acquisitionFailed'), root: RootName, path: RelativePath, code: Type.String(), structural: Type.Union([
     Type.Object({ kind: Type.Literal('unsupported') }, closed),

@@ -1,7 +1,7 @@
 import type { BridgeClient } from '../native/bridge-client.js';
 import type { InventorySnapshot, PolicySnapshot } from '../contracts/inventory.js';
 import { ArtifactStore } from './artifact-store.js';
-import { scanInventory, type ReusableFiles } from './inventory.js';
+import { scanInventory, type Reuse } from './inventory.js';
 import { NativeAccess, unavailableRootCode, type OpenRoot } from './source-access.js';
 import type { PolicyDeclaration } from './root-policy.js';
 import { canonicalJSON, freeze, WorkspaceFailure } from './values.js';
@@ -29,7 +29,7 @@ export class WorkspaceRuntime {
   #published = 0;
   #flight: Promise<void> | null = null;
   #snapshot: InventorySnapshot | null = null;
-  #reusable: ReusableFiles = new Map();
+  #reusable: Reuse | null = null;
   #failure: unknown = null;
   #closing: Promise<void> | null = null;
   readonly #observers = new Set<{ target: number; resolve: (snapshot: InventorySnapshot) => void; reject: (error: unknown) => void }>();

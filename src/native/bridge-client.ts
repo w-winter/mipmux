@@ -111,7 +111,11 @@ export class BridgeClient {
   #retired: Promise<Error> | null = null;
   #stopping: Promise<ProcessReceipt> | null = null;
 
+  /** The path this bridge's process was started from. */
+  readonly executable: string;
+
   constructor(options: { readonly executable: string; readonly supervisor: ProcessSupervisor; readonly env: Readonly<Record<string, string>> }) {
+    this.executable = options.executable;
     this.#process = options.supervisor.spawn({ executable: options.executable, args: [this.#generation], env: options.env, cwd: '/' });
     this.#process.child.stdout.on('data', (bytes: Buffer) => this.#receive(bytes));
     this.#process.child.stdin.on('error', () => this.#workerFailed());

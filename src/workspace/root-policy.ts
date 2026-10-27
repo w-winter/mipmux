@@ -37,6 +37,19 @@ export function deniedAbsolutePath(declaration: PolicyDeclaration, absolute: str
   return false;
 }
 
+/** Groups by root the `rank`th binding of each source still admitted, with the source's index. */
+function bindingRound(sources: readonly { directory: boolean }[], bindings: readonly (readonly SourcePath[] | null)[],
+  verdicts: readonly boolean[], rank: number): Map<string, { index: number; path: string; isDirectory: boolean }[]> {
+  const round = new Map<string, { index: number; path: string; isDirectory: boolean }[]>();
+  for (const [index, { directory }] of sources.entries()) {
+    const binding = verdicts[index] ? bindings[index]?.[rank] : undefined;
+    if (!binding) continue;
+    const bound = round.get(binding.root) ?? [];
+    bound.push({ index, path: binding.path, isDirectory: directory }); round.set(binding.root, bound);
+  }
+  return round;
+}
+
 /** Captures controlling files and applies the original ordinary-crawl policy at the native boundary. */
 export class RootPolicy {
   readonly #inputs = new Map<string, PolicyInput>();
@@ -110,12 +123,25 @@ export class RootPolicy {
   }
 
   async admitted(source: SourcePath, directory: boolean): Promise<boolean> {
-    if (this.denied(source)) return false;
-    for (const binding of this.#bindings(source)) {
-      const [included] = await this.#query(binding.root, [{ path: binding.path, isDirectory: directory }]);
-      if (!included) return false;
+    const [admitted] = await this.admittedAll([{ source, directory }]);
+    return admitted === true;
+  }
+
+  /**
+   * Returns whether each source is admitted. A source's binding roots are queried in declaration order and stop at the first
+   * exclusion, so the captured controls match querying each source alone; each round sends one query per root.
+   */
+  async admittedAll(sources: readonly { source: SourcePath; directory: boolean }[]): Promise<boolean[]> {
+    const bindings = sources.map(({ source }) => this.denied(source) ? null : this.#bindings(source));
+    const verdicts = bindings.map(bound => bound !== null);
+    for (let rank = 0; ; rank++) {
+      const round = bindingRound(sources, bindings, verdicts, rank);
+      if (!round.size) return verdicts;
+      for (const [root, bound] of round) {
+        const included = await this.#query(root, bound.map(({ path, isDirectory }) => ({ path, isDirectory })));
+        for (const [position, { index }] of bound.entries()) if (!included[position]) verdicts[index] = false;
+      }
     }
-    return true;
   }
 
   async directory(root: string, directory: string): Promise<void> {

@@ -1,7 +1,7 @@
 import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rename, stat, utimes, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rename, stat, utimes, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
@@ -10,22 +10,19 @@ import type { NativeOperation } from '../src/contracts/native.js';
 import type { InventorySnapshot } from '../src/contracts/inventory.js';
 
 const signal = () => new AbortController().signal;
+const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 
-/** A runtime whose bridges record the path of every source read. */
-async function fixture() {
-  const base = await mkdtemp(join(tmpdir(), 'mipmux-inventory-reuse-'));
-  const root = join(base, 'root'), outputRoot = join(base, 'out');
-  await mkdir(root); await mkdir(outputRoot);
-  await writeFile(join(root, 'Model.swift'), 'struct Model { let value: Int }\n');
-  await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int }\n');
-  const reads: string[] = [];
-  const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
-    credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+/** Declares the fixture workspace in a runtime over `base`'s cache whose bridges record source reads and request kinds. */
+async function start(base: string, settings: { nativeExecutable?: string; codeMapsGloballyDisabled?: boolean } = {}) {
+  const reads: string[] = [], kinds: string[] = [];
+  const options = { copyContext: { ...copyContext(), codeMapsGloballyDisabled: settings.codeMapsGloballyDisabled ?? false },
+    cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: settings.nativeExecutable ?? nativeExecutable, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
   class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+          kinds.push(operation.kind);
           if (operation.kind === 'readSource') reads.push(operation.path);
           return super.request(operation, requestSignal);
         }
@@ -34,9 +31,22 @@ async function fixture() {
     }
   }
   const runtime = new Runtime(options);
-  const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot }, signal());
-  await workspace.refresh(signal());
-  return { root, runtime, workspace, reads };
+  const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }], exclusions: [],
+    outputRoot: join(base, 'out') }, signal());
+  return { runtime, workspace, reads, kinds };
+}
+
+/** A refreshed workspace over two top-level files and a subdirectory of three. */
+async function fixture() {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-inventory-reuse-'));
+  const root = join(base, 'root');
+  await mkdir(join(root, 'sub'), { recursive: true }); await mkdir(join(base, 'out'));
+  await writeFile(join(root, 'Model.swift'), 'struct Model { let value: Int }\n');
+  await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int }\n');
+  for (const name of ['a', 'b', 'c']) await writeFile(join(root, 'sub', name + '.swift'), `struct ${name.toUpperCase()} {}\n`);
+  const started = await start(base);
+  await started.workspace.refresh(signal());
+  return { base, root, ...started };
 }
 
 function file(snapshot: InventorySnapshot, path: string) {
@@ -74,6 +84,58 @@ test('a same-size edit with its modification time restored, or a replacement by 
     const replaced = file(await workspace.refresh(signal()), 'Model.swift');
     assert.notDeepEqual(replaced.identity, restored.identity);
   } finally { await runtime.close(); }
+});
+
+test('a refresh sends one ignore query per listed directory besides the root admission', async () => {
+  const { runtime, workspace, kinds } = await fixture();
+  try {
+    kinds.length = 0;
+    await workspace.refresh(signal());
+    const count = (kind: string) => kinds.filter(entry => entry === kind).length;
+    assert.equal(count('queryIgnoreHierarchy'), count('listDirectory') + 1);
+  } finally { await runtime.close(); }
+});
+
+test('a restarted runtime rereads only files changed while it was stopped', async () => {
+  const { base, root, runtime, workspace } = await fixture();
+  const before = await workspace.refresh(signal());
+  await runtime.close();
+  await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int; let more: Int }\n');
+  const restarted = await start(base);
+  try {
+    const after = await restarted.workspace.refresh(signal());
+    assert.deepEqual(restarted.reads, ['Other.swift']);
+    assert.deepEqual(file(after, 'Model.swift'), file(before, 'Model.swift'));
+  } finally { await restarted.runtime.close(); }
+});
+
+test('a saved record is not reused after the native executable or the codemap setting changes', async () => {
+  for (const change of ['executable', 'codemaps'] as const) {
+    const { base, runtime } = await fixture();
+    await runtime.close();
+    const wrapper = join(base, 'wrapped-bridge');
+    await writeFile(wrapper, `#!/bin/sh\nexec '${nativeExecutable}' "$@"\n`); await chmod(wrapper, 0o755);
+    const restarted = await start(base, change === 'executable' ? { nativeExecutable: wrapper } : { codeMapsGloballyDisabled: true });
+    try {
+      const snapshot = await restarted.workspace.refresh(signal());
+      const files = snapshot.entries.filter(entry => entry.kind === 'file').map(entry => entry.path);
+      assert.deepEqual(new Set(restarted.reads), new Set(files), change);
+      if (change === 'codemaps') assert.equal(file(snapshot, 'Model.swift').structural.kind, 'pending');
+    } finally { await restarted.runtime.close(); }
+  }
+});
+
+test('a corrupt saved record fails the scan until it is invalidated', async () => {
+  const { base, runtime, workspace } = await fixture();
+  const key = (await workspace.refresh(signal())).workspaceKey;
+  await runtime.close();
+  await writeFile(join(base, 'cache/v1/workspaces', key, 'reuse.json'), '{}');
+  const restarted = await start(base);
+  try {
+    await assert.rejects(restarted.workspace.refresh(signal()), { code: 'cacheCorrupt', details: { target: { kind: 'reuse', key } } });
+    await restarted.runtime.artifacts.invalidateReuse(key);
+    await restarted.workspace.refresh(signal());
+  } finally { await restarted.runtime.close(); }
 });
 
 test('a reused file whose codemap record was invalidated has its record rebuilt', async () => {

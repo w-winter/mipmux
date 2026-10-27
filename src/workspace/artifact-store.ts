@@ -1,12 +1,22 @@
 import { mkdir, open, readFile, link, unlink, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { NativeResult } from '../contracts/native.js';
-import { artifactValidator, inventoryValidator, type ArtifactRecord, type ArtifactKey, type InventorySnapshot } from '../contracts/inventory.js';
+import Type, { type Static } from 'typebox';
+import { Compile } from 'typebox/compile';
+import { DescriptorFingerprint, type NativeResult } from '../contracts/native.js';
+import { SHA256 } from '../contracts/workspace.js';
+import { artifactValidator, inventoryValidator, ReusableFileEntry, type ArtifactRecord, type ArtifactKey,
+  type InventorySnapshot } from '../contracts/inventory.js';
 import { canonicalJSON, sha256, freeze, WorkspaceFailure } from './values.js';
 import { observe } from './observe.js';
 
 type Extracted = Extract<NativeResult, { kind: 'extracted' }>;
+const closed = { additionalProperties: false };
+/** A scanned file's entry with the descriptor fingerprint observed when the scan read it. */
+const ReusableFile = Type.Object({ fingerprint: DescriptorFingerprint, entry: ReusableFileEntry }, closed);
+export type ReusableFile = Static<typeof ReusableFile>;
+const reuseValidator = Compile(Type.Object({ schemaVersion: Type.Literal(1), workspaceKey: SHA256, binding: SHA256,
+  files: Type.Array(ReusableFile), recordSHA256: SHA256 }, closed));
 function isAbsent(error: unknown): boolean { return error instanceof Error && 'code' in error && error.code === 'ENOENT'; }
 function isExists(error: unknown): boolean { return error instanceof Error && 'code' in error && error.code === 'EEXIST'; }
 
@@ -69,12 +79,36 @@ export class ArtifactStore {
   }
 
   async publishMembership(snapshot: InventorySnapshot): Promise<void> {
-    const directory = join(this.#path, 'workspaces', snapshot.workspaceKey);
+    await this.#replaceWorkspaceRecord(snapshot.workspaceKey, 'membership.json', canonicalJSON(snapshot));
+  }
+
+  /** Saves the files a scan after a restart may reuse, with the binding of the native build and settings that produced them. */
+  async publishReuse(key: string, binding: string, files: readonly ReusableFile[]): Promise<void> {
+    const body = { schemaVersion: 1 as const, workspaceKey: key, binding, files };
+    await this.#replaceWorkspaceRecord(key, 'reuse.json', canonicalJSON({ ...body, recordSHA256: sha256(canonicalJSON(body)) }));
+  }
+
+  /** The saved reusable files when they were saved under `binding`; none when the record is absent or has another binding. */
+  async readReuse(key: string, binding: string): Promise<readonly ReusableFile[]> {
+    let raw: string;
+    try { raw = await readFile(join(this.#path, 'workspaces', key, 'reuse.json'), 'utf8'); }
+    catch (error) { if (isAbsent(error)) return []; throw error; }
+    let value: unknown;
+    try { value = JSON.parse(raw); } catch { throw reuseCorrupt(key); }
+    if (!reuseValidator.Check(value) || value.workspaceKey !== key) throw reuseCorrupt(key);
+    const { recordSHA256, ...body } = value;
+    if (sha256(canonicalJSON(body)) !== recordSHA256) throw reuseCorrupt(key);
+    return value.binding === binding ? freeze(value.files) : [];
+  }
+
+  /** Replaces one record in a workspace's directory by syncing a private temporary file and renaming it into place. */
+  async #replaceWorkspaceRecord(key: string, name: string, body: string): Promise<void> {
+    const directory = join(this.#path, 'workspaces', key);
     await mkdir(directory, { recursive: true, mode: 0o700 });
     const temporary = join(directory, randomUUID() + '.tmp');
     try {
-      await writePrivate(temporary, canonicalJSON(snapshot));
-      await rename(temporary, join(directory, 'membership.json')); await syncDirectory(directory);
+      await writePrivate(temporary, body);
+      await rename(temporary, join(directory, name)); await syncDirectory(directory);
     } finally { await unlink(temporary).catch(error => { if (!isAbsent(error)) throw error; }); }
   }
 
@@ -101,11 +135,19 @@ export class ArtifactStore {
     await unlink(join(this.#path, 'workspaces', key, 'membership.json'));
   }
 
+  async invalidateReuse(key: string): Promise<void> {
+    if (!/^[a-f0-9]{64}$/.test(key)) throw new WorkspaceFailure('invalidWorkspaceKey');
+    await unlink(join(this.#path, 'workspaces', key, 'reuse.json'));
+  }
+
   #artifactPath(digest: string): string { return join(this.#path, 'artifacts', digest.slice(0, 2), digest + '.json'); }
 }
 
 function artifactFailure(code: string, key: string): WorkspaceFailure {
   return new WorkspaceFailure(code, { target: { kind: 'artifact', key } });
+}
+function reuseCorrupt(key: string): WorkspaceFailure {
+  return new WorkspaceFailure('cacheCorrupt', { target: { kind: 'reuse', key } });
 }
 
 export function inventoryDigest(value: Omit<InventorySnapshot, 'inventoryDigest' | 'generation'>): string {
