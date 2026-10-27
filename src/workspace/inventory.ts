@@ -22,6 +22,16 @@ async function reuseBinding(access: NativeAccess, description: Extract<NativeRes
     executable: [executable.dev, executable.ino, executable.size, executable.mtimeNs, executable.ctimeNs].map(String) }));
 }
 
+// File systems round file times down, by up to two seconds on FAT, one on HFS+ and ext3 and a clock tick on Linux, so an
+// in-place rewrite at the same size in the same step as a read can leave the fingerprint unchanged.
+const reuseMarginNanoseconds = 2_000_000_000n;
+
+/** Whether a file read at `readAt` (milliseconds since the epoch) last changed long enough before it to be reused later. */
+function settled(fingerprint: DescriptorFingerprint, readAt: number): boolean {
+  const changed = BigInt(fingerprint.changedSeconds) * 1_000_000_000n + BigInt(fingerprint.changedNanoseconds);
+  return changed < BigInt(readAt) * 1_000_000n - reuseMarginNanoseconds;
+}
+
 /** The entry as reuse keeps it: without an artifact record, which reuse reloads from the artifact store. */
 function reusableFile(fingerprint: DescriptorFingerprint, entry: FileEntry): ReusableFile {
   const { structural } = entry;
@@ -31,7 +41,8 @@ function reusableFile(fingerprint: DescriptorFingerprint, entry: FileEntry): Reu
 /**
  * Scans the declared roots. A file whose listed descriptor fingerprint equals the one recorded when an earlier scan read it,
  * and whose codemap record is still cached, keeps its earlier entry without being read again, as RPCE trusts unchanged
- * file metadata; every other file is read. The first scan after a restart reuses the saved files when the native build and
+ * file metadata; every other file is read. A file whose status changed within the reuse margin of its read is not kept for
+ * reuse, so the next scan reads it again. The first scan after a restart reuses the saved files when the native build and
  * settings that produced them are unchanged. Returns the snapshot and the files the next scan may reuse, and saves them.
  */
 export async function scanInventory(access: NativeAccess, declaration: PolicyDeclaration, workspaceKey: string,
@@ -60,9 +71,11 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
     if (reused) { entries.push(reused); next.set(reusableKey(source), reusableFile(listed, reused)); return; }
     try {
       const acquired = await access.read(source, null);
+      const readAt = Date.now();
       const entry = await completeFile(access, capturedFile(source, acquired, 'discoverable'), acquired, artifacts, retainExtraction,
         artifactBuildSignal, codeMapsGloballyDisabled);
-      entries.push(entry); next.set(reusableKey(source), reusableFile(acquired.fingerprint, entry));
+      entries.push(entry);
+      if (settled(acquired.fingerprint, readAt)) next.set(reusableKey(source), reusableFile(acquired.fingerprint, entry));
     } catch (error) {
       if (!(error instanceof NativeFailure) || ['cancelled', 'nativeWorkerClosed', 'nativeProtocolError'].includes(error.code)) throw error;
       const supported = supportedExtensions.has(extname(source.path).slice(1).toLowerCase());

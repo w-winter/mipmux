@@ -14,7 +14,7 @@ interface SearchInput { readonly mode: 'path' | 'content'; readonly query: { rea
 const signal = () => new AbortController().signal;
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
 
-/** A warm workspace whose bridges record every native request kind issued after `recording` is set. */
+/** A warm workspace whose bridges started while `recording` is set, the search's own, record every native request kind. */
 async function fixture() {
   const base = await mkdtemp(join(tmpdir(), 'mipmux-search-source-scan-'));
   const root = join(base, 'root'), outputRoot = join(base, 'out');
@@ -33,8 +33,9 @@ async function fixture() {
   class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {
+        readonly #recorded = state.recording;
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
-          if (state.recording) requests.push(operation.kind);
+          if (this.#recorded) requests.push(operation.kind);
           return super.request(operation, requestSignal);
         }
       }

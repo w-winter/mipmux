@@ -11,6 +11,8 @@ import type { InventorySnapshot } from '../src/contracts/inventory.js';
 
 const signal = () => new AbortController().signal;
 const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
+// A scan reads a file again when its status-change time was within this margin of the previous read.
+const reuseMarginMs = 2000;
 
 /** Declares the fixture workspace in a runtime over `base`'s cache whose bridges record source reads and request kinds. */
 async function start(base: string, settings: { nativeExecutable?: string; codeMapsGloballyDisabled?: boolean } = {}) {
@@ -36,14 +38,15 @@ async function start(base: string, settings: { nativeExecutable?: string; codeMa
   return { runtime, workspace, reads, kinds };
 }
 
-/** A refreshed workspace over two top-level files and a subdirectory of three. */
-async function fixture() {
+/** A refreshed workspace over two top-level files and a subdirectory of three; `settled` files predate the reuse margin. */
+async function fixture({ settled = false } = {}) {
   const base = await mkdtemp(join(tmpdir(), 'mipmux-inventory-reuse-'));
   const root = join(base, 'root');
   await mkdir(join(root, 'sub'), { recursive: true }); await mkdir(join(base, 'out'));
   await writeFile(join(root, 'Model.swift'), 'struct Model { let value: Int }\n');
   await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int }\n');
   for (const name of ['a', 'b', 'c']) await writeFile(join(root, 'sub', name + '.swift'), `struct ${name.toUpperCase()} {}\n`);
+  if (settled) await new Promise(resolve => setTimeout(resolve, reuseMarginMs + 100));
   const started = await start(base);
   await started.workspace.refresh(signal());
   return { base, root, ...started };
@@ -56,7 +59,7 @@ function file(snapshot: InventorySnapshot, path: string) {
 }
 
 test('a refresh reads only files whose descriptor fingerprint changed', async () => {
-  const { root, runtime, workspace, reads } = await fixture();
+  const { root, runtime, workspace, reads } = await fixture({ settled: true });
   try {
     reads.length = 0;
     const unchanged = await workspace.refresh(signal());
@@ -96,15 +99,26 @@ test('a refresh sends one ignore query per listed directory besides the root adm
   } finally { await runtime.close(); }
 });
 
+test('a file changed within the reuse margin of its read is read again by the next refresh', async () => {
+  const { root, runtime, workspace, reads } = await fixture({ settled: true });
+  try {
+    await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int; let more: Int }\n');
+    await workspace.refresh(signal());
+    reads.length = 0;
+    await workspace.refresh(signal());
+    assert.deepEqual(reads, ['Other.swift']);
+  } finally { await runtime.close(); }
+});
+
 test('a restarted runtime rereads only files changed while it was stopped', async () => {
-  const { base, root, runtime, workspace } = await fixture();
+  const { base, root, runtime, workspace } = await fixture({ settled: true });
   const before = await workspace.refresh(signal());
   await runtime.close();
   await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int; let more: Int }\n');
   const restarted = await start(base);
   try {
     const after = await restarted.workspace.refresh(signal());
-    assert.deepEqual(restarted.reads, ['Other.swift']);
+    assert.deepEqual([...new Set(restarted.reads)], ['Other.swift']);
     assert.deepEqual(file(after, 'Model.swift'), file(before, 'Model.swift'));
   } finally { await restarted.runtime.close(); }
 });
@@ -139,7 +153,7 @@ test('a corrupt saved record fails the scan until it is invalidated', async () =
 });
 
 test('a reused file whose codemap record was invalidated has its record rebuilt', async () => {
-  const { runtime, workspace, reads } = await fixture();
+  const { runtime, workspace, reads } = await fixture({ settled: true });
   try {
     const structural = file(await workspace.refresh(signal()), 'Model.swift').structural;
     assert(structural.kind === 'artifact');
