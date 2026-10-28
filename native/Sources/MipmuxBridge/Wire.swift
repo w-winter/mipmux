@@ -396,15 +396,21 @@ struct Request {
     }
 
     func emit(_ fields: [String: Any]) throws {
-        // Foundation autoreleases each encoded frame; without this pool, a long-lived helper keeps every frame.
-        try autoreleasepool {
-            var value = fields
-            value["wireVersion"] = 1; value["requestId"] = id; value["generation"] = generation
-            var bytes = try JSONSerialization.data(
-                withJSONObject: value, options: [.sortedKeys, .withoutEscapingSlashes])
-            bytes.append(0x0A)
-            try FileHandle.standardOutput.write(contentsOf: bytes)
-        }
+        #if canImport(Darwin)
+            // Darwin's Foundation autoreleases each encoded frame; without this pool, a long-lived helper keeps every
+            // frame. Linux has no autorelease pools.
+            try autoreleasepool { try write(fields) }
+        #else
+            try write(fields)
+        #endif
+    }
+
+    private func write(_ fields: [String: Any]) throws {
+        var value = fields
+        value["wireVersion"] = 1; value["requestId"] = id; value["generation"] = generation
+        var bytes = try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys, .withoutEscapingSlashes])
+        bytes.append(0x0A)
+        try FileHandle.standardOutput.write(contentsOf: bytes)
     }
 
     func terminal(_ result: [String: Any]) throws {
