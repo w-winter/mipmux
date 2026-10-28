@@ -83,28 +83,24 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
     }
     current++; lines = [];
   };
-  // Every candidate's controlling policy is revalidated, even for path-only and count-only continuations.
-  const unavailable = await operation.revalidateSearchSources(candidates);
+  // A first page uses the policy that its refresh just captured. A continuation revalidates every candidate's controlling
+  // policy, even for path-only and count-only pages.
+  if (request.continuation !== null) await operation.revalidateSearchSources(candidates);
   if (content === null) {
     // A path-only pass reads no file contents.
-    const failure = unavailable.find(failure => failure !== null);
-    if (failure) throw failure;
     while (current < candidates.length) flush();
     return { records, limitations, contentMatches, contentFiles, perFileErrors };
   }
-  // One native request reads, decodes and scans the available candidates; binary and undecodable files are skipped unreported.
+  // One native request reads, decodes and scans the candidates; binary and undecodable files are skipped unreported.
   const scanned: ScannedOutcome[] = [];
-  await operation.scanSearchSources(candidates.filter((_, index) => unavailable[index] === null)
-    .map(({ root, path, identity }) => ({ root, path, identity })), { pattern: content.text, isRegex: content.isRegex,
-    caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
-    countOnly: request.countOnly, limit: request.maxResults }, outcome => scanned.push(scannedOutcome(request, outcome)));
-  let next = 0;
+  await operation.scanSearchSources(candidates.map(({ root, path, identity }) => ({ root, path, identity })),
+    { pattern: content.text, isRegex: content.isRegex, caseSensitive: request.query.caseSensitive,
+      wholeWord: request.query.kind !== 'glob' && request.query.wholeWord, countOnly: request.countOnly, limit: request.maxResults },
+    outcome => scanned.push(scannedOutcome(request, outcome)));
   for (const [index, candidate] of candidates.entries()) {
-    const failure = unavailable[index];
-    const outcome = failure ? null : scanned[next++]!;
-    if (failure) limitations.push(unavailableLimitation(request, candidate, failure));
-    else if (outcome?.kind === 'failed') limitations.push(unavailableLimitation(request, candidate, new NativeFailure(outcome.code, outcome.errno)));
-    else if (outcome?.kind === 'decoded') {
+    const outcome = scanned[index]!;
+    if (outcome.kind === 'failed') limitations.push(unavailableLimitation(request, candidate, new NativeFailure(outcome.code, outcome.errno)));
+    else if (outcome.kind === 'decoded') {
       const found = decodedScan(candidate, outcome, request.countOnly);
       if ('diagnostic' in found) perFileErrors.push({ root: candidate.root, path: candidate.path, diagnostic: found.diagnostic });
       else {

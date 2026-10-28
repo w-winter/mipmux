@@ -46,7 +46,7 @@ async function fixture() {
         }
         override async scanSources(operation: Extract<NativeOperation, { kind: 'scanSearchSources' }>, requestSignal: AbortSignal,
           consume: (outcome: NativeSearchSourceOutcome) => void) {
-          if (this.#recorded) requests.push(operation.kind);
+          if (this.#recorded) { requests.push(operation.kind); await state.beforeRequest(operation); }
           return super.scanSources(operation, requestSignal, consume);
         }
       }
@@ -105,14 +105,31 @@ test('a content continuation rejects a file that became binary after its first p
   } finally { await runtime.close(); }
 });
 
-test('a directory removed while a search checks policy limits only the files beneath it', async () => {
+test('a first page uses the policy its refresh captured, and a continuation revalidates it', async () => {
+  const { root, runtime, workspace, requests, state } = await fixture();
+  try {
+    const operation = await workspace.openOperation(signal());
+    try {
+      const query = searchValidator.Parse(searchValidator.Default({ mode: 'path', query: { kind: 'glob', text: 'page-*' }, maxOutputBytes: 100000 }));
+      const full = await operation.fileSearch(query);
+      if (full.kind !== 'search') assert.fail('Missing search result');
+      const cap = serializedBytes({ ...full, files: full.files.slice(0, 1), truncated: true, continuation: { digest: '0'.repeat(64), offset: 1 } });
+      state.recording = true;
+      const first = await operation.fileSearch({ ...query, maxOutputBytes: cap });
+      state.recording = false;
+      if (first.kind !== 'search' || !first.continuation) assert.fail('Missing continuation');
+      assert.deepEqual(requests.filter(kind => kind === 'queryIgnoreHierarchy' || kind === 'captureIgnoreInputs'), []);
+      await writeFile(join(root, '.gitignore'), 'page-b.dat\n');
+      await assert.rejects(operation.fileSearch({ ...query, maxOutputBytes: cap, continuation: first.continuation }), { code: 'policyChanged' });
+    } finally { await operation.close(); }
+  } finally { await runtime.close(); }
+});
+
+test('a directory removed during a search limits only the files beneath it', async () => {
   const { root, runtime, state, search } = await fixture();
   try {
     state.beforeRequest = async operation => {
-      if (operation.kind !== 'queryIgnoreHierarchy') return;
-      const paths = operation.queries.map(query => query.path);
-      // Only the search's policy check queries files from both directories at once.
-      if (paths.includes('kept.txt') && paths.includes('gone/victim.txt')) await rm(join(root, 'gone'), { recursive: true });
+      if (operation.kind === 'scanSearchSources') await rm(join(root, 'gone'), { recursive: true });
     };
     const found = await search({ mode: 'content', query: { kind: 'literal', text: 'vanishing' } });
     assert.deepEqual(found.files.map(file => file.path), ['kept.txt']);

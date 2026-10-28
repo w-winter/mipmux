@@ -2,7 +2,7 @@ import type { InventorySnapshot, SourcePath, PolicySnapshot } from '../contracts
 import type { ReadRequest, TreeRequest, StructureRequest, SearchRequest } from '../contracts/exploration.js';
 import type { BridgeClient } from '../native/bridge-client.js';
 import type { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
-import { NativeAccess, unavailableFileCode, unavailableRootCode } from './source-access.js';
+import { NativeAccess, unavailableFileCode } from './source-access.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { RootPolicy, contains, deniedAbsolutePath, type PolicyDeclaration } from './root-policy.js';
 import { canonicalJSON, WorkspaceFailure } from './values.js';
@@ -275,24 +275,17 @@ export class WorkspaceOperation {
       return access.read(source, entry.identity);
     });
   }
-  /**
-   * Revalidates search candidates' controlling policy, querying each root once. Returns, for each source, the failure that
-   * made its policy unavailable, or null; any other failure is thrown.
-   */
+  /** Revalidates search candidates' controlling policy, querying each root once. */
   revalidateSearchSources(sources: readonly SourcePath[]) {
     const captured = structuredClone(sources);
     return this.#track(async () => {
       const policy = new RootPolicy(this.declaration, await (this.#access ??= this.#openAccess()));
-      const failures = await policy.revalidateAll(captured, this.snapshot.policy);
-      const fatal = failures.find(failure => failure !== null && unavailableRootCode(failure) === null);
-      if (fatal) throw fatal;
-      return failures;
+      await policy.revalidateAll(captured, this.snapshot.policy);
     });
   }
   /**
    * Reads, decodes and scans search candidates, each expected to have its snapshot identity, in one native request. Each
-   * outcome is passed to `consume`, in candidate order, as it arrives; `consume` must not throw. Call after
-   * `revalidateSearchSources`, with available candidates only.
+   * outcome is passed to `consume`, in candidate order, as it arrives; `consume` must not throw.
    */
   scanSearchSources(candidates: readonly { root: string; path: string; identity: SourceIdentity }[],
     scan: Omit<Extract<NativeOperation, { kind: 'scanSearchSources' }>, 'kind' | 'files'>, consume: (outcome: NativeSearchSourceOutcome) => void) {

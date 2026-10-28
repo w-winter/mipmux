@@ -511,9 +511,6 @@ export const NativeResult = Type.Union([
     Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean() }, { additionalProperties: false }),
     Type.Object({ path: Type.String(), isDirectory: Type.Literal(true), ignored: Type.Boolean(),
       requiresTraversal: Type.Boolean(), directoryIncluded: Type.Boolean() }, { additionalProperties: false }),
-    // A query whose ancestor directories could not be captured.
-    Type.Object({ path: Type.String(), isDirectory: Type.Boolean(), failure: Type.Object({ code: NativeWireFailureCode, errno: nativeErrno },
-      { additionalProperties: false }) }, { additionalProperties: false }),
   ])), directories: IgnoreHierarchy.properties.directories }, { additionalProperties: false }),
   IgnoreQueryResult,
   NativeGitPatchResult,

@@ -4,7 +4,6 @@ import type { WorkspaceSpec, PolicyInput, PolicySnapshot, SourcePath, AdmittedRo
 import type { NativeIgnoreInputs } from '../contracts/native.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import { NativeAccess } from './source-access.js';
-import { NativeFailure } from '../native/bridge-client.js';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from './values.js';
 
 export interface PolicyDeclaration {
@@ -103,11 +102,8 @@ export class RootPolicy {
     return [...directories].map(([path, controls]) => ({ path, controls }));
   }
 
-  /**
-   * Evaluates root-relative paths under one root with a single hierarchy query. Returns whether each path is admitted, or
-   * the failure to capture one of its ancestor directories.
-   */
-  async #query(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<(boolean | NativeFailure)[]> {
+  /** Evaluates root-relative paths under one root with a single hierarchy query; returns whether each path is admitted. */
+  async #query(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<boolean[]> {
     const rootInputs = await this.#capture(root, '');
     const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs,
       directories: rootInputs.settings.enableHierarchicalIgnores ? this.#capturedAncestors(root, queries.map(query => query.path)) : [],
@@ -123,17 +119,7 @@ export class RootPolicy {
       }
     }
     if (result.result.paths.length !== queries.length) throw new WorkspaceFailure('nativeProtocolError');
-    return result.result.paths.map(verdict => 'failure' in verdict ? new NativeFailure(verdict.failure.code, verdict.failure.errno)
-      : !(verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored));
-  }
-
-  /** `#query`, except that a failure to capture the root's own policy becomes every path's failure. */
-  async #rootQuery(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<(boolean | NativeFailure)[]> {
-    try { return await this.#query(root, queries); }
-    catch (error) {
-      if (!(error instanceof NativeFailure)) throw error;
-      return queries.map(() => error);
-    }
+    return result.result.paths.map(verdict => !(verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored));
   }
 
   async admitted(source: SourcePath, directory: boolean): Promise<boolean> {
@@ -153,11 +139,7 @@ export class RootPolicy {
       if (!round.size) return verdicts;
       for (const [root, bound] of round) {
         const included = await this.#query(root, bound.map(({ path, isDirectory }) => ({ path, isDirectory })));
-        for (const [position, { index }] of bound.entries()) {
-          const verdict = included[position];
-          if (verdict instanceof NativeFailure) throw verdict;
-          if (!verdict) verdicts[index] = false;
-        }
+        for (const [position, { index }] of bound.entries()) if (!included[position]) verdicts[index] = false;
       }
     }
   }
@@ -181,31 +163,22 @@ export class RootPolicy {
     this.#matchSnapshot(this.#bindings(source).map(binding => ({ root: binding.root, source })), snapshot);
   }
 
-  /**
-   * Revalidates discoverable sources as `revalidate` does, querying each root binding once for all of them. Returns each
-   * source's native failure to capture its policy, or null when it was revalidated: a root whose own policy cannot be
-   * captured fails all of its sources, and an ancestor directory that cannot be captured fails only the sources beneath it.
-   */
-  async revalidateAll(sources: readonly SourcePath[], snapshot: PolicySnapshot): Promise<(NativeFailure | null)[]> {
-    const byRoot = new Map<string, { index: number; path: string }[]>();
-    for (const [index, source] of sources.entries()) {
+  /** Revalidates discoverable sources as `revalidate` does, querying each root binding once for all of them. */
+  async revalidateAll(sources: readonly SourcePath[], snapshot: PolicySnapshot): Promise<void> {
+    const byRoot = new Map<string, { source: SourcePath; path: string }[]>();
+    for (const source of sources) {
       if (this.denied(source)) throw new WorkspaceFailure('policyChanged', source);
       for (const binding of this.#bindings(source)) {
         const bound = byRoot.get(binding.root) ?? [];
-        bound.push({ index, path: binding.path }); byRoot.set(binding.root, bound);
+        bound.push({ source, path: binding.path }); byRoot.set(binding.root, bound);
       }
     }
-    const failures: (NativeFailure | null)[] = sources.map(() => null);
     for (const [root, bound] of byRoot) {
-      const included = await this.#rootQuery(root, bound.map(({ path }) => ({ path, isDirectory: false })));
-      for (const [position, { index }] of bound.entries()) {
-        const verdict = included[position];
-        if (verdict instanceof NativeFailure) failures[index] ??= verdict;
-        else if (!verdict) throw new WorkspaceFailure('policyChanged', sources[index]);
-      }
+      const included = await this.#query(root, bound.map(({ path }) => ({ path, isDirectory: false })));
+      const excluded = bound.find((_, index) => !included[index]);
+      if (excluded) throw new WorkspaceFailure('policyChanged', excluded.source);
     }
-    this.#matchSnapshot([...byRoot].map(([root, bound]) => ({ root, source: sources[bound[0]!.index]! })), snapshot);
-    return failures;
+    this.#matchSnapshot([...byRoot].map(([root, bound]) => ({ root, source: bound[0]!.source })), snapshot);
   }
 
   /** Requires each binding root's captured policy and controlling inputs to equal the snapshot's. */

@@ -84,8 +84,6 @@ struct IgnoreHierarchyInput {
         }
     }
 
-    /// Evaluates every query. A query whose ancestor directories cannot be captured reports that failure in place of
-    /// its verdict, so one unavailable directory does not fail the queries outside it.
     func render(files: ConfinedFiles) async throws -> [String: Any] {
         let provider = CapturedIgnoreRulesProvider(
             byDirectory, settings: settings, files: files, capture: capture, authority: authority
@@ -93,13 +91,7 @@ struct IgnoreHierarchyInput {
         let evaluator = RPCEHierarchicalIgnoreEvaluator(rulesProvider: provider)
         var paths: [[String: Any]] = []
         for query in queries {
-            do {
-                try await paths.append(verdict(query, provider: provider, evaluator: evaluator))
-            } catch let failure as BridgeFailure {
-                paths.append(["path": query.path, "isDirectory": query.isDirectory, "failure": [
-                    "code": failure.code, "errno": failure.number.map { $0 as Any } ?? NSNull()
-                ]])
-            }
+            try await paths.append(verdict(query, provider: provider, evaluator: evaluator))
         }
         return ["kind": "ignoreHierarchy", "paths": paths, "directories": provider.captured]
     }
