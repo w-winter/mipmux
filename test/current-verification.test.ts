@@ -90,7 +90,7 @@ test('current verification admits only recorded material, applies current denies
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
-            if (operation.kind === 'listDirectory') {
+            if (operation.kind === 'listDirectory' || operation.kind === 'walkDirectory') {
               enumeration++;
               if (operation.directory.kind === 'descendant' && operation.directory.path === 'unrelated') {
                 throw new NativeFailure('permissionDenied', 13);

@@ -96,7 +96,7 @@ test('draft admission uses its qualifying refresh snapshot while a later scan is
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
-            if (operation.kind === 'listDirectory') {
+            if (operation.kind === 'walkDirectory') {
               lists++;
               if (lists === 2) { secondEntered.release(); await secondResume.promise; }
               if (lists === 3) {

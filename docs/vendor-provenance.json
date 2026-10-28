@@ -7691,9 +7691,10 @@
         "Only inspectSource corresponds to this metadata-admission boundary. Reuse existing confined descriptors and no-follow parent traversal, then fstatat the leaf without reading bytes. Missing, symlink and nonregular metadata is separate from subsequent read failure. The original mipmux read/export/snapshot substrate remains in this file and is not claimed as copied source.",
         "Revalidate the output root and destination parent device/inode after atomic interim export creation and before acknowledging its path, reusing the existing snapshot writer identity-check contract.",
         "Report each listed entry's descriptor fingerprint from the existing no-follow fstatat, so inventory scans can reuse files whose fingerprint is unchanged.",
-        "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, and a declined file is still hashed and checked against its expected identity without keeping its contents."
+        "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, and a declined file is still hashed and checked against its expected identity without keeping its contents.",
+        "Let a directory listing pass each entry's name and kind to its caller, so an inventory walk evaluates the entries it lists in the same request; reading the entries moved into its own function."
       ],
-      "sha256": "ec58643f9fddef9cefc15f0bcac50d49f119f3871ff3ea813a3026660b391d41"
+      "sha256": "ccde806821fac5b771b34ac02ba2ece2059a52b63589c8502bc4f395b7a21d35"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",

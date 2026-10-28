@@ -23,6 +23,9 @@ final class Descriptor {
     deinit { if !closed { close(value) } }
 }
 
+private struct Listed { let name: String; let kind: String; let fingerprint: DescriptorFingerprint }
+private let listedKinds = [mode_t(S_IFREG): "file", mode_t(S_IFDIR): "directory", mode_t(S_IFLNK): "symlink"]
+
 private struct Root {
     let directory: Descriptor
     let identity: RootIdentity
@@ -84,15 +87,31 @@ final class ConfinedFiles {
         return ["kind": "rootsOpened", "roots": result]
     }
 
-    func list(_ handle: NativeHandle, path: String?, request: Request) throws -> [String: Any] {
+    func list(_ handle: NativeHandle, path: String?, request: Request,
+              visit: (_ name: String, _ kind: String) -> Void = { _, _ in }) throws -> [String: Any] {
         let root = try sourceRoot(handle)
         let directory = try traverse(root.directory.value, components: path.map(components) ?? [])
         let before = try fingerprint(directory.value)
-        let duplicate = dup(directory.value)
+        let entries = try listedEntries(directory.value)
+        var digest = SHA256()
+        for entry in entries {
+            digest.update(data: Data((entry.kind + "\0" + entry.name + "\0").utf8))
+            visit(entry.name, entry.kind)
+            try request.emit(["kind": "entry", "name": entry.name, "entryKind": entry.kind,
+                              "fingerprint": entry.fingerprint.json])
+        }
+        guard try fingerprint(directory.value) == before else { throw BridgeFailure("sourceChanged") }
+        try validate(root)
+        let sha256 = digest.finalize().map { String(format: "%02x", $0) }.joined()
+        return ["kind": "directoryComplete", "count": entries.count, "sha256": sha256]
+    }
+
+    /// The entries of a directory other than `.` and `..`, sorted by the bytes of their names.
+    private func listedEntries(_ directory: Int32) throws -> [Listed] {
+        let duplicate = dup(directory)
         guard duplicate >= 0 else { throw ioFailure() }
         guard let stream = fdopendir(duplicate) else { close(duplicate); throw ioFailure() }
         defer { closedir(stream) }
-        struct Listed { let name: String; let kind: String; let fingerprint: DescriptorFingerprint }
         var entries: [Listed] = []
         while true {
             errno = 0
@@ -106,27 +125,14 @@ final class ConfinedFiles {
                 }
             }
             guard let name else { throw BridgeFailure("invalidFilenameEncoding") }
-            if name == "." || name == ".." { continue }
+            if [".", ".."].contains(name) { continue }
             var info = stat()
-            guard fstatat(directory.value, name, &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
-            let kind = switch info.st_mode & mode_t(S_IFMT) {
-            case mode_t(S_IFREG): "file"
-            case mode_t(S_IFDIR): "directory"
-            case mode_t(S_IFLNK): "symlink"
-            default: "other"
-            }
+            guard fstatat(directory, name, &info, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+            let kind = listedKinds[info.st_mode & mode_t(S_IFMT)] ?? "other"
             entries.append(Listed(name: name, kind: kind, fingerprint: DescriptorFingerprint(info)))
         }
         entries.sort { Array($0.name.utf8).lexicographicallyPrecedes(Array($1.name.utf8)) }
-        var digest = SHA256()
-        for entry in entries {
-            digest.update(data: Data((entry.kind + "\0" + entry.name + "\0").utf8))
-            try request.emit(["kind": "entry", "name": entry.name, "entryKind": entry.kind,
-                              "fingerprint": entry.fingerprint.json])
-        }
-        guard try fingerprint(directory.value) == before else { throw BridgeFailure("sourceChanged") }
-        try validate(root)
-        return ["kind": "directoryComplete", "count": entries.count, "sha256": digest.finalize().map { String(format: "%02x", $0) }.joined()]
+        return entries
     }
 
     func fingerprintGitDiff(_ input: GitFingerprintInput) throws -> [String: Any] {

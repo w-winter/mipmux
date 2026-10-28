@@ -279,6 +279,22 @@ const IgnoreHierarchy = Type.Object({ kind: Type.Literal('queryIgnoreHierarchy')
   directories: Type.Array(Type.Object({ path: RelativePath, controls: Type.Array(IgnoreControl) }, { additionalProperties: false })),
   queries: Type.Array(Type.Object({ path: Type.String(), isDirectory: Type.Boolean() }, { additionalProperties: false })),
 }, { additionalProperties: false });
+/**
+ * Lists one directory of an inventory walk and evaluates its entries against the walk's ignore rules, which the helper keeps
+ * between the walk's requests. A walk starts with its root's request, which carries the root's captured inputs; later
+ * requests name the same walk, and each descendant follows its parent.
+ */
+const IgnoreWalk = Type.Union([
+  Type.Object({ kind: Type.Literal('walkDirectory'), walk: Type.String({ minLength: 1 }), root: handle,
+    directory: DirectoryRef.anyOf[0], rootInputs: NativeIgnoreInputs, capture: IgnoreCapture }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('walkDirectory'), walk: Type.String({ minLength: 1 }), root: handle,
+    directory: DirectoryRef.anyOf[1] }, { additionalProperties: false }),
+]);
+const IgnoreVerdict = Type.Union([
+  Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean() }, { additionalProperties: false }),
+  Type.Object({ path: Type.String(), isDirectory: Type.Literal(true), ignored: Type.Boolean(),
+    requiresTraversal: Type.Boolean(), directoryIncluded: Type.Boolean() }, { additionalProperties: false }),
+]);
 
 export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRootPath: Type.String(), repoKey: Type.String(),
   repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
@@ -352,7 +368,7 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('electGitTarget'), roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String() }, { additionalProperties: false })),
     paths: Type.Array(Type.String()) }, { additionalProperties: false }),
   NativeFileBlockInput,
-  IgnoreCapture, IgnoreHierarchy,
+  IgnoreCapture, IgnoreHierarchy, ...IgnoreWalk.anyOf,
   IgnoreQueryInput,
   NativeGitPatchInput,
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
@@ -507,11 +523,8 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }, { additionalProperties: false }),
   NativeFileBlockResult,
   NativeIgnoreInputs,
-  Type.Object({ kind: Type.Literal('ignoreHierarchy'), paths: Type.Array(Type.Union([
-    Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean() }, { additionalProperties: false }),
-    Type.Object({ path: Type.String(), isDirectory: Type.Literal(true), ignored: Type.Boolean(),
-      requiresTraversal: Type.Boolean(), directoryIncluded: Type.Boolean() }, { additionalProperties: false }),
-  ])), directories: IgnoreHierarchy.properties.directories }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('ignoreHierarchy'), paths: Type.Array(IgnoreVerdict), directories: IgnoreHierarchy.properties.directories },
+    { additionalProperties: false }),
   IgnoreQueryResult,
   NativeGitPatchResult,
   Type.Object({ kind: Type.Literal('gitComparison'), comparison: NativeGitComparison, rawKey: Type.String(), display: Type.String() }, { additionalProperties: false }),
@@ -556,6 +569,10 @@ export const NativeResult = Type.Union([
     handle, name: RootName, access, identity: RootIdentity,
   }, { additionalProperties: false })) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('directoryComplete'), count: SafeCount, sha256: SHA256 }, { additionalProperties: false }),
+  // Each listed entry's verdict, in listing order; null for an entry that is neither a regular file nor a directory.
+  Type.Object({ kind: Type.Literal('directoryWalked'), count: SafeCount, sha256: SHA256,
+    verdicts: Type.Array(Type.Union([IgnoreVerdict, Type.Null()])), directories: IgnoreHierarchy.properties.directories },
+  { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('sourceInspected') }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('sourceComplete'), identity: SourceIdentity,
     fingerprint: DescriptorFingerprint, key: Type.Union([ArtifactKey, Type.Null()]),

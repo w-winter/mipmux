@@ -1,20 +1,14 @@
 import Foundation
 
-struct IgnoreHierarchyInput {
-    private let byDirectory: [String: IgnoreRules]
-    private let settings: IgnoreSettings
-    private let queries: [(path: String, isDirectory: Bool)]
-    private let hierarchical: Bool
-    private let capture: IgnoreCaptureInput
-    private let authority: [String: Any]
+/// A root's captured ignore inputs, compiled into its rules.
+struct CompiledIgnoreRoot {
+    let rules: IgnoreRules
+    let settings: IgnoreSettings
+    let authority: [String: Any]
 
     init(_ value: Any) throws {
-        let fields = try WireObject(value, keys: ["kind", "capture", "rootInputs", "directories", "queries"])
-        let root = try WireObject(fields.value("rootInputs"), keys: ["kind", "authority", "settings", "controls"])
-        capture = try IgnoreCaptureInput(fields.value("capture"))
-        let settings = try IgnoreSettings(root.value("settings"))
-        self.settings = settings
-        hierarchical = settings.enableHierarchicalIgnores
+        let root = try WireObject(value, keys: ["kind", "authority", "settings", "controls"])
+        settings = try IgnoreSettings(root.value("settings"))
         let authority = try root.value("authority")
         guard let object = authority as? [String: Any], let kind = object["kind"] as? String else {
             throw BridgeFailure("nativeProtocolError")
@@ -31,12 +25,30 @@ struct IgnoreHierarchyInput {
             guard kind == "nonGit" else { throw BridgeFailure("nativeProtocolError") }
             policy = .nonGitRoot
         }
-        guard let inputs = try root.value("controls") as? [Any],
-              let directories = try fields.value("directories") as? [Any],
+        guard let inputs = try root.value("controls") as? [Any] else { throw BridgeFailure("nativeProtocolError") }
+        rules = IgnoreRules(policy: policy)
+        try IgnoreHierarchyInput.apply(inputs, to: rules, settings: settings, root: true)
+    }
+}
+
+struct IgnoreHierarchyInput {
+    private let byDirectory: [String: IgnoreRules]
+    private let settings: IgnoreSettings
+    private let queries: [(path: String, isDirectory: Bool)]
+    private let hierarchical: Bool
+    private let capture: IgnoreCaptureInput
+    private let authority: [String: Any]
+
+    init(_ value: Any) throws {
+        let fields = try WireObject(value, keys: ["kind", "capture", "rootInputs", "directories", "queries"])
+        capture = try IgnoreCaptureInput(fields.value("capture"))
+        let root = try CompiledIgnoreRoot(fields.value("rootInputs"))
+        settings = root.settings
+        hierarchical = root.settings.enableHierarchicalIgnores
+        authority = root.authority
+        guard let directories = try fields.value("directories") as? [Any],
               let queries = try fields.value("queries") as? [Any] else { throw BridgeFailure("nativeProtocolError") }
-        let rules = IgnoreRules(policy: policy)
-        try Self.apply(inputs, to: rules, settings: settings, root: true)
-        var byDirectory = ["": rules]
+        var byDirectory = ["": root.rules]
         for entry in directories {
             let directory = try WireObject(entry, keys: ["path", "controls"])
             let path = try directory.string("path")
@@ -57,7 +69,7 @@ struct IgnoreHierarchyInput {
         }
     }
 
-    fileprivate static func apply(_ inputs: [Any], to rules: IgnoreRules, settings: IgnoreSettings, root: Bool) throws {
+    static func apply(_ inputs: [Any], to rules: IgnoreRules, settings: IgnoreSettings, root: Bool) throws {
         for entry in inputs {
             let input = try WireObject(entry, keys: ["path", "directory", "name", "authority", "content"])
             let content = try input.value("content")
@@ -91,13 +103,16 @@ struct IgnoreHierarchyInput {
         let evaluator = RPCEHierarchicalIgnoreEvaluator(rulesProvider: provider)
         var paths: [[String: Any]] = []
         for query in queries {
-            try await paths.append(verdict(query, provider: provider, evaluator: evaluator))
+            try await paths.append(Self.verdict(query, hierarchical: hierarchical, provider: provider,
+                                                evaluator: evaluator))
         }
-        return ["kind": "ignoreHierarchy", "paths": paths, "directories": provider.captured]
+        return ["kind": "ignoreHierarchy", "paths": paths, "directories": provider.takeCaptured()]
     }
 
-    private func verdict(_ query: (path: String, isDirectory: Bool), provider: CapturedIgnoreRulesProvider,
-                         evaluator: RPCEHierarchicalIgnoreEvaluator) async throws -> [String: Any] {
+    /// Whether a root-relative path is ignored and, for a directory, whether it is traversed and included.
+    static func verdict(_ query: (path: String, isDirectory: Bool), hierarchical: Bool,
+                        provider: CapturedIgnoreRulesProvider,
+                        evaluator: RPCEHierarchicalIgnoreEvaluator) async throws -> [String: Any] {
         let ignored = hierarchical
             ? try await evaluator.isIgnored(relativePath: query.path, isDirectory: query.isDirectory)
             : provider.root.isIgnored(relativePath: query.path, isDirectory: query.isDirectory)
@@ -114,15 +129,23 @@ struct IgnoreHierarchyInput {
     }
 }
 
-private final class CapturedIgnoreRulesProvider: RPCEHierarchicalIgnoreEvaluator.RulesProvider {
+/// Compiled rules by root-relative directory. A directory without rules has its controls captured, checked against the
+/// root's authority and compiled on first use.
+final class CapturedIgnoreRulesProvider: RPCEHierarchicalIgnoreEvaluator.RulesProvider {
     private var byDirectory: [String: IgnoreRules]
     private let settings: IgnoreSettings
     private let files: ConfinedFiles
     private let capture: IgnoreCaptureInput
     private let authority: [String: Any]
-    private(set) var captured: [[String: Any]] = []
+    private var captured: [[String: Any]] = []
     var root: IgnoreRules {
         byDirectory[""]!
+    }
+
+    /// The directories captured since the last call, with their controls, in capture order.
+    func takeCaptured() -> [[String: Any]] {
+        defer { captured = [] }
+        return captured
     }
 
     init(

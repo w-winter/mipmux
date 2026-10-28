@@ -202,7 +202,7 @@ test('incomplete enumeration permits known-source exploration but refuses draft 
     override makeBridge() {
       class Bridge extends BridgeClient {
         override request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
-          if (operation.kind === 'listDirectory' && operation.directory.kind === 'descendant' && operation.directory.path === 'blocked') {
+          if (operation.kind === 'walkDirectory' && operation.directory.kind === 'descendant' && operation.directory.path === 'blocked') {
             return Promise.reject(new NativeFailure('permissionDenied', null));
           }
           return super.request(operation, signal);

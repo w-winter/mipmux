@@ -53,7 +53,7 @@ const resultKinds = {
   prepareGitDiff: ['gitDiffArguments'], parseGitDiffStats: ['gitDiffStats'],
   normalizeGitUntrackedPatch: ['gitUntrackedPatch'],
   prepareGitShow: ['gitShowArguments', 'gitShowError'], parseGitShowMetadata: ['gitShowMetadata', 'gitShowError'], projectGitShow: ['gitShow'],
-  describe: ['description'], openRoots: ['rootsOpened'], listDirectory: ['directoryComplete'],
+  describe: ['description'], openRoots: ['rootsOpened'], listDirectory: ['directoryComplete'], walkDirectory: ['directoryWalked'],
   prepareGitRead: ['gitReadArguments'], projectGitRead: ['gitLog', 'gitBlame', 'gitStatus', 'gitStatusError'],
   sliceReadText: ['readTextSlice', 'readTextRangeError'],
   renderFileBlock: ['fileBlock'],
@@ -208,7 +208,7 @@ export class BridgeClient {
           if (pending.operation.kind !== 'readSource') throw new NativeFailure('nativeProtocolError', null);
           pending.chunks.push(decodeBase64(value.bytes));
         } else if (value.kind === 'entry') {
-          if (pending.operation.kind !== 'listDirectory') throw new NativeFailure('nativeProtocolError', null);
+          if (pending.operation.kind !== 'listDirectory' && pending.operation.kind !== 'walkDirectory') throw new NativeFailure('nativeProtocolError', null);
           pending.entries.push(value);
         } else if (value.kind === 'scanOutcome') {
           if (!pending.consume) throw new NativeFailure('nativeProtocolError', null);
@@ -250,7 +250,7 @@ export class BridgeClient {
       }
     }
     if (result.kind === 'searchSourceScan' && result.count !== pending.delivered) throw new Error('scan outcome count mismatch');
-    if (result.kind === 'directoryComplete') {
+    if (result.kind === 'directoryComplete' || result.kind === 'directoryWalked') {
       const canonical = pending.entries.map(entry => `${entry.entryKind}\0${entry.name}\0`).join('');
       if (result.count !== pending.entries.length || result.sha256 !== sha256(Buffer.from(canonical))) throw new Error('directory identity mismatch');
     }

@@ -1,7 +1,8 @@
+import { randomUUID } from 'node:crypto';
 import { posix } from 'node:path';
 import type { Static } from 'typebox';
 import type { WorkspaceSpec, PolicyInput, PolicySnapshot, SourcePath, AdmittedRoot, IgnoreSettings } from '../contracts/inventory.js';
-import type { NativeIgnoreInputs } from '../contracts/native.js';
+import type { NativeFrame, NativeHandle, NativeIgnoreInputs, NativeResult } from '../contracts/native.js';
 import type { RootIdentity } from '../contracts/workspace.js';
 import { NativeAccess } from './source-access.js';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from './values.js';
@@ -20,7 +21,13 @@ function ancestors(path: string): string[] {
   return ['', ...parts.map((_, index) => parts.slice(0, index + 1).join('/'))];
 }
 type CapturedIgnoreInputs = Static<typeof NativeIgnoreInputs>;
+type CapturedDirectories = Extract<NativeResult, { kind: 'ignoreHierarchy' }>['directories'];
+type Verdict = Extract<NativeResult, { kind: 'ignoreHierarchy' }>['paths'][number];
+type ListedEntry = Extract<NativeFrame, { kind: 'entry' }>;
+/** Admission for a known root binding of each source, by root-relative path. */
+interface KnownVerdicts { readonly root: string; readonly verdicts: ReadonlyMap<string, boolean> }
 function inputKey(input: PolicyInput): string { return canonicalJSON([input.root, input.path]); }
+function admittedVerdict(verdict: Verdict): boolean { return !(verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored); }
 
 /** Applies host denies to physical evidence and its logical loaded-root path. */
 export function deniedAbsolutePath(declaration: PolicyDeclaration, absolute: string, logicalPath: string): boolean {
@@ -35,6 +42,12 @@ export function deniedAbsolutePath(declaration: PolicyDeclaration, absolute: str
     if (rule.kind === 'prefix' ? contains(rule.path, binding.path) : prefixes.some(path => posix.matchesGlob(path, rule.pattern))) return true;
   }
   return false;
+}
+
+function knownVerdict(known: KnownVerdicts, path: string): boolean {
+  const verdict = known.verdicts.get(path);
+  if (verdict === undefined) throw new WorkspaceFailure('nativeProtocolError');
+  return verdict;
 }
 
 /** Groups by root the `rank`th binding of each source still admitted, with the source's index. */
@@ -55,6 +68,7 @@ export class RootPolicy {
   readonly #inputs = new Map<string, PolicyInput>();
   readonly #roots = new Map<string, CapturedIgnoreInputs>();
   readonly #directories = new Map<string, CapturedIgnoreInputs>();
+  #walk: string | null = null;
   constructor(readonly declaration: PolicyDeclaration, readonly access: NativeAccess) {}
 
   #absolute(source: SourcePath): string { return posix.join(this.access.root(source.root).identity.canonicalPath, source.path); }
@@ -102,15 +116,15 @@ export class RootPolicy {
     return [...directories].map(([path, controls]) => ({ path, controls }));
   }
 
-  /** Evaluates root-relative paths under one root with a single hierarchy query; returns whether each path is admitted. */
-  async #query(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<boolean[]> {
-    const rootInputs = await this.#capture(root, '');
-    const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs,
-      directories: rootInputs.settings.enableHierarchicalIgnores ? this.#capturedAncestors(root, queries.map(query => query.path)) : [],
-      capture: { kind: 'captureIgnoreInputs', root: (await this.access.openRoot(root)).handle, directory: { kind: 'root' },
-        settings: rootInputs.settings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths] },
-      queries: [...queries] }, this.access.signal);
-    for (const captured of result.result.directories) {
+  /** The request that captures a root's ignore inputs, which native code repeats for the directories it captures. */
+  #captureRequest(handle: NativeHandle, rootInputs: CapturedIgnoreInputs) {
+    return { kind: 'captureIgnoreInputs' as const, root: handle, directory: { kind: 'root' as const },
+      settings: rootInputs.settings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths] };
+  }
+
+  /** Records the directories that native code captured while evaluating paths under `root`. */
+  #record(root: string, rootInputs: CapturedIgnoreInputs, directories: CapturedDirectories): void {
+    for (const captured of directories) {
       const value = { ...rootInputs, controls: captured.controls };
       this.#directories.set(canonicalJSON([root, captured.path]), value);
       for (const control of captured.controls) {
@@ -118,8 +132,51 @@ export class RootPolicy {
         this.#inputs.set(inputKey(input), input);
       }
     }
+  }
+
+  /** Evaluates root-relative paths under one root with a single hierarchy query; returns whether each path is admitted. */
+  async #query(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<boolean[]> {
+    const rootInputs = await this.#capture(root, '');
+    const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs,
+      directories: rootInputs.settings.enableHierarchicalIgnores ? this.#capturedAncestors(root, queries.map(query => query.path)) : [],
+      capture: this.#captureRequest((await this.access.openRoot(root)).handle, rootInputs),
+      queries: [...queries] }, this.access.signal);
+    this.#record(root, rootInputs, result.result.directories);
     if (result.result.paths.length !== queries.length) throw new WorkspaceFailure('nativeProtocolError');
-    return result.result.paths.map(verdict => !(verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored));
+    return result.result.paths.map(admittedVerdict);
+  }
+
+  /**
+   * Lists one directory of an inventory walk and decides admission for its regular files and directories, as `directory`,
+   * a listing and `admittedAll` would together, in one native request. The helper keeps the walk's compiled rules between
+   * requests, so a policy walks one inventory, on one bridge, listing each root before its descendants and each directory
+   * before its children.
+   */
+  async walkDirectory(root: string, path: string): Promise<{ children: { child: ListedEntry; source: SourcePath }[];
+    admitted: ReadonlySet<ListedEntry> }> {
+    const rootInputs = await this.#capture(root, '');
+    const handle = (await this.access.openRoot(root)).handle, walk = this.#walk ??= randomUUID();
+    const reply = await this.access.bridge.request(path
+      ? { kind: 'walkDirectory', walk, root: handle, directory: { kind: 'descendant', path } }
+      : { kind: 'walkDirectory', walk, root: handle, directory: { kind: 'root' }, rootInputs, capture: this.#captureRequest(handle, rootInputs) },
+    this.access.signal);
+    this.#record(root, rootInputs, reply.result.directories);
+    const { verdicts } = reply.result;
+    if (verdicts.length !== reply.entries.length) throw new WorkspaceFailure('nativeProtocolError');
+    const known = new Map<string, boolean>();
+    const children = reply.entries.map((child, index) => {
+      const source = { root, path: path ? path + '/' + child.name : child.name }, verdict = verdicts[index] ?? null;
+      const evaluated = child.entryKind === 'file' || child.entryKind === 'directory';
+      if (evaluated !== (verdict !== null) || verdict && (verdict.path !== source.path || verdict.isDirectory !== (child.entryKind === 'directory'))) {
+        throw new WorkspaceFailure('nativeProtocolError');
+      }
+      if (verdict) known.set(source.path, admittedVerdict(verdict));
+      return { child, source };
+    });
+    const candidates = children.filter(({ child, source }) => !this.denied(source) && (child.entryKind === 'file' || child.entryKind === 'directory'));
+    const included = await this.#admit(candidates.map(({ child, source }) => ({ source, directory: child.entryKind === 'directory' })),
+      { root, verdicts: known });
+    return { children, admitted: new Set(candidates.filter((_, index) => included[index]).map(({ child }) => child)) };
   }
 
   async admitted(source: SourcePath, directory: boolean): Promise<boolean> {
@@ -131,14 +188,18 @@ export class RootPolicy {
    * Returns whether each source is admitted. A source's binding roots are queried in declaration order and stop at the first
    * exclusion, so the captured controls match querying each source alone; each round sends one query per root.
    */
-  async admittedAll(sources: readonly { source: SourcePath; directory: boolean }[]): Promise<boolean[]> {
+  admittedAll(sources: readonly { source: SourcePath; directory: boolean }[]): Promise<boolean[]> { return this.#admit(sources, null); }
+
+  /** `admittedAll`, taking the bindings under `known.root` from `known` instead of querying them. */
+  async #admit(sources: readonly { source: SourcePath; directory: boolean }[], known: KnownVerdicts | null): Promise<boolean[]> {
     const bindings = sources.map(({ source }) => this.denied(source) ? null : this.#bindings(source));
     const verdicts = bindings.map(bound => bound !== null);
     for (let rank = 0; ; rank++) {
       const round = bindingRound(sources, bindings, verdicts, rank);
       if (!round.size) return verdicts;
       for (const [root, bound] of round) {
-        const included = await this.#query(root, bound.map(({ path, isDirectory }) => ({ path, isDirectory })));
+        const included = root === known?.root ? bound.map(({ path }) => knownVerdict(known, path))
+          : await this.#query(root, bound.map(({ path, isDirectory }) => ({ path, isDirectory })));
         for (const [position, { index }] of bound.entries()) if (!included[position]) verdicts[index] = false;
       }
     }

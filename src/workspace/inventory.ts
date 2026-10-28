@@ -90,12 +90,8 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
     const directory: DirectoryRef = path ? { kind: 'descendant', path } : { kind: 'root' };
     try {
       if (!path && !await policy.admitted({ root, path: '' }, true)) return;
-      await policy.directory(root, path);
-      const children = (await access.list(root, directory)).map(child => ({ child, source: { root, path: path ? path + '/' + child.name : child.name } }));
-      // Admission is decided for every regular file and directory at once, with one ignore query per root.
-      const candidates = children.filter(({ child, source }) => !policy.denied(source) && (child.entryKind === 'file' || child.entryKind === 'directory'));
-      const verdicts = await policy.admittedAll(candidates.map(({ child, source }) => ({ source, directory: child.entryKind === 'directory' })));
-      const admitted = new Set(candidates.filter((_, index) => verdicts[index]).map(({ child }) => child));
+      // One native request lists the directory and decides admission for every regular file and directory in it.
+      const { children, admitted } = await policy.walkDirectory(root, path);
       for (const { child, source } of children) {
         access.signal.throwIfAborted();
         if (policy.denied(source)) {

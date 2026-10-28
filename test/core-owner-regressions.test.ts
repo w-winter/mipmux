@@ -35,7 +35,7 @@ test('refresh observers settle on their publication while a later scan remains h
     override makeBridge() {
       class Bridge extends BridgeClient {
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
-          if (operation.kind === 'listDirectory') {
+          if (operation.kind === 'walkDirectory') {
             lists++;
             if (lists === 2) { firstEntered.release(); await firstResume.promise; }
             if (lists === 3) { entered.release(); await resume.promise; await this.close(); }
@@ -76,7 +76,7 @@ test('explicit refresh replaces a retired generation without rebinding a replace
       override makeBridge() {
         class Bridge extends BridgeClient {
           override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
-            if (retireNextList && operation.kind === 'listDirectory') { retireNextList = false; await this.close(); }
+            if (retireNextList && operation.kind === 'walkDirectory') { retireNextList = false; await this.close(); }
             return super.request(operation, requestSignal);
           }
         }

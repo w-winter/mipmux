@@ -102,13 +102,14 @@ test('a reusable file edited at the same size with its modification time restore
   } finally { await runtime.close(); }
 });
 
-test('a refresh sends one ignore query per listed directory besides the root admission', async () => {
+test('a refresh sends one native request per listed directory besides the root policy capture and admission', async () => {
   const { runtime, workspace, kinds } = await fixture();
   try {
     kinds.length = 0;
     await workspace.refresh(signal());
     const count = (kind: string) => kinds.filter(entry => entry === kind).length;
-    assert.equal(count('queryIgnoreHierarchy'), count('listDirectory') + 1);
+    // The fixture lists two directories: the root and `sub`.
+    assert.deepEqual(['captureIgnoreInputs', 'queryIgnoreHierarchy', 'listDirectory', 'walkDirectory'].map(count), [1, 1, 0, 2]);
   } finally { await runtime.close(); }
 });
 
