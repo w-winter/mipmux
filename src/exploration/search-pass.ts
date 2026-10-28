@@ -1,9 +1,9 @@
 import type { SearchRequest } from '../contracts/exploration.js';
-import type { NativeResult } from '../contracts/native.js';
+import type { NativeResult, NativeSearchSourceOutcome } from '../contracts/native.js';
 import type { PreparedSearchPattern, SearchCorrection, SearchDiagnostic } from '../contracts/search-pattern.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { WorkspaceFailure } from '../workspace/values.js';
-import { prepareText, type PreparedText } from './lines.js';
+import { prepareText } from './lines.js';
 import type { prepareSearch } from './search-query.js';
 import type { SearchFile } from './search.js';
 import { validateMatches } from './content-search.js';
@@ -14,9 +14,22 @@ import { SearchPatternFailure } from './search-diagnostic.js';
 
 type SearchPlan = Awaited<ReturnType<typeof prepareSearch>>;
 type Candidate = SearchPlan['candidates'][number];
-type SourceOutcome = Awaited<ReturnType<WorkspaceOperation['scanSearchSources']>>[number];
+type DecodedOutcome = Extract<NativeSearchSourceOutcome, { kind: 'decoded' }>;
+/** A scan outcome whose text is reduced to its line count and the lines a search record shows around its matches. */
+type ScannedOutcome = Exclude<NativeSearchSourceOutcome, DecodedOutcome> |
+  (Omit<DecodedOutcome, 'text'> & { readonly context: { readonly lineCount: number; readonly lines: SearchFile['lines'] } | null });
 // A file returned without text has no matches to place, so only match order and counts are checked.
 const unknownLineCount = Number.MAX_SAFE_INTEGER;
+
+/** Keeps of a decoded file's text only what its search record needs, so a scan holds no file's full text. */
+function scannedOutcome(request: SearchRequest, outcome: NativeSearchSourceOutcome): ScannedOutcome {
+  if (outcome.kind !== 'decoded') return outcome;
+  const { text, ...rest } = outcome;
+  if (text === null) return { ...rest, context: null };
+  const { lines } = prepareText(text);
+  const matching = new Set('matches' in outcome.result ? outcome.result.matches : []);
+  return { ...rest, context: { lineCount: lines.length, lines: matchedContext(lines, matching, request.before, request.after) } };
+}
 
 /** An unavailable-root failure becomes a limitation on a first page; any other failure, or one on a continuation, fails the search. */
 function unavailableLimitation(request: SearchRequest, candidate: Candidate, error: NativeFailure) {
@@ -26,17 +39,16 @@ function unavailableLimitation(request: SearchRequest, candidate: Candidate, err
 }
 
 /** Checks a decoded file against its snapshot decoding and the scanner's protocol; returns its diagnostic or matches. */
-function decodedScan(candidate: Candidate, outcome: Extract<SourceOutcome, { kind: 'decoded' }>, countOnly: boolean) {
+function decodedScan(candidate: Candidate, outcome: Extract<ScannedOutcome, { kind: 'decoded' }>, countOnly: boolean) {
   const { decoding } = candidate, { textIdentity } = outcome;
   if (decoding.kind !== 'decoded' || decoding.identity.sha256 !== textIdentity.sha256 || decoding.identity.byteCount !== textIdentity.byteCount) {
     throw new WorkspaceFailure('pipelineChanged', { root: candidate.root, path: candidate.path });
   }
   const found = outcome.result;
   if (found.kind === 'regexSearchError' || found.kind === 'literalSearchError') return found;
-  if (!countOnly && found.matchingLines > 0 && outcome.text === null) throw new WorkspaceFailure('searchProtocolError');
-  const text = outcome.text === null ? null : prepareText(outcome.text);
-  validateMatches(found, text?.lines.length ?? unknownLineCount, countOnly);
-  return { ...found, text };
+  if (!countOnly && found.matchingLines > 0 && outcome.context === null) throw new WorkspaceFailure('searchProtocolError');
+  validateMatches(found, outcome.context?.lineCount ?? unknownLineCount, countOnly);
+  return { ...found, lines: outcome.context?.lines ?? [] };
 }
 type RecoveryAttempt = Extract<NativeResult, { kind: 'searchRecovery' }>['attempts'][number];
 interface ContentCorrection { current: SearchCorrection }
@@ -57,39 +69,38 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
   const perFileErrors: { root: string; path: string; diagnostic: SearchDiagnostic }[] = [];
   const records: SearchFile[] = [];
   let current = 0, contentFiles = 0, contentMatches = 0;
-  let text: PreparedText | null = null;
-  let matching = new Set<number>();
+  let lines: SearchFile['lines'] = [];
   const flush = () => {
     const candidate = candidates[current], match = matches[current];
     if (!candidate || !match) throw new WorkspaceFailure('searchProtocolError');
     if (match.matchingLines) contentFiles++;
     if (matchedPaths.has(candidate) || match.matchingLines) {
       if (!request.countOnly) {
-        const lines = text ? matchedContext(text.lines, matching, request.before, request.after) : [];
         const record = { root: candidate.root, path: candidate.path, identity: candidate.identity,
           pathMatch: matchedPaths.has(candidate), matchingLines: match.matchingLines, lines };
         records.push(record);
       }
     }
-    current++; text = null; matching = new Set();
+    current++; lines = [];
   };
   // Every candidate's controlling policy is revalidated, even for path-only and count-only continuations.
   const unavailable = await operation.revalidateSearchSources(candidates);
   if (content === null) {
     // A path-only pass reads no file contents.
-    const failure = candidates.map(candidate => unavailable.get(candidate.root)).find(failure => failure !== undefined);
+    const failure = unavailable.find(failure => failure !== null);
     if (failure) throw failure;
     while (current < candidates.length) flush();
     return { records, limitations, contentMatches, contentFiles, perFileErrors };
   }
   // One native request reads, decodes and scans the available candidates; binary and undecodable files are skipped unreported.
-  const scanned = await operation.scanSearchSources(candidates.filter(candidate => !unavailable.has(candidate.root))
+  const scanned: ScannedOutcome[] = [];
+  await operation.scanSearchSources(candidates.filter((_, index) => unavailable[index] === null)
     .map(({ root, path, identity }) => ({ root, path, identity })), { pattern: content.text, isRegex: content.isRegex,
     caseSensitive: request.query.caseSensitive, wholeWord: request.query.kind !== 'glob' && request.query.wholeWord,
-    countOnly: request.countOnly, limit: request.maxResults });
+    countOnly: request.countOnly, limit: request.maxResults }, outcome => scanned.push(scannedOutcome(request, outcome)));
   let next = 0;
   for (const [index, candidate] of candidates.entries()) {
-    const failure = unavailable.get(candidate.root);
+    const failure = unavailable[index];
     const outcome = failure ? null : scanned[next++]!;
     if (failure) limitations.push(unavailableLimitation(request, candidate, failure));
     else if (outcome?.kind === 'failed') limitations.push(unavailableLimitation(request, candidate, new NativeFailure(outcome.code, outcome.errno)));
@@ -99,7 +110,7 @@ async function scanPass(operation: WorkspaceOperation, request: SearchRequest, p
       else {
         matches[index]!.matchingLines = found.matchingLines;
         contentMatches += found.matchingLines;
-        if (!request.countOnly) { text = found.text; matching = new Set(found.matches); }
+        if (!request.countOnly) lines = found.lines;
       }
     }
     flush();

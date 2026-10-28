@@ -6087,12 +6087,12 @@
         "Observe per-file availability under original root capabilities and protected-path checks, even after catalog removal. Existing catalog entries retain policy revalidation. Normalize only expected native unreadability into typed observations; worker, policy, changed-root and cancellation failures propagate.",
         "Add a protected, original-root metadata inspection before byte acquisition. Metadata and read observations remain separate so the source demand classifier is not inferred from an ambiguous read exception.",
         "Settle globally disabled explicit codemap demand with the registered source entry before retaining any extraction. Shared completion independently uses the same captured flag. Optional supported sources remain pending, not unsupported. Source WorkspaceFileContextStore.swift:13331-13337 revokes globally suspended graph authority.",
-        "Revalidate search candidates' controlling policy with one ignore-hierarchy query per root, returning roots whose capability became unavailable.",
-        "Read, decode and scan search candidates in one native request after their policy revalidation."
+        "Revalidate search candidates' controlling policy with one ignore-hierarchy query per root, returning for each candidate the failure that made its policy unavailable.",
+        "Read, decode and scan search candidates in one native request after their policy revalidation, passing each file's outcome on as it arrives."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "93450b7e0cfd1e75c2ca2312cd9d405308175a57eba72c69fbe43f2d665fd9df",
+      "sha256": "59ec1c9b83775c9943f4e6f3200db90e0ed3906f21c2426a794997dde1d12808",
       "classification": "handwritten"
     },
     {
@@ -7326,10 +7326,10 @@
         "Raw source bytes are revalidated and decoded for every attempted pass. No document collection, retry-result cache, alternate search backend, or new resource limit is introduced.",
         "Preserve expected per-file pattern failures separately from phase failures, with empty hits for the failed file and continued scanning of healthy files. Primary per-file diagnostics survive all-zero regex recovery; positive/literal recovery retains the source result-replacement rules. Expected query-wide recovery compilation failures participate in the same both-mode phase rule. Normalized-stage suppression is limited to the search-local typed failure; host authority, native/protocol failures and cancellation propagate.",
         "Keep correction state across failed content recovery, matching the source inout wasAutoCorrected flag and StoreBackedWorkspaceSearch.swift490-493 warning projection. A healthy both-mode path phase retains the compilation warning even when content recovery subsequently fails.",
-        "A path-only pass reads no file contents, as the source path scan uses only catalog paths (SearchMatch.swift scanPath); it revalidates every candidate's controlling policy and still fails when a candidate root became unavailable.",
-        "Scan a content pass's available candidates in one native request that reads, decodes and scans them in order with the running result limit; binary and undecodable files are skipped without a limitation, as the source search returns no content for them (SearchMatch.swift scanFileWithErrorHandling)."
+        "A path-only pass reads no file contents, as the source path scan uses only catalog paths (SearchMatch.swift scanPath); it revalidates every candidate's controlling policy and still fails when a candidate's policy became unavailable.",
+        "Scan a content pass's available candidates in one native request that reads, decodes and scans them in order with the running result limit; binary and undecodable files are skipped without a limitation, as the source search returns no content for them (SearchMatch.swift scanFileWithErrorHandling). Each matching file's text is reduced to its context lines as it arrives, and a candidate whose policy check failed is limited alone."
       ],
-      "sha256": "f9b3f73848ae06254e12e344bea57f28262ffea6ab6123914b99eb3519117cca"
+      "sha256": "88c148fa8799c8b1859507bbb0e9abd2ef2982821c187396c47917a3c7fe4d02"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchPathFiltering.swift",
@@ -7691,9 +7691,9 @@
         "Only inspectSource corresponds to this metadata-admission boundary. Reuse existing confined descriptors and no-follow parent traversal, then fstatat the leaf without reading bytes. Missing, symlink and nonregular metadata is separate from subsequent read failure. The original mipmux read/export/snapshot substrate remains in this file and is not claimed as copied source.",
         "Revalidate the output root and destination parent device/inode after atomic interim export creation and before acknowledging its path, reusing the existing snapshot writer identity-check contract.",
         "Report each listed entry's descriptor fingerprint from the existing no-follow fstatat, so inventory scans can reuse files whose fingerprint is unchanged.",
-        "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, before reading its contents."
+        "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, and a declined file is still hashed and checked against its expected identity without keeping its contents."
       ],
-      "sha256": "b1dc726d2d9f8f582fc8d6634fed5c49ba97da28d8bfddb38a743e1633ec2134"
+      "sha256": "ec58643f9fddef9cefc15f0bcac50d49f119f3871ff3ea813a3026660b391d41"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",

@@ -11,7 +11,7 @@ struct ConfinedSource {
 
 /// Reads, decodes and scans search candidates in order, sharing one result limit as the per-file scans do. A binary
 /// file, by RPCE's probe, or an undecodable one is skipped; a read failure is reported for that file and scanning
-/// continues.
+/// continues. Each file's outcome is emitted as its own frame once scanned, so at most one file's text is held.
 struct SearchSourceScanInput {
     private struct Candidate {
         let root: NativeHandle
@@ -45,31 +45,31 @@ struct SearchSourceScanInput {
         limit = try input.integer("limit")
     }
 
-    func render(files: ConfinedFiles) throws -> [String: Any] {
+    func render(files: ConfinedFiles, request: Request) throws -> [String: Any] {
         var remaining = limit
-        var outcomes: [[String: Any]] = []
         for candidate in candidates {
-            let source: ConfinedSource?
-            do {
-                source = try files.readConfinedSource(
-                    candidate.root, path: candidate.path, expected: candidate.expected
-                ) { try RPCEBinaryProbe.isBinary(path: candidate.path, descriptor: $0) }
-            } catch let failure as BridgeFailure {
-                let number: Any = failure.number.map { $0 as Any } ?? NSNull()
-                outcomes.append(["kind": "failed", "code": failure.code, "errno": number])
-                continue
-            }
-            guard let text = Self.decodedText(source) else {
-                outcomes.append(["kind": "skipped"])
-                continue
-            }
-            let result = try scan(text, limit: remaining)
-            let matchingLines = (result["matchingLines"] as? Int) ?? 0
-            remaining -= matchingLines
-            outcomes.append(["kind": "decoded", "textIdentity": Extraction.identity(Data(text.utf8)).json,
-                             "result": result, "text": matchingLines > 0 && !countOnly ? text : NSNull()])
+            let scanned = try outcome(candidate, files: files, remaining: &remaining)
+            try request.emit(["kind": "scanOutcome", "outcome": scanned])
         }
-        return ["kind": "searchSourceScan", "files": outcomes]
+        return ["kind": "searchSourceScan", "count": candidates.count]
+    }
+
+    private func outcome(_ candidate: Candidate, files: ConfinedFiles, remaining: inout Int) throws -> [String: Any] {
+        let source: ConfinedSource?
+        do {
+            source = try files.readConfinedSource(
+                candidate.root, path: candidate.path, expected: candidate.expected
+            ) { try RPCEBinaryProbe.isBinary(path: candidate.path, descriptor: $0) }
+        } catch let failure as BridgeFailure {
+            let number: Any = failure.number.map { $0 as Any } ?? NSNull()
+            return ["kind": "failed", "code": failure.code, "errno": number]
+        }
+        guard let text = Self.decodedText(source) else { return ["kind": "skipped"] }
+        let result = try scan(text, limit: remaining)
+        let matchingLines = (result["matchingLines"] as? Int) ?? 0
+        remaining -= matchingLines
+        return ["kind": "decoded", "textIdentity": Extraction.identity(Data(text.utf8)).json,
+                "result": result, "text": matchingLines > 0 && !countOnly ? text : NSNull()]
     }
 
     /// The decoded text of a read source; nil for a file skipped as binary or undecodable.

@@ -1,11 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { statSync } from 'node:fs';
-import { nativeFrameValidator, nativeRequestValidator, type NativeFrame, type NativeOperation, type NativeResult } from '../contracts/native.js';
+import { nativeFrameValidator, nativeRequestValidator, type NativeFrame, type NativeOperation, type NativeResult,
+  type NativeSearchSourceOutcome } from '../contracts/native.js';
 import { ProcessSupervisor, type OwnedProcess, type ProcessReceipt } from '../runtime/process-supervisor.js';
 import type { SourceIdentity } from '../contracts/workspace.js';
 import type { NativeFailureCode } from '../contracts/errors.js';
 
 type Entry = Extract<NativeFrame, { kind: 'entry' }>;
+type ScanOperation = Extract<NativeOperation, { kind: 'scanSearchSources' }>;
 const resultKinds = {
   listCopyPresets: ['copyPresets'], resolveCopyPreset: ['copyPreset'], writePromptExport: ['promptExportWritten'],
   prepareSearchPattern: ['searchPattern', 'searchContentPatternError', 'searchPatternError'],
@@ -90,6 +92,9 @@ interface Pending {
   readonly chunks: Buffer[];
   readonly entries: Entry[];
   terminal: NativeResult | null;
+  /** Receives each scan outcome as it arrives; set only for a scan. */
+  readonly consume: ((outcome: NativeSearchSourceOutcome) => void) | null;
+  delivered: number;
   readonly resolve: (value: NativeReply) => void;
   readonly reject: (error: Error) => void;
 }
@@ -131,8 +136,23 @@ export class BridgeClient {
     void this.#process.closed.then(() => this.#workerFailed());
   }
 
-  /** Serializes requests on this owned process. Aborting retires it and rejects queued work. */
+  /** Serializes requests on this owned process. Aborting retires it and rejects queued work. A scan requires `scanSources`. */
   request<O extends NativeOperation>(operation: O, signal: AbortSignal): Promise<NativeReply<O['kind']>> {
+    if (operation.kind === 'scanSearchSources') return Promise.reject(new NativeFailure('invalidRequest', null));
+    return this.#send(operation, signal, null);
+  }
+
+  /**
+   * Scans search candidates as `request` runs other operations, passing each file's outcome to `consume` as it arrives so
+   * that no more than one file's text is held. Returned text is checked against its claimed identity first; a mismatch
+   * retires the process. `consume` must not throw. Resolves with the number of outcomes.
+   */
+  async scanSources(operation: ScanOperation, signal: AbortSignal, consume: (outcome: NativeSearchSourceOutcome) => void): Promise<number> {
+    return (await this.#send(operation, signal, consume)).result.count;
+  }
+
+  #send<O extends NativeOperation>(operation: O, signal: AbortSignal,
+    consume: ((outcome: NativeSearchSourceOutcome) => void) | null): Promise<NativeReply<O['kind']>> {
     const snapshot = structuredClone(operation);
     const request = { wireVersion: 1, requestId: randomUUID(), generation: this.#generation, operation: snapshot };
     if (!nativeRequestValidator.Check(request)) return Promise.reject(new NativeFailure('invalidRequest', null));
@@ -149,7 +169,8 @@ export class BridgeClient {
       }
       try {
         return await new Promise<NativeReply>((resolve, reject) => {
-          this.#pending = { id: request.requestId, operation: snapshot, chunks: [], entries: [], terminal: null, resolve, reject };
+          this.#pending = { id: request.requestId, operation: snapshot, chunks: [], entries: [], terminal: null, consume, delivered: 0,
+            resolve, reject };
           this.#process.child.stdin.write(JSON.stringify(request) + '\n');
         });
       } catch (error) {
@@ -189,6 +210,11 @@ export class BridgeClient {
         } else if (value.kind === 'entry') {
           if (pending.operation.kind !== 'listDirectory') throw new NativeFailure('nativeProtocolError', null);
           pending.entries.push(value);
+        } else if (value.kind === 'scanOutcome') {
+          if (!pending.consume) throw new NativeFailure('nativeProtocolError', null);
+          verifyScanText(value.outcome);
+          pending.delivered++;
+          pending.consume(value.outcome);
         } else {
           pending.terminal = value.result;
         }
@@ -223,6 +249,7 @@ export class BridgeClient {
           sha256(text) !== result.decoding.identity.sha256) throw new Error('decoded source identity mismatch');
       }
     }
+    if (result.kind === 'searchSourceScan' && result.count !== pending.delivered) throw new Error('scan outcome count mismatch');
     if (result.kind === 'directoryComplete') {
       const canonical = pending.entries.map(entry => `${entry.entryKind}\0${entry.name}\0`).join('');
       if (result.count !== pending.entries.length || result.sha256 !== sha256(Buffer.from(canonical))) throw new Error('directory identity mismatch');
@@ -274,6 +301,14 @@ export class BridgeClient {
 }
 
 function sha256(bytes: Buffer): string { return createHash('sha256').update(bytes).digest('hex'); }
+/** Rejects a scan outcome whose text is not valid Unicode or does not have the identity it claims. */
+function verifyScanText(outcome: NativeSearchSourceOutcome): void {
+  if (outcome.kind !== 'decoded' || outcome.text === null) return;
+  const text = Buffer.from(outcome.text);
+  if (text.toString() !== outcome.text || text.length !== outcome.textIdentity.byteCount || sha256(text) !== outcome.textIdentity.sha256) {
+    throw new Error('scan text identity mismatch');
+  }
+}
 function decodeBase64(value: string): Buffer {
   const bytes = Buffer.from(value, 'base64');
   if (bytes.toString('base64') !== value) throw new Error('noncanonical base64');

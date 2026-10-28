@@ -3,6 +3,8 @@ import { spawn } from 'node:child_process';
 // Only expected native boundary outcomes are scripted; workspace admission and MCP dispatch remain real.
 const child = spawn(process.env.MIPMUX_NATIVE, process.argv.slice(2), { stdio: 'pipe', env: process.env });
 const requests = new Map();
+// The number of scan outcomes already forwarded for each scan request, which identifies the next one's file.
+const scanned = new Map();
 const diagnostic = phase => ({ kind: 'pattern', issue: phase + ' fixture issue', suggestion: phase + ' fixture suggestion' });
 function pathResult(result, op) {
   const fail = ['fixture-path-failure', 'fixture-both-failure', 'fixture-content-zero', 'fixture-both-recovery\\.fail'].includes(op.pattern);
@@ -33,18 +35,26 @@ function scanOutcome(outcome, file, op) {
   if (op.pattern === 'fixture-path-failure') {
     return { ...outcome, result: { kind: 'regexSearch', matchingLines: 1, matches: [1] }, text: fixtureText[file.path] };
   }
+  if (op.pattern === 'fixture-tampered-text' && file.path === 'example.txt') {
+    // Text that differs from the file while keeping its line count and claimed identity.
+    return { ...outcome, result: { kind: 'regexSearch', matchingLines: 1, matches: [1] }, text: 'jello\n' };
+  }
   if (op.pattern === 'fixture-per-file' && file.path === 'example.txt') {
     return { ...outcome, result: { kind: 'regexSearchError', diagnostic: diagnostic('file') }, text: null };
   }
   return outcome;
 }
 function fixtureFrame(frame, op) {
-  if (frame.kind !== 'terminal' || !op?.pattern?.includes('fixture-')) return frame;
+  if (!op?.pattern?.includes('fixture-')) return frame;
+  if (frame.kind === 'scanOutcome') {
+    const index = scanned.get(frame.requestId) ?? 0;
+    scanned.set(frame.requestId, index + 1);
+    return { ...frame, outcome: scanOutcome(frame.outcome, op.files[index], op) };
+  }
+  if (frame.kind !== 'terminal') return frame;
   switch (op.kind) {
     case 'matchSearchPaths': return { ...frame, result: pathResult(frame.result, op) };
     case 'compileRegexContent': return compileFrame(frame, op);
-    case 'scanSearchSources': return { ...frame, result: { ...frame.result,
-      files: frame.result.files.map((outcome, index) => scanOutcome(outcome, op.files[index], op)) } };
     default: return frame;
   }
 }

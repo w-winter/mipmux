@@ -427,6 +427,15 @@ export const DescriptorFingerprint = Type.Object({
 }, { additionalProperties: false });
 export type DescriptorFingerprint = Static<typeof DescriptorFingerprint>;
 
+const nativeErrno = Type.Union([Type.Integer(), Type.Null()]);
+/** One search candidate's scan: skipped as binary or undecodable, failed to read, or decoded with its text when it matched. */
+export const NativeSearchSourceOutcome = Type.Union([
+  Type.Object({ kind: Type.Literal('skipped') }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('failed'), code: NativeWireFailureCode, errno: nativeErrno }, { additionalProperties: false }),
+  Type.Object({ kind: Type.Literal('decoded'), textIdentity: SourceIdentity, result: Type.Union([NativeLiteralSearchResult, NativeRegexSearchResult]),
+    text: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
+]);
+export type NativeSearchSourceOutcome = Static<typeof NativeSearchSourceOutcome>;
 export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('copyPresets'), presets: Type.Array(RawCopyPreset) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('copyPreset'), hasSelector: Type.Boolean(), preset: Type.Union([CapturedClipboardPreset, Type.Null()]) }, { additionalProperties: false }),
@@ -438,12 +447,8 @@ export const NativeResult = Type.Union([
   ...NativeSearchPathsResult.anyOf,
   NativeLiteralSearchResult,
   ...NativeRegexSearchResult.anyOf,
-  Type.Object({ kind: Type.Literal('searchSourceScan'), files: Type.Array(Type.Union([
-    Type.Object({ kind: Type.Literal('skipped') }, { additionalProperties: false }),
-    Type.Object({ kind: Type.Literal('failed'), code: NativeWireFailureCode, errno: Type.Union([Type.Integer(), Type.Null()]) }, { additionalProperties: false }),
-    Type.Object({ kind: Type.Literal('decoded'), textIdentity: SourceIdentity, result: Type.Union([NativeLiteralSearchResult, NativeRegexSearchResult]),
-      text: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
-  ])) }, { additionalProperties: false }),
+  // Outcomes arrive as `scanOutcome` frames; `count` is how many were sent.
+  Type.Object({ kind: Type.Literal('searchSourceScan'), count: SafeCount }, { additionalProperties: false }),
   ...NativeRegexCompilationResult.anyOf,
   NativeSearchRecoveryResult,
   NativeSearchReplyResult,
@@ -506,6 +511,9 @@ export const NativeResult = Type.Union([
     Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean() }, { additionalProperties: false }),
     Type.Object({ path: Type.String(), isDirectory: Type.Literal(true), ignored: Type.Boolean(),
       requiresTraversal: Type.Boolean(), directoryIncluded: Type.Boolean() }, { additionalProperties: false }),
+    // A query whose ancestor directories could not be captured.
+    Type.Object({ path: Type.String(), isDirectory: Type.Boolean(), failure: Type.Object({ code: NativeWireFailureCode, errno: nativeErrno },
+      { additionalProperties: false }) }, { additionalProperties: false }),
   ])), directories: IgnoreHierarchy.properties.directories }, { additionalProperties: false }),
   IgnoreQueryResult,
   NativeGitPatchResult,
@@ -578,6 +586,7 @@ export const NativeFrame = Type.Union([
     entryKind: Type.Union([Type.Literal('file'), Type.Literal('directory'), Type.Literal('symlink'), Type.Literal('other')]),
     fingerprint: DescriptorFingerprint,
   }, { additionalProperties: false }),
+  Type.Object({ ...envelope, kind: Type.Literal('scanOutcome'), outcome: NativeSearchSourceOutcome }, { additionalProperties: false }),
 ]);
 export type NativeFrame = Static<typeof NativeFrame>;
 export const nativeRequestValidator = Compile(NativeRequest);

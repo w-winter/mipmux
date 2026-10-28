@@ -1,17 +1,20 @@
 import { copyContext } from './fixtures/copy-context.js';
 import { tmpdir } from 'node:os';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
-import type { NativeOperation } from '../src/contracts/native.js';
+import type { NativeOperation, NativeSearchSourceOutcome } from '../src/contracts/native.js';
 import { searchValidator } from '../src/contracts/exploration.js';
+import { serializedBytes } from '../src/exploration/output-budget.js';
 
 interface SearchInput { readonly mode: 'path' | 'content'; readonly query: { readonly kind: 'glob' | 'literal'; readonly text: string } }
 
 const signal = () => new AbortController().signal;
+/** Whether new bridges record their requests, and a hook run before each recorded request is sent. */
+interface Recording { recording: boolean; beforeRequest: (operation: NativeOperation) => Promise<void> }
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
 
 /** A warm workspace whose bridges started while `recording` is set, the search's own, record every native request kind. */
@@ -25,8 +28,11 @@ async function fixture() {
   // ... unless its extension is always text.
   await writeFile(join(root, 'notes.md'), 'needle\0 in markdown\n');
   await writeFile(join(root, 'image.png'), Buffer.concat([pngSignature, Buffer.from('needle\n')]));
+  for (const name of ['a', 'b', 'c']) await writeFile(join(root, `page-${name}.dat`), 'pager\n');
+  await mkdir(join(root, 'gone'));
+  await writeFile(join(root, 'kept.txt'), 'vanishing\n'); await writeFile(join(root, 'gone', 'victim.txt'), 'vanishing\n');
   const requests: string[] = [];
-  const state = { recording: false };
+  const state: Recording = { recording: false, beforeRequest: async () => {} };
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
     credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
@@ -35,8 +41,13 @@ async function fixture() {
       class Bridge extends BridgeClient {
         readonly #recorded = state.recording;
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
-          if (this.#recorded) requests.push(operation.kind);
+          if (this.#recorded) { requests.push(operation.kind); await state.beforeRequest(operation); }
           return super.request(operation, requestSignal);
+        }
+        override async scanSources(operation: Extract<NativeOperation, { kind: 'scanSearchSources' }>, requestSignal: AbortSignal,
+          consume: (outcome: NativeSearchSourceOutcome) => void) {
+          if (this.#recorded) requests.push(operation.kind);
+          return super.scanSources(operation, requestSignal, consume);
         }
       }
       return new Bridge({ executable: options.nativeExecutable, env: options.nativeEnvironment, supervisor: this.supervisor });
@@ -54,7 +65,7 @@ async function fixture() {
       return found;
     } finally { state.recording = false; await operation.close(); }
   };
-  return { runtime, search, requests };
+  return { root, runtime, workspace, state, search, requests };
 }
 
 test('a path-only search reads no file contents', async () => {
@@ -62,7 +73,7 @@ test('a path-only search reads no file contents', async () => {
   try {
     const found = await search({ mode: 'path', query: { kind: 'glob', text: '*.swift' } });
     assert.deepEqual(found.files.map(file => file.path), ['Main.swift']);
-    assert.deepEqual(requests.filter(kind => kind === 'readSource'), []);
+    assert.deepEqual(requests.filter(kind => kind === 'readSource' || kind === 'scanSearchSources'), []);
   } finally { await runtime.close(); }
 });
 
@@ -72,5 +83,39 @@ test('a content search skips RPCE-binary files without reporting them, and searc
     const found = await search({ mode: 'content', query: { kind: 'literal', text: 'needle' } });
     assert.deepEqual(found.files.map(file => file.path).sort(), ['Main.swift', 'notes.md']);
     assert.deepEqual(found.limitations, []);
+  } finally { await runtime.close(); }
+});
+
+test('a content continuation rejects a file that became binary after its first page', async () => {
+  const { root, runtime, workspace } = await fixture();
+  try {
+    const operation = await workspace.openOperation(signal());
+    try {
+      const query = searchValidator.Parse(searchValidator.Default({ mode: 'content', query: { kind: 'literal', text: 'pager' }, maxOutputBytes: 100000 }));
+      const full = await operation.fileSearch(query);
+      if (full.kind !== 'search') assert.fail('Missing search result');
+      assert.deepEqual(full.files.map(file => file.path), ['page-a.dat', 'page-b.dat', 'page-c.dat']);
+      const cap = serializedBytes({ ...full, files: full.files.slice(0, 1), returnedMatchingLines: 1,
+        truncated: true, continuation: { digest: '0'.repeat(64), offset: 1 } });
+      const first = await operation.fileSearch({ ...query, maxOutputBytes: cap });
+      if (first.kind !== 'search' || !first.continuation) assert.fail('Missing continuation');
+      await writeFile(join(root, 'page-a.dat'), 'pager\0\n');
+      await assert.rejects(operation.fileSearch({ ...query, maxOutputBytes: cap, continuation: first.continuation }), { code: 'sourceChanged' });
+    } finally { await operation.close(); }
+  } finally { await runtime.close(); }
+});
+
+test('a directory removed while a search checks policy limits only the files beneath it', async () => {
+  const { root, runtime, state, search } = await fixture();
+  try {
+    state.beforeRequest = async operation => {
+      if (operation.kind !== 'queryIgnoreHierarchy') return;
+      const paths = operation.queries.map(query => query.path);
+      // Only the search's policy check queries files from both directories at once.
+      if (paths.includes('kept.txt') && paths.includes('gone/victim.txt')) await rm(join(root, 'gone'), { recursive: true });
+    };
+    const found = await search({ mode: 'content', query: { kind: 'literal', text: 'vanishing' } });
+    assert.deepEqual(found.files.map(file => file.path), ['kept.txt']);
+    assert.deepEqual(found.limitations, [{ root: 'r', path: 'gone/victim.txt', code: 'notFound' }]);
   } finally { await runtime.close(); }
 });

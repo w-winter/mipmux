@@ -396,11 +396,15 @@ struct Request {
     }
 
     func emit(_ fields: [String: Any]) throws {
-        var value = fields
-        value["wireVersion"] = 1; value["requestId"] = id; value["generation"] = generation
-        var bytes = try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys, .withoutEscapingSlashes])
-        bytes.append(0x0A)
-        try FileHandle.standardOutput.write(contentsOf: bytes)
+        // Foundation autoreleases each encoded frame; without this pool, a long-lived helper keeps every frame.
+        try autoreleasepool {
+            var value = fields
+            value["wireVersion"] = 1; value["requestId"] = id; value["generation"] = generation
+            var bytes = try JSONSerialization.data(
+                withJSONObject: value, options: [.sortedKeys, .withoutEscapingSlashes])
+            bytes.append(0x0A)
+            try FileHandle.standardOutput.write(contentsOf: bytes)
+        }
     }
 
     func terminal(_ result: [String: Any]) throws {

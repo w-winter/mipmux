@@ -131,7 +131,7 @@ test('public search preserves healthy phases and per-file pattern diagnostics at
       assert.equal(result.error, 'content fixture issue'); assert.equal(result.suggestion, 'content fixture suggestion');
     });
     for (const [text, code] of [['fixture-native-failure', 'nativeOperationFailed'], ['fixture-protocol-failure', 'nativeProtocolError'],
-      ['fixture-authorization-failure', 'invalidSourceCapability']] as const) await t.test(text, async () => {
+      ['fixture-authorization-failure', 'invalidSourceCapability'], ['fixture-tampered-text', 'nativeProtocolError']] as const) await t.test(text, async () => {
       const found = await search({ mode: 'content', query: { kind: 'regex', text } });
       observations.push({ text, found }); assert.equal(found.isError, true);
       assert.deepEqual(toolJSON(found), { kind: 'error', code });

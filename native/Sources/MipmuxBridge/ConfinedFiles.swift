@@ -174,8 +174,8 @@ final class ConfinedFiles {
                     "key": extraction.key(read.digest, byteCount: read.content.count, extension: ext)]
     }
 
-    /// Reads a confined regular source that is unchanged across the read and equals `expected` when given. Returns nil,
-    /// without reading the contents, when `skip` declines the opened descriptor.
+    /// Reads a confined regular source that is unchanged across the read and equals `expected` when given. Returns nil
+    /// when `skip` declines the opened descriptor; the same identity checks apply, but the contents are only hashed.
     func readConfinedSource(_ handle: NativeHandle, path: String, expected: SourceIdentity?,
                             skip: (Int32) throws -> Bool,
                             chunk: (Data) throws -> Void = { _ in }) throws -> ConfinedSource? {
@@ -186,18 +186,19 @@ final class ConfinedFiles {
         let file = try Descriptor(openat(parent.value, leaf, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC))
         let before = try fingerprint(file.value)
         guard try status(file.value).st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw BridgeFailure("nonRegularFile") }
-        if try skip(file.value) { try validate(root); return nil }
+        let skipped = try skip(file.value)
         var digest = SHA256()
-        var content = Data()
+        var content = Data(), byteCount = 0
         try readChunks(file.value) { bytes in
-            content.append(bytes); digest.update(data: bytes)
-            try chunk(bytes)
+            digest.update(data: bytes); byteCount += bytes.count
+            if !skipped { content.append(bytes); try chunk(bytes) }
         }
         let rawDigest = CodeMapRawSourceDigest(bytes: Data(digest.finalize()))
-        let identity = SourceIdentity(sha256: rawDigest.lowercaseHex, byteCount: content.count)
+        let identity = SourceIdentity(sha256: rawDigest.lowercaseHex, byteCount: byteCount)
         guard try fingerprint(file.value) == before else { throw BridgeFailure("sourceChanged") }
         if let expected, expected != identity { throw BridgeFailure("sourceChanged") }
         try validate(root)
+        if skipped { return nil }
         return ConfinedSource(content: content, digest: rawDigest, identity: identity, fingerprint: before)
     }
 

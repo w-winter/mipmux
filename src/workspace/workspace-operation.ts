@@ -13,7 +13,7 @@ import { readGit } from '../exploration/git.js';
 import type { GitRequest } from '../contracts/git.js';
 import { fileSearch } from '../exploration/search.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
-import type { NativeOperation, NativeHandle } from '../contracts/native.js';
+import type { NativeOperation, NativeHandle, NativeSearchSourceOutcome } from '../contracts/native.js';
 import type { RootIdentity, SourceIdentity } from '../contracts/workspace.js';
 import type { WorkspaceRuntime } from './workspace-runtime.js';
 import { capturedFile, completeFile } from './inventory-file.js';
@@ -276,43 +276,33 @@ export class WorkspaceOperation {
     });
   }
   /**
-   * Revalidates search candidates' controlling policy, querying each root once. Returns the roots whose capability became
-   * unavailable, with their failure; other failures are thrown.
+   * Revalidates search candidates' controlling policy, querying each root once. Returns, for each source, the failure that
+   * made its policy unavailable, or null; any other failure is thrown.
    */
   revalidateSearchSources(sources: readonly SourcePath[]) {
     const captured = structuredClone(sources);
     return this.#track(async () => {
       const policy = new RootPolicy(this.declaration, await (this.#access ??= this.#openAccess()));
-      const byRoot = new Map<string, SourcePath[]>();
-      for (const source of captured) {
-        const group = byRoot.get(source.root) ?? [];
-        group.push(source); byRoot.set(source.root, group);
-      }
-      const unavailable = new Map<string, NativeFailure>();
-      for (const [root, group] of byRoot) {
-        try { await policy.revalidateAll(group, this.snapshot.policy); }
-        catch (error) {
-          if (!(error instanceof NativeFailure) || unavailableRootCode(error) === null) throw error;
-          unavailable.set(root, error);
-        }
-      }
-      return unavailable;
+      const failures = await policy.revalidateAll(captured, this.snapshot.policy);
+      const fatal = failures.find(failure => failure !== null && unavailableRootCode(failure) === null);
+      if (fatal) throw fatal;
+      return failures;
     });
   }
   /**
-   * Reads, decodes and scans search candidates, each expected to have its snapshot identity, in one native request whose
-   * outcomes follow candidate order. Call after `revalidateSearchSources`, with candidates in available roots only.
+   * Reads, decodes and scans search candidates, each expected to have its snapshot identity, in one native request. Each
+   * outcome is passed to `consume`, in candidate order, as it arrives; `consume` must not throw. Call after
+   * `revalidateSearchSources`, with available candidates only.
    */
   scanSearchSources(candidates: readonly { root: string; path: string; identity: SourceIdentity }[],
-    scan: Omit<Extract<NativeOperation, { kind: 'scanSearchSources' }>, 'kind' | 'files'>) {
+    scan: Omit<Extract<NativeOperation, { kind: 'scanSearchSources' }>, 'kind' | 'files'>, consume: (outcome: NativeSearchSourceOutcome) => void) {
     const captured = structuredClone({ candidates, scan });
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       const files = [];
       for (const { root, path, identity } of captured.candidates) files.push({ root: (await access.openRoot(root)).handle, path, expected: identity });
-      const reply = await access.bridge.request({ kind: 'scanSearchSources', files, ...captured.scan }, this.signal);
-      if (reply.result.files.length !== files.length) throw new WorkspaceFailure('searchProtocolError');
-      return reply.result.files;
+      const count = await access.bridge.scanSources({ kind: 'scanSearchSources', files, ...captured.scan }, this.signal, consume);
+      if (count !== files.length) throw new WorkspaceFailure('searchProtocolError');
     });
   }
   readSource(source: SourcePath) {
