@@ -10,15 +10,21 @@ import type { NativeOperation, NativeSearchSourceOutcome } from '../src/contract
 import { searchValidator } from '../src/contracts/exploration.js';
 import { serializedBytes } from '../src/exploration/output-budget.js';
 
-interface SearchInput { readonly mode: 'path' | 'content'; readonly query: { readonly kind: 'glob' | 'literal'; readonly text: string } }
+/** A search's mode and query, and optionally its result limit; `searchValidator.Default` fills in the rest. */
+interface SearchInput {
+  readonly mode: 'path' | 'content'; readonly query: { readonly kind: 'glob' | 'literal'; readonly text: string }; readonly maxResults?: number;
+}
 
 const signal = () => new AbortController().signal;
 /** Whether new bridges record their requests, and a hook run before each recorded request is sent. */
 interface Recording { recording: boolean; beforeRequest: (operation: NativeOperation) => Promise<void> }
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
 
-/** A warm workspace whose bridges started while `recording` is set, the search's own, record every native request kind. */
-async function fixture() {
+/**
+ * A warm workspace, with `extra` files written under its root, whose bridges started while `recording` is set, the search's
+ * own, record every native request kind.
+ */
+async function fixture(extra: Readonly<Record<string, string>> = {}) {
   const base = await mkdtemp(join(tmpdir(), 'mipmux-search-source-scan-'));
   const root = join(base, 'root'), outputRoot = join(base, 'out');
   await mkdir(root); await mkdir(outputRoot);
@@ -31,6 +37,7 @@ async function fixture() {
   for (const name of ['a', 'b', 'c']) await writeFile(join(root, `page-${name}.dat`), 'pager\n');
   await mkdir(join(root, 'gone'));
   await writeFile(join(root, 'kept.txt'), 'vanishing\n'); await writeFile(join(root, 'gone', 'victim.txt'), 'vanishing\n');
+  for (const [name, text] of Object.entries(extra)) await writeFile(join(root, name), text);
   const requests: string[] = [];
   const state: Recording = { recording: false, beforeRequest: async () => {} };
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
@@ -134,5 +141,17 @@ test('a directory removed during a search limits only the files beneath it', asy
     const found = await search({ mode: 'content', query: { kind: 'literal', text: 'vanishing' } });
     assert.deepEqual(found.files.map(file => file.path), ['kept.txt']);
     assert.deepEqual(found.limitations, [{ root: 'r', path: 'gone/victim.txt', code: 'notFound' }]);
+  } finally { await runtime.close(); }
+});
+
+test('the result limit carries across files that are read in separate batches', async () => {
+  // Each file is larger than half of a scan batch, so each is read in its own batch.
+  const filler = 'x'.repeat(79) + '\n';
+  const large = (matches: number) => 'limited\n'.repeat(matches) + filler.repeat(64 * 1024);
+  const { runtime, search } = await fixture({ 'large-a.txt': large(3), 'large-b.txt': large(3), 'large-c.txt': large(3) });
+  try {
+    const found = await search({ mode: 'content', query: { kind: 'literal', text: 'limited' }, maxResults: 4 });
+    assert.deepEqual(found.files.map(file => [file.path, file.matchingLines]), [['large-a.txt', 3], ['large-b.txt', 1]]);
+    assert.equal(found.counts.matchingLines, 4);
   } finally { await runtime.close(); }
 });
