@@ -170,7 +170,6 @@ export class MipmuxRuntime {
       signal.throwIfAborted();
       let owner = this.#owners.get(key);
       if (!owner) {
-        await this.artifacts.readMembership(key);
         owner = await this.mutateGitSnapshots(outputRoot.identity, signal, async (combined, access) => {
           const existing = this.#owners.get(key);
           if (existing) return existing;

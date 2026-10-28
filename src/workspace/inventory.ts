@@ -43,7 +43,8 @@ function reusableFile(fingerprint: DescriptorFingerprint, entry: FileEntry): Reu
  * and whose codemap record is still cached, keeps its earlier entry without being read again, as RPCE trusts unchanged
  * file metadata; every other file is read. A file whose status changed within the reuse margin of its read is not kept for
  * reuse, so the next scan reads it again. The first scan after a restart reuses the saved files when the native build and
- * settings that produced them are unchanged. Returns the snapshot and the files the next scan may reuse, and saves them.
+ * settings that produced them are unchanged. Returns the snapshot and the files the next scan may reuse, and saves them
+ * when they differ from the files saved before.
  */
 export async function scanInventory(access: NativeAccess, declaration: PolicyDeclaration, workspaceKey: string,
   generation: number, artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal,
@@ -51,15 +52,18 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   const description = (await access.bridge.request({ kind: 'describe' }, access.signal)).result;
   const supportedExtensions = new Set(description.extensions.map(entry => entry.extension));
   const binding = reuseBinding(access, description, codeMapsGloballyDisabled);
+  // The files saved under this binding; null when none are, so this scan's files must be saved.
   const previous = reusable === null
-    ? new Map((await artifacts.readReuse(workspaceKey, binding)).map(file => [reusableKey(file.entry), file]))
-    : reusable.binding === binding ? reusable.files : new Map<string, ReusableFile>();
+    ? await artifacts.readReuse(workspaceKey, binding).then(files => files && new Map(files.map(file => [reusableKey(file.entry), file])))
+    : reusable.binding === binding ? reusable.files : null;
   const policy = new RootPolicy(declaration, access);
   const entries: InventoryEntry[] = [];
   const failures: { root: string; directory: DirectoryRef; code: string }[] = [];
   const next = new Map<string, ReusableFile>();
+  // A reused file keeps its saved record, so `next` equals `previous` when it holds only reused files, as many as `previous`.
+  let reusedFiles = 0;
   async function reuse(source: SourcePath, listed: DescriptorFingerprint): Promise<FileEntry | null> {
-    const saved = previous.get(reusableKey(source));
+    const saved = previous?.get(reusableKey(source));
     if (!saved || canonicalJSON(saved.fingerprint) !== canonicalJSON(listed)) return null;
     const { structural } = saved.entry;
     if (structural.kind !== 'artifact') return freeze({ ...saved.entry, structural });
@@ -68,7 +72,7 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   }
   async function acquire(source: SourcePath, listed: DescriptorFingerprint): Promise<void> {
     const reused = await reuse(source, listed);
-    if (reused) { entries.push(reused); next.set(reusableKey(source), reusableFile(listed, reused)); return; }
+    if (reused) { entries.push(reused); next.set(reusableKey(source), reusableFile(listed, reused)); reusedFiles++; return; }
     try {
       // The margin counts from the start of the read: a later time could accept a rewrite made while the read was in flight.
       const readAt = Date.now();
@@ -121,7 +125,6 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
     enumeration: failures.length ? { kind: 'incomplete' as const, failures } : { kind: 'complete' as const } };
   const snapshot = freeze({ ...body, inventoryDigest: inventoryDigest(body) });
   access.signal.throwIfAborted();
-  await artifacts.publishMembership(snapshot);
-  await artifacts.publishReuse(workspaceKey, binding, [...next.values()]);
+  if (previous === null || next.size !== reusedFiles || next.size !== previous.size) await artifacts.publishReuse(workspaceKey, binding, [...next.values()]);
   return { snapshot, reusable: { binding, files: next } };
 }

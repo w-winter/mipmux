@@ -133,7 +133,6 @@ async function main(): Promise<void> {
           if (subcommand !== 'invalidate') throw new WorkspaceFailure('invalidArguments');
           const kind = required('kind'), key = required('key');
           if (kind === 'artifact') await runtime.artifacts.invalidate(key);
-          else if (kind === 'membership') await runtime.artifacts.invalidateMembership(key);
           else if (kind === 'reuse') await runtime.artifacts.invalidateReuse(key);
           else throw new WorkspaceFailure('invalidArguments');
           result = { kind: 'invalidated', target: { kind, key } }; break;

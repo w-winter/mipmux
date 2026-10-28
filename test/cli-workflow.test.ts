@@ -60,11 +60,6 @@ test('built CLI warms, explores, renders, verifies, invalidates and emits failed
     const corrupt = await cli(['workspace', '--spec', files.spec, '--config', files.config]);
     assert.deepEqual(JSON.parse(corrupt.out), { kind: 'failed', code: 'cacheCorrupt', target: { kind: 'artifact', key } });
     assert.equal((await cli(['cache', 'invalidate', '--kind', 'artifact', '--key', key, '--config', files.config])).code, 0);
-    const membershipPath = join(directory, 'cache/v1/workspaces', inventory.workspaceKey, 'membership.json');
-    await writeFile(membershipPath, '{}');
-    const badMembership = await cli(['workspace', '--spec', files.spec, '--config', files.config]);
-    assert.deepEqual(JSON.parse(badMembership.out), { kind: 'failed', code: 'membershipCorrupt', target: { kind: 'membership', key: inventory.workspaceKey } });
-    assert.equal((await cli(['cache', 'invalidate', '--kind', 'membership', '--key', inventory.workspaceKey, '--config', files.config])).code, 0);
     assert.equal((await cli(['workspace', '--spec', files.spec, '--config', files.config])).code, 0);
     const blocked = await cli(['build', '--request', files.build, '--config', files.config]);
     assert.equal(blocked.code, 2, blocked.out);

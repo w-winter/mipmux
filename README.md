@@ -199,13 +199,12 @@ node dist/cli/main.js render --request /work/render.json --draft /work/draft.jso
 node dist/cli/main.js verify --bundle /exports/packet --mode integrity
 node dist/cli/main.js verify --bundle /exports/packet --mode current
 node dist/cli/main.js cache invalidate --kind artifact --key <sha256>
-node dist/cli/main.js cache invalidate --kind membership --key <sha256>
 node dist/cli/main.js cache invalidate --kind reuse --key <sha256>
 ```
 
 The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Omit `enhancementMode` and `budgetUnits` to use the configured defaults. Input files for `mipmux tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
 
-Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; membership targets name workspace inventory records; reuse targets name the saved file fingerprints that let a restarted server skip unchanged files. Library callers use `runtime.artifacts.invalidate(key)` for an artifact, `runtime.artifacts.invalidateMembership(key)` for membership or `runtime.artifacts.invalidateReuse(key)` for reuse. Each method removes only its named record.
+Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; reuse targets name the saved file fingerprints that let a restarted server skip unchanged files. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateReuse(key)` for reuse. Each method removes only its named record.
 
 Every configuration field is optional. Enabling `discovery` requires `provider`, `model`, `thinking` and `modelsPath`, the path of the model file described below. A file sets only what differs from the defaults:
 

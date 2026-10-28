@@ -50,15 +50,20 @@ test('workspace policy, reconciliation, operations and persistent content reuse'
     await writeFile(join(root, 'added.txt'), 'new');
     const b = await second.refresh(signal());
     assert.notEqual(a.inventoryDigest, b.inventoryDigest);
-    const writers = [a, b].map(() => runtime.supervisor.spawn({ executable: process.execPath,
+    // Processes replacing the same reuse record concurrently leave one complete record; readers never see a partial one.
+    const recordPath = join(f.options.cachePath, 'v1/workspaces', a.workspaceKey, 'reuse.json');
+    const { files } = JSON.parse(await readFile(recordPath, 'utf8'));
+    const bindings = ['a', 'b'].map(digit => digit.repeat(64)), unrelatedBinding = 'c'.repeat(64);
+    const writers = bindings.map(() => runtime.supervisor.spawn({ executable: process.execPath,
       args: [resolve('test/fixtures/cache-writer.mjs')], env: {}, cwd: resolve('.') }));
     await Promise.all(writers.map(writer => new Promise<void>(resolve => writer.child.stdout.once('data', () => resolve()))));
-    writers.forEach((writer, index) => writer.child.stdin.end(JSON.stringify({ kind: 'membership', cache: f.options.cachePath, snapshot: [a, b][index] })));
-    const observed = await runtime.artifacts.readMembership(a.workspaceKey);
-    assert(observed && [a.inventoryDigest, b.inventoryDigest].includes(observed.inventoryDigest));
+    writers.forEach((writer, index) => writer.child.stdin.end(JSON.stringify({ kind: 'reuse', cache: f.options.cachePath,
+      key: a.workspaceKey, binding: bindings[index], files })));
+    assert.equal(await runtime.artifacts.readReuse(a.workspaceKey, unrelatedBinding), null);
     assert((await Promise.all(writers.map(writer => writer.closed))).every(receipt => receipt.code === 0));
-    const published = await runtime.artifacts.readMembership(a.workspaceKey);
-    assert(published && [a.inventoryDigest, b.inventoryDigest].includes(published.inventoryDigest));
+    const published = JSON.parse(await readFile(recordPath, 'utf8'));
+    assert(bindings.includes(published.binding));
+    assert.deepEqual(await runtime.artifacts.readReuse(a.workspaceKey, published.binding), files);
     await assert.rejects(operation.readSource({ root: 'root', path: 'file.swift' }), /sourceChanged/);
     await writeFile(join(root, '.gitignore'), '*.txt\n');
     await assert.rejects(operation.readSource({ root: 'root', path: 'note.txt' }), /policyChanged/);
@@ -70,8 +75,6 @@ test('workspace policy, reconciliation, operations and persistent content reuse'
     const handle = await restarted.declare(f.spec, signal());
     const snapshot = await handle.refresh(signal());
     assert(!snapshot.entries.some(entry => entry.kind === 'file' && entry.path === 'note.txt'));
-    const membership = JSON.parse(await readFile(join(f.options.cachePath, 'v1/workspaces', snapshot.workspaceKey, 'membership.json'), 'utf8'));
-    assert.equal(membership.inventoryDigest, snapshot.inventoryDigest);
     await handle.close();
   } finally { await restarted.close(); }
 });

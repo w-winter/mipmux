@@ -31,7 +31,7 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
 
   async function exercise() {
   const warm = new MipmuxRuntime(options);
-  let key: string, membershipPath: string;
+  let key: string, reusePath: string;
   try {
     const client = warm.createClient(null);
     const workspace = await client.declare(spec, signal());
@@ -39,17 +39,17 @@ test('builder terminal receipts retain the sanitized cache recovery target throu
     const entry = inventory.entries.find(entry => entry.kind === 'file');
     if (entry?.kind !== 'file' || entry.structural.kind !== 'artifact') assert.fail('missing artifact');
     key = entry.structural.key.digest;
-    membershipPath = join(options.cachePath, 'v1/workspaces', inventory.workspaceKey, 'membership.json');
+    reusePath = join(options.cachePath, 'v1/workspaces', inventory.workspaceKey, 'reuse.json');
     await client.close();
   } finally { await warm.close(); }
   const artifactPath = join(options.cachePath, 'v1/artifacts', key.slice(0, 2), key + '.json');
   const target = { kind: 'artifact', key };
   const corrupt = async () => { await writeFile(artifactPath, '{}'); };
-  // Explicit invalidation removes only the named artifact; the valid membership record beside it is untouched.
+  // Explicit invalidation removes only the named artifact; the valid reuse record beside it is untouched.
   const invalidate = async (run: () => Promise<unknown>) => {
-    const membership = await readFile(membershipPath);
+    const reuse = await readFile(reusePath);
     await run();
-    await assert.rejects(access(artifactPath)); assert.deepEqual(await readFile(membershipPath), membership);
+    await assert.rejects(access(artifactPath)); assert.deepEqual(await readFile(reusePath), reuse);
   };
   const proof: Record<string, unknown> = {};
 

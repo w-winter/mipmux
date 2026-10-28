@@ -7,7 +7,7 @@ import type { CacheRecoveryTarget } from '../contracts/errors.js';
 import { SourcePath } from '../contracts/inventory.js';
 import { SHA256 } from '../contracts/workspace.js';
 
-const recoveryTarget = Compile(Type.Object({ kind: Type.Enum(['artifact', 'membership', 'reuse']), key: SHA256 }));
+const recoveryTarget = Compile(Type.Object({ kind: Type.Enum(['artifact', 'reuse']), key: SHA256 }));
 const structureKind = Compile(Type.Pick(StructureToolResult, ['kind']));
 const structureResult = Compile(StructureToolResult);
 const sourcePath = Compile(SourcePath);
@@ -32,11 +32,10 @@ export function failureCode(error: unknown): string {
 /** The validated recovery target of a cache corruption, conflict or busy failure; null for every other error. */
 export function cacheRecoveryTarget(error: unknown): CacheRecoveryTarget | null {
   const code = failureCode(error);
-  if (!(error instanceof WorkspaceFailure) || !['cacheCorrupt', 'cacheConflict', 'artifactBusy', 'membershipCorrupt'].includes(code)) return null;
+  if (!(error instanceof WorkspaceFailure) || !['cacheCorrupt', 'cacheConflict', 'artifactBusy'].includes(code)) return null;
   const target = error.details.target;
   // A corrupt cache can be an artifact or a workspace's reuse record; the other failures each name one kind.
-  const kinds: readonly CacheRecoveryTarget['kind'][] = code === 'membershipCorrupt' ? ['membership']
-    : code === 'cacheCorrupt' ? ['artifact', 'reuse'] : ['artifact'];
+  const kinds: readonly CacheRecoveryTarget['kind'][] = code === 'cacheCorrupt' ? ['artifact', 'reuse'] : ['artifact'];
   return recoveryTarget.Check(target) && kinds.includes(target.kind) ? { kind: target.kind, key: target.key } : null;
 }
 

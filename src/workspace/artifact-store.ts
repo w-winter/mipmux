@@ -5,7 +5,7 @@ import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { DescriptorFingerprint, type NativeResult } from '../contracts/native.js';
 import { SHA256 } from '../contracts/workspace.js';
-import { artifactValidator, inventoryValidator, ReusableFileEntry, type ArtifactRecord, type ArtifactKey,
+import { artifactValidator, ReusableFileEntry, type ArtifactRecord, type ArtifactKey,
   type InventorySnapshot } from '../contracts/inventory.js';
 import { canonicalJSON, sha256, freeze, WorkspaceFailure } from './values.js';
 import { observe } from './observe.js';
@@ -78,27 +78,23 @@ export class ArtifactStore {
     try { return await work; } finally { this.#pending.delete(key.digest); }
   }
 
-  async publishMembership(snapshot: InventorySnapshot): Promise<void> {
-    await this.#replaceWorkspaceRecord(snapshot.workspaceKey, 'membership.json', canonicalJSON(snapshot));
-  }
-
   /** Saves the files a scan after a restart may reuse, with the binding of the native build and settings that produced them. */
   async publishReuse(key: string, binding: string, files: readonly ReusableFile[]): Promise<void> {
     const body = { schemaVersion: 1 as const, workspaceKey: key, binding, files };
     await this.#replaceWorkspaceRecord(key, 'reuse.json', canonicalJSON({ ...body, recordSHA256: sha256(canonicalJSON(body)) }));
   }
 
-  /** The saved reusable files when they were saved under `binding`; none when the record is absent or has another binding. */
-  async readReuse(key: string, binding: string): Promise<readonly ReusableFile[]> {
+  /** The saved reusable files when they were saved under `binding`; null when the record is absent or has another binding. */
+  async readReuse(key: string, binding: string): Promise<readonly ReusableFile[] | null> {
     let raw: string;
     try { raw = await readFile(join(this.#path, 'workspaces', key, 'reuse.json'), 'utf8'); }
-    catch (error) { if (isAbsent(error)) return []; throw error; }
+    catch (error) { if (isAbsent(error)) return null; throw error; }
     let value: unknown;
     try { value = JSON.parse(raw); } catch { throw reuseCorrupt(key); }
     if (!reuseValidator.Check(value) || value.workspaceKey !== key) throw reuseCorrupt(key);
     const { recordSHA256, ...body } = value;
     if (sha256(canonicalJSON(body)) !== recordSHA256) throw reuseCorrupt(key);
-    return value.binding === binding ? freeze(value.files) : [];
+    return value.binding === binding ? freeze(value.files) : null;
   }
 
   /** Replaces one record in a workspace's directory by syncing a private temporary file and renaming it into place. */
@@ -112,27 +108,10 @@ export class ArtifactStore {
     } finally { await unlink(temporary).catch(error => { if (!isAbsent(error)) throw error; }); }
   }
 
-  async readMembership(key: string): Promise<InventorySnapshot | null> {
-    let raw: string;
-    try { raw = await readFile(join(this.#path, 'workspaces', key, 'membership.json'), 'utf8'); }
-    catch (error) { if (isAbsent(error)) return null; throw error; }
-    let value: unknown;
-    try { value = JSON.parse(raw); } catch { throw new WorkspaceFailure('membershipCorrupt', { target: { kind: 'membership', key } }); }
-    if (!inventoryValidator.Check(value) || value.workspaceKey !== key || inventoryDigest(value) !== value.inventoryDigest) {
-      throw new WorkspaceFailure('membershipCorrupt', { target: { kind: 'membership', key } });
-    }
-    return freeze(value);
-  }
-
   async invalidate(digest: string): Promise<void> {
     if (!/^[a-f0-9]{64}$/.test(digest)) throw new WorkspaceFailure('invalidArtifactKey');
     if (this.#pending.has(digest)) throw artifactFailure('artifactBusy', digest);
     await unlink(this.#artifactPath(digest));
-  }
-
-  async invalidateMembership(key: string): Promise<void> {
-    if (!/^[a-f0-9]{64}$/.test(key)) throw new WorkspaceFailure('invalidWorkspaceKey');
-    await unlink(join(this.#path, 'workspaces', key, 'membership.json'));
   }
 
   async invalidateReuse(key: string): Promise<void> {

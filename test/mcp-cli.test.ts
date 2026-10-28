@@ -13,7 +13,7 @@ import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { toolJSON } from './fixtures/tool-json.js';
 
 const command = resolve('dist/cli/main.js');
-test('MCP exposes nonsecret artifact and membership targets usable by explicit CLI recovery', async () => {
+test('MCP exposes nonsecret artifact and reuse targets usable by explicit CLI recovery', async () => {
   await mkdir('test-output', { recursive: true });
   const base = await mkdtemp(join(tmpdir(), 'mipmux-mcp-cache-'));
   const root = join(base, 'root'), outputRoot = join(base, 'out'), config = join(base, 'config.json');
@@ -28,14 +28,14 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
   await handle.close(); await runtime.close();
   const entry = inventory.entries.find(entry => entry.kind === 'file');
   if (!entry || entry.kind !== 'file' || entry.structural.kind !== 'artifact') assert.fail('missing artifact');
-  const artifactKey = entry.structural.key.digest, membershipKey = inventory.workspaceKey;
+  const artifactKey = entry.structural.key.digest, reuseKey = inventory.workspaceKey;
   const artifactPath = join(options.cachePath, 'v1/artifacts', artifactKey.slice(0, 2), artifactKey + '.json');
-  const membershipPath = join(options.cachePath, 'v1/workspaces', membershipKey, 'membership.json');
+  const reusePath = join(options.cachePath, 'v1/workspaces', reuseKey, 'reuse.json');
   await writeFile(config, JSON.stringify({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000 }));
-  for (const kind of ['artifact', 'membership'] as const) {
-    const key = kind === 'artifact' ? artifactKey : membershipKey;
-    const path = kind === 'artifact' ? artifactPath : membershipPath;
-    const unrelated = kind === 'artifact' ? membershipPath : artifactPath;
+  for (const kind of ['artifact', 'reuse'] as const) {
+    const key = kind === 'artifact' ? artifactKey : reuseKey;
+    const path = kind === 'artifact' ? artifactPath : reusePath;
+    const unrelated = kind === 'artifact' ? reusePath : artifactPath;
     const saved = await readFile(path), neighbor = await readFile(unrelated);
     await writeFile(path, 'synthetic corrupt record');
     const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
@@ -44,10 +44,10 @@ test('MCP exposes nonsecret artifact and membership targets usable by explicit C
     try {
       await client.connect(transport);
       const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec } });
-      const result = kind === 'membership' ? declared : await client.callTool({ name: 'workspace_refresh',
+      const result = await client.callTool({ name: 'workspace_refresh',
         arguments: { workspaceId: JSON.parse(JSON.stringify(toolJSON(declared))).id } });
       assert.equal(result.isError, true);
-      assert.deepEqual(toolJSON(result), { kind: 'error', code: kind === 'artifact' ? 'cacheCorrupt' : 'membershipCorrupt', target: { kind, key } });
+      assert.deepEqual(toolJSON(result), { kind: 'error', code: 'cacheCorrupt', target: { kind, key } });
       await writeFile(join(base, kind + '-diagnostic.json'), JSON.stringify(result));
     } finally { await client.close(); }
     await promisify(execFile)(process.execPath, [command, 'cache', 'invalidate', '--kind', kind, '--key', key, '--config', config], { cwd: '/' });

@@ -69,14 +69,19 @@ function file(snapshot: InventorySnapshot, path: string) {
   return entry;
 }
 
-test('a refresh reads only files whose descriptor fingerprint changed', async () => {
-  const { root, runtime, workspace, reads } = await fixture({ settled: true });
+test('a refresh reads only files whose descriptor fingerprint changed and saves the record only when it changed', async () => {
+  const { base, root, runtime, workspace, reads } = await fixture({ settled: true });
   try {
     reads.length = 0;
     const unchanged = await workspace.refresh(signal());
     assert.deepEqual(reads, []);
+    // Saving replaces the record through a rename, which gives it a new inode.
+    const record = join(base, 'cache/v1/workspaces', unchanged.workspaceKey, 'reuse.json'), saved = (await stat(record)).ino;
+    await workspace.refresh(signal());
+    assert.equal((await stat(record)).ino, saved, 'an unchanged refresh rewrote the reuse record');
     await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int; let more: Int }\n');
     const edited = await workspace.refresh(signal());
+    assert.notEqual((await stat(record)).ino, saved);
     assert.deepEqual(reads, ['Other.swift']);
     assert.notDeepEqual(file(edited, 'Other.swift').identity, file(unchanged, 'Other.swift').identity);
     assert.deepEqual(file(edited, 'Model.swift'), file(unchanged, 'Model.swift'));
