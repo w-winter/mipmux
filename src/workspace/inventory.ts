@@ -1,4 +1,3 @@
-import { stat } from 'node:fs/promises';
 import { extname } from 'node:path';
 import type { InventoryEntry, InventorySnapshot, SourcePath } from '../contracts/inventory.js';
 import type { DirectoryRef } from '../contracts/workspace.js';
@@ -14,19 +13,20 @@ import { capturedFile, completeFile, type FileEntry } from './inventory-file.js'
 export interface Reuse { readonly binding: string; readonly files: ReadonlyMap<string, ReusableFile> }
 const reusableKey = (source: SourcePath) => source.root + '\0' + source.path;
 
-/** Identifies what a file entry depends on besides the file: the native executable, its pipelines and the codemap setting. */
-async function reuseBinding(access: NativeAccess, description: Extract<NativeResult, { kind: 'description' }>,
-  codeMapsGloballyDisabled: boolean): Promise<string> {
-  const executable = await stat(access.bridge.executable, { bigint: true });
-  return sha256(canonicalJSON({ description, codeMapsGloballyDisabled,
-    executable: [executable.dev, executable.ino, executable.size, executable.mtimeNs, executable.ctimeNs].map(String) }));
+/**
+ * Identifies what a file entry depends on besides the file: the executable the running native helper started from, its
+ * pipelines and the codemap setting.
+ */
+function reuseBinding(access: NativeAccess, description: Extract<NativeResult, { kind: 'description' }>,
+  codeMapsGloballyDisabled: boolean): string {
+  return sha256(canonicalJSON({ description, codeMapsGloballyDisabled, executable: access.bridge.executableIdentity }));
 }
 
 // File systems round file times down, by up to two seconds on FAT, one on HFS+ and ext3 and a clock tick on Linux, so an
 // in-place rewrite at the same size in the same step as a read can leave the fingerprint unchanged.
 const reuseMarginNanoseconds = 2_000_000_000n;
 
-/** Whether a file read at `readAt` (milliseconds since the epoch) last changed long enough before it to be reused later. */
+/** Whether a file whose read started at `readAt` (milliseconds since the epoch) last changed long enough before it to be reused later. */
 function settled(fingerprint: DescriptorFingerprint, readAt: number): boolean {
   const changed = BigInt(fingerprint.changedSeconds) * 1_000_000_000n + BigInt(fingerprint.changedNanoseconds);
   return changed < BigInt(readAt) * 1_000_000n - reuseMarginNanoseconds;
@@ -50,7 +50,7 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   codeMapsGloballyDisabled: boolean, reusable: Reuse | null): Promise<{ snapshot: InventorySnapshot; reusable: Reuse }> {
   const description = (await access.bridge.request({ kind: 'describe' }, access.signal)).result;
   const supportedExtensions = new Set(description.extensions.map(entry => entry.extension));
-  const binding = await reuseBinding(access, description, codeMapsGloballyDisabled);
+  const binding = reuseBinding(access, description, codeMapsGloballyDisabled);
   const previous = reusable === null
     ? new Map((await artifacts.readReuse(workspaceKey, binding)).map(file => [reusableKey(file.entry), file]))
     : reusable.binding === binding ? reusable.files : new Map<string, ReusableFile>();
@@ -70,8 +70,9 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
     const reused = await reuse(source, listed);
     if (reused) { entries.push(reused); next.set(reusableKey(source), reusableFile(listed, reused)); return; }
     try {
-      const acquired = await access.read(source, null);
+      // The margin counts from the start of the read: a later time could accept a rewrite made while the read was in flight.
       const readAt = Date.now();
+      const acquired = await access.read(source, null);
       const entry = await completeFile(access, capturedFile(source, acquired, 'discoverable'), acquired, artifacts, retainExtraction,
         artifactBuildSignal, codeMapsGloballyDisabled);
       entries.push(entry);

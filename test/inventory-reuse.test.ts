@@ -8,15 +8,21 @@ import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import type { InventorySnapshot } from '../src/contracts/inventory.js';
+import { failureResult } from '../src/runtime/tool-result.js';
 
 const signal = () => new AbortController().signal;
 const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 // A scan reads a file again when its status-change time was within this margin of the previous read.
 const reuseMarginMs = 2000;
 
+interface Settings { readonly nativeExecutable?: string; readonly codeMapsGloballyDisabled?: boolean;
+  /** Holds the response to the first read of this file for this long. */
+  readonly slowRead?: { readonly path: string; readonly ms: number } }
+
 /** Declares the fixture workspace in a runtime over `base`'s cache whose bridges record source reads and request kinds. */
-async function start(base: string, settings: { nativeExecutable?: string; codeMapsGloballyDisabled?: boolean } = {}) {
+async function start(base: string, settings: Settings = {}) {
   const reads: string[] = [], kinds: string[] = [];
+  let slow = settings.slowRead;
   const options = { copyContext: { ...copyContext(), codeMapsGloballyDisabled: settings.codeMapsGloballyDisabled ?? false },
     cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: settings.nativeExecutable ?? nativeExecutable, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
@@ -26,7 +32,12 @@ async function start(base: string, settings: { nativeExecutable?: string; codeMa
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
           kinds.push(operation.kind);
           if (operation.kind === 'readSource') reads.push(operation.path);
-          return super.request(operation, requestSignal);
+          const reply = await super.request(operation, requestSignal);
+          if (operation.kind === 'readSource' && slow && operation.path === slow.path) {
+            const { ms } = slow; slow = undefined;
+            await new Promise(resolve => setTimeout(resolve, ms));
+          }
+          return reply;
         }
       }
       return new Bridge({ executable: options.nativeExecutable, env: options.nativeEnvironment, supervisor: this.supervisor });
@@ -39,7 +50,7 @@ async function start(base: string, settings: { nativeExecutable?: string; codeMa
 }
 
 /** A refreshed workspace over two top-level files and a subdirectory of three; `settled` files predate the reuse margin. */
-async function fixture({ settled = false } = {}) {
+async function fixture({ settled = false, settings = {} }: { readonly settled?: boolean; readonly settings?: Settings } = {}) {
   const base = await mkdtemp(join(tmpdir(), 'mipmux-inventory-reuse-'));
   const root = join(base, 'root');
   await mkdir(join(root, 'sub'), { recursive: true }); await mkdir(join(base, 'out'));
@@ -47,7 +58,7 @@ async function fixture({ settled = false } = {}) {
   await writeFile(join(root, 'Other.swift'), 'struct Other { let value: Int }\n');
   for (const name of ['a', 'b', 'c']) await writeFile(join(root, 'sub', name + '.swift'), `struct ${name.toUpperCase()} {}\n`);
   if (settled) await new Promise(resolve => setTimeout(resolve, reuseMarginMs + 100));
-  const started = await start(base);
+  const started = await start(base, settings);
   await started.workspace.refresh(signal());
   return { base, root, ...started };
 }
@@ -72,20 +83,22 @@ test('a refresh reads only files whose descriptor fingerprint changed', async ()
   } finally { await runtime.close(); }
 });
 
-test('a same-size edit with its modification time restored, or a replacement by rename, is read again', async () => {
-  const { root, runtime, workspace } = await fixture();
+test('a reusable file edited at the same size with its modification time restored, or replaced by rename, is read again', async () => {
+  const { root, runtime, workspace, reads } = await fixture({ settled: true });
   try {
-    const path = join(root, 'Model.swift'), before = await stat(path);
-    const original = file(await workspace.refresh(signal()), 'Model.swift');
-    await writeFile(path, 'struct Model { let other: Int }\n');
-    await utimes(path, before.atime, before.mtime);
-    const restored = file(await workspace.refresh(signal()), 'Model.swift');
-    assert.notDeepEqual(restored.identity, original.identity);
-    await writeFile(join(root, 'replacement.tmp'), 'struct Model { let third: Int }\n');
-    await utimes(join(root, 'replacement.tmp'), before.atime, before.mtime);
-    await rename(join(root, 'replacement.tmp'), path);
-    const replaced = file(await workspace.refresh(signal()), 'Model.swift');
-    assert.notDeepEqual(replaced.identity, restored.identity);
+    const original = await workspace.refresh(signal());
+    const model = join(root, 'Model.swift'), other = join(root, 'Other.swift');
+    const modelTimes = await stat(model), otherTimes = await stat(other);
+    await writeFile(model, 'struct Model { let other: Int }\n');
+    await utimes(model, modelTimes.atime, modelTimes.mtime);
+    await writeFile(join(root, 'replacement.tmp'), 'struct Other { let third: Int }\n');
+    await utimes(join(root, 'replacement.tmp'), otherTimes.atime, otherTimes.mtime);
+    await rename(join(root, 'replacement.tmp'), other);
+    reads.length = 0;
+    const edited = await workspace.refresh(signal());
+    assert.deepEqual(reads.sort(), ['Model.swift', 'Other.swift']);
+    assert.notDeepEqual(file(edited, 'Model.swift').identity, file(original, 'Model.swift').identity);
+    assert.notDeepEqual(file(edited, 'Other.swift').identity, file(original, 'Other.swift').identity);
   } finally { await runtime.close(); }
 });
 
@@ -96,6 +109,19 @@ test('a refresh sends one ignore query per listed directory besides the root adm
     await workspace.refresh(signal());
     const count = (kind: string) => kinds.filter(entry => entry === kind).length;
     assert.equal(count('queryIgnoreHierarchy'), count('listDirectory') + 1);
+  } finally { await runtime.close(); }
+});
+
+test('a read that completes after the reuse margin still counts from its start', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-inventory-reuse-'));
+  await mkdir(join(base, 'root')); await mkdir(join(base, 'out'));
+  await writeFile(join(base, 'root', 'Model.swift'), 'struct Model { let value: Int }\n');
+  const { runtime, workspace, reads } = await start(base, { slowRead: { path: 'Model.swift', ms: reuseMarginMs + 100 } });
+  try {
+    // The slow read cannot be recorded, so a later scan reads the file again; by then it has settled and is recorded.
+    await workspace.refresh(signal());
+    await workspace.refresh(signal());
+    assert.deepEqual(reads, ['Model.swift', 'Model.swift']);
   } finally { await runtime.close(); }
 });
 
@@ -123,20 +149,43 @@ test('a restarted runtime rereads only files changed while it was stopped', asyn
   } finally { await restarted.runtime.close(); }
 });
 
-test('a saved record is not reused after the native executable or the codemap setting changes', async () => {
-  for (const change of ['executable', 'codemaps'] as const) {
-    const { base, runtime } = await fixture();
+/** Writes an executable script at `path` that runs the native bridge, replacing any earlier one by rename. */
+async function writeWrapper(path: string, comment: string) {
+  await writeFile(path + '.tmp', `#!/bin/sh\n# ${comment}\nexec '${nativeExecutable}' "$@"\n`); await chmod(path + '.tmp', 0o755);
+  await rename(path + '.tmp', path);
+}
+
+test('a saved record is reused only while the native executable and the codemap setting are unchanged', async () => {
+  for (const change of ['none', 'executable', 'codemaps'] as const) {
+    const { base, runtime } = await fixture({ settled: true });
     await runtime.close();
     const wrapper = join(base, 'wrapped-bridge');
-    await writeFile(wrapper, `#!/bin/sh\nexec '${nativeExecutable}' "$@"\n`); await chmod(wrapper, 0o755);
-    const restarted = await start(base, change === 'executable' ? { nativeExecutable: wrapper } : { codeMapsGloballyDisabled: true });
+    await writeWrapper(wrapper, 'wrapped');
+    const restarted = await start(base, change === 'executable' ? { nativeExecutable: wrapper }
+      : change === 'codemaps' ? { codeMapsGloballyDisabled: true } : {});
     try {
       const snapshot = await restarted.workspace.refresh(signal());
       const files = snapshot.entries.filter(entry => entry.kind === 'file').map(entry => entry.path);
-      assert.deepEqual(new Set(restarted.reads), new Set(files), change);
+      assert.deepEqual(new Set(restarted.reads), new Set(change === 'none' ? [] : files), change);
       if (change === 'codemaps') assert.equal(file(snapshot, 'Model.swift').structural.kind, 'pending');
     } finally { await restarted.runtime.close(); }
   }
+});
+
+test('a saved record names the executable its helper started from, not one that replaced it later', async () => {
+  const wrapper = join(await mkdtemp(join(tmpdir(), 'mipmux-inventory-wrapper-')), 'wrapped-bridge');
+  await writeWrapper(wrapper, 'first');
+  const { base, runtime, workspace } = await fixture({ settled: true, settings: { nativeExecutable: wrapper } });
+  // The running helper was started from the first script; only helpers started later use the second.
+  await writeWrapper(wrapper, 'second');
+  await workspace.refresh(signal());
+  await runtime.close();
+  const restarted = await start(base, { nativeExecutable: wrapper });
+  try {
+    const snapshot = await restarted.workspace.refresh(signal());
+    const files = snapshot.entries.filter(entry => entry.kind === 'file').map(entry => entry.path);
+    assert.deepEqual(new Set(restarted.reads), new Set(files));
+  } finally { await restarted.runtime.close(); }
 });
 
 test('a corrupt saved record fails the scan until it is invalidated', async () => {
@@ -146,7 +195,8 @@ test('a corrupt saved record fails the scan until it is invalidated', async () =
   await writeFile(join(base, 'cache/v1/workspaces', key, 'reuse.json'), '{}');
   const restarted = await start(base);
   try {
-    await assert.rejects(restarted.workspace.refresh(signal()), { code: 'cacheCorrupt', details: { target: { kind: 'reuse', key } } });
+    const failure: unknown = await restarted.workspace.refresh(signal()).then(() => assert.fail('The scan read a corrupt record'), error => error);
+    assert.deepEqual(failureResult(failure), { kind: 'error', code: 'cacheCorrupt', target: { kind: 'reuse', key } });
     await restarted.runtime.artifacts.invalidateReuse(key);
     await restarted.workspace.refresh(signal());
   } finally { await restarted.runtime.close(); }

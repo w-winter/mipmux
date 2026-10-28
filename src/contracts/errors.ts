@@ -17,5 +17,8 @@ export const UnreadableFileCode = Type.Enum(unreadableFileCodes);
 export type NativeFailureCode = Static<typeof NativeWireFailureCode> |
   'invalidRequest' | 'nativeProtocolError' | 'nativeWorkerFailed' | 'cancelled' | 'nativeWorkerClosed';
 
-/** The nonsecret record that explicit cache invalidation accepts: an artifact key digest or a workspace membership key. */
-export interface CacheRecoveryTarget { readonly kind: 'artifact' | 'membership'; readonly key: string }
+/**
+ * The nonsecret record that explicit cache invalidation accepts: an artifact key digest, or the workspace key of a
+ * membership or reuse record.
+ */
+export interface CacheRecoveryTarget { readonly kind: 'artifact' | 'membership' | 'reuse'; readonly key: string }

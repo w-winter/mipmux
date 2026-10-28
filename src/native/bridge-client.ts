@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { statSync } from 'node:fs';
 import { nativeFrameValidator, nativeRequestValidator, type NativeFrame, type NativeOperation, type NativeResult } from '../contracts/native.js';
 import { ProcessSupervisor, type OwnedProcess, type ProcessReceipt } from '../runtime/process-supervisor.js';
 import type { SourceIdentity } from '../contracts/workspace.js';
@@ -113,9 +114,17 @@ export class BridgeClient {
 
   /** The path this bridge's process was started from. */
   readonly executable: string;
+  /**
+   * The device, inode, size and modification and status-change times of the file at `executable` just before the process
+   * started, as decimal strings; null when no file was there, in which case the process fails to start. A file that
+   * replaces it later is not the one this process runs.
+   */
+  readonly executableIdentity: readonly string[] | null;
 
   constructor(options: { readonly executable: string; readonly supervisor: ProcessSupervisor; readonly env: Readonly<Record<string, string>> }) {
     this.executable = options.executable;
+    const launched = statSync(options.executable, { bigint: true, throwIfNoEntry: false });
+    this.executableIdentity = launched ? [launched.dev, launched.ino, launched.size, launched.mtimeNs, launched.ctimeNs].map(String) : null;
     this.#process = options.supervisor.spawn({ executable: options.executable, args: [this.#generation], env: options.env, cwd: '/' });
     this.#process.child.stdout.on('data', (bytes: Buffer) => this.#receive(bytes));
     this.#process.child.stdin.on('error', () => this.#workerFailed());
