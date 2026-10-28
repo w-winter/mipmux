@@ -16,13 +16,15 @@ import { mcpProtectedPaths } from '../discovery/mcp-config.js';
 
 const closed = { additionalProperties: false };
 const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
-const executable = Type.Object({ executable: absolute }, closed);
+/** Git and, by default, the user's configuration from `HOME` and `XDG_CONFIG_HOME`, whose excludes file Git applies. */
+const GitHost = Type.Object({ executable: absolute, userConfiguration: Type.Optional(Type.Object({ home: absolute,
+  xdgConfigHome: Type.Union([absolute, Type.Null()]) }, closed)) }, closed);
 /** Resolved host settings with every path, policy and limit explicit. Library hosts construct this form directly. */
 export const HostConfig = Type.Object({ copyContext: CopyContext, ignoreSettings: Type.Optional(IgnoreSettings), cachePath: absolute, nativeExecutable: absolute,
   nativeEnvironment: Type.Record(Type.String(), Type.String()),
   terminationGraceMs: Type.Integer({ minimum: 0, maximum: 2147483647 }),
   credentialPaths: Type.Array(absolute),
-  git: Type.Union([executable, Type.Null()]), discovery: Type.Union([PiConfig, Type.Null()]),
+  git: Type.Union([GitHost, Type.Null()]), discovery: Type.Union([PiConfig, Type.Null()]),
   defaultMaxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   contextBudgetUnits: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   defaultEnhancementMode: Type.Optional(PromptEnhancementMode),
@@ -85,8 +87,8 @@ const defaultGitExecutable = '/usr/bin/git';
 /**
  * Resolves a configuration file into explicit host settings. Omitted values take these defaults: RPCE's default copy
  * state, the platform cache directory (`~/Library/Caches/mipmux` on macOS, otherwise `$XDG_CACHE_HOME/mipmux` or
- * `~/.cache/mipmux`), the package's own native executable, `/usr/bin/git`, a 200000-unit budget, 48000-byte exploration
- * replies and a 1000 ms termination grace. Discovery takes Pi's `auth.json` from `$PI_CODING_AGENT_DIR` or `~/.pi/agent`,
+ * `~/.cache/mipmux`), the package's own native executable, `/usr/bin/git` with the user's Git configuration, a 200000-unit
+ * budget, 48000-byte exploration replies and a 1000 ms termination grace. Discovery takes Pi's `auth.json` from `$PI_CODING_AGENT_DIR` or `~/.pi/agent`,
  * the shipped discovery template, codemode and Pi's recovery defaults, merged field by field with the file's overrides.
  */
 export function resolveHostConfig(file: ConfigFile, host: ConfigHost): HostConfig {
@@ -98,7 +100,8 @@ export function resolveHostConfig(file: ConfigFile, host: ConfigHost): HostConfi
     nativeEnvironment: file.nativeEnvironment ?? {},
     terminationGraceMs: file.terminationGraceMs ?? defaultTerminationGraceMs,
     credentialPaths: file.credentialPaths ?? [],
-    git: file.git === undefined ? { executable: defaultGitExecutable } : file.git,
+    git: file.git === null ? null : { executable: file.git?.executable ?? defaultGitExecutable,
+      userConfiguration: file.git?.userConfiguration ?? userGitConfiguration(host) },
     discovery: file.discovery ? resolveDiscovery(file.discovery, host) : null,
     defaultMaxOutputBytes: file.defaultMaxOutputBytes ?? defaultMaxOutputBytes,
     contextBudgetUnits: file.contextBudgetUnits ?? defaultContextBudgetUnits,
@@ -106,6 +109,12 @@ export function resolveHostConfig(file: ConfigFile, host: ConfigHost): HostConfi
   if (file.ignoreSettings !== undefined) config.ignoreSettings = file.ignoreSettings;
   if (file.defaultEnhancementMode !== undefined) config.defaultEnhancementMode = file.defaultEnhancementMode;
   return config;
+}
+
+/** Where Git finds the user's configuration; Git, like the XDG specification, ignores an empty or relative `XDG_CONFIG_HOME`. */
+function userGitConfiguration(host: ConfigHost) {
+  const xdgConfigHome = host.env.XDG_CONFIG_HOME;
+  return { home: host.home, xdgConfigHome: xdgConfigHome && isAbsolute(xdgConfigHome) ? xdgConfigHome : null };
 }
 
 function resolveDiscovery(file: Static<typeof DiscoveryFile>, host: ConfigHost): PiConfig {

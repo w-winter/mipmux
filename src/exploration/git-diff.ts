@@ -195,7 +195,8 @@ export async function discoverPaths(operation: WorkspaceOperation, owner: Reposi
   let untracked: string[] = [];
   if (commands.includeUntracked) {
     const listed = await gitProcess(operation.runtime.supervisor, owner.executable, owner.repository.worktree.canonicalPath,
-      ['ls-files', '--others', '--exclude-standard', ...(commands.pathspecs.length ? ['--', ...commands.pathspecs] : [])], operation.signal,
+      [...owner.excludes, 'ls-files', '--others', '--exclude-standard', ...(commands.pathspecs.length ? ['--', ...commands.pathspecs] : [])],
+      operation.signal,
       { kind: 'diff', gitDirectory: owner.repository.gitDirectory.canonicalPath, worktree: owner.repository.worktree.canonicalPath,
         literalPaths: false, stdin: null });
     if (listed.code !== 0) throw new WorkspaceFailure('gitQueryFailed', { exit: listed.code });

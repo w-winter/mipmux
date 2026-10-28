@@ -6088,11 +6088,12 @@
         "Add a protected, original-root metadata inspection before byte acquisition. Metadata and read observations remain separate so the source demand classifier is not inferred from an ambiguous read exception.",
         "Settle globally disabled explicit codemap demand with the registered source entry before retaining any extraction. Shared completion independently uses the same captured flag. Optional supported sources remain pending, not unsupported. Source WorkspaceFileContextStore.swift:13331-13337 revokes globally suspended graph authority.",
         "Revalidate a search continuation's candidates' controlling policy with one ignore-hierarchy query per root.",
-        "Read, decode and scan search candidates in one native request, passing each file's outcome on as it arrives."
+        "Read, decode and scan search candidates in one native request, passing each file's outcome on as it arrives.",
+        "Admit paths against the Git exclusions of the workspace's latest refresh, or ask Git again when verifying a saved packet against current files."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "ebc41990dcf4d4ff5799cd3d71bdea6fd76bab4129f5506ececbda2405093f84",
+      "sha256": "14cc71f8fede5b2a0c9993759bf077259119edb02a7af38bb9c0649fcb459867",
       "classification": "handwritten"
     },
     {
@@ -6399,7 +6400,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "1dc0b747cceab406d17bb35f4b3e9f641b5a9b2a4d8409112361e28317a7bf85",
+      "sha256": "af59b8020f8e47ad7a1fbe15d9d8ccbf93e70ffb1685cd46d13322570254f82f",
       "classification": "handwritten",
       "changes": [
         "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework.",
@@ -6408,7 +6409,8 @@
         "Capture the immutable runtime global disable value and pass it to ordinary inventory and managed-file completion. Source WorkspaceFileContextStore.swift:10992-11033,13331-13337,13410-13425 suspends generation and graph authority; dynamic app transition machinery is unnecessary for immutable headless settings.",
         "Keep the previous scan's files with their read-time descriptor fingerprints and pass them to the next inventory scan, which reuses an unchanged file's entry as RPCE's content cache trusts an unchanged FileContentFingerprint (FileSystemService+ContentLoading.swift contentFingerprint).",
         "Load the saved reuse record on the first scan after a restart, and keep the reuse set with the binding of the native build and settings that produced it.",
-        "Wait for the workspace owner close callback, which can stop the output root's snapshot helper, before workspace closure settles."
+        "Wait for the workspace owner close callback, which can stop the output root's snapshot helper, before workspace closure settles.",
+        "Publish each scan's Git exclusions with its inventory, and apply them when rechecking explicitly registered files."
       ]
     },
     {
@@ -8259,7 +8261,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "4eb9620b17fed9b16acb06111f72207eed608298760e3e3d79efe88fefe22379",
       "destination": "src/exploration/git-repository.ts",
-      "sha256": "193d109dbaa8f30f8c3cfc1380c1d0456fd53be89cb5ef38015eacc785e2a267",
+      "sha256": "2370e3f4d4a3d88a1831261f32578bb6b82c87dc8b3429aaed9f548a23df8f46",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8271,7 +8273,8 @@
         "Use the existing supervised resolver and captured filesystem identities to admit advertised same-repository worktrees. A declared subroot authorizes its owning checkout advertisement under the approved Git evidence authority.",
         "An already admitted checkout can anchor main-worktree metadata reads, including nested repositories. Explicit exclusions and credential/protected paths remain enforced by the existing permits function.",
         "Classify only exit 128 with empty stdout and the C-locale rev-parse --show-toplevel no-repository diagnostic as expected absence. Preserve gitQueryFailed for other process failures and propagate protocol, identity, authorization and cancellation failures. Explicit callers retain their error code.",
-        "Expose strict Git queries through the admitted repository owner with its captured working directory and signal. Preserve typed no-repository discovery separately from other command failures; optional queries and diff/scratch process environments retain their own handling."
+        "Expose strict Git queries through the admitted repository owner with its captured working directory and signal. Preserve typed no-repository discovery separately from other command failures; optional queries and diff/scratch process environments retain their own handling.",
+        "Apply the excludes file named by the user's Git configuration to every Git command in the resolved repository."
       ]
     },
     {

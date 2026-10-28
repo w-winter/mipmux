@@ -98,6 +98,8 @@ An operation provides `readFile`, `getFileTree`, `getCodeStructure`, and `fileSe
 
 Workspace visibility follows RPCE's ignore rules. Git repositories apply a mandatory `.gitignore` filter, including ancestor controls when a loaded root is below the repository root. Global patterns, `.repo_ignore` and `.cursorignore` supply additional ordered rules. Optional `ignoreSettings` in the host configuration or runtime options sets `global` pattern text and the booleans `respectRepoIgnore`, `respectCursorignore` and `enableHierarchicalIgnores`. Omission uses RPCE's global defaults, including dependency and cache directories, with all three switches enabled.
 
+With Git configured, each refresh also asks Git which untracked files it ignores in each Git root, and excludes them. Git's answer covers `.gitignore` files, the repository's `info/exclude` and the excludes file your Git configuration names: `core.excludesFile`, or Git's default `~/.config/git/ignore`. Git never ignores a tracked file, so a tracked file that matches only `info/exclude` or the excludes file stays in the workspace. Reads and later pages of a search use the latest refresh's answer, and checking a saved packet against current files asks Git again. The `git` tool's status and untracked diff listings apply the same excludes file. mipmux reads `core.excludesFile` once per repository while it runs; restart mipmux after changing that setting. Library hosts pass the user's `home` and `xdgConfigHome` as `git.userConfiguration`; without it, only `.gitignore` files and `info/exclude` apply.
+
 Explicit exclusions govern every root, including overlapping roots. Git administration paths, `.env` files, configured credential paths (including ones that do not exist yet), the cache, and the admitted output directory are excluded. Absolute denies also apply through declared root aliases, including aliases of containing roots. Descendant source symlinks are skipped. This protects excluded material; it cannot identify arbitrary secrets renamed into permitted files.
 
 `runtime.artifacts.invalidate(keyDigest)` removes a reported corrupt artifact explicitly. Corrupt/conflicting artifacts cause errors rather than cache misses. [Workspace and exploration contracts](docs/contracts.md#workspace-generations-and-exploration) describe identities, coverage, query semantics, and pagination.
@@ -237,7 +239,7 @@ Omitted fields take these values:
 | `nativeExecutable` | the package's `libexec/<platform>-<architecture>/MipmuxBridge` |
 | `nativeEnvironment` | none |
 | `terminationGraceMs` | `1000` |
-| `git` | `{ "executable": "/usr/bin/git" }`. Set `null` to work without Git |
+| `git` | `{ "executable": "/usr/bin/git" }`, with `userConfiguration` taken from `HOME` and `XDG_CONFIG_HOME` so that Git finds your excludes file. Set `null` to work without Git |
 | `defaultMaxOutputBytes` | `48000`, which keeps a default exploration reply below Pi's 50 KiB tool-output limit |
 | `discovery` | `null`, for model-free use |
 | `discovery.authPath` | `auth.json` in `$PI_CODING_AGENT_DIR`, or in `~/.pi/agent` when that variable is unset |

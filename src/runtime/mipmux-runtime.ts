@@ -25,6 +25,8 @@ import type { RootIdentity } from '../contracts/workspace.js';
 import { observe } from '../workspace/observe.js';
 import { revalidateCanonicalSources } from '../context/clipboard-selection.js';
 import { capturedSourceSelections } from '../context/source-omissions.js';
+import type { GitUserConfiguration } from '../patches/git-process.js';
+import { GitExclusionQuery, listGitExclusions, resolveExcludesFile, type GitRepositoryLocation } from '../workspace/git-exclusions.js';
 
 interface GitSnapshotMutationAccess { readonly bridge: BridgeClient; readonly root: NativeHandle }
 interface GitSnapshotMutationOwner { tail: Promise<void>; bridge: BridgeClient | null }
@@ -43,7 +45,12 @@ export interface RuntimeOptions {
   readonly credentialPaths: readonly string[];
   /** Omission selects the retained RPCE defaults; explicit values are captured per workspace. */
   readonly ignoreSettings?: IgnoreSettings;
-  readonly git?: { readonly executable: string };
+  /**
+   * Git, which reports the untracked files it ignores and answers Git queries; omission works without Git. With
+   * `userConfiguration`, Git applies the excludes file the user's global configuration names; without it, only `.gitignore`
+   * files and each repository's `info/exclude` apply.
+   */
+  readonly git?: { readonly executable: string; readonly userConfiguration?: GitUserConfiguration };
 }
 
 export class MipmuxRuntime {
@@ -56,6 +63,7 @@ export class MipmuxRuntime {
   readonly #drafts = new Set<DraftRuntime>();
   readonly #clients = new Set<ClientRuntime>();
   readonly #snapshotMutations = new Map<string, GitSnapshotMutationOwner>();
+  readonly #excludesFiles = new Map<string, Promise<string>>();
   #vcsBridge: BridgeClient | null = null;
   readonly #shutdown = new AbortController();
   #closing: Promise<void> | null = null;
@@ -67,7 +75,9 @@ export class MipmuxRuntime {
     if (!Number.isSafeInteger(options.contextBudgetUnits) || options.contextBudgetUnits < 1) {
       throw new WorkspaceFailure('invalidContextBudget');
     }
-    for (const path of [options.cachePath, options.nativeExecutable, ...options.credentialPaths, ...(options.git ? [options.git.executable] : [])]) {
+    const user = options.git?.userConfiguration;
+    for (const path of [options.cachePath, options.nativeExecutable, ...options.credentialPaths, ...(options.git ? [options.git.executable] : []),
+      ...(user ? [user.home, ...(user.xdgConfigHome === null ? [] : [user.xdgConfigHome])] : [])]) {
       if (!isAbsolute(path)) throw new WorkspaceFailure('absoluteConfigurationRequired');
     }
     this.supervisor = new ProcessSupervisor({ terminationGraceMs: options.terminationGraceMs });
@@ -137,6 +147,31 @@ export class MipmuxRuntime {
     queue.tail = Promise.allSettled([retired]).then(() => {});
     return retired;
   }
+  /**
+   * The excludes file Git applies in a repository under the user's configuration, or null without one. Each repository's file
+   * is resolved once for the runtime's lifetime, so a changed `core.excludesFile` setting applies after a restart.
+   */
+  gitExcludesFile(repository: GitRepositoryLocation, signal: AbortSignal): Promise<string | null> {
+    const git = this.options.git, user = git?.userConfiguration;
+    if (!git || !user) return Promise.resolve(null);
+    let resolved = this.#excludesFiles.get(repository.gitDirectory);
+    if (!resolved) {
+      resolved = resolveExcludesFile(this.supervisor, git.executable, user, repository, this.#shutdown.signal);
+      this.#excludesFiles.set(repository.gitDirectory, resolved);
+      void resolved.then(path => process.stderr.write(JSON.stringify({ level: 'info', event: 'gitExcludesFileResolved',
+        gitDirectory: repository.gitDirectory, path }) + '\n'), () => this.#excludesFiles.delete(repository.gitDirectory));
+    }
+    return observe(resolved, AbortSignal.any([signal, this.#shutdown.signal]));
+  }
+  /** Asks Git, once per root, which untracked paths it ignores in each Git root; a root outside Git, or a runtime without Git, has none. */
+  gitExclusionQuery(signal: AbortSignal): GitExclusionQuery {
+    return new GitExclusionQuery(async (authority, rootPath) => {
+      const git = this.options.git;
+      if (!git || authority.kind !== 'git') return new Set();
+      const repository = { gitDirectory: authority.gitDirectory.canonicalPath, worktree: authority.repositoryRoot.canonicalPath };
+      return listGitExclusions(this.supervisor, git.executable, await this.gitExcludesFile(repository, signal), repository, rootPath, signal);
+    });
+  }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
   renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
@@ -194,7 +229,8 @@ export class MipmuxRuntime {
           const admitted = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => {
             this.#owners.delete(key); return this.#retireSnapshotWorker(outputRoot.identity);
           },
-            () => this.makeBridge(), this.#shutdown.signal, this.options.copyContext.codeMapsGloballyDisabled);
+            () => this.makeBridge(), this.#shutdown.signal, this.options.copyContext.codeMapsGloballyDisabled,
+            signal => this.gitExclusionQuery(signal));
           this.#owners.set(key, admitted); bridgeOwnership.adopted = true;
           return admitted;
         });

@@ -21,6 +21,7 @@ import { observe } from './observe.js';
 import type { CatalogedGitArtifact } from './git-artifact-catalog.js';
 import { join } from 'node:path';
 import { managedInventory } from './managed-inventory.js';
+import type { GitExclusionSource } from './git-exclusions.js';
 
 /** Pins one inventory and owns a separate bridge until close joins admitted operations. */
 export class WorkspaceOperation {
@@ -34,6 +35,7 @@ export class WorkspaceOperation {
   readonly #codemapRetains = new Set<() => Promise<void>>();
   readonly #codemapPresentations = new Set<() => void>();
   #closing: Promise<void> | null = null;
+  #verificationGit: GitExclusionSource | null = null;
   constructor(snapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
     signal: AbortSignal,
     readonly runtime: MipmuxRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal, snapshot: InventorySnapshot) => Promise<WorkspaceOperation>,
@@ -75,7 +77,7 @@ export class WorkspaceOperation {
       const existing = this.snapshot.entries.find(entry => entry.root === captured.root && entry.path === captured.path);
       if (existing?.kind === 'file') return existing;
       const access = await (this.#access ??= this.#openAccess());
-      const policy = new RootPolicy(this.declaration, access);
+      const policy = this.#policy(access);
       if (policy.denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
       const visibility = await policy.admitted(captured, false) ? 'discoverable' : 'managedOnly';
       const acquired = await access.read(captured, null);
@@ -159,7 +161,7 @@ export class WorkspaceOperation {
     const captured = structuredClone(source);
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
-      if (new RootPolicy(this.declaration, access).denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
+      if (this.#policy(access).denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
       await access.validateRoot(captured.root);
       try { await access.inspect(captured); return { kind: 'regular' as const }; }
       catch (error) {
@@ -177,7 +179,7 @@ export class WorkspaceOperation {
     const captured = structuredClone(source);
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
-      const policy = new RootPolicy(this.declaration, access);
+      const policy = this.#policy(access);
       if (policy.denied(captured)) throw new WorkspaceFailure('pathDenied', captured);
       await access.validateRoot(captured.root);
       try {
@@ -218,7 +220,7 @@ export class WorkspaceOperation {
     source = structuredClone(source);
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
-      const policy = new RootPolicy(this.declaration, access);
+      const policy = this.#policy(access);
       if (previous) await policy.revalidate(source, previous);
       if (!await policy.admitted(source, false)) throw new WorkspaceFailure('pathDenied', source);
       return policy.snapshot();
@@ -235,7 +237,7 @@ export class WorkspaceOperation {
   comparisonFiles(root: string, prefixes: readonly string[] | null) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
-      const policy = new RootPolicy(this.declaration, access), paths: string[] = [];
+      const policy = this.#policy(access), paths: string[] = [];
       const walk = async (path: string): Promise<void> => {
         await policy.directory(root, path);
         for (const entry of await access.list(root, path ? { kind: 'descendant', path } : { kind: 'root' })) {
@@ -249,6 +251,15 @@ export class WorkspaceOperation {
       };
       await walk(''); return paths;
     });
+  }
+  /**
+   * A policy over `access`. A workspace operation applies the Git exclusions of its workspace's latest refresh; verification
+   * asks Git again, once per root, because it checks a saved packet against current files.
+   */
+  #policy(access: NativeAccess): RootPolicy {
+    const git = this.catalog.kind === 'workspace' ? this.catalog.owner.gitExclusions
+      : this.#verificationGit ??= this.runtime.gitExclusionQuery(this.signal);
+    return new RootPolicy(this.declaration, access, git);
   }
   async #openAccess(): Promise<NativeAccess> {
     const bridge = this.runtime.makeBridge(); this.#bridge = bridge;
@@ -270,7 +281,7 @@ export class WorkspaceOperation {
       const entry = this.snapshot.entries.find(entry => entry.root === source.root && entry.path === source.path);
       if (!entry || entry.kind !== 'file') throw new WorkspaceFailure('unavailableSource', source);
       const access = await (this.#access ??= this.#openAccess());
-      const policy = new RootPolicy(this.declaration, access);
+      const policy = this.#policy(access);
       await policy.revalidate(source, this.snapshot.policy, entry.visibility);
       return access.read(source, entry.identity);
     });
@@ -279,7 +290,7 @@ export class WorkspaceOperation {
   revalidateSearchSources(sources: readonly SourcePath[]) {
     const captured = structuredClone(sources);
     return this.#track(async () => {
-      const policy = new RootPolicy(this.declaration, await (this.#access ??= this.#openAccess()));
+      const policy = this.#policy(await (this.#access ??= this.#openAccess()));
       await policy.revalidateAll(captured, this.snapshot.policy);
     });
   }

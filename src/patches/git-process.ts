@@ -1,6 +1,23 @@
 import type { ProcessSupervisor } from '../runtime/process-supervisor.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 
+/** Where Git finds the user's global configuration: `~/.gitconfig` and the `git` directory under `xdgConfigHome` or `~/.config`. */
+export interface GitUserConfiguration { readonly home: string; readonly xdgConfigHome: string | null }
+
+function gitEnvironment(base: Record<string, string>, location: Parameters<typeof gitProcess>[5]) {
+  const isolated = { ...base, GIT_CONFIG_GLOBAL: '/dev/null' };
+  switch (location.kind) {
+    case 'repository': return isolated;
+    case 'scratch': return { ...isolated, GIT_CEILING_DIRECTORIES: location.ceiling };
+    case 'diff': return { ...isolated, GIT_DIR: location.gitDirectory, GIT_WORK_TREE: location.worktree };
+    case 'userConfiguration': {
+      const { home, xdgConfigHome } = location.user;
+      const environment = { ...base, HOME: home, GIT_DIR: location.gitDirectory, GIT_WORK_TREE: location.worktree };
+      return xdgConfigHome === null ? environment : { ...environment, XDG_CONFIG_HOME: xdgConfigHome };
+    }
+  }
+}
+
 export async function gitProcess(
   supervisor: ProcessSupervisor,
   executable: string,
@@ -9,23 +26,22 @@ export async function gitProcess(
   signal: AbortSignal,
   location: { readonly kind: 'repository' } | { readonly kind: 'scratch'; readonly ceiling: string } |
     { readonly kind: 'diff'; readonly gitDirectory: string; readonly worktree: string;
-      readonly literalPaths: boolean; readonly stdin: Buffer | null },
+      readonly literalPaths: boolean; readonly stdin: Buffer | null } |
+    // Reads the user's global configuration as well as the repository's; every other location reads only the repository's.
+    { readonly kind: 'userConfiguration'; readonly gitDirectory: string; readonly worktree: string; readonly user: GitUserConfiguration },
 ) {
   signal.throwIfAborted();
   const baseEnvironment = {
     PATH: '/usr/bin:/bin',
     LC_ALL: 'C',
     GIT_CONFIG_NOSYSTEM: '1',
-    GIT_CONFIG_GLOBAL: '/dev/null',
     GIT_OPTIONAL_LOCKS: '0',
     GIT_NO_LAZY_FETCH: '1',
     GIT_NO_REPLACE_OBJECTS: '1',
     GIT_TERMINAL_PROMPT: '0',
     GIT_ATTR_NOSYSTEM: '1',
   };
-  const repositoryEnvironment = location.kind === 'diff'
-    ? { ...baseEnvironment, GIT_DIR: location.gitDirectory, GIT_WORK_TREE: location.worktree } : baseEnvironment;
-  const env = location.kind === 'scratch' ? { ...baseEnvironment, GIT_CEILING_DIRECTORIES: location.ceiling } : repositoryEnvironment;
+  const env = gitEnvironment(baseEnvironment, location);
   const child = supervisor.spawn({
     executable,
     cwd,

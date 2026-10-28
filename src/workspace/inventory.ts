@@ -8,6 +8,7 @@ import { RootPolicy, type PolicyDeclaration } from './root-policy.js';
 import { NativeAccess } from './source-access.js';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from './values.js';
 import { capturedFile, completeFile, type FileEntry } from './inventory-file.js';
+import type { GitExclusionQuery, GitExclusions } from './git-exclusions.js';
 
 /** Files a later scan may reuse, keyed by `reusableKey`, and the binding of the native build and settings that produced them. */
 export interface Reuse { readonly binding: string; readonly files: ReadonlyMap<string, ReusableFile> }
@@ -43,12 +44,14 @@ function reusableFile(fingerprint: DescriptorFingerprint, entry: FileEntry): Reu
  * and whose codemap record is still cached, keeps its earlier entry without being read again, as RPCE trusts unchanged
  * file metadata; every other file is read. A file whose status changed within the reuse margin of its read is not kept for
  * reuse, so the next scan reads it again. The first scan after a restart reuses the saved files when the native build and
- * settings that produced them are unchanged. Returns the snapshot and the files the next scan may reuse, and saves them
- * when they differ from the files saved before.
+ * settings that produced them are unchanged. `git` supplies the untracked paths Git ignores, which the scan skips like other
+ * excluded paths. Returns the snapshot, the files the next scan may reuse, which it saves when they differ from the files
+ * saved before, and Git's answers.
  */
 export async function scanInventory(access: NativeAccess, declaration: PolicyDeclaration, workspaceKey: string,
   generation: number, artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal,
-  codeMapsGloballyDisabled: boolean, reusable: Reuse | null): Promise<{ snapshot: InventorySnapshot; reusable: Reuse }> {
+  codeMapsGloballyDisabled: boolean, reusable: Reuse | null, git: GitExclusionQuery,
+): Promise<{ snapshot: InventorySnapshot; reusable: Reuse; gitExclusions: GitExclusions }> {
   const description = (await access.bridge.request({ kind: 'describe' }, access.signal)).result;
   const supportedExtensions = new Set(description.extensions.map(entry => entry.extension));
   const binding = reuseBinding(access, description, codeMapsGloballyDisabled);
@@ -56,7 +59,7 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   const previous = reusable === null
     ? await artifacts.readReuse(workspaceKey, binding).then(files => files && new Map(files.map(file => [reusableKey(file.entry), file])))
     : reusable.binding === binding ? reusable.files : null;
-  const policy = new RootPolicy(declaration, access);
+  const policy = new RootPolicy(declaration, access, git);
   const entries: InventoryEntry[] = [];
   const failures: { root: string; directory: DirectoryRef; code: string }[] = [];
   const next = new Map<string, ReusableFile>();
@@ -126,5 +129,5 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   const snapshot = freeze({ ...body, inventoryDigest: inventoryDigest(body) });
   access.signal.throwIfAborted();
   if (previous === null || next.size !== reusedFiles || next.size !== previous.size) await artifacts.publishReuse(workspaceKey, binding, [...next.values()]);
-  return { snapshot, reusable: { binding, files: next } };
+  return { snapshot, reusable: { binding, files: next }, gitExclusions: await git.answers() };
 }

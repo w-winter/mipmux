@@ -12,11 +12,17 @@ import { RootPolicy } from './root-policy.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { failureCode } from '../runtime/tool-result.js';
 import type { CatalogedGitArtifact } from './git-artifact-catalog.js';
+import { GitExclusions, type GitExclusionQuery } from './git-exclusions.js';
 
 interface CodemapDemand {
   readonly controller: AbortController;
   readonly retains: Set<symbol>;
   readonly result: Promise<FileEntry>;
+}
+
+/** Whether a registered file's refresh failed because the file is gone, is no longer regular or is now denied. */
+function managedSourceGone(failure: NativeFailure | WorkspaceFailure): boolean {
+  return failure instanceof NativeFailure ? ['notFound', 'nonRegularFile', 'symlink'].includes(failure.code) : failure.code === 'pathDenied';
 }
 
 // RPCE WorkspaceFileContextStore's retained presentation records per root session.
@@ -30,6 +36,7 @@ export class WorkspaceRuntime {
   #flight: Promise<void> | null = null;
   #snapshot: InventorySnapshot | null = null;
   #reusable: Reuse | null = null;
+  #gitExclusions = GitExclusions.none;
   #failure: unknown = null;
   #closing: Promise<void> | null = null;
   readonly #observers = new Set<{ target: number; resolve: (snapshot: InventorySnapshot) => void; reject: (error: unknown) => void }>();
@@ -41,7 +48,11 @@ export class WorkspaceRuntime {
   #managedRevision = 0;
   constructor(readonly key: string, readonly declaration: PolicyDeclaration, private roots: readonly OpenRoot[],
     private bridge: BridgeClient, readonly artifacts: ArtifactStore, readonly onClosed: () => Promise<void>,
-    readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal, readonly codeMapsGloballyDisabled: boolean) {}
+    readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal, readonly codeMapsGloballyDisabled: boolean,
+    readonly queryGit: (signal: AbortSignal) => GitExclusionQuery) {}
+
+  /** The untracked paths Git ignored when the latest published scan asked it, which admission uses until the next scan. */
+  get gitExclusions(): GitExclusions { return this.#gitExclusions; }
 
   registerGitArtifact(entry: CatalogedGitArtifact): void {
     this.#controller.signal.throwIfAborted();
@@ -129,13 +140,22 @@ export class WorkspaceRuntime {
     };
   }
 
-  async #refreshManaged(access: NativeAccess): Promise<void> {
+  /** Whether `error` came from the source's root being unavailable, which keeps a registration until the root returns. */
+  async #rootUnavailable(access: NativeAccess, failure: NativeFailure, source: { readonly root: string; readonly path: string }): Promise<boolean> {
+    if (unavailableRootCode(failure) === null) return false;
+    const root = await access.rootAvailability(source.root);
+    if (root.kind !== 'unavailable') return false;
+    process.stderr.write(JSON.stringify({ level: 'warn', event: 'managedSourceRootUnavailable',
+      workspaceKey: this.key, root: source.root, path: source.path, code: root.code }) + '\n');
+    return true;
+  }
+  async #refreshManaged(access: NativeAccess, git: GitExclusions): Promise<void> {
     for (const [key, registered] of [...this.#managed]) {
-      await this.#refreshRegistration(access, key, registered);
+      await this.#refreshRegistration(access, git, key, registered);
     }
   }
-  async #refreshRegistration(access: NativeAccess, key: string, registered: ManagedRegistration): Promise<void> {
-    const policy = new RootPolicy(this.declaration, access), source = { root: registered.entry.root, path: registered.entry.path };
+  async #refreshRegistration(access: NativeAccess, git: GitExclusions, key: string, registered: ManagedRegistration): Promise<void> {
+    const policy = new RootPolicy(this.declaration, access, git), source = { root: registered.entry.root, path: registered.entry.path };
     try {
       if (policy.denied(source)) throw new WorkspaceFailure('pathDenied', source);
       const discoverable = await policy.admitted(source, false);
@@ -147,19 +167,11 @@ export class WorkspaceRuntime {
       this.#managed.set(key, { entry, policy: policy.snapshot() });
       this.#managedRevision++;
     } catch (error) {
-      if (error instanceof NativeFailure && unavailableRootCode(error) !== null) {
-        const root = await access.rootAvailability(source.root);
-        if (root.kind === 'unavailable') {
-          process.stderr.write(JSON.stringify({ level: 'warn', event: 'managedSourceRootUnavailable',
-            workspaceKey: this.key, root: source.root, path: source.path, code: root.code }) + '\n');
-          return;
-        }
-      }
-      if (error instanceof NativeFailure && ['notFound', 'nonRegularFile', 'symlink'].includes(error.code) ||
-        error instanceof WorkspaceFailure && error.code === 'pathDenied') {
-        if (this.#managed.get(key) !== registered) throw new WorkspaceFailure('sourceChanged', source);
-        this.#managed.delete(key); this.#managedRevision++;
-      } else throw error;
+      if (!(error instanceof NativeFailure || error instanceof WorkspaceFailure)) throw error;
+      if (error instanceof NativeFailure && await this.#rootUnavailable(access, error, source)) return;
+      if (!managedSourceGone(error)) throw error;
+      if (this.#managed.get(key) !== registered) throw new WorkspaceFailure('sourceChanged', source);
+      this.#managed.delete(key); this.#managedRevision++;
     }
   }
 
@@ -186,11 +198,11 @@ export class WorkspaceRuntime {
         const target = this.#requested;
         process.stderr.write(JSON.stringify({ level: 'info', event: 'inventoryStarted', workspaceKey: this.key, generation: target }) + '\n');
         const access = new NativeAccess(this.bridge, this.roots, this.#controller.signal);
-        const { snapshot, reusable } = await scanInventory(access, this.declaration, this.key, target, this.artifacts,
-          () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled, this.#reusable);
-        await this.#refreshManaged(access);
+        const { snapshot, reusable, gitExclusions } = await scanInventory(access, this.declaration, this.key, target, this.artifacts,
+          () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled, this.#reusable, this.queryGit(this.#controller.signal));
+        await this.#refreshManaged(access, gitExclusions);
         this.#controller.signal.throwIfAborted();
-        this.#snapshot = snapshot; this.#reusable = reusable; this.#published = target; this.#failure = null;
+        this.#snapshot = snapshot; this.#reusable = reusable; this.#gitExclusions = gitExclusions; this.#published = target; this.#failure = null;
         for (const observer of this.#observers) {
           if (observer.target <= target) { this.#observers.delete(observer); observer.resolve(snapshot); }
         }

@@ -10,6 +10,7 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 import { canonicalJSON, WorkspaceFailure } from '../workspace/values.js';
 import type { NativeGitCheckout } from '../contracts/native.js';
 import { resolveGitWorktreeListing, type ReadGitMetadata } from './git-worktrees.js';
+import { excludesArguments } from '../workspace/git-exclusions.js';
 
 const pathValidator = Compile(RelativePath);
 export function gitText(bytes: Buffer): string {
@@ -17,7 +18,10 @@ export function gitText(bytes: Buffer): string {
   return bytes.toString('utf8');
 }
 
-/** Resolves a loaded checkout or an advertised worktree, then fences its captured identities. */
+/**
+ * Resolves a loaded checkout or an advertised worktree, then fences its captured identities. Its `run` applies the excludes
+ * file the user's Git configuration names, as `excludes` passes it to other Git commands in the repository.
+ */
 export async function resolveDiffRepository(operation: WorkspaceOperation, rootName: string,
   location: { kind: 'explicit'; worktree: string | null } | { kind: 'elected'; checkout: NativeGitCheckout }
     | { kind: 'advertised'; checkout: NativeGitCheckout; worktree: string }) {
@@ -89,6 +93,8 @@ export async function resolveDiffRepository(operation: WorkspaceOperation, rootN
       if (!listed.includes(repository.worktree.canonicalPath)) throw new WorkspaceFailure('gitRepositoryChanged');
     }
   };
-  return { executable: configured.executable, repository, access, permits, revalidate,
-    run: (args: readonly string[]) => run(repository.worktree.canonicalPath, args) };
+  const excludes = excludesArguments(await operation.runtime.gitExcludesFile({ gitDirectory: repository.gitDirectory.canonicalPath,
+    worktree: repository.worktree.canonicalPath }, operation.signal));
+  return { executable: configured.executable, repository, access, permits, revalidate, excludes,
+    run: (args: readonly string[]) => run(repository.worktree.canonicalPath, [...excludes, ...args]) };
 }
