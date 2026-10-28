@@ -28,6 +28,7 @@ import { capturedSourceSelections } from '../context/source-omissions.js';
 
 interface GitSnapshotMutationAccess { readonly bridge: BridgeClient; readonly root: NativeHandle }
 interface GitSnapshotMutationOwner { tail: Promise<void>; bridge: BridgeClient | null }
+const snapshotRootKey = (root: RootIdentity) => canonicalJSON([root.canonicalPath, root.device, root.inode]);
 
 export interface RuntimeOptions {
   readonly copyContext: CopyContext;
@@ -92,7 +93,7 @@ export class MipmuxRuntime {
     if (this.#closing) return Promise.reject(new WorkspaceFailure('runtimeClosed'));
     const combined = AbortSignal.any([signal, this.#shutdown.signal]);
     const identity = structuredClone(root);
-    const key = canonicalJSON([identity.canonicalPath, identity.device, identity.inode]);
+    const key = snapshotRootKey(identity);
     let owner = this.#snapshotMutations.get(key);
     if (!owner) {
       owner = { tail: Promise.resolve(), bridge: null };
@@ -122,6 +123,19 @@ export class MipmuxRuntime {
     this.#admissions.add(work);
     void work.then(() => this.#admissions.delete(work), () => this.#admissions.delete(work));
     return work;
+  }
+  /** After the root's queued mutations, stops its snapshot helper unless an open workspace still writes to the root. */
+  #retireSnapshotWorker(root: RootIdentity): Promise<void> {
+    const key = snapshotRootKey(root), queue = this.#snapshotMutations.get(key);
+    if (!queue) return Promise.resolve();
+    const retired = queue.tail.then(async () => {
+      if ([...this.#owners.values()].some(owner => snapshotRootKey(owner.declaration.outputRoot) === key)) return;
+      const bridge = queue.bridge;
+      queue.bridge = null;
+      await bridge?.close();
+    });
+    queue.tail = Promise.allSettled([retired]).then(() => {});
+    return retired;
   }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
   renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
@@ -177,7 +191,9 @@ export class MipmuxRuntime {
           combined.throwIfAborted();
           process.stderr.write(JSON.stringify({ level: 'info', event: 'workspaceSnapshotMaintenanceCompleted', workspaceKey: key,
             outcome: maintenance.result.outcome }) + '\n');
-          const admitted = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => this.#owners.delete(key),
+          const admitted = new WorkspaceRuntime(key, declaration, roots, bridge, this.artifacts, () => {
+            this.#owners.delete(key); return this.#retireSnapshotWorker(outputRoot.identity);
+          },
             () => this.makeBridge(), this.#shutdown.signal, this.options.copyContext.codeMapsGloballyDisabled);
           this.#owners.set(key, admitted); bridgeOwnership.adopted = true;
           return admitted;
@@ -414,17 +430,28 @@ function validateWorkspaceSpec(spec: WorkspaceSpec): void {
 }
 
 export class WorkspaceHandle {
-  #closed = false;
-  constructor(private readonly runtime: MipmuxRuntime, private readonly owner: WorkspaceRuntime, private readonly release: () => Promise<void>) {}
-  #check(): void { if (this.#closed) throw new WorkspaceFailure('workspaceClosed'); }
+  // A closed handle keeps no reference to its workspace, so a client holding it does not keep the workspace's inventory.
+  #lease: { readonly owner: WorkspaceRuntime; readonly release: () => Promise<void> } | null;
+  constructor(private readonly runtime: MipmuxRuntime, owner: WorkspaceRuntime, release: () => Promise<void>) {
+    this.#lease = { owner, release };
+  }
+  #owner(): WorkspaceRuntime {
+    if (!this.#lease) throw new WorkspaceFailure('workspaceClosed');
+    return this.#lease.owner;
+  }
   async refresh(signal: AbortSignal) {
-    this.#check(); const release = this.owner.retain();
-    try { return await this.owner.refresh(signal); } finally { await release(); }
+    const owner = this.#owner(), release = owner.retain();
+    try { return await owner.refresh(signal); } finally { await release(); }
   }
-  async openOperation(signal: AbortSignal) { this.#check(); return this.runtime.openOperation(this.owner, signal); }
+  async openOperation(signal: AbortSignal) { return this.runtime.openOperation(this.#owner(), signal); }
   async createDraft(request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}, prompt?: string) {
-    this.#check(); return this.runtime.createDraft(this.owner, request, signal, acquiring, prompt);
+    return this.runtime.createDraft(this.#owner(), request, signal, acquiring, prompt);
   }
-  async preparePacket(request: ContextPrepareRequest, signal: AbortSignal) { this.#check(); return this.runtime.preparePacket(this.owner, request, signal); }
-  async close(): Promise<void> { if (!this.#closed) { this.#closed = true; await this.release(); } }
+  async preparePacket(request: ContextPrepareRequest, signal: AbortSignal) { return this.runtime.preparePacket(this.#owner(), request, signal); }
+  async close(): Promise<void> {
+    const lease = this.#lease;
+    if (!lease) return;
+    this.#lease = null;
+    await lease.release();
+  }
 }

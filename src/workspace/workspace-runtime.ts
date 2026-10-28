@@ -40,7 +40,7 @@ export class WorkspaceRuntime {
   readonly #gitArtifacts = new Map<string, CatalogedGitArtifact>();
   #managedRevision = 0;
   constructor(readonly key: string, readonly declaration: PolicyDeclaration, private roots: readonly OpenRoot[],
-    private bridge: BridgeClient, readonly artifacts: ArtifactStore, readonly onClosed: () => void,
+    private bridge: BridgeClient, readonly artifacts: ArtifactStore, readonly onClosed: () => Promise<void>,
     readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal, readonly codeMapsGloballyDisabled: boolean) {}
 
   registerGitArtifact(entry: CatalogedGitArtifact): void {
@@ -270,7 +270,7 @@ export class WorkspaceRuntime {
       await Promise.allSettled(demands.map(demand => demand.result));
       this.#codemapDemands.clear();
       this.#codemapPresentations.clear();
-      this.onClosed();
+      await this.onClosed();
     })();
     return this.#closing;
   }

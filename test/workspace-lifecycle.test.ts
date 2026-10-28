@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import { MipmuxRuntime, type RuntimeOptions } from '../src/runtime/mipmux-runtime.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
@@ -13,6 +15,43 @@ function barrier() {
   const promise = new Promise<void>(resolve => { release = resolve; });
   return { promise, release };
 }
+
+setFlagsFromString('--expose-gc');
+// SAFETY: once --expose-gc is set, a new context's global `gc` is V8's full collector, which takes no arguments.
+const collectGarbage = runInNewContext('gc') as () => void;
+
+test('closed workspaces release their inventories and their output roots\' snapshot helpers', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-release-'));
+  const root = join(base, 'root'); await mkdir(root);
+  await writeFile(join(root, 'model.swift'), 'struct Model {}\n');
+  const open = new Set<BridgeClient>();
+  const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+  class CountingRuntime extends MipmuxRuntime {
+    override makeBridge() {
+      const bridge = super.makeBridge();
+      open.add(bridge); void bridge.closed.then(() => open.delete(bridge));
+      return bridge;
+    }
+  }
+  const runtime = new CountingRuntime(options), signal = new AbortController().signal;
+  try {
+    const client = runtime.createClient(null);
+    const inventories: WeakRef<object>[] = [];
+    for (const run of ['a', 'b']) {
+      const outputRoot = join(base, 'out-' + run); await mkdir(outputRoot);
+      const { id } = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot }, signal);
+      inventories.push(new WeakRef(await client.refresh(id, signal)));
+      await client.closeWorkspace(id);
+      await assert.rejects(client.refresh(id, signal), /workspaceClosed/);
+    }
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(open.size, 0, 'a closed workspace left a native helper running');
+    collectGarbage();
+    assert(inventories.every(inventory => inventory.deref() === undefined), 'a closed workspace kept its inventory');
+    await client.close();
+  } finally { await runtime.close(); }
+});
 
 test('warming satisfies a later barrier, cancelled observers release only their interest, and caches survive restart', async () => {
   await mkdir('test-output', { recursive: true });

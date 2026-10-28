@@ -6399,7 +6399,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "4bce683fafdb9ea221c8007b0bd7e8c33ec73137a3d954a2d8f919ac6fbd39b9",
+      "sha256": "1dc0b747cceab406d17bb35f4b3e9f641b5a9b2a4d8409112361e28317a7bf85",
       "classification": "handwritten",
       "changes": [
         "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework.",
@@ -6407,7 +6407,8 @@
         "Capture an existing latest publication without waiting for an unrelated unfinished scan; explicit refresh barriers still wait for their requested publication.",
         "Capture the immutable runtime global disable value and pass it to ordinary inventory and managed-file completion. Source WorkspaceFileContextStore.swift:10992-11033,13331-13337,13410-13425 suspends generation and graph authority; dynamic app transition machinery is unnecessary for immutable headless settings.",
         "Keep the previous scan's files with their read-time descriptor fingerprints and pass them to the next inventory scan, which reuses an unchanged file's entry as RPCE's content cache trusts an unchanged FileContentFingerprint (FileSystemService+ContentLoading.swift contentFingerprint).",
-        "Load the saved reuse record on the first scan after a restart, and keep the reuse set with the binding of the native build and settings that produced it."
+        "Load the saved reuse record on the first scan after a restart, and keep the reuse set with the binding of the native build and settings that produced it.",
+        "Wait for the workspace owner close callback, which can stop the output root's snapshot helper, before workspace closure settles."
       ]
     },
     {

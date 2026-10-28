@@ -112,14 +112,21 @@ test('explicit refresh replaces a retired generation without rebinding a replace
 test('closing a shared extraction consumer does not join the producer', async () => {
   const { base, spec, options } = await fixture();
   await mkdir(join(base, 'out-b'));
-  const entered = barrier(), resume = barrier(), secondRead = barrier(), consumerClosed = barrier();
+  const entered = barrier(), resume = barrier(), secondRead = barrier(), consumerClosed = barrier(), consumerSnapshotsClosed = barrier();
   let reads = 0, extractions = 0;
   class Runtime extends MipmuxRuntime {
     override makeBridge() {
-      let consumer = false;
+      let consumer = false, consumerSnapshots = false;
       class Bridge extends BridgeClient {
-        override async close() { await super.close(); if (consumer) consumerClosed.release(); }
+        override async close() {
+          await super.close();
+          if (consumer) consumerClosed.release();
+          if (consumerSnapshots) consumerSnapshotsClosed.release();
+        }
         override async request<O extends NativeOperation>(operation: O, requestSignal: AbortSignal) {
+          if (operation.kind === 'openRoots' && operation.roots.some(root => root.name === 'GitSnapshots' && root.absolutePath === join(base, 'out-b'))) {
+            consumerSnapshots = true;
+          }
           if (operation.kind === 'extract') { extractions++; entered.release(); await resume.promise; }
           const result = await super.request(operation, requestSignal);
           if (operation.kind === 'readSource' && operation.path === 'model.swift' && ++reads === 2) {
@@ -137,7 +144,8 @@ test('closing a shared extraction consumer does not join the producer', async ()
     const b = await runtime.declare({ ...spec, outputRoot: join(base, 'out-b') }, signal()); await secondRead.promise;
     let closed = false;
     const closing = b.close().then(() => { closed = true; });
-    await consumerClosed.promise; await setImmediate();
+    // Closing stops the consumer's workspace helper and its output root's snapshot helper, then settles.
+    await consumerClosed.promise; await consumerSnapshotsClosed.promise; await setImmediate();
     assert.equal(closed, true, 'consumer close must not wait for held extraction');
     resume.release(); await closing;
     await a.refresh(signal()); assert.equal(extractions, 1);
