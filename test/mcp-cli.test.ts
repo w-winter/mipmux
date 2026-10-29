@@ -69,6 +69,10 @@ test('official MCP probes accept disabled provider deadlines and create no works
   const client = new Client({ name: 'test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
   try {
     await client.connect(transport);
+    const instructions = client.getInstructions() ?? '';
+    assert.match(instructions, /^mipmux builds verified context packets/);
+    // Claude Code releases before 2.1.296 discard server instructions past 2,048 characters.
+    assert(instructions.length <= 2048, String(instructions.length));
     const tools = await client.listTools();
     for (const name of ['draft_dispose', 'context_builder_dispose']) assert(tools.tools.some(tool => tool.name === name));
     const result = await client.callTool({ name: 'context_builder_result', arguments: { jobId: 'foreign' } });
