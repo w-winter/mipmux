@@ -1,12 +1,108 @@
 # mipmux
 
-mipmux indexes explicit filesystem roots, provides source exploration, and prepares verified context packets on macOS and Linux. Use its library, stdio MCP server or CLI. Swift owns extraction and descriptor-relative filesystem access. TypeScript owns workspace policy, inventory generations, persistent artifacts, drafts, Git comparisons, rendering, and verification. An isolated Pi discovery agent can curate a draft through scoped tools, called directly or from Pi `codemode` scripts, before the parent verifies and publishes it.
+mipmux builds context packets for coding agents. You declare the folders a task involves and describe the task; mipmux's discovery agent selects the source files, line ranges, code maps (syntax summaries of files) and Git patches the task needs, and mipmux saves them with the task as one `context.md` file for a planning, review or investigation model to read. Packets are checked against the files on disk when they are prepared, so mipmux refuses a packet whose files have changed rather than delivering it. mipmux runs as a stdio MCP server, a command-line tool or a TypeScript library, on macOS and Linux.
+
+mipmux is a headless port of the Context Builder in [RepoPrompt CE](https://github.com/repoprompt/repoprompt-ce) (RPCE). It carries RepoPrompt CE's Apache-2.0 code for ignore rules, code maps, search, file trees and packet formatting, with each change recorded in `docs/vendor-provenance.json`. Discovery runs on the SDK of [Pi](https://pi.dev), an open-source coding agent. mipmux is an independent project and is not affiliated with RepoPrompt.
+
+## Status
+
+mipmux is alpha software in regular use with Pi; its interfaces and configuration may change. It is tested on macOS arm64 and on Linux arm64 in Docker; Linux x64 has not been tested. No other MCP client has yet been tested end to end, and discovery has run only with the `openai-codex` provider. There are no prebuilt binaries or npm packages yet, so you build mipmux from source.
+
+## Compared with RepoPrompt CE
+
+RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces that you create and manage in the app. mipmux has no app or window. It runs on macOS and Linux, including remote machines, and any MCP client can call it. Each call declares the folders it needs: mipmux keeps an index for each set of folders while it runs and reuses its cache after a restart, so there is no list of workspaces to maintain. The cost is search speed, described under [Limits](#limits).
+
+## Requirements
+
+- Node.js 22.22.1 or later.
+- Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config and tar, to build mipmux's native Swift helper. On macOS, Xcode 26 or later, or its Command Line Tools, provides Swift and the compiler, and Homebrew provides CMake and pkg-config.
+- Git, at `/usr/bin/git` unless the configuration names another path.
+- For discovery, a login to a model provider, stored in Pi's `auth.json` (see the quickstart).
+
+## Quickstart
+
+1. Build mipmux. The first native build downloads and compiles its dependencies, which takes several minutes.
+
+   ```sh
+   git clone https://github.com/w-winter/mipmux.git
+   cd mipmux
+   npm ci
+   npm run build
+   npm run build:native
+   ```
+
+2. Sign in to a model provider for discovery. mipmux reads provider credentials from Pi's `~/.pi/agent/auth.json`. If you already use Pi and are signed in, skip this step. Otherwise start the Pi command-line tool that mipmux installed, run `/login`, choose a provider, then quit Pi:
+
+   ```sh
+   node_modules/.bin/pi
+   ```
+
+3. Configure discovery in `~/.config/mipmux/config.json`. Paths must be absolute. `modelsPath` names a model file; a file containing `{ "providers": {} }` selects Pi's built-in model list.
+
+   ```json
+   {
+     "discovery": {
+       "provider": "openai-codex",
+       "model": "gpt-6.1-sol",
+       "thinking": "medium",
+       "modelsPath": "/home/you/.config/mipmux/models.json"
+     }
+   }
+   ```
+
+   Without a `discovery` entry, `context_builder` fails with `discoveryNotConfigured`; the other tools work, and you select a packet's contents yourself, as described under [Manual context packets](#manual-context-packets). [CLI and MCP](#cli-and-mcp) lists every setting.
+
+4. Connect your MCP client to `node /absolute/path/to/mipmux/dist/cli/main.js mcp`. If the client cannot find `node`, use its absolute path.
+
+   Claude Code:
+
+   ```sh
+   claude mcp add --scope user mipmux -- node /absolute/path/to/mipmux/dist/cli/main.js mcp
+   ```
+
+   Codex, in `~/.codex/config.toml`:
+
+   ```toml
+   [mcp_servers.mipmux]
+   command = "node"
+   args = ["/absolute/path/to/mipmux/dist/cli/main.js", "mcp"]
+   ```
+
+   Pi, in `~/.pi/agent/mcp.json`, and other clients that read an `mcpServers` object:
+
+   ```json
+   {
+     "mcpServers": {
+       "mipmux": {
+         "command": "node",
+         "args": ["/absolute/path/to/mipmux/dist/cli/main.js", "mcp"]
+       }
+     }
+   }
+   ```
+
+   To use a configuration file other than `~/.config/mipmux/config.json`, add `--config /absolute/path/config.json` after `mcp`.
+
+## Using mipmux
+
+When a client connects, mipmux sends it short instructions for building a packet, which most agents can follow without help. The [agent workflow](docs/workflow.md) is the complete guide; point your agent at it for its first run. The instructions tell agents to wait for a build in steps shorter than their client's tool-call limit, which is 60 seconds by default in Codex.
+
+## Limits
+
+- Each search first checks the declared folders for changes, so a content search takes about 0.7 seconds in a workspace of about 1,000 files. RepoPrompt CE answers in tens of milliseconds because a file watcher keeps its index current. A discovery run makes a handful of searches, so this adds seconds to a run that takes minutes.
+- The first index of a new set of folders takes 10 to 15 seconds for about 1,000 files, mostly to build code maps. Later refreshes take under half a second, and the first refresh after a restart about one second.
+- Code maps cover `.c`, `.cpp`, `.cs`, `.go`, `.java`, `.js`, `.php`, `.py`, `.rb`, `.rs`, `.swift`, `.ts` and `.tsx` files. Other text files can be included in full or as line ranges.
+- mipmux runs on macOS and Linux only.
+
+## How it is built
+
+Swift owns extraction and descriptor-relative filesystem access. TypeScript owns workspace policy, inventory generations, persistent artifacts, drafts, Git comparisons, rendering, and verification. An isolated Pi discovery agent can curate a draft through scoped tools, called directly or from Pi `codemode` scripts, before the parent verifies and publishes it.
 
 A ready code map is a syntax-derived summary. Its symbols and referenced type names are structural hints, subject to the retained parser's limits and heuristics.
 
 ## Build and test
 
-Install Node 22.22.1 or later, Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config, and tar. The build downloads the pinned PCRE2 10.49 archive, verifies its checksum and packaged SLJIT files, builds its static width-8 library, and runs upstream tests. SwiftPM dependencies are pinned in `native/Package.resolved`. npm dependencies are pinned in `package-lock.json`, and the repository's `.npmrc` sets `ignore-scripts=true`, so `npm ci` runs none of their install scripts; mipmux does not need them.
+Install the [requirements](#requirements), then run the full build and test sequence below. The build downloads the pinned PCRE2 10.49 archive, verifies its checksum and packaged SLJIT files, builds its static width-8 library, and runs upstream tests. SwiftPM dependencies are pinned in `native/Package.resolved`. npm dependencies are pinned in `package-lock.json`, and the repository's `.npmrc` sets `ignore-scripts=true`, so `npm ci` runs none of their install scripts; mipmux does not need them.
 
 ```sh
 npm ci
@@ -297,7 +393,7 @@ If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private direct
 
 ### Caller MCP interface
 
-MCP clients launch the `mcp` command over stdio. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`; `prompt`, `manage_selection`, `draft_create`, `draft_inspect`, `draft_update`, `draft_validate`, `draft_finalize`, `draft_dispose`; `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`, `context_builder_dispose`; and `context_prepare`. `tools/list` supplies their schemas. Each result is one text block of compact JSON; `get_code_structure` instead returns its rendered view as text, with the complete evidence as structured content. Workspace, draft and job IDs belong to the connected client. Declaring the same roots, exclusions and output directory again reuses the open workspace and its current index. Give each project one output directory and a distinct `outputName` for each bundle; a new output directory starts a separate workspace, whose first refresh reads every file again.
+MCP clients launch the `mcp` command over stdio. The [agent workflow](docs/workflow.md) gives the sequence of calls that builds a packet, and the server sends a short form of it as its MCP instructions. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`; `prompt`, `manage_selection`, `draft_create`, `draft_inspect`, `draft_update`, `draft_validate`, `draft_finalize`, `draft_dispose`; `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`, `context_builder_dispose`; and `context_prepare`. `tools/list` supplies their schemas. Each result is one text block of compact JSON; `get_code_structure` instead returns its rendered view as text, with the complete evidence as structured content. Workspace, draft and job IDs belong to the connected client. Declaring the same roots, exclusions and output directory again reuses the open workspace and its current index. Give each project one output directory and a distinct `outputName` for each bundle; a new output directory starts a separate workspace, whose first refresh reads every file again.
 
 Exploration calls use `workspaceId` and a tool-specific `input`. Request a file tree with only `{ "workspaceId": "..." }`, read with `{ "workspaceId": "...", "input": { "root": "app", "path": "src/main.ts" } }`, or search with `{ "workspaceId": "...", "input": { "query": { "text": "greet" } } }`. These tools are available independently of context-builder jobs.
 
