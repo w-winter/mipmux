@@ -57,3 +57,27 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
     await op.close(); await handle.close();
   } finally { await runtime.close(); }
 });
+
+// Linux Foundation traps when `NSString.deletingLastPathComponent` receives a one-character path.
+test('a top-level directory with a one-character name is walked and mapped', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-short-name-'));
+  await mkdir(join(base, 'root/u'), { recursive: true }); await mkdir(join(base, 'out'));
+  await writeFile(join(base, 'root/u/A.swift'), 'struct OwnerRecord {\n let value: Int\n}\n');
+  const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
+    credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
+    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+  try {
+    const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }], exclusions: [], outputRoot: join(base, 'out') },
+      new AbortController().signal);
+    const snapshot = await handle.refresh(new AbortController().signal);
+    assert.equal(snapshot.enumeration.kind, 'complete');
+    assert(snapshot.entries.some(entry => entry.kind === 'file' && entry.path === 'u/A.swift'));
+    const operation = await handle.openOperation(new AbortController().signal);
+    try {
+      const structure = await operation.getCodeStructure({ seeds: [{ root: 'r', path: 'u/A.swift', kind: 'file' }], expand: 'none', depth: 1,
+        signatures: true, size: 'medium', maxOutputBytes: 10000, selection: null });
+      assert(structure.kind === 'structure' && structure.files.length === 1);
+    } finally { await operation.close(); }
+    await handle.close();
+  } finally { await runtime.close(); }
+});

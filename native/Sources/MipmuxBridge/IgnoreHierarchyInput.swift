@@ -52,7 +52,7 @@ struct IgnoreHierarchyInput {
         for entry in directories {
             let directory = try WireObject(entry, keys: ["path", "controls"])
             let path = try directory.string("path")
-            let parent = (path as NSString).deletingLastPathComponent
+            let parent = relativeParent(path)
             guard !path.isEmpty, let inherited = byDirectory[parent],
                   let controls = try directory.value("controls") as? [Any]
             else {
@@ -118,7 +118,7 @@ struct IgnoreHierarchyInput {
             : provider.root.isIgnored(relativePath: query.path, isDirectory: query.isDirectory)
         var verdict: [String: Any] = ["path": query.path, "isDirectory": query.isDirectory, "ignored": ignored]
         if query.isDirectory {
-            let parent = (query.path as NSString).deletingLastPathComponent
+            let parent = relativeParent(query.path)
             let rules = hierarchical ? try await provider.rulesForDirectory(parent) : provider.root
             let traversal = rules.requiresTraversal(for: query.path)
             verdict["requiresTraversal"] = traversal
@@ -162,7 +162,7 @@ final class CapturedIgnoreRulesProvider: RPCEHierarchicalIgnoreEvaluator.RulesPr
     func rulesForDirectory(_ directoryPath: String) async throws -> IgnoreRules {
         if let rules = byDirectory[directoryPath] { return rules }
         guard !directoryPath.isEmpty else { throw BridgeFailure("nativeProtocolError") }
-        let parent = (directoryPath as NSString).deletingLastPathComponent
+        let parent = relativeParent(directoryPath)
         let inherited = try await rulesForDirectory(parent)
         let input = try files.captureIgnoreInputs(capture.atDirectory(directoryPath))
         guard let capturedAuthority = input["authority"] as? [String: Any],

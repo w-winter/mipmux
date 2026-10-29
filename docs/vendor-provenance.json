@@ -2121,9 +2121,10 @@
       "destination": "native/Sources/MipmuxBridge/StructureSeedCatalog.swift",
       "changes": [
         "Retain boundedDescendantFiles over a captured folder/file catalog.",
-        "Root-qualified typed selectors replace desktop path alias lookup. Captured directory/file order supplies child adjacency; physical paths supply deduplication."
+        "Root-qualified typed selectors replace desktop path alias lookup. Captured directory/file order supplies child adjacency; physical paths supply deduplication.",
+        "Take the parent of a root-relative path through relativeParent, since Linux Foundation traps on one-character paths."
       ],
-      "sha256": "ca13953421bac7dafa5f95f7c2044c537c190264f4cb03e77ccc071a9401dad9",
+      "sha256": "a1b4275c2aecf0251133a29846f8a7cbdc2aa56b390803a71965ceb249ece1f1",
       "classification": "handwritten",
       "ranges": [
         [

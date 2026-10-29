@@ -37,7 +37,7 @@ final class StructureSeedCatalog {
                 _ = folder(root: root, path: path)
             }
             for input in root.files {
-                let parentPath = (input.path as NSString).deletingLastPathComponent
+                let parentPath = relativeParent(input.path)
                 let parent = folder(root: root, path: parentPath)
                 let file = File(
                     fileID: input.id,
@@ -63,7 +63,7 @@ final class StructureSeedCatalog {
         foldersByPath[key] = value
         foldersByID[value.id] = value
         if !path.isEmpty {
-            let parent = folder(root: root, path: (path as NSString).deletingLastPathComponent)
+            let parent = folder(root: root, path: relativeParent(path))
             rootStatesByID[root.id]!.childFolderIDsByFolderID[parent.id, default: []].append(value.id)
         }
         return value
