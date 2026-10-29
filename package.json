@@ -1,6 +1,14 @@
 {
   "name": "mipmux",
   "version": "0.1.0",
+  "description": "Headless port of RepoPrompt CE's Context Builder: an MCP server that builds verified context packets for coding agents",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/w-winter/mipmux.git"
+  },
+  "homepage": "https://github.com/w-winter/mipmux#readme",
+  "bugs": "https://github.com/w-winter/mipmux/issues",
   "private": true,
   "type": "module",
   "engines": {

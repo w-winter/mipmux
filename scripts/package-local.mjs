@@ -16,7 +16,7 @@ mkdirSync(destination, { recursive: true, mode: 0o700 });
 const staging = join(destination, 'package-input');
 mkdirSync(staging, { mode: 0o700 });
 const target = `${process.platform}-${process.arch}`;
-const paths = ['package.json', 'README.md', 'THIRD_PARTY_NOTICES.md',
+const paths = ['package.json', 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
   `libexec/${target}/MipmuxBridge`, 'dist/dependency-identity.json', 'dist/prompts/discovery.md'];
 for (const entry of readdirSync(join(root, 'src'), { recursive: true, withFileTypes: true })) {
   if (!entry.isFile() || !entry.name.endsWith('.ts')) continue;

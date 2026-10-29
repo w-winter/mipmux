@@ -37,7 +37,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const paths: string[] = receipt.files.map((file: { path: string }) => file.path);
   for (const path of ['dist/index.js', 'dist/index.d.ts', 'dist/cli/main.js', 'dist/discovery/pi-worker.js',
     'dist/dependency-identity.json', 'dist/prompts/discovery.md', `libexec/${process.platform}-${process.arch}/MipmuxBridge`,
-    'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
+    'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
   assert(!paths.some(path => /(?:\.DS_Store|\.env|test-output|prompt-exports|node_modules|\.build)/u.test(path)));
   const bytes = readFileSync(join(directory, receipt.filename));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), receipt.sha256);
