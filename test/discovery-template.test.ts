@@ -62,7 +62,8 @@ test('edited template bodies retain literal UTF-8 bytes through reordered defini
   const examples: [string][] = [[''], [' \t '], ['\nA\n'], ['A\r\nB'], ['e\u0301'], ['{"outer":{"value":1}}']];
   const proof: { body: string; expectedBase64: string; actualBase64: string }[] = [];
   fc.assert(fc.property(fc.string({ unit: 'grapheme' }).filter(body => !body.includes('<!-- mipmux:') && !body.includes('{{mipmux')), body => {
-    const input = reordered.replace('\nBODY_LITERAL\n', '\n' + body + '\n');
+    // A replacer function inserts the body literally; a replacement string would expand `$` patterns such as `$$`.
+    const input = reordered.replace('\nBODY_LITERAL\n', () => '\n' + body + '\n');
     const frame = callNative({ ...operation, template: input }, 'template-bytes', 'literal-' + proof.length);
     const result = policy.Parse(frame.result);
     const expected = Buffer.from('L|' + body + '|' + body + '|R');
