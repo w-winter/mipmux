@@ -6,10 +6,10 @@ A ready code map is a syntax-derived summary. Its symbols and referenced type na
 
 ## Build and test
 
-Install Node 22.22.1 or later, Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config, and tar. The build downloads the pinned PCRE2 10.49 archive, verifies its checksum and packaged SLJIT files, builds its static width-8 library, and runs upstream tests. SwiftPM dependencies are pinned in `native/Package.resolved`.
+Install Node 22.22.1 or later, Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config, and tar. The build downloads the pinned PCRE2 10.49 archive, verifies its checksum and packaged SLJIT files, builds its static width-8 library, and runs upstream tests. SwiftPM dependencies are pinned in `native/Package.resolved`. npm dependencies are pinned in `package-lock.json`, and the repository's `.npmrc` sets `ignore-scripts=true`, so `npm ci` runs none of their install scripts; mipmux does not need them.
 
 ```sh
-npm ci --ignore-scripts
+npm ci
 node scripts/build-native.mjs test
 npm run verify:vendor
 npm run typecheck
