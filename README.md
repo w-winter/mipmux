@@ -12,6 +12,10 @@ mipmux is alpha software in regular use with Pi; its interfaces and configuratio
 
 RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces that you create and manage in the app. mipmux has no app or window. It runs on macOS and Linux, including remote machines, and any MCP client can call it. Each call declares the folders it needs: mipmux keeps an index for each set of folders while it runs and reuses its cache after a restart, so there is no list of workspaces to maintain. The cost is search speed, described under [Limits](#limits).
 
+## Security
+
+[SECURITY.md](SECURITY.md) lists what mipmux reads, writes, runs and connects to, including what its discovery agent sends to the model provider, and explains how to report a vulnerability.
+
 ## Requirements
 
 - Node.js 22.22.1 or later.
