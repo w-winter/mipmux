@@ -290,11 +290,17 @@ const IgnoreWalk = Type.Union([
   Type.Object({ kind: Type.Literal('walkDirectory'), walk: Type.String({ minLength: 1 }), root: handle,
     directory: DirectoryRef.anyOf[1] }, { additionalProperties: false }),
 ]);
+/** `gitExcludesOnly` marks an exclusion that Git's exclude files alone cause, which does not apply to a tracked path. */
 const IgnoreVerdict = Type.Union([
-  Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean() }, { additionalProperties: false }),
+  Type.Object({ path: Type.String(), isDirectory: Type.Literal(false), ignored: Type.Boolean(), gitExcludesOnly: Type.Boolean() },
+    { additionalProperties: false }),
   Type.Object({ path: Type.String(), isDirectory: Type.Literal(true), ignored: Type.Boolean(),
-    requiresTraversal: Type.Boolean(), directoryIncluded: Type.Boolean() }, { additionalProperties: false }),
+    requiresTraversal: Type.Boolean(), directoryIncluded: Type.Boolean(), gitExcludesOnly: Type.Boolean() }, { additionalProperties: false }),
 ]);
+/** Reads a repository's Git exclude files, the user's `core.excludesFile` when one applies and `info/exclude`, by absolute path. */
+const GitExcludeCapture = Type.Object({ kind: Type.Literal('captureGitExcludeInputs'),
+  excludesFile: Type.Union([canonicalSelectionPath, Type.Null()]), infoExclude: canonicalSelectionPath,
+  deniedAbsolutePaths: Type.Array(canonicalSelectionPath) }, { additionalProperties: false });
 
 export const NativeGitCheckout = Type.Object({ root: Type.String(), checkoutRootPath: Type.String(), repoKey: Type.String(),
   repositoryID: Type.String(), worktreeID: Type.String(), kind: Type.Enum(['canonical', 'linkedWorktree']) }, { additionalProperties: false });
@@ -368,7 +374,7 @@ export const NativeOperation = Type.Union([
   Type.Object({ kind: Type.Literal('electGitTarget'), roots: Type.Array(Type.Object({ name: Type.String(), path: Type.String() }, { additionalProperties: false })),
     paths: Type.Array(Type.String()) }, { additionalProperties: false }),
   NativeFileBlockInput,
-  IgnoreCapture, IgnoreHierarchy, ...IgnoreWalk.anyOf,
+  IgnoreCapture, IgnoreHierarchy, ...IgnoreWalk.anyOf, GitExcludeCapture,
   IgnoreQueryInput,
   NativeGitPatchInput,
   Type.Object({ kind: Type.Literal('parseGitComparison'), raw: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false }),
@@ -523,6 +529,7 @@ export const NativeResult = Type.Union([
   Type.Object({ kind: Type.Literal('promptAssembly'), text: Type.String() }, { additionalProperties: false }),
   NativeFileBlockResult,
   NativeIgnoreInputs,
+  Type.Object({ kind: Type.Literal('gitExcludeInputs'), controls: Type.Array(IgnoreControl) }, { additionalProperties: false }),
   Type.Object({ kind: Type.Literal('ignoreHierarchy'), paths: Type.Array(IgnoreVerdict), directories: IgnoreHierarchy.properties.directories },
     { additionalProperties: false }),
   IgnoreQueryResult,

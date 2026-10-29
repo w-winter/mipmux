@@ -1,5 +1,5 @@
 // Derived from RepoPrompt CE 43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3.
-// Modified: native visibility and module imports; DEBUG metrics omitted.
+// Modified: native visibility and module imports; DEBUG metrics omitted; Git exclude-file authority added.
 // Source rule shapes remain intact; CCCC checks remain enabled.
 // swiftlint:disable file_length for_where line_length
 import Foundation
@@ -9,6 +9,9 @@ import Foundation
 enum IgnoreRuleAuthority {
     case mandatoryGit
     case secondary
+    /// Git's exclude files, `core.excludesFile` and `info/exclude`. They rank below `.gitignore` and the secondary
+    /// controls, so a negation in either keeps a path they ignore, and they never apply to a tracked path.
+    case gitExclude
 }
 
 enum IgnoreRulePolicy {
@@ -97,6 +100,8 @@ final class IgnoreRules {
     private var tail: RulesNode
     private var cachedSnapshot: IgnoreRulesSnapshot?
     private let policy: IgnoreRulePolicy
+    /// Whether Git exclude-file layers take part in matching; false for the view a tracked path is evaluated with.
+    private let includesGitExcludes: Bool
 
     // MARK: - Initialisers
 
@@ -107,12 +112,14 @@ final class IgnoreRules {
         case .gitRoot: IgnoreRules.baseNode
         }
         self.policy = policy
+        includesGitExcludes = true
     }
 
     /// Private designated initialiser used by `clone()` to share the same chain.
-    private init(tail: RulesNode, policy: IgnoreRulePolicy) {
+    private init(tail: RulesNode, policy: IgnoreRulePolicy, includesGitExcludes: Bool) {
         self.tail = tail
         self.policy = policy
+        self.includesGitExcludes = includesGitExcludes
     }
 
     // MARK: - Public API
@@ -160,7 +167,14 @@ final class IgnoreRules {
             ) {
                 return secondaryOutcome
             }
-            return gitOutcome
+            if gitOutcome == .allow || !includesGitExcludes {
+                return gitOutcome
+            }
+            return matchOutcome(
+                relativePathComponents: repositoryComponents,
+                isDirectory: isDirectory,
+                authority: .gitExclude
+            )
         }
         var node: RulesNode? = tail
         while let current = node {
@@ -227,7 +241,12 @@ final class IgnoreRules {
 
     /// Returns a shallow clone that *shares* all rule layers with the original.
     func clone() -> IgnoreRules {
-        IgnoreRules(tail: tail, policy: policy)
+        IgnoreRules(tail: tail, policy: policy, includesGitExcludes: includesGitExcludes)
+    }
+
+    /// The same layers without Git's exclude files, as Git evaluates a tracked path.
+    func excludingGitExcludes() -> IgnoreRules {
+        IgnoreRules(tail: tail, policy: policy, includesGitExcludes: false)
     }
 
     /// The number of rule layers (including defaults).
@@ -243,6 +262,7 @@ final class IgnoreRules {
         var layers: [CompiledIgnoreRules] = []
         var gitLayers: [CompiledIgnoreRules] = []
         var secondaryLayers: [CompiledIgnoreRules] = []
+        var gitExcludeLayers: [CompiledIgnoreRules] = []
         layers.reserveCapacity(tail.depth)
         var node: RulesNode? = tail
         while let current = node {
@@ -250,6 +270,7 @@ final class IgnoreRules {
             switch current.authority {
             case .mandatoryGit: gitLayers.append(current.compiled)
             case .secondary: secondaryLayers.append(current.compiled)
+            case .gitExclude: gitExcludeLayers.append(current.compiled)
             }
             node = current.parent
         }
@@ -257,6 +278,7 @@ final class IgnoreRules {
             layers: layers,
             gitLayers: gitLayers,
             secondaryLayers: secondaryLayers,
+            gitExcludeLayers: includesGitExcludes ? gitExcludeLayers : [],
             policy: policy,
             hasNegative: tail.hasNegative,
             traversalPrefixes: tail.traversalPrefixes,
@@ -309,6 +331,7 @@ struct IgnoreRulesSnapshot {
     fileprivate let layers: [CompiledIgnoreRules]
     fileprivate let gitLayers: [CompiledIgnoreRules]
     fileprivate let secondaryLayers: [CompiledIgnoreRules]
+    fileprivate let gitExcludeLayers: [CompiledIgnoreRules]
     private let policy: IgnoreRulePolicy
     private let hasNegative: Bool
     private let traversalPrefixes: Set<String>
@@ -321,6 +344,7 @@ struct IgnoreRulesSnapshot {
         layers: [CompiledIgnoreRules],
         gitLayers: [CompiledIgnoreRules],
         secondaryLayers: [CompiledIgnoreRules],
+        gitExcludeLayers: [CompiledIgnoreRules],
         policy: IgnoreRulePolicy,
         hasNegative: Bool,
         traversalPrefixes: Set<String>,
@@ -332,6 +356,7 @@ struct IgnoreRulesSnapshot {
         self.layers = layers
         self.gitLayers = gitLayers
         self.secondaryLayers = secondaryLayers
+        self.gitExcludeLayers = gitExcludeLayers
         self.policy = policy
         self.hasNegative = hasNegative
         self.traversalPrefixes = traversalPrefixes
@@ -364,11 +389,21 @@ struct IgnoreRulesSnapshot {
             if gitOutcome == .ignore {
                 return .ignore
             }
-            return Self.matchOutcome(
+            if let secondaryOutcome = Self.matchOutcome(
                 in: secondaryLayers,
                 relativePathComponents: repositoryComponents,
                 isDirectory: isDirectory
-            ) ?? gitOutcome
+            ) {
+                return secondaryOutcome
+            }
+            if gitOutcome == .allow {
+                return gitOutcome
+            }
+            return Self.matchOutcome(
+                in: gitExcludeLayers,
+                relativePathComponents: repositoryComponents,
+                isDirectory: isDirectory
+            )
         }
         return Self.matchOutcome(
             in: layers,

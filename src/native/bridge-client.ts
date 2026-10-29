@@ -45,7 +45,7 @@ const resultKinds = {
   resolveAutomaticReviewGit: ['automaticReviewGitPaths'],
   renderAutomaticReviewGit: ['automaticReviewGit'],
   revalidateGitTargets: ['gitTargetValidation'],
-  captureIgnoreInputs: ['ignoreInputs'], queryIgnoreHierarchy: ['ignoreHierarchy'],
+  captureIgnoreInputs: ['ignoreInputs'], queryIgnoreHierarchy: ['ignoreHierarchy'], captureGitExcludeInputs: ['gitExcludeInputs'],
   queryIgnoreRules: ['ignoreRules'],
   parseGitPatch: ['gitPatch'], parseGitComparison: ['gitComparison'], projectGitDiff: ['gitDiff'],
   normalizeGitDiffPaths: ['gitDiffPaths'],

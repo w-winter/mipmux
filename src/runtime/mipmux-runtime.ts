@@ -26,7 +26,7 @@ import { observe } from '../workspace/observe.js';
 import { revalidateCanonicalSources } from '../context/clipboard-selection.js';
 import { capturedSourceSelections } from '../context/source-omissions.js';
 import type { GitUserConfiguration } from '../patches/git-process.js';
-import { GitExclusionQuery, listGitExclusions, resolveExcludesFile, type GitRepositoryLocation } from '../workspace/git-exclusions.js';
+import { GitExcludeQuery, listTrackedPaths, resolveExcludesFile, type GitRepositoryLocation } from '../workspace/git-exclusions.js';
 
 interface GitSnapshotMutationAccess { readonly bridge: BridgeClient; readonly root: NativeHandle }
 interface GitSnapshotMutationOwner { tail: Promise<void>; bridge: BridgeClient | null }
@@ -163,14 +163,13 @@ export class MipmuxRuntime {
     }
     return observe(resolved, AbortSignal.any([signal, this.#shutdown.signal]));
   }
-  /** Asks Git, once per root, which untracked paths it ignores in each Git root; a root outside Git, or a runtime without Git, has none. */
-  gitExclusionQuery(signal: AbortSignal): GitExclusionQuery {
-    return new GitExclusionQuery(async (authority, rootPath) => {
-      const git = this.options.git;
-      if (!git || authority.kind !== 'git') return new Set();
-      const repository = { gitDirectory: authority.gitDirectory.canonicalPath, worktree: authority.repositoryRoot.canonicalPath };
-      return listGitExclusions(this.supervisor, git.executable, await this.gitExcludesFile(repository, signal), repository, rootPath, signal);
-    });
+  /** What policies need from Git to apply Git roots' exclude files; null without Git, when those files do not apply. */
+  gitExcludeQuery(signal: AbortSignal): GitExcludeQuery | null {
+    const git = this.options.git;
+    if (!git) return null;
+    return new GitExcludeQuery(repository => this.gitExcludesFile(repository, signal),
+      (repository, rootPath) => listTrackedPaths(this.supervisor, git.executable, repository, rootPath,
+        AbortSignal.any([signal, this.#shutdown.signal])));
   }
   /** Owns captured prompt/tree/clipboard rendering, including observations after workspace lease release. */
   renderPresentation<O extends Extract<NativeOperation, { kind: 'listCopyPresets' | 'resolveCopyPreset' | 'renderFileTree' | 'renderPreparedClipboard' | 'planClipboardPresentation' | 'renderDiscoveryPrompt' | 'renderAutomaticReviewGit' | 'calculateTokenStats' }>>(input: O, signal: AbortSignal) {
@@ -230,7 +229,7 @@ export class MipmuxRuntime {
             this.#owners.delete(key); return this.#retireSnapshotWorker(outputRoot.identity);
           },
             () => this.makeBridge(), this.#shutdown.signal, this.options.copyContext.codeMapsGloballyDisabled,
-            signal => this.gitExclusionQuery(signal));
+            signal => this.gitExcludeQuery(signal));
           this.#owners.set(key, admitted); bridgeOwnership.adopted = true;
           return admitted;
         });

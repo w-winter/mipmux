@@ -49,8 +49,11 @@ async function fixture() {
   for (const [path, text] of Object.entries(files)) await writeFile(join(root, path), text);
   run(['add', '.']); run(['commit', '-qm', 'base']);
   await writeFile(join(root, 'Full.swift'), files['Full.swift'] + '// reviewed change\n');
+  // The library runtime that saves bundles and the MCP server that prepares them read the same user Git configuration, so
+  // their policies record the same exclude files.
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), contextBudgetUnits: 200000, nativeExecutable,
-    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: { executable: git } };
+    nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100,
+    git: { executable: git, userConfiguration: { home: base, xdgConfigHome: null } } };
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out };
   return { base, root, out, options, spec };
 }
@@ -110,7 +113,7 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
   await saveBundles(f);
   const config = join(f.base, 'host.json');
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: f.options.cachePath, contextBudgetUnits: 200000,
-    nativeExecutable, nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: { executable: git },
+    nativeExecutable, nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: f.options.git,
     discovery: null, defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });

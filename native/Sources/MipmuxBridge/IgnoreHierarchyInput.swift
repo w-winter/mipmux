@@ -81,8 +81,12 @@ struct IgnoreHierarchyInput {
                 guard let text = try captured.value("text") as? String else {
                     throw BridgeFailure("nativeProtocolError")
                 }
-                let authority: IgnoreRuleAuthority = try input.string("authority") == "mandatoryGit"
-                    ? .mandatoryGit : .secondary
+                let authority: IgnoreRuleAuthority = switch try input.string("authority") {
+                case "mandatoryGit": .mandatoryGit
+                case "secondary": .secondary
+                case "gitExclude": .gitExclude
+                default: throw BridgeFailure("nativeProtocolError")
+                }
                 try rules.addCompiledLayer(
                     GitignoreCompiler.compile(content: text, directoryPath: input.string("directory")),
                     authority: authority
@@ -110,9 +114,28 @@ struct IgnoreHierarchyInput {
     }
 
     /// Whether a root-relative path is ignored and, for a directory, whether it is traversed and included.
+    /// `gitExcludesOnly` reports an exclusion that Git's exclude files alone cause; a tracked path is exempt from it.
     static func verdict(_ query: (path: String, isDirectory: Bool), hierarchical: Bool,
                         provider: CapturedIgnoreRulesProvider,
                         evaluator: RPCEHierarchicalIgnoreEvaluator) async throws -> [String: Any] {
+        let evaluated = try await evaluate(query, hierarchical: hierarchical, provider: provider, evaluator: evaluator)
+        var verdict = evaluated.verdict
+        var gitExcludesOnly = false
+        if evaluated.excluded {
+            let exempt = GitExcludeExemptRules(provider)
+            let exemptEvaluator = RPCEHierarchicalIgnoreEvaluator(rulesProvider: exempt)
+            gitExcludesOnly = try await !evaluate(query, hierarchical: hierarchical, provider: exempt,
+                                                  evaluator: exemptEvaluator).excluded
+        }
+        verdict["gitExcludesOnly"] = gitExcludesOnly
+        return verdict
+    }
+
+    /// The verdict, and whether it excludes the path: an ignored file, or a directory neither included nor traversed.
+    private static func evaluate(
+        _ query: (path: String, isDirectory: Bool), hierarchical: Bool, provider: some IgnoreRulesSource,
+        evaluator: RPCEHierarchicalIgnoreEvaluator
+    ) async throws -> (verdict: [String: Any], excluded: Bool) {
         let ignored = hierarchical
             ? try await evaluator.isIgnored(relativePath: query.path, isDirectory: query.isDirectory)
             : provider.root.isIgnored(relativePath: query.path, isDirectory: query.isDirectory)
@@ -121,17 +144,33 @@ struct IgnoreHierarchyInput {
             let parent = relativeParent(query.path)
             let rules = hierarchical ? try await provider.rulesForDirectory(parent) : provider.root
             let traversal = rules.requiresTraversal(for: query.path)
+            let included = !rules.isIgnored(relativePath: query.path, isDirectory: true) || traversal
             verdict["requiresTraversal"] = traversal
-            verdict["directoryIncluded"] = !rules.isIgnored(relativePath: query.path, isDirectory: true)
-                || traversal
+            verdict["directoryIncluded"] = included
+            return (verdict, !included)
         }
-        return verdict
+        return (verdict, ignored)
+    }
+}
+
+/// Rules for the root and for each root-relative directory.
+protocol IgnoreRulesSource: RPCEHierarchicalIgnoreEvaluator.RulesProvider {
+    var root: IgnoreRules { get }
+}
+
+/// A provider's rules without Git's exclude files, as Git evaluates a tracked path.
+private struct GitExcludeExemptRules: IgnoreRulesSource {
+    let base: CapturedIgnoreRulesProvider
+    init(_ base: CapturedIgnoreRulesProvider) { self.base = base }
+    var root: IgnoreRules { base.root.excludingGitExcludes() }
+    func rulesForDirectory(_ directoryPath: String) async throws -> IgnoreRules {
+        try await base.rulesForDirectory(directoryPath).excludingGitExcludes()
     }
 }
 
 /// Compiled rules by root-relative directory. A directory without rules has its controls captured, checked against the
 /// root's authority and compiled on first use.
-final class CapturedIgnoreRulesProvider: RPCEHierarchicalIgnoreEvaluator.RulesProvider {
+final class CapturedIgnoreRulesProvider: IgnoreRulesSource {
     private var byDirectory: [String: IgnoreRules]
     private let settings: IgnoreSettings
     private let files: ConfinedFiles

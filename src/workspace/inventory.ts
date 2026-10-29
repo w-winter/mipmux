@@ -8,7 +8,7 @@ import { RootPolicy, type PolicyDeclaration } from './root-policy.js';
 import { NativeAccess } from './source-access.js';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from './values.js';
 import { capturedFile, completeFile, type FileEntry } from './inventory-file.js';
-import type { GitExclusionQuery, GitExclusions } from './git-exclusions.js';
+import type { GitExcludeQuery } from './git-exclusions.js';
 
 /** Files a later scan may reuse, keyed by `reusableKey`, and the binding of the native build and settings that produced them. */
 export interface Reuse { readonly binding: string; readonly files: ReadonlyMap<string, ReusableFile> }
@@ -50,8 +50,8 @@ function reusableFile(fingerprint: DescriptorFingerprint, entry: FileEntry): Reu
  */
 export async function scanInventory(access: NativeAccess, declaration: PolicyDeclaration, workspaceKey: string,
   generation: number, artifacts: ArtifactStore, retainExtraction: () => () => Promise<void>, artifactBuildSignal: AbortSignal,
-  codeMapsGloballyDisabled: boolean, reusable: Reuse | null, git: GitExclusionQuery,
-): Promise<{ snapshot: InventorySnapshot; reusable: Reuse; gitExclusions: GitExclusions }> {
+  codeMapsGloballyDisabled: boolean, reusable: Reuse | null, git: GitExcludeQuery | null,
+): Promise<{ snapshot: InventorySnapshot; reusable: Reuse }> {
   const description = (await access.bridge.request({ kind: 'describe' }, access.signal)).result;
   const supportedExtensions = new Set(description.extensions.map(entry => entry.extension));
   const binding = reuseBinding(access, description, codeMapsGloballyDisabled);
@@ -129,5 +129,5 @@ export async function scanInventory(access: NativeAccess, declaration: PolicyDec
   const snapshot = freeze({ ...body, inventoryDigest: inventoryDigest(body) });
   access.signal.throwIfAborted();
   if (previous === null || next.size !== reusedFiles || next.size !== previous.size) await artifacts.publishReuse(workspaceKey, binding, [...next.values()]);
-  return { snapshot, reusable: { binding, files: next }, gitExclusions: await git.answers() };
+  return { snapshot, reusable: { binding, files: next } };
 }

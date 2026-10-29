@@ -314,7 +314,7 @@ final class ConfinedFiles {
                             device: String(info.st_dev), inode: String(info.st_ino))
     }
 
-    private func readIgnoreControl(_ path: String, mandatory: Bool, denied: [String]) throws -> [String: Any] {
+    func readIgnoreControl(_ path: String, mandatory: Bool, denied: [String]) throws -> [String: Any] {
         func protected(_ value: String) -> Bool {
             if value.split(separator: "/").contains(where: { $0 == ".env" || $0.hasPrefix(".env.") }) { return true }
             return denied.contains { value == $0 || value.hasPrefix($0 == "/" ? "/" : $0 + "/") }

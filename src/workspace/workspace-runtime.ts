@@ -12,7 +12,7 @@ import { RootPolicy } from './root-policy.js';
 import { NativeFailure } from '../native/bridge-client.js';
 import { failureCode } from '../runtime/tool-result.js';
 import type { CatalogedGitArtifact } from './git-artifact-catalog.js';
-import { GitExclusions, type GitExclusionQuery } from './git-exclusions.js';
+import type { GitExcludeQuery } from './git-exclusions.js';
 
 interface CodemapDemand {
   readonly controller: AbortController;
@@ -36,7 +36,6 @@ export class WorkspaceRuntime {
   #flight: Promise<void> | null = null;
   #snapshot: InventorySnapshot | null = null;
   #reusable: Reuse | null = null;
-  #gitExclusions = GitExclusions.none;
   #failure: unknown = null;
   #closing: Promise<void> | null = null;
   readonly #observers = new Set<{ target: number; resolve: (snapshot: InventorySnapshot) => void; reject: (error: unknown) => void }>();
@@ -49,10 +48,7 @@ export class WorkspaceRuntime {
   constructor(readonly key: string, readonly declaration: PolicyDeclaration, private roots: readonly OpenRoot[],
     private bridge: BridgeClient, readonly artifacts: ArtifactStore, readonly onClosed: () => Promise<void>,
     readonly makeBridge: () => BridgeClient, readonly artifactBuildSignal: AbortSignal, readonly codeMapsGloballyDisabled: boolean,
-    readonly queryGit: (signal: AbortSignal) => GitExclusionQuery) {}
-
-  /** The untracked paths Git ignored when the latest published scan asked it, which admission uses until the next scan. */
-  get gitExclusions(): GitExclusions { return this.#gitExclusions; }
+    readonly queryGit: (signal: AbortSignal) => GitExcludeQuery | null) {}
 
   registerGitArtifact(entry: CatalogedGitArtifact): void {
     this.#controller.signal.throwIfAborted();
@@ -149,12 +145,12 @@ export class WorkspaceRuntime {
       workspaceKey: this.key, root: source.root, path: source.path, code: root.code }) + '\n');
     return true;
   }
-  async #refreshManaged(access: NativeAccess, git: GitExclusions): Promise<void> {
+  async #refreshManaged(access: NativeAccess, git: GitExcludeQuery | null): Promise<void> {
     for (const [key, registered] of [...this.#managed]) {
       await this.#refreshRegistration(access, git, key, registered);
     }
   }
-  async #refreshRegistration(access: NativeAccess, git: GitExclusions, key: string, registered: ManagedRegistration): Promise<void> {
+  async #refreshRegistration(access: NativeAccess, git: GitExcludeQuery | null, key: string, registered: ManagedRegistration): Promise<void> {
     const policy = new RootPolicy(this.declaration, access, git), source = { root: registered.entry.root, path: registered.entry.path };
     try {
       if (policy.denied(source)) throw new WorkspaceFailure('pathDenied', source);
@@ -198,11 +194,12 @@ export class WorkspaceRuntime {
         const target = this.#requested;
         process.stderr.write(JSON.stringify({ level: 'info', event: 'inventoryStarted', workspaceKey: this.key, generation: target }) + '\n');
         const access = new NativeAccess(this.bridge, this.roots, this.#controller.signal);
-        const { snapshot, reusable, gitExclusions } = await scanInventory(access, this.declaration, this.key, target, this.artifacts,
-          () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled, this.#reusable, this.queryGit(this.#controller.signal));
-        await this.#refreshManaged(access, gitExclusions);
+        const git = this.queryGit(this.#controller.signal);
+        const { snapshot, reusable } = await scanInventory(access, this.declaration, this.key, target, this.artifacts,
+          () => this.retain(), this.artifactBuildSignal, this.codeMapsGloballyDisabled, this.#reusable, git);
+        await this.#refreshManaged(access, git);
         this.#controller.signal.throwIfAborted();
-        this.#snapshot = snapshot; this.#reusable = reusable; this.#gitExclusions = gitExclusions; this.#published = target; this.#failure = null;
+        this.#snapshot = snapshot; this.#reusable = reusable; this.#published = target; this.#failure = null;
         for (const observer of this.#observers) {
           if (observer.target <= target) { this.#observers.delete(observer); observer.resolve(snapshot); }
         }

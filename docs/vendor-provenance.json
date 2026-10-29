@@ -3415,7 +3415,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "3316cb5437da4b590c0793b370d6b121e09223a1a8d6ed037fc1a9198c1e0df0",
       "destination": "native/Sources/MipmuxBridge/RPCEIgnoreRules.swift",
-      "sha256": "d0a63840023306b8fc2d129cce7514af4105b3c1fe448602b5e1c7e18356c52d",
+      "sha256": "0e1a2b505f8f82c797de9c76cfc69535245e6a96d10691c75bc7289a361ad475",
       "classification": "handwritten",
       "ranges": [
         [
@@ -3426,7 +3426,8 @@
       "changes": [
         "Use native module visibility; omit the unused RepoPromptFoundation import and DEBUG-only metrics, retaining all production matching and traversal semantics.",
         "Immutable linked RulesNode fields are Sendable for shared default nodes. Extract the unchanged mandatory-Git traversal hint union into a private constructor phase to satisfy the configured cyclomatic20 limit.",
-        "Scoped source-shape SwiftLint exceptions retain original identifiers and parsing layout; configured CCCC thresholds remain enabled."
+        "Scoped source-shape SwiftLint exceptions retain original identifiers and parsing layout; configured CCCC thresholds remain enabled.",
+        "Add a Git exclude-file authority, for info/exclude and core.excludesFile, consulted after the secondary layers and after a .gitignore negation, and a view of the rules without it for tracked paths."
       ]
     },
     {
@@ -6090,11 +6091,11 @@
         "Settle globally disabled explicit codemap demand with the registered source entry before retaining any extraction. Shared completion independently uses the same captured flag. Optional supported sources remain pending, not unsupported. Source WorkspaceFileContextStore.swift:13331-13337 revokes globally suspended graph authority.",
         "Revalidate a search continuation's candidates' controlling policy with one ignore-hierarchy query per root.",
         "Read, decode and scan search candidates in one native request, passing each file's outcome on as it arrives.",
-        "Admit paths against the Git exclusions of the workspace's latest refresh, or ask Git again when verifying a saved packet against current files."
+        "Give each operation's policies one Git query, which asks for a root's tracked paths only when an exclusion depends on them."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "14cc71f8fede5b2a0c9993759bf077259119edb02a7af38bb9c0649fcb459867",
+      "sha256": "0497dfec45b2fce0436ab48f9ac3ddf201d627512725cb7501fa4a5ae4e26c17",
       "classification": "handwritten"
     },
     {
@@ -6401,7 +6402,7 @@
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "af59b8020f8e47ad7a1fbe15d9d8ccbf93e70ffb1685cd46d13322570254f82f",
+      "sha256": "62d66d1bc7f5f43ca224710581267e1381ca4e3362640534f36f89652314e431",
       "classification": "handwritten",
       "changes": [
         "Reuse the existing shared-demand owner. A rejected loader promise stops being an admission target immediately; current pending/ready work still joins, and terminal artifact outcomes stay fulfilled results. Earlier observers retain their original promise and release closure. Identity-checked removal prevents old failure/cleanup from deleting replacement work. This binds the source nonstable-unavailable fresh-admission path to headless promise settlement, not a second retry framework.",
@@ -6411,7 +6412,7 @@
         "Keep the previous scan's files with their read-time descriptor fingerprints and pass them to the next inventory scan, which reuses an unchanged file's entry as RPCE's content cache trusts an unchanged FileContentFingerprint (FileSystemService+ContentLoading.swift contentFingerprint).",
         "Load the saved reuse record on the first scan after a restart, and keep the reuse set with the binding of the native build and settings that produced it.",
         "Wait for the workspace owner close callback, which can stop the output root's snapshot helper, before workspace closure settles.",
-        "Publish each scan's Git exclusions with its inventory, and apply them when rechecking explicitly registered files."
+        "Give each scan and its recheck of explicitly registered files one Git query, so they share a root's tracked paths."
       ]
     },
     {
@@ -7696,9 +7697,10 @@
         "Revalidate the output root and destination parent device/inode after atomic interim export creation and before acknowledging its path, reusing the existing snapshot writer identity-check contract.",
         "Report each listed entry's descriptor fingerprint from the existing no-follow fstatat, so inventory scans can reuse files whose fingerprint is unchanged.",
         "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, and a declined file is still hashed and checked against its expected identity without keeping its contents.",
-        "Let a directory listing pass each entry's name and kind to its caller, so an inventory walk evaluates the entries it lists in the same request; reading the entries moved into its own function."
+        "Let a directory listing pass each entry's name and kind to its caller, so an inventory walk evaluates the entries it lists in the same request; reading the entries moved into its own function.",
+        "Expose the ignore-control reader to the Git exclude-file capture."
       ],
-      "sha256": "ccde806821fac5b771b34ac02ba2ece2059a52b63589c8502bc4f395b7a21d35"
+      "sha256": "9432c3026147bf59df893089dbb1085f402303fd6174d5f1d530f5d8d9e66e1c"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",

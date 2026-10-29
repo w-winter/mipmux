@@ -21,7 +21,7 @@ import { observe } from './observe.js';
 import type { CatalogedGitArtifact } from './git-artifact-catalog.js';
 import { join } from 'node:path';
 import { managedInventory } from './managed-inventory.js';
-import type { GitExclusionSource } from './git-exclusions.js';
+import type { GitExcludeQuery } from './git-exclusions.js';
 
 /** Pins one inventory and owns a separate bridge until close joins admitted operations. */
 export class WorkspaceOperation {
@@ -35,7 +35,7 @@ export class WorkspaceOperation {
   readonly #codemapRetains = new Set<() => Promise<void>>();
   readonly #codemapPresentations = new Set<() => void>();
   #closing: Promise<void> | null = null;
-  #verificationGit: GitExclusionSource | null = null;
+  #git: GitExcludeQuery | null | undefined;
   constructor(snapshot: InventorySnapshot, readonly declaration: PolicyDeclaration,
     signal: AbortSignal,
     readonly runtime: MipmuxRuntime, readonly release: () => Promise<void>, private readonly openPinned: (signal: AbortSignal, snapshot: InventorySnapshot) => Promise<WorkspaceOperation>,
@@ -252,14 +252,10 @@ export class WorkspaceOperation {
       await walk(''); return paths;
     });
   }
-  /**
-   * A policy over `access`. A workspace operation applies the Git exclusions of its workspace's latest refresh; verification
-   * asks Git again, once per root, because it checks a saved packet against current files.
-   */
+  /** A policy over `access`. The operation asks Git for a root's tracked paths at most once, when an exclusion depends on them. */
   #policy(access: NativeAccess): RootPolicy {
-    const git = this.catalog.kind === 'workspace' ? this.catalog.owner.gitExclusions
-      : this.#verificationGit ??= this.runtime.gitExclusionQuery(this.signal);
-    return new RootPolicy(this.declaration, access, git);
+    if (this.#git === undefined) this.#git = this.runtime.gitExcludeQuery(this.signal);
+    return new RootPolicy(this.declaration, access, this.#git);
   }
   async #openAccess(): Promise<NativeAccess> {
     const bridge = this.runtime.makeBridge(); this.#bridge = bridge;

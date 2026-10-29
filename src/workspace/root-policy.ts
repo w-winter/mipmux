@@ -6,7 +6,7 @@ import type { NativeFrame, NativeHandle, NativeIgnoreInputs, NativeResult } from
 import type { RootIdentity } from '../contracts/workspace.js';
 import { NativeAccess } from './source-access.js';
 import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from './values.js';
-import { gitExcluded, type GitExclusionSource } from './git-exclusions.js';
+import type { GitExcludeQuery } from './git-exclusions.js';
 
 export interface PolicyDeclaration {
   readonly roots: readonly AdmittedRoot[];
@@ -25,10 +25,13 @@ type CapturedIgnoreInputs = Static<typeof NativeIgnoreInputs>;
 type CapturedDirectories = Extract<NativeResult, { kind: 'ignoreHierarchy' }>['directories'];
 type Verdict = Extract<NativeResult, { kind: 'ignoreHierarchy' }>['paths'][number];
 type ListedEntry = Extract<NativeFrame, { kind: 'entry' }>;
-/** Admission for a known root binding of each source, by root-relative path. */
-interface KnownVerdicts { readonly root: string; readonly verdicts: ReadonlyMap<string, boolean> }
+/** The verdicts already known for a root binding of each source, by root-relative path. */
+interface KnownVerdicts { readonly root: string; readonly verdicts: ReadonlyMap<string, Verdict> }
 function inputKey(input: PolicyInput): string { return canonicalJSON([input.root, input.path]); }
 function admittedVerdict(verdict: Verdict): boolean { return !(verdict.isDirectory ? !verdict.directoryIncluded : verdict.ignored); }
+function gitRepository(authority: Extract<CapturedIgnoreInputs['authority'], { kind: 'git' }>) {
+  return { gitDirectory: authority.gitDirectory.canonicalPath, worktree: authority.repositoryRoot.canonicalPath };
+}
 
 /** Applies host denies to physical evidence and its logical loaded-root path. */
 export function deniedAbsolutePath(declaration: PolicyDeclaration, absolute: string, logicalPath: string): boolean {
@@ -45,7 +48,7 @@ export function deniedAbsolutePath(declaration: PolicyDeclaration, absolute: str
   return false;
 }
 
-function knownVerdict(known: KnownVerdicts, path: string): boolean {
+function knownVerdict(known: KnownVerdicts, path: string): Verdict {
   const verdict = known.verdicts.get(path);
   if (verdict === undefined) throw new WorkspaceFailure('nativeProtocolError');
   return verdict;
@@ -65,15 +68,16 @@ function bindingRound(sources: readonly { directory: boolean }[], bindings: read
 }
 
 /**
- * Captures controlling files and applies the original ordinary-crawl policy at the native boundary. A path it admits is also
- * withheld when `git` lists it as an untracked path that Git ignores in any root containing it.
+ * Captures controlling files and applies the original ordinary-crawl policy at the native boundary. With `git`, a Git root's
+ * policy also applies the repository's exclude files, `info/exclude` and the user's `core.excludesFile`, below its other
+ * controls; they never exclude a tracked file or a directory containing one.
  */
 export class RootPolicy {
   readonly #inputs = new Map<string, PolicyInput>();
   readonly #roots = new Map<string, CapturedIgnoreInputs>();
   readonly #directories = new Map<string, CapturedIgnoreInputs>();
   #walk: string | null = null;
-  constructor(readonly declaration: PolicyDeclaration, readonly access: NativeAccess, readonly git: GitExclusionSource) {}
+  constructor(readonly declaration: PolicyDeclaration, readonly access: NativeAccess, readonly git: GitExcludeQuery | null) {}
 
   #absolute(source: SourcePath): string { return posix.join(this.access.root(source.root).identity.canonicalPath, source.path); }
   #bindings(source: SourcePath): SourcePath[] {
@@ -96,7 +100,7 @@ export class RootPolicy {
       directory: directory ? { kind: 'descendant', path: directory } : { kind: 'root' },
       settings: this.declaration.ignoreSettings, deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths],
     }, this.access.signal);
-    const captured = freeze(structuredClone(reply.result));
+    const captured = freeze(directory ? structuredClone(reply.result) : await this.#withGitExcludes(reply.result));
     if (directory) {
       const base = await this.#capture(root, '');
       if (canonicalJSON(captured.authority) !== canonicalJSON(base.authority)) throw new WorkspaceFailure('policyChanged', { root });
@@ -107,6 +111,27 @@ export class RootPolicy {
       this.#inputs.set(inputKey(input), input);
     }
     return captured;
+  }
+
+  /** A Git root's captured inputs with its exclude files appended; other roots' inputs unchanged. */
+  async #withGitExcludes(captured: CapturedIgnoreInputs): Promise<CapturedIgnoreInputs> {
+    const { authority } = captured;
+    if (!this.git || authority.kind !== 'git') return captured;
+    const excludesFile = await this.git.excludesFile(gitRepository(authority));
+    const reply = await this.access.bridge.request({ kind: 'captureGitExcludeInputs', excludesFile,
+      infoExclude: posix.join(authority.commonDirectory.canonicalPath, 'info', 'exclude'),
+      deniedAbsolutePaths: [...this.declaration.deniedAbsolutePaths] }, this.access.signal);
+    return { ...captured, controls: [...captured.controls, ...reply.result.controls] };
+  }
+
+  /** Whether a verdict admits its path; an exclusion caused only by Git's exclude files does not apply to a tracked path. */
+  async #admits(root: string, verdict: Verdict): Promise<boolean> {
+    if (admittedVerdict(verdict)) return true;
+    if (!verdict.gitExcludesOnly) return false;
+    const { authority } = await this.#capture(root, '');
+    if (!this.git || authority.kind !== 'git') throw new WorkspaceFailure('nativeProtocolError');
+    const tracked = await this.git.tracked(gitRepository(authority), this.access.root(root).identity.canonicalPath);
+    return verdict.isDirectory ? tracked.directories.has(verdict.path) : tracked.files.has(verdict.path);
   }
 
   /** The captured controls of the paths' ancestor directories, parents first, for reuse by a hierarchy query. */
@@ -140,6 +165,13 @@ export class RootPolicy {
 
   /** Evaluates root-relative paths under one root with a single hierarchy query; returns whether each path is admitted. */
   async #query(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<boolean[]> {
+    const verdicts = await this.#verdicts(root, queries), admitted: boolean[] = [];
+    for (const verdict of verdicts) admitted.push(await this.#admits(root, verdict));
+    return admitted;
+  }
+
+  /** The native verdicts for root-relative paths under one root, from a single hierarchy query. */
+  async #verdicts(root: string, queries: readonly { path: string; isDirectory: boolean }[]): Promise<Verdict[]> {
     const rootInputs = await this.#capture(root, '');
     const result = await this.access.bridge.request({ kind: 'queryIgnoreHierarchy', rootInputs,
       directories: rootInputs.settings.enableHierarchicalIgnores ? this.#capturedAncestors(root, queries.map(query => query.path)) : [],
@@ -147,7 +179,7 @@ export class RootPolicy {
       queries: [...queries] }, this.access.signal);
     this.#record(root, rootInputs, result.result.directories);
     if (result.result.paths.length !== queries.length) throw new WorkspaceFailure('nativeProtocolError');
-    return result.result.paths.map(admittedVerdict);
+    return result.result.paths;
   }
 
   /**
@@ -167,14 +199,14 @@ export class RootPolicy {
     this.#record(root, rootInputs, reply.result.directories);
     const { verdicts } = reply.result;
     if (verdicts.length !== reply.entries.length) throw new WorkspaceFailure('nativeProtocolError');
-    const known = new Map<string, boolean>();
+    const known = new Map<string, Verdict>();
     const children = reply.entries.map((child, index) => {
       const source = { root, path: path ? path + '/' + child.name : child.name }, verdict = verdicts[index] ?? null;
       const evaluated = child.entryKind === 'file' || child.entryKind === 'directory';
       if (evaluated !== (verdict !== null) || verdict && (verdict.path !== source.path || verdict.isDirectory !== (child.entryKind === 'directory'))) {
         throw new WorkspaceFailure('nativeProtocolError');
       }
-      if (verdict) known.set(source.path, admittedVerdict(verdict));
+      if (verdict) known.set(source.path, verdict);
       return { child, source };
     });
     const candidates = children.filter(({ child, source }) => !this.denied(source) && (child.entryKind === 'file' || child.entryKind === 'directory'));
@@ -200,24 +232,17 @@ export class RootPolicy {
     const verdicts = bindings.map(bound => bound !== null);
     for (let rank = 0; ; rank++) {
       const round = bindingRound(sources, bindings, verdicts, rank);
-      if (!round.size) break;
+      if (!round.size) return verdicts;
       for (const [root, bound] of round) {
-        const included = root === known?.root ? bound.map(({ path }) => knownVerdict(known, path))
-          : await this.#query(root, bound.map(({ path, isDirectory }) => ({ path, isDirectory })));
-        for (const [position, { index }] of bound.entries()) if (!included[position]) verdicts[index] = false;
+        const queries = bound.map(({ path, isDirectory }) => ({ path, isDirectory }));
+        const roundVerdicts = root === known?.root ? queries.map(({ path }) => knownVerdict(known, path)) : await this.#verdicts(root, queries);
+        for (const [position, { index }] of bound.entries()) {
+          const verdict = roundVerdicts[position];
+          if (!verdict) throw new WorkspaceFailure('nativeProtocolError');
+          if (!await this.#admits(root, verdict)) verdicts[index] = false;
+        }
       }
     }
-    for (const [index, bound] of bindings.entries()) if (verdicts[index] && bound && await this.#gitIgnored(bound)) verdicts[index] = false;
-    return verdicts;
-  }
-
-  /** Whether Git ignores the path as untracked in any of its binding roots. */
-  async #gitIgnored(bindings: readonly SourcePath[]): Promise<boolean> {
-    for (const { root, path } of bindings) {
-      const { authority } = await this.#capture(root, '');
-      if (gitExcluded(await this.git.paths(root, authority, this.access.root(root).identity.canonicalPath), path)) return true;
-    }
-    return false;
   }
 
   async directory(root: string, directory: string): Promise<void> {
@@ -254,7 +279,6 @@ export class RootPolicy {
       const excluded = bound.find((_, index) => !included[index]);
       if (excluded) throw new WorkspaceFailure('policyChanged', excluded.source);
     }
-    for (const source of sources) if (await this.#gitIgnored(this.#bindings(source))) throw new WorkspaceFailure('policyChanged', source);
     this.#matchSnapshot([...byRoot].map(([root, bound]) => ({ root, source: bound[0]!.source })), snapshot);
   }
 
