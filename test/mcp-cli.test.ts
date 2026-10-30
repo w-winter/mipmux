@@ -94,6 +94,10 @@ test('official MCP probes accept disabled provider deadlines and create no works
     await fullClient.connect(new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', fullConfig], cwd: '/', stderr: 'pipe' }));
     const full = (await fullClient.listTools()).tools;
     assert.deepEqual(full.map(tool => tool.name).sort(), fullTools);
+    // Claude Code skips a tool whose input schema composes alternatives at the root ("top-level anyOf, which the Anthropic API does not accept").
+    for (const tool of full) {
+      for (const keyword of ['anyOf', 'oneOf', 'allOf']) assert(!(keyword in tool.inputSchema), `${tool.name} composes ${keyword} at its schema root`);
+    }
     // Key order inside a schema depends on the negotiated protocol version, so the declarations compare as values.
     const declarations = (tools: typeof full) => tools.filter(tool => coreTools.includes(tool.name))
       .map(({ name, description, inputSchema }) => ({ name, description, inputSchema })).sort((a, b) => a.name.localeCompare(b.name));

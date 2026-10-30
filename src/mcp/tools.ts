@@ -4,7 +4,7 @@ import { fromJsonSchema, inputRequired, isInputRequiredResult, CLIENT_CAPABILITI
   type McpServer, type ServerContext } from '@modelcontextprotocol/server';
 import { WorkspaceSpec } from '../contracts/inventory.js';
 import { ContextBuildRequest, DraftInspection, DraftUpdate, PromptRequest } from '../contracts/context.js';
-import { CallerBuildRequest, CallerJobRequest, CallerPrepareRequest } from '../contracts/caller-context.js';
+import { CallerBuildRequest, CallerJobInput, CallerJobRequest, CallerPrepareRequest } from '../contracts/caller-context.js';
 import { ReadInput, SearchInput, StructureInput, readValidator, searchValidator, ScopedStructure, toolDescription } from '../contracts/exploration.js';
 import { GitInput, gitValidator } from '../contracts/git.js';
 import { SelectionInput, selectionValidator } from '../contracts/selection.js';
@@ -22,6 +22,7 @@ const formCapability = Compile(Type.Object({ [CLIENT_CAPABILITIES_META_KEY]: Typ
   elicitation: Type.Object({ form: Type.Object({}) }),
 }) }));
 const questionResponses = Compile(Type.Record(Type.String(), ClientQuestionResponse));
+const jobRequest = Compile(CallerJobRequest);
 /** The tools the agent workflow in docs/workflow.md uses; the `full` set registers every tool. */
 const coreTools: ReadonlySet<string> = new Set(['context_builder', 'context_job', 'context_prepare']);
 
@@ -50,8 +51,12 @@ async function waitForJob(client: ClientRuntime, jobId: string, durationMs: numb
   return inputRequired({ inputRequests: { [question.id]: inputRequired.elicit(questionForm(question)) } });
 }
 
-/** Only a wait may answer a question, so a status, cancel or dispose call that carries an answer fails without effect. */
-function controlJob(client: ClientRuntime, input: CallerJobRequest, ctx: ServerContext) {
+/**
+ * Dispatches one job operation. The advertised schema cannot say that only `wait` takes `durationMs`, so the union check
+ * here does. Only a wait may answer a question, so a status, cancel or dispose call that carries an answer fails without effect.
+ */
+function controlJob(client: ClientRuntime, input: CallerJobInput, ctx: ServerContext) {
+  if (!jobRequest.Check(input)) throw new WorkspaceFailure('invalidRequest');
   if (input.op === 'wait') return waitForJob(client, input.jobId, input.durationMs, ctx);
   if (ctx.mcpReq.inputResponses !== undefined) throw new WorkspaceFailure('invalidInteractionResponse');
   switch (input.op) {
@@ -134,6 +139,6 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
   register('draft_dispose', Type.Object({ draftId: id }, closed), (input, ctx) => client().disposeDraft(input.draftId, ctx.mcpReq.signal));
   register('context_builder', CallerBuildRequest, async (input, ctx) => jobReceipt(await client().buildContext(input, ctx.mcpReq.signal,
     formCapability.Check(ctx.mcpReq.envelope) ? 'form' : 'unavailable')));
-  register('context_job', CallerJobRequest, (input, ctx) => controlJob(client(), input, ctx));
+  register('context_job', CallerJobInput, (input, ctx) => controlJob(client(), input, ctx));
   register('context_prepare', CallerPrepareRequest, async (input, ctx) => prepareReceipt(await client().prepareContext(input, ctx.mcpReq.signal)));
 }

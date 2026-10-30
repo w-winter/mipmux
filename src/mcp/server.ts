@@ -22,12 +22,14 @@ const instructions = [
     + 'a new outputName that starts with a run ID. Add required for files that must appear in full, patches for review '
     + 'comparisons, such as { id, root, comparison: { kind: "worktree", base: "HEAD", includeUntracked: true } }, and '
     + 'documents for text outside the roots. Omit budgetUnits unless the user sets one.',
-  '3. Call context_job with op "wait", the jobId and a durationMs below your tool-call timeout. Repeat until the state is '
-    + 'ready, blocked, failed or cancelled. Repeating step 2 with the same arguments returns the same job; only a new attempt '
-    + 'takes a new outputName.',
+  '3. Call context_job with op "wait", the jobId and a durationMs below your tool-call timeout, such as 50000. Repeat until '
+    + 'the state is ready, blocked, failed or cancelled. Repeating step 2 with the same arguments returns the same job; only a '
+    + 'new attempt takes a new outputName.',
   '4. Check the ready receipt\'s materials and omitted lists. Do not read context.md into your own context.',
   '5. Call context_prepare with the same workspace, the ready bundle\'s directory name as bundle, the complete final task as '
-    + 'prompt and a new outputName. It checks the packet against current files and makes no model call.',
+    + 'prompt and a new outputName with the same run ID. The prompt replaces the receipt\'s prompt, including discovery\'s '
+    + 'notes, so carry over what the recipient needs from it. Preparation checks the packet against current files and makes '
+    + 'no model call.',
   '6. Give the recipient the prepared bundle\'s context.md.',
   '',
   'Full guide: https://github.com/w-winter/mipmux/blob/main/docs/workflow.md',

@@ -45,12 +45,20 @@ export const CallerPrepareRequest = Type.Object({ workspace: CallerWorkspace, bu
   outputName: prepare.outputName, refresh: prepare.refresh, ...evidence, remove: prepare.remove, demote: prepare.demote,
   budgetUnits: prepare.budgetUnits }, closed);
 export type CallerPrepareRequest = Static<typeof CallerPrepareRequest>;
+const jobId = Type.String({ minLength: 1 });
+const durationMs = Type.Integer({ minimum: 0, maximum: maximumWaitMs, description: 'Required for wait and not accepted by the other operations.' });
+/**
+ * The advertised `context_job` input. Claude Code drops a tool whose schema composes alternatives at its root, so the
+ * advertised shape is one object and `CallerJobRequest` states which operation takes `durationMs`.
+ */
+export const CallerJobInput = Type.Object({ op: Type.Enum(['wait', 'status', 'cancel', 'dispose']), jobId,
+  durationMs: Type.Optional(durationMs) }, closed);
+export type CallerJobInput = Static<typeof CallerJobInput>;
 /** Only `wait` takes a duration and can deliver a pending question; the other operations never wait or elicit. */
 export const CallerJobRequest = Type.Union([
-  Type.Object({ op: Type.Literal('wait'), jobId: Type.String({ minLength: 1 }),
-    durationMs: Type.Integer({ minimum: 0, maximum: maximumWaitMs }) }, closed),
-  Type.Object({ op: Type.Enum(['status', 'cancel', 'dispose']), jobId: Type.String({ minLength: 1 }) }, closed),
-], { type: 'object' });
+  Type.Object({ op: Type.Literal('wait'), jobId, durationMs }, closed),
+  Type.Object({ op: Type.Enum(['status', 'cancel', 'dispose']), jobId }, closed),
+]);
 export type CallerJobRequest = Static<typeof CallerJobRequest>;
 
 function sourceSelection(source: CallerRequiredSource): SourceSelection {

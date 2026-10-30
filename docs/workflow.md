@@ -108,7 +108,7 @@ Call `context_prepare` to give the saved packet its final task. It publishes a n
 }
 ```
 
-Send the workspace that built the bundle. `bundle` is the ready bundle's folder name. `prompt` becomes the packet's last section word for word, so write the complete task: the user's request, the roots and comparisons, the user's decisions, corrections from discovery, and the deliverable. Before publishing, mipmux checks every delivered material against the current files. A ready reply lists the materials it `added` and `removed` instead of the full list.
+Send the workspace that built the bundle. `bundle` is the ready bundle's folder name. `prompt` becomes the packet's last section word for word, replacing the prompt that discovery wrote, which the ready receipt shows as `prompt`. Write the complete task: the user's request, the roots and comparisons, the user's decisions, corrections from discovery, and the deliverable. Before publishing, mipmux checks every delivered material against the current files. A ready reply lists the materials it `added` and `removed` instead of the full list.
 
 - A `sourceChanged` failure names a file that changed since the build. Send `refresh: true` to rebuild the packet from current files with the same selection. A packet that includes Git artifacts chosen by discovery (`gitPatch` or `gitMap` materials) cannot be refreshed and returns `refreshRequiresDiscovery`; start a new build instead.
 - To add missing material, send `required`, `documents` or `patches`, in the forms that step 2 describes.

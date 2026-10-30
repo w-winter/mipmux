@@ -149,7 +149,10 @@ test('concurrent destination retries share one job and conflicts never start a s
     comparison: { kind: 'staged', base: 'HEAD' } }] }, { workspaceId: 'w', requestId: 'r', request: { task: 'Old shape' } }]) {
     assert.equal((await client.callTool({ name: 'context_builder', arguments: invalid })).isError, true);
   }
-  assert.equal((await client.callTool({ name: 'context_job', arguments: { op: 'cancel', jobId: first, durationMs: 0 } })).isError, true);
+  for (const misplaced of [{ op: 'cancel', jobId: first, durationMs: 0 }, { op: 'wait', jobId: first }]) {
+    const refused = await client.callTool({ name: 'context_job', arguments: misplaced });
+    assert.equal(refused.isError, true); assert.equal(errorReply.Parse(toolJSON(refused)).code, 'invalidRequest');
+  }
   await held;
   assert.equal(snapshotReply.Parse(toolJSON(await job(client, { op: 'status', jobId: first }))).localSettled, false);
   assert.equal(f.provider.requests.length, 1);
