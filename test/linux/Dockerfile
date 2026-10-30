@@ -18,6 +18,6 @@ COPY test test
 COPY scripts scripts
 COPY prompts prompts
 COPY ThirdPartyLicenses ThirdPartyLicenses
-COPY README.md THIRD_PARTY_NOTICES.md ./
+COPY LICENSE README.md THIRD_PARTY_NOTICES.md ./
 RUN npm run build
 CMD ["sh", "-c", "npm run verify:vendor && npm run typecheck && npm test"]
