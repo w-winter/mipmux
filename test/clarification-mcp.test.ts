@@ -7,14 +7,12 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { contextRequestValidator } from '../src/contracts/context.js';
 import { AskUserResponse } from '../src/contracts/interaction.js';
 import { verifyBundle } from '../src/index.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import { toolJSON } from './fixtures/tool-json.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
-const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const jobReply = Compile(Type.Object({ jobId: Type.String(), state: Type.String(), localSettled: Type.Boolean() }));
 const readyReply = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true),
   bundle: Type.Object({ directory: Type.String() }),
@@ -29,7 +27,8 @@ const processEvent = Compile(Type.Object({ event: Type.Enum(['processSpawned', '
 const formReply = Compile(Type.Object({ resultType: Type.Literal('input_required'), inputRequests: Type.Record(Type.String(),
   Type.Object({ params: Type.Object({ requestedSchema: Type.Object({ properties: Type.Record(Type.String(), Type.Object({ type: Type.String() })) }) }) })) }));
 
-const scenarios = ['accept', 'empty-answer', 'decline', 'form-cancel', 'timeout', 'job-cancel', 'close', 'unavailable', 'disabled', 'foreign-answer'] as const;
+const scenarios = ['accept', 'empty-answer', 'decline', 'form-cancel', 'timeout', 'job-cancel', 'close', 'unavailable', 'disabled',
+  'foreign-answer', 'status'] as const;
 type Scenario = typeof scenarios[number];
 
 async function createFixture(scenario: Scenario, t: TestContext) {
@@ -58,7 +57,7 @@ async function createFixture(scenario: Scenario, t: TestContext) {
   const diagnostics: Buffer[] = []; transport.stderr?.on('data', bytes => diagnostics.push(Buffer.from(bytes)));
   const client = new Client({ name: 'clarification-fixture', version: '1' }, {
     versionNegotiation: { mode: { pin: '2026-07-28' } }, capabilities: scenario === 'unavailable' ? {} : { elicitation: { form: {} } },
-    inputRequired: { autoFulfill: scenario !== 'foreign-answer' },
+    inputRequired: { autoFulfill: scenario !== 'foreign-answer' && scenario !== 'status' },
   });
   t.after(() => client.close());
   let questions = 0;
@@ -74,43 +73,59 @@ async function createFixture(scenario: Scenario, t: TestContext) {
       field.type === 'array' ? ['API'] : questions > 1 ? 'Yes' : scenario === 'accept' ? 'also docs' : 'API'])) };
   });
   await client.connect(transport);
-  const workspace = workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: {
-    spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot },
-  } })));
-  const request = contextRequestValidator.Parse({ task: 'Inspect the selected context', constraints: '', enhancementMode: 'augment',
-    purpose: 'investigation', initialSelection: { codemapMode: 'manual', sources: [] },
-    requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } }], documents: [], patches: [],
-    copyPreset: 'standard', duplicateUserInstructionsAtTop: false, discoveryHints: [],
-    budgetUnits: 10000, outputName: 'packet' });
-  if (scenario !== 'disabled') request.clarification = { questionTimeoutSeconds: scenario === 'timeout' ? 1 : 300 };
-  return { scenario, provider, client, transport, diagnostics, request, workspace, outputRoot,
+  const unclarified = { workspace: { roots: [{ name: 'r', absolutePath: root }], outputRoot }, task: 'Inspect the selected context',
+    enhancementMode: 'augment', purpose: 'investigation', required: [{ root: 'r', path: 'Main.swift' }], budgetUnits: 10000,
+    outputName: 'packet' };
+  const request = scenario === 'disabled' ? unclarified
+    : { ...unclarified, clarification: { questionTimeoutSeconds: scenario === 'timeout' ? 1 : 300 } };
+  return { scenario, provider, client, transport, diagnostics, request, outputRoot,
     questionEntered, resumed, releaseAnswer, get questions() { return questions; } };
 }
 type Fixture = Awaited<ReturnType<typeof createFixture>>;
 type Waiting = ReturnType<Client['callTool']>;
 
 async function checkForeignAnswer(f: Fixture, firstJobId: string) {
-  const { client, workspace, request } = f;
-  const form = formReply.Parse(await client.callTool({ name: 'context_builder_wait', arguments: { jobId: firstJobId, durationMs: 10000 } },
+  const { client, request } = f;
+  const form = formReply.Parse(await client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: firstJobId, durationMs: 10000 } },
     { allowInputRequired: true }));
-  const second = jobReply.Parse(toolJSON(await client.callTool({ name: 'context_builder', arguments: {
-    workspaceId: workspace.id, requestId: 'second', request: { ...request, outputName: 'second' },
-  } })));
-  const secondForm = formReply.Parse(await client.callTool({ name: 'context_builder_wait', arguments: { jobId: second.jobId, durationMs: 10000 } },
+  const second = jobReply.Parse(toolJSON(await client.callTool({ name: 'context_builder', arguments: { ...request, outputName: 'second' } })));
+  const secondForm = formReply.Parse(await client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: second.jobId, durationMs: 10000 } },
     { allowInputRequired: true }));
   const firstId = Object.keys(form.inputRequests)[0]!, secondId = Object.keys(secondForm.inputRequests)[0]!;
   const answer = { action: 'accept', content: Object.fromEntries(Object.keys(
     form.inputRequests[firstId]!.params.requestedSchema.properties).map(key => [key, 'API'])) };
-  const rejected = await client.request({ method: 'tools/call', params: { name: 'context_builder_wait',
-    arguments: { jobId: second.jobId, durationMs: 10000 }, inputResponses: { [firstId]: answer } } });
+  const rejected = await client.request({ method: 'tools/call', params: { name: 'context_job',
+    arguments: { op: 'wait', jobId: second.jobId, durationMs: 10000 }, inputResponses: { [firstId]: answer } } });
   assert.equal(rejected.isError, true); assert.equal(errorReply.Parse(toolJSON(rejected)).code, 'interactionNotCurrent');
   const results: ReturnType<typeof readyReply.Parse>[] = [];
   const pendingAnswers: [string, string][] = [[firstJobId, firstId], [second.jobId, secondId]];
   for (const [jobId, questionId] of pendingAnswers) results.push(readyReply.Parse(toolJSON(await client.request({
-    method: 'tools/call', params: { name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 },
+    method: 'tools/call', params: { name: 'context_job', arguments: { op: 'wait', jobId, durationMs: 10000 },
       inputResponses: { [questionId]: answer } },
   }))));
   await writeFile('test-output/clarification-foreign-answer-proof.json', JSON.stringify({ rejected, results }, null, 2) + '\n');
+}
+
+/** Status observes a job with a pending question without delivering, answering or replacing that question. */
+async function checkPendingStatus(f: Fixture, jobId: string) {
+  const { client } = f;
+  const wait = { name: 'context_job', arguments: { op: 'wait', jobId, durationMs: 10000 } };
+  const form = formReply.Parse(await client.callTool(wait, { allowInputRequired: true }));
+  const questionId = Object.keys(form.inputRequests)[0]!;
+  const status = await client.callTool({ name: 'context_job', arguments: { op: 'status', jobId } });
+  assert.equal(status.isError, false);
+  assert.equal(jobReply.Parse(toolJSON(status)).localSettled, false);
+  const answer = { action: 'accept', content: Object.fromEntries(Object.keys(
+    form.inputRequests[questionId]!.params.requestedSchema.properties).map(key => [key, 'API'])) };
+  const misplaced = await client.request({ method: 'tools/call', params: { name: 'context_job', arguments: { op: 'status', jobId },
+    inputResponses: { [questionId]: answer } } });
+  assert.equal(misplaced.isError, true);
+  assert.equal(errorReply.Parse(toolJSON(misplaced)).code, 'invalidInteractionResponse');
+  assert.deepEqual(Object.keys(formReply.Parse(await client.callTool(wait, { allowInputRequired: true })).inputRequests), [questionId]);
+  assert.equal(f.provider.requests.length, 1);
+  const result = readyReply.Parse(toolJSON(await client.request({ method: 'tools/call',
+    params: { ...wait, inputResponses: { [questionId]: answer } } })));
+  await verifyBundle(result.bundle.directory);
 }
 
 function assertProcessesClosed(diagnostics: readonly Buffer[]) {
@@ -125,12 +140,12 @@ function assertProcessesClosed(diagnostics: readonly Buffer[]) {
 
 async function checkCancellation(f: Fixture, jobId: string, waiting: Waiting) {
   await f.questionEntered.promise;
-  if (f.scenario === 'job-cancel') await f.client.callTool({ name: 'context_builder_cancel', arguments: { jobId } });
+  if (f.scenario === 'job-cancel') await f.client.callTool({ name: 'context_job', arguments: { op: 'cancel', jobId } });
   else await f.transport.close();
   f.releaseAnswer.release();
   await waiting.catch(() => {});
   if (f.scenario === 'job-cancel') {
-    const result = jobReply.Parse(toolJSON(await f.client.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 } })));
+    const result = jobReply.Parse(toolJSON(await f.client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId, durationMs: 10000 } })));
     assert.equal(result.state, 'cancelled'); assert.equal(result.localSettled, true);
   }
   await assert.rejects(access(join(f.outputRoot, 'packet', 'manifest.json')));
@@ -159,8 +174,8 @@ async function checkCompletion(f: Fixture, jobId: string, waiting: Waiting) {
     assert.equal(first.isError, true);
     assert.equal(errorReply.Parse(toolJSON(first)).code, 'interactionNotCurrent');
   } else assert.equal(first.isError, false, JSON.stringify(first));
-  const result = readyReply.Parse(toolJSON(scenario === 'timeout' ? await client.callTool({ name: 'context_builder_wait',
-    arguments: { jobId, durationMs: 10000 } }) : first));
+  const result = readyReply.Parse(toolJSON(scenario === 'timeout' ? await client.callTool({ name: 'context_job',
+    arguments: { op: 'wait', jobId, durationMs: 10000 } }) : first));
   const packet = await verifyBundle(result.bundle.directory);
   assert.equal(packet.manifest.prompt, '');
   // The scripted provider reports 10 input and 4 output tokens for every request.
@@ -179,9 +194,7 @@ for (const scenario of scenarios) {
   test(`real scout clarification through MCP owns the interaction: ${scenario}`, async t => {
     const f = await createFixture(scenario, t);
     try {
-      const started = await f.client.callTool({ name: 'context_builder', arguments: {
-        workspaceId: f.workspace.id, requestId: scenario, request: f.request,
-      } });
+      const started = await f.client.callTool({ name: 'context_builder', arguments: f.request });
       if (scenario === 'unavailable') {
         assert.equal(started.isError, true);
         assert.equal(errorReply.Parse(toolJSON(started)).code, 'elicitationUnavailable');
@@ -189,8 +202,9 @@ for (const scenario of scenarios) {
       } else {
         const job = jobReply.Parse(toolJSON(started));
         if (scenario === 'foreign-answer') await checkForeignAnswer(f, job.jobId);
+        else if (scenario === 'status') await checkPendingStatus(f, job.jobId);
         else {
-          const waiting = f.client.callTool({ name: 'context_builder_wait', arguments: { jobId: job.jobId, durationMs: 10000 } });
+          const waiting = f.client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: job.jobId, durationMs: 10000 } });
           void waiting.catch(() => {});
           if (scenario === 'timeout') { await f.resumed.promise; f.releaseAnswer.release(); }
           if (scenario === 'job-cancel' || scenario === 'close') await checkCancellation(f, job.jobId, waiting);

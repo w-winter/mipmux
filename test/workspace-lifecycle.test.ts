@@ -9,6 +9,9 @@ import { runInNewContext } from 'node:vm';
 import { MipmuxRuntime, type RuntimeOptions } from '../src/runtime/mipmux-runtime.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
+import type { WorkspaceSpec } from '../src/contracts/inventory.js';
+import type { DiscoveryRunner } from '../src/discovery/runner.js';
+import { WorkspaceFailure } from '../src/workspace/values.js';
 
 function barrier() {
   let release!: () => void;
@@ -51,6 +54,74 @@ test('closed workspaces release their inventories and their output roots\' snaps
     assert(inventories.every(inventory => inventory.deref() === undefined), 'a closed workspace kept its inventory');
     await client.close();
   } finally { await runtime.close(); }
+});
+
+test('inline calls share admission, retain a warm workspace and join it on close', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-inline-workspace-'));
+  const root = join(base, 'root'), out = join(base, 'out'), otherOut = join(base, 'other-out');
+  await mkdir(root); await mkdir(out); await mkdir(otherOut);
+  await writeFile(join(root, 'model.swift'), 'struct Model {\n let value: String\n}');
+  const open = new Set<BridgeClient>();
+  let hold: { readonly entered: ReturnType<typeof barrier>; readonly resume: ReturnType<typeof barrier> } | null = null;
+  let declarations = 0;
+  const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
+    credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} };
+  class ObservedRuntime extends MipmuxRuntime {
+    override declare(spec: WorkspaceSpec, signal: AbortSignal) { declarations++; return super.declare(spec, signal); }
+    override makeBridge() {
+      class ObservedBridge extends BridgeClient {
+        override async request<O extends NativeOperation>(operation: O, signal: AbortSignal) {
+          // Workspace admission is the only source-root opening without an expected identity.
+          const held = hold;
+          if (held && operation.kind === 'openRoots' && operation.roots[0]?.access === 'source' && operation.roots[0].expected === null) {
+            hold = null; held.entered.release(); await held.resume.promise;
+          }
+          return super.request(operation, signal);
+        }
+      }
+      const bridge = new ObservedBridge({ executable: options.nativeExecutable, env: {}, supervisor: this.supervisor });
+      open.add(bridge); void bridge.closed.then(() => open.delete(bridge));
+      return bridge;
+    }
+  }
+  const runner: DiscoveryRunner = { run: () => Promise.reject(new WorkspaceFailure('fixtureDiscoveryStopped')) };
+  const runtime = new ObservedRuntime(options), signal = new AbortController().signal;
+  const settled = () => new Promise(resolve => setImmediate(resolve));
+  const request = (outputName: string, outputRoot = out) => ({ workspace: { roots: [{ name: 'r', absolutePath: root }], outputRoot },
+    purpose: 'investigation' as const, task: 'Inspect the model', outputName });
+  const first = { entered: barrier(), resume: barrier() }, closing = { entered: barrier(), resume: barrier() };
+  try {
+    const client = runtime.createClient(runner);
+    hold = first;
+    const cancelled = new AbortController();
+    const abandoned = client.buildContext(request('run-a'), cancelled.signal, 'unavailable');
+    const refused = assert.rejects(abandoned, /cancelled/);
+    await first.entered.promise;
+    const shared = client.buildContext(request('run-b'), signal, 'unavailable');
+    cancelled.abort(); await refused;
+    first.resume.release();
+    const job = await shared;
+    assert.equal((await client.wait(job.jobId, 10000, signal, () => {})).state, 'failed');
+    await settled();
+    const retained = open.size;
+    assert(retained > 0, 'the inline workspace released its warm owner');
+    for (const outputName of ['run-c', 'run-d']) {
+      const repeated = await client.buildContext(request(outputName), signal, 'unavailable');
+      assert.equal((await client.wait(repeated.jobId, 10000, signal, () => {})).state, 'failed');
+    }
+    await settled();
+    assert.equal(declarations, 1); assert.equal(open.size, retained);
+
+    hold = closing;
+    const pending = client.buildContext(request('run-e', otherOut), signal, 'unavailable');
+    const rejected = assert.rejects(pending, /cancelled|clientClosed/);
+    await closing.entered.promise;
+    const closed = client.close();
+    closing.resume.release();
+    await rejected; await closed; await settled();
+    assert.equal(declarations, 2);
+    assert.equal(open.size, 0, 'a closed client left a native helper running');
+  } finally { first.resume.release(); closing.resume.release(); await runtime.close(); }
 });
 
 test('warming satisfies a later barrier, cancelled observers release only their interest, and caches survive restart', async () => {

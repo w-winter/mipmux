@@ -13,10 +13,10 @@ import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { toolJSON } from './fixtures/tool-json.js';
 
 const command = resolve('dist/cli/main.js');
-const coreTools = ['context_builder', 'context_builder_cancel', 'context_builder_dispose', 'context_builder_result',
-  'context_builder_wait', 'context_prepare', 'workspace_close', 'workspace_declare'];
+const coreTools = ['context_builder', 'context_job', 'context_prepare'];
 const fullTools = [...coreTools, 'draft_create', 'draft_dispose', 'draft_finalize', 'draft_inspect', 'draft_update', 'draft_validate',
-  'file_search', 'get_code_structure', 'get_file_tree', 'git', 'manage_selection', 'prompt', 'read_file', 'workspace_refresh'].sort();
+  'file_search', 'get_code_structure', 'get_file_tree', 'git', 'manage_selection', 'prompt', 'read_file', 'workspace_close',
+  'workspace_declare', 'workspace_refresh'].sort();
 test('MCP exposes nonsecret artifact and reuse targets usable by explicit CLI recovery', async () => {
   await mkdir('test-output', { recursive: true });
   const base = await mkdtemp(join(tmpdir(), 'mipmux-mcp-cache-'));
@@ -71,25 +71,33 @@ test('official MCP probes accept disabled provider deadlines and create no works
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 12000 }));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
+  const core: Awaited<ReturnType<Client['listTools']>>['tools'] = [];
   try {
     await client.connect(transport);
     const instructions = client.getInstructions() ?? '';
     assert.match(instructions, /^mipmux builds verified context packets/);
     // Claude Code releases before 2.1.296 discard server instructions past 2,048 characters.
     assert(instructions.length <= 2048, String(instructions.length));
-    const tools = await client.listTools();
-    assert.deepEqual(tools.tools.map(tool => tool.name).sort(), coreTools);
-    const result = await client.callTool({ name: 'context_builder_result', arguments: { jobId: 'foreign' } });
+    core.push(...(await client.listTools()).tools);
+    assert.deepEqual(core.map(tool => tool.name).sort(), coreTools);
+    const result = await client.callTool({ name: 'context_job', arguments: { op: 'status', jobId: 'foreign' } });
     assert.equal(result.isError, true);
     assert.match(JSON.stringify(toolJSON(result)), /unknownJob/);
     await assert.rejects(access(join(base, 'cache')));
+    await writeFile('test-output/caller-tools.json', JSON.stringify({ instructions,
+      tools: core.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) }, null, 2) + '\n');
   } finally { await client.close(); }
   const fullConfig = join(base, 'full-config.json');
   await writeFile(fullConfig, JSON.stringify({ ...JSON.parse(await readFile(config, 'utf8')), tools: 'full' }));
   const fullClient = new Client({ name: 'test', version: '1' });
   try {
     await fullClient.connect(new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', fullConfig], cwd: '/', stderr: 'pipe' }));
-    assert.deepEqual((await fullClient.listTools()).tools.map(tool => tool.name).sort(), fullTools);
+    const full = (await fullClient.listTools()).tools;
+    assert.deepEqual(full.map(tool => tool.name).sort(), fullTools);
+    // Key order inside a schema depends on the negotiated protocol version, so the declarations compare as values.
+    const declarations = (tools: typeof full) => tools.filter(tool => coreTools.includes(tool.name))
+      .map(({ name, description, inputSchema }) => ({ name, description, inputSchema })).sort((a, b) => a.name.localeCompare(b.name));
+    assert.deepEqual(declarations(full), declarations(core));
   } finally { await fullClient.close(); }
   const eof = spawn(process.execPath, [command, 'mcp', '--config', config], { cwd: '/', stdio: 'pipe' });
   const stdout: Buffer[] = []; eof.stdout.on('data', chunk => stdout.push(chunk)); eof.stderr.resume();
@@ -121,36 +129,34 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
     await client.connect(transport); await client.listTools();
     const protocolClose = transport.onclose;
     const closed = new Promise<void>(resolve => { transport.onclose = () => { protocolClose?.(); resolve(); }; });
-    const declaration = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
-      roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } });
+    const spec = { roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] };
+    const declaration = await client.callTool({ name: 'workspace_declare', arguments: { spec } });
     const workspaceId = JSON.parse(JSON.stringify(toolJSON(declaration))).id;
     const read = await client.callTool({ name: 'read_file', arguments: { workspaceId,
       input: { root: 'r', path: 'file.txt', start_line: null, offset: null, limit: null, continuation: null } } });
     assert.equal(read.isError, false, JSON.stringify(read));
     assert(Buffer.byteLength(JSON.stringify(read)) <= 2000);
-    const request = {
-      task: 'Task', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [],
-      outputName: 'packet' };
-    const first = await client.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'one', request } });
+    const request = { workspace: spec, task: 'Task', purpose: 'investigation', outputName: 'packet' };
+    const first = await client.callTool({ name: 'context_builder', arguments: request });
     const firstId = JSON.parse(JSON.stringify(toolJSON(first))).jobId;
     await started;
     const observer = new AbortController();
-    const waiting = client.callTool({ name: 'context_builder_wait', arguments: { jobId: firstId, durationMs: 10000 } }, { signal: observer.signal });
+    const waiting = client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: firstId, durationMs: 10000 } }, { signal: observer.signal });
     const refused = assert.rejects(waiting);
-    await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } });
+    await client.callTool({ name: 'context_job', arguments: { op: 'status', jobId: firstId } });
     observer.abort(); await refused;
-    assert.equal(JSON.parse(JSON.stringify(toolJSON(await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } })))).state, 'discovering');
-    const second = await client.callTool({ name: 'context_builder', arguments: { workspaceId, requestId: 'two', request: { ...request, outputName: 'packet-two' } } });
+    assert.equal(JSON.parse(JSON.stringify(toolJSON(await client.callTool({ name: 'context_job', arguments: { op: 'status', jobId: firstId } })))).state, 'discovering');
+    const second = await client.callTool({ name: 'context_builder', arguments: { ...request, outputName: 'packet-two' } });
     const secondId = JSON.parse(JSON.stringify(toolJSON(second))).jobId;
     await startedTwo;
     const progress: number[] = [];
-    const secondWait = client.callTool({ name: 'context_builder_wait', arguments: { jobId: secondId, durationMs: 10000 } },
+    const secondWait = client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: secondId, durationMs: 10000 } },
       { onprogress: value => { progress.push(value.progress); } });
-    await client.callTool({ name: 'context_builder_result', arguments: { jobId: secondId } });
-    await client.callTool({ name: 'context_builder_cancel', arguments: { jobId: secondId } });
+    await client.callTool({ name: 'context_job', arguments: { op: 'status', jobId: secondId } });
+    await client.callTool({ name: 'context_job', arguments: { op: 'cancel', jobId: secondId } });
     assert.equal(JSON.parse(JSON.stringify(toolJSON(await secondWait))).state, 'cancelled');
     assert(progress.length > 0); assert(progress.every((value, index) => index === 0 || value > progress[index - 1]!));
-    assert.equal(JSON.parse(JSON.stringify(toolJSON(await client.callTool({ name: 'context_builder_result', arguments: { jobId: firstId } })))).state, 'discovering');
+    assert.equal(JSON.parse(JSON.stringify(toolJSON(await client.callTool({ name: 'context_job', arguments: { op: 'status', jobId: firstId } })))).state, 'discovering');
     await client.close(); await closed;
     const records = Buffer.concat(diagnostics).toString().trim().split('\n').map(line => JSON.parse(line));
     const spawned = records.filter(record => record.event === 'processSpawned').map(record => record.id).sort();

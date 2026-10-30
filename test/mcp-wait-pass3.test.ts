@@ -37,8 +37,9 @@ for (const scenario of ['timeout', 'abort'] as const) {
     const register = McpServer.prototype.registerTool;
     t.mock.method(McpServer.prototype, 'registerTool', function(this: McpServer, ...args: Parameters<typeof register>) {
       const [name, options, callback] = args;
-      if (name !== 'context_builder_wait') return register.call(this, ...args);
+      if (name !== 'context_job') return register.call(this, ...args);
       return register.call(this, name, options, async (input, ctx) => {
+        // The test's only context_job call is the wait.
         waitEntered.release();
         try { const result = await callback(input, ctx); handlerResult = result; return result; }
         finally { handlerSettled = true; }
@@ -68,15 +69,12 @@ for (const scenario of ['timeout', 'abort'] as const) {
       const body = value.result; assert(isCallToolResult(body)); return toolJSON(body);
     };
     try {
-      const workspace = await call('workspace_declare', { spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out } });
-      assert(workspace && typeof workspace === 'object' && 'id' in workspace);
-      const job = await call('context_builder', { workspaceId: workspace.id, requestId: 'one', request: { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation',
-        requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet',
-        budgetUnits: 10000 } });
+      const job = await call('context_builder', { workspace: { roots: [{ name: 'r', absolutePath: root }], outputRoot: out },
+        task: 'Inspect', enhancementMode: 'augment', purpose: 'investigation', outputName: 'packet', budgetUnits: 10000 });
       assert(job && typeof job === 'object' && 'jobId' in job && typeof job.jobId === 'string'); await running.promise;
       hold = true; const waitId = ++id;
       wire.onmessage?.({ jsonrpc: '2.0', id: waitId, method: 'tools/call', params: { _meta: { ...meta, progressToken: 'p'.repeat(getDefaultHighWaterMark(false)) },
-        name: 'context_builder_wait', arguments: { jobId: job.jobId, durationMs: scenario === 'abort' ? 2147483647 : 30 } } });
+        name: 'context_job', arguments: { op: 'wait', jobId: job.jobId, durationMs: scenario === 'abort' ? 2147483647 : 30 } } });
       await waitEntered.promise;
       progress({ kind: 'boundary', attempt: null, delayMs: null, success: null, reason: null }); await outputEntered.promise;
       if (scenario === 'abort') wire.onmessage?.({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: waitId } });

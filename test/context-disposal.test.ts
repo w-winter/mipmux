@@ -111,20 +111,20 @@ test('MCP job disposal joins real Pi discovery before owner cleanup and retains 
       cwd: '/', stderr: 'pipe' });
     try {
       await client.connect(transport);
-      const workspaceId = identifier.Parse(toolJSON(await client.callTool({ name: 'workspace_declare', arguments: { spec: f.spec } }))).id;
-      const args = { workspaceId, requestId: 'job', request: f.request };
+      const args = { workspace: f.spec, task: f.request.task, purpose: f.request.purpose, enhancementMode: f.request.enhancementMode,
+        copyPreset: 'standard', required: [{ root: 'r', path: 'file.txt' }], budgetUnits: f.request.budgetUnits, outputName: f.request.outputName };
       const job = jobIdentifier.Parse(toolJSON(await client.callTool({ name: 'context_builder', arguments: args })));
       if (finish) {
-        const waited = await client.callTool({ name: 'context_builder_wait', arguments: { jobId: job.jobId, durationMs: 10000 } });
+        const waited = await client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: job.jobId, durationMs: 10000 } });
         assert.equal(terminalReply.Parse(toolJSON(waited)).state, 'ready');
       }
       else await waiting;
-      const result = await client.callTool({ name: 'context_builder_dispose', arguments: { jobId: job.jobId } });
+      const result = await client.callTool({ name: 'context_job', arguments: { op: 'dispose', jobId: job.jobId } });
       assert.equal(result.isError, false); assert.equal(disposed.Parse(toolJSON(result)).deletedSnapshots, 1);
-      const receipt = await client.callTool({ name: 'context_builder_result', arguments: { jobId: job.jobId } });
+      const receipt = await client.callTool({ name: 'context_job', arguments: { op: 'status', jobId: job.jobId } });
       const terminal = terminalReply.Parse(toolJSON(receipt)); assert.equal(terminal.localSettled, true);
       assert.equal(terminal.state, finish ? 'ready' : 'cancelled');
-      const repeated = await client.callTool({ name: 'context_builder_dispose', arguments: { jobId: job.jobId } });
+      const repeated = await client.callTool({ name: 'context_job', arguments: { op: 'dispose', jobId: job.jobId } });
       assert.equal(disposed.Parse(toolJSON(repeated)).deletedSnapshots, 0);
       assert.equal(jobIdentifier.Parse(toolJSON(await client.callTool({ name: 'context_builder', arguments: args }))).jobId, job.jobId);
       if (finish) await verifyBundle(join(f.out, 'packet'));

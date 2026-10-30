@@ -11,26 +11,24 @@ import { freeze, WorkspaceFailure } from '../workspace/values.js';
  * favors the first 512 and Pi previews 300, so the summary comes first and the whole text stays under 2,048.
  */
 const instructions = [
-  'mipmux builds verified context packets for coding agents. It indexes the folders you declare, runs a discovery agent '
+  'mipmux builds verified context packets for coding agents. It indexes the folders you name, runs a discovery agent '
     + 'that selects the files, code maps and Git patches a task needs, and saves them as one context.md for a planning, review '
     + 'or investigation model.',
   '',
   'To build a packet:',
   '1. Use one existing output folder per project, such as <repository>/prompt-exports, for every run. mipmux never indexes it.',
-  '2. Call workspace_declare with spec { roots: [{ name, absolutePath }], exclusions: [], outputRoot }. Keep the returned id. '
-    + 'If a later call fails with unknownWorkspace, declare the same spec again.',
-  '3. Call context_builder with workspaceId, a new requestId and a request: purpose (planning, review or investigation); '
-    + 'copyPreset ("codeReview" when the packet needs patches, otherwise "standard"); task (the whole request, with roots, Git '
-    + 'comparisons, changed files, plan paths and the recipient); constraints ""; requiredSources for files that must appear in '
-    + 'full; patches as localPatch entries for reviews; documents for text outside the roots; initialSelection { codemapMode: '
-    + '"automatic", sources: [] }; discoveryHints []; duplicateUserInstructionsAtTop false; and a new outputName that starts '
-    + 'with a run ID. Omit budgetUnits unless the user sets one.',
-  '4. Call context_builder_wait with the jobId and a durationMs below your tool-call timeout. Repeat until the state is ready, '
-    + 'blocked, failed or cancelled. Never start a second job for the same work.',
-  '5. Check the ready receipt\'s materials and omitted lists. Do not read context.md into your own context.',
-  '6. Call context_prepare with workspaceId, the ready bundle\'s directory name as bundle, the complete final task as prompt '
-    + 'and a new outputName. It checks the packet against current files and makes no model call.',
-  '7. Give the recipient the prepared bundle\'s context.md.',
+  '2. Call context_builder with workspace { roots: [{ name, absolutePath }], outputRoot }, purpose (planning, review or '
+    + 'investigation), task (the whole request, with roots, Git comparisons, changed files, plan paths and the recipient) and '
+    + 'a new outputName that starts with a run ID. Add required for files that must appear in full, patches for review '
+    + 'comparisons, such as { id, root, comparison: { kind: "worktree", base: "HEAD", includeUntracked: true } }, and '
+    + 'documents for text outside the roots. Omit budgetUnits unless the user sets one.',
+  '3. Call context_job with op "wait", the jobId and a durationMs below your tool-call timeout. Repeat until the state is '
+    + 'ready, blocked, failed or cancelled. Repeating step 2 with the same arguments returns the same job; only a new attempt '
+    + 'takes a new outputName.',
+  '4. Check the ready receipt\'s materials and omitted lists. Do not read context.md into your own context.',
+  '5. Call context_prepare with the same workspace, the ready bundle\'s directory name as bundle, the complete final task as '
+    + 'prompt and a new outputName. It checks the packet against current files and makes no model call.',
+  '6. Give the recipient the prepared bundle\'s context.md.',
   '',
   'Full guide: https://github.com/w-winter/mipmux/blob/main/docs/workflow.md',
 ].join('\n');

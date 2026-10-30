@@ -24,7 +24,7 @@ const readyDiscovery = Type.Object({ ...DiscoveryReceipt.properties, completions
 async function waitForSettlement(client: Client, jobId: string) {
   const observation = Compile(Type.Object({ localSettled: Type.Boolean() }));
   for (;;) {
-    const reply = await client.callTool({ name: 'context_builder_wait', arguments: { jobId, durationMs: 10000 } });
+    const reply = await client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId, durationMs: 10000 } });
     const snapshot = observation.Parse(toolJSON(reply));
     if (snapshot.localSettled) return reply;
   }
@@ -116,7 +116,7 @@ test('local package audits resources and executes relocated library, native, CLI
   try {
     await client.connect(transport);
     const tools = await client.listTools();
-    for (const name of ['draft_dispose', 'context_builder_dispose']) assert(tools.tools.some(tool => tool.name === name));
+    for (const name of ['draft_dispose', 'context_job']) assert(tools.tools.some(tool => tool.name === name));
     writeFileSync(requestPath, JSON.stringify({ workspace: spec, requestId: 'relocation', request: {
       task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', purpose: 'investigation', requiredSources: [], documents: [], patches: [],
       discoveryHints: [], outputName: 'packet' } }));
@@ -171,14 +171,10 @@ test('local package audits resources and executes relocated library, native, CLI
       toolJSON(await client.callTool({ name: 'file_search', arguments: { workspaceId,
         input: { mode: 'content', query: { kind: 'literal', text: 'Relocated' } } } })));
     assert.equal(search.counts.matchingLines, 1);
-    const request = {
-      task: 'Inspect', initialSelection: { codemapMode: 'manual', sources: [] }, duplicateUserInstructionsAtTop: false,
-      copyPreset: 'standard', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
-      requiredSources: [{ kind: 'full', source: { root: 'r', path: 'model.swift' } }], documents: [], patches: [],
-      discoveryHints: [], outputName: 'interactive-packet', budgetUnits: 10000,
-    };
+    const request = { workspace: spec, task: 'Inspect', copyPreset: 'standard', enhancementMode: 'preserve', purpose: 'investigation',
+      required: [{ root: 'r', path: 'model.swift' }], outputName: 'interactive-packet', budgetUnits: 10000 };
     const jobId = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
-      arguments: { workspaceId, requestId: 'interactive-relocation', request: { ...request, clarification: {} } },
+      arguments: { ...request, clarification: {} },
     }))).jobId;
     const interactiveReply = await waitForSettlement(client, jobId);
     writeFileSync(join(directory, 'interactive-wait.json'), JSON.stringify(interactiveReply));
@@ -191,7 +187,7 @@ test('local package audits resources and executes relocated library, native, CLI
     const fetchRequestStart = provider.requests.length;
     phase = { kind: 'fetch', calls: 0, templatePath: prompt, updatedTemplate };
     const fetchedId = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
-      arguments: { workspaceId, requestId: 'http-relocation', request: { ...request, outputName: 'http-packet' } } }))).jobId;
+      arguments: { ...request, outputName: 'http-packet' } }))).jobId;
     const fetched = Compile(Type.Object({ state: Type.Literal('ready'), localSettled: Type.Literal(true), discovery: readyDiscovery,
       bundle: Type.Object({ directory: Type.String() }) })).Parse(toolJSON(await waitForSettlement(client, fetchedId)));
     const verified = Compile(Type.Object({ kind: Type.Literal('verified'), manifest: Manifest })).Parse(JSON.parse(execFileSync(
@@ -206,17 +202,17 @@ test('local package audits resources and executes relocated library, native, CLI
     assert.equal(fetched.discovery.template.identity.sha256, createHash('sha256').update(stockBytes).digest('hex'));
     for (const request of provider.requests.slice(fetchRequestStart)) assert(!JSON.stringify(request.system).includes('UPDATED_EXTERNAL_TEMPLATE'));
     const observed = Compile(Type.Object({ state: Type.Literal('ready') })).Parse(toolJSON(await client.callTool({
-      name: 'context_builder_result', arguments: { jobId: fetchedId },
+      name: 'context_job', arguments: { op: 'status', jobId: fetchedId },
     })));
     let entered!: () => void;
     const entering = new Promise<void>(resolveEntered => { entered = resolveEntered; });
     phase = { kind: 'hold', entered };
     const beforeCancel = readdirSync(output).sort();
     const cancelledId = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
-      arguments: { workspaceId, requestId: 'cancel-relocation', request: { ...request, outputName: 'cancel-packet' } } }))).jobId;
+      arguments: { ...request, outputName: 'cancel-packet' } }))).jobId;
     const waiting = waitForSettlement(client, cancelledId);
     await Promise.race([entering, waiting.then(() => { throw new Error('Installed job settled before the provider hold'); })]);
-    await client.callTool({ name: 'context_builder_cancel', arguments: { jobId: cancelledId } });
+    await client.callTool({ name: 'context_job', arguments: { op: 'cancel', jobId: cancelledId } });
     const cancelled = Compile(Type.Object({ state: Type.Literal('cancelled'), localSettled: Type.Literal(true),
       discovery: DiscoveryReceipt })).Parse(toolJSON(await waiting));
     assert.equal(cancelled.discovery.workerClosed, true); assert.equal(cancelled.discovery.parentToolsSettled, true);

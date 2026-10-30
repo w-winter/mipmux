@@ -7,11 +7,15 @@ import type { DiscoveryRunner } from '../discovery/runner.js';
 import type { DraftRuntime } from '../context/draft-runtime.js';
 import type { JobSnapshot } from '../contracts/jobs.js';
 import { JobRegistry } from './job-registry.js';
-import { WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { observe } from '../workspace/observe.js';
+import { expandCallerBuild, expandCallerPrepare, expandCallerWorkspace, type CallerBuildRequest, type CallerPrepareRequest,
+  type CallerWorkspace } from '../contracts/caller-context.js';
 import { scopedCall, scopedGitCall, scopedReadCall } from '../discovery/scoped-tools.js';
 import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
 import type { ClientQuestionResponse } from '../contracts/interaction.js';
 import { listPromptPresets } from '../context/prompt-presets.js';
+import { failureCode } from './tool-result.js';
 
 type ExplorationCall = Exclude<DiscoveryCall, { name: 'ask_user' | 'draft_inspect' | 'draft_update' | 'draft_validate' | 'prompt' | 'manage_selection' }>;
 interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRuntime }
@@ -19,6 +23,8 @@ interface ManualDraft { readonly workspaceId: string; readonly draft: DraftRunti
 /** A connected client's handles and drafts are capabilities only within this owner. */
 export class ClientRuntime {
   readonly #workspaces = new Map<string, WorkspaceHandle>();
+  /** One admission per declaration that build and prepare calls name inline, retained until the client closes. */
+  readonly #callerWorkspaces = new Map<string, Promise<WorkspaceHandle>>();
   readonly #drafts = new Map<string, ManualDraft>();
   readonly #jobs: JobRegistry;
   readonly #abort = new AbortController();
@@ -47,6 +53,27 @@ export class ClientRuntime {
     const promise = work(combined); this.#pending.add(promise);
     void promise.then(() => this.#pending.delete(promise), () => this.#pending.delete(promise));
     return promise;
+  }
+  /**
+   * The retained handle for an inline declaration. Concurrent calls share one admission; cancelling `signal` ends only
+   * this caller's observation. A failed admission is forgotten, so a later call admits the declaration again.
+   */
+  #callerWorkspace(input: CallerWorkspace, signal: AbortSignal): Promise<WorkspaceHandle> {
+    const spec = expandCallerWorkspace(input), key = canonicalJSON(spec);
+    const log = (level: string, outcome: string, fields: Record<string, string | null>) => process.stderr.write(JSON.stringify({
+      level, event: 'callerWorkspace', outcome, declaration: sha256(key), ...fields }) + '\n');
+    let admission = this.#callerWorkspaces.get(key);
+    if (admission) log('debug', 'reused', {});
+    else {
+      const admitted = this.runtime.declare(spec, this.#abort.signal);
+      this.#callerWorkspaces.set(key, admitted);
+      admission = admitted;
+      void admitted.then(workspace => log('debug', 'admitted', { workspaceKey: workspace.binding.workspaceKey }), error => {
+        this.#callerWorkspaces.delete(key);
+        log('error', 'failed', { code: failureCode(error) });
+      });
+    }
+    return observe(admission, signal);
   }
   declare(spec: WorkspaceSpec, signal: AbortSignal) {
     return this.#track(signal, async combined => {
@@ -132,11 +159,31 @@ export class ClientRuntime {
     const workspace = this.#workspace(id);
     return this.#track(signal, combined => workspace.preparePacket(request, combined));
   }
+  /** `prepare` for an inline declaration, which the client admits once and retains. */
+  prepareContext(input: CallerPrepareRequest, signal: AbortSignal) {
+    const captured = freeze(structuredClone(input)), request = expandCallerPrepare(captured);
+    return this.#track(signal, async combined => (await this.#callerWorkspace(captured.workspace, combined)).preparePacket(request, combined));
+  }
   /** Enabled clarification requires the caller's form capability or throws elicitationUnavailable before admission. */
   build(workspaceId: string, requestId: string, request: ContextBuildRequest, elicitation: 'form' | 'unavailable' = 'unavailable') {
     const workspace = this.#workspace(workspaceId);
     if (request.clarification && elicitation !== 'form') throw new WorkspaceFailure('elicitationUnavailable');
-    return this.#jobs.start(workspace, workspaceId, requestId, request);
+    return this.#jobs.start(workspace, { kind: 'requestId', workspaceId, requestId }, request);
+  }
+  /**
+   * `build` for an inline declaration. The job is identified by its output destination: an identical start returns the
+   * existing job, and the same destination with a different workspace or request fails with outputNameConflict.
+   * Cancelling `signal` before the job is admitted starts nothing; afterwards the job runs until cancelled.
+   */
+  buildContext(input: CallerBuildRequest, signal: AbortSignal, elicitation: 'form' | 'unavailable') {
+    const captured = freeze(structuredClone(input));
+    const request = expandCallerBuild(captured, this.runtime.options.contextBudgetUnits, this.runtime.options.defaultEnhancementMode);
+    if (request.clarification && elicitation !== 'form') throw new WorkspaceFailure('elicitationUnavailable');
+    return this.#track(signal, async combined => {
+      const workspace = await this.#callerWorkspace(captured.workspace, combined);
+      combined.throwIfAborted();
+      return this.#jobs.start(workspace, { kind: 'destination', ...workspace.binding }, request);
+    });
   }
   /** Returns an owned job's current form, or null when no form is pending. */
   pendingQuestion(id: string) { this.#check(); return this.#jobs.pendingQuestion(id); }
@@ -158,8 +205,11 @@ export class ClientRuntime {
       this.#abort.abort();
       const results = await Promise.allSettled([this.#jobs.close()]);
       await Promise.allSettled([...this.#pending]);
+      const admitted = await Promise.allSettled([...this.#callerWorkspaces.values()]);
+      this.#callerWorkspaces.clear();
       results.push(...await Promise.allSettled([...this.#drafts.values()].map(({ draft }) => draft.close())));
       results.push(...await Promise.allSettled([...this.#workspaces.values()].map(workspace => workspace.close())));
+      results.push(...await Promise.allSettled(admitted.flatMap(admission => admission.status === 'fulfilled' ? [admission.value.close()] : [])));
       this.released();
       const failure = results.find(result => result.status === 'rejected');
       if (failure?.status === 'rejected') throw failure.reason;

@@ -1,6 +1,6 @@
 import { lstat, mkdir, realpath, stat } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
-import { BridgeClient } from '../native/bridge-client.js';
+import { BridgeClient, NativeFailure } from '../native/bridge-client.js';
 import { ProcessSupervisor } from './process-supervisor.js';
 import { workspaceSpecValidator, InventorySnapshot as InventorySchema, type WorkspaceSpec, type InventorySnapshot, type IgnoreSettings } from '../contracts/inventory.js';
 import { contextRequestValidator, PromptEnhancementMode, type ContextBuildRequest, type ContextPrepareRequest } from '../contracts/context.js';
@@ -464,6 +464,8 @@ function validateWorkspaceSpec(spec: WorkspaceSpec): void {
       spec.exclusions.some(rule=>!spec.roots.some(root=>root.name === rule.root))) throw new WorkspaceFailure('invalidWorkspace');
 }
 
+export interface WorkspaceBinding { readonly workspaceKey: string; readonly outputRoot: RootIdentity }
+
 export class WorkspaceHandle {
   // A closed handle keeps no reference to its workspace, so a client holding it does not keep the workspace's inventory.
   #lease: { readonly owner: WorkspaceRuntime; readonly release: () => Promise<void> } | null;
@@ -474,9 +476,35 @@ export class WorkspaceHandle {
     if (!this.#lease) throw new WorkspaceFailure('workspaceClosed');
     return this.#lease.owner;
   }
+  /** The admitted workspace key and output-root identity that identify where this workspace publishes. */
+  get binding(): WorkspaceBinding {
+    const owner = this.#owner();
+    return freeze({ workspaceKey: owner.key, outputRoot: structuredClone(owner.declaration.outputRoot) });
+  }
   async refresh(signal: AbortSignal) {
     const owner = this.#owner(), release = owner.retain();
     try { return await owner.refresh(signal); } finally { await release(); }
+  }
+  /**
+   * Fails with alreadyExists when any entry, including a directory or a dangling symlink, has the name `outputName` in the
+   * output root. Reads metadata only; publication's exclusive directory creation remains the final check.
+   */
+  async assertOutputAvailable(outputName: string, signal: AbortSignal): Promise<void> {
+    const owner = this.#owner(), release = owner.retain(), output = owner.declaration.outputRoot;
+    const bridge = this.runtime.makeBridge();
+    try {
+      const opened = await bridge.request({ kind: 'openRoots', roots: [{ name: 'output', absolutePath: output.declaredPath,
+        access: 'source', expected: output }] }, signal);
+      const root = opened.result.roots[0];
+      if (!root) throw new WorkspaceFailure('nativeProtocolError');
+      const occupied = await bridge.request({ kind: 'inspectSource', root: root.handle, path: outputName }, signal).then(() => true,
+        error => {
+          if (error instanceof NativeFailure && error.code === 'notFound') return false;
+          if (error instanceof NativeFailure && (error.code === 'nonRegularFile' || error.code === 'symlink')) return true;
+          throw error;
+        });
+      if (occupied) throw new WorkspaceFailure('alreadyExists');
+    } finally { await bridge.close(); await release(); }
   }
   async openOperation(signal: AbortSignal) { return this.runtime.openOperation(this.#owner(), signal); }
   async createDraft(request: ContextBuildRequest, signal: AbortSignal, acquiring: () => void = () => {}, prompt?: string) {

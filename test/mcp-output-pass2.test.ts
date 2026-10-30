@@ -52,7 +52,7 @@ for (const scenario of ['subscription', 'existing', 'progress', 'outputError', '
     t.mock.method(MipmuxRuntime.prototype, 'close', async () => { appEntered.release(); await resumeApp.promise; applicationJoined = true;
       if (scenario === 'cleanupError') throw new Error('synthetic cleanup secret'); });
     const host = serveMipmuxStdio(config);
-    wire.onmessage?.({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { _meta: meta, name: 'context_builder_result', arguments: { jobId: 'absent' } } });
+    wire.onmessage?.({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { _meta: meta, name: 'context_job', arguments: { op: 'status', jobId: 'absent' } } });
     await turn();
     wire.onmessage?.({ jsonrpc: '2.0', id: 3, method: 'subscriptions/listen', params: { _meta: meta, notifications: { toolsListChanged: true } } });
     await turn();

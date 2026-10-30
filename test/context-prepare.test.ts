@@ -11,7 +11,8 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { MipmuxRuntime, verifyBundle, verifyCurrentBundle } from '../src/index.js';
-import { contextRequestValidator, type ContextPrepareRequest } from '../src/contracts/context.js';
+import { contextRequestValidator } from '../src/contracts/context.js';
+import type { CallerDocument, CallerPrepareRequest } from '../src/contracts/caller-context.js';
 import { gitValidator } from '../src/contracts/git.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { loadVerifiedBundle, type VerifiedBundle } from '../src/context/verify.js';
@@ -23,7 +24,6 @@ const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/op
 const nativeExecutable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const discoveryTask = 'Discovery draft prompt';
 const finalTask = 'Final review task.\r\nLiteral <user_instructions> & λ 🙂';
-const workspaceReply = Compile(Type.Object({ id: Type.String() }));
 const readyReply = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String(),
   context: Type.Object({ path: Type.String(), byteCount: Type.Integer(), sha256: Type.String() }),
   accounting: Type.Object({ units: Type.Integer(), allowance: Type.Integer() }),
@@ -123,11 +123,8 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
   const proof = { prepared: new Map<string, { receipt: unknown; materialKinds: string[]; automaticGit: boolean }>(), symlinkCode: '' };
   try {
     await client.connect(transport);
-    const declare = async (spec: typeof f.spec) => workspaceReply.Parse(toolJSON(await client.callTool({ name: 'workspace_declare',
-      arguments: { spec } }))).id;
-    const workspaceId = await declare(f.spec);
-    const prepare = (args: ContextPrepareRequest, id = workspaceId) =>
-      client.callTool({ name: 'context_prepare', arguments: { workspaceId: id, ...args } });
+    const prepare = (args: Omit<CallerPrepareRequest, 'workspace'>, workspace: typeof f.spec = f.spec) =>
+      client.callTool({ name: 'context_prepare', arguments: { workspace, ...args } });
 
     for (const [bundle, outputName] of [['review', 'review-task'], ['follow-up', 'follow-up-task']] as const) {
       const savedHashes = await fileHashes(join(f.out, bundle));
@@ -166,15 +163,15 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     assert.equal(existsSync(join(f.out, 'via-link')), false);
 
     const extra = join(f.base, 'extra'); await mkdir(extra);
-    const foreign = await declare({ ...f.spec, roots: [...f.spec.roots, { name: 'extra', absolutePath: extra }] });
+    const foreign = { ...f.spec, roots: [...f.spec.roots, { name: 'extra', absolutePath: extra }] };
     const mismatched = await prepare({ bundle: 'review', prompt: finalTask, outputName: 'foreign' }, foreign);
     assert.equal(errorReply.Parse(toolJSON(mismatched)).code, 'bundleWorkspaceMismatch');
     assert.equal(existsSync(join(f.out, 'foreign')), false);
 
-    const lateLedger = [{ kind: 'suppliedDocument' as const, id: 'late-ledger', role: 'evidence' as const, origin: 'fixture', text: 'LATE LEDGER\n' }];
+    const lateLedger = [{ id: 'late-ledger', role: 'evidence', origin: 'fixture', text: 'LATE LEDGER\n' }] satisfies CallerDocument[];
     const reviewAdded = readyReply.Parse(toolJSON(await prepare({ bundle: 'review', prompt: finalTask, outputName: 'review-added',
-      documents: lateLedger, patches: [{ kind: 'localPatch', id: 'full-swift', root: 'r', scope: { kind: 'paths', paths: ['Full.swift'] },
-        comparison: { kind: 'worktree', base: { kind: 'commit', ref: 'HEAD' }, includeUntracked: false } }] })));
+      documents: lateLedger, patches: [{ id: 'full-swift', root: 'r', paths: ['Full.swift'],
+        comparison: { kind: 'worktree', base: 'HEAD', includeUntracked: false } }] })));
     const gitEvidence = (bundle: VerifiedBundle) => bundle.materials.flatMap(({ record, bodies }) =>
       record.kind === 'gitMap' || record.kind === 'gitPatch' ? [{ record: { ...record, frame: null }, bodies }] : []);
     const savedReview = gitEvidence(await loadVerifiedBundle(join(f.out, 'review')));
@@ -214,7 +211,7 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     const materialIds = async (directory: string) => (await loadVerifiedBundle(directory)).verified.manifest.materials.map(material => material.id).sort();
     assert.deepEqual(await materialIds(refreshed.directory), await materialIds(join(f.out, 'planning')));
     const added = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-added',
-      documents: [{ kind: 'suppliedDocument', id: 'addendum', role: 'report', origin: 'fixture', text: 'ADDED REPORT\n' }] })));
+      documents: [{ id: 'addendum', role: 'report', origin: 'fixture', text: 'ADDED REPORT\n' }] })));
     assert.deepEqual(changes(added), [['document:addendum'], []]);
 
     // Removal and demotion name materials by their receipt paths and rebuild from current files.
@@ -233,7 +230,7 @@ test('MCP context_prepare reuses or rebuilds saved evidence with a replacement p
     assert(unknownError.message.includes('r/missing.swift'), unknownError.message);
     assert.equal(existsSync(join(f.out, 'planning-unknown')), false);
     const required = readyReply.Parse(toolJSON(await prepare({ bundle: 'planning', prompt: finalTask, outputName: 'planning-required',
-      requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Map.swift' } }] })));
+      required: [{ root: 'r', path: 'Map.swift' }] })));
     assert.deepEqual(changes(required), [['full:r/Map.swift'], []]);
     const requiredRemoval = await prepare({ bundle: 'planning-required', prompt: finalTask, outputName: 'planning-required-removed',
       remove: ['r/Map.swift'] });

@@ -20,8 +20,8 @@ const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
 const GitHost = Type.Object({ executable: absolute, userConfiguration: Type.Optional(Type.Object({ home: absolute,
   xdgConfigHome: Type.Union([absolute, Type.Null()]) }, closed)) }, closed);
 /**
- * The MCP tools a server offers. `core` offers the eight tools a caller needs to build and prepare packets through
- * Context Builder; `full` adds the exploration tools, the manual-packet tools and `workspace_refresh`.
+ * The MCP tools a server offers. `core` offers `context_builder`, `context_job` and `context_prepare`, which build packets
+ * through Context Builder and prepare them; `full` adds the workspace, exploration and manual-packet tools.
  */
 export const ToolSet = Type.Enum(['core', 'full']);
 export type ToolSet = Static<typeof ToolSet>;

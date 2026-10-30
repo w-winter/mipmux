@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { WorkspaceHandle } from './mipmux-runtime.js';
+import type { WorkspaceBinding, WorkspaceHandle } from './mipmux-runtime.js';
 import type { DraftRuntime } from '../context/draft-runtime.js';
 import type { ContextBuildRequest } from '../contracts/context.js';
 import { contextRequestValidator } from '../contracts/context.js';
@@ -13,6 +13,12 @@ import { defaultQuestionTimeoutSeconds, type AskUserRequest, type ClientQuestion
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 
 type QuestionResponse = ClientQuestionResponse | { readonly action: 'timeout' };
+/**
+ * What makes a start a retry. A library caller names a request ID within its workspace handle; an MCP caller's output
+ * destination, the admitted output directory and the request's `outputName`, identifies its job for the connection.
+ */
+export type JobIdentity = { readonly kind: 'requestId'; readonly workspaceId: string; readonly requestId: string } |
+  ({ readonly kind: 'destination' } & WorkspaceBinding);
 
 /** A discovery call's tool name and the fields that say how it changes the draft. */
 function callSummary(call: DiscoveryCall) {
@@ -47,21 +53,30 @@ export class JobRegistry {
   readonly #requests = new Map<string, Job>();
   #closing: Promise<void> | null = null;
   constructor(private readonly runner: DiscoveryRunner | null) {}
-  start(workspace: WorkspaceHandle, workspaceId: string, requestId: string, input: ContextBuildRequest): JobSnapshot {
+  /**
+   * Starts discovery, or returns the job an identical earlier start created. The same identity with a different request
+   * fails with requestIdConflict or outputNameConflict and leaves the existing job unchanged.
+   */
+  start(workspace: WorkspaceHandle, identity: JobIdentity, input: ContextBuildRequest): JobSnapshot {
     if (this.#closing) throw new WorkspaceFailure('clientClosed');
-    if (!requestId || !contextRequestValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
+    if ((identity.kind === 'requestId' && !identity.requestId) || !contextRequestValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
     const request = freeze(structuredClone(input));
     if (!this.runner) throw new WorkspaceFailure('discoveryNotConfigured');
-    const digest = sha256(canonicalJSON({ workspaceId, request })), previous = this.#requests.get(requestId);
+    const admission = jobAdmission(identity, request), previous = this.#requests.get(admission.key);
     if (previous) {
-      if (previous.digest !== digest) throw new WorkspaceFailure('requestIdConflict');
+      if (previous.digest !== admission.digest) {
+        admission.log('warn', 'outputNameConflict', null);
+        throw new WorkspaceFailure(identity.kind === 'requestId' ? 'requestIdConflict' : 'outputNameConflict');
+      }
+      admission.log('debug', 'reused', previous.id);
       return this.snapshot(previous.id);
     }
-    const job: Job = { id: randomUUID(), digest, abort: new AbortController(), listeners: new Set(), sequence: 0,
+    const job: Job = { id: randomUUID(), digest: admission.digest, abort: new AbortController(), listeners: new Set(), sequence: 0,
       progress: null, status: { state: 'accepted' }, draft: null, question: { kind: 'idle' }, work: Promise.resolve() };
-    this.#jobs.set(job.id, job); this.#requests.set(requestId, job);
-    // createDraft retains the workspace and registers its barrier synchronously before start returns.
-    job.work = this.#run(job, workspace, request, this.runner);
+    this.#jobs.set(job.id, job); this.#requests.set(admission.key, job);
+    admission.log('info', 'started', job.id);
+    // A request-ID start calls createDraft, which retains the workspace and registers its barrier, before start returns.
+    job.work = this.#run(job, workspace, request, this.runner, identity.kind === 'destination' ? admission.key : null);
     return this.snapshot(job.id);
   }
   #get(id: string): Job {
@@ -85,11 +100,14 @@ export class JobRegistry {
       try { listener(snapshot); } catch { /* Progress observers cannot change execution. */ }
     }
   }
-  async #run(job: Job, workspace: WorkspaceHandle, request: ContextBuildRequest, runner: DiscoveryRunner): Promise<void> {
+  /** `destination` is the key of a destination job, whose output name is checked before draft acquisition; null otherwise. */
+  async #run(job: Job, workspace: WorkspaceHandle, request: ContextBuildRequest, runner: DiscoveryRunner,
+    destination: string | null): Promise<void> {
     let receipt: DiscoveryReceipt | null = null;
     let terminal: JobTerminal;
     try {
       this.#publish(job, { state: 'reconciling' });
+      if (destination !== null) await preflightOutput(job, workspace, request.outputName, destination);
       // As an RPCE MCP run starts in a fresh tab, discovery receives the task as its instructions and writes the prompt itself.
       const draft = await workspace.createDraft(request, job.abort.signal,
         () => this.#publish(job, { state: 'acquiringMaterials' }), '');
@@ -252,3 +270,28 @@ export class JobRegistry {
   }
 }
 function isTerminal(status: Job['status']): status is JobTerminal { return ['ready', 'blocked', 'failed', 'cancelled'].includes(status.state); }
+
+/**
+ * The retry key and request digest for a start. Request-ID keys and destination keys occupy separate namespaces; a
+ * destination key names the output directory by physical identity, and its digest covers the workspace's authority.
+ */
+function jobAdmission(identity: JobIdentity, request: ContextBuildRequest) {
+  if (identity.kind === 'requestId') return { key: canonicalJSON(['requestId', identity.requestId]),
+    digest: sha256(canonicalJSON({ workspaceId: identity.workspaceId, request })), log: () => {} };
+  const { canonicalPath, device, inode } = identity.outputRoot;
+  const key = canonicalJSON(['destination', canonicalPath, device, inode, request.outputName]);
+  return { key, digest: sha256(canonicalJSON({ workspaceKey: identity.workspaceKey, request })),
+    log: (level: string, outcome: string, jobId: string | null) => process.stderr.write(JSON.stringify({ level,
+      event: 'jobAdmission', outcome, destination: sha256(key), jobId }) + '\n') };
+}
+
+/** Fails a destination job before draft acquisition when its output name is already occupied. */
+async function preflightOutput(job: Job, workspace: WorkspaceHandle, outputName: string, destination: string): Promise<void> {
+  try { await workspace.assertOutputAvailable(outputName, job.abort.signal); }
+  catch (error) {
+    const code = failureCode(error);
+    if (code !== 'cancelled') process.stderr.write(JSON.stringify({ level: code === 'alreadyExists' ? 'warn' : 'error',
+      event: 'jobOutputPreflight', jobId: job.id, destination: sha256(destination), code }) + '\n');
+    throw error;
+  }
+}
