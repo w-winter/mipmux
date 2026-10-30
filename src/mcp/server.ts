@@ -19,7 +19,7 @@ const instructions = [
   '1. Use one existing output folder per project, such as <repository>/prompt-exports, for every run. mipmux never indexes it.',
   '2. Call context_builder with workspace { roots: [{ name, absolutePath }], outputRoot }, purpose (planning, review or '
     + 'investigation), task (the whole request, with roots, Git comparisons, changed files, plan paths and the recipient) and '
-    + 'a new outputName that starts with a run ID. Add required for files that must appear in full, patches for review '
+    + 'a new outputName that starts with a run ID and a hyphen. Add required for files that must appear in full, patches for review '
     + 'comparisons, such as { id, root, comparison: { kind: "worktree", base: "HEAD", includeUntracked: true } }, and '
     + 'documents for text outside the roots. Omit budgetUnits unless the user sets one.',
   '3. Call context_job with op "wait", the jobId and a durationMs below your tool-call timeout, such as 50000. Repeat until '

@@ -56,7 +56,7 @@ async function waitForJob(client: ClientRuntime, jobId: string, durationMs: numb
  * here does. Only a wait may answer a question, so a status, cancel or dispose call that carries an answer fails without effect.
  */
 function controlJob(client: ClientRuntime, input: CallerJobInput, ctx: ServerContext) {
-  if (!jobRequest.Check(input)) throw new WorkspaceFailure('invalidRequest');
+  if (!jobRequest.Check(input)) throw new WorkspaceFailure('invalidRequest', { message: 'durationMs is required for wait and not accepted by status, cancel or dispose.' });
   if (input.op === 'wait') return waitForJob(client, input.jobId, input.durationMs, ctx);
   if (ctx.mcpReq.inputResponses !== undefined) throw new WorkspaceFailure('invalidInteractionResponse');
   switch (input.op) {

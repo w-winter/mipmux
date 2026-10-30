@@ -24,6 +24,7 @@ const failedReply = Compile(Type.Object({ jobId: Type.String(), state: Type.Lite
 const readyReply = Compile(Type.Object({ jobId: Type.String(), state: Type.Literal('ready'),
   bundle: Type.Object({ directory: Type.String() }) }));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String() }));
+const invalidRequestReply = Compile(Type.Object({ code: Type.Literal('invalidRequest'), message: Type.String() }));
 const prepared = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String(),
   added: Type.Array(Type.Object({ kind: Type.String(), path: Type.Optional(Type.String()) })) }));
 
@@ -151,7 +152,7 @@ test('concurrent destination retries share one job and conflicts never start a s
   }
   for (const misplaced of [{ op: 'cancel', jobId: first, durationMs: 0 }, { op: 'wait', jobId: first }]) {
     const refused = await client.callTool({ name: 'context_job', arguments: misplaced });
-    assert.equal(refused.isError, true); assert.equal(errorReply.Parse(toolJSON(refused)).code, 'invalidRequest');
+    assert.equal(refused.isError, true); assert.match(invalidRequestReply.Parse(toolJSON(refused)).message, /durationMs/);
   }
   await held;
   assert.equal(snapshotReply.Parse(toolJSON(await job(client, { op: 'status', jobId: first }))).localSettled, false);

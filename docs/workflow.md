@@ -10,7 +10,7 @@ Use one output folder for every run in a project: `prompt-exports` in the main r
 
 Keep `prompt-exports/` out of Git by listing it in `.gitignore`, in the repository's `info/exclude`, or in your global excludes file. Otherwise `git status` lists the packets as untracked files.
 
-Choose a run ID from the date and a short task name, such as `20261029-login-timeout`, and start every `outputName` in the run with it, for example `20261029-login-timeout-review` and then `20261029-login-timeout-review-final`. A name cannot contain `/`, and mipmux refuses a name that already exists in the output folder.
+Choose a run ID from the date and a short task name, such as `20261029-login-timeout`, and start every `outputName` in the run with it and a hyphen, for example `20261029-login-timeout-review` and then `20261029-login-timeout-review-final`. A name cannot contain `/`, and mipmux refuses a name that already exists in the output folder.
 
 ## 1. Describe the workspace
 
@@ -108,7 +108,7 @@ Call `context_prepare` to give the saved packet its final task. It publishes a n
 }
 ```
 
-Send the workspace that built the bundle. `bundle` is the ready bundle's folder name. `prompt` becomes the packet's last section word for word, replacing the prompt that discovery wrote, which the ready receipt shows as `prompt`. Write the complete task: the user's request, the roots and comparisons, the user's decisions, corrections from discovery, and the deliverable. Before publishing, mipmux checks every delivered material against the current files. A ready reply lists the materials it `added` and `removed` instead of the full list.
+Send the workspace that built the bundle. `bundle` is the ready bundle's folder name. `prompt` becomes the packet's last section word for word, replacing the prompt that discovery wrote, which the ready receipt shows as `prompt`. Write the complete task: the user's request, the roots and comparisons, the user's decisions, corrections from discovery, and the deliverable. Before publishing, mipmux checks every delivered material against the current files. A ready reply lists the materials it `added` and `removed` instead of the full list. As with a build, an `outputName` that already exists in the output folder fails with `alreadyExists`.
 
 - A `sourceChanged` failure names a file that changed since the build. Send `refresh: true` to rebuild the packet from current files with the same selection. A packet that includes Git artifacts chosen by discovery (`gitPatch` or `gitMap` materials) cannot be refreshed and returns `refreshRequiresDiscovery`; start a new build instead.
 - To add missing material, send `required`, `documents` or `patches`, in the forms that step 2 describes.
