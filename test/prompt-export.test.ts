@@ -35,7 +35,7 @@ test('real MCP lists presets before draft lookup and exports a nonterminal captu
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     credentialPaths: [], terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: 20000, copyContext }));
   const transport = new StdioClientTransport({ command: process.execPath,
-    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'prompt-export', version: '1' });
   const evidence: unknown[] = [];

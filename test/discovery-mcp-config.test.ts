@@ -75,7 +75,7 @@ test('host composition excludes MCP state and symlink targets from source admiss
   await writeFile(join(root, 'tokens.txt'), 'synthetic'); await symlink(join(root, 'tokens.txt'), join(agentDirectory, 'mcp-auth.json'));
   const { runtime } = compose({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
-    discovery: { ...provider.config, mcp: { agentDirectory } }, git: null, defaultMaxOutputBytes: 10000 }, null);
+    discovery: { ...provider.config, mcp: { agentDirectory } }, git: null, defaultMaxOutputBytes: 10000, tools: 'core' }, null);
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
     const operation = await workspace.openOperation(new AbortController().signal);

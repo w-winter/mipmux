@@ -13,6 +13,10 @@ import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { toolJSON } from './fixtures/tool-json.js';
 
 const command = resolve('dist/cli/main.js');
+const coreTools = ['context_builder', 'context_builder_cancel', 'context_builder_dispose', 'context_builder_result',
+  'context_builder_wait', 'context_prepare', 'workspace_close', 'workspace_declare'];
+const fullTools = [...coreTools, 'draft_create', 'draft_dispose', 'draft_finalize', 'draft_inspect', 'draft_update', 'draft_validate',
+  'file_search', 'get_code_structure', 'get_file_tree', 'git', 'manage_selection', 'prompt', 'read_file', 'workspace_refresh'].sort();
 test('MCP exposes nonsecret artifact and reuse targets usable by explicit CLI recovery', async () => {
   await mkdir('test-output', { recursive: true });
   const base = await mkdtemp(join(tmpdir(), 'mipmux-mcp-cache-'));
@@ -38,7 +42,7 @@ test('MCP exposes nonsecret artifact and reuse targets usable by explicit CLI re
     const unrelated = kind === 'artifact' ? reusePath : artifactPath;
     const saved = await readFile(path), neighbor = await readFile(unrelated);
     await writeFile(path, 'synthetic corrupt record');
-    const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
     transport.stderr?.on('data', () => {});
     const client = new Client({ name: 'cache-recovery', version: '1' });
     try {
@@ -74,12 +78,19 @@ test('official MCP probes accept disabled provider deadlines and create no works
     // Claude Code releases before 2.1.296 discard server instructions past 2,048 characters.
     assert(instructions.length <= 2048, String(instructions.length));
     const tools = await client.listTools();
-    for (const name of ['draft_dispose', 'context_builder_dispose']) assert(tools.tools.some(tool => tool.name === name));
+    assert.deepEqual(tools.tools.map(tool => tool.name).sort(), coreTools);
     const result = await client.callTool({ name: 'context_builder_result', arguments: { jobId: 'foreign' } });
     assert.equal(result.isError, true);
     assert.match(JSON.stringify(toolJSON(result)), /unknownJob/);
     await assert.rejects(access(join(base, 'cache')));
   } finally { await client.close(); }
+  const fullConfig = join(base, 'full-config.json');
+  await writeFile(fullConfig, JSON.stringify({ ...JSON.parse(await readFile(config, 'utf8')), tools: 'full' }));
+  const fullClient = new Client({ name: 'test', version: '1' });
+  try {
+    await fullClient.connect(new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', fullConfig], cwd: '/', stderr: 'pipe' }));
+    assert.deepEqual((await fullClient.listTools()).tools.map(tool => tool.name).sort(), fullTools);
+  } finally { await fullClient.close(); }
   const eof = spawn(process.execPath, [command, 'mcp', '--config', config], { cwd: '/', stdio: 'pipe' });
   const stdout: Buffer[] = []; eof.stdout.on('data', chunk => stdout.push(chunk)); eof.stderr.resume();
   const closed = new Promise<number | null>(resolve => eof.once('close', resolve)); eof.stdin.end();
@@ -89,7 +100,7 @@ test('official MCP probes accept disabled provider deadlines and create no works
   assert.equal(result.code, 1); assert.equal(JSON.parse(result.stdout).kind, 'failed');
   assert(!result.stderr.includes('processSpawned'));
   assert.equal(provider.requests.length, 0);
-  await writeFile(join(base, 'receipt.json'), JSON.stringify({ listedTools: 18, eofCode: 0, integrityCode: result.code }));
+  await writeFile(join(base, 'receipt.json'), JSON.stringify({ listedTools: coreTools.length, eofCode: 0, integrityCode: result.code }));
 });
 
 test('MCP applies the host output allowance and EOF settles an active isolated discovery', async () => {
@@ -103,7 +114,7 @@ test('MCP applies the host output allowance and EOF settles an active isolated d
   await writeFile(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'),
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 2000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'test', version: '1' });
   const diagnostics: Buffer[] = []; transport.stderr?.on('data', chunk => diagnostics.push(Buffer.from(chunk)));
   try {

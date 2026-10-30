@@ -32,7 +32,7 @@ test('public MCP literal prompt operations publish Rewrite, Augment and unchange
     nativeEnvironment: {}, credentialPaths: [], terminationGraceMs: 100, git: null,
     discovery: null, defaultMaxOutputBytes: 10000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
-    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'prompt-state', version: '1' });
   const evidence: { mode: string; directory: string; prompt: string; units: number }[] = [];
   try {

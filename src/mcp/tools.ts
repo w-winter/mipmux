@@ -14,16 +14,21 @@ import { WorkspaceFailure } from '../workspace/values.js';
 import { ClientQuestionResponse } from '../contracts/interaction.js';
 import { questionForm, sourceQuestionResponse } from './question-form.js';
 import { jobReceipt, prepareReceipt, publicationReceipt } from './receipts.js';
+import type { ToolSet } from '../cli/config.js';
 
 const closed = { additionalProperties: false }, id = Type.String({ minLength: 1 });
 const formCapability = Compile(Type.Object({ [CLIENT_CAPABILITIES_META_KEY]: Type.Object({
   elicitation: Type.Object({ form: Type.Object({}) }),
 }) }));
 const questionResponses = Compile(Type.Record(Type.String(), ClientQuestionResponse));
-export function registerTools(server: McpServer, client: () => ClientRuntime, defaultMaxOutputBytes: number) {
+/** The tools the agent workflow in docs/workflow.md uses; the `full` set registers every tool. */
+const coreTools: ReadonlySet<string> = new Set(['workspace_declare', 'workspace_close', 'context_builder', 'context_builder_wait',
+  'context_builder_result', 'context_builder_cancel', 'context_builder_dispose', 'context_prepare']);
+export function registerTools(server: McpServer, client: () => ClientRuntime, defaultMaxOutputBytes: number, toolSet: ToolSet) {
   const budget = { maxOutputBytes: Type.Optional(Positive) };
   function register<S extends TSchema>(name: string, schema: S,
     execute: (input: Static<S>, context: ServerContext) => unknown | Promise<unknown>) {
+    if (toolSet === 'core' && !coreTools.has(name)) return;
     const check = Compile(schema);
     server.registerTool(name, { description: toolDescription(name), inputSchema: fromJsonSchema(schema) }, async (input, context) => {
       try {

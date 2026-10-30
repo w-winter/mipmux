@@ -37,7 +37,7 @@ test('public MCP exact reads acquire ignored files with source bounds and diagno
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 12000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'source-read', version: '1' });
   const proof: unknown[] = [];

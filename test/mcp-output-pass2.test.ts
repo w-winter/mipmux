@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import { McpServer, fromJsonSchema, isCallToolResult } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { serveMipmuxStdio } from '../src/mcp/server.js';
+import type { HostConfig } from '../src/cli/config.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import { verifyBundle } from '../src/context/verify.js';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
@@ -16,7 +17,7 @@ import { toolJSON } from './fixtures/tool-json.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
 const config = { copyContext: copyContext(), cachePath: '/unavailable/cache', nativeExecutable: '/unavailable/native', nativeEnvironment: {}, terminationGraceMs: 100,
-  contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 };
+  contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000, tools: 'full' } satisfies HostConfig;
 const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
 for (const scenario of ['subscription', 'existing', 'progress', 'outputError', 'cleanupError'] as const) {
   test(`production stdio joins application and cancels ${scenario} output without closing shared stdout`, async t => {

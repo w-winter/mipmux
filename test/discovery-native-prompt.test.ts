@@ -44,7 +44,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
     const discovery = { ...provider.config, promptTemplatePath };
     const config = hostValidator.Parse({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-      contextBudgetUnits: 200000, defaultEnhancementMode: mode, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000 });
+      contextBudgetUnits: 200000, defaultEnhancementMode: mode, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000, tools: 'core' });
     const { runtime, client } = compose(config, null);
     try {
       const signal = new AbortController().signal;

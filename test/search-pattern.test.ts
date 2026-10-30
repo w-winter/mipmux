@@ -30,7 +30,7 @@ test('public file_search uses source pattern inference, trimming and literal fle
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 12000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config],
     cwd: '/', env: { PATH: base }, stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'source-search-pattern', version: '1' });

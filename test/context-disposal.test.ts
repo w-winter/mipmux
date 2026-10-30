@@ -107,7 +107,7 @@ test('MCP job disposal joins real Pi discovery before owner cleanup and retains 
     const config = join(f.base, 'config.json');
     await writeFile(config, JSON.stringify({ ...f.options, discovery: provider.config, defaultMaxOutputBytes: 100000 }));
     const client = new Client({ name: 'context-job-disposal', version: '1' });
-    const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
+    const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config],
       cwd: '/', stderr: 'pipe' });
     try {
       await client.connect(transport);
@@ -139,7 +139,7 @@ test('MCP draft_dispose performs owner cleanup after finalization and workspace 
   const f = await fixture(), config = join(f.base, 'config.json');
   await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'context-disposal', version: '1' });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config],
     cwd: '/', stderr: 'pipe' });
   try {
     await client.connect(transport);

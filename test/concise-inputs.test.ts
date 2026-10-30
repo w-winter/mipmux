@@ -30,7 +30,7 @@ test('concise MCP exploration matches explicit options and preserves validation,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     git: null, discovery: null, defaultMaxOutputBytes: 12000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'concise-inputs', version: '1' });
   try {

@@ -28,7 +28,7 @@ test('public structural seeds use owned selection, whole roots, direct-file prio
     terminationGraceMs: 100, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 50000 }));
   const client = new Client({ name: 'structure-seeds', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,
-    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   try {
     await client.connect(transport);
     const spec = { roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] };

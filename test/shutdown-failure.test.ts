@@ -58,7 +58,7 @@ test('MCP server-close rejects the exported closed outcome after joining applica
     } };
   });
   const instance = createMcpServer({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: {}, terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000 });
+    nativeEnvironment: {}, terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null, defaultMaxOutputBytes: 12000, tools: 'core' });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'shutdown', version: '1' });
   await instance.server.connect(serverTransport); await client.connect(clientTransport);

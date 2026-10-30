@@ -54,7 +54,7 @@ async function fixture() {
 test('public diff preserves comparison states, source pathspec semantics and repository-wide authority without protected bodies', async () => {
   const f = await fixture(), config = join(f.base, 'config.json'), index = await readFile(join(f.repo, '.git/index'));
   await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 100000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'scout-diff', version: '1' }), proof: unknown[] = [];
   try {

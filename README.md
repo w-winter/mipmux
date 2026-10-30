@@ -54,7 +54,7 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
    }
    ```
 
-   Without a `discovery` entry, `context_builder` fails with `discoveryNotConfigured`; the other tools work, and you select a packet's contents yourself, as described under [Manual context packets](#manual-context-packets). [CLI and MCP](#cli-and-mcp) lists every setting.
+   Without a `discovery` entry, `context_builder` fails with `discoveryNotConfigured`. To select a packet's contents yourself instead, add `"tools": "full"`, which offers the exploration and manual-packet tools described under [Manual context packets](#manual-context-packets). [CLI and MCP](#cli-and-mcp) lists every setting.
 
 4. Connect your MCP client to `node /absolute/path/to/mipmux/dist/cli/main.js mcp`. If the client cannot find `node`, use its absolute path.
 
@@ -206,6 +206,8 @@ Explicit exclusions govern every root, including overlapping roots. Git administ
 
 ## Manual context packets
 
+An MCP server offers the tools in this section when its `tools` setting is `"full"`.
+
 The MCP and Pi `manage_selection` tool supports get, set, add, remove, preview, promote, demote and clear operations. File and directory paths can use declared root aliases; absolute file paths also support explicit access to ignored regular files within the workspace. Managed-only files remain accessible by exact path and are excluded from ordinary discovery. Full-file additions retain existing slices, while promotion restores full content. Codemap-only additions, demotion and promotion keep the current codemap mode; in automatic mode, codemaps are still added for the files that the selected full files and slices reference. Clearing codemaps selects manual mode. See the [selection contracts](docs/contracts.md#public-selection-and-explicit-registration) for transaction and registration ownership.
 
 A supported file with no rendered codemap remains selected. Selection replies identify it in `code_structure.unmapped_paths`; it contributes no source or codemap body. Pending extraction left by cancellation can complete on a later explicit codemap request.
@@ -341,6 +343,7 @@ Omitted fields take these values:
 | `terminationGraceMs` | `1000` |
 | `git` | `{ "executable": "/usr/bin/git" }`, with `userConfiguration` taken from `HOME` and `XDG_CONFIG_HOME` so that Git finds your excludes file. Set `null` to work without Git |
 | `defaultMaxOutputBytes` | `48000`, which keeps a default exploration reply below Pi's 50 KiB tool-output limit |
+| `tools` | `"core"`: the MCP server offers the eight tools that build and prepare packets through Context Builder. `"full"` adds the exploration tools, the manual-packet tools and `workspace_refresh`. `mcp --tools <set>` overrides this for one server |
 | `discovery` | `null`, for model-free use |
 | `discovery.authPath` | `auth.json` in `$PI_CODING_AGENT_DIR`, or in `~/.pi/agent` when that variable is unset |
 | `discovery.promptTemplatePath` | the shipped `dist/prompts/discovery.md` |
@@ -397,9 +400,9 @@ If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private direct
 
 ### Caller MCP interface
 
-MCP clients launch the `mcp` command over stdio. The [agent workflow](docs/workflow.md) gives the sequence of calls that builds a packet, and the server sends a short form of it as its MCP instructions. The server exposes `workspace_declare`, `workspace_refresh`, `workspace_close`; `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`; `prompt`, `manage_selection`, `draft_create`, `draft_inspect`, `draft_update`, `draft_validate`, `draft_finalize`, `draft_dispose`; `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`, `context_builder_dispose`; and `context_prepare`. `tools/list` supplies their schemas. Each result is one text block of compact JSON; `get_code_structure` instead returns its rendered view as text, with the complete evidence as structured content. Workspace, draft and job IDs belong to the connected client. Declaring the same roots, exclusions and output directory again reuses the open workspace and its current index. Give each project one output directory and a distinct `outputName` for each bundle; a new output directory starts a separate workspace, whose first refresh reads every file again.
+MCP clients launch the `mcp` command over stdio. The [agent workflow](docs/workflow.md) gives the sequence of calls that builds a packet, and the server sends a short form of it as its MCP instructions. By default the server offers the core tools that workflow uses: `workspace_declare`, `workspace_close`, `context_builder`, `context_builder_wait`, `context_builder_result`, `context_builder_cancel`, `context_builder_dispose` and `context_prepare`. Set `tools` to `"full"` in the configuration, or start the server with `mcp --tools full`, to add `workspace_refresh`; the exploration tools `get_file_tree`, `get_code_structure`, `file_search`, `read_file` and `git`; and the manual-packet tools `prompt`, `manage_selection`, `draft_create`, `draft_inspect`, `draft_update`, `draft_validate`, `draft_finalize` and `draft_dispose`. `tools/list` supplies their schemas. Each result is one text block of compact JSON; `get_code_structure` instead returns its rendered view as text, with the complete evidence as structured content. Workspace, draft and job IDs belong to the connected client. Declaring the same roots, exclusions and output directory again reuses the open workspace and its current index. Give each project one output directory and a distinct `outputName` for each bundle; a new output directory starts a separate workspace, whose first refresh reads every file again.
 
-Exploration calls use `workspaceId` and a tool-specific `input`. Request a file tree with only `{ "workspaceId": "..." }`, read with `{ "workspaceId": "...", "input": { "root": "app", "path": "src/main.ts" } }`, or search with `{ "workspaceId": "...", "input": { "query": { "text": "greet" } } }`. These tools are available independently of context-builder jobs.
+Exploration calls use `workspaceId` and a tool-specific `input`. Request a file tree with only `{ "workspaceId": "..." }`, read with `{ "workspaceId": "...", "input": { "root": "app", "path": "src/main.ts" } }`, or search with `{ "workspaceId": "...", "input": { "query": { "text": "greet" } } }`. These tools, in the full set, are available independently of context-builder jobs.
 
 File trees use RPCE's renderer. `type: "roots"` lists physical roots; `type: "files"` supports `mode: "auto"`, `"full"`, `"folders"` or `"selected"`. The default is files in automatic mode. To inspect a directory, supply `scope: { root: "repo", directory: { kind: "descendant", path: "src" } }`; use `{ kind: "root" }` for a whole named root. `maxDepth` starts at folder depth zero and retains selected descendants beyond the cutoff. A star marks selected implementation and a plus marks available code-map structure. Selected mode requires an owned manual `draftId`. Tree pages contain complete rendered lines; follow `continuation` to obtain the rest.
 

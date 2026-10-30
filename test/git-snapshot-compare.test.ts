@@ -62,7 +62,7 @@ test('public snapshot comparisons use only the saved HEAD, precede named refs an
     credentialPaths: repos.map(entry => join(entry.repo, 'denied.txt')), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     nativeEnvironment: {}, git: { executable: git }, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'snapshot-compare', version: '1' }), proof: unknown[] = [];
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const index = await readFile(join(firstRepo.repo, '.git/index'));
   try {

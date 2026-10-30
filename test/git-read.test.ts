@@ -60,7 +60,7 @@ test('public Git log/blame use the nearest owning checkout, retain source fields
   const before = await readFile(join(f.repo, '.git/index'));
   const config = join(f.base, 'config.json');
   await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 24000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'git-source', version: '1' });
   const proof: unknown[] = [];
@@ -178,7 +178,7 @@ test('public Git status returns coherent source categories for a subdirectory ro
   const config = join(f.base, 'config.json');
   await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 24000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
-    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'git-status-source', version: '1' });
   try {

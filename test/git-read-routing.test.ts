@@ -57,7 +57,7 @@ test('MCP Git reads route ordered repositories and linked checkouts with primary
   f.run(nested, ['worktree', 'add', '-b', 'nested-topic', nestedLinked]);
   await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
-    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'git-routing', version: '1' }), proof: unknown[] = [];
   try {

@@ -19,7 +19,7 @@ test('configured context defaults resolve omitted settings and explicit request 
   const options = { copyContext: copyContext(), cachePath: join(directory, 'cache'), credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     contextBudgetUnits, defaultEnhancementMode: 'preserve' as const };
-  const { runtime } = compose({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000 }, null);
+  const { runtime } = compose({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000, tools: 'core' }, null);
   const signal = new AbortController().signal;
   const observed: { enhancementMode: string; tokenBudget: number }[] = [];
   const runner: DiscoveryRunner = { run: async input => {

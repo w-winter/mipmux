@@ -46,7 +46,7 @@ test('public show preserves metadata, full hunks, root-commit source behavior an
   await writeFile(join(f.root, 'file.txt'), 'one\ntwo\nthree\nworktree\n');
   const before = await readFile(join(f.repo, '.git/index')), config = join(f.base, 'config.json');
   await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 24000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'git-show-source', version: '1' }), proof: unknown[] = [];
   try {
@@ -116,7 +116,7 @@ test('public show excludes protected files and both protected rename endpoints w
   const renamed = f.run(['rev-parse', 'HEAD']).trim(), index = await readFile(join(f.repo, '.git/index'));
   const config = join(f.base, 'protected-config.json');
   await writeFile(config, JSON.stringify({ ...f.options, credentialPaths: [credential], discovery: null, defaultMaxOutputBytes: 24000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'protected-show', version: '1' }), proof: unknown[] = [];
   try {
@@ -172,7 +172,7 @@ test('public MCP retains source diagnostics for malformed Git show and status ou
   await chmod(executable, 0o700);
   const config = join(f.base, 'config.json');
   await writeFile(config, JSON.stringify({ ...f.options, git: { executable }, discovery: null, defaultMaxOutputBytes: 24000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'git-diagnostics-source', version: '1' }), proof: unknown[] = [];
   try {

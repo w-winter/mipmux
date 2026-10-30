@@ -103,7 +103,7 @@ test('local package audits resources and executes relocated library, native, CLI
     terminationGraceMs: 100, contextBudgetUnits: 1000000, defaultEnhancementMode: 'augment', credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/mipmux'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'relocation-test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } },
     capabilities: { elicitation: { form: {} } } });
   let questions = 0;

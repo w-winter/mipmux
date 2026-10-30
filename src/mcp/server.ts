@@ -52,7 +52,7 @@ export function createMcpServer(input: HostConfig, configurationPath: string | n
   registerTools(server, () => {
     if (state.closing) throw new WorkspaceFailure('clientClosed');
     state.application ??= compose(config, configurationPath); return state.application.client;
-  }, config.defaultMaxOutputBytes);
+  }, config.defaultMaxOutputBytes, config.tools);
   server.server.onclose = () => { void close().catch(rejected); };
   return { server, close, closed };
 }

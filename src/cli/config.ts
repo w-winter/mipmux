@@ -19,6 +19,12 @@ const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
 /** Git and, by default, the user's configuration from `HOME` and `XDG_CONFIG_HOME`, whose excludes file Git applies. */
 const GitHost = Type.Object({ executable: absolute, userConfiguration: Type.Optional(Type.Object({ home: absolute,
   xdgConfigHome: Type.Union([absolute, Type.Null()]) }, closed)) }, closed);
+/**
+ * The MCP tools a server offers. `core` offers the eight tools a caller needs to build and prepare packets through
+ * Context Builder; `full` adds the exploration tools, the manual-packet tools and `workspace_refresh`.
+ */
+export const ToolSet = Type.Enum(['core', 'full']);
+export type ToolSet = Static<typeof ToolSet>;
 /** Resolved host settings with every path, policy and limit explicit. Library hosts construct this form directly. */
 export const HostConfig = Type.Object({ copyContext: CopyContext, ignoreSettings: Type.Optional(IgnoreSettings), cachePath: absolute, nativeExecutable: absolute,
   nativeEnvironment: Type.Record(Type.String(), Type.String()),
@@ -28,6 +34,7 @@ export const HostConfig = Type.Object({ copyContext: CopyContext, ignoreSettings
   defaultMaxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   contextBudgetUnits: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   defaultEnhancementMode: Type.Optional(PromptEnhancementMode),
+  tools: ToolSet,
 }, closed);
 export type HostConfig = Static<typeof HostConfig>;
 export const hostValidator = Compile(HostConfig);
@@ -88,7 +95,7 @@ const defaultGitExecutable = '/usr/bin/git';
  * Resolves a configuration file into explicit host settings. Omitted values take these defaults: RPCE's default copy
  * state, the platform cache directory (`~/Library/Caches/mipmux` on macOS, otherwise `$XDG_CACHE_HOME/mipmux` or
  * `~/.cache/mipmux`), the package's own native executable, `/usr/bin/git` with the user's Git configuration, a 200000-unit
- * budget, 48000-byte exploration replies and a 1000 ms termination grace. Discovery takes Pi's `auth.json` from `$PI_CODING_AGENT_DIR` or `~/.pi/agent`,
+ * budget, 48000-byte exploration replies, a 1000 ms termination grace and the `core` MCP tools. Discovery takes Pi's `auth.json` from `$PI_CODING_AGENT_DIR` or `~/.pi/agent`,
  * the shipped discovery template, codemode and Pi's recovery defaults, merged field by field with the file's overrides.
  */
 export function resolveHostConfig(file: ConfigFile, host: ConfigHost): HostConfig {
@@ -105,6 +112,7 @@ export function resolveHostConfig(file: ConfigFile, host: ConfigHost): HostConfi
     discovery: file.discovery ? resolveDiscovery(file.discovery, host) : null,
     defaultMaxOutputBytes: file.defaultMaxOutputBytes ?? defaultMaxOutputBytes,
     contextBudgetUnits: file.contextBudgetUnits ?? defaultContextBudgetUnits,
+    tools: file.tools ?? 'core',
   };
   if (file.ignoreSettings !== undefined) config.ignoreSettings = file.ignoreSettings;
   if (file.defaultEnhancementMode !== undefined) config.defaultEnhancementMode = file.defaultEnhancementMode;

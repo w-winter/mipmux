@@ -41,7 +41,7 @@ async function fixture() {
     discovery: null, defaultMaxOutputBytes: 30000 }));
   const client = new Client({ name: 'source-selection', version: '1' });
   const transport = new StdioClientTransport({ command: process.execPath,
-    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   await client.connect(transport);
   const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
     roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output } } });

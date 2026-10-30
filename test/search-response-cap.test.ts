@@ -50,7 +50,7 @@ test('public search retains the source character cap before byte pagination and 
   const evidence = [];
   try {
     await client.connect(new StdioClientTransport({ command: process.execPath,
-      args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' }));
+      args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' }));
     const declared = await client.callTool({ name: 'workspace_declare', arguments: { spec: {
       roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] } } });
     assert.equal(declared.isError, false);

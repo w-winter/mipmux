@@ -2,6 +2,7 @@
 import { isAbsolute } from 'node:path';
 import { parseArgs } from 'node:util';
 import Type from 'typebox';
+import { Compile } from 'typebox/compile';
 import { ContextBuildRequest, SourceSelection } from '../contracts/context.js';
 import { WorkspaceSpec } from '../contracts/inventory.js';
 import { gitValidator } from '../contracts/git.js';
@@ -9,7 +10,7 @@ import { readValidator, treeValidator, searchValidator, structureValidator } fro
 import { verifyBundle, verifyCurrentBundle } from '../context/verify.js';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { failureCode, failureResult } from '../runtime/tool-result.js';
-import { ConfigFile, compose, currentConfigHost, defaultConfigPath, loadJSON, resolveHostConfig } from './config.js';
+import { ConfigFile, ToolSet, compose, currentConfigHost, defaultConfigPath, loadJSON, resolveHostConfig } from './config.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 
 const closed = { additionalProperties: false };
@@ -17,17 +18,19 @@ const RenderInput = Type.Object({ workspace: WorkspaceSpec, request: ContextBuil
 const BuildInput = Type.Object({ workspace: WorkspaceSpec, request: ContextBuildRequest, requestId: Type.String({ minLength: 1 }) }, closed);
 const DraftInput = Type.Object({ selections: Type.Array(SourceSelection), prompt: Type.String() }, closed);
 const maximumNodeTimerDelayMs = 2147483647;
+const toolSetValidator = Compile(ToolSet);
 
 async function main(): Promise<void> {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: {
     config: { type: 'string' }, spec: { type: 'string' }, workspace: { type: 'string' }, input: { type: 'string' },
     request: { type: 'string' }, draft: { type: 'string' }, bundle: { type: 'string' }, mode: { type: 'string' }, key: { type: 'string' }, kind: { type: 'string' },
+    tools: { type: 'string' },
   } });
   const [command, subcommand] = positionals;
   function required(name: keyof typeof values): string {
     const value = values[name]; if (!value) throw new WorkspaceFailure('missingArgument'); return value;
   }
-  function shape(flags: readonly string[], positionalCount: number) {
+  function expectArguments(flags: readonly string[], positionalCount: number) {
     if (positionals.length !== positionalCount || Object.keys(values).some(key => !flags.includes(key))) throw new WorkspaceFailure('invalidArguments');
   }
   const abort = new AbortController();
@@ -35,16 +38,18 @@ async function main(): Promise<void> {
   process.on('SIGINT', interrupt); process.on('SIGTERM', interrupt);
   try {
     if (command === 'verify' && values.mode === 'integrity') {
-      shape(['bundle', 'mode'], 1);
+      expectArguments(['bundle', 'mode'], 1);
       const directory = required('bundle'); if (!isAbsolute(directory)) throw new WorkspaceFailure('absoluteConfigurationRequired');
       process.stdout.write(JSON.stringify(await verifyBundle(directory)) + '\n'); return;
     }
     const host = currentConfigHost(), path = values.config ?? defaultConfigPath(host);
     const config = resolveHostConfig(await loadJSON(path, ConfigFile), host);
     if (command === 'mcp') {
-      shape(['config'], 1);
+      expectArguments(['config', 'tools'], 1);
+      const tools = values.tools ?? config.tools;
+      if (!toolSetValidator.Check(tools)) throw new WorkspaceFailure('invalidArguments');
       const { serveMipmuxStdio } = await import('../mcp/server.js');
-      const server = serveMipmuxStdio(config, path);
+      const server = serveMipmuxStdio({ ...config, tools }, path);
       const stop = () => { void server.close().catch(() => {}); };
       abort.signal.addEventListener('abort', stop, { once: true });
       if (abort.signal.aborted) stop();
@@ -57,12 +62,12 @@ async function main(): Promise<void> {
     try {
       switch (command) {
         case 'workspace': {
-          shape(['spec', 'config'], 1);
+          expectArguments(['spec', 'config'], 1);
           const workspace = await client.declare(await loadJSON(required('spec'), WorkspaceSpec), abort.signal);
           result = await client.refresh(workspace.id, abort.signal); break;
         }
         case 'tool': {
-          shape(['workspace', 'input', 'config'], 2);
+          expectArguments(['workspace', 'input', 'config'], 2);
           const raw = await loadJSON(required('input'), Type.Unknown());
           if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) throw new WorkspaceFailure('invalidRequest');
           const input = { maxOutputBytes: config.defaultMaxOutputBytes, ...raw };
@@ -87,7 +92,7 @@ async function main(): Promise<void> {
           break;
         }
         case 'build': {
-          shape(['request', 'config'], 1);
+          expectArguments(['request', 'config'], 1);
           const input = await loadJSON(required('request'), BuildInput);
           const workspace = await client.declare(input.workspace, abort.signal);
           const job = client.build(workspace.id, input.requestId, input.request);
@@ -105,7 +110,7 @@ async function main(): Promise<void> {
           break;
         }
         case 'render': {
-          shape(['request', 'draft', 'config'], 1);
+          expectArguments(['request', 'draft', 'config'], 1);
           const input = await loadJSON(required('request'), RenderInput), selection = await loadJSON(required('draft'), DraftInput);
           const workspace = await client.declare(input.workspace, abort.signal);
           const draft = await client.createDraft(workspace.id, input.request, abort.signal);
@@ -123,13 +128,13 @@ async function main(): Promise<void> {
           break;
         }
         case 'verify': {
-          shape(['bundle', 'mode', 'config'], 1);
+          expectArguments(['bundle', 'mode', 'config'], 1);
           if (values.mode !== 'current') throw new WorkspaceFailure('invalidArguments');
           const directory = required('bundle'); if (!isAbsolute(directory)) throw new WorkspaceFailure('absoluteConfigurationRequired');
           result = await verifyCurrentBundle(directory, runtime, abort.signal); break;
         }
         case 'cache': {
-          shape(['kind', 'key', 'config'], 2);
+          expectArguments(['kind', 'key', 'config'], 2);
           if (subcommand !== 'invalidate') throw new WorkspaceFailure('invalidArguments');
           const kind = required('kind'), key = required('key');
           if (kind === 'artifact') await runtime.artifacts.invalidate(key);

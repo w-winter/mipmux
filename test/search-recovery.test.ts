@@ -38,7 +38,7 @@ test('public content recovery retries the whole query only after zero primary ma
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [], git: null, discovery: null,
     defaultMaxOutputBytes: 100000 }));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config],
     cwd: '/', env: { PATH: base }, stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'source-search-recovery', version: '1' });

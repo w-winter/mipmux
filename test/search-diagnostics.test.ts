@@ -37,7 +37,7 @@ async function connect(fixture: boolean) {
     credentialPaths: [], nativeExecutable: fixture ? proxy : native, nativeEnvironment: fixture ? { MIPMUX_NATIVE: native } : {},
     terminationGraceMs: 100, git: null, discovery: null, defaultMaxOutputBytes: 100000 }));
   const transport = new StdioClientTransport({ command: process.execPath,
-    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+    args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   transport.stderr?.on('data', () => {});
   const client = new Client({ name: 'source-search-diagnostics', version: '1' });
   await client.connect(transport);

@@ -234,7 +234,7 @@ test('MCP publication requires an owned draft and uses the same source commit an
   const f = await fixture(), config = join(f.out, '../host.json');
   await writeFile(config, JSON.stringify({ ...f.options, discovery: null, defaultMaxOutputBytes: 100000 }));
   const client = new Client({ name: 'scout-artifact-mcp', version: '1' });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--config', config],
+  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve('dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config],
     cwd: '/', stderr: 'pipe' });
   try {
     await client.connect(transport);

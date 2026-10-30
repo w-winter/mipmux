@@ -148,7 +148,7 @@ To give a ready bundle a different task, prepare it again with a new prompt; whi
 
 Builds that capture Git evidence store snapshots in `<output folder>/_git_data`, which every run in the project shares. mipmux deletes snapshots older than seven days and all but the newest 25, so preparing an older review bundle can fail; start a new build when it does. `context_builder_dispose` deletes one job's snapshots when you no longer need its bundles.
 
-To select context yourself instead of running discovery, use `draft_create`, `manage_selection`, `draft_validate` and `draft_finalize`, described in the README's [manual context packets](../README.md#manual-context-packets) section.
+To select context yourself instead of running discovery, use `draft_create`, `manage_selection`, `draft_validate` and `draft_finalize`. The server offers them when its `tools` setting is `"full"`; they are described in the README's [manual context packets](../README.md#manual-context-packets) section.
 
 ## Common mistakes
 
