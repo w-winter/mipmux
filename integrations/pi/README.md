@@ -1,53 +1,83 @@
 # pi-mipmux
 
-pi-mipmux is a [Pi](https://pi.dev) extension for using mipmux through [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter). It adds a `/mipmux` command that lets you choose which folders the agent's context packets come from and set build preferences, such as the budget and the discovery model. The extension applies your choices to the agent's `context_builder` and `context_prepare` calls before the adapter sends them to mipmux.
+pi-mipmux is a [Pi](https://pi.dev) extension for mipmux. Its `/mipmux` command opens a panel where you choose the folders that the agent's context packets come from, and set build preferences such as the budget and the discovery model. The extension applies these choices to the agent's `context_builder` and `context_prepare` calls before Pi sends them to mipmux.
 
 ## Install
 
-pi-mipmux needs mipmux configured as an MCP server named `mipmux` in pi-mcp-adapter, and the `mipmux` command on your PATH. Install the extension from a mipmux checkout:
+pi-mipmux needs mipmux connected to Pi as an MCP server named `mipmux`, and the `mipmux` command on your PATH. With Pi's built-in MCP support:
 
 ```sh
+pi mcp add mipmux -- mipmux mcp
 pi install /absolute/path/to/mipmux/integrations/pi
 ```
 
+## Use the panel
+
+Run `/mipmux`. The panel lists every setting with the value a build would use now. Highlight a row and press a key:
+
+| Key | Action |
+|---|---|
+| ↑ ↓ | Move between rows |
+| Enter | Edit the highlighted value, or open its list |
+| `p` | Pin or unpin the value; a pinned value replaces the value the agent sends |
+| Delete | Clear the value, or remove the highlighted item in a list |
+| Ctrl+S | Save every change |
+| Esc or Ctrl+C | Go back one screen; on the main screen, close the panel |
+
+Nothing changes until you press Ctrl+S. The footer shows `(unsaved)` while changes are waiting, and closing the panel discards them. Saved changes apply from the agent's next mipmux call, with no restart or reconnect.
+
+`/mipmux <name>` selects a saved workspace without opening the panel and completes saved names. Outside Pi's terminal interface, as in `pi -p` or RPC mode, `/mipmux` prints the current settings instead.
+
 ## Choose a workspace
 
-Every build and prepare call names a workspace: the source folders (roots), the output folder where mipmux saves packets, and any excluded paths. Run `/mipmux` to open the panel, then choose the workspace row:
+Every build and prepare call names a workspace: the source folders mipmux indexes (its roots), the output folder where mipmux saves packets, and any excluded paths. The panel saves workspaces under names so you can select one per session.
 
-- **Create a saved workspace** proposes the Git repository that contains Pi's current directory, or the directory itself outside a repository, with a `prompt-exports` output folder inside it. Add or remove roots, change the output folder and add exclusions, then name the workspace. The output folder is created when you confirm.
-- **Save the workspace the agent last used** turns the agent's most recent declaration in this session into a saved workspace.
-- **Select a saved workspace** chooses one for this session. `/mipmux <name>` does the same without the panel, and completes saved names.
-- **Clear the selection** returns to letting the agent choose.
+To create a workspace, press Enter on **Roots** and choose a folder. The workspace is named after that folder, or `name (1)` if the name is taken, and its output folder is `prompt-exports` inside it. Saving creates the output folder if it does not exist. Edit the other rows to add roots, change the output folder or add exclusions. **Rename workspace** changes the name; you never have to.
 
-While a workspace is selected, the agent receives its exact declaration in the system prompt, and a build or prepare call that names any other workspace is blocked with a message repeating the declaration. Nothing is selected until you select it: the extension never chooses a workspace from Pi's current directory or from what the agent sends. The status line shows `mipmux: <name>`, or `mipmux: no workspace`.
+Enter on **Saved workspace** opens the list of saved workspaces. Select one for this session, delete one with Delete, start a new one from a folder, save the workspace the agent last declared in this session, or choose none.
 
-Saved workspaces are stored in `mipmux.json` in Pi's agent directory (`~/.pi/agent`, or `$PI_CODING_AGENT_DIR`) and shared by all your sessions; a session keeps only the name it selected, so an edit reaches every session on its next call. Two saved workspaces with the same root folders, output folder and exclusions, in any order and under any names, are duplicates: the extension keeps the earlier one, with its name and model, and tells you what it removed.
+While a workspace is selected, the agent receives its exact declaration in the system prompt, and the extension blocks a build or prepare call that names any other workspace, repeating the declaration in the error. With nothing selected, the agent chooses its own workspace and only your preferences apply. The extension never selects a workspace for you from Pi's current directory or from what the agent sends. The status line shows `mipmux: <name>` or `mipmux: no workspace`.
+
+## Type paths
+
+Root, output folder and exclusion rows open a path field with completion. Type a path as in a shell: `~` is your home folder, and a relative path starts at Pi's current directory, or at the root for an exclusion. Root and output fields open with a suggested folder; Ctrl+U clears it.
+
+Below the field, the first row is the path you typed, when it names something you can choose. The rows after it are the entries of the folder you are typing in that match the name typed so far, best match first. Matching ignores case, so `~/proj` finds `~/Projects`.
+
+| Key | Action |
+|---|---|
+| Tab | Complete the typed name to the highlighted entry, as the disk spells it |
+| Shift+Tab | Go up one folder |
+| ↑ ↓ | Highlight another row |
+| Enter | Choose the highlighted row |
+
+While a name is partly typed, the best match is highlighted, so typing a few letters and pressing Enter chooses it. An exclusion is a path inside its root or a pattern such as `**/*.log`.
 
 ## Set preferences
 
-The panel lists five settings with the value a build would use and where it comes from:
-
-| Setting | Applies to | Can also be saved with the workspace |
+| Setting | Applies to | Saved with |
 |---|---|---|
-| Budget, in mipmux's estimated units | builds; preparations only when pinned | no |
-| Enhancement mode: `fullRewrite`, `augment` or `preserve` | builds | no |
-| Clarification questions from discovery, with an optional timeout | builds in sessions with a UI | no |
-| Discovery model, from the models the server allows | builds | yes |
-| Thinking level for the discovery model | builds | yes |
+| Budget, in mipmux's estimated units, such as `150000` or `150k` | builds; preparations only when pinned | the session |
+| Enhancement mode: `augment`, `fullRewrite` or `preserve` | builds | the session |
+| Clarification questions from discovery, with an optional timeout | builds in sessions with a UI | the session |
+| Discovery model, from the models mipmux allows | builds | the session or the selected workspace |
+| Thinking level for the discovery model | builds | the session or the selected workspace |
 
-A value you set for the session or the selected saved workspace fills in a setting the agent leaves out. Pin a value to make it replace the agent's value too. From highest precedence to lowest, a build uses: a pinned session value, a pinned saved-workspace value, the agent's value, a session value, a saved-workspace value, and finally the server's default from mipmux's configuration file.
+A value you set fills in a setting the agent leaves out. A pinned value replaces the agent's value too. From highest precedence to lowest, a build uses a pinned session value, a pinned workspace value, the agent's value, a session value, a workspace value, and finally the server default.
 
-The panel shows the server defaults and the allowed models by running `mipmux config`. mipmux reads its configuration when it starts, so after editing the file run `/mcp-adapter reconnect mipmux`. The discovery models come from `discovery.allowedModels` in that file, and mipmux refuses any other model.
+The panel shows the server defaults by running `mipmux config`. They come from mipmux's configuration file, whose path the panel names. The discovery models you can choose are the configured model and those listed in `discovery.allowedModels`; mipmux refuses any other. mipmux reads the file when it starts, so after editing it, reconnect the mipmux server from `/mcp`.
 
-Session choices are recorded in the session itself: resuming or forking a session restores them, and a new session starts with nothing selected. They never change mipmux's configuration file or other sessions.
+Session choices are recorded in the session itself: resuming or forking a session restores them, and a new session starts with nothing selected. They do not change mipmux's configuration file or other sessions. Changing a preference changes the request, so repeating an earlier build start under the same output name fails with `outputNameConflict`; the extension adds a note saying so, and a new output name solves it.
 
-Changing a preference changes the request, so repeating an earlier build start under the same output name then fails with `outputNameConflict`; the extension adds a note saying so. Use a new output name.
+## Storage
+
+Saved workspaces are stored in `mipmux.json` in Pi's agent directory (`~/.pi/agent`, or `$PI_CODING_AGENT_DIR`) and shared by all your sessions. A session keeps only the name it selected, so an edit reaches every session on its next call. Saving applies only the workspaces you added, changed or deleted, so changes another session saved while the panel was open remain. Two saved workspaces with the same roots, output folder and exclusions, in any order and under any names, are duplicates: saving keeps the earlier one, with its name and model, and the panel says which it removed.
 
 ## Limits
 
-- The extension sees calls that pass through Pi's tool pipeline: the adapter's `mcp` tool, the `mcp__mipmux` tool and the per-tool registrations, including calls from codemode scripts. Calls another extension makes through the adapter's `pi-mcp-adapter:runtime-tool-call:v1` event, and calls from MCP App views, bypass it.
-- Per-tool names that the adapter gives a hash suffix after a name collision are not recognized; calls through `mcp` and `mcp__mipmux` still are.
-- Without a UI, as in `pi -p`, the clarification preference is not applied, and `/mipmux` prints the effective state instead of opening the panel.
+- The extension sees calls that pass through Pi's tool pipeline, including calls from codemode scripts, under the tool names `mcp__mipmux__context_builder` and `mcp__mipmux__context_prepare`. It also recognizes the `mcp` and `mcp__mipmux` tools and the `mipmux_` tool names that pi-mcp-adapter registers when it replaces Pi's built-in MCP support. Calls another extension makes outside Pi's tool pipeline bypass it.
+- Tool names that end in a hash suffix, which an MCP client adds after a name collision, are not recognized.
+- Without a UI, the clarification preference is not applied.
 
 ## Development
 

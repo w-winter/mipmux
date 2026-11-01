@@ -1,58 +1,106 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, stat } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, join } from 'node:path';
+import { join } from 'node:path';
 import { test } from 'node:test';
+import { getKeybindings } from '@earendil-works/pi-tui';
 import { createMipmux, type MipmuxContext } from '../src/register.ts';
 import type { MipmuxConfig } from '../src/config.ts';
-import type { SessionState } from '../src/state.ts';
+import type { PanelComponent } from '../src/panel.ts';
+import type { CallArgs, SavedWorkspace, SessionState } from '../src/state.ts';
 
 const config: MipmuxConfig = { kind: 'config', path: '/home/user/.config/mipmux/config.json', contextBudgetUnits: 200000,
   defaultEnhancementMode: 'augment', tools: 'core',
   discovery: { model: 'openai-codex/gpt-6.1-sol', thinking: 'medium', allowedModels: ['anthropic/claude-haiku-4-5'] } };
+const key = { up: '\x1b[A', down: '\x1b[B', enter: '\r', escape: '\x1b', tab: '\t', save: '\x13', clearLine: '\x15', delete: '\x1b[3~' };
+const plain = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
+const width = 120;
 
-/** One scripted answer per dialog, in the order the panel asks. */
-type Answer = { readonly dialog: 'select'; choose(options: readonly string[]): string | undefined } |
-  { readonly dialog: 'input'; readonly text: string } | { readonly dialog: 'confirm'; readonly accept: boolean };
-const option = (label: string): Answer => ({ dialog: 'select', choose: options => options.find(entry => entry === label) });
-const startingWith = (prefix: string): Answer => ({ dialog: 'select', choose: options => options.find(entry => entry.startsWith(prefix)) });
-const typed = (text: string): Answer => ({ dialog: 'input', text });
-const confirmed: Answer = { dialog: 'confirm', accept: true };
-
-function scripted(cwd: string, answers: Answer[]): MipmuxContext {
-  const next = <D extends Answer['dialog']>(dialog: D): Extract<Answer, { dialog: D }> => {
-    const answer = answers.shift();
-    assert(answer?.dialog === dialog, `the panel opened a ${dialog} dialog where the script expected ${answer?.dialog ?? 'nothing'}`);
-    // SAFETY: the assertion above established that the answer's dialog is `dialog`.
-    return answer as Extract<Answer, { dialog: D }>;
-  };
-  return { hasUI: true, cwd, sessionManager: { getBranch: () => [] },
-    ui: { setStatus: () => {}, notify: () => {},
-      select: async (_title, options) => {
-        const choice = next('select').choose(options);
-        assert(choice !== undefined, `no scripted choice among ${options.join(' | ')}`);
-        return choice;
-      },
-      input: async () => next('input').text,
-      confirm: async () => next('confirm').accept } };
+/** A home folder with projects, an unrelated session directory, and an extension instance whose store holds `saved`. */
+async function setup(saved: SavedWorkspace[] = []) {
+  const base = await mkdtemp(join(tmpdir(), 'pi-mipmux-panel-')), home = join(base, 'home'), cwd = join(base, 'elsewhere');
+  for (const folder of ['Projects/alpha-app/node_modules', 'Projects/alpha-lib', 'Projects/beta']) await mkdir(join(home, folder), { recursive: true });
+  await mkdir(cwd);
+  const storePath = join(base, 'mipmux.json');
+  await writeFile(storePath, JSON.stringify({ workspaces: saved }));
+  const appended: SessionState[] = [], notices: string[] = [];
+  const mipmux = createMipmux({ storePath, home, appendEntry: state => { appended.push(state); }, readConfig: async () => config });
+  let open: (component: PanelComponent) => void = () => {};
+  const opened = new Promise<PanelComponent>(resolve => { open = resolve; });
+  const ctx: MipmuxContext = { hasUI: true, mode: 'tui', cwd, sessionManager: { getBranch: () => [] },
+    ui: { setStatus: () => {}, notify: message => { notices.push(message); },
+      custom: factory => new Promise(resolve => { open(factory({ requestRender: () => {} }, plain, getKeybindings(), () => resolve())); }) } };
+  return { home, storePath, appended, notices, mipmux, ctx, opened };
 }
 
-test('the panel creates and selects a saved workspace, then sets and pins a session budget', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'pi-mipmux-panel-')), storePath = join(base, 'mipmux.json');
-  const appended: SessionState[] = [];
-  const mipmux = createMipmux({ storePath, appendEntry: state => { appended.push(state); }, readConfig: async () => config });
-  const root = join(base, 'project'), output = join(root, 'prompt-exports');
-  await mkdir(root);
-  const ctx = scripted(root, [
-    startingWith('workspace:'), option('create a saved workspace'), option('continue'), option(output), option('continue'), typed(''), confirmed,
-    startingWith('budget:'), option('set for this session'), typed('150000'),
-    startingWith('budget:'), option('pin the value for this session'),
-    option('close')]);
-  await mipmux.command('', ctx);
-  const saved = JSON.parse(await readFile(storePath, 'utf8'));
-  assert.deepEqual(saved, { workspaces: [{ name: basename(root), roots: [{ name: basename(root), absolutePath: root }], outputRoot: output,
-    exclusions: [] }] });
-  assert((await stat(output)).isDirectory());
-  assert.deepEqual(mipmux.state(), { selected: basename(root), preferences: { budgetUnits: { value: 150000, pinned: true } }, lastDeclared: null });
-  assert.deepEqual(appended.at(-1), mipmux.state());
+/** Opens /mipmux and returns a driver that presses keys in order, waiting for each to take effect. */
+async function panel(fixture: Awaited<ReturnType<typeof setup>>) {
+  const closed = fixture.mipmux.command('', fixture.ctx);
+  const component = await fixture.opened;
+  const press = async (...keys: string[]) => { for (const data of keys) await component.handleInput(data); };
+  /** Moves the cursor down to the first row whose text contains `label`. */
+  const focus = async (label: string) => {
+    for (let step = 0; step < 30; step++) {
+      if (component.render(width).find(line => line.startsWith('→ '))?.includes(label)) return;
+      await press(key.down);
+    }
+    assert.fail(`no row containing "${label}" in:\n${component.render(width).join('\n')}`);
+  };
+  return { press, focus, closed, screen: () => component.render(width).join('\n') };
+}
+
+const savedStore = async (path: string): Promise<SavedWorkspace[]> => JSON.parse(await readFile(path, 'utf8')).workspaces;
+
+test('a folder typed with ~ and Tab completion becomes a saved workspace named after it, and ctrl+s applies the choices to the next call', async () => {
+  const taken: SavedWorkspace = { name: 'alpha-app', roots: [{ name: 'other', absolutePath: '/elsewhere/other' }],
+    outputRoot: '/elsewhere/other/prompt-exports', exclusions: [] };
+  const fixture = await setup([taken]);
+  const { press, focus, closed, screen } = await panel(fixture);
+  await focus('Roots');
+  await press(key.enter, key.clearLine, ...'~/proj', key.tab);
+  assert.match(screen(), /~\/Projects\//, 'Tab completes the folder name whatever its case');
+  await press(...'ALPHA-A', key.tab, key.enter);
+  await press(key.enter, key.down, key.enter, ...'bet', key.enter, key.escape);
+  await focus('Budget');
+  await press(key.enter, key.clearLine, ...'150k', key.enter, 'p');
+  assert.match(screen(), /unsaved/);
+  await press(key.save, key.escape);
+  await closed;
+
+  const project = join(fixture.home, 'Projects');
+  const created: SavedWorkspace = { name: 'alpha-app (1)', roots: [{ name: 'alpha-app', absolutePath: join(project, 'alpha-app') },
+    { name: 'beta', absolutePath: join(project, 'beta') }], outputRoot: join(project, 'alpha-app', 'prompt-exports'), exclusions: [] };
+  assert.deepEqual(await savedStore(fixture.storePath), [taken, created]);
+  assert((await stat(created.outputRoot)).isDirectory());
+  const state = { selected: 'alpha-app (1)', preferences: { budgetUnits: { value: 150000, pinned: true } }, lastDeclared: null };
+  assert.deepEqual(fixture.mipmux.state(), state);
+  assert.deepEqual(fixture.appended, [state]);
+
+  const args: CallArgs = { workspace: { roots: created.roots, outputRoot: created.outputRoot, exclusions: [] }, purpose: 'planning',
+    task: 'Plan', outputName: 'run-1', budgetUnits: 90000 };
+  assert.equal(await fixture.mipmux.toolCall({ toolName: 'mcp__mipmux__context_builder', toolCallId: 'c1', input: args }, fixture.ctx), undefined);
+  assert.equal(args.budgetUnits, 150000);
+});
+
+test('renaming and exclusions are saved with ctrl+s, and escape discards what was not saved', async () => {
+  const fixture = await setup();
+  const app = join(fixture.home, 'Projects', 'alpha-app');
+  const saved: SavedWorkspace = { name: 'alpha-app', roots: [{ name: 'alpha-app', absolutePath: app }], outputRoot: join(app, 'prompt-exports'),
+    exclusions: [] };
+  await writeFile(fixture.storePath, JSON.stringify({ workspaces: [saved] }));
+  await fixture.mipmux.command('alpha-app', fixture.ctx);
+  const first = await panel(fixture);
+  await first.focus('Exclusions');
+  await first.press(key.enter, key.enter, ...'node_m', key.tab, key.enter);
+  await first.press(key.enter, ...'**/*.log', key.enter, key.escape);
+  await first.focus('Rename');
+  await first.press(key.enter, key.clearLine, ...'frontend', key.enter, key.save);
+  await first.focus('Budget');
+  await first.press(key.enter, key.clearLine, ...'5000', key.enter, key.escape);
+  await first.closed;
+
+  assert.deepEqual(await savedStore(fixture.storePath), [{ ...saved, name: 'frontend', exclusions: [
+    { kind: 'prefix', root: 'alpha-app', path: 'node_modules' }, { kind: 'glob', root: 'alpha-app', pattern: '**/*.log' }] }]);
+  assert.deepEqual(fixture.mipmux.state(), { selected: 'frontend', preferences: {}, lastDeclared: null });
+  assert.match(fixture.notices.at(-1) ?? '', /discarded/);
 });

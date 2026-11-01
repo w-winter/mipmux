@@ -3,9 +3,11 @@ import { Compile } from 'typebox/compile';
 import { CallArguments, type CallArgs, type Tool } from './state.ts';
 
 /*
- * The pi-mcp-adapter 7 routes that carry a call to mipmux's context_builder or context_prepare through Pi's tool_call
- * event: the `mcp` gateway, the `mcp__mipmux` namespace proxy, and the per-tool registrations, whether the model or a
- * codemode script called them. The extension supports only the adapter server named `mipmux`.
+ * The tool names that carry a call to mipmux's context_builder or context_prepare through Pi's tool_call event, whether
+ * the model or a codemode script called them. Pi's built-in MCP support registers `mcp__mipmux__<tool>` with the
+ * arguments as the event input. pi-mcp-adapter 7, which replaces the built-in support when installed, also offers the
+ * `mcp` gateway and the `mcp__mipmux` namespace proxy, with the arguments nested in `args`, and registers direct tools
+ * as `mipmux_<tool>`. The extension supports only the server named `mipmux`.
  */
 const server = 'mipmux';
 const tools: readonly Tool[] = ['context_builder', 'context_prepare'];

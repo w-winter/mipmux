@@ -1,19 +1,22 @@
 import type { ExtensionContext, ExtensionUIContext, ToolResultEvent, ToolResultEventResult } from '@earendil-works/pi-coding-agent';
 import { readStore, StoreError } from './store.ts';
 import { recognize } from './routes.ts';
-import { openPanel, report } from './panel.ts';
+import { openPanel, type PanelContext } from './panel.ts';
+import { report } from './report.ts';
 import type { MipmuxConfig } from './config.ts';
 import { conflictNote, decide, declaredWorkspace, emptyState, sameWorkspace, selectedInstruction, sessionStateValidator,
   type CallArgs, type SavedWorkspace, type Selection, type SessionState } from './state.ts';
 
 /** The parts of Pi's extension context the extension uses. */
-export type MipmuxContext = Pick<ExtensionContext, 'hasUI' | 'cwd'> & {
-  readonly ui: Pick<ExtensionUIContext, 'select' | 'input' | 'confirm' | 'notify' | 'setStatus'>;
+export type MipmuxContext = Pick<ExtensionContext, 'hasUI' | 'cwd' | 'mode'> & {
+  readonly ui: Pick<ExtensionUIContext, 'notify' | 'setStatus'> & Pick<PanelContext['ui'], 'custom'>;
   readonly sessionManager: Pick<ExtensionContext['sessionManager'], 'getBranch'>;
 };
 export interface MipmuxDependencies {
   /** `<Pi agent dir>/mipmux.json`. */
   readonly storePath: string;
+  /** The user's home folder, which `~` names in the panel's path fields. */
+  readonly home: string;
   /** Records `state` in the session log, where `restore` finds it on resume, fork or tree navigation. */
   appendEntry(state: SessionState): void;
   readConfig(): Promise<MipmuxConfig>;
@@ -94,7 +97,7 @@ export function createMipmux(dependencies: MipmuxDependencies) {
       if (event.structuredContent !== undefined) result.structuredContent = event.structuredContent;
       return result;
     },
-    /** `/mipmux <name>` selects a saved workspace; `/mipmux` opens the panel, or reports the state without a UI. */
+    /** `/mipmux <name>` selects a saved workspace; `/mipmux` opens the panel in Pi's terminal UI and reports the state elsewhere. */
     async command(args: string, ctx: MipmuxContext): Promise<void> {
       const name = args.trim();
       if (name) {
@@ -106,8 +109,10 @@ export function createMipmux(dependencies: MipmuxDependencies) {
         await record({ ...state, selected: name }, ctx);
         return;
       }
-      if (ctx.hasUI) await openPanel(ctx, { storePath: dependencies.storePath, state: () => state, record, readConfig: dependencies.readConfig });
-      else ctx.ui.notify(report(state, await lookup()), 'info');
+      if (ctx.mode === 'tui') {
+        await openPanel(ctx, { storePath: dependencies.storePath, home: dependencies.home, state: () => state,
+          record: next => record(next, ctx), readConfig: dependencies.readConfig });
+      } else ctx.ui.notify(report(state, await lookup()), 'info');
     },
     async completions(prefix: string) {
       const saved = await readStore(dependencies.storePath);

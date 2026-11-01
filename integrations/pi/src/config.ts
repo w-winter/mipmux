@@ -13,8 +13,8 @@ export type MipmuxConfig = Static<typeof MipmuxConfig>;
 const configValidator = Compile(MipmuxConfig);
 
 /**
- * Runs `mipmux config` from PATH, as the user's MCP adapter starts `mipmux mcp`, so the defaults shown are the ones a
- * newly started server reads. Fails with mipmux's error code, or with the reason the command could not run.
+ * Runs `mipmux config` from PATH, as an MCP client configured with `mipmux mcp` starts the server, so the defaults shown
+ * are the ones a newly started server reads. Fails with mipmux's error code, or with the reason the command could not run.
  */
 export async function readMipmuxConfig(): Promise<MipmuxConfig> {
   let output: string;

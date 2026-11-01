@@ -34,8 +34,14 @@ export async function readStore(path: string): Promise<SavedWorkspace[]> {
     const errors = storeValidator.Errors(value), error = errors.find(item => item.keyword !== 'boolean') ?? errors[0];
     throw invalid(path, `${error?.instancePath || '/'} ${error?.message ?? 'is invalid'}`);
   }
+  checkNames(path, value.workspaces);
+  return value.workspaces;
+}
+
+/** Workspace names are unique, root names are unique within a workspace, and every exclusion names one of its roots. */
+function checkNames(path: string, workspaces: readonly SavedWorkspace[]): void {
   const names = new Set<string>();
-  for (const workspace of value.workspaces) {
+  for (const workspace of workspaces) {
     if (names.has(workspace.name)) throw invalid(path, `"${workspace.name}" is saved twice`);
     names.add(workspace.name);
     const roots = new Set(workspace.roots.map(root => root.name));
@@ -43,13 +49,13 @@ export async function readStore(path: string): Promise<SavedWorkspace[]> {
     const unknown = workspace.exclusions.find(exclusion => !roots.has(exclusion.root));
     if (unknown) throw invalid(path, `"${workspace.name}" excludes a path under root "${unknown.root}", which it does not declare`);
   }
-  return value.workspaces;
 }
 
 /** Applies `change` to the saved workspaces, merges duplicates and replaces the file with the result. */
 export async function updateStore(path: string, change: (workspaces: SavedWorkspace[]) => SavedWorkspace[]):
   Promise<{ workspaces: SavedWorkspace[]; merges: Merge[] }> {
   const merged = mergeDuplicates(change(await readStore(path)));
+  checkNames(path, merged.workspaces);
   const temporary = join(dirname(path), `.mipmux.json.${randomUUID()}`);
   await writeFile(temporary, JSON.stringify({ workspaces: merged.workspaces }, null, 2) + '\n', { mode: 0o600 });
   await rename(temporary, path);

@@ -1,3 +1,4 @@
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { getAgentDir, type ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { readMipmuxConfig } from './config.ts';
@@ -5,7 +6,7 @@ import { createMipmux, entryType } from './register.ts';
 
 /** Registers the /mipmux command and the handlers that apply this session's mipmux choices to the agent's calls. */
 export default function mipmux(pi: ExtensionAPI): void {
-  const extension = createMipmux({ storePath: join(getAgentDir(), 'mipmux.json'), readConfig: readMipmuxConfig,
+  const extension = createMipmux({ storePath: join(getAgentDir(), 'mipmux.json'), home: homedir(), readConfig: readMipmuxConfig,
     appendEntry: state => { pi.appendEntry(entryType, state); } });
   pi.on('session_start', (_event, ctx) => extension.restore(ctx));
   pi.on('session_tree', (_event, ctx) => extension.restore(ctx));

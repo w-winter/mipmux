@@ -14,12 +14,12 @@ export function stateEntry(state: SessionState, id: string): CustomEntry<Session
   return { type: 'custom', customType: 'mipmux', data: state, id, parentId: null, timestamp: '2026-11-01T00:00:00.000Z' };
 }
 
-/** A context recording what the extension shows; dialogs answer nothing. */
+/** A context recording what the extension shows; it never opens the panel. */
 export function context(branch: CustomEntry[] = [], hasUI = true) {
   const statuses: (string | undefined)[] = [], notices: string[] = [];
-  const ctx: MipmuxContext = { hasUI, cwd: '/repos/app', sessionManager: { getBranch: () => branch },
+  const ctx: MipmuxContext = { hasUI, mode: hasUI ? 'tui' : 'print', cwd: '/repos/app', sessionManager: { getBranch: () => branch },
     ui: { setStatus: (_key, text) => { statuses.push(text); }, notify: message => { notices.push(message); },
-      select: async () => undefined, input: async () => undefined, confirm: async () => false } };
+      custom: () => Promise.reject(new Error('the panel is not used here')) } };
   return { ctx, statuses, notices };
 }
 
@@ -28,7 +28,7 @@ export async function instance(saved: readonly SavedWorkspace[] = [app]) {
   const directory = await mkdtemp(join(tmpdir(), 'pi-mipmux-')), storePath = join(directory, 'mipmux.json');
   await writeFile(storePath, JSON.stringify({ workspaces: saved }));
   const appended: SessionState[] = [];
-  const mipmux = createMipmux({ storePath, appendEntry: state => { appended.push(state); },
+  const mipmux = createMipmux({ storePath, home: directory, appendEntry: state => { appended.push(state); },
     readConfig: () => Promise.reject(new Error('mipmux config is not used here')) });
   return { mipmux, storePath, appended };
 }
