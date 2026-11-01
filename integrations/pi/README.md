@@ -34,7 +34,7 @@ Every build and prepare call names a workspace: the source folders mipmux indexe
 
 To create a workspace, press Enter on **Roots** and choose a folder. The workspace is named after that folder, or `name (1)` if the name is taken, and its output folder is `prompt-exports` inside it. Saving creates the output folder if it does not exist. Edit the other rows to add roots, change the output folder or add exclusions. **Rename workspace** changes the name; you never have to.
 
-Enter on **Saved workspace** opens the list of saved workspaces. Select one for this session, delete one with Delete, start a new one from a folder, save the workspace the agent last declared in this session, or choose none.
+Enter on **Selected workspace** opens the list of saved workspaces. Select one for this session, delete one with Delete, start a new one from a folder, save the workspace the agent last declared in this session, or choose none.
 
 While a workspace is selected, the agent receives its exact declaration in the system prompt, and the extension blocks a build or prepare call that names any other workspace, repeating the declaration in the error. With nothing selected, the agent chooses its own workspace and only your preferences apply. The extension never selects a workspace for you from Pi's current directory or from what the agent sends. The status line shows `mipmux: <name>` or `mipmux: no workspace`.
 
@@ -51,7 +51,7 @@ Below the field, the first row is the path you typed, when it names something yo
 | ↑ ↓ | Highlight another row |
 | Enter | Choose the highlighted row |
 
-While a name is partly typed, the best match is highlighted, so typing a few letters and pressing Enter chooses it. An exclusion is a path inside its root or a pattern such as `**/*.log`.
+While a name is partly typed, the best match is highlighted, so typing a few letters and pressing Enter chooses it. An exclusion is a path inside its root or a pattern such as `**/*.log`. Exclusions only leave paths out; to bring back a path that Git's exclude files hide, add a `!` line to `.repo_ignore` in that root.
 
 ## Set preferences
 

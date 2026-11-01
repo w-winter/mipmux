@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { dirname, isAbsolute, relative } from 'node:path';
 import { promisify } from 'node:util';
-import { truncateToWidth, wrapTextWithAnsi, type Component, type Focusable, type KeybindingsManager } from '@earendil-works/pi-tui';
+import { Key, matchesKey, truncateToWidth, wrapTextWithAnsi, type Component, type Focusable, type KeybindingsManager } from '@earendil-works/pi-tui';
 import type { MipmuxConfig } from './config.ts';
 import { addRoot, addWorkspace, applyDraft, createFromFolder, deleteWorkspace, editSelected, openDraft, removeRoot,
   renameSelected, selectedWorkspace, type Draft } from './draft.ts';
@@ -153,7 +153,7 @@ export class PanelComponent implements Component, Focusable {
     this.message = null;
     const { keybindings } = this.control;
     try {
-      if (data === '\x13') await this.save();
+      if (matchesKey(data, Key.ctrl('s'))) await this.save();
       else if (keybindings.matches(data, 'tui.select.cancel')) this.back();
       else await this.top().handleInput(data);
     } catch (error) {
@@ -185,7 +185,7 @@ export class PanelComponent implements Component, Focusable {
   private mainRows(): ListRow[] {
     const draft = this.draft, workspace = selectedWorkspace(draft);
     const missing = draft.selected !== null && !workspace;
-    const rows: ListRow[] = [{ id: 'workspace', section: 'Workspace', label: 'Saved workspace', inherited: !workspace,
+    const rows: ListRow[] = [{ id: 'workspace', section: 'Workspace', label: 'Selected workspace', inherited: !workspace,
       value: workspace?.name ?? (missing ? `${draft.selected} (no longer saved)` : 'none, so the agent chooses'),
       description: 'The folders this session\'s builds use. Enter selects or creates a saved workspace; del clears the selection.',
       activate: () => this.push(this.workspaceList()),
@@ -207,17 +207,17 @@ export class PanelComponent implements Component, Focusable {
       value: workspace.exclusions.map(item => `${item.root}: ${item.kind === 'prefix' ? item.path : item.pattern}`).join(', ') || 'none',
       description: 'Paths or patterns under a folder that mipmux leaves out. Enter adds or removes them.',
       activate: () => this.push(this.exclusionList()) },
-    this.preferenceRow('workspace.model', 'Discovery model', this.serverDefault(discovery?.model), this.workspaceField(workspaceModel), String,
-      apply => this.chooseModel(workspace.model?.value, apply), 'Saved with this workspace for every session that selects it.'),
-    this.preferenceRow('workspace.thinking', 'Thinking level', this.serverDefault(discovery?.thinking), this.workspaceField(workspaceThinking), String,
-      apply => this.chooseThinking(workspace.thinking?.value, apply), 'Saved with this workspace for every session that selects it.'),
     { id: 'rename', label: 'Rename workspace', description: 'A new workspace is named after its first folder; renaming it is optional.',
       activate: () => this.push(new PromptScreen('rename', this.control, workspace.name, 'Sessions that selected the old name select again.', text => {
         const renamed = renameSelected(this.draft, text);
         if ('problem' in renamed) return renamed.problem;
         this.change(renamed);
         return null;
-      })) }];
+      })) },
+    this.preferenceRow('workspace.model', 'Discovery model', this.serverDefault(discovery?.model), this.workspaceField(workspaceModel), String,
+      apply => this.chooseModel(workspace.model?.value, apply), 'Saved with this workspace for every session that selects it.'),
+    this.preferenceRow('workspace.thinking', 'Thinking level', this.serverDefault(discovery?.thinking), this.workspaceField(workspaceThinking), String,
+      apply => this.chooseThinking(workspace.thinking?.value, apply), 'Saved with this workspace for every session that selects it.')];
   }
 
   private sessionRows(workspace: SavedWorkspace | null): ListRow[] {
@@ -392,6 +392,8 @@ export class PanelComponent implements Component, Focusable {
     return new PathScreen(`exclude from ${root.name}`, this.control, { base, include: 'all', start: '',
       help: `A path inside ${this.show(root.absolutePath)}, relative to it, or a pattern such as **/*.log.`,
       target: text => {
+        if (text.startsWith('!')) return { label: 'a leading ! cannot re-include a path here', choose: () => 'Exclusions only leave paths ' +
+          'out. A ! line in the root\'s .repo_ignore re-includes a path that Git\'s exclude files hide.' };
         if (globCharacters.test(text)) return { label: `exclude paths matching ${text}`, choose: () => add({ kind: 'glob', root: root.name, pattern: text }) };
         const found = resolveExisting(expand(text, base)), under = inside(found.path);
         return under === null ? null : { label: `exclude ${under}`, choose: () => prefix(found.path) };

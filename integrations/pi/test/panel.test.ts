@@ -12,7 +12,9 @@ import type { CallArgs, SavedWorkspace, SessionState } from '../src/state.ts';
 const config: MipmuxConfig = { kind: 'config', path: '/home/user/.config/mipmux/config.json', contextBudgetUnits: 200000,
   defaultEnhancementMode: 'augment', tools: 'core',
   discovery: { model: 'openai-codex/gpt-6.1-sol', thinking: 'medium', allowedModels: ['anthropic/claude-haiku-4-5'] } };
-const key = { up: '\x1b[A', down: '\x1b[B', enter: '\r', escape: '\x1b', tab: '\t', save: '\x13', clearLine: '\x15', delete: '\x1b[3~' };
+// Ctrl+S as a terminal sends it with Pi's enhanced keyboard protocol active, and as the legacy control byte otherwise.
+const key = { up: '\x1b[A', down: '\x1b[B', enter: '\r', escape: '\x1b', tab: '\t', save: '\x1b[115;5u', legacySave: '\x13', clearLine: '\x15',
+  delete: '\x1b[3~' };
 const plain = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
 const width = 120;
 
@@ -92,9 +94,13 @@ test('renaming and exclusions are saved with ctrl+s, and escape discards what wa
   const first = await panel(fixture);
   await first.focus('Exclusions');
   await first.press(key.enter, key.enter, ...'node_m', key.tab, key.enter);
-  await first.press(key.enter, ...'**/*.log', key.enter, key.escape);
+  await first.press(key.enter, ...'**/*.log', key.enter);
+  // A leading ! re-includes only in ignore files, so the field refuses it rather than saving a prefix that matches nothing.
+  await first.press(key.enter, ...'!docs', key.enter);
+  assert.match(first.screen(), /\.repo_ignore/);
+  await first.press(key.escape, key.escape);
   await first.focus('Rename');
-  await first.press(key.enter, key.clearLine, ...'frontend', key.enter, key.save);
+  await first.press(key.enter, key.clearLine, ...'frontend', key.enter, key.legacySave);
   await first.focus('Budget');
   await first.press(key.enter, key.clearLine, ...'5000', key.enter, key.escape);
   await first.closed;
