@@ -1,4 +1,4 @@
-import type { DiscoveryInput } from '../contracts/discovery.js';
+import { toolSchemas, type DiscoveryInput } from '../contracts/discovery.js';
 import type { CapturedContextBuildRequest } from '../contracts/context.js';
 import type { NativeOperation, NativeResult } from '../contracts/native.js';
 import { scoutTokenBudget } from './budget.js';
@@ -29,10 +29,22 @@ type DiscoveryPromptOperation = Extract<NativeOperation, { kind: 'renderDiscover
 export type DiscoveryPromptRenderer = (operation: DiscoveryPromptOperation, signal: AbortSignal) =>
   Promise<Extract<NativeResult, { kind: 'discoveryPrompt' | 'discoveryTemplateRejected' }>>;
 
-/** Composes both startup channels from admitted template text, the captured facts and whether the session offers codemode. */
-export async function prepareDiscoveryInput(input: DiscoveryInput, template: string, codemode: boolean, signal: AbortSignal,
+/**
+ * Fills each `{{mipmux:tool:<name>}}` placeholder that names a discovery tool with the tool's name as the model sees it:
+ * `toolPrefix` followed by the name. Other placeholders stay for the native renderer, which rejects unknown ones by line;
+ * substitution keeps every line break, so those lines stay correct.
+ */
+export function bindToolNames(template: string, toolPrefix: string): string {
+  return template.replace(/\{\{mipmux:tool:([a-z_]+)\}\}/g, (token, name: string) => Object.hasOwn(toolSchemas, name) ? toolPrefix + name : token);
+}
+
+/**
+ * Composes both startup channels from admitted template text, the captured facts, whether the session offers codemode and
+ * the prefix of the model's tool names: empty for Pi, which offers the tools under their own names.
+ */
+export async function prepareDiscoveryInput(input: DiscoveryInput, template: string, codemode: boolean, toolPrefix: string, signal: AbortSignal,
   render: DiscoveryPromptRenderer) {
-  const result = await render({ kind: 'renderDiscoveryPrompt', template, tokenBudget: input.tokenBudget, codemode,
+  const result = await render({ kind: 'renderDiscoveryPrompt', template: bindToolNames(template, toolPrefix), tokenBudget: input.tokenBudget, codemode,
     enhancementMode: input.enhancementMode, purpose: input.purpose, task: input.task,
     allowClarifyingQuestions: input.clarification !== undefined,
     questionTimeoutSeconds: input.clarification?.questionTimeoutSeconds ?? defaultQuestionTimeoutSeconds,

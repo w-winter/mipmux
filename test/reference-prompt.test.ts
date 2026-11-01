@@ -1,4 +1,5 @@
 import { callNative } from './fixtures/call-native.js';
+import { bindToolNames } from '../src/context/discovery-input.js';
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -16,7 +17,7 @@ const cases = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Ty
 }) })));
 
 test('the shipped editable template preserves independent original-policy mode, clarification and review variants', async () => {
-  const template = await readFile('prompts/discovery.md', 'utf8');
+  const template = bindToolNames(await readFile('prompts/discovery.md', 'utf8'), '');
   const references = cases.Parse(JSON.parse(await readFile('test/fixtures/mipmux-discovery-policy/cases.json', 'utf8')));
   const proof: { name: string; bytes: number }[] = [];
   for (const entry of references) {
@@ -37,7 +38,7 @@ test('the shipped editable template preserves independent original-policy mode, 
 });
 
 test('review purpose, phrase hotwords and separated git/diffs tokens retain their original distinctions', async () => {
-  const template = await readFile('prompts/discovery.md', 'utf8');
+  const template = bindToolNames(await readFile('prompts/discovery.md', 'utf8'), '');
   const references = cases.Parse(JSON.parse(await readFile('test/fixtures/mipmux-discovery-policy/cases.json', 'utf8')));
   for (const input of [
     { purpose: 'review', task: 'Gather dependencies', review: true },

@@ -8370,7 +8370,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
       "destination": "prompts/discovery.md",
-      "sha256": "52666579906e6df7e63818aa3bb8b37f03e40fe414c351b830d697c2bc7c7cda",
+      "sha256": "d718623c635cd25514d43fd8005f9557ac4bfa3fd91c57c7c98b635513c57da6",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8396,7 +8396,8 @@
         "Apply the explicit mipmux tool/runtime bindings independently captured by scripts/reference-discovery-bindings.mjs, including tool examples, state wording, task-name removal and parent publication. Keep all remaining source wording, literal whitespace and emphasis.",
         "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases.",
         "List codemode among the available tools through the codemode.tool section when discovery offers it, and state in the mipmux runtime bindings that draft changes are made one at a time.",
-        "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on."
+        "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on.",
+        "Name each tool through a {{mipmux:tool:NAME}} placeholder, filled with the bare name for Pi discovery and the mcp__mipmux__ name for Claude Code discovery; with bare names the template renders exactly as before."
       ]
     },
     {

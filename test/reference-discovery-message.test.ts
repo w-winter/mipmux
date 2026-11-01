@@ -1,4 +1,5 @@
 import { callNative } from './fixtures/call-native.js';
+import { bindToolNames } from '../src/context/discovery-input.js';
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -20,7 +21,7 @@ const representationGuidance = '- Selected files use full content, slices, or co
 
 test('native startup renderer preserves RPCE ordering with the approved representation guidance correction', async () => {
   const cases = fixtures.Parse(JSON.parse(await readFile(resolve('test/fixtures/rpce-discovery-message/cases.json'), 'utf8')));
-  const template = await readFile('prompts/discovery.md', 'utf8');
+  const template = bindToolNames(await readFile('prompts/discovery.md', 'utf8'), '');
   const proof: { name: string; bytes: number }[] = [];
   for (const entry of cases.filter(entry => entry.input.contextBuilderPrompts.length === 0)) {
     const generation = 'startup-reference';

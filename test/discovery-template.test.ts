@@ -6,6 +6,7 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { callNative } from './fixtures/call-native.js';
 import type { NativeOperation } from '../src/contracts/native.js';
+import { bindToolNames } from '../src/context/discovery-input.js';
 
 const template = readFileSync('test/fixtures/discovery-template.md', 'utf8');
 const policy = Compile(Type.Object({ kind: Type.Literal('discoveryPrompt'), text: Type.String(), message: Type.String() }));
@@ -54,6 +55,15 @@ test('invalid templates return correlated domain rejections, including inactive 
     proof.push({ name, result });
   }
   writeFileSync('test-output/discovery-template-rejections.json', JSON.stringify(proof, null, 2) + '\n');
+});
+
+test('tool placeholders render the tool names the model sees, and a misspelled tool name is rejected at its line', () => {
+  const named = bindToolNames(template.replace('L|{{mipmux:handoff}}|{{mipmux:handoff}}|R', '`{{mipmux:tool:read_file}}`'), 'mcp__mipmux__');
+  assert.equal(policy.Parse(callNative({ ...operation, template: named }, 'template-tools', 'prefixed').result).text, '`mcp__mipmux__read_file`');
+  const misspelled = template.replace(inactiveSection, inactiveSection + '\n{{mipmux:tool:reed_file}}');
+  const diagnostic = Compile(Type.Object({ kind: Type.Literal('placeholder'), reason: Type.Literal('unknown'),
+    line: Type.Literal(misspelled.slice(0, misspelled.indexOf('{{mipmux:tool:')).split('\n').length) }));
+  diagnostic.Parse(rejection.Parse(callNative({ ...operation, template: bindToolNames(misspelled, 'mcp__mipmux__') }, 'template-tools', 'misspelled').result).diagnostic);
 });
 
 test('edited template bodies retain literal UTF-8 bytes through reordered definitions and repeated insertions', () => {
