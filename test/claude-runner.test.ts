@@ -80,8 +80,10 @@ function claudeReceipt(snapshot: JobSnapshot): ClaudeCodeDiscoveryReceipt {
 test('Claude Code discovery sees exactly mipmux tools under the names its prompt uses, runs them and publishes a verified packet', async t => {
   const appended = '\n\n<discovered_architecture>Main is the entry point.</discovered_architecture>';
   const host = await claudeHost(t, (_summary, index) => {
-    if (index === 1) return { kind: 'tool', name: 'mcp__mipmux__prompt', input: { op: 'append', text: appended, expectedRevision: 0, maxOutputBytes: 8000 }, stop: 'tool_use', tokens: 10 };
-    if (index === 2) return { kind: 'tool', name: 'mcp__mipmux__draft_validate', input: { maxOutputBytes: 8000 }, stop: 'tool_use', tokens: 10 };
+    // A bare name reaches no tool; the receipt keeps it apart from the prefixed call that follows.
+    if (index === 1) return { kind: 'tool', name: 'prompt', input: { op: 'get', maxOutputBytes: 8000 }, stop: 'tool_use', tokens: 10 };
+    if (index === 2) return { kind: 'tool', name: 'mcp__mipmux__prompt', input: { op: 'append', text: appended, expectedRevision: 0, maxOutputBytes: 8000 }, stop: 'tool_use', tokens: 10 };
+    if (index === 3) return { kind: 'tool', name: 'mcp__mipmux__draft_validate', input: { maxOutputBytes: 8000 }, stop: 'tool_use', tokens: 10 };
     return { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 };
   });
   const result = await host.wait(host.build());
@@ -96,7 +98,8 @@ test('Claude Code discovery sees exactly mipmux tools under the names its prompt
   assert.doesNotMatch(system, bareToolMention);
   const receipt = claudeReceipt(result);
   assert.equal(receipt.effective?.apiKeySource, 'ANTHROPIC_API_KEY');
-  assert.deepEqual(receipt.completions.map(completion => completion.toolCalls), [['prompt'], ['draft_validate'], []]);
+  assert.deepEqual(receipt.completions.map(completion => completion.toolCalls),
+    [['prompt'], ['mcp__mipmux__prompt'], ['mcp__mipmux__draft_validate'], []]);
   assert.equal(receipt.result?.subtype, 'success'); assert.equal(receipt.childClosed, true); assert(receipt.thinkingLevels?.includes('low'));
   // persistSession: false keeps Claude Code from saving the conversation.
   await assert.rejects(access(join(host.home, '.claude', 'projects')), { code: 'ENOENT' });

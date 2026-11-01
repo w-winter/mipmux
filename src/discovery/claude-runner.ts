@@ -145,8 +145,8 @@ function completions(responses: readonly Response[], finalStop: string | null, r
 
 function completion(response: Response, requestedModel: string): Completion {
   const text = response.blocks.flatMap(block => block.type === 'text' ? [block.text] : []).join('\n');
-  const toolCalls = response.blocks.flatMap(block => block.type === 'tool_use' ? [block.name.startsWith(mipmuxToolPrefix)
-    ? block.name.slice(mipmuxToolPrefix.length) : block.name] : []);
+  // Names as the model called them, so a call to a name Claude Code does not offer stays distinguishable.
+  const toolCalls = response.blocks.flatMap(block => block.type === 'tool_use' ? [block.name] : []);
   return { dispatched: { provider: claudeCodeProvider, model: requestedModel, api: claudeAgentSdkApi },
     reported: { provider: claudeCodeProvider, model: response.model, api: claudeAgentSdkApi }, serverModel: response.model,
     stopReason: stopReason(response.stopReason), channel: 'ordinary', textBytes: Buffer.byteLength(text), textSHA256: sha256(text),
