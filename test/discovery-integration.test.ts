@@ -76,6 +76,7 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
     assert(!packet.includes('OPTIONAL'));
     assert(provider.requests.some(request => JSON.stringify(request.messages).includes('overBudget')));
     assert(!packet.includes('Diagnostic acknowledgement only'));
+    assert(result.discovery.adapter === 'mipmux-pi-v2');
     assert.equal(result.discovery.workerClosed, true); assert.equal(result.discovery.parentToolsSettled, true);
     assert.equal(result.discovery.acceptedRuns, 1);
     assert.equal(result.discovery.effective?.modelRecord.contextWindow, 8192);
@@ -262,6 +263,7 @@ test('normally completed budget-blocked SDK builder retains every committed hand
     assert(recovered.kind === 'metadata'); assert.equal(recovered.revision, 1);
     assert.deepEqual(recovered.items, [{ kind: 'prompt', prompt: '\n\n' + JSON.stringify(handoff) }]);
     await assert.rejects(async () => (await other.inspect(result.draftId, { view: 'metadata', continuation: null, maxOutputBytes: 20000 }, new AbortController().signal)), /unknownDraft/);
+    assert(result.discovery.adapter === 'mipmux-pi-v2');
     assert.equal(calls, 2); assert.equal(result.discovery.acceptedRuns, 1);
     await writeFile(join(provider.directory, 'blocked-handoff-proof.json'), JSON.stringify({ result, small, recovered, calls }) + '\n');
     await client.close(); await other.close();

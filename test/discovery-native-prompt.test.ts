@@ -14,7 +14,7 @@ import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
-import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { hostDiscovery, scriptedProvider } from './fixtures/scripted-provider.js';
 
 const content = Compile(Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() })));
 const policies = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Type.String() })));
@@ -41,7 +41,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
     const run = (args: string[]) => execFileSync(git, args, { cwd: root, env: { PATH: '/usr/bin:/bin', HOME: provider.directory,
       GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
     run(['init', '-q']); run(['add', '.']); run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'base']);
-    const discovery = { ...provider.config, promptTemplatePath };
+    const discovery = hostDiscovery({ ...provider.config, promptTemplatePath });
     const config = hostValidator.Parse({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), nativeEnvironment: {}, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
       contextBudgetUnits: 200000, defaultEnhancementMode: mode, terminationGraceMs: 100, discovery, git: { executable: git }, defaultMaxOutputBytes: 100000, tools: 'core' });

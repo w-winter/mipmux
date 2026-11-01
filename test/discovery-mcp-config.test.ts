@@ -9,7 +9,7 @@ import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { admitMcpConfiguration } from '../src/discovery/mcp-config.js';
 import { compose } from '../src/cli/config.js';
-import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { hostDiscovery, scriptedProvider } from './fixtures/scripted-provider.js';
 import { selectDiscovery } from '../src/discovery/selection.js';
 
 const server = { url: 'https://example.invalid/mcp', exposure: 'hidden', toolExposure: { read_ticket: 'direct' } };
@@ -76,7 +76,7 @@ test('host composition excludes MCP state and symlink targets from source admiss
   await writeFile(join(root, 'tokens.txt'), 'synthetic'); await symlink(join(root, 'tokens.txt'), join(agentDirectory, 'mcp-auth.json'));
   const { runtime } = compose({ copyContext: copyContext(), cachePath: join(provider.directory, 'cache'), contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {},
-    discovery: { ...provider.config, mcp: { agentDirectory } }, git: null, defaultMaxOutputBytes: 10000, tools: 'core' }, null);
+    discovery: hostDiscovery({ ...provider.config, mcp: { agentDirectory } }), git: null, defaultMaxOutputBytes: 10000, tools: 'core' }, null);
   try {
     const workspace = await runtime.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: output, exclusions: [] }, new AbortController().signal);
     const operation = await workspace.openOperation(new AbortController().signal);

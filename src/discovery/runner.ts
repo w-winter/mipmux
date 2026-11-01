@@ -6,9 +6,9 @@ export interface DiscoveryTools {
   /** Measures paged results through the runner's complete serialized tool-result encoding. */
   call(call: DiscoveryCall, signal: AbortSignal, encode: ResultEncoding): Promise<unknown>;
 }
-export type DiscoveryOutcome =
-  | { readonly kind: 'complete'; readonly receipt: DiscoveryReceipt }
-  | { readonly kind: 'failed' | 'cancelled'; readonly code: string; readonly receipt: DiscoveryReceipt };
+export type DiscoveryOutcome<Receipt extends DiscoveryReceipt = DiscoveryReceipt> =
+  | { readonly kind: 'complete'; readonly receipt: Receipt }
+  | { readonly kind: 'failed' | 'cancelled'; readonly code: string; readonly receipt: Receipt };
 
 export interface DiscoveryRunner {
   /** The settings a build runs with, from a request's selection; throws modelNotAllowed for a model it may not select. */

@@ -1,6 +1,6 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { Completion, DiscoveryCall, DiscoveryEvent, DiscoveryInput, DiscoveryReceipt, RecoveryPolicy, ThinkingLevel } from '../contracts/discovery.js';
+import { Completion, DiscoveryCall, DiscoveryEvent, DiscoveryInput, PiDiscoveryReceipt, RecoveryPolicy, ThinkingLevel } from '../contracts/discovery.js';
 import { AdmittedMcp, McpReference } from './mcp-config.js';
 
 const closed = { additionalProperties: false };
@@ -25,13 +25,13 @@ export const ParentMessage = Type.Union([
 ]);
 export type ParentMessage = Static<typeof ParentMessage>;
 export const Evidence = Type.Union([
-  Type.Object({ kind: Type.Literal('preflight'), effective: DiscoveryReceipt.properties.effective,
+  Type.Object({ kind: Type.Literal('preflight'), effective: PiDiscoveryReceipt.properties.effective,
     policy: RecoveryPolicy }, closed),
   Type.Object({ kind: Type.Literal('modelCapabilities'), thinkingLevels: Type.Array(Type.String()) }, closed),
   Type.Object({ kind: Type.Literal('completion'), value: Completion }, closed),
   Type.Object({ kind: Type.Literal('assistant'), value: Completion }, closed),
   Type.Object({ kind: Type.Literal('prompt'), outcome: Type.Enum(['resolved', 'rejected']) }, closed),
-  Type.Object({ kind: Type.Literal('mcpReadiness'), value: DiscoveryReceipt.properties.mcp.anyOf[0].properties.readiness }, closed),
+  Type.Object({ kind: Type.Literal('mcpReadiness'), value: PiDiscoveryReceipt.properties.mcp.anyOf[0].properties.readiness }, closed),
   Type.Object({ kind: Type.Literal('mcpShutdown'), outcome: Type.Enum(['dispatched', 'handlerFailed']) }, closed),
   Type.Object({ kind: Type.Literal('lifecycle'), stage: Type.Enum(['accepted', 'settled', 'idle', 'observationsSettled', 'disposed']) }, closed),
 ]);

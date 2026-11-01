@@ -25,18 +25,34 @@ test('a partial configuration file resolves to explicit defaults and field-level
     terminationGraceMs: 1000, credentialPaths: ['/home/fixture/private.json'],
     git: { executable: '/usr/bin/git', userConfiguration: { home: '/home/fixture', xdgConfigHome: null } },
     defaultMaxOutputBytes: 48000, contextBudgetUnits: 200000, tools: 'core',
-    discovery: { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/home/fixture/models.json', allowedModels: [],
-      authPath: '/home/fixture/.pi/agent/auth.json', promptTemplatePath: '/opt/mipmux/dist/prompts/discovery.md', environment: {}, mcp: null, codemode: true,
-      policy: { retry: { enabled: true, maxRetries: 3, baseDelayMs: 2000, maxAgentDelayMs: 60000,
-        provider: { timeoutMs: 0, maxRetries: 0, maxRetryDelayMs: 60000 } },
-      compaction: { enabled: true, reserveTokens: 9000, keepRecentTokens: 20000 },
-      transport: 'auto', httpIdleTimeoutMs: 300000, websocketConnectTimeoutMs: 15000, cacheWarming: 'off' } },
+    discovery: { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', allowedModels: [],
+      promptTemplatePath: '/opt/mipmux/dist/prompts/discovery.md', mcp: null, claudeCode: null,
+      pi: { modelsPath: '/home/fixture/models.json', authPath: '/home/fixture/.pi/agent/auth.json', environment: {}, codemode: true,
+        policy: { retry: { enabled: true, maxRetries: 3, baseDelayMs: 2000, maxAgentDelayMs: 60000,
+          provider: { timeoutMs: 0, maxRetries: 0, maxRetryDelayMs: 60000 } },
+        compaction: { enabled: true, reserveTokens: 9000, keepRecentTokens: 20000 },
+        transport: 'auto', httpIdleTimeoutMs: 300000, websocketConnectTimeoutMs: 15000, cacheWarming: 'off' } } },
   });
   const macOS = resolveHostConfig({ git: null }, { ...host, platform: 'darwin', arch: 'arm64', env: { PI_CODING_AGENT_DIR: '/agent' } });
   assert.equal(macOS.cachePath, '/home/fixture/Library/Caches/mipmux');
   assert.equal(macOS.git, null);
   assert.equal(resolveHostConfig({ discovery: { provider: 'p', model: 'm', thinking: 'off', modelsPath: '/m.json' } },
-    { ...host, env: { PI_CODING_AGENT_DIR: '/agent' } }).discovery?.authPath, '/agent/auth.json');
+    { ...host, env: { PI_CODING_AGENT_DIR: '/agent' } }).discovery?.pi?.authPath, '/agent/auth.json');
+});
+
+test('each configured or allowed model needs its runner, and a Claude-only configuration needs no Pi files', () => {
+  const failure = Compile(Type.Object({ code: Type.Literal('invalidDiscoveryConfiguration'), details: Type.Object({ message: Type.String() }) }));
+  const claude = { provider: 'claude-code', model: 'claude-sonnet-5-5', thinking: 'low' } as const;
+  assert.throws(() => resolveHostConfig({ discovery: claude }, host),
+    error => failure.Check(error) && error.details.message === 'claude-code/claude-sonnet-5-5 needs discovery.claudeCode.');
+  assert.throws(() => resolveHostConfig({ discovery: { ...claude, allowedModels: ['openai-codex/gpt-6.1-sol'], claudeCode: {} } }, host),
+    error => failure.Check(error) && error.details.message === 'openai-codex/gpt-6.1-sol needs discovery.modelsPath.');
+  const resolved = resolveHostConfig({ discovery: { ...claude, claudeCode: { environment: { ANTHROPIC_API_KEY: 'key' } } } },
+    { ...host, env: { PATH: '/usr/bin', USER: 'fixture', SHELL: '/bin/zsh' } });
+  assert.equal(resolved.discovery?.pi, null);
+  assert.deepEqual(resolved.discovery?.claudeCode, { executable: null,
+    environment: { HOME: '/home/fixture', PATH: '/usr/bin', USER: 'fixture', ANTHROPIC_API_KEY: 'key' },
+    configPaths: ['/home/fixture/.claude', '/home/fixture/.claude.json'] });
 });
 
 test('the CLI reads the default configuration path when --config is omitted', async () => {

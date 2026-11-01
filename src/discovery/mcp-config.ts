@@ -36,6 +36,11 @@ function literal(value: string): boolean {
   return true;
 }
 
+/** The text an admitted literal value stands for: `$$` is a literal `$` and `$!` a literal `!`, as in Pi's configuration values. */
+export function decodeLiteral(value: string): string {
+  return value.replace(/\$([$!])/g, '$1');
+}
+
 function admitServerValues(name: string, config: Static<typeof server>): void {
   let url: URL;
   try { url = new URL(config.url); }

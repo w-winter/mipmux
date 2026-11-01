@@ -1,7 +1,8 @@
 import Type, { type Static } from 'typebox';
-import type { DiscoverySelection, ThinkingLevel } from '../contracts/discovery.js';
+import { Compile } from 'typebox/compile';
+import { ThinkingLevel, type DiscoverySelection } from '../contracts/discovery.js';
 import { PiConfig } from './pi-protocol.js';
-import { WorkspaceFailure } from '../workspace/values.js';
+import { freeze, WorkspaceFailure } from '../workspace/values.js';
 
 const closed = { additionalProperties: false };
 export const ModelChoice = Type.Object({ provider: PiConfig.properties.provider, model: PiConfig.properties.model }, closed);
@@ -15,6 +16,14 @@ export type DiscoveryHostConfig = Static<typeof DiscoveryHostConfig>;
 /** The configured model and level, and the other models a request may select; a host may replace them while running. */
 export interface DiscoveryDefaults extends Pick<DiscoveryHostConfig, 'provider' | 'model' | 'thinking'> {
   readonly allowedModels: readonly ModelChoice[];
+}
+const defaultsValidator = Compile(Type.Object({ provider: ModelChoice.properties.provider, model: ModelChoice.properties.model,
+  thinking: ThinkingLevel, allowedModels: Type.Array(ModelChoice) }, closed));
+/** A frozen copy of `defaults`, or invalidDiscoveryConfiguration when they are not valid defaults. */
+export function checkedDefaults(defaults: DiscoveryDefaults): DiscoveryDefaults {
+  const copy = structuredClone({ provider: defaults.provider, model: defaults.model, thinking: defaults.thinking, allowedModels: defaults.allowedModels });
+  if (!defaultsValidator.Check(copy)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
+  return freeze(copy);
 }
 /** The model and thinking level one discovery job runs with. */
 export interface DiscoverySettings { readonly provider: string; readonly model: string; readonly thinking: ThinkingLevel }

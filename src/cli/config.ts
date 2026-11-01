@@ -11,9 +11,13 @@ import { Compile } from 'typebox/compile';
 import { PiConfig } from '../discovery/pi-protocol.js';
 import { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import { PiRunner } from '../discovery/pi-runner.js';
-import { DiscoveryHostConfig, parseModelReference } from '../discovery/selection.js';
+import { ClaudeCodeRunner } from '../discovery/claude-runner.js';
+import { checkRunnerCoverage, DiscoveryConfig, piRunnerConfig, type ClaudeCodeConfig } from '../discovery/discovery-config.js';
+import { DiscoveryRunners } from '../discovery/discovery-runners.js';
+import { parseModelReference } from '../discovery/selection.js';
 import { freeze, WorkspaceFailure } from '../workspace/values.js';
 import { mcpProtectedPaths } from '../discovery/mcp-config.js';
+import type { DiscoveryPromptRenderer } from '../context/discovery-input.js';
 
 const closed = { additionalProperties: false };
 const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
@@ -31,7 +35,7 @@ export const HostConfig = Type.Object({ copyContext: CopyContext, ignoreSettings
   nativeEnvironment: Type.Record(Type.String(), Type.String()),
   terminationGraceMs: Type.Integer({ minimum: 0, maximum: 2147483647 }),
   credentialPaths: Type.Array(absolute),
-  git: Type.Union([GitHost, Type.Null()]), discovery: Type.Union([DiscoveryHostConfig, Type.Null()]),
+  git: Type.Union([GitHost, Type.Null()]), discovery: Type.Union([DiscoveryConfig, Type.Null()]),
   defaultMaxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   contextBudgetUnits: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   defaultEnhancementMode: Type.Optional(PromptEnhancementMode),
@@ -51,10 +55,15 @@ const PolicyFile = Type.Object({
   websocketConnectTimeoutMs: Type.Optional(RecoveryPolicy.properties.websocketConnectTimeoutMs),
   cacheWarming: Type.Optional(RecoveryPolicy.properties.cacheWarming),
 }, closed);
-/** `allowedModels` lists the `provider/model` references a build request may select besides the configured model. */
-const DiscoveryFile = Type.Object({ ...Type.Partial(Type.Omit(PiConfig, ['provider', 'model', 'thinking', 'modelsPath', 'policy'])).properties,
-  ...Type.Pick(PiConfig, ['provider', 'model', 'thinking', 'modelsPath']).properties, policy: Type.Optional(PolicyFile),
-  allowedModels: Type.Optional(Type.Array(ModelReference)) }, closed);
+/** How discovery starts Claude Code: an executable in place of the Claude Agent SDK's own, and environment entries for the child. */
+const ClaudeCodeFile = Type.Object({ executable: Type.Optional(absolute), environment: Type.Optional(Type.Record(Type.String(), Type.String())) }, closed);
+/**
+ * `allowedModels` lists the `provider/model` references a build request may select besides the configured model.
+ * `modelsPath` configures the Pi runner and `claudeCode` the Claude Code runner, each required when a model needs it.
+ */
+const DiscoveryFile = Type.Object({ ...Type.Partial(Type.Omit(PiConfig, ['provider', 'model', 'thinking', 'policy'])).properties,
+  ...Type.Pick(PiConfig, ['provider', 'model', 'thinking']).properties, policy: Type.Optional(PolicyFile),
+  allowedModels: Type.Optional(Type.Array(ModelReference)), claudeCode: Type.Optional(ClaudeCodeFile) }, closed);
 /** The configuration file. Every field is optional; resolveHostConfig supplies each default. */
 export const ConfigFile = Type.Object({ ...Type.Partial(Type.Omit(HostConfig, ['discovery'])).properties,
   discovery: Type.Optional(Type.Union([DiscoveryFile, Type.Null()])) }, closed);
@@ -128,15 +137,40 @@ function userGitConfiguration(host: ConfigHost) {
   return { home: host.home, xdgConfigHome: xdgConfigHome && isAbsolute(xdgConfigHome) ? xdgConfigHome : null };
 }
 
-function resolveDiscovery(file: Static<typeof DiscoveryFile>, host: ConfigHost): DiscoveryHostConfig {
+/**
+ * Claude Code's settings: its executable, and an environment of `HOME`, `PATH` and `USER` from this process (on macOS,
+ * Claude Code needs `USER` to find its login in the Keychain) with the file's entries over them. Claude Code's own
+ * configuration directory and file under that `HOME`, or `CLAUDE_CONFIG_DIR`, are protected from context collection.
+ */
+function resolveClaudeCode(file: Static<typeof ClaudeCodeFile>, host: ConfigHost): ClaudeCodeConfig {
+  const inherited = (['PATH', 'USER'] as const).flatMap(name => {
+    const value = host.env[name];
+    return value === undefined ? [] : [[name, value] as const];
+  });
+  const home = file.environment?.HOME ?? host.home;
+  return { executable: file.executable ?? null, environment: { HOME: host.home, ...Object.fromEntries(inherited), ...file.environment },
+    configPaths: [file.environment?.CLAUDE_CONFIG_DIR ?? join(home, '.claude'), join(home, '.claude.json')] };
+}
+
+function resolveDiscovery(file: Static<typeof DiscoveryFile>, host: ConfigHost): DiscoveryConfig {
+  const config: DiscoveryConfig = {
+    provider: file.provider, model: file.model, thinking: file.thinking,
+    allowedModels: (file.allowedModels ?? []).map(parseModelReference),
+    promptTemplatePath: file.promptTemplatePath ?? join(host.packageRoot, 'dist', 'prompts', 'discovery.md'),
+    mcp: file.mcp ?? null,
+    pi: file.modelsPath === undefined ? null : resolvePi(file, file.modelsPath, host),
+    claudeCode: file.claudeCode ? resolveClaudeCode(file.claudeCode, host) : null,
+  };
+  checkRunnerCoverage(config, { pi: config.pi !== null, claudeCode: config.claudeCode !== null });
+  return config;
+}
+
+function resolvePi(file: Static<typeof DiscoveryFile>, modelsPath: string, host: ConfigHost): NonNullable<DiscoveryConfig['pi']> {
   const policy = file.policy ?? {}, httpIdleTimeoutMs = policy.httpIdleTimeoutMs ?? piPolicyDefaults.httpIdleTimeoutMs;
   return {
-    provider: file.provider, model: file.model, thinking: file.thinking, modelsPath: file.modelsPath,
-    allowedModels: (file.allowedModels ?? []).map(parseModelReference),
+    modelsPath,
     authPath: file.authPath ?? join(host.env.PI_CODING_AGENT_DIR ?? join(host.home, '.pi', 'agent'), 'auth.json'),
-    promptTemplatePath: file.promptTemplatePath ?? join(host.packageRoot, 'dist', 'prompts', 'discovery.md'),
     environment: file.environment ?? {},
-    mcp: file.mcp ?? null,
     codemode: file.codemode ?? true,
     policy: {
       retry: { ...piPolicyDefaults.retry, ...policy.retry,
@@ -159,19 +193,33 @@ export async function loadJSON<S extends TSchema>(path: string, schema: S): Prom
   if (!validator.Check(value)) throw new WorkspaceFailure('invalidConfiguration');
   return freeze(value);
 }
+/** The files discovery reads credentials or settings from, which context collection never reads. */
+function discoveryCredentialPaths(discovery: DiscoveryConfig): string[] {
+  return [...(discovery.pi ? [discovery.pi.authPath, discovery.pi.modelsPath] : []), ...(discovery.claudeCode?.configPaths ?? []),
+    ...(discovery.mcp ? mcpProtectedPaths(discovery.mcp) : [])];
+}
+
+/** The configured runners and the defaults that select between them; Claude Code runs in `<cachePath>/claude-code`. */
+function composeDiscovery(discovery: DiscoveryConfig, runtime: MipmuxRuntime, cachePath: string): DiscoveryRunners {
+  const render: DiscoveryPromptRenderer = (operation, signal) => runtime.renderPresentation(operation, signal);
+  const pi = piRunnerConfig(discovery);
+  return new DiscoveryRunners(discovery, pi && new PiRunner(pi, runtime.supervisor, render),
+    discovery.claudeCode && new ClaudeCodeRunner({ claudeCode: discovery.claudeCode, promptTemplatePath: discovery.promptTemplatePath,
+      mcp: discovery.mcp, workingDirectory: join(cachePath, 'claude-code') }, runtime.supervisor, render));
+}
+
 export function compose(config: HostConfig, configurationPath: string | null) {
+  const discovery = config.discovery;
   const runtimeOptions = { copyContext: config.copyContext, cachePath: config.cachePath, nativeExecutable: config.nativeExecutable,
     contextBudgetUnits: config.contextBudgetUnits,
     nativeEnvironment: config.nativeEnvironment, terminationGraceMs: config.terminationGraceMs,
     credentialPaths: [...config.credentialPaths, ...(configurationPath === null ? [] : [configurationPath]),
-      ...(config.discovery ? [config.discovery.authPath, config.discovery.modelsPath,
-        ...(config.discovery.mcp ? mcpProtectedPaths(config.discovery.mcp) : [])] : [])],
+      ...(discovery ? discoveryCredentialPaths(discovery) : [])],
   };
   if (config.git) Object.assign(runtimeOptions, { git: config.git });
   if (config.ignoreSettings) Object.assign(runtimeOptions, { ignoreSettings: config.ignoreSettings });
   if (config.defaultEnhancementMode !== undefined) Object.assign(runtimeOptions, { defaultEnhancementMode: config.defaultEnhancementMode });
   const runtime = new MipmuxRuntime(runtimeOptions);
-  const runner = config.discovery ? new PiRunner(config.discovery, runtime.supervisor,
-    (operation, signal) => runtime.renderPresentation(operation, signal)) : null;
+  const runner = discovery && composeDiscovery(discovery, runtime, config.cachePath);
   return { runtime, runner, client: runtime.createClient(runner) };
 }

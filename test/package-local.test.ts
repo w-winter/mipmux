@@ -12,13 +12,13 @@ import { scriptedProvider } from './fixtures/scripted-provider.js';
 import { controlledHttpMcp } from './fixtures/controlled-http-mcp.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { DiscoveryReceipt, TokenUsage } from '../src/contracts/discovery.js';
+import { PiDiscoveryReceipt, TokenUsage } from '../src/contracts/discovery.js';
 import { Manifest } from '../src/contracts/context.js';
 import { toolJSON } from './fixtures/tool-json.js';
 
 // MCP ready snapshots give the number of discovery completions, their summed token usage and their tool calls counted by
 // name instead of their records.
-const readyDiscovery = Type.Object({ ...DiscoveryReceipt.properties, completions: Type.Integer({ minimum: 1 }), usage: TokenUsage,
+const readyDiscovery = Type.Object({ ...PiDiscoveryReceipt.properties, completions: Type.Integer({ minimum: 1 }), usage: TokenUsage,
   toolCalls: Type.Record(Type.String(), Type.Integer({ minimum: 1 })) }, { additionalProperties: false });
 
 async function waitForSettlement(client: Client, jobId: string) {
@@ -126,7 +126,7 @@ test('local package audits resources and executes relocated library, native, CLI
           if (error && error.code !== 2) reject(error); else resolveResult(stdout);
         });
     });
-    const terminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt,
+    const terminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: PiDiscoveryReceipt,
       bundle: Type.Object({ manifest: Manifest }) })).Parse(JSON.parse(result));
     assert.equal(terminal.bundle.manifest.request.budgetUnits, 1000000);
     assert.equal(terminal.bundle.manifest.request.enhancementMode, 'augment');
@@ -146,7 +146,7 @@ test('local package audits resources and executes relocated library, native, CLI
         if (error) reject(error); else resolveResult(stdout);
       });
     });
-    const nativeTerminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: DiscoveryReceipt,
+    const nativeTerminal = Compile(Type.Object({ state: Type.Literal('ready'), discovery: PiDiscoveryReceipt,
       bundle: Type.Object({ directory: Type.String() }) })).Parse(JSON.parse(nativeResult));
     assert.equal(nativeTerminal.state, 'ready'); assert(nativeTerminal.state === 'ready');
     assert.equal(nativeTerminal.discovery.templateVersion, 'mipmux-discovery-template-v1');
@@ -214,7 +214,7 @@ test('local package audits resources and executes relocated library, native, CLI
     await Promise.race([entering, waiting.then(() => { throw new Error('Installed job settled before the provider hold'); })]);
     await client.callTool({ name: 'context_job', arguments: { op: 'cancel', jobId: cancelledId } });
     const cancelled = Compile(Type.Object({ state: Type.Literal('cancelled'), localSettled: Type.Literal(true),
-      discovery: DiscoveryReceipt })).Parse(toolJSON(await waiting));
+      discovery: PiDiscoveryReceipt })).Parse(toolJSON(await waiting));
     assert.equal(cancelled.discovery.workerClosed, true); assert.equal(cancelled.discovery.parentToolsSettled, true);
     assert.equal(cancelled.discovery.template.identity.sha256, createHash('sha256').update(updatedTemplate).digest('hex'));
     assert(JSON.stringify(provider.requests.at(-1)?.system).includes('UPDATED_EXTERNAL_TEMPLATE'));

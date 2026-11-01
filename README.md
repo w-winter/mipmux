@@ -21,7 +21,7 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
 - Node.js 22.22.1 or later.
 - Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config and tar, to build mipmux's native Swift helper. On macOS, Xcode 26 or later, or its Command Line Tools, provides Swift and the compiler, and Homebrew provides CMake and pkg-config.
 - Git, at `/usr/bin/git` unless the configuration names another path.
-- For discovery, a login to a model provider, stored in Pi's `auth.json` (see the quickstart).
+- For discovery, either a login to a model provider, stored in Pi's `auth.json` (see the quickstart), or Claude Code signed in with your Claude account or an API key, with the Claude Agent SDK installed next to mipmux (see [Claude Code discovery](#claude-code-discovery)).
 
 ## Quickstart
 
@@ -54,7 +54,7 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
    }
    ```
 
-   Without a `discovery` entry, `context_builder` fails with `discoveryNotConfigured`. To select a packet's contents yourself instead, add `"tools": "full"`, which offers the exploration and manual-packet tools described under [Manual context packets](#manual-context-packets). [CLI and MCP](#cli-and-mcp) lists every setting.
+   To run discovery with Claude models through Claude Code instead, see [Claude Code discovery](#claude-code-discovery). Without a `discovery` entry, `context_builder` fails with `discoveryNotConfigured`. To select a packet's contents yourself instead, add `"tools": "full"`, which offers the exploration and manual-packet tools described under [Manual context packets](#manual-context-packets). [CLI and MCP](#cli-and-mcp) lists every setting.
 
 4. Connect your MCP client to `node /absolute/path/to/mipmux/dist/cli/main.js mcp`. If the client cannot find `node`, use its absolute path.
 
@@ -314,13 +314,13 @@ node dist/cli/main.js cache invalidate --kind reuse --key <sha256>
 
 `config` prints the defaults that builds use: `{ "kind": "config", "path", "contextBudgetUnits", "defaultEnhancementMode", "tools", "discovery" }`, where `discovery` is `null` or `{ "model": "provider/model", "thinking", "allowedModels": ["provider/model", ...] }`. It prints no other paths, credentials or environment values, and starts nothing.
 
-`models` prints the discovery models mipmux has credentials for: `{ "kind": "models", "models": ["provider/model", ...] }`, sorted. It lists them the way a discovery job sees them, in a worker given only `discovery.environment`, so an API key exported in your shell adds no models. The list comes from the providers built into mipmux's Pi SDK, with the overrides in `discovery.modelsPath` and the credentials in `discovery.authPath`; it reads no model catalog from the network. Choose `discovery.model` and `discovery.allowedModels` from it.
+`models` prints the discovery models mipmux has credentials for: `{ "kind": "models", "models": ["provider/model", ...] }`, sorted. It lists them the way a discovery job sees them, in a worker given only `discovery.environment`, so an API key exported in your shell adds no models. The list comes from the providers built into mipmux's Pi SDK, with the overrides in `discovery.modelsPath` and the credentials in `discovery.authPath`; it reads no model catalog from the network. With `discovery.claudeCode` configured, it also lists the `claude-code/` models Claude Code offers your account, without a model request. Choose `discovery.model` and `discovery.allowedModels` from it.
 
 The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`, with an optional `"discovery": { "model": "provider/model", "thinking": "low" }` that selects the job's discovery model and level from the allowed models. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Omit `enhancementMode` and `budgetUnits` to use the configured defaults. Input files for `mipmux tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; reuse targets name the saved file fingerprints that let a restarted server skip unchanged files. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateReuse(key)` for reuse. Each method removes only its named record.
 
-Every configuration field is optional. Enabling `discovery` requires `provider`, `model`, `thinking` and `modelsPath`, the path of the model file described below. A file sets only what differs from the defaults.
+Every configuration field is optional. Enabling `discovery` requires `provider`, `model` and `thinking`. When the configured model or an allowed one runs through Pi, which is every provider but `claude-code`, discovery also requires `modelsPath`, the path of the model file described below; when one is a `claude-code/` model, it requires `discovery.claudeCode`. A file sets only what differs from the defaults.
 
 A running MCP server rereads the file before each `context_builder` and `draft_create` call and applies `contextBudgetUnits`, `defaultEnhancementMode`, and `discovery.provider`, `discovery.model`, `discovery.thinking` and `discovery.allowedModels` to builds started from then on; jobs already started keep their settings. A file that cannot be read or is not valid configuration fails that call. Every other field, and turning discovery on or off, takes effect when the server starts again.
 
@@ -361,8 +361,11 @@ Omitted fields take these values:
 | `discovery` | `null`, for model-free use |
 | `discovery.allowedModels` | none. Lists `provider/model` references, in Pi's notation, that a build request may select instead of the configured model, which is always allowed |
 | `discovery.authPath` | `auth.json` in `$PI_CODING_AGENT_DIR`, or in `~/.pi/agent` when that variable is unset |
+| `discovery.claudeCode` | none. Enables `claude-code/` models; see [Claude Code discovery](#claude-code-discovery) |
+| `discovery.claudeCode.executable` | the Claude Code that the Claude Agent SDK installs with it |
+| `discovery.claudeCode.environment` | `HOME`, `PATH` and `USER` from mipmux's environment. Listed entries replace or add to them in Claude Code's environment |
 | `discovery.promptTemplatePath` | the shipped `dist/prompts/discovery.md` |
-| `discovery.environment` | none |
+| `discovery.environment` | none. The environment of Pi's discovery worker |
 | `discovery.mcp` | `null` |
 | `discovery.codemode` | `true`, which also offers the agent Pi's `codemode` tool; its scripts call the same discovery tools |
 | `discovery.policy` | Pi's defaults, merged field by field with the file's overrides: retries `enabled`, `maxRetries: 3`, `baseDelayMs: 2000`, `maxAgentDelayMs: 60000`; provider requests `timeoutMs` equal to `httpIdleTimeoutMs`, `maxRetries: 0`, `maxRetryDelayMs: 60000`; compaction `enabled`, `reserveTokens: 16384`, `keepRecentTokens: 20000`; `transport: "auto"`, `httpIdleTimeoutMs: 300000`, `websocketConnectTimeoutMs: 15000` |
@@ -412,6 +415,37 @@ PI_CODING_AGENT_DIR="$PWD" /opt/mipmux/node_modules/.bin/pi mcp list
 ```
 
 If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private directory to diagnose connection or sign-in problems. See the [discovery contract](docs/contracts.md#discovery-and-client-ownership) for configuration options and lifecycle details.
+
+Claude Code discovery connects to these servers itself and supports header authentication only; a server configured for OAuth fails its builds with `mcpOAuthUnsupported`. Many servers accept an API key in a header instead. Linear's, for example, accepts `"headers": { "Authorization": "Bearer <Linear API key>" }`, and a key limited to read access, or the `https://mcp.linear.app/mcp/readonly` endpoint, keeps discovery from changing anything.
+
+### Claude Code discovery
+
+Discovery can run Claude models through Claude Code, signed in with your own Claude account or with an API key. mipmux drives Claude Code through Anthropic's Claude Agent SDK, an optional add-on that Anthropic licenses under its own terms. Install the version mipmux requires next to mipmux, globally beside a global mipmux or into the same project, and sign in to Claude Code once:
+
+```sh
+npm install -g @anthropic-ai/claude-agent-sdk@0.3.310
+claude
+```
+
+The SDK installs its own copy of Claude Code, about 230 MB. To use a Claude Code you already have, set `discovery.claudeCode.executable` to its absolute path. Then configure discovery with a `claude-code/` model. A configuration that uses only Claude Code needs no `modelsPath`:
+
+```json
+{
+  "discovery": {
+    "provider": "claude-code",
+    "model": "claude-sonnet-5-5",
+    "thinking": "low",
+    "allowedModels": ["claude-code/claude-opus-5-5"],
+    "claudeCode": {}
+  }
+}
+```
+
+`mipmux models` lists the Claude Code models your account offers. A model name Claude Code does not recognize fails the build when Anthropic's API refuses it, and the receipt records the error. The thinking levels `low`, `medium`, `high`, `xhigh` and `max` set Claude Code's effort level and must be among the levels the model supports; `off` turns thinking off; `minimal` fails with `unsupportedThinkingLevel`. These checks run before any model request.
+
+Claude Code receives the rendered discovery template as its system prompt. Claude Code adds a billing header and a line identifying the Agent SDK before it, and short reminders of the date and environment to the first message, about 330 tokens in all. It offers the model only mipmux's discovery tools, named `mcp__mipmux__<tool>` in requests and in the template, and the allowlisted tools of the servers configured under `discovery.mcp`. Before the first model request, mipmux checks that Claude Code offers exactly those tools. Claude Code loads no settings, project instructions, skills, plugins or other MCP servers, does not save the conversation, and runs in `claude-code` under `cachePath`. mipmux sets `ENABLE_CLAUDEAI_MCP_SERVERS=0`, `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS=0`, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` and `ENABLE_TOOL_SEARCH=false` in Claude Code's environment. A question from `ask_user` keeps its tool call open for as long as the question waits, and discovery continues in the same conversation once it is answered.
+
+On macOS, Claude Code needs `USER` to find a Claude login in the Keychain; without it, Claude Code reports that the OAuth session expired. To use an API key instead, set `ANTHROPIC_API_KEY` in `discovery.claudeCode.environment`; mipmux does not pass on the variables of its own environment. mipmux never reads Claude credentials. It excludes Claude Code's configuration directory, `~/.claude` or `CLAUDE_CONFIG_DIR`, and `~/.claude.json` from context collection. A build's receipt records Claude Code's version, the model, where its credential came from, each response's usage and the cost Claude Code reports at list prices.
 
 ### Caller MCP interface
 

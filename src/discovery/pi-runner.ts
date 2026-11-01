@@ -4,64 +4,27 @@ import { fileURLToPath } from 'node:url';
 import type { ProcessSupervisor } from '../runtime/process-supervisor.js';
 import { failureResult, piToolResult } from '../runtime/tool-result.js';
 import { freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
-import { ThinkingLevel, type DiscoveryReceipt, type DiscoveryEvent, type DiscoverySelection } from '../contracts/discovery.js';
+import type { PiDiscoveryReceipt, DiscoveryEvent, DiscoverySelection } from '../contracts/discovery.js';
 import type { DiscoveryInput, DiscoveryOutcome, DiscoveryRunner, DiscoveryTools } from './runner.js';
 import { modelsReplyValidator, piConfigValidator, workerValidator, type ModelsReply, type PiConfig, type WorkerMessage,
   type DiscoverySessionInput } from './pi-protocol.js';
-import { ModelChoice, selectDiscovery, type DiscoveryDefaults, type DiscoveryHostConfig, type DiscoverySettings } from './selection.js';
+import { checkedDefaults, selectDiscovery, type DiscoveryDefaults, type DiscoveryHostConfig, type DiscoverySettings } from './selection.js';
 import { receive, send } from './pi-channel.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { SHA256 } from '../contracts/workspace.js';
 import { completeDiscovery } from './completion.js';
-import { readRegularFile } from '../runtime/host-files.js';
-import { admitMcpConfiguration, type AdmittedMcp } from './mcp-config.js';
-import { prepareDiscoveryInput, type DiscoveryPromptRenderer } from '../context/discovery-input.js';
-import type { SourceIdentity } from '../contracts/workspace.js';
+import type { DiscoveryPromptRenderer } from '../context/discovery-input.js';
+import { admitRunMcp, prepareDiscoveryRun } from './template-file.js';
 
 const dependencyValidator = Compile(Type.Object({ buildLockSHA256: SHA256 }, { additionalProperties: false }));
-const defaultsValidator = Compile(Type.Object({ provider: ModelChoice.properties.provider, model: ModelChoice.properties.model,
-  thinking: ThinkingLevel, allowedModels: Type.Array(ModelChoice) }, { additionalProperties: false }));
 /** What the parent observed of a models worker: its replies, and whether it broke the protocol. */
 interface ModelsListing { readonly replies: ModelsReply[]; protocolFailed: boolean }
-const systemFileFailure = Compile(Type.Object({ code: Type.String() }));
-
-async function readDiscoveryTemplate(path: string, signal: AbortSignal) {
-  let bytes: Buffer;
-  try { bytes = await readRegularFile(path, new WorkspaceFailure('nonRegularDiscoveryTemplate'), signal); }
-  catch (error) {
-    signal.throwIfAborted();
-    if (error instanceof WorkspaceFailure) throw error;
-    if (systemFileFailure.Check(error)) {
-      throw new WorkspaceFailure('discoveryTemplateReadFailed', { systemCode: error.code });
-    }
-    throw error;
-  }
-  try { return { bytes, text: new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }; }
-  catch (cause) {
-    const failure = new WorkspaceFailure('invalidDiscoveryTemplate', { kind: 'encoding' });
-    failure.cause = cause;
-    throw failure;
-  }
-}
-
-function checkedDefaults(defaults: DiscoveryDefaults): DiscoveryDefaults {
-  const copy = structuredClone({ provider: defaults.provider, model: defaults.model, thinking: defaults.thinking, allowedModels: defaults.allowedModels });
-  if (!defaultsValidator.Check(copy)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
-  return freeze(copy);
-}
-
-function logTemplateRejection(error: WorkspaceFailure, path: string, identity: SourceIdentity | null) {
-  const record = { level: 'error', event: 'discoveryTemplateRejected', code: error.code,
-    templatePath: path, ...error.details };
-  if (identity) Object.assign(record, { templateSHA256: identity.sha256 });
-  process.stderr.write(JSON.stringify(record) + '\n');
-}
 
 export class PiRunner implements DiscoveryRunner {
   /** The worker configuration as started; each run replaces its model and level with the run's settings. */
   readonly config: PiConfig;
-  #defaults: DiscoveryDefaults;
+  readonly #defaults: DiscoveryDefaults;
   constructor(config: DiscoveryHostConfig, private readonly supervisor: ProcessSupervisor, private readonly renderPrompt: DiscoveryPromptRenderer) {
     const { allowedModels, ...worker } = config;
     if (!piConfigValidator.Check(worker)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
@@ -71,10 +34,6 @@ export class PiRunner implements DiscoveryRunner {
     this.config = freeze(structuredClone(worker));
     this.#defaults = checkedDefaults({ provider: worker.provider, model: worker.model, thinking: worker.thinking, allowedModels });
   }
-  /** The configured model and level and the allowed models that builds started from now on select from. */
-  defaults(): DiscoveryDefaults { return this.#defaults; }
-  /** Replaces the defaults for builds started from now on; jobs already admitted keep their settings. */
-  replaceDefaults(next: DiscoveryDefaults): void { this.#defaults = checkedDefaults(next); }
   /** The `provider/model` references discovery has credentials for, listed by a worker with discovery's environment. */
   async listModels(signal: AbortSignal): Promise<string[]> {
     const child = this.supervisor.spawn({ executable: process.execPath,
@@ -100,35 +59,16 @@ export class PiRunner implements DiscoveryRunner {
     return selectDiscovery(this.#defaults, selection);
   }
   async run(input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal,
-    progress: (event: DiscoveryEvent) => void, settings: DiscoverySettings): Promise<DiscoveryOutcome> {
+    progress: (event: DiscoveryEvent) => void, settings: DiscoverySettings): Promise<DiscoveryOutcome<PiDiscoveryReceipt>> {
     signal.throwIfAborted();
     const config = freeze({ ...this.config, provider: settings.provider, model: settings.model, thinking: settings.thinking });
-    let admitted: Awaited<ReturnType<typeof readDiscoveryTemplate>>;
-    try { admitted = await readDiscoveryTemplate(this.config.promptTemplatePath, signal); }
-    catch (error) {
-      signal.throwIfAborted();
-      if (error instanceof WorkspaceFailure) logTemplateRejection(error, this.config.promptTemplatePath, null);
-      throw error;
-    }
-    const templateIdentity = { sha256: sha256(admitted.bytes), byteCount: admitted.bytes.length };
-    let prepared: Awaited<ReturnType<typeof prepareDiscoveryInput>>;
-    try { prepared = await prepareDiscoveryInput(input, admitted.text, this.config.codemode, '', signal, this.renderPrompt); }
-    catch (error) {
-      signal.throwIfAborted();
-      if (error instanceof WorkspaceFailure) logTemplateRejection(error, this.config.promptTemplatePath, templateIdentity);
-      throw error;
-    }
+    const { templateIdentity, prepared } = await prepareDiscoveryRun(this.config.promptTemplatePath, input, this.config.codemode, '',
+      signal, this.renderPrompt);
     signal.throwIfAborted();
-    let mcp: AdmittedMcp | null;
-    try { mcp = this.config.mcp ? await admitMcpConfiguration(this.config.mcp, signal) : null; }
-    catch (error) {
-      if (error instanceof WorkspaceFailure) process.stderr.write(JSON.stringify({ level: 'error', event: 'mcpConfigurationRejected',
-        code: error.code, ...error.details }) + '\n');
-      throw error;
-    }
+    const mcp = await admitRunMcp(this.config.mcp, signal);
     const dependency: unknown = JSON.parse(await readFile(new URL('../dependency-identity.json', import.meta.url), 'utf8'));
     if (!dependencyValidator.Check(dependency)) throw new WorkspaceFailure('invalidDependencyIdentity');
-    const receipt: DiscoveryReceipt = {
+    const receipt: PiDiscoveryReceipt = {
       adapter: 'mipmux-pi-v2', sdk: '1.0.2', buildLockSHA256: dependency.buildLockSHA256,
       templateVersion: 'mipmux-discovery-template-v1',
       template: { path: this.config.promptTemplatePath, identity: templateIdentity },

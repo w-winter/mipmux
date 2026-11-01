@@ -44,7 +44,7 @@ export function failureResult(error: unknown) {
   const target = cacheRecoveryTarget(error);
   if (error instanceof WorkspaceFailure && ['limitWithNegativeStart', 'zeroStart', 'gitStatusMalformed', 'gitShowMalformed', 'invalidSelection',
     'gitSnapshotUnavailable', 'gitSnapshotManifestUnavailable', 'gitSnapshotNotFound', 'gitArtifactReadDenied', 'invalidQuestion', 'invalidSearchPattern', 'invalidSearchScope',
-    'invalidRequest', 'modelNotAllowed'].includes(code)) {
+    'invalidRequest', 'modelNotAllowed', 'invalidDiscoveryConfiguration', 'claudeAgentSdkUnavailable', 'claudeAgentSdkVersionMismatch'].includes(code)) {
     return { kind: 'error', code, message: error.details.message };
   }
   if (target) return { kind: 'error', code, target };

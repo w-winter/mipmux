@@ -5,12 +5,19 @@ import { join, resolve } from 'node:path';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import type { DiscoveryHostConfig } from '../../src/discovery/selection.js';
+import type { DiscoveryConfig } from '../../src/discovery/discovery-config.js';
 
 const requestValidator = Compile(Type.Object({ model: Type.String(), messages: Type.Array(Type.Unknown()),
   tools: Type.Optional(Type.Array(Type.Object({ name: Type.String() }))), system: Type.Optional(Type.Unknown()) }));
 export type Reply = { kind: 'error' } | { kind: 'overflow' } | { kind: 'hold'; entered: () => void } |
   { kind: 'text'; text: string; stop: 'end_turn' | 'max_tokens'; tokens: number; reportedModel?: string } |
   { kind: 'tool'; name: string; input: unknown; stop: 'tool_use' | 'max_tokens'; tokens: number };
+
+/** A host configuration's discovery settings for a Pi runner configuration such as `scriptedProvider` returns. */
+export function hostDiscovery(config: DiscoveryHostConfig): DiscoveryConfig {
+  const { modelsPath, authPath, environment, codemode, policy, ...shared } = config;
+  return { ...shared, pi: { modelsPath, authPath, environment, codemode, policy }, claudeCode: null };
+}
 
 export async function scriptedProvider(respond: (summary: boolean, index: number) => Reply) {
   const requests: { model: string; tools: string[]; summary: boolean; messages: unknown[]; system: unknown }[] = [];
@@ -29,7 +36,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
     }
     response.writeHead(200, { 'content-type': 'text/event-stream' });
     const emit = (event: string, data: unknown) => response.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-    emit('message_start', { type: 'message_start', message: { id: 'synthetic', type: 'message', role: 'assistant', model: reply.kind === 'text' ? reply.reportedModel ?? body.model : body.model,
+    emit('message_start', { type: 'message_start', message: { id: 'synthetic-' + requests.length, type: 'message', role: 'assistant', model: reply.kind === 'text' ? reply.reportedModel ?? body.model : body.model,
       content: [], stop_reason: null, usage: { input_tokens: reply.tokens, output_tokens: 0 } } });
     emit('content_block_start', { type: 'content_block_start', index: 0, content_block: reply.kind === 'text'
       ? { type: 'text', text: '' } : { type: 'tool_use', id: 'tool-' + requests.length, name: reply.name, input: {} } });
@@ -53,7 +60,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   await writeFile(config.authPath, JSON.stringify({ anthropic: { type: 'api_key', key: 'synthetic' } }));
   await writeFile(config.modelsPath, JSON.stringify({ providers: { anthropic: { baseUrl: `http://127.0.0.1:${address.port}`,
     modelOverrides: { 'claude-sonnet-4-5': { contextWindow: 8192, maxTokens: 1024 } } } } }));
-  return { config, directory, requests, close: async () => {
+  return { config, directory, requests, url: `http://127.0.0.1:${address.port}`, close: async () => {
     server.closeAllConnections(); await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   } };
 }

@@ -62,9 +62,10 @@ for (const boundary of ['read', 'search'] as const) test(`worker ${boundary === 
     assert.equal(result.localSettled, true);
     assert.equal(result.sharedIndexInterest, 'released');
     if (result.state !== 'failed') assert.fail('Missing failure terminal');
-    assert.equal(result.discovery?.workerClosed, true);
-    assert.equal(result.discovery?.parentToolsSettled, true);
-    assert.equal(result.discovery?.acceptedRuns, 1);
+    assert(result.discovery?.adapter === 'mipmux-pi-v2');
+    assert.equal(result.discovery.workerClosed, true);
+    assert.equal(result.discovery.parentToolsSettled, true);
+    assert.equal(result.discovery.acceptedRuns, 1);
     const joins = await Promise.all(held.map(process => process.closed));
     assert(joins.length > 0);
     armed = false;

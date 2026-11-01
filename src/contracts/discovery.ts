@@ -86,7 +86,7 @@ export const DiscoveryEvent = Type.Object({ kind: Type.String(),
   success: Type.Union([Type.Boolean(), Type.Null()]), reason: Type.Union([Type.String(), Type.Null()]),
 }, closed);
 export type DiscoveryEvent = Static<typeof DiscoveryEvent>;
-const McpReceipt = Type.Object({ configSHA256: SHA256,
+export const McpReceipt = Type.Object({ configSHA256: SHA256,
   servers: Type.Array(Type.Object({ name: Type.String(), endpointSHA256: SHA256, tools: Type.Array(Type.String()) }, closed)),
   readiness: Type.Union([
     Type.Object({ state: Type.Literal('notObserved') }, closed),
@@ -95,12 +95,16 @@ const McpReceipt = Type.Object({ configSHA256: SHA256,
   ]),
   shutdown: Type.Enum(['notObserved', 'dispatched', 'handlerFailed']),
 }, closed);
-export const DiscoveryReceipt = Type.Object({
-  adapter: Type.String(), sdk: Type.String(), buildLockSHA256: SHA256,
+/** The template and rendered policy a discovery run used, and the model and level it was asked to use. */
+const runFacts = {
   templateVersion: Type.Literal('mipmux-discovery-template-v1'),
   template: Type.Object({ path: Type.String({ pattern: '^/[^\\u0000]*$' }), identity: SourceIdentity }, closed),
   policyIdentity: SourceIdentity,
   requested: Type.Object({ provider: Type.String(), model: Type.String(), thinking: Type.String() }, closed),
+};
+/** What a Pi discovery run observed through its worker. */
+export const PiDiscoveryReceipt = Type.Object({
+  adapter: Type.Literal('mipmux-pi-v2'), sdk: Type.String(), buildLockSHA256: SHA256, ...runFacts,
   /** The thinking levels the requested model supports, as Pi reports them; null until the worker has resolved the model. */
   thinkingLevels: Type.Union([Type.Array(Type.String()), Type.Null()]),
   effective: Type.Union([Type.Null(), Type.Object({ identity: ModelIdentity, thinking: Type.String(),
@@ -114,4 +118,31 @@ export const DiscoveryReceipt = Type.Object({
   workerClosed: Type.Boolean(), parentToolsSettled: Type.Boolean(),
   telemetryLimit: Type.String(), mcp: Type.Union([McpReceipt, Type.Null()]),
 }, closed);
+export type PiDiscoveryReceipt = Static<typeof PiDiscoveryReceipt>;
+/** What a Claude Code discovery run observed through the Claude Agent SDK. */
+export const ClaudeCodeDiscoveryReceipt = Type.Object({
+  adapter: Type.Literal('mipmux-claude-code-v1'),
+  /** The Claude Agent SDK's version, and Claude Code's as its startup message reports it; null until reported. */
+  sdk: Type.String(), claudeCodeVersion: Type.Union([Type.String(), Type.Null()]), ...runFacts,
+  /** The effort levels Claude Code lists for the requested model; null until listed. */
+  thinkingLevels: Type.Union([Type.Array(Type.String()), Type.Null()]),
+  /**
+   * From Claude Code's startup message: the model it runs, the model name responses report, where its credential came
+   * from (`none` for a Claude login) and the tools the model can call.
+   */
+  effective: Type.Union([Type.Null(), Type.Object({ model: Type.String(), servedModel: Type.String(), apiKeySource: Type.String(),
+    tools: Type.Array(Type.String()) }, closed)]),
+  completions: Type.Array(Completion), events: Type.Array(DiscoveryEvent), finalAssistant: Type.Union([Completion, Type.Null()]),
+  prompt: Type.Enum(['notStarted', 'resolved', 'rejected']),
+  /**
+   * Claude Code's closing report: its subtype, turns, duration, cost at list prices in US dollars, summed token usage and
+   * the error texts it gave, such as a failed sign-in.
+   */
+  result: Type.Union([Type.Null(), Type.Object({ subtype: Type.String(), turns: SafeCount, durationMs: SafeCount,
+    costUsd: Type.Number({ minimum: 0 }), usage: TokenUsage, errors: Type.Array(Type.String()) }, closed)]),
+  childClosed: Type.Boolean(), toolsSettled: Type.Boolean(),
+  telemetryLimit: Type.String(), mcp: Type.Union([McpReceipt, Type.Null()]),
+}, closed);
+export type ClaudeCodeDiscoveryReceipt = Static<typeof ClaudeCodeDiscoveryReceipt>;
+export const DiscoveryReceipt = Type.Union([PiDiscoveryReceipt, ClaudeCodeDiscoveryReceipt]);
 export type DiscoveryReceipt = Static<typeof DiscoveryReceipt>;

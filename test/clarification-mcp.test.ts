@@ -33,6 +33,11 @@ const RecordedMessages = Type.Array(Type.Object({ role: Type.String(), content: 
   cache_control: Type.Optional(Type.Object({ type: Type.String() })) })) }));
 type RecordedMessages = Static<typeof RecordedMessages>;
 const recordedMessages = Compile(RecordedMessages);
+/** A request's recorded messages, checked without `Parse`, which would drop the fields the schema does not name, such as text. */
+function recorded(messages: unknown[]): Static<typeof RecordedMessages> {
+  assert(recordedMessages.Check(messages));
+  return messages;
+}
 /** The response a client without forms sends with op=answer. */
 type QuestionResponse = { readonly action: 'accept'; readonly content: Readonly<Record<string, string>> } | { readonly action: 'decline' };
 const formReply = Compile(Type.Object({ resultType: Type.Literal('input_required'), inputRequests: Type.Record(Type.String(),
@@ -166,7 +171,7 @@ async function checkConversation(f: Fixture, jobId: string) {
   const result = readyReply.Parse(toolJSON(await client.callTool(wait)));
   await verifyBundle(result.bundle.directory);
   assert.equal(provider.requests.length, 2);
-  const [first, second] = provider.requests.map(request => unmarked(recordedMessages.Parse(request.messages)));
+  const [first, second] = provider.requests.map(request => unmarked(recorded(request.messages)));
   assert.deepEqual(second!.slice(0, first!.length), first, 'the answer continues the same conversation');
   assertSourceResponse(f);
 }
