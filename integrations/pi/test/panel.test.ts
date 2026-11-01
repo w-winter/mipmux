@@ -65,7 +65,7 @@ test('a folder typed with ~ and Tab completion becomes a saved workspace named a
   await press(key.enter, key.down, key.enter, ...'bet', key.enter, key.escape);
   await focus('Discovery model');
   await press(key.enter);
-  assert.match(screen(), /discovery\.allowedModels in \/home\/user\/\.config\/mipmux\/config\.json/, 'the model list names the file to edit');
+  assert.match(screen(), /discovery\.allowedModels in\s+\/home\/user\/\.config\/mipmux\/config\.json/, 'the model list names the file to edit');
   await press(key.escape);
   await focus('Budget');
   await press(key.enter, key.clearLine, ...'150k', key.enter, 'p');
