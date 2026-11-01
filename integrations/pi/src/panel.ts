@@ -27,6 +27,7 @@ const thinkingLevels: ThinkingLevel[] = ['off', 'minimal', 'low', 'medium', 'hig
 const enhancementModes: EnhancementMode[] = ['fullRewrite', 'augment', 'preserve'];
 const rootNamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const wholeNumber = /^[1-9]\d*$/;
+const count = (number: number, noun: string) => `${number} ${noun}${number === 1 ? '' : 's'}`;
 
 /** Shows `menu`, runs the chosen action and returns its label; undefined when the user cancels. */
 async function run(ctx: MipmuxContext, title: string, menu: Menu): Promise<string | undefined> {
@@ -271,7 +272,7 @@ async function workspaceForm(ctx: MipmuxContext, start: Workspace, startName: st
   const name = (await ctx.ui.input(`Name for this saved workspace (empty for ${proposed})`, proposed))?.trim() || proposed;
   if (taken.has(name)) { ctx.ui.notify(`A saved workspace is already named "${name}".`, 'error'); return null; }
   const summary = [name, ...roots.map(root => `  ${root.name}  ${root.absolutePath}`), `  output ${outputRoot}`,
-    `  ${exclusions.length} exclusions`].join('\n');
+    `  ${count(exclusions.length, 'exclusion')}`].join('\n');
   if (!(await ctx.ui.confirm('Save this workspace?', summary))) return null;
   await mkdir(outputRoot, { recursive: true });
   return { name, roots, outputRoot, exclusions };
@@ -346,8 +347,8 @@ export async function openPanel(ctx: MipmuxContext, host: PanelHost): Promise<vo
   for (;;) {
     const { saved, selection } = await loadSelection(host);
     const workspace = selection.kind === 'found' ? selection.workspace : null;
-    const header = [workspace ? `mipmux workspace "${workspace.name}": ${workspace.roots.length} roots, output ${workspace.outputRoot}, ` +
-      `${workspace.exclusions.length} exclusions` : `mipmux ${workspaceLine(selection)}`, defaults,
+    const header = [workspace ? `mipmux workspace "${workspace.name}": ${count(workspace.roots.length, 'root')}, output ${workspace.outputRoot}, ` +
+      count(workspace.exclusions.length, 'exclusion') : `mipmux ${workspaceLine(selection)}`, defaults,
     'An unpinned value applies when the agent sends none; a pinned value replaces the agent\'s.'].join('\n');
     const lines = settingLines(host.state(), workspace, config.value);
     const savedField = <T>(field: Field<SavedWorkspace, T>) => workspace && { workspace, field };
