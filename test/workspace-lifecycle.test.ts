@@ -95,10 +95,10 @@ test('inline calls share admission, retain a warm workspace and join it on close
     const client = runtime.createClient(runner);
     hold = first;
     const cancelled = new AbortController();
-    const abandoned = client.buildContext(request('run-a'), cancelled.signal, 'unavailable');
+    const abandoned = client.buildContext(request('run-a'), cancelled.signal);
     const refused = assert.rejects(abandoned, /cancelled/);
     await first.entered.promise;
-    const shared = client.buildContext(request('run-b'), signal, 'unavailable');
+    const shared = client.buildContext(request('run-b'), signal);
     cancelled.abort(); await refused;
     first.resume.release();
     const job = await shared;
@@ -107,14 +107,14 @@ test('inline calls share admission, retain a warm workspace and join it on close
     const retained = open.size;
     assert(retained > 0, 'the inline workspace released its warm owner');
     for (const outputName of ['run-c', 'run-d']) {
-      const repeated = await client.buildContext(request(outputName), signal, 'unavailable');
+      const repeated = await client.buildContext(request(outputName), signal);
       assert.equal((await client.wait(repeated.jobId, 10000, signal, () => {})).state, 'failed');
     }
     await settled();
     assert.equal(declarations, 1); assert.equal(open.size, retained);
 
     hold = closing;
-    const pending = client.buildContext(request('run-e', otherOut), signal, 'unavailable');
+    const pending = client.buildContext(request('run-e', otherOut), signal);
     const rejected = assert.rejects(pending, /cancelled|clientClosed/);
     await closing.entered.promise;
     const closed = client.close();

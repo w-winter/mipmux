@@ -51,14 +51,21 @@ const jobId = Type.String({ minLength: 1 });
 const durationMs = Type.Integer({ minimum: 0, maximum: maximumWaitMs, description: 'Required for wait and not accepted by the other operations.' });
 /**
  * The advertised `context_job` input. Claude Code drops a tool whose schema composes alternatives at its root, so the
- * advertised shape is one object and `CallerJobRequest` states which operation takes `durationMs`.
+ * advertised shape is one object and `CallerJobRequest` states which operation takes which fields.
  */
-export const CallerJobInput = Type.Object({ op: Type.Enum(['wait', 'status', 'cancel', 'dispose']), jobId,
-  durationMs: Type.Optional(durationMs) }, closed);
+const questionId = Type.String({ minLength: 1, description: 'Required for answer: the id of the question a wait returned.' });
+/** An answer to a pending question: content keyed by the question schema's property names, or a decline that skips it. */
+const QuestionAnswer = Type.Union([
+  Type.Object({ action: Type.Literal('accept'), content: Type.Record(Type.String(), Type.Union([Type.String(), Type.Array(Type.String())])) }, closed),
+  Type.Object({ action: Type.Literal('decline') }, closed),
+], { description: 'Required for answer: {action:"accept", content} keyed by the question schema\'s property names, or {action:"decline"} to skip.' });
+export const CallerJobInput = Type.Object({ op: Type.Enum(['wait', 'status', 'answer', 'cancel', 'dispose']), jobId,
+  durationMs: Type.Optional(durationMs), questionId: Type.Optional(questionId), response: Type.Optional(QuestionAnswer) }, closed);
 export type CallerJobInput = Static<typeof CallerJobInput>;
-/** Only `wait` takes a duration and can deliver a pending question; the other operations never wait or elicit. */
+/** Only `wait` takes a duration and can deliver a pending question, and only `answer` answers one without a form. */
 export const CallerJobRequest = Type.Union([
   Type.Object({ op: Type.Literal('wait'), jobId, durationMs }, closed),
+  Type.Object({ op: Type.Literal('answer'), jobId, questionId, response: QuestionAnswer }, closed),
   Type.Object({ op: Type.Enum(['status', 'cancel', 'dispose']), jobId }, closed),
 ]);
 export type CallerJobRequest = Static<typeof CallerJobRequest>;

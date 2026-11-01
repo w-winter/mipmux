@@ -178,13 +178,13 @@ export class ClientRuntime {
   /**
    * `build` for an inline declaration. The job is identified by its output destination: an identical start returns the
    * existing job, and the same destination with a different workspace, request or discovery settings fails with outputNameConflict.
-   * Cancelling `signal` before the job is admitted starts nothing; afterwards the job runs until cancelled.
+   * Cancelling `signal` before the job is admitted starts nothing; afterwards the job runs until cancelled. Every MCP
+   * caller can answer clarification questions, by form or by `answerQuestion`, so clarification needs no capability here.
    */
-  buildContext(input: CallerBuildRequest, signal: AbortSignal, elicitation: 'form' | 'unavailable') {
+  buildContext(input: CallerBuildRequest, signal: AbortSignal) {
     const captured = freeze(structuredClone(input));
     const defaults = this.runtime.requestDefaults();
     const request = expandCallerBuild(captured, defaults.contextBudgetUnits, defaults.defaultEnhancementMode);
-    if (request.clarification && elicitation !== 'form') throw new WorkspaceFailure('elicitationUnavailable');
     const settings = this.#jobs.settings(captured.discovery);
     return this.#track(signal, async combined => {
       const workspace = await this.#callerWorkspace(captured.workspace, combined);

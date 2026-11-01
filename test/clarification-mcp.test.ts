@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
-import Type from 'typebox';
+import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { AskUserResponse } from '../src/contracts/interaction.js';
 import { verifyBundle } from '../src/index.js';
@@ -24,10 +24,21 @@ const toolMessage = Compile(Type.Object({ role: Type.Literal('user'), content: T
   type: Type.Literal('tool_result'), content: Type.String(), is_error: Type.Boolean(),
 })) }));
 const processEvent = Compile(Type.Object({ event: Type.Enum(['processSpawned', 'processClosed']), id: Type.String() }));
+const questionReply = Compile(Type.Object({ state: Type.Literal('discovering'), localSettled: Type.Literal(false),
+  progress: Type.Object({ kind: Type.Literal('awaitingUser') }),
+  question: Type.Object({ id: Type.String(), message: Type.String(), schema: Type.Object({ properties: Type.Record(Type.String(),
+    Type.Object({ type: Type.String(), enum: Type.Optional(Type.Array(Type.String())) })) }) }, { additionalProperties: false }) }));
+/** Recorded provider messages; each content block may carry Anthropic's cache breakpoint. */
+const RecordedMessages = Type.Array(Type.Object({ role: Type.String(), content: Type.Array(Type.Object({ type: Type.String(),
+  cache_control: Type.Optional(Type.Object({ type: Type.String() })) })) }));
+type RecordedMessages = Static<typeof RecordedMessages>;
+const recordedMessages = Compile(RecordedMessages);
+/** The response a client without forms sends with op=answer. */
+type QuestionResponse = { readonly action: 'accept'; readonly content: Readonly<Record<string, string>> } | { readonly action: 'decline' };
 const formReply = Compile(Type.Object({ resultType: Type.Literal('input_required'), inputRequests: Type.Record(Type.String(),
   Type.Object({ params: Type.Object({ requestedSchema: Type.Object({ properties: Type.Record(Type.String(), Type.Object({ type: Type.String() })) }) }) })) }));
 
-const scenarios = ['accept', 'empty-answer', 'decline', 'form-cancel', 'timeout', 'job-cancel', 'close', 'unavailable', 'disabled',
+const scenarios = ['accept', 'empty-answer', 'decline', 'form-cancel', 'timeout', 'job-cancel', 'close', 'conversation', 'disabled',
   'foreign-answer', 'status'] as const;
 type Scenario = typeof scenarios[number];
 
@@ -56,12 +67,12 @@ async function createFixture(scenario: Scenario, t: TestContext) {
     args: [resolve('dist/cli/main.js'), 'mcp', '--config', configPath], cwd: '/', stderr: 'pipe' });
   const diagnostics: Buffer[] = []; transport.stderr?.on('data', bytes => diagnostics.push(Buffer.from(bytes)));
   const client = new Client({ name: 'clarification-fixture', version: '1' }, {
-    versionNegotiation: { mode: { pin: '2026-07-28' } }, capabilities: scenario === 'unavailable' ? {} : { elicitation: { form: {} } },
+    versionNegotiation: { mode: { pin: '2026-07-28' } }, capabilities: scenario === 'conversation' ? {} : { elicitation: { form: {} } },
     inputRequired: { autoFulfill: scenario !== 'foreign-answer' && scenario !== 'status' },
   });
   t.after(() => client.close());
   let questions = 0;
-  if (scenario !== 'unavailable') client.setRequestHandler('elicitation/create', async request => {
+  if (scenario !== 'conversation') client.setRequestHandler('elicitation/create', async request => {
     questions++; questionEntered.release();
     if (scenario === 'timeout' || scenario === 'job-cancel' || scenario === 'close') await releaseAnswer.promise;
     if (scenario === 'decline') return { action: 'decline' };
@@ -128,6 +139,43 @@ async function checkPendingStatus(f: Fixture, jobId: string) {
   await verifyBundle(result.bundle.directory);
 }
 
+/**
+ * A client without forms receives a pending question as data from wait and answers it with op=answer. Discovery receives
+ * the answer as its ask_user result and continues in the same conversation.
+ */
+async function checkConversation(f: Fixture, jobId: string) {
+  const { client, provider } = f;
+  const wait = { name: 'context_job', arguments: { op: 'wait', jobId, durationMs: 10000 } };
+  const pending = questionReply.Parse(toolJSON(await client.callTool(wait)));
+  assert.match(pending.question.message, /Which area\?/);
+  assert.deepEqual(pending.question.schema.properties.focus?.enum, ['API', 'UI']);
+  const answer = (questionId: string, response: QuestionResponse) =>
+    client.callTool({ name: 'context_job', arguments: { op: 'answer', jobId, questionId, response } });
+  const refusals: [string, QuestionResponse, string][] = [
+    [pending.question.id, { action: 'accept', content: { focus: 'Docs' } }, 'invalidInteractionResponse'],
+    [pending.question.id, { action: 'accept', content: { scope: 'API' } }, 'invalidInteractionResponse'],
+    ['another-question', { action: 'accept', content: { focus: 'API' } }, 'interactionNotCurrent'],
+  ];
+  for (const [questionId, response, code] of refusals) {
+    const refused = await answer(questionId, response);
+    assert.equal(refused.isError, true);
+    assert.equal(errorReply.Parse(toolJSON(refused)).code, code);
+  }
+  const answered = await answer(pending.question.id, { action: 'accept', content: { focus: 'API' } });
+  assert.equal(answered.isError, false, JSON.stringify(answered));
+  const result = readyReply.Parse(toolJSON(await client.callTool(wait)));
+  await verifyBundle(result.bundle.directory);
+  assert.equal(provider.requests.length, 2);
+  const [first, second] = provider.requests.map(request => unmarked(recordedMessages.Parse(request.messages)));
+  assert.deepEqual(second!.slice(0, first!.length), first, 'the answer continues the same conversation');
+  assertSourceResponse(f);
+}
+
+/** The messages without Anthropic's cache breakpoint, which moves to the newest message on each request. */
+function unmarked(messages: RecordedMessages): RecordedMessages {
+  return messages.map(message => ({ ...message, content: message.content.map(({ cache_control: _breakpoint, ...block }) => block) }));
+}
+
 function assertProcessesClosed(diagnostics: readonly Buffer[]) {
   const spawned = new Set<string>(), closed = new Set<string>();
   for (const line of Buffer.concat(diagnostics).toString().split('\n')) {
@@ -162,8 +210,9 @@ function assertSourceResponse(f: Fixture) {
   assert.equal(response.is_error, false);
   const answer = sourceAnswer.Parse(JSON.parse(response.content));
   assert.equal(answer.timed_out, f.scenario === 'timeout'); assert.equal(answer.skipped, f.scenario === 'decline');
-  assert.deepEqual(answer.answers.focus, f.scenario === 'accept'
-    ? { answers: ['API', 'also docs'], selected_options: ['API'], custom_response: 'also docs', skipped: false }
+  const answered = { accept: { answers: ['API', 'also docs'], selected_options: ['API'], custom_response: 'also docs', skipped: false },
+    conversation: { answers: ['API'], selected_options: ['API'], custom_response: null, skipped: false } };
+  assert.deepEqual(answer.answers.focus, f.scenario === 'accept' || f.scenario === 'conversation' ? answered[f.scenario]
     : { answers: [], selected_options: [], custom_response: null, skipped: f.scenario === 'decline' || f.scenario === 'empty-answer' });
 }
 
@@ -194,22 +243,16 @@ for (const scenario of scenarios) {
   test(`real scout clarification through MCP owns the interaction: ${scenario}`, async t => {
     const f = await createFixture(scenario, t);
     try {
-      const started = await f.client.callTool({ name: 'context_builder', arguments: f.request });
-      if (scenario === 'unavailable') {
-        assert.equal(started.isError, true);
-        assert.equal(errorReply.Parse(toolJSON(started)).code, 'elicitationUnavailable');
-        assert.equal(f.provider.requests.length, 0);
-      } else {
-        const job = jobReply.Parse(toolJSON(started));
-        if (scenario === 'foreign-answer') await checkForeignAnswer(f, job.jobId);
-        else if (scenario === 'status') await checkPendingStatus(f, job.jobId);
-        else {
-          const waiting = f.client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: job.jobId, durationMs: 10000 } });
-          void waiting.catch(() => {});
-          if (scenario === 'timeout') { await f.resumed.promise; f.releaseAnswer.release(); }
-          if (scenario === 'job-cancel' || scenario === 'close') await checkCancellation(f, job.jobId, waiting);
-          else await checkCompletion(f, job.jobId, waiting);
-        }
+      const job = jobReply.Parse(toolJSON(await f.client.callTool({ name: 'context_builder', arguments: f.request })));
+      if (scenario === 'foreign-answer') await checkForeignAnswer(f, job.jobId);
+      else if (scenario === 'conversation') await checkConversation(f, job.jobId);
+      else if (scenario === 'status') await checkPendingStatus(f, job.jobId);
+      else {
+        const waiting = f.client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: job.jobId, durationMs: 10000 } });
+        void waiting.catch(() => {});
+        if (scenario === 'timeout') { await f.resumed.promise; f.releaseAnswer.release(); }
+        if (scenario === 'job-cancel' || scenario === 'close') await checkCancellation(f, job.jobId, waiting);
+        else await checkCompletion(f, job.jobId, waiting);
       }
       await writeFile(join(f.provider.directory, 'clarification-proof.json'), JSON.stringify({ scenario, questions: f.questions,
         requests: f.provider.requests, diagnostics: Buffer.concat(f.diagnostics).toString() }, null, 2) + '\n');

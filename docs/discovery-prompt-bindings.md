@@ -9,7 +9,7 @@ The reference was rendered from `Sources/RepoPrompt/Infrastructure/AI/SystemProm
 - `tokenBudget: 198500`, the scout allowance for a 200000-unit build after the single 1500-unit reserve. Jobs supply their captured numeric allowance.
 - `agentKind: .codexExec`, for the restricted-tool workflow.
 - `enhancementMode`: Rewrite, Augment and Preserve, each with separate fragments for its handoff step, success criterion, anti-pattern and checklist.
-- `allowClarifyingQuestions`: enabled and disabled. Actual tool admission also requires the connected MCP client's form capability.
+- `allowClarifyingQuestions`: enabled and disabled.
 - Review guidance: absent, elected-target artifacts, explicit read-only Git with named roots, and explicit read-only Git with root lookup. Production binds the captured purpose and original task to the retained review-intent helper; the frozen Git target supplies authorization facts.
 - `__SUPPORTED_LANGUAGES__` as a placeholder for the catalog of supported languages at runtime. Mipmux reports structural coverage through `get_code_structure` results.
 
@@ -43,11 +43,11 @@ The parser reserves `<!-- mipmux:` and `{{mipmux`. Unknown, duplicate, missing, 
 
 ## Clarification binding
 
-Setting `ContextBuildRequest.clarification` selects the `ask_user` suffix in the tool list, clarification guidance and the step requesting approval of the selection. Its default timeout is 300 seconds. An enabled, capability-admitted run exposes `ask_user`; the default MCP setting is disabled. Example calls use the public structured `questions` schema with question ID `response`. Operators can insert `question_timeout_seconds` when editing policy; the shipped text follows the source, which omits a numeric timeout.
+Setting `ContextBuildRequest.clarification` selects the `ask_user` suffix in the tool list, clarification guidance and the step requesting approval of the selection. Its default timeout is 300 seconds. An enabled run exposes `ask_user`; the default MCP setting is disabled. Example calls use the public structured `questions` schema with question ID `response`. Operators can insert `question_timeout_seconds` when editing policy; the shipped text follows the source, which omits a numeric timeout.
 
 `AskUserInput.swift` reuses the original parser, question models and `MCPAskUserElicitationBridge` conversions. It also returns normalized question fields for the MCP boundary. The installed MCP SDK uses multi-round-trip `input_required` results and cannot encode the source's free-text arrays or `uniqueItems` constraint. `src/mcp/question-form.ts` maps fields to collision-free indexed transport keys. Fixed-choice arrays use the SDK's multi-select form, and multi-select questions with custom answers use separate choices and custom-text fields. Responses are reconstructed under the original question IDs and checked against the original schema, including uniqueness, before native answer conversion. No question or answer policy is inferred from rendered prompt text.
 
-A `context_job` wait returns these forms. Job-owned deadlines, cancellation and response ownership apply across request retries. `test/clarification-mcp.test.ts` exercises real Pi dispatch and the current MCP protocol, including multi-select/custom answers, final approval, decline, timeout, form/job cancellation, client closure, capability diagnostics and cross-job response rejection. The installation test exercises enabled interaction through the MCP server from the installed package and an external editable template.
+A `context_job` wait returns these forms to clients that support them, and the question's original schema to other clients, which answer with `op: "answer"`. Job-owned deadlines, cancellation and response ownership apply across request retries. `test/clarification-mcp.test.ts` exercises real Pi dispatch and the current MCP protocol, including multi-select/custom answers, final approval, decline, timeout, form/job cancellation, client closure, answers from a client without forms and cross-job response rejection. The installation test exercises enabled interaction through the MCP server from the installed package and an external editable template.
 
 ## Native bindings
 

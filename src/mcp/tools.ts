@@ -28,7 +28,8 @@ const coreTools: ReadonlySet<string> = new Set(['context_builder', 'context_job'
 
 /**
  * Waits for a job, first applying the one answer `inputResponses` may carry for its current question. Returns the job's
- * snapshot, or a form when a question is pending; without form capability a pending question fails with elicitationUnavailable.
+ * snapshot, or a form when a question is pending; a client without form capability receives the pending question as the
+ * snapshot's `question`, which it answers with `answerJob`.
  */
 async function waitForJob(client: ClientRuntime, jobId: string, durationMs: number, ctx: ServerContext) {
   if (ctx.mcpReq.inputResponses !== undefined) {
@@ -47,19 +48,37 @@ async function waitForJob(client: ClientRuntime, jobId: string, durationMs: numb
   });
   const question = client.pendingQuestion(jobId);
   if (!question) return jobReceipt(result);
-  if (!formCapability.Check(ctx.mcpReq.envelope)) throw new WorkspaceFailure('elicitationUnavailable');
-  return inputRequired({ inputRequests: { [question.id]: inputRequired.elicit(questionForm(question)) } });
+  if (formCapability.Check(ctx.mcpReq.envelope)) return inputRequired({ inputRequests: { [question.id]: inputRequired.elicit(questionForm(question)) } });
+  return { ...jobReceipt(result), question: { id: question.id, message: question.message, schema: question.requestedSchema } };
 }
 
 /**
- * Dispatches one job operation. The advertised schema cannot say that only `wait` takes `durationMs`, so the union check
- * here does. Only a wait may answer a question, so a status, cancel or dispose call that carries an answer fails without effect.
+ * Answers a job's pending question with content keyed by its schema's property names, or declines it. Discovery receives
+ * the answer as its open ask_user result. A stale or another question's id fails with interactionNotCurrent.
+ */
+function answerJob(client: ClientRuntime, input: Extract<CallerJobRequest, { op: 'answer' }>) {
+  const question = client.pendingQuestion(input.jobId);
+  if (!question || question.id !== input.questionId) throw new WorkspaceFailure('interactionNotCurrent');
+  const { response } = input;
+  if (response.action === 'accept' && !Compile({ ...question.requestedSchema, additionalProperties: false }).Check(response.content)) {
+    throw new WorkspaceFailure('invalidInteractionResponse');
+  }
+  client.answerQuestion(input.jobId, input.questionId, response);
+  return jobReceipt(client.result(input.jobId));
+}
+
+/**
+ * Dispatches one job operation. The advertised schema cannot say which operation takes which fields, so the union check
+ * here does. Only a wait may carry a form's answer, so any other operation that carries one fails without effect.
  */
 function controlJob(client: ClientRuntime, input: CallerJobInput, ctx: ServerContext) {
-  if (!jobRequest.Check(input)) throw new WorkspaceFailure('invalidRequest', { message: 'durationMs is required for wait and not accepted by status, cancel or dispose.' });
+  if (!jobRequest.Check(input)) {
+    throw new WorkspaceFailure('invalidRequest', { message: 'wait takes durationMs, answer takes questionId and response, and the other operations take neither.' });
+  }
   if (input.op === 'wait') return waitForJob(client, input.jobId, input.durationMs, ctx);
   if (ctx.mcpReq.inputResponses !== undefined) throw new WorkspaceFailure('invalidInteractionResponse');
   switch (input.op) {
+    case 'answer': return answerJob(client, input);
     case 'status': return jobReceipt(client.result(input.jobId));
     case 'cancel': {
       const result = client.cancel(input.jobId);
@@ -141,7 +160,7 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
   register('draft_dispose', Type.Object({ draftId: id }, closed), (input, ctx) => client().disposeDraft(input.draftId, ctx.mcpReq.signal));
   register('context_builder', CallerBuildRequest, async (input, ctx) => {
     await refreshDefaults();
-    return jobReceipt(await client().buildContext(input, ctx.mcpReq.signal, formCapability.Check(ctx.mcpReq.envelope) ? 'form' : 'unavailable'));
+    return jobReceipt(await client().buildContext(input, ctx.mcpReq.signal));
   });
   register('context_job', CallerJobInput, (input, ctx) => controlJob(client(), input, ctx));
   register('context_prepare', CallerPrepareRequest, async (input, ctx) => prepareReceipt(await client().prepareContext(input, ctx.mcpReq.signal)));
