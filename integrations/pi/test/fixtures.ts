@@ -6,7 +6,7 @@ import { createMipmux, type MipmuxContext } from '../src/register.ts';
 import type { SavedWorkspace, SessionState } from '../src/state.ts';
 
 export const app: SavedWorkspace = { name: 'app', roots: [{ name: 'app', absolutePath: '/repos/app' }],
-  outputRoot: '/repos/app/prompt-exports', exclusions: [] };
+  outputRoot: '/repos/app/prompt-exports' };
 export const appDeclaration = { roots: app.roots, outputRoot: app.outputRoot, exclusions: [] };
 
 /** A session log entry the extension wrote with `state`. */

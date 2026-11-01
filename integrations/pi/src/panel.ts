@@ -1,12 +1,13 @@
 import { execFile } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
-import { dirname, isAbsolute, relative } from 'node:path';
+import { dirname } from 'node:path';
 import { promisify } from 'node:util';
 import { Key, matchesKey, truncateToWidth, wrapTextWithAnsi, type Component, type Focusable, type KeybindingsManager } from '@earendil-works/pi-tui';
 import type { MipmuxConfig } from './config.ts';
 import { addRoot, addWorkspace, applyDraft, createFromFolder, deleteWorkspace, editSelected, openDraft, removeRoot,
   renameSelected, selectedWorkspace, type Draft } from './draft.ts';
-import { abbreviate, expand, resolveExisting, type PathBase, type PathEntry } from './paths.ts';
+import { entryRule, ignoreFileName, ignoreFilePath, isRule, readIgnoreFile, typedRule, writeIgnoreFile, type IgnoreFile } from './ignore-file.ts';
+import { abbreviate, expand, resolveExisting, type PathBase } from './paths.ts';
 import { ListScreen, PathScreen, PromptScreen, type ListRow, type PanelControl, type PanelTheme, type Screen } from './screens.ts';
 import { readStore, StoreError, updateStore } from './store.ts';
 import { duplicateKey, type Clarification, type EnhancementMode, type Merge, type Preference, type Preferences, type SavedWorkspace,
@@ -73,7 +74,6 @@ const enhancementModes: { readonly value: EnhancementMode; readonly description:
   { value: 'fullRewrite', description: 'Rewrites the task into a complete prompt.' },
   { value: 'preserve', description: 'Keeps the task exactly as written.' },
 ];
-const globCharacters = /[*?[\]]/;
 const units = (value: number) => `${value.toLocaleString('en-US')} units`;
 
 function formatClarification(value: Clarification): string {
@@ -96,6 +96,8 @@ export class PanelComponent implements Component, Focusable {
   private baseline: Draft;
   private draft: Draft;
   private readonly control: PanelControl;
+  /** Each root's `.mipmux_ignore` as the panel first read it, or as it last saved it. */
+  private readonly ignoreReads = new Map<string, IgnoreFile>();
   private readonly ctx: PanelContext;
   private readonly host: PanelHost;
   private readonly config: PanelOptions['config'];
@@ -172,6 +174,12 @@ export class PanelComponent implements Component, Focusable {
   private async save(): Promise<void> {
     if (!this.dirty()) { this.control.say('Nothing to save.', 'info'); return; }
     const draft = this.draft, snapshot = this.snapshot;
+    for (const edit of draft.ignoreEdits) {
+      const read = this.ignoreReads.get(edit.root);
+      if (read?.kind !== 'read') throw new Error(`${ignoreFilePath(edit.root)} could not be read, so it was not changed.`);
+      await writeIgnoreFile(edit.root, read.lines, edit.lines);
+      this.ignoreReads.set(edit.root, { kind: 'read', lines: edit.lines });
+    }
     const changed = draft.entries.filter(entry => !snapshot.some(saved => JSON.stringify(saved) === JSON.stringify(entry.workspace)));
     for (const entry of changed) await mkdir(entry.workspace.outputRoot, { recursive: true });
     const result = await updateStore(this.host.storePath, stored => applyDraft(stored, draft, snapshot));
@@ -203,10 +211,10 @@ export class PanelComponent implements Component, Focusable {
     return [{ id: 'output', label: 'Output folder', value: this.show(workspace.outputRoot),
       description: 'Where mipmux writes packets. mipmux never indexes it, and saving creates it if it is missing.',
       activate: () => this.push(this.outputPicker(workspace)) },
-    { id: 'exclusions', label: 'Exclusions', inherited: !workspace.exclusions.length,
-      value: workspace.exclusions.map(item => `${item.root}: ${item.kind === 'prefix' ? item.path : item.pattern}`).join(', ') || 'none',
-      description: 'Paths or patterns under a folder that mipmux leaves out. Enter adds or removes them.',
-      activate: () => this.push(this.exclusionList()) },
+    { id: 'ignore', label: 'Ignore rules', inherited: this.ignoreSummary(workspace) === 'none', value: this.ignoreSummary(workspace),
+      description: `Lines in each root's ${ignoreFileName}, in gitignore syntax: a plain line leaves paths out, and a line starting with ! ` +
+        'brings back a path another ignore file hides. They apply to every workspace and client that uses the folder.',
+      activate: () => this.push(this.ignoreList()) },
     { id: 'rename', label: 'Rename workspace', description: 'A new workspace is named after its first folder; renaming it is optional.',
       activate: () => this.push(new PromptScreen('rename', this.control, workspace.name, 'Sessions that selected the old name select again.', text => {
         const renamed = renameSelected(this.draft, text);
@@ -310,13 +318,15 @@ export class PanelComponent implements Component, Focusable {
     const declared = this.host.state().lastDeclared;
     const rows = (): ListRow[] => {
       const draft = this.draft, select = (selected: string | null) => () => { this.change({ ...this.draft, selected }); this.control.pop(); };
-      const unsaved = declared && !draft.entries.some(entry => duplicateKey(entry.workspace) === duplicateKey({ name: '', ...declared }));
+      const unsaved = declared && !draft.entries.some(entry => duplicateKey(entry.workspace) === duplicateKey(declared));
       return [...draft.entries.map(({ workspace }) => ({ id: `saved:${workspace.name}`, label: workspace.name + (workspace.name === draft.selected ? ' ✓' : ''),
         value: workspace.roots.map(root => this.show(root.absolutePath)).join(', '), activate: select(workspace.name),
         description: 'Enter selects it for this session; del deletes it from your saved workspaces.',
         remove: { label: 'delete', run: () => this.change(deleteWorkspace(this.draft, workspace.name)) } })),
       { id: 'new', label: '+ New workspace from a folder', activate: () => { this.control.pop(); this.push(this.newWorkspacePicker()); } },
       ...(unsaved ? [{ id: 'declared', label: '+ The workspace the agent last used', value: declared.roots.map(root => this.show(root.absolutePath)).join(', '),
+        description: declared.exclusions.length ? 'Saves its folders and output folder; the exclusions the agent sent are not kept, so use ' +
+          'Ignore rules instead.' : 'Saves its folders and output folder.',
         activate: () => { this.change(addWorkspace(this.draft, declared)); this.control.pop(); } }] : []),
       { id: 'none', label: 'None, so the agent chooses', activate: select(null) }];
     };
@@ -328,7 +338,7 @@ export class PanelComponent implements Component, Focusable {
     return new ListScreen(`roots of "${workspace.name}"`, this.control, 'add', () => {
       const current = selectedWorkspace(this.draft)?.roots ?? [];
       return [...current.map(root => ({ id: `root:${root.name}`, label: root.name, value: this.show(root.absolutePath),
-        description: 'Del removes this folder and its exclusions.',
+        description: 'Del removes this folder.',
         remove: { label: 'remove', run: () => current.length > 1 ? this.change(editSelected(this.draft, edited => removeRoot(edited, root.name)))
           : this.control.say('A workspace needs one folder; delete the workspace from the saved workspace list instead.', 'error') } })),
       { id: 'add', label: '+ Add a root folder', activate: () => this.push(this.folderPicker('add a root folder',
@@ -348,7 +358,7 @@ export class PanelComponent implements Component, Focusable {
       apply(folder);
       return null;
     };
-    return new PathScreen(title, this.control, { base: this.base, include: 'folders', start,
+    return new PathScreen(title, this.control, { base: this.base, include: 'folders', negatable: false, start,
       help: `~ is your home folder, and other relative paths start at ${this.show(this.ctx.cwd)}. Matching ignores case. Ctrl+u clears the line.`,
       target: text => { const found = resolveExisting(expand(text, this.base));
         return found.kind === 'folder' ? { label: `use ${this.show(found.path)}`, choose: () => accept(found.path) } : null; },
@@ -357,7 +367,8 @@ export class PanelComponent implements Component, Focusable {
 
   private outputPicker(workspace: SavedWorkspace): PathScreen {
     const apply = (outputRoot: string) => { this.change(editSelected(this.draft, edited => ({ ...edited, outputRoot }))); return null; };
-    return new PathScreen('output folder', this.control, { base: this.base, include: 'folders', start: `${this.show(workspace.outputRoot)}/`,
+    return new PathScreen('output folder', this.control, { base: this.base, include: 'folders', negatable: false,
+      start: `${this.show(workspace.outputRoot)}/`,
       help: 'Packets are saved here. A folder that does not exist yet is created when you save.',
       target: text => { const found = resolveExisting(expand(text, this.base));
         if (found.kind === 'file') return null;
@@ -365,43 +376,60 @@ export class PanelComponent implements Component, Focusable {
       chooseEntry: entry => apply(resolveExisting(entry.path).path) });
   }
 
-  private exclusionList(): ListScreen {
-    return new ListScreen('exclusions', this.control, 'add', () => {
-      const workspace = selectedWorkspace(this.draft), exclusions = workspace?.exclusions ?? [];
-      const remove = (index: number) => () => this.change(editSelected(this.draft, edited => ({ ...edited, exclusions: edited.exclusions.filter((_item, at) => at !== index) })));
-      return [...exclusions.map((item, index) => ({ id: `exclusion:${index}`, label: item.root, value: item.kind === 'prefix' ? item.path : item.pattern,
-        description: 'Del removes this exclusion.', remove: { label: 'remove', run: remove(index) } })),
-      { id: 'add', label: '+ Add an exclusion', activate: () => this.addExclusion(workspace?.roots ?? []) }];
-    }).select('add');
+  /** The lines of a root's `.mipmux_ignore`: the draft's edit, else the file as the panel first read it. */
+  private ignoreFile(root: string): IgnoreFile {
+    const edit = this.draft.ignoreEdits.find(item => item.root === root);
+    if (edit) return { kind: 'read', lines: edit.lines };
+    let read = this.ignoreReads.get(root);
+    if (!read) { read = readIgnoreFile(root); this.ignoreReads.set(root, read); }
+    return read;
   }
 
-  private addExclusion(roots: Workspace['roots']): void {
-    const [only] = roots;
-    if (roots.length === 1 && only) { this.push(this.exclusionPicker(only)); return; }
-    this.choose('folder to exclude from', roots.map(root => ({ id: root.name, label: root.name, description: this.show(root.absolutePath),
-      choose: () => this.push(this.exclusionPicker(root)) })), undefined);
+  /** Records new lines for a root's file; lines equal to the file as read leave nothing to save. */
+  private setIgnoreLines(root: string, lines: readonly string[]): void {
+    const read = this.ignoreReads.get(root), others = this.draft.ignoreEdits.filter(item => item.root !== root);
+    const unchanged = read?.kind === 'read' && JSON.stringify(read.lines) === JSON.stringify(lines);
+    this.change({ ...this.draft, ignoreEdits: unchanged ? others : [...others, { root, lines }] });
   }
 
-  private exclusionPicker(root: Workspace['roots'][number]): PathScreen {
+  private ignoreSummary(workspace: SavedWorkspace): string {
+    return workspace.roots.flatMap(root => {
+      const file = this.ignoreFile(root.absolutePath);
+      return file.kind === 'unreadable' ? [`${root.name}: cannot read`] : file.lines.filter(isRule).map(line => `${root.name}: ${line}`);
+    }).join(', ') || 'none';
+  }
+
+  private ignoreList(): ListScreen {
+    return new ListScreen('ignore rules', this.control, 'add', () => (selectedWorkspace(this.draft)?.roots ?? []).flatMap(root => {
+      const path = ignoreFilePath(root.absolutePath), file = this.ignoreFile(root.absolutePath), section = `${root.name}  ${this.show(path)}`;
+      if (file.kind === 'unreadable') return [{ id: `unreadable:${root.name}`, section, label: 'cannot read the file', description: file.problem }];
+      const rules = file.lines.flatMap((line, index) => isRule(line) ? [{ line, index }] : []);
+      const remove = (index: number) => () => this.setIgnoreLines(root.absolutePath, file.lines.filter((_line, at) => at !== index));
+      const rows: ListRow[] = rules.map(({ line, index }) => ({ id: `rule:${root.name}:${index}`, label: line,
+        description: line.startsWith('!') ? 'Brings back paths that another ignore file hides. Del removes the line.' : 'Leaves paths out. Del removes the line.',
+        remove: { label: 'remove', run: remove(index) } }));
+      rows.push({ id: `add:${root.name}`, label: `+ Add a rule to ${root.name}`, activate: () => this.push(this.rulePicker(root, file.lines)) });
+      const [first, ...rest] = rows;
+      return first ? [{ ...first, section }, ...rest] : [];
+    }));
+  }
+
+  private rulePicker(root: Workspace['roots'][number], lines: readonly string[]): PathScreen {
     const base = { base: root.absolutePath, home: this.host.home };
-    const add = (exclusion: Workspace['exclusions'][number]) => {
-      const workspace = selectedWorkspace(this.draft);
-      if (workspace?.exclusions.some(item => JSON.stringify(item) === JSON.stringify(exclusion))) return 'That exclusion is already listed.';
-      this.change(editSelected(this.draft, edited => ({ ...edited, exclusions: [...edited.exclusions, exclusion] })));
+    const add = (line: string) => {
+      if (lines.includes(line)) return 'That rule is already in the file.';
+      this.setIgnoreLines(root.absolutePath, [...lines, line]);
       return null;
     };
-    const inside = (path: string) => { const under = relative(root.absolutePath, path); return under && !under.startsWith('..') && !isAbsolute(under) ? under : null; };
-    const prefix = (path: string) => { const under = inside(path); return under === null ? `That path is outside ${this.show(root.absolutePath)}.` : add({ kind: 'prefix', root: root.name, path: under }); };
-    return new PathScreen(`exclude from ${root.name}`, this.control, { base, include: 'all', start: '',
-      help: `A path inside ${this.show(root.absolutePath)}, relative to it, or a pattern such as **/*.log.`,
+    return new PathScreen(`rule for ${root.name}`, this.control, { base, include: 'all', start: '', negatable: true,
+      help: `A path in ${this.show(root.absolutePath)}, relative to it, or a pattern such as *.log, written to ${ignoreFileName} ` +
+        'there. Start with ! to bring back a path that another ignore file hides; nothing brings back what .gitignore hides.',
       target: text => {
-        if (text.startsWith('!')) return { label: 'a leading ! cannot re-include a path here', choose: () => 'Exclusions only leave paths ' +
-          'out. A ! line in the root\'s .repo_ignore re-includes a path that Git\'s exclude files hide.' };
-        if (globCharacters.test(text)) return { label: `exclude paths matching ${text}`, choose: () => add({ kind: 'glob', root: root.name, pattern: text }) };
-        const found = resolveExisting(expand(text, base)), under = inside(found.path);
-        return under === null ? null : { label: `exclude ${under}`, choose: () => prefix(found.path) };
+        const choice = typedRule(text, base);
+        return choice.kind === 'refused' ? { label: choice.reason, choose: () => choice.reason }
+          : { label: `${choice.line.startsWith('!') ? 'bring back' : 'leave out'}: ${choice.line}`, choose: () => add(choice.line) };
       },
-      chooseEntry: (entry: PathEntry) => prefix(resolveExisting(entry.path).path) });
+      chooseEntry: (entry, negated) => add(entryRule(root.absolutePath, entry, negated)) });
   }
 }
 

@@ -3,22 +3,18 @@ import { test } from 'node:test';
 import { duplicateKey, mergeDuplicates, type SavedWorkspace } from '../src/state.ts';
 
 const app: SavedWorkspace = { name: 'app', roots: [{ name: 'app', absolutePath: '/repos/app' }, { name: 'lib', absolutePath: '/repos/lib' }],
-  outputRoot: '/repos/app/prompt-exports', exclusions: [{ kind: 'prefix', root: 'lib', path: 'vendor' }, { kind: 'glob', root: 'app', pattern: '*.log' }],
-  model: { value: 'anthropic/claude-haiku-4-5', pinned: false } };
+  outputRoot: '/repos/app/prompt-exports', model: { value: 'anthropic/claude-haiku-4-5', pinned: false } };
 
-test('the duplicate key ignores root order, root names and preferences, and maps exclusions by root path', () => {
+test('the duplicate key ignores root order, root names and preferences', () => {
   const renamed: SavedWorkspace = { name: 'other', roots: [{ name: 'library', absolutePath: '/repos/lib' }, { name: 'main', absolutePath: '/repos/app' }],
-    outputRoot: '/repos/app/prompt-exports', exclusions: [{ kind: 'glob', root: 'main', pattern: '*.log' }, { kind: 'prefix', root: 'library', path: 'vendor' }],
-    thinking: { value: 'high', pinned: true } };
+    outputRoot: '/repos/app/prompt-exports', thinking: { value: 'high', pinned: true } };
   assert.equal(duplicateKey(renamed), duplicateKey(app));
-  // The same exclusion under another root is a different workspace.
-  assert.notEqual(duplicateKey({ ...renamed, exclusions: [{ kind: 'glob', root: 'library', pattern: '*.log' },
-    { kind: 'prefix', root: 'library', path: 'vendor' }] }), duplicateKey(app));
+  assert.notEqual(duplicateKey({ ...app, roots: app.roots.slice(0, 1) }), duplicateKey(app));
   assert.notEqual(duplicateKey({ ...app, outputRoot: '/repos/app/exports' }), duplicateKey(app));
 });
 
 test('merging keeps the earlier entry with its name and model, and reports what the removed entries carried', () => {
-  const docs: SavedWorkspace = { name: 'docs', roots: [{ name: 'docs', absolutePath: '/repos/docs' }], outputRoot: '/repos/docs/out', exclusions: [] };
+  const docs: SavedWorkspace = { name: 'docs', roots: [{ name: 'docs', absolutePath: '/repos/docs' }], outputRoot: '/repos/docs/out' };
   const later: SavedWorkspace = { ...app, name: 'app-copy', roots: [...app.roots].reverse(), model: { value: 'openai/gpt-x', pinned: true },
     thinking: { value: 'low', pinned: false } };
   const { model: _model, ...plain } = { ...app, name: 'app-plain' };

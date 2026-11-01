@@ -146,13 +146,17 @@ export interface PathTarget { readonly label: string; choose(): Promise<string |
 export interface PathPickerOptions {
   readonly base: PathBase;
   readonly include: 'folders' | 'all';
+  /** Whether a leading `!` marks the typed path; completion then works on the text after it. */
+  readonly negatable: boolean;
   readonly start: string;
   readonly help: string;
   /** The row for the typed text, or null when it names nothing this picker accepts. */
   target(text: string): PathTarget | null;
-  /** Chooses a completion; returns a problem to show, or null when it accepted the entry. */
-  chooseEntry(entry: PathEntry): Promise<string | null> | string | null;
+  /** Chooses a completion, typed after a leading `!` when `negated`; returns a problem to show, or null when it accepted it. */
+  chooseEntry(entry: PathEntry, negated: boolean): Promise<string | null> | string | null;
 }
+/** Typed text split into its leading `!`, when the picker accepts one, and the path after it. */
+interface TypedText { readonly marker: string; readonly path: string }
 type PathRow = { readonly kind: 'target'; readonly target: PathTarget } | { readonly kind: 'entry'; readonly entry: PathEntry };
 
 /**
@@ -177,8 +181,13 @@ export class PathScreen implements Screen {
   get focused(): boolean { return this.input.focused; }
   set focused(value: boolean) { this.input.focused = value; }
 
+  private typed(): TypedText {
+    const text = this.input.getValue(), marker = this.options.negatable && text.startsWith('!') ? '!' : '';
+    return { marker, path: text.slice(marker.length) };
+  }
+
   private refresh(): void {
-    const text = this.input.getValue(), { folder, partial } = split(text, this.options.base);
+    const text = this.input.getValue(), { folder, partial } = split(this.typed().path, this.options.base);
     const target = text ? this.options.target(text) : null;
     const entries = candidates(folder, partial, this.options.include).map(entry => ({ kind: 'entry' as const, entry }));
     this.rows = target ? [{ kind: 'target', target }, ...entries] : entries;
@@ -187,8 +196,8 @@ export class PathScreen implements Screen {
 
   /** Replaces the partly typed name with `entry`, keeping how the user wrote the folders before it. */
   private complete(entry: PathEntry): void {
-    const text = this.input.getValue(), prefix = text === '~' ? '~/' : text.slice(0, text.lastIndexOf('/') + 1);
-    setText(this.input, prefix + entry.name + (entry.folder ? '/' : ''));
+    const { marker, path } = this.typed(), prefix = path === '~' ? '~/' : path.slice(0, path.lastIndexOf('/') + 1);
+    setText(this.input, marker + prefix + entry.name + (entry.folder ? '/' : ''));
     this.refresh();
   }
 
@@ -222,8 +231,8 @@ export class PathScreen implements Screen {
 
   /** Removes the last folder from the typed path. */
   private up(): void {
-    const text = this.input.getValue().replace(/\/+$/, '');
-    setText(this.input, text.slice(0, text.lastIndexOf('/') + 1));
+    const { marker, path } = this.typed(), trimmed = path.replace(/\/+$/, '');
+    setText(this.input, marker + trimmed.slice(0, trimmed.lastIndexOf('/') + 1));
     this.refresh();
   }
 
@@ -237,7 +246,7 @@ export class PathScreen implements Screen {
   private async choose(): Promise<void> {
     const row = this.rows[this.index];
     if (!row) { this.panel.say('Type a path first.', 'error'); return; }
-    const problem = await (row.kind === 'target' ? row.target.choose() : this.options.chooseEntry(row.entry));
+    const problem = await (row.kind === 'target' ? row.target.choose() : this.options.chooseEntry(row.entry, this.typed().marker === '!'));
     if (problem === null) this.panel.pop();
     else this.panel.say(problem, 'error');
   }

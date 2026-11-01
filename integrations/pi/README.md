@@ -30,9 +30,9 @@ Nothing changes until you press Ctrl+S. The footer shows `(unsaved)` while chang
 
 ## Choose a workspace
 
-Every build and prepare call names a workspace: the source folders mipmux indexes (its roots), the output folder where mipmux saves packets, and any excluded paths. The panel saves workspaces under names so you can select one per session.
+Every build and prepare call names a workspace: the source folders mipmux indexes (its roots) and the output folder where mipmux saves packets. The panel saves workspaces under names so you can select one per session.
 
-To create a workspace, press Enter on **Roots** and choose a folder. The workspace is named after that folder, or `name (1)` if the name is taken, and its output folder is `prompt-exports` inside it. Saving creates the output folder if it does not exist. Edit the other rows to add roots, change the output folder or add exclusions. **Rename workspace** changes the name; you never have to.
+To create a workspace, press Enter on **Roots** and choose a folder. The workspace is named after that folder, or `name (1)` if the name is taken, and its output folder is `prompt-exports` inside it. Saving creates the output folder if it does not exist. Edit the other rows to add roots, change the output folder or edit the ignore rules. **Rename workspace** changes the name; you never have to.
 
 Enter on **Selected workspace** opens the list of saved workspaces. Select one for this session, delete one with Delete, start a new one from a folder, save the workspace the agent last declared in this session, or choose none.
 
@@ -40,7 +40,7 @@ While a workspace is selected, the agent receives its exact declaration in the s
 
 ## Type paths
 
-Root, output folder and exclusion rows open a path field with completion. Type a path as in a shell: `~` is your home folder, and a relative path starts at Pi's current directory, or at the root for an exclusion. Root and output fields open with a suggested folder; Ctrl+U clears it.
+Root, output folder and ignore rule rows open a path field with completion. Type a path as in a shell: `~` is your home folder, and a relative path starts at Pi's current directory, or at the root for an ignore rule. Root and output fields open with a suggested folder; Ctrl+U clears it.
 
 Below the field, the first row is the path you typed, when it names something you can choose. The rows after it are the entries of the folder you are typing in that match the name typed so far, best match first. Matching ignores case, so `~/proj` finds `~/Projects`.
 
@@ -51,7 +51,15 @@ Below the field, the first row is the path you typed, when it names something yo
 | ↑ ↓ | Highlight another row |
 | Enter | Choose the highlighted row |
 
-While a name is partly typed, the best match is highlighted, so typing a few letters and pressing Enter chooses it. An exclusion is a path inside its root or a pattern such as `**/*.log`. Exclusions only leave paths out; to bring back a path that Git's exclude files hide, add a `!` line to `.repo_ignore` in that root.
+While a name is partly typed, the best match is highlighted, so typing a few letters and pressing Enter chooses it.
+
+## Leave paths out or bring them back
+
+**Ignore rules** edits the `.mipmux_ignore` file at each root of the selected workspace. The file uses gitignore syntax, and mipmux reads it in every folder, so you can also edit it by hand or add one in a subfolder. A plain line leaves paths out. A line starting with `!` brings back a path that another ignore file hides, such as `.repo_ignore`, `.cursorignore`, mipmux's built-in patterns or Git's exclude files. Nothing brings back a path that `.gitignore` hides.
+
+In the rule field, type a path inside the root, relative to it, or a pattern such as `*.log`, and put `!` in front to bring the path back. Tab completes the path after the `!`. A chosen path becomes a rule anchored to the root, such as `/node_modules/` or `!docs/investigations/`. Delete removes a highlighted rule. Ctrl+S writes the files you changed, keeping their comments, and refuses to overwrite a file that someone edited while the panel was open.
+
+The rules belong to the folder, not to the saved workspace: every workspace and every client that uses the folder applies them, and RepoPrompt CE does not read them. Commit the file to share the rules, or add `.mipmux_ignore` to your global gitignore to keep it out of Git.
 
 ## Set preferences
 
@@ -71,7 +79,7 @@ Session choices are recorded in the session itself: resuming or forking a sessio
 
 ## Storage
 
-Saved workspaces are stored in `mipmux.json` in Pi's agent directory (`~/.pi/agent`, or `$PI_CODING_AGENT_DIR`) and shared by all your sessions. A session keeps only the name it selected, so an edit reaches every session on its next call. Saving applies only the workspaces you added, changed or deleted, so changes another session saved while the panel was open remain. Two saved workspaces with the same roots, output folder and exclusions, in any order and under any names, are duplicates: saving keeps the earlier one, with its name and model, and the panel says which it removed.
+Saved workspaces are stored in `mipmux.json` in Pi's agent directory (`~/.pi/agent`, or `$PI_CODING_AGENT_DIR`) and shared by all your sessions. A session keeps only the name it selected, so an edit reaches every session on its next call. Saving applies only the workspaces you added, changed or deleted, so changes another session saved while the panel was open remain. Two saved workspaces with the same root folders and output folder, in any order and under any names, are duplicates: saving keeps the earlier one, with its name and model, and the panel says which it removed.
 
 ## Limits
 

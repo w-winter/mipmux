@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { decide, effectiveValue, emptyPreferences, type CallArgs, type Preferences, type SavedWorkspace, type Selection } from '../src/state.ts';
 
-const workspace: SavedWorkspace = { name: 'app', roots: [{ name: 'app', absolutePath: '/repos/app' }], outputRoot: '/repos/app/prompt-exports',
-  exclusions: [] };
+const workspace: SavedWorkspace = { name: 'app', roots: [{ name: 'app', absolutePath: '/repos/app' }], outputRoot: '/repos/app/prompt-exports' };
 const declaration = { roots: workspace.roots, outputRoot: workspace.outputRoot, exclusions: [] };
 const none: Selection = { kind: 'none' };
 const found: Selection = { kind: 'found', workspace };
@@ -97,7 +96,7 @@ test('with a workspace selected, a call naming any other workspace is blocked, a
     assert.match(decision.reason, /"app"/); assert.match(decision.reason, /Change the selection with \/mipmux\./);
     assert(decision.reason.includes(JSON.stringify(declaration)), decision.reason);
   }
-  // An omitted exclusion list is the empty list the saved workspace records.
+  // A saved workspace declares no exclusions, so an omitted list matches it.
   const omitted = build({ workspace: { roots: declaration.roots, outputRoot: declaration.outputRoot } });
   assert.equal(decide('context_prepare', omitted, found, emptyPreferences, true).kind, 'allowed');
   const missing = decide('context_builder', build(), { kind: 'missing', name: 'gone', saved: ['app', 'docs'] }, emptyPreferences, true);

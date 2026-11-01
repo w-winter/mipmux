@@ -27,18 +27,18 @@ async function setup(saved: SavedWorkspace[] = []) {
   await writeFile(storePath, JSON.stringify({ workspaces: saved }));
   const appended: SessionState[] = [], notices: string[] = [];
   const mipmux = createMipmux({ storePath, home, appendEntry: state => { appended.push(state); }, readConfig: async () => config });
-  let open: (component: PanelComponent) => void = () => {};
-  const opened = new Promise<PanelComponent>(resolve => { open = resolve; });
+  const components: PanelComponent[] = [];
   const ctx: MipmuxContext = { hasUI: true, mode: 'tui', cwd, sessionManager: { getBranch: () => [] },
     ui: { setStatus: () => {}, notify: message => { notices.push(message); },
-      custom: factory => new Promise(resolve => { open(factory({ requestRender: () => {} }, plain, getKeybindings(), () => resolve())); }) } };
-  return { home, storePath, appended, notices, mipmux, ctx, opened };
+      custom: factory => new Promise(resolve => { components.push(factory({ requestRender: () => {} }, plain, getKeybindings(), () => resolve())); }) } };
+  return { home, storePath, appended, notices, mipmux, ctx, components };
 }
 
 /** Opens /mipmux and returns a driver that presses keys in order, waiting for each to take effect. */
 async function panel(fixture: Awaited<ReturnType<typeof setup>>) {
-  const closed = fixture.mipmux.command('', fixture.ctx);
-  const component = await fixture.opened;
+  const count = fixture.components.length, closed = fixture.mipmux.command('', fixture.ctx);
+  while (fixture.components.length === count) await new Promise(resolve => setTimeout(resolve, 5));
+  const component = fixture.components[count] ?? assert.fail('the panel did not open');
   const press = async (...keys: string[]) => { for (const data of keys) await component.handleInput(data); };
   /** Moves the cursor down to the first row whose text contains `label`. */
   const focus = async (label: string) => {
@@ -55,7 +55,7 @@ const savedStore = async (path: string): Promise<SavedWorkspace[]> => JSON.parse
 
 test('a folder typed with ~ and Tab completion becomes a saved workspace named after it, and ctrl+s applies the choices to the next call', async () => {
   const taken: SavedWorkspace = { name: 'alpha-app', roots: [{ name: 'other', absolutePath: '/elsewhere/other' }],
-    outputRoot: '/elsewhere/other/prompt-exports', exclusions: [] };
+    outputRoot: '/elsewhere/other/prompt-exports' };
   const fixture = await setup([taken]);
   const { press, focus, closed, screen } = await panel(fixture);
   await focus('Roots');
@@ -75,7 +75,7 @@ test('a folder typed with ~ and Tab completion becomes a saved workspace named a
 
   const project = join(fixture.home, 'Projects');
   const created: SavedWorkspace = { name: 'alpha-app (1)', roots: [{ name: 'alpha-app', absolutePath: join(project, 'alpha-app') },
-    { name: 'beta', absolutePath: join(project, 'beta') }], outputRoot: join(project, 'alpha-app', 'prompt-exports'), exclusions: [] };
+    { name: 'beta', absolutePath: join(project, 'beta') }], outputRoot: join(project, 'alpha-app', 'prompt-exports') };
   assert.deepEqual(await savedStore(fixture.storePath), [taken, created]);
   assert((await stat(created.outputRoot)).isDirectory());
   const state = { selected: 'alpha-app (1)', preferences: { budgetUnits: { value: 150000, pinned: true } }, lastDeclared: null };
@@ -88,20 +88,21 @@ test('a folder typed with ~ and Tab completion becomes a saved workspace named a
   assert.equal(args.budgetUnits, 150000);
 });
 
-test('renaming and exclusions are saved with ctrl+s, and escape discards what was not saved', async () => {
+test('ignore rules and a rename are saved with ctrl+s, escape discards the rest, and a hand edit is never overwritten', async () => {
   const fixture = await setup();
-  const app = join(fixture.home, 'Projects', 'alpha-app');
-  const saved: SavedWorkspace = { name: 'alpha-app', roots: [{ name: 'alpha-app', absolutePath: app }], outputRoot: join(app, 'prompt-exports'),
-    exclusions: [] };
+  const app = join(fixture.home, 'Projects', 'alpha-app'), ignoreFile = join(app, '.mipmux_ignore');
+  await mkdir(join(app, 'docs', 'investigations'), { recursive: true });
+  await writeFile(ignoreFile, '# notes\n*.tmp\n');
+  const saved: SavedWorkspace = { name: 'alpha-app', roots: [{ name: 'alpha-app', absolutePath: app }], outputRoot: join(app, 'prompt-exports') };
   await writeFile(fixture.storePath, JSON.stringify({ workspaces: [saved] }));
   await fixture.mipmux.command('alpha-app', fixture.ctx);
   const first = await panel(fixture);
-  await first.focus('Exclusions');
-  await first.press(key.enter, key.enter, ...'node_m', key.tab, key.enter);
+  await first.focus('Ignore rules');
+  await first.press(key.enter, key.delete, key.enter, ...'node_m', key.tab, key.enter);
+  await first.press(key.enter, ...'!docs/inv', key.tab, key.enter);
   await first.press(key.enter, ...'**/*.log', key.enter);
-  // A leading ! re-includes only in ignore files, so the field refuses it rather than saving a prefix that matches nothing.
-  await first.press(key.enter, ...'!docs', key.enter);
-  assert.match(first.screen(), /\.repo_ignore/);
+  await first.press(key.enter, ...'#x', key.enter);
+  assert.match(first.screen(), /comment/);
   await first.press(key.escape, key.escape);
   await first.focus('Rename');
   await first.press(key.enter, key.clearLine, ...'frontend', key.enter, key.legacySave);
@@ -109,8 +110,20 @@ test('renaming and exclusions are saved with ctrl+s, and escape discards what wa
   await first.press(key.enter, key.clearLine, ...'5000', key.enter, key.escape);
   await first.closed;
 
-  assert.deepEqual(await savedStore(fixture.storePath), [{ ...saved, name: 'frontend', exclusions: [
-    { kind: 'prefix', root: 'alpha-app', path: 'node_modules' }, { kind: 'glob', root: 'alpha-app', pattern: '**/*.log' }] }]);
+  assert.equal(await readFile(ignoreFile, 'utf8'), '# notes\n/node_modules/\n!docs/investigations/\n**/*.log\n');
+  assert.deepEqual(await savedStore(fixture.storePath), [{ ...saved, name: 'frontend' }]);
   assert.deepEqual(fixture.mipmux.state(), { selected: 'frontend', preferences: {}, lastDeclared: null });
   assert.match(fixture.notices.at(-1) ?? '', /discarded/);
+
+  const second = await panel(fixture);
+  await second.focus('Ignore rules');
+  await second.press(key.enter);
+  await second.focus('+ Add a rule');
+  await second.press(key.enter, ...'notes.md', key.enter);
+  await writeFile(ignoreFile, 'hand\n');
+  await second.press(key.save);
+  assert.match(second.screen(), /changed\s+while the panel was open/);
+  await second.press(key.escape, key.escape);
+  await second.closed;
+  assert.equal(await readFile(ignoreFile, 'utf8'), 'hand\n');
 });

@@ -38,16 +38,13 @@ export async function readStore(path: string): Promise<SavedWorkspace[]> {
   return value.workspaces;
 }
 
-/** Workspace names are unique, root names are unique within a workspace, and every exclusion names one of its roots. */
+/** Workspace names are unique, and root names are unique within a workspace. */
 function checkNames(path: string, workspaces: readonly SavedWorkspace[]): void {
   const names = new Set<string>();
   for (const workspace of workspaces) {
     if (names.has(workspace.name)) throw invalid(path, `"${workspace.name}" is saved twice`);
     names.add(workspace.name);
-    const roots = new Set(workspace.roots.map(root => root.name));
-    if (roots.size !== workspace.roots.length) throw invalid(path, `"${workspace.name}" names a root twice`);
-    const unknown = workspace.exclusions.find(exclusion => !roots.has(exclusion.root));
-    if (unknown) throw invalid(path, `"${workspace.name}" excludes a path under root "${unknown.root}", which it does not declare`);
+    if (new Set(workspace.roots.map(root => root.name)).size !== workspace.roots.length) throw invalid(path, `"${workspace.name}" names a root twice`);
   }
 }
 

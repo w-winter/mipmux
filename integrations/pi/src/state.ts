@@ -29,9 +29,12 @@ const Exclusion = Type.Union([
 /** The declaration a build or prepare call carries: named roots, the output folder and exclusions tied to roots. */
 export const Workspace = Type.Object({ roots: Type.Array(Root, { minItems: 1 }), outputRoot: absolutePath, exclusions: Type.Array(Exclusion) }, closed);
 export type Workspace = Static<typeof Workspace>;
-/** A workspace the user saved under a name, with an optional discovery model and thinking level. */
-export const SavedWorkspace = Type.Object({ name: Type.String({ minLength: 1 }), ...Workspace.properties,
-  model: Type.Optional(preference(ModelReference)), thinking: Type.Optional(preference(ThinkingLevel)) }, closed);
+/**
+ * A workspace the user saved under a name, with an optional discovery model and thinking level. It declares no exclusions:
+ * the user leaves paths out with each root's `.mipmux_ignore`, which every client and workspace using the folder applies.
+ */
+export const SavedWorkspace = Type.Object({ name: Type.String({ minLength: 1 }), roots: Workspace.properties.roots,
+  outputRoot: Workspace.properties.outputRoot, model: Type.Optional(preference(ModelReference)), thinking: Type.Optional(preference(ThinkingLevel)) }, closed);
 export type SavedWorkspace = Static<typeof SavedWorkspace>;
 export const Preferences = Type.Object({ budgetUnits: Type.Optional(preference(Type.Integer({ minimum: 1 }))),
   enhancementMode: Type.Optional(preference(EnhancementMode)), clarification: Type.Optional(preference(Clarification)),
@@ -86,12 +89,13 @@ export function declaredWorkspace(args: CallArgs): Workspace | null {
 
 /** Whether two declarations are the same workspace to the server, whose key counts root order, root names and exclusion order. */
 export function sameWorkspace(declared: Workspace, other: Workspace | null): boolean {
-  return other !== null && canonical(declaration(declared)) === canonical(declaration(other));
+  const key = (workspace: Workspace) => canonical({ roots: workspace.roots, outputRoot: workspace.outputRoot, exclusions: workspace.exclusions });
+  return other !== null && key(declared) === key(other);
 }
 
-/** Exactly what the server keys a workspace by: root order, root names and exclusion order all count. */
-export function declaration(workspace: Workspace): Workspace {
-  return { roots: workspace.roots, outputRoot: workspace.outputRoot, exclusions: workspace.exclusions };
+/** The declaration a saved workspace stands for, exactly as the agent must send it. */
+export function declaration(workspace: SavedWorkspace): Workspace {
+  return { roots: workspace.roots, outputRoot: workspace.outputRoot, exclusions: [] };
 }
 
 /** JSON with object keys sorted, so equal values serialize equally whatever their key order. */
@@ -129,7 +133,7 @@ export function decide(tool: Tool, args: CallArgs, selection: Selection, prefere
   const workspace = selection.kind === 'found' ? selection.workspace : null;
   if (workspace) {
     const declared = declaredWorkspace(args);
-    if (!declared || !sameWorkspace(declared, workspace)) return { kind: 'blocked', reason: mismatchReason(workspace) };
+    if (!declared || !sameWorkspace(declared, declaration(workspace))) return { kind: 'blocked', reason: mismatchReason(workspace) };
   }
   const before = canonical(args);
   if (tool === 'context_prepare') {
@@ -172,11 +176,9 @@ function applyDiscovery(args: BuildFields, preferences: Preferences, workspace: 
   else delete args.discovery;
 }
 
-/** Workspaces are duplicates when their root paths, output folder and exclusions match, whatever their order, root names and preferences. */
-export function duplicateKey(workspace: SavedWorkspace): string {
-  const path = new Map(workspace.roots.map(root => [root.name, root.absolutePath]));
-  const exclusions = workspace.exclusions.map(exclusion => canonical({ ...exclusion, root: path.get(exclusion.root) })).sort();
-  return canonical({ roots: workspace.roots.map(root => root.absolutePath).sort(), outputRoot: workspace.outputRoot, exclusions });
+/** Workspaces are duplicates when their root paths and output folder match, whatever their root order, root names and preferences. */
+export function duplicateKey(workspace: Pick<SavedWorkspace, 'roots' | 'outputRoot'>): string {
+  return canonical({ roots: workspace.roots.map(root => root.absolutePath).sort(), outputRoot: workspace.outputRoot });
 }
 
 /** A saved workspace that a merge removed, with the preferences it carried. */

@@ -1,21 +1,26 @@
 import { basename } from 'node:path';
-import { declaration, type Preferences, type SavedWorkspace, type SessionState, type Workspace } from './state.ts';
+import { type Preferences, type SavedWorkspace, type SessionState, type Workspace } from './state.ts';
 
 /*
  * The panel's unsaved changes. The panel edits a draft and writes it only on ctrl+s; closing discards it. A save applies
- * only the saved workspaces the panel added, changed or deleted, so changes another session saved meanwhile survive.
+ * only the saved workspaces the panel added, changed or deleted, so changes another session saved meanwhile survive, and
+ * writes only the `.mipmux_ignore` files the panel changed.
  */
 /** A saved workspace in the draft; `origin` is its name in the file when the panel read it, or null for a new one. */
 export interface DraftEntry { readonly origin: string | null; readonly workspace: SavedWorkspace }
+/** The complete new lines of one root's `.mipmux_ignore`. */
+export interface IgnoreEdit { readonly root: string; readonly lines: readonly string[] }
 export interface Draft {
   readonly entries: readonly DraftEntry[];
   readonly selected: string | null;
   readonly preferences: Preferences;
+  readonly ignoreEdits: readonly IgnoreEdit[];
 }
 const rootNamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
 export function openDraft(saved: readonly SavedWorkspace[], state: SessionState): Draft {
-  return { entries: saved.map(workspace => ({ origin: workspace.name, workspace })), selected: state.selected, preferences: state.preferences };
+  return { entries: saved.map(workspace => ({ origin: workspace.name, workspace })), selected: state.selected, preferences: state.preferences,
+    ignoreEdits: [] };
 }
 
 export function selectedWorkspace(draft: Draft): SavedWorkspace | null {
@@ -38,16 +43,17 @@ function rootName(path: string, roots: Workspace['roots']): string {
   return name;
 }
 
-/** Adds `workspace`, such as one the agent declared, under a name taken from its first root, and selects it. */
-export function addWorkspace(draft: Draft, workspace: Workspace): Draft {
+/** Adds the roots and output folder of `workspace`, such as one the agent declared, under a name taken from its first root, and selects it. */
+export function addWorkspace(draft: Draft, workspace: Pick<Workspace, 'roots' | 'outputRoot'>): Draft {
   const first = workspace.roots[0]?.absolutePath ?? 'workspace';
   const name = uniqueName(basename(first), draft.entries.map(entry => entry.workspace.name));
-  return { ...draft, entries: [...draft.entries, { origin: null, workspace: { name, ...declaration(workspace) } }], selected: name };
+  const added: SavedWorkspace = { name, roots: workspace.roots, outputRoot: workspace.outputRoot };
+  return { ...draft, entries: [...draft.entries, { origin: null, workspace: added }], selected: name };
 }
 
 /** A new saved workspace with one root, `<root>/prompt-exports` as its output folder, named after the root and selected. */
 export function createFromFolder(draft: Draft, folder: string): Draft {
-  return addWorkspace(draft, { roots: [{ name: rootName(folder, []), absolutePath: folder }], outputRoot: `${folder}/prompt-exports`, exclusions: [] });
+  return addWorkspace(draft, { roots: [{ name: rootName(folder, []), absolutePath: folder }], outputRoot: `${folder}/prompt-exports` });
 }
 
 /** Replaces the selected saved workspace with `change(workspace)`. */
@@ -59,9 +65,8 @@ export function addRoot(workspace: SavedWorkspace, folder: string): SavedWorkspa
   return { ...workspace, roots: [...workspace.roots, { name: rootName(folder, workspace.roots), absolutePath: folder }] };
 }
 
-/** Removes a root and the exclusions under it. */
 export function removeRoot(workspace: SavedWorkspace, name: string): SavedWorkspace {
-  return { ...workspace, roots: workspace.roots.filter(root => root.name !== name), exclusions: workspace.exclusions.filter(item => item.root !== name) };
+  return { ...workspace, roots: workspace.roots.filter(root => root.name !== name) };
 }
 
 /** Renames the selected saved workspace; fails with a reason when the name is empty or taken. */

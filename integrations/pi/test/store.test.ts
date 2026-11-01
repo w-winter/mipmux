@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { readStore, StoreError, updateStore } from '../src/store.ts';
 import type { SavedWorkspace } from '../src/state.ts';
 
-const app: SavedWorkspace = { name: 'app', roots: [{ name: 'app', absolutePath: '/repos/app' }], outputRoot: '/repos/app/prompt-exports', exclusions: [] };
+const app: SavedWorkspace = { name: 'app', roots: [{ name: 'app', absolutePath: '/repos/app' }], outputRoot: '/repos/app/prompt-exports' };
 
 test('a missing file is an empty list, and an invalid file fails with its path and first problem', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'pi-mipmux-store-')), path = join(directory, 'mipmux.json');
@@ -15,7 +15,7 @@ test('a missing file is an empty list, and an invalid file fails with its path a
     ['{"workspaces": [', /not valid JSON/],
     [JSON.stringify({ workspaces: [{ ...app, outputRoot: 'relative' }] }), /\/workspaces\/0\/outputRoot/],
     [JSON.stringify({ workspaces: [app, { ...app, outputRoot: '/other' }] }), /"app" is saved twice/],
-    [JSON.stringify({ workspaces: [{ ...app, exclusions: [{ kind: 'prefix', root: 'missing', path: 'x' }] }] }), /root "missing"/],
+    [JSON.stringify({ workspaces: [{ ...app, exclusions: [] }] }), /\/workspaces\/0 must not have additional properties/],
   ] as const) {
     await writeFile(path, content);
     await assert.rejects(readStore(path), error => error instanceof StoreError && error.message.includes(path) && problem.test(error.message));
