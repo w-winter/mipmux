@@ -10,7 +10,7 @@ mipmux reads whole source trees and, when discovery is configured, holds model c
 
 ### Reads
 
-- Files under the folders a caller declares, except files hidden by ignore rules: `.gitignore`, `.repo_ignore`, `.cursorignore`, Git's `info/exclude`, the excludes file your Git configuration names, and mipmux's global patterns. A caller can still read an ignored file inside a declared folder by naming its exact path.
+- Files under the folders a caller declares, except files hidden by ignore rules: `.gitignore`, `.repo_ignore`, `.cursorignore`, `.mipmux_ignore`, Git's `info/exclude`, the excludes file your Git configuration names, and mipmux's global patterns. A caller can still read an ignored file inside a declared folder by naming its exact path.
 - Never as source: Git's administration folders, `.env` files, paths listed in `credentialPaths`, mipmux's own configuration, model and credential files, its cache, and the output folder.
 - Its configuration file (`~/.config/mipmux/config.json` unless `--config` names another), the discovery prompt template, the discovery models file, and Pi's `auth.json` for provider credentials. mipmux rejects any value in the models or credential file that starts with `!`, which Pi would otherwise run as a shell command to obtain a key.
 - Your global Git configuration, only to find the `core.excludesFile` setting.

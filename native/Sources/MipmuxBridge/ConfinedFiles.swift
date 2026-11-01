@@ -239,7 +239,7 @@ final class ConfinedFiles {
         }
         var controls: [[String: Any]] = []
         for directory in directories {
-            for name in [".gitignore", ".repo_ignore", ".cursorignore"] {
+            for name in [".gitignore", ".repo_ignore", ".cursorignore", ".mipmux_ignore"] {
                 if name == ".repo_ignore", !input.settings.respectRepoIgnore { continue }
                 if name == ".cursorignore", !input.settings.respectCursorignore { continue }
                 let path = directory.url.appendingPathComponent(name).path

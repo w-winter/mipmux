@@ -7698,9 +7698,10 @@
         "Report each listed entry's descriptor fingerprint from the existing no-follow fstatat, so inventory scans can reuse files whose fingerprint is unchanged.",
         "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, and a declined file is still hashed and checked against its expected identity without keeping its contents.",
         "Let a directory listing pass each entry's name and kind to its caller, so an inventory walk evaluates the entries it lists in the same request; reading the entries moved into its own function.",
-        "Expose the ignore-control reader to the Git exclude-file capture."
+        "Expose the ignore-control reader to the Git exclude-file capture.",
+        "Ignore capture also reads .mipmux_ignore in each folder, after .cursorignore, so its rules take precedence over the other secondary ignore files in that folder."
       ],
-      "sha256": "9432c3026147bf59df893089dbb1085f402303fd6174d5f1d530f5d8d9e66e1c"
+      "sha256": "8c2e330e366b8349de3f67badf893b5ad6e03d66d977a2c1d8670cb7048a51fc"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",

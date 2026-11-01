@@ -38,7 +38,7 @@ export const IgnoreAuthority = Type.Union([
 ]);
 export const IgnoreControl = Type.Object({
   path: Type.String({ pattern: '^/[^\\u0000]*$' }), directory: Type.String(),
-  name: Type.Enum(['.gitignore', '.repo_ignore', '.cursorignore', 'core.excludesFile', 'info/exclude']),
+  name: Type.Enum(['.gitignore', '.repo_ignore', '.cursorignore', '.mipmux_ignore', 'core.excludesFile', 'info/exclude']),
   authority: Type.Enum(['mandatoryGit', 'secondary', 'gitExclude']),
   content: Type.Union([
     Type.Object({ kind: Type.Literal('absent') }, closed),
