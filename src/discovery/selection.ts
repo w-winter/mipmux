@@ -12,6 +12,10 @@ export type ModelChoice = Static<typeof ModelChoice>;
  */
 export const DiscoveryHostConfig = Type.Object({ ...PiConfig.properties, allowedModels: Type.Array(ModelChoice) }, closed);
 export type DiscoveryHostConfig = Static<typeof DiscoveryHostConfig>;
+/** The configured model and level, and the other models a request may select; a host may replace them while running. */
+export interface DiscoveryDefaults extends Pick<DiscoveryHostConfig, 'provider' | 'model' | 'thinking'> {
+  readonly allowedModels: readonly ModelChoice[];
+}
 /** The model and thinking level one discovery job runs with. */
 export interface DiscoverySettings { readonly provider: string; readonly model: string; readonly thinking: ThinkingLevel }
 
@@ -28,8 +32,7 @@ export function modelReference(choice: ModelChoice): string { return choice.prov
  * A selected model must be the configured one or an allowed one, or the build fails with modelNotAllowed. Whether the
  * model supports the level is checked when the worker resolves the model.
  */
-export function selectDiscovery(config: Pick<DiscoveryHostConfig, 'provider' | 'model' | 'thinking'> & { readonly allowedModels: readonly ModelChoice[] },
-  selection: DiscoverySelection | undefined): DiscoverySettings {
+export function selectDiscovery(config: DiscoveryDefaults, selection: DiscoverySelection | undefined): DiscoverySettings {
   const configured = { provider: config.provider, model: config.model }, allowed = [configured, ...config.allowedModels];
   const chosen = selection?.model === undefined ? configured : parseModelReference(selection.model);
   if (!allowed.some(choice => choice.provider === chosen.provider && choice.model === chosen.model)) {

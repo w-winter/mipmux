@@ -58,12 +58,21 @@ async function main(): Promise<void> {
           allowedModels: discovery.allowedModels.map(modelReference) } }) + '\n');
       return;
     }
+    if (command === 'models') {
+      expectArguments(['config'], 1);
+      const { runtime, runner } = compose(config, path);
+      try {
+        if (!runner) throw new WorkspaceFailure('discoveryNotConfigured');
+        process.stdout.write(JSON.stringify({ kind: 'models', models: await runner.listModels(abort.signal) }) + '\n');
+      } finally { await runtime.close(); }
+      return;
+    }
     if (command === 'mcp') {
       expectArguments(['config', 'tools'], 1);
       const tools = values.tools ?? config.tools;
       if (!toolSetValidator.Check(tools)) throw new WorkspaceFailure('invalidArguments');
       const { serveMipmuxStdio } = await import('../mcp/server.js');
-      const server = serveMipmuxStdio({ ...config, tools }, path);
+      const server = serveMipmuxStdio({ ...config, tools }, path, async () => resolveHostConfig(await loadJSON(path, ConfigFile), host));
       const stop = () => { void server.close().catch(() => {}); };
       abort.signal.addEventListener('abort', stop, { once: true });
       if (abort.signal.aborted) stop();

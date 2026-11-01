@@ -1,26 +1,17 @@
-import { readFile } from 'node:fs/promises';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import { createAgentSession, ModelRuntime, SessionManager, SettingsManager,
+import { createAgentSession, SessionManager, SettingsManager,
   type AgentSession, type ResourceLoader, type ToolDefinition } from '@earendil-works/pi-coding-agent';
-import { InMemoryModelsStore, lazyStream, type AssistantMessage } from '@earendil-works/pi-ai';
+import { lazyStream, type AssistantMessage } from '@earendil-works/pi-ai';
 import type { ThinkingLevel } from '@earendil-works/pi-agent-core';
 import type { Completion, DiscoveryEvent, DiscoveryReceipt } from '../contracts/discovery.js';
 import type { DiscoverySessionInput as DiscoveryInput } from './pi-protocol.js';
 import type { Evidence, PiConfig } from './pi-protocol.js';
 import { canonicalJSON, sha256, freeze, WorkspaceFailure } from '../workspace/values.js';
-import { createCredentials, rejectCommands } from './pi-credentials.js';
+import { createDiscoveryModels } from './discovery-models.js';
 import type { AdmittedMcp } from './mcp-config.js';
 import { CODEMODE_TOOL, loadDiscoveryExtensions } from './discovery-extensions.js';
 
-const closed = { additionalProperties: false };
-const modelsValidator = Compile(Type.Object({ providers: Type.Record(Type.String(), Type.Object({
-  baseUrl: Type.Optional(Type.String()),
-  modelOverrides: Type.Optional(Type.Record(Type.String(), Type.Object({
-    contextWindow: Type.Optional(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })),
-    maxTokens: Type.Optional(Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER })),
-  }, closed))),
-}, closed)) }, closed));
 const modelRecordValidator = Compile(Type.Record(Type.String(), Type.Unknown()));
 
 /** Reads authorized configuration only; SDK diagnostics are never forwarded to the caller. */
@@ -39,21 +30,7 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
   signal.addEventListener('abort', abort, { once: true });
   try {
     signal.throwIfAborted();
-    const models: unknown = JSON.parse(await readFile(config.modelsPath, 'utf8'));
-    const auth: unknown = JSON.parse(await readFile(config.authPath, 'utf8'));
-    rejectCommands(models); rejectCommands(auth);
-    if (!modelsValidator.Check(models)) throw new WorkspaceFailure('unsupportedModelConfiguration');
-    const credentials = await createCredentials(config.authPath, signal);
-    const runtime = await ModelRuntime.create({ credentials, modelsPath: null,
-      modelsStore: new InMemoryModelsStore(), allowModelNetwork: false, refreshOnCreate: false, signal });
-    for (const [provider, data] of Object.entries(models.providers)) {
-      if (!runtime.getProvider(provider)) throw new WorkspaceFailure('unsupportedModelConfiguration');
-      runtime.registerProvider(provider, { models: runtime.getAllModels(provider).map(model => ({
-        ...model, ...(model.type === 'chat' ? data.modelOverrides?.[model.id] : {}),
-        baseUrl: data.baseUrl ?? model.baseUrl,
-      })) });
-    }
-    if (runtime.getError()) throw new WorkspaceFailure('invalidModelConfiguration');
+    const runtime = await createDiscoveryModels(config, signal);
     const selected = runtime.getPhysicalModel(config.provider, config.model);
     if (!selected) throw new WorkspaceFailure('modelUnavailable');
     const model = freeze(structuredClone(selected));

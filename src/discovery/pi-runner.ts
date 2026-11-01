@@ -4,10 +4,11 @@ import { fileURLToPath } from 'node:url';
 import type { ProcessSupervisor } from '../runtime/process-supervisor.js';
 import { failureResult, piToolResult } from '../runtime/tool-result.js';
 import { freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
-import type { DiscoveryReceipt, DiscoveryEvent, DiscoverySelection } from '../contracts/discovery.js';
+import { ThinkingLevel, type DiscoveryReceipt, type DiscoveryEvent, type DiscoverySelection } from '../contracts/discovery.js';
 import type { DiscoveryInput, DiscoveryOutcome, DiscoveryRunner, DiscoveryTools } from './runner.js';
-import { piConfigValidator, workerValidator, type PiConfig, type WorkerMessage, type DiscoverySessionInput } from './pi-protocol.js';
-import { ModelChoice, selectDiscovery, type DiscoveryHostConfig, type DiscoverySettings } from './selection.js';
+import { modelsReplyValidator, piConfigValidator, workerValidator, type ModelsReply, type PiConfig, type WorkerMessage,
+  type DiscoverySessionInput } from './pi-protocol.js';
+import { ModelChoice, selectDiscovery, type DiscoveryDefaults, type DiscoveryHostConfig, type DiscoverySettings } from './selection.js';
 import { receive, send } from './pi-channel.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -19,7 +20,10 @@ import { prepareDiscoveryInput, type DiscoveryPromptRenderer } from '../context/
 import type { SourceIdentity } from '../contracts/workspace.js';
 
 const dependencyValidator = Compile(Type.Object({ buildLockSHA256: SHA256 }, { additionalProperties: false }));
-const allowedValidator = Compile(Type.Array(ModelChoice));
+const defaultsValidator = Compile(Type.Object({ provider: ModelChoice.properties.provider, model: ModelChoice.properties.model,
+  thinking: ThinkingLevel, allowedModels: Type.Array(ModelChoice) }, { additionalProperties: false }));
+/** What the parent observed of a models worker: its replies, and whether it broke the protocol. */
+interface ModelsListing { readonly replies: ModelsReply[]; protocolFailed: boolean }
 const systemFileFailure = Compile(Type.Object({ code: Type.String() }));
 
 async function readDiscoveryTemplate(path: string, signal: AbortSignal) {
@@ -41,6 +45,12 @@ async function readDiscoveryTemplate(path: string, signal: AbortSignal) {
   }
 }
 
+function checkedDefaults(defaults: DiscoveryDefaults): DiscoveryDefaults {
+  const copy = structuredClone({ provider: defaults.provider, model: defaults.model, thinking: defaults.thinking, allowedModels: defaults.allowedModels });
+  if (!defaultsValidator.Check(copy)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
+  return freeze(copy);
+}
+
 function logTemplateRejection(error: WorkspaceFailure, path: string, identity: SourceIdentity | null) {
   const record = { level: 'error', event: 'discoveryTemplateRejected', code: error.code,
     templatePath: path, ...error.details };
@@ -49,20 +59,45 @@ function logTemplateRejection(error: WorkspaceFailure, path: string, identity: S
 }
 
 export class PiRunner implements DiscoveryRunner {
-  /** The worker configuration with the configured model and level; each run replaces those with its own settings. */
+  /** The worker configuration as started; each run replaces its model and level with the run's settings. */
   readonly config: PiConfig;
-  readonly allowedModels: readonly ModelChoice[];
+  #defaults: DiscoveryDefaults;
   constructor(config: DiscoveryHostConfig, private readonly supervisor: ProcessSupervisor, private readonly renderPrompt: DiscoveryPromptRenderer) {
     const { allowedModels, ...worker } = config;
-    if (!piConfigValidator.Check(worker) || !allowedValidator.Check(allowedModels)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
+    if (!piConfigValidator.Check(worker)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
     if (Object.keys(worker.environment).some(name => name === 'NODE_OPTIONS' || name.startsWith('PI_'))) {
       throw new WorkspaceFailure('unsafeWorkerEnvironment');
     }
     this.config = freeze(structuredClone(worker));
-    this.allowedModels = freeze(structuredClone(allowedModels));
+    this.#defaults = checkedDefaults({ provider: worker.provider, model: worker.model, thinking: worker.thinking, allowedModels });
+  }
+  /** The configured model and level and the allowed models that builds started from now on select from. */
+  defaults(): DiscoveryDefaults { return this.#defaults; }
+  /** Replaces the defaults for builds started from now on; jobs already admitted keep their settings. */
+  replaceDefaults(next: DiscoveryDefaults): void { this.#defaults = checkedDefaults(next); }
+  /** The `provider/model` references discovery has credentials for, listed by a worker with discovery's environment. */
+  async listModels(signal: AbortSignal): Promise<string[]> {
+    const child = this.supervisor.spawn({ executable: process.execPath,
+      args: [fileURLToPath(new URL('./models-worker.js', import.meta.url))], cwd: '/', env: { ...this.config.environment, PI_OFFLINE: '1' } });
+    const stop = () => { void child.stop(); };
+    signal.addEventListener('abort', stop, { once: true });
+    const state: ModelsListing = { replies: [], protocolFailed: false };
+    const retire = () => { state.protocolFailed = true; stop(); };
+    receive(child.child.stdout, value => {
+      if (modelsReplyValidator.Check(value) && !state.replies.length) state.replies.push(value);
+      else retire();
+    }, retire);
+    send(child.child.stdin, { kind: 'listModels', config: this.config });
+    const closed = await child.closed;
+    signal.removeEventListener('abort', stop);
+    signal.throwIfAborted();
+    const [reply] = state.replies;
+    if (state.protocolFailed || closed.code !== 0 || closed.signal || closed.spawnError || !reply) throw new WorkspaceFailure('discoveryWorkerFailed');
+    if (reply.kind === 'failed') throw new WorkspaceFailure(reply.code);
+    return reply.models;
   }
   settings(selection: DiscoverySelection | undefined): DiscoverySettings {
-    return selectDiscovery({ ...this.config, allowedModels: this.allowedModels }, selection);
+    return selectDiscovery(this.#defaults, selection);
   }
   async run(input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal,
     progress: (event: DiscoveryEvent) => void, settings: DiscoverySettings): Promise<DiscoveryOutcome> {

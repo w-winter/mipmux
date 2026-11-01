@@ -68,7 +68,9 @@ function controlJob(client: ClientRuntime, input: CallerJobInput, ctx: ServerCon
     case 'dispose': return client.disposeJob(input.jobId, ctx.mcpReq.signal);
   }
 }
-export function registerTools(server: McpServer, client: () => ClientRuntime, defaultMaxOutputBytes: number, toolSet: ToolSet) {
+/** Registers the tool set; `refreshDefaults` runs before each call that starts a build or draft, so it can apply a reread configuration. */
+export function registerTools(server: McpServer, client: () => ClientRuntime, defaultMaxOutputBytes: number, toolSet: ToolSet,
+  refreshDefaults: () => Promise<void>) {
   const budget = { maxOutputBytes: Type.Optional(Positive) };
   function register<S extends TSchema>(name: string, schema: S,
     execute: (input: Static<S>, context: ServerContext) => unknown | Promise<unknown>) {
@@ -116,7 +118,7 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
       return client().explore(input.workspaceId, { name: 'file_search', input: request }, ctx.mcpReq.signal, null, toolResult);
     });
   register('draft_create', Type.Object({ workspaceId: id, request: ContextBuildRequest }, closed),
-    (input, ctx) => client().createDraft(input.workspaceId, input.request, ctx.mcpReq.signal));
+    async (input, ctx) => { await refreshDefaults(); return client().createDraft(input.workspaceId, input.request, ctx.mcpReq.signal); });
   register('manage_selection', Type.Object({ draftId: id, input: Type.Optional(SelectionInput), ...budget }, closed),
     (input, ctx) => client().manageSelection(input.draftId,
       selectionValidator.Parse(selectionValidator.Default({ ...input.input,
@@ -137,8 +139,10 @@ export function registerTools(server: McpServer, client: () => ClientRuntime, de
     (input, ctx) => client().validate(input.draftId, input.maxOutputBytes ?? defaultMaxOutputBytes, ctx.mcpReq.signal, toolResult));
   register('draft_finalize', Type.Object({ draftId: id }, closed), async (input, ctx) => publicationReceipt(await client().finalize(input.draftId, ctx.mcpReq.signal)));
   register('draft_dispose', Type.Object({ draftId: id }, closed), (input, ctx) => client().disposeDraft(input.draftId, ctx.mcpReq.signal));
-  register('context_builder', CallerBuildRequest, async (input, ctx) => jobReceipt(await client().buildContext(input, ctx.mcpReq.signal,
-    formCapability.Check(ctx.mcpReq.envelope) ? 'form' : 'unavailable')));
+  register('context_builder', CallerBuildRequest, async (input, ctx) => {
+    await refreshDefaults();
+    return jobReceipt(await client().buildContext(input, ctx.mcpReq.signal, formCapability.Check(ctx.mcpReq.envelope) ? 'form' : 'unavailable'));
+  });
   register('context_job', CallerJobInput, (input, ctx) => controlJob(client(), input, ctx));
   register('context_prepare', CallerPrepareRequest, async (input, ctx) => prepareReceipt(await client().prepareContext(input, ctx.mcpReq.signal)));
 }

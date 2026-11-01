@@ -45,3 +45,12 @@ export const WorkerMessage = Type.Union([
 ]);
 export type WorkerMessage = Static<typeof WorkerMessage>;
 export const parentValidator = Compile(ParentMessage), workerValidator = Compile(WorkerMessage);
+/** The models worker's one request and its one reply: the models discovery has credentials for, or a failure code. */
+export const ModelsRequest = Type.Object({ kind: Type.Literal('listModels'), config: PiConfig }, closed);
+export type ModelsRequest = Static<typeof ModelsRequest>;
+export const ModelsReply = Type.Union([
+  Type.Object({ kind: Type.Literal('models'), models: Type.Array(Type.String()) }, closed),
+  Type.Object({ kind: Type.Literal('failed'), code: Type.String() }, closed),
+]);
+export type ModelsReply = Static<typeof ModelsReply>;
+export const modelsRequestValidator = Compile(ModelsRequest), modelsReplyValidator = Compile(ModelsReply);

@@ -182,7 +182,8 @@ export class ClientRuntime {
    */
   buildContext(input: CallerBuildRequest, signal: AbortSignal, elicitation: 'form' | 'unavailable') {
     const captured = freeze(structuredClone(input));
-    const request = expandCallerBuild(captured, this.runtime.options.contextBudgetUnits, this.runtime.options.defaultEnhancementMode);
+    const defaults = this.runtime.requestDefaults();
+    const request = expandCallerBuild(captured, defaults.contextBudgetUnits, defaults.defaultEnhancementMode);
     if (request.clarification && elicitation !== 'form') throw new WorkspaceFailure('elicitationUnavailable');
     const settings = this.#jobs.settings(captured.discovery);
     return this.#track(signal, async combined => {

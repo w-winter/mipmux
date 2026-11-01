@@ -3,8 +3,9 @@ import { serveStdio, StdioServerTransport } from '@modelcontextprotocol/server/s
 import { Writable } from 'node:stream';
 import { finished } from 'node:stream/promises';
 import { compose, hostValidator, type HostConfig } from '../cli/config.js';
+import { defaultEnhancementMode } from '../runtime/mipmux-runtime.js';
 import { registerTools } from './tools.js';
-import { freeze, WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON, freeze, WorkspaceFailure } from '../workspace/values.js';
 
 /**
  * Sent at initialization for the client to show its model. Claude Code before 2.1.296 keeps 2,048 characters, Codex
@@ -35,8 +36,32 @@ const instructions = [
   'Full guide: https://github.com/w-winter/mipmux/blob/main/docs/workflow.md',
 ].join('\n');
 
-/** Factory construction validates structure only. Resources are admitted on the first tool call. */
-export function createMcpServer(input: HostConfig, configurationPath: string | null = null) {
+/** Rereads the host configuration, for a server whose file the user may edit while it runs. */
+export type ConfigurationReader = () => Promise<HostConfig>;
+
+/**
+ * Applies a reread configuration's request defaults: the budget and enhancement mode, and the discovery model, level and
+ * allowed models. Every other setting takes effect when the server starts again.
+ */
+function applyRequestDefaults({ runtime, runner }: ReturnType<typeof compose>, config: HostConfig): void {
+  const request = { contextBudgetUnits: config.contextBudgetUnits, defaultEnhancementMode: config.defaultEnhancementMode ?? defaultEnhancementMode };
+  let changed = canonicalJSON(request) !== canonicalJSON(runtime.requestDefaults());
+  runtime.replaceRequestDefaults(request);
+  const discovery = config.discovery && { provider: config.discovery.provider, model: config.discovery.model,
+    thinking: config.discovery.thinking, allowedModels: config.discovery.allowedModels };
+  if (runner && discovery) {
+    changed ||= canonicalJSON(discovery) !== canonicalJSON(runner.defaults());
+    runner.replaceDefaults(discovery);
+  }
+  if (changed) process.stderr.write(JSON.stringify({ level: 'info', event: 'configurationReloaded', ...request, discovery }) + '\n');
+}
+
+/**
+ * Factory construction validates structure only. Resources are admitted on the first tool call. With `reread`, each call
+ * that starts a build first rereads the configuration and applies its request defaults; a file that cannot be read or
+ * parsed fails that call.
+ */
+export function createMcpServer(input: HostConfig, configurationPath: string | null = null, reread: ConfigurationReader | null = null) {
   if (!hostValidator.Check(input)) throw new WorkspaceFailure('invalidConfiguration');
   const config = freeze(structuredClone(input));
   const state: { application: ReturnType<typeof compose> | null; closing: Promise<void> | null } = { application: null, closing: null };
@@ -49,15 +74,17 @@ export function createMcpServer(input: HostConfig, configurationPath: string | n
     void state.closing.then(settled, rejected);
     return state.closing;
   };
-  registerTools(server, () => {
+  const application = () => {
     if (state.closing) throw new WorkspaceFailure('clientClosed');
-    state.application ??= compose(config, configurationPath); return state.application.client;
-  }, config.defaultMaxOutputBytes, config.tools);
+    return state.application ??= compose(config, configurationPath);
+  };
+  const refreshDefaults = async () => { if (reread) applyRequestDefaults(application(), await reread()); };
+  registerTools(server, () => application().client, config.defaultMaxOutputBytes, config.tools, refreshDefaults);
   server.server.onclose = () => { void close().catch(rejected); };
   return { server, close, closed };
 }
 
-export function serveMipmuxStdio(config: HostConfig, configurationPath: string | null = null) {
+export function serveMipmuxStdio(config: HostConfig, configurationPath: string | null = null, reread: ConfigurationReader | null = null) {
   const instances = new Set<ReturnType<typeof createMcpServer>>();
   const outputCancelled = new Error('mcpOutputCancelled');
   let outputFailed = false;
@@ -87,7 +114,7 @@ export function serveMipmuxStdio(config: HostConfig, configurationPath: string |
   let closing: Promise<void> | null = null;
   let transportFailed = false;
   const transport = serveStdio(() => {
-    const instance = createMcpServer(config, configurationPath); instances.add(instance); return instance.server;
+    const instance = createMcpServer(config, configurationPath, reread); instances.add(instance); return instance.server;
   }, { transport: wire, onerror: error => {
     if (error === outputCancelled) return;
     if (closing) transportFailed = true;

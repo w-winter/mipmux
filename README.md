@@ -301,6 +301,7 @@ Build with `npm run build`, then run `node dist/cli/main.js`. Every input path i
 ```sh
 node dist/cli/main.js mcp
 node dist/cli/main.js config
+node dist/cli/main.js models
 node dist/cli/main.js workspace --spec /work/spec.json
 node dist/cli/main.js tool read_file --workspace /work/spec.json --input /work/read.json
 node dist/cli/main.js build --request /work/build.json > /work/terminal-receipt.json
@@ -313,11 +314,16 @@ node dist/cli/main.js cache invalidate --kind reuse --key <sha256>
 
 `config` prints the defaults that builds use: `{ "kind": "config", "path", "contextBudgetUnits", "defaultEnhancementMode", "tools", "discovery" }`, where `discovery` is `null` or `{ "model": "provider/model", "thinking", "allowedModels": ["provider/model", ...] }`. It prints no other paths, credentials or environment values, and starts nothing.
 
+`models` prints the discovery models mipmux has credentials for: `{ "kind": "models", "models": ["provider/model", ...] }`, sorted. It lists them the way a discovery job sees them, in a worker given only `discovery.environment`, so an API key exported in your shell adds no models. The list comes from the providers built into mipmux's Pi SDK, with the overrides in `discovery.modelsPath` and the credentials in `discovery.authPath`; it reads no model catalog from the network. Choose `discovery.model` and `discovery.allowedModels` from it.
+
 The workspace file is a `WorkspaceSpec`. A build file contains `{ "workspace": <WorkspaceSpec>, "requestId": "caller-id", "request": <ContextBuildRequest> }`, with an optional `"discovery": { "model": "provider/model", "thinking": "low" }` that selects the job's discovery model and level from the allowed models. A render file contains `{ "workspace": <WorkspaceSpec>, "request": <ContextBuildRequest> }`; its draft file contains `{ "selections": [<SourceSelection>], "prompt": "Complete resulting prompt" }`. Omit `enhancementMode` and `budgetUnits` to use the configured defaults. Input files for `mipmux tool` must contain complete requests matching the exported exploration schemas. MCP and Pi discovery-agent calls accept the concise inputs described below. Integrity verification needs only saved bundle files and Node. Build exits 0 for ready, 2 for blocked, 1 for failure and 130 for cancellation before publication. Save its complete stdout receipt before ending the workflow.
 
 Cache corruption and conflict diagnostics include `target: { kind, key }`; a builder job that fails on one carries the same `target` in its receipt. Pass that target's `kind` and `key` to `cache invalidate`, then repeat the failed operation. Artifact targets name extraction records; reuse targets name the saved file fingerprints that let a restarted server skip unchanged files. Library callers use `runtime.artifacts.invalidate(key)` for an artifact or `runtime.artifacts.invalidateReuse(key)` for reuse. Each method removes only its named record.
 
-Every configuration field is optional. Enabling `discovery` requires `provider`, `model`, `thinking` and `modelsPath`, the path of the model file described below. A file sets only what differs from the defaults:
+Every configuration field is optional. Enabling `discovery` requires `provider`, `model`, `thinking` and `modelsPath`, the path of the model file described below. A file sets only what differs from the defaults.
+
+A running MCP server rereads the file before each `context_builder` and `draft_create` call and applies `contextBudgetUnits`, `defaultEnhancementMode`, and `discovery.provider`, `discovery.model`, `discovery.thinking` and `discovery.allowedModels` to builds started from then on; jobs already started keep their settings. A file that cannot be read or is not valid configuration fails that call. Every other field, and turning discovery on or off, takes effect when the server starts again.
+
 
 ```json
 {

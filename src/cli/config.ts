@@ -173,5 +173,5 @@ export function compose(config: HostConfig, configurationPath: string | null) {
   const runtime = new MipmuxRuntime(runtimeOptions);
   const runner = config.discovery ? new PiRunner(config.discovery, runtime.supervisor,
     (operation, signal) => runtime.renderPresentation(operation, signal)) : null;
-  return { runtime, client: runtime.createClient(runner) };
+  return { runtime, runner, client: runtime.createClient(runner) };
 }

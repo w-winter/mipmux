@@ -55,6 +55,14 @@ export interface RuntimeOptions {
 
 /** The task mode a build uses when neither the request nor the host configuration names one. */
 export const defaultEnhancementMode: PromptEnhancementMode = 'augment';
+/** What a build request falls back to for the budget and enhancement mode it omits. A host may replace them while running. */
+export interface RequestDefaults { readonly contextBudgetUnits: number; readonly defaultEnhancementMode: PromptEnhancementMode }
+
+function checkedDefaults(defaults: RequestDefaults): RequestDefaults {
+  if (!Compile(PromptEnhancementMode).Check(defaults.defaultEnhancementMode)) throw new WorkspaceFailure('invalidDefaultEnhancementMode');
+  if (!Number.isSafeInteger(defaults.contextBudgetUnits) || defaults.contextBudgetUnits < 1) throw new WorkspaceFailure('invalidContextBudget');
+  return freeze({ contextBudgetUnits: defaults.contextBudgetUnits, defaultEnhancementMode: defaults.defaultEnhancementMode });
+}
 
 export class MipmuxRuntime {
   readonly options: RuntimeOptions & { readonly defaultEnhancementMode: PromptEnhancementMode };
@@ -70,14 +78,12 @@ export class MipmuxRuntime {
   #vcsBridge: BridgeClient | null = null;
   readonly #shutdown = new AbortController();
   #closing: Promise<void> | null = null;
+  #requestDefaults: RequestDefaults;
   constructor(options: RuntimeOptions) {
     if (!Compile(CopyContext).Check(options.copyContext)) throw new WorkspaceFailure('invalidCopyContext');
-    const enhancementMode = options.defaultEnhancementMode ?? defaultEnhancementMode;
-    if (!Compile(PromptEnhancementMode).Check(enhancementMode)) throw new WorkspaceFailure('invalidDefaultEnhancementMode');
-    this.options = freeze({ ...structuredClone(options), defaultEnhancementMode: enhancementMode });
-    if (!Number.isSafeInteger(options.contextBudgetUnits) || options.contextBudgetUnits < 1) {
-      throw new WorkspaceFailure('invalidContextBudget');
-    }
+    this.#requestDefaults = checkedDefaults({ contextBudgetUnits: options.contextBudgetUnits,
+      defaultEnhancementMode: options.defaultEnhancementMode ?? defaultEnhancementMode });
+    this.options = freeze({ ...structuredClone(options), defaultEnhancementMode: this.#requestDefaults.defaultEnhancementMode });
     const user = options.git?.userConfiguration;
     for (const path of [options.cachePath, options.nativeExecutable, ...options.credentialPaths, ...(options.git ? [options.git.executable] : []),
       ...(user ? [user.home, ...(user.xdgConfigHome === null ? [] : [user.xdgConfigHome])] : [])]) {
@@ -86,6 +92,10 @@ export class MipmuxRuntime {
     this.supervisor = new ProcessSupervisor({ terminationGraceMs: options.terminationGraceMs });
     this.artifacts = new ArtifactStore(options.cachePath);
   }
+  /** The budget and enhancement mode builds started from now on use when their request omits them. */
+  requestDefaults(): RequestDefaults { return this.#requestDefaults; }
+  /** Replaces the request defaults for builds started from now on; jobs already admitted keep theirs. */
+  replaceRequestDefaults(next: RequestDefaults): void { this.#requestDefaults = checkedDefaults(next); }
   makeBridge(): BridgeClient {
     return new BridgeClient({ executable: this.options.nativeExecutable, supervisor: this.supervisor, env: this.options.nativeEnvironment });
   }
@@ -388,8 +398,8 @@ export class MipmuxRuntime {
     if (!contextRequestValidator.Check(request)) throw new WorkspaceFailure('invalidRequest');
     const snapshot = structuredClone(request);
     const captured = freeze({ ...snapshot,
-      enhancementMode: snapshot.enhancementMode ?? this.options.defaultEnhancementMode,
-      budgetUnits: snapshot.budgetUnits ?? this.options.contextBudgetUnits });
+      enhancementMode: snapshot.enhancementMode ?? this.#requestDefaults.defaultEnhancementMode,
+      budgetUnits: snapshot.budgetUnits ?? this.#requestDefaults.contextBudgetUnits });
     const release = owner.retain();
     const work = (async () => {
       const combined = AbortSignal.any([signal, this.#shutdown.signal]);

@@ -1,7 +1,7 @@
 import type { Readable, Writable } from 'node:stream';
-import type { ParentMessage, WorkerMessage } from './pi-protocol.js';
+import type { ModelsReply, ModelsRequest, ParentMessage, WorkerMessage } from './pi-protocol.js';
 
-export function send(output: Writable, value: ParentMessage | WorkerMessage, done?: () => void): void {
+export function send(output: Writable, value: ParentMessage | WorkerMessage | ModelsRequest | ModelsReply, done?: () => void): void {
   output.write(JSON.stringify(value) + '\n', done);
 }
 
