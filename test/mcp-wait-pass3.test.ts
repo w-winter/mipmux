@@ -14,6 +14,7 @@ import type { ClientRuntime } from '../src/runtime/client-runtime.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import type { DiscoveryEvent } from '../src/contracts/discovery.js';
 import { toolJSON } from './fixtures/tool-json.js';
+import { fixtureSettings } from './fixtures/discovery-settings.js';
 
 function barrier() { let release!: () => void; const promise = new Promise<void>(resolve => { release = resolve; }); return { promise, release }; }
 const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
@@ -23,7 +24,7 @@ for (const scenario of ['timeout', 'abort'] as const) {
     const root = join(directory, 'root'), out = join(directory, 'out'); await mkdir(root); await mkdir(out); await writeFile(join(root, 'file.txt'), 'source');
     const running = barrier(), aborted = barrier(), releaseRunner = barrier(), waitEntered = barrier(), outputEntered = barrier();
     let progress!: (event: DiscoveryEvent) => void;
-    const runner: DiscoveryRunner = { run: async (_input, _tools, signal, notify) => {
+    const runner: DiscoveryRunner = { settings: fixtureSettings, run: async (_input, _tools, signal, notify) => {
       progress = notify; running.release();
       await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }));
       aborted.release(); await releaseRunner.promise; throw new Error('Cancelled runner boundary');

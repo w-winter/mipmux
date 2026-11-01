@@ -14,6 +14,7 @@ import type { DiscoveryCall } from '../src/contracts/discovery.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { toolJSON } from './fixtures/tool-json.js';
+import { selectDiscovery } from '../src/discovery/selection.js';
 
 const record = Compile(Type.Record(Type.String(), Type.Unknown()));
 const declaration = Compile(Type.Object({ kind: Type.Literal('workspace'), id: Type.String() }));
@@ -98,7 +99,7 @@ test('scout exploration normalizes concise inputs before crossing parent IPC', a
   const calls: DiscoveryCall[] = [];
   try {
     const result = await new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: ['r'], hints: [] },
-      { call: async call => { calls.push(call); return { kind: 'observed' }; } }, new AbortController().signal, () => {});
+      { call: async call => { calls.push(call); return { kind: 'observed' }; } }, new AbortController().signal, () => {}, selectDiscovery(provider.config, undefined));
     assert.equal(result.kind, 'complete'); assert.equal(calls.length, requests.length);
     assert.deepEqual(calls[0], { name: 'get_file_tree', input: { type: 'files', mode: 'auto', scope: null, maxDepth: null, continuation: null, maxOutputBytes: 3000 } });
     assert(calls[1]?.name === 'read_file'); assert.deepEqual(calls[1].input['start_line'], null);

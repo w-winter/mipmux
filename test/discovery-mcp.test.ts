@@ -12,6 +12,7 @@ import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { toolSchemas } from '../src/contracts/discovery.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import { controlledHttpMcp } from './fixtures/controlled-http-mcp.js';
+import { selectDiscovery } from '../src/discovery/selection.js';
 
 async function configure(directory: string, url: string) {
   const agentDirectory = join(directory, 'scout-mcp'); await mkdir(agentDirectory, { mode: 0o700 });
@@ -98,7 +99,7 @@ test('missing selected tools, unavailable servers and authentication failure sto
       const mcp = await configure(provider.directory, server.url);
       const discovery = { ...provider.config, mcp };
       const result = await new PiRunner(discovery, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
-        { call: async () => { throw new Error('No parent tool permitted'); } }, new AbortController().signal, () => {});
+        { call: async () => { throw new Error('No parent tool permitted'); } }, new AbortController().signal, () => {}, selectDiscovery(discovery, undefined));
       assert.equal(result.kind, 'failed'); assert(result.kind === 'failed'); assert.equal(result.code, 'mcpToolsUnavailable');
       assert.equal(result.receipt.mcp?.readiness.state, 'unavailable'); assert.equal(result.receipt.mcp?.shutdown, 'dispatched');
       assert.equal(provider.requests.length, 0); assert.equal(result.receipt.workerClosed, true);
@@ -118,14 +119,14 @@ test('cancellation during MCP startup or a held call closes the worker and permi
       const runner = new PiRunner(discovery, supervisor, nativeDiscoveryRenderer(supervisor));
       const tools = { call: async () => { throw new Error('No parent tool permitted'); } };
       const input: DiscoveryInput = { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] };
-      const work = runner.run(input, tools, abort.signal, () => {});
+      const work = runner.run(input, tools, abort.signal, () => {}, runner.settings(undefined));
       await server.held; abort.abort();
       const cancelled = await work; assert.equal(cancelled.kind, 'cancelled');
       await server.heldClosed;
       assert.equal(cancelled.receipt.workerClosed, true); assert.equal(cancelled.receipt.parentToolsSettled, true);
       if (hold === 'initialize') assert.equal(provider.requests.length, 0);
       server.state.hold = null;
-      const next = await runner.run(input, tools, new AbortController().signal, () => {});
+      const next = await runner.run(input, tools, new AbortController().signal, () => {}, runner.settings(undefined));
       assert.equal(next.kind, 'complete', JSON.stringify(next));
       await writeFile(join(provider.directory, 'cancellation-receipts.json'), JSON.stringify({ cancelled, next }, null, 2));
     } finally { await supervisor.close(); await provider.close(); await server.close(); }

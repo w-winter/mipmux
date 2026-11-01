@@ -10,6 +10,7 @@ import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { admitMcpConfiguration } from '../src/discovery/mcp-config.js';
 import { compose } from '../src/cli/config.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { selectDiscovery } from '../src/discovery/selection.js';
 
 const server = { url: 'https://example.invalid/mcp', exposure: 'hidden', toolExposure: { read_ticket: 'direct' } };
 test('MCP configuration rejects unsafe input before worker startup and keeps diagnostics free of values', async t => {
@@ -40,7 +41,7 @@ test('MCP configuration rejects unsafe input before worker startup and keeps dia
       const agentDirectory = join(provider.directory, String(index)); await mkdir(agentDirectory, { mode: 0o700 });
       await writeFile(join(agentDirectory, 'mcp.json'), JSON.stringify(value));
       await assert.rejects(new PiRunner({ ...provider.config, mcp: { agentDirectory } }, supervisor, nativeDiscoveryRenderer(supervisor)).run(
-        { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: [], hints: [] }, { call: async () => {} }, new AbortController().signal, () => {}), { code });
+        { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: [], hints: [] }, { call: async () => {} }, new AbortController().signal, () => {}, selectDiscovery(provider.config, undefined)), { code });
     }
     const agentDirectory = join(provider.directory, 'private'); await mkdir(agentDirectory, { mode: 0o700 });
     await assert.rejects(admitMcpConfiguration({ agentDirectory }, new AbortController().signal), { code: 'unreadableMcpConfiguration' });

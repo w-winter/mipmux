@@ -12,6 +12,7 @@ import type { NativeOperation } from '../src/contracts/native.js';
 import type { WorkspaceSpec } from '../src/contracts/inventory.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import { WorkspaceFailure } from '../src/workspace/values.js';
+import { fixtureSettings } from './fixtures/discovery-settings.js';
 
 function barrier() {
   let release!: () => void;
@@ -84,7 +85,7 @@ test('inline calls share admission, retain a warm workspace and join it on close
       return bridge;
     }
   }
-  const runner: DiscoveryRunner = { run: () => Promise.reject(new WorkspaceFailure('fixtureDiscoveryStopped')) };
+  const runner: DiscoveryRunner = { settings: fixtureSettings, run: () => Promise.reject(new WorkspaceFailure('fixtureDiscoveryStopped')) };
   const runtime = new ObservedRuntime(options), signal = new AbortController().signal;
   const settled = () => new Promise(resolve => setImmediate(resolve));
   const request = (outputName: string, outputRoot = out) => ({ workspace: { roots: [{ name: 'r', absolutePath: root }], outputRoot },

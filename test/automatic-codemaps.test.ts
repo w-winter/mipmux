@@ -21,6 +21,7 @@ import { Compile } from 'typebox/compile';
 import { selectionValidator, type SelectionRequest } from '../src/contracts/selection.js';
 import { failureCode } from '../src/runtime/tool-result.js';
 import { prepareReceipt } from '../src/mcp/receipts.js';
+import { fixtureSettings } from './fixtures/discovery-settings.js';
 
 const signal = () => new AbortController().signal;
 const maxOutputBytes = 100000;
@@ -536,7 +537,7 @@ test('cancelling a job during inferred admission joins native work before report
   const entering = new Promise<void>(resolve => { entered = resolve; }), held = new Promise<void>(resolve => { release = resolve; });
   const f = await fixture(async (path, pinned) => { if (armed && pinned && path === 'SharedA.swift') { armed = false; entered(); await held; } });
   try {
-    const client = f.runtime.createClient({ run: async () => { calls++; throw new Error('Unexpected scout dispatch'); } });
+    const client = f.runtime.createClient({ settings: fixtureSettings, run: async () => { calls++; throw new Error('Unexpected scout dispatch'); } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: join(f.directory, 'r') }],
       exclusions: [], outputRoot: join(f.directory, 'out') }, signal());
     armed = true;

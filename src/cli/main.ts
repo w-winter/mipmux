@@ -5,6 +5,9 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { ContextBuildRequest, SourceSelection } from '../contracts/context.js';
 import { WorkspaceSpec } from '../contracts/inventory.js';
+import { DiscoverySelection } from '../contracts/discovery.js';
+import { modelReference } from '../discovery/selection.js';
+import { defaultEnhancementMode } from '../runtime/mipmux-runtime.js';
 import { gitValidator } from '../contracts/git.js';
 import { readValidator, treeValidator, searchValidator, structureValidator } from '../contracts/exploration.js';
 import { verifyBundle, verifyCurrentBundle } from '../context/verify.js';
@@ -15,7 +18,8 @@ import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 
 const closed = { additionalProperties: false };
 const RenderInput = Type.Object({ workspace: WorkspaceSpec, request: ContextBuildRequest }, closed);
-const BuildInput = Type.Object({ workspace: WorkspaceSpec, request: ContextBuildRequest, requestId: Type.String({ minLength: 1 }) }, closed);
+const BuildInput = Type.Object({ workspace: WorkspaceSpec, request: ContextBuildRequest, requestId: Type.String({ minLength: 1 }),
+  discovery: Type.Optional(DiscoverySelection) }, closed);
 const DraftInput = Type.Object({ selections: Type.Array(SourceSelection), prompt: Type.String() }, closed);
 const maximumNodeTimerDelayMs = 2147483647;
 const toolSetValidator = Compile(ToolSet);
@@ -44,6 +48,16 @@ async function main(): Promise<void> {
     }
     const host = currentConfigHost(), path = values.config ?? defaultConfigPath(host);
     const config = resolveHostConfig(await loadJSON(path, ConfigFile), host);
+    if (command === 'config') {
+      // Callers display these defaults, so the output names only the file read, never paths, credentials or environment.
+      expectArguments(['config'], 1);
+      const discovery = config.discovery;
+      process.stdout.write(JSON.stringify({ kind: 'config', path, contextBudgetUnits: config.contextBudgetUnits,
+        defaultEnhancementMode: config.defaultEnhancementMode ?? defaultEnhancementMode, tools: config.tools,
+        discovery: discovery && { model: modelReference(discovery), thinking: discovery.thinking,
+          allowedModels: discovery.allowedModels.map(modelReference) } }) + '\n');
+      return;
+    }
     if (command === 'mcp') {
       expectArguments(['config', 'tools'], 1);
       const tools = values.tools ?? config.tools;
@@ -95,7 +109,7 @@ async function main(): Promise<void> {
           expectArguments(['request', 'config'], 1);
           const input = await loadJSON(required('request'), BuildInput);
           const workspace = await client.declare(input.workspace, abort.signal);
-          const job = client.build(workspace.id, input.requestId, input.request);
+          const job = client.build(workspace.id, input.requestId, input.request, 'unavailable', input.discovery);
           const cancel = () => { client.cancel(job.jobId); };
           abort.signal.addEventListener('abort', cancel, { once: true });
           if (abort.signal.aborted) cancel();

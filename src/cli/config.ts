@@ -1,7 +1,7 @@
 import { IgnoreSettings } from '../contracts/inventory.js';
 import { CopyContext } from '../contracts/presentation.js';
 import { PromptEnhancementMode } from '../contracts/context.js';
-import { RecoveryPolicy } from '../contracts/discovery.js';
+import { ModelReference, RecoveryPolicy } from '../contracts/discovery.js';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
@@ -11,6 +11,7 @@ import { Compile } from 'typebox/compile';
 import { PiConfig } from '../discovery/pi-protocol.js';
 import { MipmuxRuntime } from '../runtime/mipmux-runtime.js';
 import { PiRunner } from '../discovery/pi-runner.js';
+import { DiscoveryHostConfig, parseModelReference } from '../discovery/selection.js';
 import { freeze, WorkspaceFailure } from '../workspace/values.js';
 import { mcpProtectedPaths } from '../discovery/mcp-config.js';
 
@@ -30,7 +31,7 @@ export const HostConfig = Type.Object({ copyContext: CopyContext, ignoreSettings
   nativeEnvironment: Type.Record(Type.String(), Type.String()),
   terminationGraceMs: Type.Integer({ minimum: 0, maximum: 2147483647 }),
   credentialPaths: Type.Array(absolute),
-  git: Type.Union([GitHost, Type.Null()]), discovery: Type.Union([PiConfig, Type.Null()]),
+  git: Type.Union([GitHost, Type.Null()]), discovery: Type.Union([DiscoveryHostConfig, Type.Null()]),
   defaultMaxOutputBytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   contextBudgetUnits: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
   defaultEnhancementMode: Type.Optional(PromptEnhancementMode),
@@ -50,8 +51,10 @@ const PolicyFile = Type.Object({
   websocketConnectTimeoutMs: Type.Optional(RecoveryPolicy.properties.websocketConnectTimeoutMs),
   cacheWarming: Type.Optional(RecoveryPolicy.properties.cacheWarming),
 }, closed);
+/** `allowedModels` lists the `provider/model` references a build request may select besides the configured model. */
 const DiscoveryFile = Type.Object({ ...Type.Partial(Type.Omit(PiConfig, ['provider', 'model', 'thinking', 'modelsPath', 'policy'])).properties,
-  ...Type.Pick(PiConfig, ['provider', 'model', 'thinking', 'modelsPath']).properties, policy: Type.Optional(PolicyFile) }, closed);
+  ...Type.Pick(PiConfig, ['provider', 'model', 'thinking', 'modelsPath']).properties, policy: Type.Optional(PolicyFile),
+  allowedModels: Type.Optional(Type.Array(ModelReference)) }, closed);
 /** The configuration file. Every field is optional; resolveHostConfig supplies each default. */
 export const ConfigFile = Type.Object({ ...Type.Partial(Type.Omit(HostConfig, ['discovery'])).properties,
   discovery: Type.Optional(Type.Union([DiscoveryFile, Type.Null()])) }, closed);
@@ -125,10 +128,11 @@ function userGitConfiguration(host: ConfigHost) {
   return { home: host.home, xdgConfigHome: xdgConfigHome && isAbsolute(xdgConfigHome) ? xdgConfigHome : null };
 }
 
-function resolveDiscovery(file: Static<typeof DiscoveryFile>, host: ConfigHost): PiConfig {
+function resolveDiscovery(file: Static<typeof DiscoveryFile>, host: ConfigHost): DiscoveryHostConfig {
   const policy = file.policy ?? {}, httpIdleTimeoutMs = policy.httpIdleTimeoutMs ?? piPolicyDefaults.httpIdleTimeoutMs;
   return {
     provider: file.provider, model: file.model, thinking: file.thinking, modelsPath: file.modelsPath,
+    allowedModels: (file.allowedModels ?? []).map(parseModelReference),
     authPath: file.authPath ?? join(host.env.PI_CODING_AGENT_DIR ?? join(host.home, '.pi', 'agent'), 'auth.json'),
     promptTemplatePath: file.promptTemplatePath ?? join(host.packageRoot, 'dist', 'prompts', 'discovery.md'),
     environment: file.environment ?? {},

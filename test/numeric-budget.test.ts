@@ -10,6 +10,7 @@ import { MipmuxRuntime } from '../src/index.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import { WorkspaceFailure } from '../src/workspace/values.js';
+import { fixtureSettings } from './fixtures/discovery-settings.js';
 
 const scoutBudget = Compile(Type.Object({ tokenBudget: Type.Integer(), initialContext: Type.String() }));
 
@@ -19,7 +20,7 @@ test('numeric assembly budget remains the packet limit while scout input receive
   const root = join(base, 'root'), output = join(base, 'out');
   await mkdir(root); await mkdir(output);
   const received: { tokenBudget: number; initialContext: string }[] = [];
-  const runner: DiscoveryRunner = { run: async input => {
+  const runner: DiscoveryRunner = { settings: fixtureSettings, run: async input => {
     received.push(scoutBudget.Parse(input));
     throw new WorkspaceFailure('fixtureBudgetObserved');
   } };

@@ -14,6 +14,7 @@ import { expandCallerBuild, expandCallerPrepare, expandCallerWorkspace, type Cal
 import { scopedCall, scopedGitCall, scopedReadCall } from '../discovery/scoped-tools.js';
 import { identityEncoding, type ResultEncoding } from '../exploration/output-budget.js';
 import type { ClientQuestionResponse } from '../contracts/interaction.js';
+import type { DiscoverySelection } from '../contracts/discovery.js';
 import { listPromptPresets } from '../context/prompt-presets.js';
 import { failureCode } from './tool-result.js';
 
@@ -164,25 +165,30 @@ export class ClientRuntime {
     const captured = freeze(structuredClone(input)), request = expandCallerPrepare(captured);
     return this.#track(signal, async combined => (await this.#callerWorkspace(captured.workspace, combined)).preparePacket(request, combined));
   }
-  /** Enabled clarification requires the caller's form capability or throws elicitationUnavailable before admission. */
-  build(workspaceId: string, requestId: string, request: ContextBuildRequest, elicitation: 'form' | 'unavailable' = 'unavailable') {
+  /**
+   * Enabled clarification requires the caller's form capability or throws elicitationUnavailable before admission. `discovery`
+   * selects the job's discovery model and level from the allowed models, or throws modelNotAllowed before admission.
+   */
+  build(workspaceId: string, requestId: string, request: ContextBuildRequest, elicitation: 'form' | 'unavailable' = 'unavailable',
+    discovery?: DiscoverySelection) {
     const workspace = this.#workspace(workspaceId);
     if (request.clarification && elicitation !== 'form') throw new WorkspaceFailure('elicitationUnavailable');
-    return this.#jobs.start(workspace, { kind: 'requestId', workspaceId, requestId }, request);
+    return this.#jobs.start(workspace, { kind: 'requestId', workspaceId, requestId }, request, this.#jobs.settings(discovery));
   }
   /**
    * `build` for an inline declaration. The job is identified by its output destination: an identical start returns the
-   * existing job, and the same destination with a different workspace or request fails with outputNameConflict.
+   * existing job, and the same destination with a different workspace, request or discovery settings fails with outputNameConflict.
    * Cancelling `signal` before the job is admitted starts nothing; afterwards the job runs until cancelled.
    */
   buildContext(input: CallerBuildRequest, signal: AbortSignal, elicitation: 'form' | 'unavailable') {
     const captured = freeze(structuredClone(input));
     const request = expandCallerBuild(captured, this.runtime.options.contextBudgetUnits, this.runtime.options.defaultEnhancementMode);
     if (request.clarification && elicitation !== 'form') throw new WorkspaceFailure('elicitationUnavailable');
+    const settings = this.#jobs.settings(captured.discovery);
     return this.#track(signal, async combined => {
       const workspace = await this.#callerWorkspace(captured.workspace, combined);
       combined.throwIfAborted();
-      return this.#jobs.start(workspace, { kind: 'destination', ...workspace.binding }, request);
+      return this.#jobs.start(workspace, { kind: 'destination', ...workspace.binding }, request, settings);
     });
   }
   /** Returns an owned job's current form, or null when no form is pending. */

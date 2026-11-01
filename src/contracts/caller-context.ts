@@ -3,6 +3,7 @@ import { SourcePath, WorkspaceSpec } from './inventory.js';
 import { ContextBuildRequest, ContextPrepareRequest, DocumentInput, LineRange, type PromptEnhancementMode,
   type SourceSelection } from './context.js';
 import { LocalComparison, PatchInput } from './patches.js';
+import { DiscoverySelection } from './discovery.js';
 
 /*
  * The compact inputs an MCP caller sends to build and prepare packets. Each expands once into the domain request that
@@ -39,7 +40,8 @@ const evidence = { required: Type.Optional(Type.Array(CallerRequiredSource)), pa
 const build = ContextBuildRequest.properties, prepare = ContextPrepareRequest.properties;
 export const CallerBuildRequest = Type.Object({ workspace: CallerWorkspace, purpose: build.purpose, task: build.task,
   outputName: build.outputName, ...evidence, copyPreset: Type.Optional(Type.Enum(['standard', 'codeReview'])),
-  budgetUnits: build.budgetUnits, enhancementMode: build.enhancementMode, clarification: build.clarification }, closed);
+  budgetUnits: build.budgetUnits, enhancementMode: build.enhancementMode, clarification: build.clarification,
+  discovery: Type.Optional(DiscoverySelection) }, closed);
 export type CallerBuildRequest = Static<typeof CallerBuildRequest>;
 export const CallerPrepareRequest = Type.Object({ workspace: CallerWorkspace, bundle: prepare.bundle, prompt: prepare.prompt,
   outputName: prepare.outputName, refresh: prepare.refresh, ...evidence, remove: prepare.remove, demote: prepare.demote,
@@ -85,10 +87,12 @@ export function expandCallerWorkspace(input: CallerWorkspace): WorkspaceSpec {
 /**
  * The domain request for a caller's build. It starts from an empty automatic selection with no constraints or hints; the
  * preset defaults to codeReview for a review or any patch, and the budget and enhancement mode to the supplied host defaults.
+ * The discovery selection is a job setting, not part of the domain request.
  */
 export function expandCallerBuild(input: CallerBuildRequest, contextBudgetUnits: number,
   defaultEnhancementMode: PromptEnhancementMode): ContextBuildRequest {
-  const { workspace: _workspace, required = [], patches = [], documents = [], copyPreset, budgetUnits, enhancementMode, ...fields } = input;
+  const { workspace: _workspace, discovery: _discovery, required = [], patches = [], documents = [], copyPreset, budgetUnits,
+    enhancementMode, ...fields } = input;
   return { ...fields, constraints: '', initialSelection: { codemapMode: 'automatic', sources: [] }, discoveryHints: [],
     duplicateUserInstructionsAtTop: false, requiredSources: required.map(sourceSelection), documents: documents.map(documentInput),
     patches: patches.map(patchInput), copyPreset: copyPreset ?? (fields.purpose === 'review' || patches.length > 0 ? 'codeReview' : 'standard'),

@@ -8,6 +8,16 @@ import { SelectionInput, SelectionRequest } from './selection.js';
 import { AskUserRequest } from './interaction.js';
 
 const closed = { additionalProperties: false };
+export const ThinkingLevel = Type.Enum(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+export type ThinkingLevel = Static<typeof ThinkingLevel>;
+/** Pi's `provider/model` notation: the provider is the text before the first `/`, and the model ID, which may contain `/`, follows it. */
+export const ModelReference = Type.String({ pattern: '^[^/\\s]+/\\S+$' });
+/**
+ * A build's choice of discovery model and thinking level. `model` must be the configured model or one of the configured
+ * allowed models; an omitted field keeps the configured value.
+ */
+export const DiscoverySelection = Type.Object({ model: Type.Optional(ModelReference), thinking: Type.Optional(ThinkingLevel) }, closed);
+export type DiscoverySelection = Static<typeof DiscoverySelection>;
 export const DiscoveryInput = Type.Object({ tokenBudget: SafeCount, purpose: ContextBuildRequest.properties.purpose,
   clarification: Type.Optional(Type.Object({ questionTimeoutSeconds: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }) }, closed)),
   enhancementMode: CapturedContextBuildRequest.properties.enhancementMode,
@@ -91,6 +101,8 @@ export const DiscoveryReceipt = Type.Object({
   template: Type.Object({ path: Type.String({ pattern: '^/[^\\u0000]*$' }), identity: SourceIdentity }, closed),
   policyIdentity: SourceIdentity,
   requested: Type.Object({ provider: Type.String(), model: Type.String(), thinking: Type.String() }, closed),
+  /** The thinking levels the requested model supports, as Pi reports them; null until the worker has resolved the model. */
+  thinkingLevels: Type.Union([Type.Array(Type.String()), Type.Null()]),
   effective: Type.Union([Type.Null(), Type.Object({ identity: ModelIdentity, thinking: Type.String(),
     contextWindow: Positive, maxTokens: Positive, recordSHA256: SHA256,
     modelRecord: Type.Record(Type.String(), Type.Unknown()), endpointSHA256: SHA256,

@@ -1,4 +1,5 @@
-import type { DiscoveryCall, DiscoveryEvent, DiscoveryInput, DiscoveryReceipt } from '../contracts/discovery.js';
+import type { DiscoveryCall, DiscoveryEvent, DiscoveryInput, DiscoveryReceipt, DiscoverySelection } from '../contracts/discovery.js';
+import type { DiscoverySettings } from './selection.js';
 import type { ResultEncoding } from '../exploration/output-budget.js';
 export type { DiscoveryInput } from '../contracts/discovery.js';
 export interface DiscoveryTools {
@@ -9,8 +10,10 @@ export type DiscoveryOutcome =
   | { readonly kind: 'complete'; readonly receipt: DiscoveryReceipt }
   | { readonly kind: 'failed' | 'cancelled'; readonly code: string; readonly receipt: DiscoveryReceipt };
 
-/** Returns only after owned tools, observations and the worker have settled locally. */
 export interface DiscoveryRunner {
+  /** The settings a build runs with, from a request's selection; throws modelNotAllowed for a model it may not select. */
+  settings(selection: DiscoverySelection | undefined): DiscoverySettings;
+  /** Runs one discovery with settings that `settings` returned; returns only after owned tools, observations and the worker have settled locally. */
   run(input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal,
-    progress: (event: DiscoveryEvent) => void): Promise<DiscoveryOutcome>;
+    progress: (event: DiscoveryEvent) => void, settings: DiscoverySettings): Promise<DiscoveryOutcome>;
 }

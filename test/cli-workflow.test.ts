@@ -66,6 +66,12 @@ test('built CLI warms, explores, renders, verifies, invalidates and emits failed
     const receipt = JSON.parse(blocked.out);
     assert.equal(receipt.state, 'blocked'); assert.equal(receipt.discovery.workerClosed, true);
     await writeFile(join(directory, 'blocked-receipt.json'), blocked.out);
+    const selectedBuild = join(directory, 'build-selected.json');
+    await writeFile(selectedBuild, JSON.stringify({ workspace: spec, request: { ...request, outputName: 'builder-low', budgetUnits: 1 },
+      requestId: 'two', discovery: { thinking: 'low' } }));
+    const selected = await cli(['build', '--request', selectedBuild, '--config', files.config]);
+    assert.equal(selected.code, 2, selected.out);
+    assert.deepEqual(JSON.parse(selected.out).discovery.requested, { provider: provider.config.provider, model: provider.config.model, thinking: 'low' });
     await writeFile(files.config, JSON.stringify({ ...config, discovery: { ...provider.config, model: 'not-a-model' } }));
     const failed = await cli(['build', '--request', files.build, '--config', files.config]);
     assert.equal(failed.code, 1, failed.out); assert.equal(JSON.parse(failed.out).state, 'failed');

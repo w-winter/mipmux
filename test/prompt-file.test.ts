@@ -12,6 +12,7 @@ import type { DiscoveryInput } from '../src/discovery/runner.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { selectDiscovery } from '../src/discovery/selection.js';
 
 const input: DiscoveryInput = { tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: ['r'], hints: [] };
 const digest = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
@@ -32,10 +33,10 @@ test('one runner snapshots configured prompt bytes per job and sees edits on the
   try {
     const config = { ...provider.config, promptTemplatePath: promptPath };
     const runner = new PiRunner(config, supervisor, nativeDiscoveryRenderer(supervisor));
-    const running = runner.run(input, { call: async () => { entered(); await released; return { kind: 'ok' }; } }, new AbortController().signal, () => {});
+    const running = runner.run(input, { call: async () => { entered(); await released; return { kind: 'ok' }; } }, new AbortController().signal, () => {}, runner.settings(undefined));
     await boundary; await writeFile(promptPath, second); release();
     const one = await running;
-    const two = await runner.run(input, { call: async () => { throw Error('Unexpected tool'); } }, new AbortController().signal, () => {});
+    const two = await runner.run(input, { call: async () => { throw Error('Unexpected tool'); } }, new AbortController().signal, () => {}, runner.settings(undefined));
     assert.equal(one.kind, 'complete'); assert.equal(two.kind, 'complete');
     assert.equal(one.receipt.template.identity.sha256, digest(first)); assert.equal(two.receipt.template.identity.sha256, digest(second));
     const firstPolicy = Buffer.from('L|FIRST_PROMPT_INSTRUCTION|FIRST_PROMPT_INSTRUCTION|R');
@@ -82,14 +83,14 @@ test('prompt admission rejects invalid files before spawn and closes descriptors
           const supervisor = new ProcessSupervisor({terminationGraceMs:0});
           supervisor.spawn = () => {throw Error('unexpectedSpawn')};
           try {await new PiRunner(${JSON.stringify(config)},supervisor,nativeDiscoveryRenderer(supervisor)).run(${JSON.stringify(input)},
-            {call:async()=>{throw Error('unexpectedTool')}},new AbortController().signal,()=>{}); process.exitCode=1;}
+            {call:async()=>{throw Error('unexpectedTool')}},new AbortController().signal,()=>{},${JSON.stringify(selectDiscovery(config, undefined))}); process.exitCode=1;}
           catch(error){console.log(error.code ?? error.message)} finally {await supervisor.close()}`;
         const result = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', program], { timeout: 3000 });
         assert.equal(result.stdout.trim(), 'nonRegularDiscoveryTemplate');
         continue;
       }
       await assert.rejects(new PiRunner(config, supervisor, nativeDiscoveryRenderer(supervisor)).run(input,
-        { call: async () => { throw Error('Unexpected tool'); } }, new AbortController().signal, () => {}),
+        { call: async () => { throw Error('Unexpected tool'); } }, new AbortController().signal, () => {}, selectDiscovery(config, undefined)),
       { code });
     }
     const validTemplate = await readFile('test/fixtures/discovery-template.md', 'utf8');
@@ -112,7 +113,7 @@ test('prompt admission rejects invalid files before spawn and closes descriptors
     try {
       const config = { ...provider.config, promptTemplatePath: promptPath };
       await assert.rejects(new PiRunner(config, supervisor, nativeDiscoveryRenderer(supervisor)).run(input,
-        { call: async () => { throw Error('Unexpected tool'); } }, abort.signal, () => {}), { name: 'AbortError' });
+        { call: async () => { throw Error('Unexpected tool'); } }, abort.signal, () => {}, selectDiscovery(config, undefined)), { name: 'AbortError' });
       assert.equal(acquired, 1); assert.equal(closed, acquired);
     } finally { hook.mock.restore(); syncBuiltinESMExports(); }
     assert.equal(provider.requests.length, 0);

@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { ProcessSupervisor, type ProcessSpec } from '../src/runtime/process-supervisor.js';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
+import { selectDiscovery } from '../src/discovery/selection.js';
 
 test('untrusted worker generations, late records and premature completion cannot grant readiness or tools', async () => {
   const provider = await scriptedProvider(() => { throw new Error('No model expected'); });
@@ -24,7 +25,7 @@ test('untrusted worker generations, late records and premature completion cannot
             calls++;
             await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }));
             return { kind: 'metadata' };
-          } }, new AbortController().signal, () => {});
+          } }, new AbortController().signal, () => {}, selectDiscovery(provider.config, undefined));
         assert.equal(result.kind, 'failed', scenario);
         assert.equal(result.receipt.workerClosed, true);
         assert.equal(calls, scenario === 'outstandingTool' ? 1 : 0);

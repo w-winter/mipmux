@@ -12,6 +12,7 @@ import { MipmuxRuntime } from '../src/index.js';
 import { BridgeClient } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { toolJSON } from './fixtures/tool-json.js';
+import { fixtureSettings } from './fixtures/discovery-settings.js';
 
 const identifier = Compile(Type.Object({ id: Type.String() }));
 const treeReply = Compile(Type.Object({ kind: Type.Literal('tree'), tree: Type.String(), rootsCount: Type.Integer() }));
@@ -139,7 +140,7 @@ test('job cancellation reaches a held startup tree before scout dispatch and ter
     credentialPaths: [], terminationGraceMs: 100,
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: {} });
   try {
-    const client = runtime.createClient({ run: async () => { scoutCalls++; throw new Error('Scout must not dispatch'); } });
+    const client = runtime.createClient({ settings: fixtureSettings, run: async () => { scoutCalls++; throw new Error('Scout must not dispatch'); } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output }, new AbortController().signal);
     const job = client.build(workspace.id, 'startup-cancel', { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'preserve',
       purpose: 'investigation', requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'packet', budgetUnits: 10000 });

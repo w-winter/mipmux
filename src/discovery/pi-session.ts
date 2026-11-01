@@ -77,9 +77,11 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     session = created.session;
     // Naming codemode in the allowlist activates it; without an allowlist, as with MCP, it registers inactive.
     if (mcp && config.codemode) session.setActiveToolsByName([...session.getActiveToolNames(), CODEMODE_TOOL]);
-    if (created.modelFallbackMessage || session.thinkingLevel !== thinking || JSON.stringify(session.model) !== JSON.stringify(model)) {
-      throw new WorkspaceFailure('modelSelectionChanged');
-    }
+    observe({ kind: 'modelCapabilities', thinkingLevels: session.getAvailableThinkingLevels() });
+    // compat-ok: Pi reports a substituted model through modelFallbackMessage; discovery fails rather than run another model.
+    if (created.modelFallbackMessage || JSON.stringify(session.model) !== JSON.stringify(model)) throw new WorkspaceFailure('modelSelectionChanged');
+    // Pi clamps a level the model does not support to the nearest supported one, which would change the requested setting.
+    if (session.thinkingLevel !== thinking) throw new WorkspaceFailure('unsupportedThinkingLevel');
     if (canonicalJSON(session.getActiveToolNames().sort()) !== canonicalJSON([...toolNames].sort()) ||
         canonicalJSON(session.getCallableToolNames().sort()) !== canonicalJSON([...scriptable].sort())) {
       throw new WorkspaceFailure('unexpectedToolAccess');

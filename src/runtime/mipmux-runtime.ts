@@ -53,6 +53,9 @@ export interface RuntimeOptions {
   readonly git?: { readonly executable: string; readonly userConfiguration?: GitUserConfiguration };
 }
 
+/** The task mode a build uses when neither the request nor the host configuration names one. */
+export const defaultEnhancementMode: PromptEnhancementMode = 'augment';
+
 export class MipmuxRuntime {
   readonly options: RuntimeOptions & { readonly defaultEnhancementMode: PromptEnhancementMode };
   readonly supervisor: ProcessSupervisor;
@@ -69,9 +72,9 @@ export class MipmuxRuntime {
   #closing: Promise<void> | null = null;
   constructor(options: RuntimeOptions) {
     if (!Compile(CopyContext).Check(options.copyContext)) throw new WorkspaceFailure('invalidCopyContext');
-    const defaultEnhancementMode = options.defaultEnhancementMode === undefined ? 'augment' : options.defaultEnhancementMode;
-    if (!Compile(PromptEnhancementMode).Check(defaultEnhancementMode)) throw new WorkspaceFailure('invalidDefaultEnhancementMode');
-    this.options = freeze({ ...structuredClone(options), defaultEnhancementMode });
+    const enhancementMode = options.defaultEnhancementMode ?? defaultEnhancementMode;
+    if (!Compile(PromptEnhancementMode).Check(enhancementMode)) throw new WorkspaceFailure('invalidDefaultEnhancementMode');
+    this.options = freeze({ ...structuredClone(options), defaultEnhancementMode: enhancementMode });
     if (!Number.isSafeInteger(options.contextBudgetUnits) || options.contextBudgetUnits < 1) {
       throw new WorkspaceFailure('invalidContextBudget');
     }

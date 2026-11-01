@@ -10,6 +10,7 @@ import type { JobSnapshot } from '../src/contracts/jobs.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
 import { compose } from '../src/cli/config.js';
 import { WorkspaceFailure } from '../src/workspace/values.js';
+import { fixtureSettings } from './fixtures/discovery-settings.js';
 
 test('configured context defaults resolve omitted settings and explicit request overrides across drafts and jobs', async () => {
   await mkdir('test-output', { recursive: true });
@@ -22,7 +23,7 @@ test('configured context defaults resolve omitted settings and explicit request 
   const { runtime } = compose({ ...options, git: null, discovery: null, defaultMaxOutputBytes: 10000, tools: 'core' }, null);
   const signal = new AbortController().signal;
   const observed: { enhancementMode: string; tokenBudget: number }[] = [];
-  const runner: DiscoveryRunner = { run: async input => {
+  const runner: DiscoveryRunner = { settings: fixtureSettings, run: async input => {
     observed.push({ enhancementMode: input.enhancementMode, tokenBudget: input.tokenBudget });
     throw new WorkspaceFailure('fixtureDefaultsObserved');
   } };
@@ -71,7 +72,7 @@ test('client jobs deduplicate admission, isolate ids, release cancelled work', a
   let entered!: () => void;
   const started = new Promise<void>(resolve => { entered = resolve; });
   let calls = 0;
-  const runner: DiscoveryRunner = { run: async (_input, _tools, signal) => {
+  const runner: DiscoveryRunner = { settings: fixtureSettings, run: async (_input, _tools, signal) => {
     calls++; entered();
     await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), { once: true }));
     throw new Error('Cancelled boundary');

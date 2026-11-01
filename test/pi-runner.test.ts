@@ -25,7 +25,7 @@ test('real isolated SDK has only scoped tools, observes same-model recovery and 
   try {
     const runner = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor));
     const result = await runner.run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Inspect', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: ['r'] },
-      { call: async () => { throw new Error('Unexpected tool'); } }, new AbortController().signal, () => {});
+      { call: async () => { throw new Error('Unexpected tool'); } }, new AbortController().signal, () => {}, runner.settings(undefined));
     assert.equal(result.kind, 'complete');
     assert.equal(result.receipt.workerClosed, true);
     assert.equal(result.receipt.disposed, true);

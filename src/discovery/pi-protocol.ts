@@ -1,12 +1,12 @@
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
-import { Completion, DiscoveryCall, DiscoveryEvent, DiscoveryInput, DiscoveryReceipt, RecoveryPolicy } from '../contracts/discovery.js';
+import { Completion, DiscoveryCall, DiscoveryEvent, DiscoveryInput, DiscoveryReceipt, RecoveryPolicy, ThinkingLevel } from '../contracts/discovery.js';
 import { AdmittedMcp, McpReference } from './mcp-config.js';
 
 const closed = { additionalProperties: false };
 const absolute = Type.String({ pattern: '^/[^\\u0000]*$' });
 export const PiConfig = Type.Object({ provider: Type.String({ minLength: 1 }), model: Type.String({ minLength: 1 }),
-  thinking: Type.Enum(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']),
+  thinking: ThinkingLevel,
   authPath: absolute, modelsPath: absolute, promptTemplatePath: absolute,
   environment: Type.Record(Type.String(), Type.String()),
   policy: RecoveryPolicy, mcp: Type.Union([McpReference, Type.Null()]), codemode: Type.Boolean() }, closed);
@@ -27,6 +27,7 @@ export type ParentMessage = Static<typeof ParentMessage>;
 export const Evidence = Type.Union([
   Type.Object({ kind: Type.Literal('preflight'), effective: DiscoveryReceipt.properties.effective,
     policy: RecoveryPolicy }, closed),
+  Type.Object({ kind: Type.Literal('modelCapabilities'), thinkingLevels: Type.Array(Type.String()) }, closed),
   Type.Object({ kind: Type.Literal('completion'), value: Completion }, closed),
   Type.Object({ kind: Type.Literal('assistant'), value: Completion }, closed),
   Type.Object({ kind: Type.Literal('prompt'), outcome: Type.Enum(['resolved', 'rejected']) }, closed),

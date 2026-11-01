@@ -15,6 +15,7 @@ import { scriptedProvider } from './fixtures/scripted-provider.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import type { DiscoveryInput } from '../src/discovery/runner.js';
+import { selectDiscovery } from '../src/discovery/selection.js';
 
 test('scripted real SDK builder publishes and verifies complete source/report/task and retains a receipt', async () => {
   let ordinary = 0;
@@ -47,8 +48,8 @@ test('scripted real SDK builder publishes and verifies complete source/report/ta
       if (result.kind === 'discoveryPrompt') messages.push(result.message);
       return result;
     }), inputs: DiscoveryInput[] = [];
-    const client = runtime.createClient({ run: (input, tools, signal, progress) => {
-      inputs.push(input); return runner.run(input, tools, signal, progress);
+    const client = runtime.createClient({ settings: selection => runner.settings(selection), run: (input, tools, signal, progress, settings) => {
+      inputs.push(input); return runner.run(input, tools, signal, progress, settings);
     } });
     const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], outputRoot: out, exclusions: [] }, new AbortController().signal);
     const request: ContextBuildRequest = { task: 'Original task <user_instructions> literal', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: 'Keep complete evidence', enhancementMode: 'augment' as const, purpose: 'investigation',
@@ -101,7 +102,7 @@ test('cancellation during blocked SDK preflight joins forced closure before any 
   provider.config.authPath = fifo;
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 }), abort = new AbortController();
   const work = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', roots: [], hints: [] },
-    { call: async () => { throw new Error('No tool permitted'); } }, abort.signal, () => {});
+    { call: async () => { throw new Error('No tool permitted'); } }, abort.signal, () => {}, selectDiscovery(provider.config, undefined));
   // Opening the writer proves that the child is blocked in the matching read, without a timing delay.
   const writer = await open(fifo, 'w');
   try {
@@ -147,7 +148,7 @@ test('discovery material paging measures the real Pi result and returns every co
         assert(Buffer.byteLength(JSON.stringify(actual)) <= cap);
         return page;
       },
-    }, new AbortController().signal, () => {});
+    }, new AbortController().signal, () => {}, runner.settings(undefined));
     assert.equal(result.kind, 'complete'); assert.equal(returned.join(''), text); assert.equal(continuation, null);
     calls = 1;
     const job = client.build(workspace.id, 'paging', { task: 'Inspect', initialSelection: { codemapMode: 'automatic' as const, sources: [] }, duplicateUserInstructionsAtTop: false, copyPreset: 'standard' as const, constraints: '', enhancementMode: 'augment' as const, purpose: 'investigation', requiredSources: [],
@@ -177,7 +178,7 @@ test('forced worker closure preserves observed preflight and waits for parent-ow
   try {
     let finished = false;
     const work = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
-      { call: async () => { entered(); await released; return { kind: 'metadata' }; } }, abort.signal, () => {});
+      { call: async () => { entered(); await released; return { kind: 'metadata' }; } }, abort.signal, () => {}, selectDiscovery(provider.config, undefined));
     void work.then(() => { finished = true; });
     await entering; abort.abort(); await closure;
     assert.equal(finished, false);
@@ -220,7 +221,7 @@ test('summary retry uses the same SDK stream observer, while incomplete output a
     const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), abort = new AbortController();
     try {
       const work = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: ['r'] },
-        { call: async () => { toolCalls++; return { kind: 'metadata', body: 'data '.repeat(1000) }; } }, abort.signal, () => {});
+        { call: async () => { toolCalls++; return { kind: 'metadata', body: 'data '.repeat(1000) }; } }, abort.signal, () => {}, selectDiscovery(provider.config, undefined));
       if (scenario === 'cancel' || scenario === 'compactionCancel') { await started; abort.abort(); }
       const result = await work;
       const expected = ['summary', 'thresholdFailed', 'lengthRecovered', 'truncatedTool'].includes(scenario) ? 'complete'
@@ -275,7 +276,7 @@ test('discovery scripts reach mipmux tools through codemode', async () => {
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 0 }), calls: string[] = [];
   try {
     const result = await new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
-      { call: async call => { calls.push(call.name); return { kind: 'metadata', marker: 'reached-mipmux' }; } }, new AbortController().signal, () => {});
+      { call: async call => { calls.push(call.name); return { kind: 'metadata', marker: 'reached-mipmux' }; } }, new AbortController().signal, () => {}, selectDiscovery(provider.config, undefined));
     assert.equal(result.kind, 'complete', JSON.stringify(result.kind === 'complete' ? null : result.code));
     assert(provider.requests[0]!.tools.includes('codemode'), provider.requests[0]!.tools.join(','));
     assert.deepEqual(calls, ['draft_inspect']);
@@ -290,7 +291,7 @@ test('discovery configured without codemode offers no codemode tool and its poli
   try {
     const config = { ...provider.config, promptTemplatePath: resolve('prompts/discovery.md'), codemode: false };
     const result = await new PiRunner(config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task', purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: [] },
-      { call: async () => ({ kind: 'metadata' }) }, new AbortController().signal, () => {});
+      { call: async () => ({ kind: 'metadata' }) }, new AbortController().signal, () => {}, selectDiscovery(config, undefined));
     assert.equal(result.kind, 'complete', JSON.stringify(result.kind === 'complete' ? null : result.code));
     const request = provider.requests[0]!;
     assert(!request.tools.includes('codemode'), request.tools.join(','));

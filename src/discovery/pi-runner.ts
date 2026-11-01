@@ -4,9 +4,10 @@ import { fileURLToPath } from 'node:url';
 import type { ProcessSupervisor } from '../runtime/process-supervisor.js';
 import { failureResult, piToolResult } from '../runtime/tool-result.js';
 import { freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
-import type { DiscoveryReceipt, DiscoveryEvent } from '../contracts/discovery.js';
+import type { DiscoveryReceipt, DiscoveryEvent, DiscoverySelection } from '../contracts/discovery.js';
 import type { DiscoveryInput, DiscoveryOutcome, DiscoveryRunner, DiscoveryTools } from './runner.js';
 import { piConfigValidator, workerValidator, type PiConfig, type WorkerMessage, type DiscoverySessionInput } from './pi-protocol.js';
+import { ModelChoice, selectDiscovery, type DiscoveryHostConfig, type DiscoverySettings } from './selection.js';
 import { receive, send } from './pi-channel.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -18,6 +19,7 @@ import { prepareDiscoveryInput, type DiscoveryPromptRenderer } from '../context/
 import type { SourceIdentity } from '../contracts/workspace.js';
 
 const dependencyValidator = Compile(Type.Object({ buildLockSHA256: SHA256 }, { additionalProperties: false }));
+const allowedValidator = Compile(Type.Array(ModelChoice));
 const systemFileFailure = Compile(Type.Object({ code: Type.String() }));
 
 async function readDiscoveryTemplate(path: string, signal: AbortSignal) {
@@ -47,17 +49,25 @@ function logTemplateRejection(error: WorkspaceFailure, path: string, identity: S
 }
 
 export class PiRunner implements DiscoveryRunner {
+  /** The worker configuration with the configured model and level; each run replaces those with its own settings. */
   readonly config: PiConfig;
-  constructor(config: PiConfig, private readonly supervisor: ProcessSupervisor, private readonly renderPrompt: DiscoveryPromptRenderer) {
-    if (!piConfigValidator.Check(config)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
-    if (Object.keys(config.environment).some(name => name === 'NODE_OPTIONS' || name.startsWith('PI_'))) {
+  readonly allowedModels: readonly ModelChoice[];
+  constructor(config: DiscoveryHostConfig, private readonly supervisor: ProcessSupervisor, private readonly renderPrompt: DiscoveryPromptRenderer) {
+    const { allowedModels, ...worker } = config;
+    if (!piConfigValidator.Check(worker) || !allowedValidator.Check(allowedModels)) throw new WorkspaceFailure('invalidDiscoveryConfiguration');
+    if (Object.keys(worker.environment).some(name => name === 'NODE_OPTIONS' || name.startsWith('PI_'))) {
       throw new WorkspaceFailure('unsafeWorkerEnvironment');
     }
-    this.config = freeze(structuredClone(config));
+    this.config = freeze(structuredClone(worker));
+    this.allowedModels = freeze(structuredClone(allowedModels));
+  }
+  settings(selection: DiscoverySelection | undefined): DiscoverySettings {
+    return selectDiscovery({ ...this.config, allowedModels: this.allowedModels }, selection);
   }
   async run(input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal,
-    progress: (event: DiscoveryEvent) => void): Promise<DiscoveryOutcome> {
+    progress: (event: DiscoveryEvent) => void, settings: DiscoverySettings): Promise<DiscoveryOutcome> {
     signal.throwIfAborted();
+    const config = freeze({ ...this.config, provider: settings.provider, model: settings.model, thinking: settings.thinking });
     let admitted: Awaited<ReturnType<typeof readDiscoveryTemplate>>;
     try { admitted = await readDiscoveryTemplate(this.config.promptTemplatePath, signal); }
     catch (error) {
@@ -88,7 +98,7 @@ export class PiRunner implements DiscoveryRunner {
       templateVersion: 'mipmux-discovery-template-v1',
       template: { path: this.config.promptTemplatePath, identity: templateIdentity },
       policyIdentity: { sha256: sha256(prepared.systemPrompt), byteCount: Buffer.byteLength(prepared.systemPrompt) },
-      requested: { provider: this.config.provider, model: this.config.model, thinking: this.config.thinking },
+      requested: { provider: config.provider, model: config.model, thinking: config.thinking }, thinkingLevels: null,
       effective: null, policy: structuredClone(this.config.policy), completions: [], events: [], prompt: 'notStarted',
       finalAssistant: null,
       acceptedRuns: 0, settled: false, idle: false, observationsSettled: false, disposed: false,
@@ -126,6 +136,7 @@ export class PiRunner implements DiscoveryRunner {
       if (value.kind === 'evidence') {
         const fact = value.fact;
         if (fact.kind === 'preflight') { receipt.effective = fact.effective; receipt.policy = fact.policy; }
+        else if (fact.kind === 'modelCapabilities') receipt.thinkingLevels = fact.thinkingLevels;
         else if (fact.kind === 'completion') receipt.completions.push(fact.value);
         else if (fact.kind === 'assistant') receipt.finalAssistant = fact.value;
         else if (fact.kind === 'prompt') receipt.prompt = fact.outcome;
@@ -162,7 +173,7 @@ export class PiRunner implements DiscoveryRunner {
     const sessionInput: DiscoverySessionInput = { message: prepared.message, initialContext: input.initialContext };
     if (input.clarification) sessionInput.clarification = input.clarification;
     if (signal.aborted) abort();
-    else send(child.child.stdin, { ...scope, kind: 'start', config: this.config,
+    else send(child.child.stdin, { ...scope, kind: 'start', config,
       input: sessionInput, prompt: prepared.systemPrompt, mcp });
     const closed = await child.closed;
     admission = false; cancel.abort();

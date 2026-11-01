@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
-import type { PiConfig } from '../../src/discovery/pi-protocol.js';
+import type { DiscoveryHostConfig } from '../../src/discovery/selection.js';
 
 const requestValidator = Compile(Type.Object({ model: Type.String(), messages: Type.Array(Type.Unknown()),
   tools: Type.Optional(Type.Array(Type.Object({ name: Type.String() }))), system: Type.Optional(Type.Unknown()) }));
@@ -43,7 +43,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   const address = server.address(); if (!address || typeof address === 'string') throw new Error('Missing port');
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(join(tmpdir(), 'mipmux-scripted-pi-'));
-  const config: PiConfig = { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off',
+  const config: DiscoveryHostConfig = { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off', allowedModels: [],
     authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), promptTemplatePath: join(directory, 'discovery.md'), environment: {}, mcp: null, codemode: true,
     policy: { retry: { enabled: true, maxRetries: 1, baseDelayMs: 0, maxAgentDelayMs: 0,
       provider: { timeoutMs: 10000, maxRetries: 0, maxRetryDelayMs: 0 } },

@@ -6,6 +6,8 @@ import { contextRequestValidator } from '../contracts/context.js';
 import type { DiscoveryCall, DiscoveryReceipt, DiscoveryEvent } from '../contracts/discovery.js';
 import type { JobPhase, JobSnapshot, JobTerminal } from '../contracts/jobs.js';
 import type { DiscoveryRunner } from '../discovery/runner.js';
+import type { DiscoverySettings } from '../discovery/selection.js';
+import type { DiscoverySelection } from '../contracts/discovery.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall } from '../discovery/scoped-tools.js';
 import { cacheRecoveryTarget, failureCode } from './tool-result.js';
@@ -37,6 +39,7 @@ const maximumTimerDelayMs = 2147483647;
 interface Job {
   readonly id: string;
   readonly digest: string;
+  readonly settings: DiscoverySettings;
   readonly abort: AbortController;
   readonly listeners: Set<(snapshot: JobSnapshot) => void>;
   sequence: number;
@@ -53,16 +56,22 @@ export class JobRegistry {
   readonly #requests = new Map<string, Job>();
   #closing: Promise<void> | null = null;
   constructor(private readonly runner: DiscoveryRunner | null) {}
+  /** The discovery settings for a request's selection; discoveryNotConfigured without a runner, else the runner's verdict. */
+  settings(selection: DiscoverySelection | undefined): DiscoverySettings {
+    if (!this.runner) throw new WorkspaceFailure('discoveryNotConfigured');
+    return this.runner.settings(selection);
+  }
   /**
-   * Starts discovery, or returns the job an identical earlier start created. The same identity with a different request
-   * fails with requestIdConflict or outputNameConflict and leaves the existing job unchanged.
+   * Starts discovery with `settings` from `settings()`, or returns the job an identical earlier start created. The same
+   * identity with a different request or settings fails with requestIdConflict or outputNameConflict and leaves the
+   * existing job unchanged.
    */
-  start(workspace: WorkspaceHandle, identity: JobIdentity, input: ContextBuildRequest): JobSnapshot {
+  start(workspace: WorkspaceHandle, identity: JobIdentity, input: ContextBuildRequest, settings: DiscoverySettings): JobSnapshot {
     if (this.#closing) throw new WorkspaceFailure('clientClosed');
     if ((identity.kind === 'requestId' && !identity.requestId) || !contextRequestValidator.Check(input)) throw new WorkspaceFailure('invalidRequest');
     const request = freeze(structuredClone(input));
     if (!this.runner) throw new WorkspaceFailure('discoveryNotConfigured');
-    const admission = jobAdmission(identity, request), previous = this.#requests.get(admission.key);
+    const discovery = freeze({ ...settings }), admission = jobAdmission(identity, request, discovery), previous = this.#requests.get(admission.key);
     if (previous) {
       if (previous.digest !== admission.digest) {
         admission.log('warn', 'outputNameConflict', null);
@@ -71,7 +80,7 @@ export class JobRegistry {
       admission.log('debug', 'reused', previous.id);
       return this.snapshot(previous.id);
     }
-    const job: Job = { id: randomUUID(), digest: admission.digest, abort: new AbortController(), listeners: new Set(), sequence: 0,
+    const job: Job = { id: randomUUID(), digest: admission.digest, settings: discovery, abort: new AbortController(), listeners: new Set(), sequence: 0,
       progress: null, status: { state: 'accepted' }, draft: null, question: { kind: 'idle' }, work: Promise.resolve() };
     this.#jobs.set(job.id, job); this.#requests.set(admission.key, job);
     admission.log('info', 'started', job.id);
@@ -132,7 +141,7 @@ export class JobRegistry {
             pending.add(work); void work.then(() => pending.delete(work), () => pending.delete(work));
             return work;
           },
-        }, job.abort.signal, event => { job.progress = event; this.#publish(job, job.status); });
+        }, job.abort.signal, event => { job.progress = event; this.#publish(job, job.status); }, job.settings);
         receipt = outcome.receipt;
         if (outcome.kind !== 'complete') throw new WorkspaceFailure(outcome.code);
       } finally {
@@ -274,13 +283,14 @@ function isTerminal(status: Job['status']): status is JobTerminal { return ['rea
 /**
  * The retry key and request digest for a start. Request-ID keys and destination keys occupy separate namespaces; a
  * destination key names the output directory by physical identity, and its digest covers the workspace's authority.
+ * Both digests cover the discovery settings, so a start with another model or level is not a retry.
  */
-function jobAdmission(identity: JobIdentity, request: ContextBuildRequest) {
+function jobAdmission(identity: JobIdentity, request: ContextBuildRequest, discovery: DiscoverySettings) {
   if (identity.kind === 'requestId') return { key: canonicalJSON(['requestId', identity.requestId]),
-    digest: sha256(canonicalJSON({ workspaceId: identity.workspaceId, request })), log: () => {} };
+    digest: sha256(canonicalJSON({ workspaceId: identity.workspaceId, request, discovery })), log: () => {} };
   const { canonicalPath, device, inode } = identity.outputRoot;
   const key = canonicalJSON(['destination', canonicalPath, device, inode, request.outputName]);
-  return { key, digest: sha256(canonicalJSON({ workspaceKey: identity.workspaceKey, request })),
+  return { key, digest: sha256(canonicalJSON({ workspaceKey: identity.workspaceKey, request, discovery })),
     log: (level: string, outcome: string, jobId: string | null) => process.stderr.write(JSON.stringify({ level,
       event: 'jobAdmission', outcome, destination: sha256(key), jobId }) + '\n') };
 }

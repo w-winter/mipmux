@@ -9,6 +9,7 @@ import { type ContextBuildRequest, type DraftRuntime, MipmuxRuntime, type Runtim
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import type { DiscoveryRunner } from '../src/discovery/runner.js';
+import { fixtureSettings } from './fixtures/discovery-settings.js';
 
 const signal = () => new AbortController().signal;
 const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
@@ -112,7 +113,7 @@ test('draft admission uses its qualifying refresh snapshot while a later scan is
     }
     const runtime = new Runtime(f.options);
     const runnerEntered = barrier();
-    const runner: DiscoveryRunner = { run: async () => { runnerEntered.release(); throw new Error('scripted stop after admission'); } };
+    const runner: DiscoveryRunner = { settings: fixtureSettings, run: async () => { runnerEntered.release(); throw new Error('scripted stop after admission'); } };
     const client = runtime.createClient(runner);
     try {
       const workspace = await client.declare(f.spec, signal());

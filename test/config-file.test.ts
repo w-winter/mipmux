@@ -4,6 +4,8 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
+import { promisify } from 'node:util';
+import { execFile } from 'node:child_process';
 import { ConfigFile, resolveHostConfig, type ConfigHost } from '../src/cli/config.js';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -23,7 +25,7 @@ test('a partial configuration file resolves to explicit defaults and field-level
     terminationGraceMs: 1000, credentialPaths: ['/home/fixture/private.json'],
     git: { executable: '/usr/bin/git', userConfiguration: { home: '/home/fixture', xdgConfigHome: null } },
     defaultMaxOutputBytes: 48000, contextBudgetUnits: 200000, tools: 'core',
-    discovery: { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/home/fixture/models.json',
+    discovery: { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/home/fixture/models.json', allowedModels: [],
       authPath: '/home/fixture/.pi/agent/auth.json', promptTemplatePath: '/opt/mipmux/dist/prompts/discovery.md', environment: {}, mcp: null, codemode: true,
       policy: { retry: { enabled: true, maxRetries: 3, baseDelayMs: 2000, maxAgentDelayMs: 60000,
         provider: { timeoutMs: 0, maxRetries: 0, maxRetryDelayMs: 60000 } },
@@ -49,4 +51,30 @@ test('the CLI reads the default configuration path when --config is omitted', as
     env: { ...process.env, XDG_CONFIG_HOME: configHome } });
   const inventory = Compile(Type.Object({ entries: Type.Array(Type.Object({ path: Type.String() })) })).Parse(JSON.parse(output));
   assert(inventory.entries.some(entry => entry.path === 'notes.txt'));
+});
+
+test('allowed discovery models are provider/model references, split at the first slash', () => {
+  const discovery = { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/m.json' } as const;
+  const file = Compile(ConfigFile).Parse({ discovery: { ...discovery, allowedModels: ['anthropic/claude-haiku-4-5', 'openrouter/meta/llama-4'] } });
+  assert.deepEqual(resolveHostConfig(file, host).discovery?.allowedModels,
+    [{ provider: 'anthropic', model: 'claude-haiku-4-5' }, { provider: 'openrouter', model: 'meta/llama-4' }]);
+  for (const reference of ['claude-haiku-4-5', '/claude', 'anthropic/', 'anthropic/claude haiku']) {
+    assert.equal(Compile(ConfigFile).Check({ discovery: { ...discovery, allowedModels: [reference] } }), false, reference);
+  }
+});
+
+test('mipmux config prints the resolved defaults and allowed models without paths, credentials or environment', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'mipmux-config-command-')), config = join(base, 'config.json');
+  const run = async () => JSON.parse((await promisify(execFile)(process.execPath, [resolve('dist/cli/main.js'), 'config', '--config', config],
+    { cwd: '/' })).stdout);
+  await writeFile(config, JSON.stringify({ contextBudgetUnits: 150000, credentialPaths: ['/secret/credential.json'], discovery: {
+    provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', modelsPath: '/secret/models.json', authPath: '/secret/auth.json',
+    environment: { SECRET_TOKEN: 'synthetic-secret-value' }, allowedModels: ['anthropic/claude-haiku-4-5'] } }));
+  const printed = await run();
+  assert.deepEqual(printed, { kind: 'config', path: config, contextBudgetUnits: 150000, defaultEnhancementMode: 'augment', tools: 'core',
+    discovery: { model: 'openai-codex/gpt-6.1-sol', thinking: 'medium', allowedModels: ['anthropic/claude-haiku-4-5'] } });
+  assert(!JSON.stringify(printed).includes('secret'));
+  await writeFile(config, JSON.stringify({ defaultEnhancementMode: 'preserve', tools: 'full' }));
+  assert.deepEqual(await run(), { kind: 'config', path: config, contextBudgetUnits: 200000, defaultEnhancementMode: 'preserve', tools: 'full',
+    discovery: null });
 });
