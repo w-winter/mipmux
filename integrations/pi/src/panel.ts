@@ -281,10 +281,13 @@ export class PanelComponent implements Component, Focusable {
   }
 
   private chooseModel(current: string | undefined, apply: (value: string) => void): void {
-    const discovery = this.config.value?.discovery;
-    if (!discovery) { this.control.say(this.config.problem ?? 'Discovery is not configured in mipmux\'s configuration.', 'error'); return; }
+    const config = this.config.value, discovery = config?.discovery;
+    if (!config) { this.control.say(this.config.problem ?? 'mipmux config is unavailable.', 'error'); return; }
+    if (!discovery) { this.control.say(`Discovery is not configured in ${config.path}.`, 'error'); return; }
+    const help = `To offer another model, add its provider/model name to discovery.allowedModels in ${config.path}, then reconnect the ` +
+      'mipmux server.';
     this.choose('discovery model', [...new Set([discovery.model, ...discovery.allowedModels])].map(model => ({ id: model, label: model,
-      description: 'Add models to discovery.allowedModels in mipmux\'s configuration to offer them here.', choose: () => apply(model) })), current);
+      description: help, choose: () => apply(model) })), current);
   }
 
   private chooseThinking(current: ThinkingLevel | undefined, apply: (value: ThinkingLevel) => void): void {

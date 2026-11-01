@@ -63,6 +63,10 @@ test('a folder typed with ~ and Tab completion becomes a saved workspace named a
   assert.match(screen(), /~\/Projects\//, 'Tab completes the folder name whatever its case');
   await press(...'ALPHA-A', key.tab, key.enter);
   await press(key.enter, key.down, key.enter, ...'bet', key.enter, key.escape);
+  await focus('Discovery model');
+  await press(key.enter);
+  assert.match(screen(), /discovery\.allowedModels in \/home\/user\/\.config\/mipmux\/config\.json/, 'the model list names the file to edit');
+  await press(key.escape);
   await focus('Budget');
   await press(key.enter, key.clearLine, ...'150k', key.enter, 'p');
   assert.match(screen(), /unsaved/);
