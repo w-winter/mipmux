@@ -3,7 +3,7 @@ import { readStore, StoreError } from './store.ts';
 import { recognize } from './routes.ts';
 import { openPanel, type PanelContext } from './panel.ts';
 import { report } from './report.ts';
-import type { MipmuxConfig } from './config.ts';
+import type { MipmuxCommands } from './config.ts';
 import { conflictNote, decide, declaredWorkspace, emptyState, sameWorkspace, selectedInstruction, sessionStateValidator,
   type CallArgs, type SavedWorkspace, type Selection, type SessionState } from './state.ts';
 
@@ -19,7 +19,7 @@ export interface MipmuxDependencies {
   readonly home: string;
   /** Records `state` in the session log, where `restore` finds it on resume, fork or tree navigation. */
   appendEntry(state: SessionState): void;
-  readConfig(): Promise<MipmuxConfig>;
+  readonly mipmux: MipmuxCommands;
 }
 export const entryType = 'mipmux';
 
@@ -111,7 +111,7 @@ export function createMipmux(dependencies: MipmuxDependencies) {
       }
       if (ctx.mode === 'tui') {
         await openPanel(ctx, { storePath: dependencies.storePath, home: dependencies.home, state: () => state,
-          record: next => record(next, ctx), readConfig: dependencies.readConfig });
+          record: next => record(next, ctx), mipmux: dependencies.mipmux });
       } else ctx.ui.notify(report(state, await lookup()), 'info');
     },
     async completions(prefix: string) {

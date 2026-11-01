@@ -1,4 +1,5 @@
 import { basename } from 'node:path';
+import type { ServerDefaults } from './server-config.ts';
 import { type Preferences, type SavedWorkspace, type SessionState, type Workspace } from './state.ts';
 
 /*
@@ -15,12 +16,14 @@ export interface Draft {
   readonly selected: string | null;
   readonly preferences: Preferences;
   readonly ignoreEdits: readonly IgnoreEdit[];
+  /** mipmux's request defaults, or null when `mipmux config` could not report them. */
+  readonly server: ServerDefaults | null;
 }
 const rootNamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
-export function openDraft(saved: readonly SavedWorkspace[], state: SessionState): Draft {
+export function openDraft(saved: readonly SavedWorkspace[], state: SessionState, server: ServerDefaults | null): Draft {
   return { entries: saved.map(workspace => ({ origin: workspace.name, workspace })), selected: state.selected, preferences: state.preferences,
-    ignoreEdits: [] };
+    ignoreEdits: [], server };
 }
 
 export function selectedWorkspace(draft: Draft): SavedWorkspace | null {

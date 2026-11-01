@@ -73,9 +73,15 @@ The rules belong to the folder, not to the saved workspace: every workspace and 
 
 A value you set fills in a setting the agent leaves out. A pinned value replaces the agent's value too. From highest precedence to lowest, a build uses a pinned session value, a pinned workspace value, the agent's value, a session value, a workspace value, and finally the server default.
 
-The panel shows the server defaults by running `mipmux config`. They come from mipmux's configuration file, whose path the panel names. The discovery models you can choose are the configured model and those listed in `discovery.allowedModels`; mipmux refuses any other. mipmux reads the file when it starts, so after editing it, reconnect the mipmux server from `/mcp`.
-
 Session choices are recorded in the session itself: resuming or forking a session restores them, and a new session starts with nothing selected. They do not change mipmux's configuration file or other sessions. Changing a preference changes the request, so repeating an earlier build start under the same output name fails with `outputNameConflict`; the extension adds a note saying so, and a new output name solves it.
+
+## Server defaults
+
+The **Server defaults (all clients)** section edits mipmux's configuration file, whose path the panel names: the budget and enhancement mode of builds that name none, the discovery model and thinking level, and the allowed models. These apply to every client that uses mipmux, not only Pi. A running mipmux rereads them before each build, so a save takes effect at the next build without a reconnect.
+
+The discovery model and **Allowed models** lists show the models mipmux has credentials for, from `mipmux models`; type to filter them. In **Allowed models**, Enter allows or disallows the highlighted model. Session and workspace model rows offer the discovery model and the allowed models, and mipmux refuses any other.
+
+A save changes only the values you changed and keeps the file's other settings, their order and its indentation. It replaces the file only after `mipmux config` accepts the result, and refuses to overwrite a file that someone edited while the panel was open. Other settings in the file, such as the cache path or discovery credentials, apply when mipmux starts again; reconnect it from `/mcp` after editing them by hand.
 
 ## Storage
 

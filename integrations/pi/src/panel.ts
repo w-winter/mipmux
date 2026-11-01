@@ -1,14 +1,15 @@
 import { execFile } from 'node:child_process';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { promisify } from 'node:util';
 import { Key, matchesKey, truncateToWidth, wrapTextWithAnsi, type Component, type Focusable, type KeybindingsManager } from '@earendil-works/pi-tui';
-import type { MipmuxConfig } from './config.ts';
+import type { MipmuxCommands, MipmuxConfig } from './config.ts';
 import { addRoot, addWorkspace, applyDraft, createFromFolder, deleteWorkspace, editSelected, openDraft, removeRoot,
   renameSelected, selectedWorkspace, type Draft } from './draft.ts';
 import { entryRule, ignoreFileName, ignoreFilePath, isRule, readIgnoreFile, typedRule, writeIgnoreFile, type IgnoreFile } from './ignore-file.ts';
 import { abbreviate, expand, resolveExisting, type PathBase } from './paths.ts';
-import { ListScreen, PathScreen, PromptScreen, type ListRow, type PanelControl, type PanelTheme, type Screen } from './screens.ts';
+import { FilterListScreen, ListScreen, PathScreen, PromptScreen, type ListRow, type PanelControl, type PanelTheme, type Screen } from './screens.ts';
+import { serverDefaults, writeServerDefaults, type DiscoveryDefaults, type ServerDefaults } from './server-config.ts';
 import { readStore, StoreError, updateStore } from './store.ts';
 import { duplicateKey, type Clarification, type EnhancementMode, type Merge, type Preference, type Preferences, type SavedWorkspace,
   type SessionState, type ThinkingLevel, type Workspace } from './state.ts';
@@ -22,8 +23,11 @@ export interface PanelHost {
   readonly home: string;
   state(): SessionState;
   record(state: SessionState): Promise<void>;
-  readConfig(): Promise<MipmuxConfig>;
+  readonly mipmux: MipmuxCommands;
 }
+/** mipmux's configuration as `mipmux config` reported it, with the file's text, or why it could not be read. */
+type ServerConfig = { readonly kind: 'read'; readonly report: MipmuxConfig; readonly text: string } |
+  { readonly kind: 'unavailable'; readonly problem: string };
 /** The parts of Pi's context the panel uses; `custom` shows the panel until it calls `done`. */
 export interface PanelContext {
   readonly cwd: string;
@@ -37,7 +41,7 @@ interface PanelOptions {
   readonly ctx: PanelContext;
   readonly host: PanelHost;
   readonly saved: SavedWorkspace[];
-  readonly config: { readonly value: MipmuxConfig | null; readonly problem: string | null };
+  readonly config: ServerConfig;
   /** Where a new workspace's folder picker starts. */
   readonly proposed: string;
   readonly tui: { requestRender(): void };
@@ -76,6 +80,21 @@ const enhancementModes: { readonly value: EnhancementMode; readonly description:
 ];
 const units = (value: number) => `${value.toLocaleString('en-US')} units`;
 
+/** A budget typed as a whole number, with an optional k for thousands; null when the text is not one. */
+function parseBudget(text: string): number | null {
+  const match = /^(\d[\d,_]*)(k?)$/i.exec(text), value = match ? Number(match[1]?.replace(/[,_]/g, '')) * (match[2] ? 1000 : 1) : 0;
+  return Number.isSafeInteger(value) && value >= 1 ? value : null;
+}
+
+async function readServerConfig(mipmux: MipmuxCommands): Promise<ServerConfig> {
+  try {
+    const report = await mipmux.config();
+    return { kind: 'read', report, text: await readFile(report.path, 'utf8') };
+  } catch (error) {
+    return { kind: 'unavailable', problem: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 function formatClarification(value: Clarification): string {
   if (!value.enabled) return 'off';
   return value.questionTimeoutSeconds === undefined ? 'on' : `on, ${value.questionTimeoutSeconds} s question timeout`;
@@ -100,7 +119,9 @@ export class PanelComponent implements Component, Focusable {
   private readonly ignoreReads = new Map<string, IgnoreFile>();
   private readonly ctx: PanelContext;
   private readonly host: PanelHost;
-  private readonly config: PanelOptions['config'];
+  private config: ServerConfig;
+  /** The models mipmux has credentials for, once `mipmux models` reported them. */
+  private models: readonly string[] | null = null;
   private readonly proposed: string;
   private readonly tui: PanelOptions['tui'];
   private readonly done: () => void;
@@ -113,7 +134,7 @@ export class PanelComponent implements Component, Focusable {
     this.tui = tui;
     this.done = done;
     this.snapshot = saved;
-    this.baseline = this.draft = openDraft(saved, host.state());
+    this.baseline = this.draft = openDraft(saved, host.state(), config.kind === 'read' ? serverDefaults(config.report) : null);
     this.control = { theme, keybindings, push: screen => this.push(screen), pop: () => { this.stack.pop(); this.refocus(); },
       say: (text, kind) => { this.message = { text, kind }; } };
     this.push(new ListScreen('settings', this.control, 'change', () => this.mainRows()));
@@ -134,7 +155,8 @@ export class PanelComponent implements Component, Focusable {
 
   render(width: number): string[] {
     const { theme } = this.control, screen = this.top(), nested = this.stack.length > 1;
-    const config = this.config.value ? `Server defaults come from ${this.show(this.config.value.path)}.` : `Server defaults are unavailable: ${this.config.problem}`;
+    const config = this.config.kind === 'read' ? `Server defaults come from ${this.show(this.config.report.path)}.`
+      : `Server defaults are unavailable: ${this.config.problem}`;
     const header = nested ? [] : [theme.fg('muted', 'Saved changes apply to the agent\'s next mipmux call.'), theme.fg('muted', config)];
     const message = this.message ? wrapTextWithAnsi(this.message.text, width).map(line => theme.fg(this.message?.kind === 'error' ? 'error' : 'success', line)) : [];
     const hints = `${screen.hints()} · ctrl+s save · esc ${nested ? 'back' : this.dirty() ? 'discard and close' : 'close'}`;
@@ -173,7 +195,10 @@ export class PanelComponent implements Component, Focusable {
 
   private async save(): Promise<void> {
     if (!this.dirty()) { this.control.say('Nothing to save.', 'info'); return; }
-    const draft = this.draft, snapshot = this.snapshot;
+    const draft = this.draft, snapshot = this.snapshot, before = this.baseline.server;
+    if (this.config.kind === 'read' && before && draft.server && JSON.stringify(draft.server) !== JSON.stringify(before)) {
+      await writeServerDefaults(this.config.report.path, this.config.text, before, draft.server, async path => { await this.host.mipmux.config(path); });
+    }
     for (const edit of draft.ignoreEdits) {
       const read = this.ignoreReads.get(edit.root);
       if (read?.kind !== 'read') throw new Error(`${ignoreFilePath(edit.root)} could not be read, so it was not changed.`);
@@ -186,7 +211,8 @@ export class PanelComponent implements Component, Focusable {
     const merge = result.merges.find(item => item.removed.some(removed => removed.name === draft.selected));
     await this.host.record({ selected: merge?.survivor ?? draft.selected, preferences: draft.preferences, lastDeclared: this.host.state().lastDeclared });
     this.snapshot = result.workspaces;
-    this.baseline = this.draft = openDraft(result.workspaces, this.host.state());
+    this.config = await readServerConfig(this.host.mipmux);
+    this.baseline = this.draft = openDraft(result.workspaces, this.host.state(), this.config.kind === 'read' ? serverDefaults(this.config.report) : null);
     this.control.say(['Saved. The agent\'s next mipmux call uses these settings.', ...mergeNotes(result.merges)].join(' '), 'info');
   }
 
@@ -203,11 +229,11 @@ export class PanelComponent implements Component, Focusable {
         : 'Enter chooses a folder and creates a saved workspace named after it.',
       activate: () => this.push(workspace ? this.folderList(workspace) : this.newWorkspacePicker()) }];
     if (workspace) rows.push(...this.workspaceRows(workspace));
-    return [...rows, ...this.sessionRows(workspace)];
+    return [...rows, ...this.sessionRows(workspace), ...this.serverRows()];
   }
 
   private workspaceRows(workspace: SavedWorkspace): ListRow[] {
-    const discovery = this.config.value?.discovery;
+    const discovery = this.draft.server?.discovery;
     return [{ id: 'output', label: 'Output folder', value: this.show(workspace.outputRoot),
       description: 'Where mipmux writes packets. mipmux never indexes it, and saving creates it if it is missing.',
       activate: () => this.push(this.outputPicker(workspace)) },
@@ -229,21 +255,17 @@ export class PanelComponent implements Component, Focusable {
   }
 
   private sessionRows(workspace: SavedWorkspace | null): ListRow[] {
-    const config = this.config.value, discovery = config?.discovery;
+    const server = this.draft.server, discovery = server?.discovery;
     const fromWorkspace = <T>(preference: Preference<T> | undefined, serverValue: string) =>
       preference ? `from the workspace: ${String(preference.value)}` : serverValue;
     const scope = 'This session only; it takes precedence over the saved workspace.';
-    const budget = this.preferenceRow('budgetUnits', 'Budget', this.serverDefault(config && units(config.contextBudgetUnits)),
-      this.sessionField(sessionFields.budgetUnits), units, apply => this.push(new PromptScreen('budget', this.control,
+    const budget = this.preferenceRow('budgetUnits', 'Budget', this.serverDefault(server && units(server.contextBudgetUnits)),
+      this.sessionField(sessionFields.budgetUnits), units, apply => this.push(this.budgetPrompt(
         this.draft.preferences.budgetUnits ? String(this.draft.preferences.budgetUnits.value) : '',
-        'Units for the complete packet, such as 150000 or 150k. A pinned budget also applies to preparations.', text => {
-          const match = /^(\d[\d,_]*)(k?)$/i.exec(text), value = match ? Number(match[1]?.replace(/[,_]/g, '')) * (match[2] ? 1000 : 1) : 0;
-          if (!Number.isSafeInteger(value) || value < 1) return 'Type a whole number of units, such as 150000 or 150k.';
-          apply(value);
-          return null;
-        })), 'The packet size for builds, in mipmux\'s estimated units.');
+        'Units for the complete packet, such as 150000 or 150k. A pinned budget also applies to preparations.', apply)),
+      'The packet size for builds, in mipmux\'s estimated units.');
     return [{ ...budget, section: 'This session' },
-      this.preferenceRow('enhancementMode', 'Enhancement mode', this.serverDefault(config?.defaultEnhancementMode),
+      this.preferenceRow('enhancementMode', 'Enhancement mode', this.serverDefault(server?.defaultEnhancementMode),
         this.sessionField(sessionFields.enhancementMode), String, apply => this.choose('enhancement mode',
           enhancementModes.map(mode => ({ id: mode.value, label: mode.value, description: mode.description, choose: () => apply(mode.value) })),
           this.draft.preferences.enhancementMode?.value), 'How discovery treats the task text.'),
@@ -256,8 +278,82 @@ export class PanelComponent implements Component, Focusable {
   }
 
   private serverDefault(value: string | null | undefined): string {
-    if (this.config.value && this.config.value.discovery === null && value === undefined) return 'discovery not configured';
+    if (this.draft.server && this.draft.server.discovery === null && value === undefined) return 'discovery not configured';
     return value ? `server default: ${value}` : 'server default';
+  }
+
+  private budgetPrompt(start: string, help: string, apply: (value: number) => void): PromptScreen {
+    return new PromptScreen('budget', this.control, start, help, text => {
+      const value = parseBudget(text);
+      if (value === null) return 'Type a whole number of units, such as 150000 or 150k.';
+      apply(value);
+      return null;
+    });
+  }
+
+  private editServer(change: (server: ServerDefaults) => ServerDefaults): void {
+    const server = this.draft.server;
+    if (server) this.change({ ...this.draft, server: change(server) });
+  }
+
+  private editDiscovery(change: (discovery: DiscoveryDefaults) => DiscoveryDefaults): void {
+    this.editServer(server => server.discovery ? { ...server, discovery: change(server.discovery) } : server);
+  }
+
+  /** The request defaults in mipmux's configuration file, which every client's builds use and a running mipmux rereads. */
+  private serverRows(): ListRow[] {
+    const server = this.draft.server;
+    if (!server || this.config.kind !== 'read') return [];
+    const scope = `Saved to ${this.show(this.config.report.path)} for every client; a running mipmux applies it at its next build.`;
+    const rows: ListRow[] = [{ id: 'server.budget', section: 'Server defaults (all clients)', label: 'Budget', value: units(server.contextBudgetUnits),
+      description: `The budget of every build that names none. ${scope}`,
+      activate: () => this.push(this.budgetPrompt(String(server.contextBudgetUnits), 'Units for every build that names no budget, such as 150000 or 150k.',
+        value => this.editServer(edited => ({ ...edited, contextBudgetUnits: value })))) },
+    { id: 'server.mode', label: 'Enhancement mode', value: server.defaultEnhancementMode, description: scope,
+      activate: () => this.choose('enhancement mode', enhancementModes.map(mode => ({ id: mode.value, label: mode.value, description: mode.description,
+        choose: () => this.editServer(edited => ({ ...edited, defaultEnhancementMode: mode.value })) })), server.defaultEnhancementMode) }];
+    const discovery = server.discovery;
+    if (!discovery) return rows;
+    return [...rows,
+      { id: 'server.model', label: 'Discovery model', value: discovery.model, description: `The model of every build that names none. ${scope}`,
+        activate: () => this.pickDefaultModel() },
+      { id: 'server.thinking', label: 'Thinking level', value: discovery.thinking, description: scope,
+        activate: () => this.chooseThinking(discovery.thinking, level => this.editDiscovery(edited => ({ ...edited, thinking: level }))) },
+      { id: 'server.allowed', label: 'Allowed models', inherited: !discovery.allowedModels.length,
+        value: discovery.allowedModels.join(', ') || 'only the discovery model',
+        description: `The models a session or saved workspace may choose besides the discovery model. ${scope}`, activate: () => this.pickAllowedModels() }];
+  }
+
+  /** The models mipmux has credentials for, read with `mipmux models` the first time the panel needs them. */
+  private async availableModels(): Promise<readonly string[]> {
+    if (this.config.kind !== 'read') throw new Error(`Server defaults are unavailable: ${this.config.problem}`);
+    const listed = this.models ?? await this.host.mipmux.models(this.config.report.path);
+    if (!listed.length) throw new Error(`mipmux has credentials for no discovery model. It reads them from discovery.authPath in ${this.config.report.path}, ` +
+      'or from auth.json in Pi\'s agent folder when that is unset; sign in with Pi\'s /login.');
+    this.models = listed;
+    return listed;
+  }
+
+  private async pickDefaultModel(): Promise<void> {
+    const models = await this.availableModels();
+    this.push(new FilterListScreen('discovery model', this.control, 'choose', () => models.map(model => ({ id: model, label: model,
+      description: 'Models mipmux has credentials for, from mipmux models.', activate: () => {
+        this.editDiscovery(edited => ({ ...edited, model }));
+        this.control.pop();
+      } }))));
+  }
+
+  private async pickAllowedModels(): Promise<void> {
+    const models = await this.availableModels();
+    this.push(new FilterListScreen('allowed models', this.control, 'allow or disallow', () => {
+      const discovery = this.draft.server?.discovery;
+      if (!discovery) return [];
+      return [...new Set([...models, ...discovery.allowedModels])].sort().filter(model => model !== discovery.model).map(model => ({
+        id: model, label: model, value: discovery.allowedModels.includes(model) ? `allowed${models.includes(model) ? '' : ', no credentials'}` : '',
+        description: 'Enter allows or disallows the model; Esc returns.',
+        activate: () => this.editDiscovery(edited => ({ ...edited, allowedModels: edited.allowedModels.includes(model)
+          ? edited.allowedModels.filter(allowed => allowed !== model) : [...edited.allowedModels, model] })) }));
+    }));
   }
 
   private sessionField<T>(field: Field<Preferences, T>): Field<Draft, T> {
@@ -289,11 +385,10 @@ export class PanelComponent implements Component, Focusable {
   }
 
   private chooseModel(current: string | undefined, apply: (value: string) => void): void {
-    const config = this.config.value, discovery = config?.discovery;
-    if (!config) { this.control.say(this.config.problem ?? 'mipmux config is unavailable.', 'error'); return; }
-    if (!discovery) { this.control.say(`Discovery is not configured in ${config.path}.`, 'error'); return; }
-    const help = `To offer another model, add its provider/model name to discovery.allowedModels in ${config.path}, then reconnect the ` +
-      'mipmux server.';
+    if (this.config.kind !== 'read') { this.control.say(`Server defaults are unavailable: ${this.config.problem}`, 'error'); return; }
+    const discovery = this.draft.server?.discovery;
+    if (!discovery) { this.control.say(`Discovery is not configured in ${this.config.report.path}.`, 'error'); return; }
+    const help = 'To offer another model, allow it under Server defaults, Allowed models.';
     this.choose('discovery model', [...new Set([discovery.model, ...discovery.allowedModels])].map(model => ({ id: model, label: model,
       description: help, choose: () => apply(model) })), current);
   }
@@ -447,8 +542,7 @@ export async function openPanel(ctx: PanelContext, host: PanelHost): Promise<voi
     ctx.ui.notify(`mipmux cannot open the saved workspaces until the file is fixed: ${error.message}`, 'error');
     return;
   }
-  const config = await host.readConfig().then(value => ({ value, problem: null }),
-    error => ({ value: null, problem: error instanceof Error ? error.message : String(error) }));
+  const config = await readServerConfig(host.mipmux);
   const proposed = await proposedRoot(ctx.cwd);
   await ctx.ui.custom((tui, theme, keybindings, done) => new PanelComponent({ ctx, host, saved, config, proposed, tui, theme, keybindings, done }));
 }

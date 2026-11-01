@@ -1,5 +1,5 @@
 import type { ThemeColor } from '@earendil-works/pi-coding-agent';
-import { Input, Key, matchesKey, truncateToWidth, visibleWidth, wrapTextWithAnsi, type KeybindingsManager } from '@earendil-works/pi-tui';
+import { fuzzyFilter, Input, Key, matchesKey, truncateToWidth, visibleWidth, wrapTextWithAnsi, type KeybindingsManager } from '@earendil-works/pi-tui';
 import { candidates, split, type PathBase, type PathEntry } from './paths.ts';
 
 /*
@@ -110,6 +110,55 @@ export class ListScreen implements Screen {
     else if (kb.matches(data, 'tui.select.confirm')) await row?.activate?.();
     else if (data === 'p') row?.pin?.();
     else if (matchesKey(data, Key.delete) || matchesKey(data, Key.backspace)) row?.remove?.run();
+  }
+}
+
+/** A row of a filtered list; enter runs `activate`. */
+export interface FilterRow { readonly id: string; readonly label: string; readonly value?: string; readonly description?: string; activate(): void }
+
+/** A list narrowed by typed text, matched fuzzily against each row's label, as Pi's model selector does. */
+export class FilterListScreen implements Screen {
+  readonly title: string;
+  private readonly input = new Input();
+  private readonly panel: PanelControl;
+  private readonly enter: string;
+  private readonly rows: () => readonly FilterRow[];
+  private index = 0;
+  constructor(title: string, panel: PanelControl, enter: string, rows: () => readonly FilterRow[]) {
+    this.title = title;
+    this.panel = panel;
+    this.enter = enter;
+    this.rows = rows;
+  }
+  get focused(): boolean { return this.input.focused; }
+  set focused(value: boolean) { this.input.focused = value; }
+  private shown(): FilterRow[] { return fuzzyFilter([...this.rows()], this.input.getValue(), row => row.label); }
+  hints(): string { return `type to filter · ↑↓ move · enter ${this.enter}`; }
+
+  render(width: number): string[] {
+    const { theme } = this.panel, rows = this.shown(), lines = [...this.input.render(width), ''];
+    this.index = Math.min(this.index, Math.max(0, rows.length - 1));
+    const labelWidth = Math.min(40, Math.max(0, ...rows.map(row => visibleWidth(row.label))));
+    const start = Math.max(0, Math.min(this.index - Math.floor(maxVisible / 2), rows.length - maxVisible));
+    for (const [offset, row] of rows.slice(start, start + maxVisible).entries()) {
+      const label = row.label.padEnd(labelWidth + row.label.length - visibleWidth(row.label));
+      const value = row.value ? `  ${theme.fg('dim', row.value)}` : '';
+      lines.push(truncateToWidth((start + offset === this.index ? theme.fg('accent', cursor + label) : `  ${label}`) + value, width));
+    }
+    if (!rows.length) lines.push(theme.fg('dim', '  nothing matches'));
+    else if (rows.length > maxVisible) lines.push(theme.fg('dim', `  (${this.index + 1}/${rows.length})`));
+    const description = rows[this.index]?.description;
+    return description ? [...lines, '', ...wrapTextWithAnsi(description, width - 2).map(line => theme.fg('muted', `  ${line}`))] : lines;
+  }
+
+  handleInput(data: string): void {
+    const kb = this.panel.keybindings, rows = this.shown();
+    if (kb.matches(data, 'tui.select.up') || kb.matches(data, 'tui.select.down')) {
+      const step = kb.matches(data, 'tui.select.up') ? -1 : 1;
+      this.index = rows.length ? (this.index + step + rows.length) % rows.length : 0;
+    }
+    else if (kb.matches(data, 'tui.select.confirm')) rows[this.index]?.activate();
+    else { this.input.handleInput(data); this.index = 0; }
   }
 }
 

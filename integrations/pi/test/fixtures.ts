@@ -29,6 +29,7 @@ export async function instance(saved: readonly SavedWorkspace[] = [app]) {
   await writeFile(storePath, JSON.stringify({ workspaces: saved }));
   const appended: SessionState[] = [];
   const mipmux = createMipmux({ storePath, home: directory, appendEntry: state => { appended.push(state); },
-    readConfig: () => Promise.reject(new Error('mipmux config is not used here')) });
+    mipmux: { config: () => Promise.reject(new Error('mipmux config is not used here')),
+      models: () => Promise.reject(new Error('mipmux models is not used here')) } });
   return { mipmux, storePath, appended };
 }

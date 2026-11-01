@@ -4,14 +4,34 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { getKeybindings } from '@earendil-works/pi-tui';
+import Type from 'typebox';
+import { Compile } from 'typebox/compile';
 import { createMipmux, type MipmuxContext } from '../src/register.ts';
-import type { MipmuxConfig } from '../src/config.ts';
+import type { MipmuxCommands } from '../src/config.ts';
 import type { PanelComponent } from '../src/panel.ts';
-import type { CallArgs, SavedWorkspace, SessionState } from '../src/state.ts';
+import { EnhancementMode, ThinkingLevel, type CallArgs, type SavedWorkspace, type SessionState } from '../src/state.ts';
 
-const config: MipmuxConfig = { kind: 'config', path: '/home/user/.config/mipmux/config.json', contextBudgetUnits: 200000,
-  defaultEnhancementMode: 'augment', tools: 'core',
-  discovery: { model: 'openai-codex/gpt-6.1-sol', thinking: 'medium', allowedModels: ['anthropic/claude-haiku-4-5'] } };
+const configFile = { contextBudgetUnits: 200000, cachePath: '/cache',
+  discovery: { provider: 'openai-codex', model: 'gpt-6.1-sol', thinking: 'medium', allowedModels: ['anthropic/claude-haiku-4-5'], modelsPath: '/models.json' } };
+const ConfigFile = Compile(Type.Object({ contextBudgetUnits: Type.Optional(Type.Integer({ minimum: 1 })), defaultEnhancementMode: Type.Optional(EnhancementMode),
+  discovery: Type.Optional(Type.Object({ provider: Type.String(), model: Type.String(), thinking: ThinkingLevel,
+    allowedModels: Type.Optional(Type.Array(Type.String())) })) }));
+const credentialedModels = ['anthropic/claude-haiku-4-5', 'anthropic/claude-sonnet-4-5', 'openai-codex/gpt-6.1-sol'];
+
+/** Stands in for mipmux: reports a configuration file as `mipmux config` resolves it, and rejects one mipmux would reject. */
+function fakeMipmux(defaultPath: string): MipmuxCommands {
+  return {
+    async config(path = defaultPath) {
+      const file: unknown = JSON.parse(await readFile(path, 'utf8'));
+      if (!ConfigFile.Check(file)) throw new Error(`mipmux config failed: {"kind":"failed","code":"invalidConfiguration"}`);
+      const discovery = file.discovery;
+      return { kind: 'config', path, contextBudgetUnits: file.contextBudgetUnits ?? 200000, defaultEnhancementMode: file.defaultEnhancementMode ?? 'augment',
+        tools: 'core', discovery: discovery ? { model: `${discovery.provider}/${discovery.model}`, thinking: discovery.thinking,
+          allowedModels: discovery.allowedModels ?? [] } : null };
+    },
+    models: async () => credentialedModels,
+  };
+}
 // Ctrl+S as a terminal sends it with Pi's enhanced keyboard protocol active, and as the legacy control byte otherwise.
 const key = { up: '\x1b[A', down: '\x1b[B', enter: '\r', escape: '\x1b', tab: '\t', save: '\x1b[115;5u', legacySave: '\x13', clearLine: '\x15',
   delete: '\x1b[3~' };
@@ -23,15 +43,16 @@ async function setup(saved: SavedWorkspace[] = []) {
   const base = await mkdtemp(join(tmpdir(), 'pi-mipmux-panel-')), home = join(base, 'home'), cwd = join(base, 'elsewhere');
   for (const folder of ['Projects/alpha-app/node_modules', 'Projects/alpha-lib', 'Projects/beta']) await mkdir(join(home, folder), { recursive: true });
   await mkdir(cwd);
-  const storePath = join(base, 'mipmux.json');
+  const storePath = join(base, 'mipmux.json'), configPath = join(base, 'config.json');
   await writeFile(storePath, JSON.stringify({ workspaces: saved }));
+  await writeFile(configPath, JSON.stringify(configFile, null, 4) + '\n');
   const appended: SessionState[] = [], notices: string[] = [];
-  const mipmux = createMipmux({ storePath, home, appendEntry: state => { appended.push(state); }, readConfig: async () => config });
+  const mipmux = createMipmux({ storePath, home, appendEntry: state => { appended.push(state); }, mipmux: fakeMipmux(configPath) });
   const components: PanelComponent[] = [];
   const ctx: MipmuxContext = { hasUI: true, mode: 'tui', cwd, sessionManager: { getBranch: () => [] },
     ui: { setStatus: () => {}, notify: message => { notices.push(message); },
       custom: factory => new Promise(resolve => { components.push(factory({ requestRender: () => {} }, plain, getKeybindings(), () => resolve())); }) } };
-  return { home, storePath, appended, notices, mipmux, ctx, components };
+  return { home, storePath, configPath, appended, notices, mipmux, ctx, components };
 }
 
 /** Opens /mipmux and returns a driver that presses keys in order, waiting for each to take effect. */
@@ -40,10 +61,11 @@ async function panel(fixture: Awaited<ReturnType<typeof setup>>) {
   while (fixture.components.length === count) await new Promise(resolve => setTimeout(resolve, 5));
   const component = fixture.components[count] ?? assert.fail('the panel did not open');
   const press = async (...keys: string[]) => { for (const data of keys) await component.handleInput(data); };
-  /** Moves the cursor down to the first row whose text contains `label`. */
-  const focus = async (label: string) => {
+  /** Moves the cursor down to the first row whose text contains `label`, or matches it. */
+  const focus = async (label: string | RegExp) => {
+    const pattern = label instanceof RegExp ? label : new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     for (let step = 0; step < 30; step++) {
-      if (component.render(width).find(line => line.startsWith('→ '))?.includes(label)) return;
+      if (pattern.test(component.render(width).find(line => line.startsWith('→ ')) ?? '')) return;
       await press(key.down);
     }
     assert.fail(`no row containing "${label}" in:\n${component.render(width).join('\n')}`);
@@ -65,7 +87,8 @@ test('a folder typed with ~ and Tab completion becomes a saved workspace named a
   await press(key.enter, key.down, key.enter, ...'bet', key.enter, key.escape);
   await focus('Discovery model');
   await press(key.enter);
-  assert.match(screen(), /discovery\.allowedModels in\s+\/home\/user\/\.config\/mipmux\/config\.json/, 'the model list names the file to edit');
+  assert.match(screen(), /anthropic\/claude-haiku-4-5/);
+  assert.match(screen(), /Allowed models/, 'the model list says where to allow another model');
   await press(key.escape);
   await focus('Budget');
   await press(key.enter, key.clearLine, ...'150k', key.enter, 'p');
@@ -126,4 +149,33 @@ test('ignore rules and a rename are saved with ctrl+s, escape discards the rest,
   await second.press(key.escape, key.escape);
   await second.closed;
   assert.equal(await readFile(ignoreFile, 'utf8'), 'hand\n');
+});
+
+test('server defaults are written into the configuration file, keeping its other keys, and a file edited meanwhile is never overwritten', async () => {
+  const fixture = await setup();
+  const { press, focus, closed, screen } = await panel(fixture);
+  await focus('Allowed models');
+  await press(key.enter, ...'sonn', key.enter, key.escape);
+  await focus(/Thinking level\s+medium/);
+  await press(key.enter, key.up, key.enter);
+  await focus(/Budget\s+200,000 units/);
+  await press(key.enter, key.clearLine, ...'150k', key.enter, key.save);
+  const text = await readFile(fixture.configPath, 'utf8');
+  assert.deepEqual(JSON.parse(text), { ...configFile, contextBudgetUnits: 150000, discovery: { ...configFile.discovery, thinking: 'low',
+    allowedModels: ['anthropic/claude-haiku-4-5', 'anthropic/claude-sonnet-4-5'] } });
+  assert.deepEqual(Object.keys(JSON.parse(text)), Object.keys(configFile));
+  assert.match(text, /^\{\n {4}"contextBudgetUnits"/);
+  // Sessions may now choose the newly allowed model.
+  await focus('Discovery model');
+  await press(key.enter);
+  assert.match(screen(), /anthropic\/claude-sonnet-4-5/);
+  await press(key.escape);
+
+  await writeFile(fixture.configPath, text.replace('150000', '160000'));
+  await focus(/Budget\s+150,000 units/);
+  await press(key.enter, key.clearLine, ...'90000', key.enter, key.save);
+  assert.match(screen(), /changed\s+while the panel was open/);
+  assert.equal(JSON.parse(await readFile(fixture.configPath, 'utf8')).contextBudgetUnits, 160000);
+  await press(key.escape);
+  await closed;
 });
