@@ -91,6 +91,8 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
 
 When a client connects, mipmux sends it short instructions for building a packet, which most agents can follow without help. The [agent workflow](docs/workflow.md) is the complete guide; point your agent at it for its first run. The instructions tell agents to wait for a build in steps shorter than their client's tool-call limit, which is 60 seconds by default in Codex.
 
+In Pi, the [pi-mipmux extension](integrations/pi/README.md) adds a `/mipmux` command for choosing a saved workspace and setting build preferences, such as the budget or discovery model, that apply to the agent's calls.
+
 ## Limits
 
 - Each search first checks the declared folders for changes, so a content search takes about 0.7 seconds in a workspace of about 1,000 files. RepoPrompt CE answers in tens of milliseconds because a file watcher keeps its index current. A discovery run makes a handful of searches, so this adds seconds to a run that takes minutes.

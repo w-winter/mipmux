@@ -23,6 +23,8 @@ A workspace is a set of named root folders plus the output folder; mipmux keeps 
 }
 ```
 
+When the request does not settle which folders the task needs, ask the user once, in plain words, before the first build. Propose the Git repository root that contains the current directory as the only root, or the current directory when it is not in a repository, with `<root>/prompt-exports` as the output folder, and accept the answer in whatever words the user gives it. The current directory is often not the repository the task is about.
+
 Name every root the task needs and no unrelated ones; a task that spans several repositories names one root per repository. Add `exclusions` only for further paths to keep out, as `{ "kind": "prefix", "root": "app", "path": "fixtures/large" }` or `{ "kind": "glob", "root": "app", "pattern": "..." }`.
 
 Send the same workspace with every call in the project. The server indexes a workspace the first time a call names it and keeps that index for later calls on the same connection; after a restart, mipmux avoids rereading most files that have not changed.
