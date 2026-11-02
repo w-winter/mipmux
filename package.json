@@ -54,6 +54,10 @@
     "typescript": "7.0.2"
   },
   "overrides": {
-    "undici": "8.12.2"
+    "undici": "8.12.2",
+    "minimatch": {
+      ".": "11.0.1",
+      "@isaacs/nonrecursive-glob-match": "1.0.1"
+    }
   }
 }
