@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "description": "Pi extension that selects a saved mipmux workspace and applies build preferences to mipmux calls",
   "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/w-winter/mipmux.git", "directory": "integrations/pi" },
+  "homepage": "https://github.com/w-winter/mipmux/tree/main/integrations/pi#readme",
+  "bugs": "https://github.com/w-winter/mipmux/issues",
   "type": "module",
-  "private": true,
   "keywords": ["pi-package"],
+  "files": ["src"],
   "pi": { "extensions": ["./src/extension.ts"] },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",

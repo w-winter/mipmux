@@ -8,7 +8,7 @@ pi-mipmux needs mipmux connected to Pi as an MCP server named `mipmux`, and the 
 
 ```sh
 pi mcp add mipmux -- mipmux mcp
-pi install /absolute/path/to/mipmux/integrations/pi
+pi install npm:pi-mipmux
 ```
 
 ## Use the panel
@@ -107,3 +107,5 @@ npm run typecheck
 ```
 
 Both run from this directory and use the TypeScript, TypeBox and Pi packages installed in the mipmux checkout.
+
+To run the extension from a checkout instead of npm, install it by path: `pi install /absolute/path/to/mipmux/integrations/pi`.
