@@ -6,7 +6,7 @@ mipmux is a headless port of the Context Builder in [RepoPrompt CE](https://gith
 
 ## Status
 
-mipmux is alpha software in regular use with Pi; its interfaces and configuration may change. It is tested on macOS arm64 and on Linux arm64 in Docker; Linux x64 has not been tested. No other MCP client has yet been tested end to end, and discovery has run only with the `openai-codex` provider. There are no prebuilt binaries or npm packages yet, so you build mipmux from source.
+mipmux is alpha software in regular use with Pi; its interfaces and configuration may change. It is tested on macOS arm64 and on Linux arm64 in Docker; Linux x64 has not been tested. Claude Code and Codex have each run the whole caller workflow. Discovery has run with real models through `openai-codex`, through Claude Code, and through OpenRouter with Gemini 3.8 Flash. There are no prebuilt binaries or npm packages yet, so you build mipmux from source.
 
 ## Compared with RepoPrompt CE
 
@@ -21,7 +21,7 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
 - Node.js 22.22.1 or later.
 - Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config and tar, to build mipmux's native Swift helper. On macOS, Xcode 26 or later, or its Command Line Tools, provides Swift and the compiler, and Homebrew provides CMake and pkg-config.
 - Git, at `/usr/bin/git` unless the configuration names another path.
-- For discovery, either a login to a model provider, stored in Pi's `auth.json` (see the quickstart), or Claude Code signed in with your Claude account or an API key, with the Claude Agent SDK installed next to mipmux (see [Claude Code discovery](#claude-code-discovery)).
+- For discovery, one of: a login to a model provider, stored in Pi's `auth.json` (see the quickstart); a provider's API key (see [Discovery with an API key](#discovery-with-an-api-key)); or Claude Code signed in with your Claude account or an API key, with the Claude Agent SDK installed next to mipmux (see [Claude Code discovery](#claude-code-discovery)).
 
 ## Quickstart
 
@@ -35,7 +35,7 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
    npm run build:native
    ```
 
-2. Sign in to a model provider for discovery. mipmux reads provider credentials from Pi's `~/.pi/agent/auth.json`. If you already use Pi and are signed in, skip this step. Otherwise start the Pi command-line tool that mipmux installed, run `/login`, choose a provider, then quit Pi:
+2. Sign in to a model provider for discovery. mipmux reads provider credentials from Pi's `~/.pi/agent/auth.json`. If you already use Pi and are signed in, skip this step. To use a provider's API key instead, skip it too and follow [Discovery with an API key](#discovery-with-an-api-key). Otherwise start the Pi command-line tool that mipmux installed, run `/login`, choose a provider, then quit Pi:
 
    ```sh
    node_modules/.bin/pi
@@ -389,6 +389,25 @@ Each job admits one regular UTF-8 file and retains that snapshot through all its
 The terminal receipt records `templateVersion`, the template path and raw-byte `template.identity`, and the rendered system policy's `policyIdentity`. Each identity contains SHA-256 and UTF-8 byte count. SDK working-directory framing, tools and startup messages are outside the policy digest.
 
 The worker reads the authorized authentication and model files; these paths and the host's configuration file are excluded from source discovery. The model file accepts a `providers` object with optional `baseUrl` and per-model `modelOverrides` containing `contextWindow` and `maxTokens`. Use `{ "providers": {} }` to select the bundled catalog explicitly. Other fields in model configuration and command-valued credentials are rejected. Supply the exact physical provider/model and supported thinking level; configuration errors require correction before another request.
+
+### Discovery with an API key
+
+Discovery can use a provider's API key without Pi or a Pi login. Put the key in `discovery.environment` under the variable Pi reads for that provider. mipmux reads `discovery.authPath` even when the key comes from the environment, so point it at a file containing `{}`:
+
+```json
+{
+  "discovery": {
+    "provider": "openrouter",
+    "model": "google/gemini-3.8-flash",
+    "thinking": "low",
+    "modelsPath": "/home/you/.config/mipmux/models.json",
+    "authPath": "/home/you/.config/mipmux/auth.json",
+    "environment": { "OPENROUTER_API_KEY": "sk-or-..." }
+  }
+}
+```
+
+Pi reads `ANTHROPIC_API_KEY` for `anthropic`, `OPENAI_API_KEY` for `openai`, `GEMINI_API_KEY` for `google`, `OPENROUTER_API_KEY` for `openrouter`, `MISTRAL_API_KEY` for `mistral`, `XAI_API_KEY` for `xai`, `GROQ_API_KEY` for `groq` and `DEEPSEEK_API_KEY` for `deepseek`. `mipmux models` lists the models the key reaches. The key is then stored in the configuration file, so make that file readable only by you, for example with `chmod 600`.
 
 ### Discovery MCP access
 
