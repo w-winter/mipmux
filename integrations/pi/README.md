@@ -26,7 +26,7 @@ Run `/mipmux`. The panel lists every setting with the value a build would use no
 
 Nothing changes until you press Ctrl+S. The footer shows `(unsaved)` while changes are waiting, and closing the panel discards them. Saved changes apply from the agent's next mipmux call, with no restart or reconnect.
 
-`/mipmux <name>` selects a saved workspace without opening the panel and completes saved names. Outside Pi's terminal interface, as in `pi -p` or RPC mode, `/mipmux` prints the current settings instead.
+`/mipmux <name>` selects a saved workspace without opening the panel and completes saved names. In RPC mode, `/mipmux` sends the current settings to the client as a notification instead of opening the panel. Print mode (`pi -p`) and JSON mode have no UI, so `/mipmux` shows nothing there.
 
 ## Choose a workspace
 
