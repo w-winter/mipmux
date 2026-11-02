@@ -18,13 +18,17 @@
     "@oh-my-pi/pi-coding-agent": "*",
     "@oh-my-pi/pi-tui": "*"
   },
+  "peerDependenciesMeta": {
+    "@oh-my-pi/pi-coding-agent": { "optional": true },
+    "@oh-my-pi/pi-tui": { "optional": true }
+  },
   "devDependencies": {
     "@oh-my-pi/pi-coding-agent": "18.13.0",
     "@oh-my-pi/pi-tui": "18.13.0"
   },
   "scripts": {
-    "prepack": "node scripts/copy-shared.mjs",
     "typecheck": "node scripts/copy-shared.mjs && tsc -p tsconfig.json",
-    "test": "node scripts/copy-shared.mjs && bun test"
+    "test": "node scripts/copy-shared.mjs && bun test",
+    "release": "node scripts/staged-npm.mjs publish"
   }
 }
