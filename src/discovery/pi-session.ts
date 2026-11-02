@@ -11,8 +11,11 @@ import { canonicalJSON, sha256, freeze, WorkspaceFailure } from '../workspace/va
 import { createDiscoveryModels } from './discovery-models.js';
 import type { AdmittedMcp } from './mcp-config.js';
 import { CODEMODE_TOOL, loadDiscoveryExtensions } from './discovery-extensions.js';
+import { advertisedSchema } from './advertised-schema.js';
 
 const modelRecordValidator = Compile(Type.Record(Type.String(), Type.Unknown()));
+/** The Pi API whose models have shown that they call tools whose schema is a union at its root: OpenAI Codex's. */
+const unionRootApi = 'openai-codex-responses';
 
 /** Reads authorized configuration only; SDK diagnostics are never forwarded to the caller. */
 export async function runPiSession(config: PiConfig, input: DiscoveryInput, tools: ToolDefinition[],
@@ -35,6 +38,9 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     if (!selected) throw new WorkspaceFailure('modelUnavailable');
     const model = freeze(structuredClone(selected));
     const identity = { provider: model.provider, model: model.id, api: model.api };
+    // Other routes lose a union at a schema's root: Pi's Anthropic conversion keeps only root properties, and Gemini
+    // through OpenRouter nests its arguments. Their models get the flattened schema; the worker checks each call exactly.
+    const offered = model.api === unionRootApi ? tools : tools.map(tool => ({ ...tool, parameters: advertisedSchema(tool.parameters) }));
     const settings = SettingsManager.inMemory(config.policy);
     const extensions = await loadDiscoveryExtensions(mcp, settings, config.codemode);
     const resources: ResourceLoader = {
@@ -50,7 +56,7 @@ export async function runPiSession(config: PiConfig, input: DiscoveryInput, tool
     const scriptable = tools.map(tool => tool.name), toolNames = config.codemode ? [...scriptable, CODEMODE_TOOL] : scriptable;
     const created = await createAgentSession({ cwd: '/', agentDir: '/', modelRuntime: runtime, model,
       thinkingLevel: thinking, sessionManager: SessionManager.inMemory('/'), settingsManager: settings,
-      resourceLoader: resources, ...(mcp ? { noTools: 'builtin' as const } : { tools: toolNames }), customTools: tools });
+      resourceLoader: resources, ...(mcp ? { noTools: 'builtin' as const } : { tools: toolNames }), customTools: offered });
     session = created.session;
     // Naming codemode in the allowlist activates it; without an allowlist, as with MCP, it registers inactive.
     if (mcp && config.codemode) session.setActiveToolsByName([...session.getActiveToolNames(), CODEMODE_TOOL]);

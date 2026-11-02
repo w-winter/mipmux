@@ -5,11 +5,12 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
-import Type from 'typebox';
+import Type, { type TSchema } from 'typebox';
 import { Compile } from 'typebox/compile';
 import { compose, hostValidator } from '../src/cli/config.js';
 import { verifyBundle } from '../src/index.js';
 import { contextRequestValidator } from '../src/contracts/context.js';
+import { toolSchemas } from '../src/contracts/discovery.js';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { PiRunner } from '../src/discovery/pi-runner.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
@@ -17,6 +18,13 @@ import type { NativeOperation } from '../src/contracts/native.js';
 import { hostDiscovery, scriptedProvider } from './fixtures/scripted-provider.js';
 
 const content = Compile(Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() })));
+const Properties = Type.Object({ properties: Type.Record(Type.String(), Type.Unknown()) });
+const toolSchema = Compile(Type.Union([Type.Object({ anyOf: Type.Array(Properties) }), Properties]));
+/** Every argument name a call can carry, across all variants of a discovery tool's schema. */
+function argumentNames(definition: TSchema): string[] {
+  const schema = toolSchema.Parse(JSON.parse(JSON.stringify(definition)));
+  return ('anyOf' in schema ? schema.anyOf : [schema]).flatMap(variant => Object.keys(variant.properties));
+}
 const policies = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Type.String() })));
 const cases = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Type.String(), input: Type.Object({
   currentPrompt: Type.String(), discoveryInstructions: Type.String(), fileTree: Type.String(),
@@ -82,6 +90,10 @@ test('native default policy and source startup reach Pi for all prompt modes and
       const packet = await verifyBundle(result.bundle.directory);
       assert.equal(packet.manifest.prompt, mode === 'preserve' ? '' : 'Discovered architecture');
       assert(first.tools.includes('prompt')); assert(!first.tools.includes('bash')); assert(!first.tools.includes('read'));
+      for (const [name, definition] of Object.entries(toolSchemas).filter(([name]) => first.tools.includes(name))) {
+        const described = Object.keys(Compile(Properties).Parse(first.schemas.get(name)).properties);
+        for (const argument of argumentNames(definition)) assert(described.includes(argument), `${name} must describe ${argument}`);
+      }
       proof.push({ mode, result, system, message });
     } finally { await runtime.close(); }
   }

@@ -16,6 +16,7 @@ import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/va
 import type { ExternalTools, ServedTool } from './claude-tools.js';
 import { completeClaudeCodeDiscovery } from './completion.js';
 import { claudeCodeProvider, mipmuxToolPrefix, type ClaudeCodeConfig } from './discovery-config.js';
+import { advertisedSchema } from './advertised-schema.js';
 import type { AdmittedMcp, McpReference } from './mcp-config.js';
 import type { DiscoveryInput, DiscoveryOutcome, DiscoveryTools } from './runner.js';
 import type { DiscoverySettings } from './selection.js';
@@ -410,7 +411,7 @@ export class ClaudeCodeRunner {
   /** mipmux's discovery tools as Claude Code sees them; each call is checked against its exact schema and answered by `tools`. */
   #discoveryTools(served: ClaudeTools, input: DiscoveryInput, tools: DiscoveryTools, signal: AbortSignal): ServedTool[] {
     return Object.entries(toolSchemas).filter(([name]) => name !== 'ask_user' || input.clarification !== undefined).map(([name, schema]) => ({
-      name, description: toolDescription(name), inputSchema: served.advertisedSchema(schema),
+      name, description: toolDescription(name), inputSchema: advertisedSchema(schema),
       call: async (args, callSignal) => {
         const call = callValidator.Default({ name, input: args });
         if (!callValidator.Check(call)) return { ...piToolResult(failureResult(new WorkspaceFailure('invalidRequest'))), isError: true };

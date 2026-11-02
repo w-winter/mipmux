@@ -8,7 +8,7 @@ import type { DiscoveryHostConfig } from '../../src/discovery/selection.js';
 import type { DiscoveryConfig } from '../../src/discovery/discovery-config.js';
 
 const requestValidator = Compile(Type.Object({ model: Type.String(), messages: Type.Array(Type.Unknown()),
-  tools: Type.Optional(Type.Array(Type.Object({ name: Type.String() }))), system: Type.Optional(Type.Unknown()) }));
+  tools: Type.Optional(Type.Array(Type.Object({ name: Type.String(), input_schema: Type.Unknown() }))), system: Type.Optional(Type.Unknown()) }));
 export type Reply = { kind: 'error' } | { kind: 'overflow' } | { kind: 'hold'; entered: () => void } |
   { kind: 'text'; text: string; stop: 'end_turn' | 'max_tokens'; tokens: number; reportedModel?: string } |
   { kind: 'tool'; name: string; input: unknown; stop: 'tool_use' | 'max_tokens'; tokens: number };
@@ -20,13 +20,14 @@ export function hostDiscovery(config: DiscoveryHostConfig): DiscoveryConfig {
 }
 
 export async function scriptedProvider(respond: (summary: boolean, index: number) => Reply) {
-  const requests: { model: string; tools: string[]; summary: boolean; messages: unknown[]; system: unknown }[] = [];
+  const requests: { model: string; tools: string[]; schemas: ReadonlyMap<string, unknown>; summary: boolean; messages: unknown[]; system: unknown }[] = [];
   const server = createServer(async (request, response) => {
     const bytes: Buffer[] = []; for await (const chunk of request) bytes.push(Buffer.from(chunk));
     const body: unknown = JSON.parse(Buffer.concat(bytes).toString());
     if (!requestValidator.Check(body)) { response.writeHead(400); response.end(); return; }
     const summary = !body.tools?.length;
-    requests.push({ model: body.model, tools: body.tools?.map(tool => tool.name) ?? [], summary, messages: body.messages, system: body.system });
+    requests.push({ model: body.model, tools: body.tools?.map(tool => tool.name) ?? [], schemas: new Map(body.tools?.map(tool => [tool.name, tool.input_schema])),
+      summary, messages: body.messages, system: body.system });
     const reply = respond(summary, requests.length);
     if (reply.kind === 'hold') { reply.entered(); return; }
     if (reply.kind === 'error' || reply.kind === 'overflow') {
