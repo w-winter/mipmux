@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import { Box, Container, Text } from '@earendil-works/pi-tui';
 import Type, { type Static } from 'typebox';
 import { Compile } from 'typebox/compile';
 
@@ -6,7 +7,8 @@ import { Compile } from 'typebox/compile';
  * Pi delivers a steering message only after the running tool calls return, and a mipmux wait can hold the agent for
  * minutes. `mipmux_wait` makes the same `context_job` wait through Pi's own mipmux connection and cancels it when the
  * user's steering message is accepted; mipmux then ends that wait and leaves the job running. Plain `context_job`
- * waits are blocked so every wait goes through this tool.
+ * waits are blocked so every wait goes through this tool. Only the model can call it (`model-only`), so no script loops
+ * on an interrupted wait, which therefore returns an ordinary result that leaves no row in Pi's terminal interface.
  */
 export const waitToolName = 'mipmux_wait';
 const jobTool = 'mcp__mipmux__context_job';
@@ -78,10 +80,16 @@ class SteeringWaits {
   }
 }
 
+/** What a result of the tool reports, which decides how its row is drawn. */
+interface WaitDetails { readonly kind: 'waiting' | 'interrupted' | 'settled' }
+const waiting: WaitDetails = { kind: 'waiting' }, interruption: WaitDetails = { kind: 'interrupted' }, settled: WaitDetails = { kind: 'settled' };
+// Lines of a settled reply shown before the row is expanded, as Pi shows tool output.
+const previewLines = 10;
+
 function interrupted(jobId: string) {
   return { content: [{ type: 'text' as const, text: `The wait for mipmux job "${jobId}" ended because the user sent a message; ` +
     `the job is still running. Respond to the message, then call ${waitToolName} with the same jobId to keep waiting.` }],
-  details: undefined, isError: true };
+  details: interruption };
 }
 
 /** Registers `mipmux_wait`, the steering detection it uses, and the block on plain `context_job` waits. */
@@ -100,26 +108,48 @@ export function registerSteerableWait(pi: ExtensionAPI): void {
     if (event.toolName !== jobTool || event.input.op !== 'wait' || own) return undefined;
     return { block: true, reason: blockReason };
   });
-  pi.registerTool({
+  pi.registerTool<typeof WaitParameters, WaitDetails>({
     name: waitToolName,
     label: 'mipmux wait',
     description: `Waits for a mipmux context job, as ${jobTool} does with op "wait", and returns mipmux's reply. When the user ` +
-      'sends a steering message, the wait ends at once with an error result saying so; the job keeps running, and you wait ' +
-      `again with the same jobId after responding. Call it directly, not from a script. Use ${jobTool} for its other operations.`,
+      'sends a steering message, the wait ends at once with a result saying so; the job keeps running, and you wait again ' +
+      `with the same jobId after responding. Scripts cannot call it; call it directly. Use ${jobTool} for its other operations.`,
     parameters: WaitParameters,
-    async execute(toolCallId, params, signal, _onUpdate, ctx) {
+    exposure: 'model-only',
+    async execute(toolCallId, params, signal, onUpdate, ctx) {
       const wait = steering.track();
       ownCalls.add(toolCallId);
+      onUpdate?.({ content: [{ type: 'text', text: `Waiting for mipmux job "${params.jobId}".` }], details: waiting });
       try {
         const outcome = await ctx.executeTool(jobTool, { op: 'wait', jobId: params.jobId, durationMs: params.durationMs },
           { signal: signal === undefined ? wait.signal : AbortSignal.any([signal, wait.signal]) });
         // A wait that settled as steering arrived returns its reply; only a wait the steering cancelled reports the interruption.
         if (outcome.isError && wait.signal.aborted) return interrupted(params.jobId);
-        return { content: outcome.result.content, details: outcome.result.details, isError: outcome.isError };
+        return { content: outcome.result.content, details: settled, isError: outcome.isError };
       } finally {
         ownCalls.delete(toolCallId);
         wait.release();
       }
+    },
+    // The tool draws its whole row, so an interrupted wait, whose row is empty, leaves no trace above the user's message.
+    renderShell: 'self',
+    renderCall: () => new Container(),
+    renderResult(result, { expanded, isPartial }, theme, context) {
+      if (result.details.kind === 'interrupted') return new Container();
+      const background = isPartial ? 'toolPendingBg' : context.isError ? 'toolErrorBg' : 'toolSuccessBg';
+      const row = new Box(context.outputPad, 1, text => theme.bg(background, text));
+      const header = theme.fg('toolTitle', theme.bold(waitToolName)) + theme.fg('muted', ` job ${context.args.jobId}`);
+      row.addChild(new Text(isPartial ? header + theme.fg('dim', ' · waiting') : header, 0, 0));
+      if (isPartial) return row;
+      const lines = result.content.flatMap(block => block.type === 'text' ? block.text.split('\n') : []);
+      const shown = expanded ? lines : lines.slice(0, previewLines);
+      let output = shown.map(line => theme.fg('toolOutput', line)).join('\n');
+      if (lines.length > shown.length) {
+        output += theme.fg('muted', `\n... (${lines.length - shown.length} more lines, `) + context.keyHint('app.tools.expand', 'to expand') +
+          theme.fg('muted', ')');
+      }
+      row.addChild(new Text(output, 0, 0));
+      return row;
     },
   });
 }

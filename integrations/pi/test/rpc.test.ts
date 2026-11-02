@@ -154,7 +154,10 @@ test('mipmux_wait waits like context_job, a steering message or pi-queue-steer e
       assert.equal(results.length, 5);
       assert.match(results[0] ?? '', /mipmux_wait/, 'the plain wait is blocked with a reason naming mipmux_wait');
       assert.match(results[1] ?? '', /\\"state\\":\\"discovering\\"/, 'a wait that ends on its own returns mipmux\'s reply');
-      for (const index of [2, 4]) assert.match(results[index] ?? '', /the job is still running/, `result ${index} reports an interrupted wait`);
+      for (const index of [2, 4]) {
+        assert.match(results[index] ?? '', /the job is still running/, `result ${index} reports an interrupted wait`);
+        assert.match(results[index] ?? '', /"isError":false/, `result ${index} is an ordinary result, not an error`);
+      }
       assert.match(results[3] ?? '', /\\"state\\":\\"discovering\\"/, 'the steering message\'s status call reaches mipmux');
 
       await mkdir(join(packageRoot, 'test-output'), { recursive: true });

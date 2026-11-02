@@ -87,9 +87,9 @@ A save changes only the values you changed and keeps the file's other settings, 
 
 ## Waiting for a build
 
-A build can take minutes, and Pi delivers a steering message only after the tool call in progress returns. The extension adds a `mipmux_wait` tool, which waits for a job as `context_job` does with `op: "wait"`, takes the same `jobId` and `durationMs`, and returns mipmux's reply. When you send a steering message during the wait, the wait ends at once with a result telling the agent that the job is still running, so the agent reads your message straight away and waits again afterwards. The job itself never stops.
+A build can take minutes, and Pi delivers a steering message only after the tool call in progress returns. The extension adds a `mipmux_wait` tool, which waits for a job as `context_job` does with `op: "wait"`, takes the same `jobId` and `durationMs`, and returns mipmux's reply. When you send a steering message during the wait, the wait ends at once with a result telling the agent that the job is still running, so the agent reads your message straight away and waits again afterwards. The job itself never stops, and the interrupted wait leaves no row in Pi's terminal interface; your message appears in its place.
 
-The extension blocks `context_job` waits, including those in codemode scripts, with a message that tells the agent to use `mipmux_wait`; status, answers, cancellation and disposal still go through `context_job`. A steering message counts when you send it from Pi's terminal or an RPC client, or when the [pi-queue-steer](https://github.com/tmustier/pi-queue-steer) extension accepts it into its queue. In a codemode script, an interrupted `mipmux_wait` call fails, which ends a script that does not catch the error.
+The extension blocks `context_job` waits, including those in codemode scripts, with a message that tells the agent to use `mipmux_wait`; status, answers, cancellation and disposal still go through `context_job`. A steering message counts when you send it from Pi's terminal or an RPC client, or when the [pi-queue-steer](https://github.com/tmustier/pi-queue-steer) extension accepts it into its queue. Codemode scripts cannot call `mipmux_wait`, so the agent waits with a direct call.
 
 ## Footer
 
