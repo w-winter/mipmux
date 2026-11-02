@@ -18,7 +18,7 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
 
 ## Requirements
 
-- Node.js 22.22.1 or later.
+- Node.js 22.23.4 or a later 22 release, 24.22.1 or a later 24 release, or 26.12.1 or later.
 - Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config and tar, to build mipmux's native Swift helper. On macOS, Xcode 26 or later, or its Command Line Tools, provides Swift and the compiler, and Homebrew provides CMake and pkg-config.
 - Git, at `/usr/bin/git` unless the configuration names another path.
 - For discovery, one of: a login to a model provider, stored in Pi's `auth.json` (see the quickstart); a provider's API key (see [Discovery with an API key](#discovery-with-an-api-key)); or Claude Code signed in with your Claude account or an API key, with the Claude Agent SDK installed next to mipmux (see [Claude Code discovery](#claude-code-discovery)).
@@ -519,7 +519,7 @@ docker build -f test/linux/Dockerfile -t mipmux-validation .
 docker run --rm mipmux-validation
 ```
 
-The image for validation fixes Swift 6.2.4 on Ubuntu Noble and Node 22.22.1 by image digest. It builds dependencies and executables inside Linux. The release executable dynamically requires the Swift runtime, Foundation, Dispatch, Foundation ICU, glibc, libstdc++, and libgcc supplied by that environment. The exact linked-library inventory is in `linkage.json`; PCRE2 is statically linked. A machine running the executable must supply those runtime libraries.
+The image for validation fixes Swift 6.2.4 on Ubuntu Noble and Node 22.23.4 by image digest. It builds dependencies and executables inside Linux. The release executable dynamically requires the Swift runtime, Foundation, Dispatch, Foundation ICU, glibc, libstdc++, and libgcc supplied by that environment. The exact linked-library inventory is in `linkage.json`; PCRE2 is statically linked. A machine running the executable must supply those runtime libraries.
 
 ## Source history
 

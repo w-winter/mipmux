@@ -15,7 +15,7 @@ try {
   for (const path of ['public.txt', 'nested/public.txt', 'nested/deeper/public.txt']) {
     await writeFile(join(directory, path), 'ordinary-neighbor');
   }
-  await writeFile(join(directory, 'Dockerfile'), 'FROM node:22.22.1-bookworm-slim\nCOPY . /probe\n');
+  await writeFile(join(directory, 'Dockerfile'), 'FROM node:22.23.4-bookworm-slim\nCOPY . /probe\n');
   execFileSync('docker', ['build', '--quiet', '--tag', tag, directory], { stdio: ['ignore', 'pipe', 'inherit'] });
   const output = execFileSync('docker', ['run', '--rm', tag, 'node', '-e',
     'const fs=require("node:fs"); console.log(JSON.stringify(fs.readdirSync("/probe",{recursive:true}).sort()))'], { encoding: 'utf8' });
