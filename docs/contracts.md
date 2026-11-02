@@ -1,5 +1,7 @@
 # Native and workspace contracts
 
+> This page is a reference for contributors. It states in detail the rules that each part follows, from the native helper's protocol and workspace indexing to drafts, packet rendering, verification and discovery. To install and use mipmux, start with the [README](../README.md). Agents that call mipmux's tools should read the [agent workflow](workflow.md), and [Building and testing](development.md) explains how the parts fit together.
+
 This document describes the private bridge implemented by `native/Sources/MipmuxBridge/`, its TypeScript schemas in `src/contracts/`, its client in `src/native/bridge-client.ts`, and the workspace/exploration APIs. Native directory capabilities authorize physical access. Workspace services apply exclusions and generation policy before requesting that access.
 
 ## Process and framing
