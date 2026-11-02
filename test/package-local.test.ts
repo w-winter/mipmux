@@ -45,9 +45,7 @@ test('local package audits resources and executes relocated library, native, CLI
   assert.deepEqual(archived.map(path => path.replace(/^package\//u, '')).sort(), paths.sort());
   const installed = join(directory, 'installed');
   mkdirSync(installed);
-  // npm applies overrides only in the root project, so an installing project declares mipmux's own.
-  const { overrides } = JSON.parse(readFileSync('package.json', 'utf8'));
-  writeFileSync(join(installed, 'package.json'), JSON.stringify({ private: true, type: 'module', overrides }));
+  writeFileSync(join(installed, 'package.json'), JSON.stringify({ private: true, type: 'module' }));
   execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', join(directory, receipt.filename)], { cwd: installed });
   const installLockSHA256 = createHash('sha256').update(readFileSync(join(installed, 'package-lock.json'))).digest('hex');
   writeFileSync(join(directory, 'installed-dependencies.json'), execFileSync('npm', ['ls', '--all', '--json'], { cwd: installed }));

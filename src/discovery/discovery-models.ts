@@ -42,7 +42,7 @@ export async function createDiscoveryModels(config: Pick<PiConfig, 'authPath' | 
 /** The `provider/model` references of the chat models discovery has credentials for, sorted. */
 export async function listDiscoveryModels(config: Pick<PiConfig, 'authPath' | 'modelsPath'>, signal: AbortSignal): Promise<string[]> {
   const runtime = await createDiscoveryModels(config, signal);
-  // Pi 1.0.2 answers availability per provider; asked for every provider at once, it returns an empty list.
+  // In the worker's environment, Pi 1.5.0 answers availability per provider; asked for every provider at once, it returns an empty list.
   const available = await Promise.all(runtime.getProviders().map(provider => runtime.getAvailable(provider.id, { signal })));
   return available.flat().map(model => `${model.provider}/${model.id}`).sort();
 }

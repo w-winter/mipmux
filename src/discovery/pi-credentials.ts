@@ -13,8 +13,11 @@ interface StorageModule {
   FileAuthStorageBackend: new (path: string) => StorageBackend;
   AuthStorage: { fromStorage(backend: StorageBackend): CredentialStore };
 }
-const storageSourceSHA256 = '0b45029901579032b19273a1427f63b622df8e1aaf9ea185eb932c0d4898998c';
+/** The Pi version whose credential storage was audited, and the SHA-256 of its source and types. */
+const auditedPiVersion = '1.5.0';
+const storageSourceSHA256 = '59791d54e50bfb86f0bb9e8dcee776547ae1744fc4aeb2fe14ff6610c1f5c567';
 const storageTypesSHA256 = '6197ffc082ffe1ef47894168fea1a575175743eaaa078bb4664ea310115dc9a6';
+const packageMetadata = Compile(Type.Object({ version: Type.String() }));
 const credentialValidator = Compile(Type.Record(Type.String(), Type.Union([
   Type.Object({ type: Type.Literal('api_key'), key: Type.Optional(Type.String()),
     env: Type.Optional(Type.Record(Type.String(), Type.String())) }),
@@ -34,12 +37,12 @@ function isStorageModule(value: unknown): value is StorageModule {
     'fromStorage' in auth && typeof auth.fromStorage === 'function';
 }
 
-/** Reuses the audited Pi 1.0.2 lock and persistence implementation before key resolution. */
+/** Reuses the audited Pi 1.5.0 lock and persistence implementation before key resolution. */
 export async function createCredentials(path: string, signal: AbortSignal): Promise<CredentialStore> {
   const entry = import.meta.resolve('@earendil-works/pi-coding-agent');
   const moduleURL = new URL('./core/auth-storage.js', entry);
   const metadata: unknown = JSON.parse(await readFile(new URL('../package.json', entry), 'utf8'));
-  if (!metadata || typeof metadata !== 'object' || !('version' in metadata) || metadata.version !== '1.0.2' ||
+  if (!packageMetadata.Check(metadata) || metadata.version !== auditedPiVersion ||
       sha256(await readFile(moduleURL)) !== storageSourceSHA256 ||
       sha256(await readFile(new URL('./core/auth-storage.d.ts', entry))) !== storageTypesSHA256) {
     throw new WorkspaceFailure('unsupportedCredentialSDK');

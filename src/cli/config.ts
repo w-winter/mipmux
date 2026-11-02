@@ -90,7 +90,7 @@ export function defaultConfigPath(host: ConfigHost): string {
 const defaultCopyContext: CopyContext = { current: { fileTreeMode: 'Auto', codeMapUsage: 'auto', gitInclusion: 'none' },
   customizations: { includeFiles: null, includeUserPrompt: null, includeFileTree: null, fileTreeMode: null, codeMapUsage: null, gitInclusion: null },
   codeMapsGloballyDisabled: false, activeGitRoot: null, presets: [] };
-/** Pi 1.0.2 defaults for the settings in RecoveryPolicy; provider requests time out with the HTTP idle timeout. */
+/** Pi 1.5.0 defaults for the settings in RecoveryPolicy; provider requests time out with the HTTP idle timeout. */
 const piPolicyDefaults = {
   retry: { enabled: true, maxRetries: 3, baseDelayMs: 2000, maxAgentDelayMs: 60000, provider: { maxRetries: 0, maxRetryDelayMs: 60000 } },
   compaction: { enabled: true, reserveTokens: 16384, keepRecentTokens: 20000 },

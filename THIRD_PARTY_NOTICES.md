@@ -18,7 +18,7 @@ TypeBox 1.3.27 uses the MIT license, copied to `ThirdPartyLicenses/typebox/LICEN
 
 Pi depends on `ignore` 7.0.8 under the MIT license, copied to `ThirdPartyLicenses/ignore/LICENSE-MIT`. Workspace ignore evaluation uses the retained native RPCE implementation.
 
-Pi coding-agent, AI and agent-core 1.0.2 run isolated discovery sessions under the MIT license. Their upstream license at revision `cd32f7725fdbddbaecdff5b1e68491563394e0ca` is copied to `ThirdPartyLicenses/pi/LICENSE`. Pi provides the session, model transport and same-model recovery APIs; the parent mipmux process retains filesystem and publication authority.
+Pi coding-agent, AI and agent-core 1.5.0 run isolated discovery sessions under the MIT license. Their upstream license at revision `f9a26365568127461c47a07a37dcb42c140a3ac5` is copied to `ThirdPartyLicenses/pi/LICENSE`. Pi provides the session, model transport and same-model recovery APIs; the parent mipmux process retains filesystem and publication authority.
 
 The Model Context Protocol server and client 2.3.0 use Apache-2.0, copied to `ThirdPartyLicenses/mcp/LICENSE`. The server supplies stdio negotiation, schema-based tool registration and request cancellation; the client is a test dependency for interoperability checks. Resolved dependencies are identified in the npm lockfile and retain their respective notices in their packages.
 
