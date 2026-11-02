@@ -35,12 +35,17 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.1
+      # The oh-my-pi extension's tests run oh-my-pi itself, which needs Bun.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
       - name: Show the toolchain
         run: |
           xcodebuild -version
           swift --version
           cmake --version
           git --version
+          bun --version
       - name: Install dependencies
         run: npm ci
       - name: Native tests
@@ -56,5 +61,11 @@ jobs:
       - name: Pi extension
         working-directory: integrations/pi
         run: |
+          npm run typecheck
+          npm test
+      - name: oh-my-pi extension
+        working-directory: integrations/omp
+        run: |
+          npm ci
           npm run typecheck
           npm test

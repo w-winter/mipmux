@@ -1,0 +1,4 @@
+# Copies of ../pi/src that scripts/copy-shared.mjs writes; edit the originals
+src/*
+!src/extension.ts
+!src/routes.ts

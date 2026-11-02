@@ -109,7 +109,7 @@ For a first run, give your agent a task such as "Build a context packet for revi
 
 Your agent should check the receipt's selected material and omissions against the task before preparing the packet, then hand the prepared `context.md` to the recipient as a file attachment or a path it can read.
 
-In Pi, the [pi-mipmux extension](integrations/pi/README.md) adds a `/mipmux` command for choosing a saved workspace and setting build preferences, such as the budget or discovery model, that apply to the agent's calls.
+In Pi, the [pi-mipmux extension](integrations/pi/README.md) adds a `/mipmux` command for choosing a saved workspace and setting build preferences, such as the budget or discovery model, that apply to the agent's calls. [omp-mipmux](integrations/omp/README.md) adds the same command to oh-my-pi.
 
 ## Documentation
 
