@@ -49,7 +49,7 @@ export const emptyPreferences: Preferences = {};
 export const emptyState: SessionState = { selected: null, preferences: emptyPreferences, lastDeclared: null };
 
 /** The arguments of an MCP call as the agent sent them; the server validates them, and the rules read only the fields they own. */
-export const CallArguments = Type.Record(Type.String(), Type.Unknown());
+const CallArguments = Type.Record(Type.String(), Type.Unknown());
 export type CallArgs = Static<typeof CallArguments>;
 export type Tool = 'context_builder' | 'context_prepare';
 /** Where an effective value came from, from highest to lowest precedence. */
@@ -126,7 +126,7 @@ function mismatchReason(workspace: SavedWorkspace): string {
 /**
  * Checks a call against the selected workspace and applies the session's preferences to its arguments in place. A build
  * receives every setting whose effective source is a preference; a preparation receives only a pinned budget. Applying
- * the rules to arguments they already changed changes nothing, because the adapter can report one call twice.
+ * the rules to arguments they already changed changes nothing.
  */
 export function decide(tool: Tool, args: CallArgs, selection: Selection, preferences: Preferences, hasUI: boolean): Decision {
   if (selection.kind === 'missing' || selection.kind === 'unreadable') return { kind: 'blocked', reason: blockReason(selection) };

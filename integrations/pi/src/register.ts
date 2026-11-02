@@ -79,13 +79,12 @@ export function createMipmux(dependencies: MipmuxDependencies) {
       if (selection.kind === 'found') event.systemPromptOptions.sections.mipmux_workspace = selectedInstruction(selection.workspace);
     },
     async toolCall(event: { readonly toolName: string; readonly toolCallId: string; readonly input: CallArgs }, ctx: MipmuxContext) {
-      const call = recognize(event.toolName, event.input);
-      if (!call) return undefined;
-      if (call.kind === 'malformed') return { block: true, reason: call.reason };
-      const decision = decide(call.tool, call.args, await lookup(), state.preferences, ctx.hasUI);
+      const tool = recognize(event.toolName);
+      if (!tool) return undefined;
+      const decision = decide(tool, event.input, await lookup(), state.preferences, ctx.hasUI);
       if (decision.kind === 'blocked') return { block: true, reason: decision.reason };
-      if (decision.changed) { call.commit(); changed.add(event.toolCallId); }
-      const declared = declaredWorkspace(call.args);
+      if (decision.changed) changed.add(event.toolCallId);
+      const declared = declaredWorkspace(event.input);
       if (declared && !sameWorkspace(declared, state.lastDeclared)) await record({ ...state, lastDeclared: declared }, ctx);
       return undefined;
     },

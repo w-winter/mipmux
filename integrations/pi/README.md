@@ -89,7 +89,7 @@ Saved workspaces are stored in `mipmux.json` in Pi's agent directory (`~/.pi/age
 
 ## Limits
 
-- The extension sees calls that pass through Pi's tool pipeline, including calls from codemode scripts, under the tool names `mcp__mipmux__context_builder` and `mcp__mipmux__context_prepare`. It also recognizes the `mcp` and `mcp__mipmux` tools and the `mipmux_` tool names that pi-mcp-adapter registers when it replaces Pi's built-in MCP support. Calls another extension makes outside Pi's tool pipeline bypass it.
+- The extension sees calls that pass through Pi's tool pipeline, including calls from codemode scripts, under the tool names that Pi's built-in MCP support gives a server named `mipmux`: `mcp__mipmux__context_builder` and `mcp__mipmux__context_prepare`. Calls another extension makes outside Pi's tool pipeline bypass it.
 - Tool names that end in a hash suffix, which an MCP client adds after a name collision, are not recognized.
 - Without a UI, the clarification preference is not applied.
 
