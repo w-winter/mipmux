@@ -49,7 +49,7 @@
     }
   ],
   "cases": 5,
-  "generatorSHA256": "d876a8c58bbe1ff61208368b9ab77549bfac917b78f4cd0781bbad4a44943b7a",
+  "generatorSHA256": "72bca8200b9d8138933b57fb6515418217dd2a4f0c72688e9ea8062939d244d6",
   "combinedSourceSHA256": "f952276fafafdc1374a194753e88a5e4d4c2dea905d5b637773b862fe4055335",
   "bindings": [
     "Original component struct, estimator, calculation, makeTokenStats and Codable DTO execute verbatim in minimal namespaces.",

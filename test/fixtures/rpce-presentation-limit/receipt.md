@@ -4,11 +4,11 @@ This fixture is a source reference for implementers comparing RPCE's limit on re
 
 ## Reproduce
 
-From `/Users/ww/mipmux`, run:
+From the mipmux checkout, run:
 
 ```sh
-node test/fixtures/rpce-presentation-limit/generate.mjs /Users/ww/repoprompt-ce
-node test/fixtures/rpce-presentation-limit/generate.mjs /Users/ww/repoprompt-ce --check
+node test/fixtures/rpce-presentation-limit/generate.mjs /absolute/path/to/repoprompt-ce
+node test/fixtures/rpce-presentation-limit/generate.mjs /absolute/path/to/repoprompt-ce --check
 ```
 
 Node, `swiftc` and `trash` must be on `PATH`. The RPCE checkout must have the pinned HEAD and unchanged source files listed in `provenance.json`; the generator rejects a mismatch rather than resetting the checkout. Only this fixture directory is written. The generator compiles a standalone adapter executable, runs it with `inputs.json`, and uses `trash` to remove its temporary source, executable and module cache. The check invocation compares all generated products byte-for-byte.

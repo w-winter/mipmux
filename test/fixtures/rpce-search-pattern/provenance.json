@@ -80,7 +80,7 @@
     }
   ],
   "cases": 43,
-  "generatorSHA256": "373a72b064a6048d2c5ae4fce485f887739c633fe7ff113a29ebe024f761e742",
+  "generatorSHA256": "ca40cd6cce32658e7d1a275f9fa1bd94d05c2e9b6e7d4aa2ec893711c9f7930d",
   "combinedSourceSHA256": "8aa53073927199bdf5f5c192a955b19134041abf8259f3a23de1e47328fb148b",
   "bindings": [
     "Original regex detection, PCRE feature detection, literal escaping and flexible-space conversion execute verbatim. The original whole-word pattern expression executes in a minimal function without the enclosing compiler/repair routine.",

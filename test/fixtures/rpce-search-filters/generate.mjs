@@ -7,8 +7,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const directory = dirname(fileURLToPath(import.meta.url));
-const reference = resolve(process.env.RPCE_REFERENCE_ROOT ?? '/Users/ww/repoprompt-ce');
 const revision = '43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3';
+if (!process.env.RPCE_REFERENCE_ROOT) throw new Error(`Set RPCE_REFERENCE_ROOT to a RepoPrompt CE clone that contains commit ${revision}.`);
+const reference = resolve(process.env.RPCE_REFERENCE_ROOT);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const sources = [];
 function original(path, ranges) {

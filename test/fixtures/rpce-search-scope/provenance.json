@@ -78,7 +78,7 @@
     }
   ],
   "cases": 46,
-  "generatorSHA256": "8fcdb545f31a5354cea6ef17d8d703fd0883cc9b6aa3ab401e96b703a3f86ad4",
+  "generatorSHA256": "0bc8d7071797f203ff78f59886df76b8a2b7c6d6cff765d34855855ddeba66e8",
   "combinedSourceSHA256": "6f05c70be01642b993697d923180cb2f8127e5088076e95c01fe4c5acf63d31c",
   "bindings": [
     "Original clause types, compiled clauses and index filter execute unchanged with the original wildmatch C wrapper.",
