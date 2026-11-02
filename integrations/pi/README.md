@@ -85,6 +85,12 @@ The discovery model and **Allowed models** lists show the models mipmux has cred
 
 A save changes only the values you changed and keeps the file's other settings, their order and its indentation. It replaces the file only after `mipmux config` accepts the result, and refuses to overwrite a file that someone edited while the panel was open. Other settings in the file, such as the cache path or discovery credentials, apply when mipmux starts again; reconnect it from `/mcp` after editing them by hand.
 
+## Waiting for a build
+
+A build can take minutes, and Pi delivers a steering message only after the tool call in progress returns. The extension adds a `mipmux_wait` tool, which waits for a job as `context_job` does with `op: "wait"`, takes the same `jobId` and `durationMs`, and returns mipmux's reply. When you send a steering message during the wait, the wait ends at once with a result telling the agent that the job is still running, so the agent reads your message straight away and waits again afterwards. The job itself never stops.
+
+The extension blocks `context_job` waits, including those in codemode scripts, with a message that tells the agent to use `mipmux_wait`; status, answers, cancellation and disposal still go through `context_job`. A steering message counts when you send it from Pi's terminal or an RPC client, or when the [pi-queue-steer](https://github.com/tmustier/pi-queue-steer) extension accepts it into its queue. In a codemode script, an interrupted `mipmux_wait` call fails, which ends a script that does not catch the error.
+
 ## Footer
 
 While the extension is loaded, Pi's footer shows `mipmux:` and the selected workspace, or `mipmux: no workspace`. The panel's last row, **Show in footer** under **Display**, turns this item on or off for all your sessions. The session where you save applies it at once; other open sessions apply it before their next prompt.
@@ -106,8 +112,8 @@ npm test
 npm run typecheck
 ```
 
-Both run from this directory and use the TypeScript, TypeBox and Pi packages installed in the mipmux checkout. One test runs Pi in RPC mode with a scripted model and a stand-in mipmux server.
+Both run from this directory and use the TypeScript, TypeBox and Pi packages installed in the mipmux checkout. Two tests run Pi in RPC mode with a scripted model and a stand-in mipmux server.
 
-The oh-my-pi extension in [`../omp`](../omp/README.md) copies every module in `src` except `extension.ts` and `routes.ts`, so after changing one, run that package's checks too.
+The oh-my-pi extension in [`../omp`](../omp/README.md) copies every module in `src` except `extension.ts`, `routes.ts` and `wait.ts`, so after changing one, run that package's checks too.
 
 To run the extension from a checkout instead of npm, install it by path: `pi install /absolute/path/to/mipmux/integrations/pi`.

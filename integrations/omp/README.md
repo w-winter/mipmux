@@ -32,6 +32,7 @@ The panel, saved workspaces, ignore rules, preferences, server defaults and the 
 - Saved workspaces and the footer setting are stored in `mipmux.json` in omp's agent directory: `~/.omp/agent`, the active profile's agent directory, or `$PI_CODING_AGENT_DIR`.
 - omp's MCP support names the tools `mcp__mipmux_context_builder` and `mcp__mipmux_context_prepare`, with one underscore after `mipmux`. omp also accepts a call to `mcp__mipmux__context_builder`, with two underscores, as a call to the same tool, and the extension applies to it as well.
 - The extension adds the selected workspace's declaration to the system prompt as a `<mipmux_workspace>` block.
+- omp-mipmux has no `mipmux_wait` tool. The agent waits with `context_job`, and omp delivers a steering message sent during a wait when the wait returns.
 
 ## Development
 
@@ -41,4 +42,4 @@ npm run typecheck
 npm test
 ```
 
-`src/extension.ts` and `src/routes.ts` belong to this package. `scripts/copy-shared.mjs` copies every other module from `../pi/src` into `src`, where Git ignores the copies, so edit the originals in `../pi/src`. The type check, the tests and `npm pack` run the copy first. The tests need Bun: one opens the panel with omp's terminal components, and one runs omp in RPC mode with a scripted model and a stand-in mipmux server.
+`src/extension.ts` and `src/routes.ts` belong to this package. `scripts/copy-shared.mjs` copies the modules it shares with pi-mipmux from `../pi/src` into `src`, where Git ignores the copies, so edit the originals in `../pi/src`. The type check, the tests and `npm pack` run the copy first. The tests need Bun: one opens the panel with omp's terminal components, and one runs omp in RPC mode with a scripted model and a stand-in mipmux server.
