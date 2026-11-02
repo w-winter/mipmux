@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { once } from 'node:events';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -60,7 +61,14 @@ async function start() {
     child.stdin.write(JSON.stringify({ id, type: 'prompt', message }) + '\n');
   }), `prompt ${id}`);
   const lines = async (path: string): Promise<unknown[]> => (await readFile(path, 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
-  return { declaration, prompt, serverCalls: () => lines(serverLog), providerRequests: () => lines(providerLog), stop: () => child.kill() };
+  /** Stops omp and removes its scratch folder, which omp fills with its own logs and caches. */
+  async function stop(): Promise<void> {
+    const exited = child.exitCode !== null || child.signalCode !== null ? Promise.resolve() : once(child, 'exit');
+    child.kill();
+    await exited;
+    await rm(base, { recursive: true, force: true });
+  }
+  return { declaration, prompt, serverCalls: () => lines(serverLog), providerRequests: () => lines(providerLog), stop };
 }
 
 test('omp applies the saved workspace to mipmux calls, blocks other workspaces under either tool name, and notes a conflict it caused',
@@ -93,5 +101,5 @@ test('omp applies the saved workspace to mipmux calls, blocks other workspaces u
 
       await mkdir(join(packageRoot, 'test-output'), { recursive: true });
       await writeFile(join(packageRoot, 'test-output/omp-rpc.json'), JSON.stringify({ calls, results }, null, 2) + '\n');
-    } finally { omp.stop(); }
+    } finally { await omp.stop(); }
   });
