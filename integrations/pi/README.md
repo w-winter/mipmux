@@ -4,7 +4,7 @@ pi-mipmux is a [Pi](https://pi.dev) extension for mipmux. Its `/mipmux` command 
 
 ## Install
 
-pi-mipmux needs mipmux connected to Pi as an MCP server named `mipmux`, and the `mipmux` command on your PATH. With Pi's built-in MCP support:
+pi-mipmux needs mipmux connected to Pi as an MCP server named `mipmux`, and the `mipmux` command on your PATH; the [mipmux quickstart](https://github.com/w-winter/mipmux#quickstart) covers building and configuring it. With Pi's built-in MCP support:
 
 ```sh
 pi mcp add mipmux -- mipmux mcp
@@ -114,6 +114,6 @@ npm run typecheck
 
 Both run from this directory and use the TypeScript, TypeBox and Pi packages installed in the mipmux checkout. Two tests run Pi in RPC mode with a scripted model and a stand-in mipmux server.
 
-The oh-my-pi extension in [`../omp`](../omp/README.md) copies every module in `src` except `extension.ts`, `routes.ts` and `wait.ts`, so after changing one, run that package's checks too.
+The oh-my-pi extension in [`integrations/omp`](https://github.com/w-winter/mipmux/tree/main/integrations/omp#readme) copies every module in `src` except `extension.ts`, `routes.ts` and `wait.ts`, so after changing one, run that package's checks too.
 
 To run the extension from a checkout instead of npm, install it by path: `pi install /absolute/path/to/mipmux/integrations/pi`.
