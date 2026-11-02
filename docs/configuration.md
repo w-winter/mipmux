@@ -139,6 +139,8 @@ If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private direct
 
 Claude Code discovery connects to these servers itself and supports header authentication only; a server configured for OAuth fails its builds with `mcpOAuthUnsupported`. Many servers accept an API key in a header instead. Linear's, for example, accepts `"headers": { "Authorization": "Bearer <Linear API key>" }`, and a key limited to read access, or the `https://mcp.linear.app/mcp/readonly` endpoint, keeps discovery from changing anything.
 
+Discovery keeps text it fetches from these servers in the packet with `draft_update`'s `addDocument` mutation, as a supplied document with an ID, a role and the origin it asserts; such documents appear in `context.md` and count toward the budget. A build's receipt lists the authorized servers and tools, a digest of their configuration, the tool names discovery observed and whether shutdown was sent. Closing the discovery worker releases its local connections; it does not cancel work a server has already started.
+
 ## The discovery prompt
 
 Set `discovery.promptTemplatePath` to an absolute path to your editable discovery template. Install the shipped `dist/prompts/discovery.md` into an existing operator-owned directory using exclusive creation:

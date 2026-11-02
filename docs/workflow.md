@@ -1,6 +1,6 @@
 # Agent workflow
 
-This guide is for an agent that calls mipmux's MCP tools to build a context packet: one `context.md` file that contains the source files, slices (line ranges of files), code maps (syntax summaries of files) and Git patches a task needs, followed by the task itself. mipmux's discovery agent, a model that explores the code with mipmux's own tools, chooses that material. The packet goes to another model, usually one that plans, reviews or investigates. Field-level detail is in the [context protocol](context-protocol.md) and the [contracts](contracts.md).
+This guide is for an agent that calls mipmux's MCP tools to build a context packet: one `context.md` file that contains the source files, slices (line ranges of files), code maps (syntax summaries of files) and Git patches a task needs, followed by the task itself. mipmux's discovery agent, a model that explores the code with mipmux's own tools, chooses that material. The packet goes to another model, usually one that plans, reviews or investigates. Field-level detail is in [MCP tools](mcp-tools.md), [Context packets](packets.md) and the [contracts](contracts.md).
 
 In each run, the agent starts a build, waits for it, checks its receipt, prepares the final packet and hands the packet to the recipient. The numbered sections below follow that order.
 
@@ -129,7 +129,7 @@ To give a ready bundle a different task, prepare it again with a new prompt; whi
 
 Builds that capture Git evidence store snapshots in `<output folder>/_git_data`, which every run in the project shares. mipmux deletes snapshots older than seven days and all but the newest 25, so preparing an older review bundle can fail; start a new build when it does. `context_job` with `{ "op": "dispose", "jobId": "..." }` deletes one job's snapshots when you no longer need its bundles.
 
-To select context yourself instead of running discovery, use `draft_create`, `manage_selection`, `draft_validate` and `draft_finalize`. The server offers them when its `tools` setting is `"full"`; they are described in [Manual context packets](packets.md).
+To select context yourself instead of running discovery, use `draft_create`, `manage_selection`, `draft_validate` and `draft_finalize`. The server offers them when its `tools` setting is `"full"`; they are described in [Context packets](packets.md).
 
 ## Common mistakes
 

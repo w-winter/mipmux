@@ -54,7 +54,7 @@ RepoPrompt CE is a macOS app, and its Context Builder works inside workspaces th
    }
    ```
 
-   To run discovery with Claude models through Claude Code instead, see [Claude Code discovery](docs/configuration.md#claude-code-discovery). Without a `discovery` entry, `context_builder` fails with `discoveryNotConfigured`. To select a packet's contents yourself instead, add `"tools": "full"`, which offers the exploration and manual-packet tools described under [Manual context packets](docs/packets.md). [Configuration](docs/configuration.md) lists every setting.
+   To run discovery with Claude models through Claude Code instead, see [Claude Code discovery](docs/configuration.md#claude-code-discovery). Without a `discovery` entry, `context_builder` fails with `discoveryNotConfigured`. To select a packet's contents yourself instead, add `"tools": "full"`, which offers the exploration and manual-packet tools described under [Context packets](docs/packets.md). [Configuration](docs/configuration.md) lists every setting.
 
 4. Connect your MCP client to `node /absolute/path/to/mipmux/dist/cli/main.js mcp`. If the client cannot find `node`, use its absolute path.
 
@@ -101,8 +101,7 @@ The [agent workflow](docs/workflow.md) and the server's instructions cover build
 - [MCP tools](docs/mcp-tools.md): the inputs, results and errors of every MCP tool.
 - [Command line](docs/cli.md): the `mipmux` commands and their input files.
 - [Workspaces and ignore rules](docs/workspaces.md): which files mipmux indexes, `.mipmux_ignore`, and the paths it never reads.
-- [Manual context packets](docs/packets.md): selecting a packet's contents yourself, copy presets, budgets, and checking saved packets.
-- [Delivering a context packet](docs/context-protocol.md): the full context request and copy settings.
+- [Context packets](docs/packets.md): the context request, selecting a packet's contents yourself, copy presets and settings, budgets, and checking and delivering saved packets.
 - [TypeScript library](docs/library.md): running mipmux inside a Node.js program.
 - [Building and testing](docs/development.md): the full build and test sequence, the native helper, local packages and Linux validation.
 

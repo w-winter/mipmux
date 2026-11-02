@@ -58,7 +58,7 @@ The [workspace rules](workspaces.md) describe which files a workspace includes.
 
 ## Packets
 
-Drafts, copy presets, budgets and verification are described in [Manual context packets](packets.md), whose examples use this API.
+Drafts, copy presets, budgets and verification are described in [Context packets](packets.md), whose examples use this API.
 
 ## Discovery and MCP
 
