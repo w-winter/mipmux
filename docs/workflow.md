@@ -1,6 +1,6 @@
 # Agent workflow
 
-This guide is for an agent that calls mipmux's MCP tools to build a context packet: one `context.md` file that contains the source files, slices (line ranges of files), code maps (syntax summaries of files) and Git patches a task needs, followed by the task itself. mipmux's discovery agent, a model that explores the code with mipmux's own tools, chooses that material. The packet goes to another model, usually one that plans, reviews or investigates. Field-level detail is in [MCP tools](mcp-tools.md), [Context packets](packets.md) and the [contracts](contracts.md).
+This guide is for an agent that calls mipmux's MCP tools to build a context packet: one `context.md` file that contains the source files, slices (line ranges of files), code maps (outlines of a file's declarations, such as its classes, methods and functions, with their signatures) and Git patches a task needs, followed by the task itself. mipmux's discovery agent, a model that explores the code with mipmux's own tools, chooses that material. The packet goes to another model, usually one that plans, reviews or investigates. Field-level detail is in [MCP tools](mcp-tools.md), [Context packets](packets.md) and the [contracts](contracts.md).
 
 In each run, the agent starts a build, waits for it, checks its receipt, prepares the final packet and hands the packet to the recipient. The numbered sections below follow that order.
 
