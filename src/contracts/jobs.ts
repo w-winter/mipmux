@@ -1,5 +1,6 @@
 import type { DiscoveryReceipt, DiscoveryEvent } from './discovery.js';
 import type { CacheRecoveryTarget } from './errors.js';
+import type { SourcePath } from './inventory.js';
 import type { FinalizationResult } from '../context/finalize.js';
 
 export type JobPhase = 'accepted' | 'reconciling' | 'acquiringMaterials' | 'discovering' |
@@ -9,6 +10,8 @@ export type JobTerminal =
   | { readonly state: 'blocked'; readonly validation: Extract<FinalizationResult, { kind: 'blocked' }>;
       readonly draftId: string; readonly discovery: DiscoveryReceipt }
   | { readonly state: 'failed' | 'cancelled'; readonly code: string; readonly target: CacheRecoveryTarget | null;
+      /** The file a failure concerns, such as the changed symlink behind `unsupportedComparisonEntry`; null when it names none. */
+      readonly source: SourcePath | null;
       readonly discovery: DiscoveryReceipt | null };
 export type JobSnapshot = { readonly jobId: string; readonly sequence: number; readonly requestDigest: string;
   readonly progress: DiscoveryEvent | null } &

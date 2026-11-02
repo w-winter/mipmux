@@ -39,6 +39,12 @@ export function cacheRecoveryTarget(error: unknown): CacheRecoveryTarget | null 
   return recoveryTarget.Check(target) && kinds.includes(target.kind) ? { kind: target.kind, key: target.key } : null;
 }
 
+/** The source a failure names when its code concerns one file, such as a changed source or an unsupported comparison entry; null otherwise. */
+export function failureSource(failure: WorkspaceFailure): SourcePath | null {
+  if (!['sourceChanged', 'pipelineChanged', 'unsupportedComparisonEntry'].includes(failure.code)) return null;
+  return sourcePath.Check(failure.details) ? { root: failure.details.root, path: failure.details.path } : null;
+}
+
 export function failureResult(error: unknown) {
   const code = failureCode(error);
   const target = cacheRecoveryTarget(error);
@@ -48,9 +54,8 @@ export function failureResult(error: unknown) {
     return { kind: 'error', code, message: error.details.message };
   }
   if (target) return { kind: 'error', code, target };
-  if (error instanceof WorkspaceFailure && ['sourceChanged', 'pipelineChanged'].includes(code) && sourcePath.Check(error.details)) {
-    return { kind: 'error', code, source: error.details };
-  }
+  const source = error instanceof WorkspaceFailure ? failureSource(error) : null;
+  if (source) return { kind: 'error', code, source };
   if (error instanceof WorkspaceFailure && code === 'outputBudgetTooSmall') {
     return { kind: 'outputBudgetTooSmall', requiredBytes: error.details.requiredBytes };
   }

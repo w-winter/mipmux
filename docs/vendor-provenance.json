@@ -6091,11 +6091,13 @@
         "Settle globally disabled explicit codemap demand with the registered source entry before retaining any extraction. Shared completion independently uses the same captured flag. Optional supported sources remain pending, not unsupported. Source WorkspaceFileContextStore.swift:13331-13337 revokes globally suspended graph authority.",
         "Revalidate a search continuation's candidates' controlling policy with one ignore-hierarchy query per root.",
         "Read, decode and scan search candidates in one native request, passing each file's outcome on as it arrives.",
-        "Give each operation's policies one Git query, which asks for a root's tracked paths only when an exclusion depends on them."
+        "Give each operation's policies one Git query, which asks for a root's tracked paths only when an exclusion depends on them.",
+        "The worktree comparison walk skips paths the index records as symlinks or submodules, which the patch compares through Git.",
+        "Read comparison symlinks through a source capability, retaining no-follow traversal and named failures for replaced links."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "0497dfec45b2fce0436ab48f9ac3ddf201d627512725cb7501fa4a5ae4e26c17",
+      "sha256": "e045393136e6682b53db343d7c8f3781a72871f1f5b30b6991b962a68e03f4aa",
       "classification": "handwritten"
     },
     {
@@ -7699,9 +7701,10 @@
         "Share the confined source read between readSource and the search-source scan; the scan can decline a file after opening it, and a declined file is still hashed and checked against its expected identity without keeping its contents.",
         "Let a directory listing pass each entry's name and kind to its caller, so an inventory walk evaluates the entries it lists in the same request; reading the entries moved into its own function.",
         "Expose the ignore-control reader to the Git exclude-file capture.",
-        "Ignore capture also reads .mipmux_ignore in each folder, after .cursorignore, so its rules take precedence over the other secondary ignore files in that folder."
+        "Ignore capture also reads .mipmux_ignore in each folder, after .cursorignore, so its rules take precedence over the other secondary ignore files in that folder.",
+        "Read symlink bytes with readlinkat and fingerprint checks; move the unchanged DescriptorFingerprint type to DescriptorFingerprint.swift to keep this file below 1,000 lines."
       ],
-      "sha256": "8c2e330e366b8349de3f67badf893b5ad6e03d66d977a2c1d8670cb7048a51fc"
+      "sha256": "5eeeb1677283cf4c11a67201bfa0b5fdddc5ef2fda5921a29de6b70f8ba99e6e"
     },
     {
       "source": "Sources/RepoPrompt/Features/Prompt/Models/Copy/BuiltInCopyPresets.swift",

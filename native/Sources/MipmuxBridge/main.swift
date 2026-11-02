@@ -43,6 +43,7 @@ private func execute(_ request: Request, files: ConfinedFiles, walks: IgnoreWalk
     case let .listDirectory(root, path): try files.list(root, path: path, request: request)
     case let .fingerprintGitDiff(input): try files.fingerprintGitDiff(input)
     case let .inspectSource(root, path): try files.inspectSource(root, path: path)
+    case let .readSymlink(root, path): try files.readSymlink(root, path: path)
     case let .readSource(root, path, expected): try files.readSource(
             root,
             path: path,

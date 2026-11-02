@@ -58,6 +58,7 @@ const resultKinds = {
   sliceReadText: ['readTextSlice', 'readTextRangeError'],
   renderFileBlock: ['fileBlock'],
   readSource: ['sourceComplete'], inspectSource: ['sourceInspected'], extract: ['extracted', 'unsupportedExtension'],
+  readSymlink: ['symlinkRead'],
   beginExport: ['exportOpened'], writeExport: ['exportWritten'], readExport: ['exportRead'],
   publishManifest: ['manifestPublished'],
   renderDiscoveryPrompt: ['discoveryPrompt', 'discoveryTemplateRejected'],

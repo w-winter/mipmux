@@ -1,7 +1,7 @@
 import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { lstat, mkdir, readdir, readlink, rename, symlink, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readdir, readFile, readlink, rename, symlink, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { Client } from '@modelcontextprotocol/client';
@@ -24,6 +24,8 @@ const failedReply = Compile(Type.Object({ jobId: Type.String(), state: Type.Lite
 const readyReply = Compile(Type.Object({ jobId: Type.String(), state: Type.Literal('ready'),
   bundle: Type.Object({ directory: Type.String() }) }));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String() }));
+const unsupportedEntryReply = Compile(Type.Object({ state: Type.Literal('failed'), code: Type.Literal('unsupportedComparisonEntry'),
+  source: Type.Object({ root: Type.String(), path: Type.String() }) }));
 const invalidRequestReply = Compile(Type.Object({ code: Type.Literal('invalidRequest'), message: Type.String() }));
 const prepared = Compile(Type.Object({ kind: Type.Literal('ready'), directory: Type.String(),
   added: Type.Array(Type.Object({ kind: Type.String(), path: Type.Optional(Type.String()) })) }));
@@ -191,6 +193,72 @@ test('terminal failures retain their destination key until connection closure', 
   const stranger = await f.connect();
   const foreign = await job(stranger, { op: 'status', jobId: retried });
   assert.equal(errorReply.Parse(toolJSON(foreign)).code, 'unknownJob');
+});
+
+test('unchanged symlinks and submodules leave patches buildable, and a changed one names its path', async t => {
+  const f = await fixture(t), client = await f.connect();
+  const env = { PATH: '/usr/bin:/bin', HOME: f.base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  const run = (args: string[], cwd = f.root) => execFileSync(git, args, { cwd, encoding: 'utf8', env });
+  await mkdir(join(f.root, 'sub'));
+  run(['init', '-q'], join(f.root, 'sub'));
+  await writeFile(join(f.root, 'sub', 'inner.txt'), 'submodule content\n'); run(['add', 'inner.txt'], join(f.root, 'sub'));
+  run(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'sub'], join(f.root, 'sub'));
+  await symlink('plan.md', join(f.root, 'link.md'));
+  run(['-c', 'advice.addEmbeddedRepo=false', 'add', 'link.md', 'sub']); run(['commit', '-qm', 'links']);
+  const linked = run(['rev-parse', 'HEAD']).trim();
+  await writeFile(join(f.root, 'Other.swift'), 'struct Other { let changed = true }\n');
+  run(['add', 'Other.swift']); run(['commit', '-qm', 'other']);
+  const changed = run(['rev-parse', 'HEAD']).trim();
+  await writeFile(join(f.root, 'Slice.txt'), 'first\nstaged\nthird\n'); run(['add', 'Slice.txt']);
+  await writeFile(join(f.root, 'New.txt'), 'untracked\n');
+  const request = { workspace: f.workspace, purpose: 'review', task: 'Collect the change' } satisfies Omit<CallerBuildRequest, 'outputName'>;
+  const comparisons = [{ kind: 'commits', base: linked, target: changed }, { kind: 'staged', base: 'HEAD' },
+    { kind: 'worktree', base: 'HEAD', includeUntracked: true }] satisfies CallerPatch['comparison'][];
+  const patched = [['Other.swift'], ['Slice.txt'], ['Full.swift', 'New.txt', 'Slice.txt']];
+  for (const [index, comparison] of comparisons.entries()) {
+    const ready = readyReply.Parse(await settle(client, await started(client, { ...request, outputName: `run-entries-${index}`,
+      patches: [{ id: 'p', root: 'r', comparison }] })));
+    const context = await readFile(join(ready.bundle.directory, 'context.md'), 'utf8');
+    assert.deepEqual([...context.matchAll(/^diff --git a\/(\S+)/gm)].map(match => match[1]).sort(), patched[index]);
+  }
+  await unlink(join(f.root, 'link.md')); await symlink('Other.swift', join(f.root, 'link.md'));
+  const retargeted = (outputName: string, comparison: CallerPatch['comparison']) => started(client, { ...request, outputName,
+    patches: [{ id: 'p', root: 'r', comparison }] });
+  const worktreeFailure = unsupportedEntryReply.Parse(await settle(client, await retargeted('run-retargeted-worktree',
+    { kind: 'worktree', base: 'HEAD', includeUntracked: false })));
+  assert.deepEqual(worktreeFailure.source, { root: 'r', path: 'link.md' });
+  run(['add', 'link.md']); run(['commit', '-qm', 'retarget']);
+  const commitFailure = unsupportedEntryReply.Parse(await settle(client, await retargeted('run-retargeted-commits',
+    { kind: 'commits', base: changed, target: 'HEAD' })));
+  assert.deepEqual(commitFailure.source, { root: 'r', path: 'link.md' });
+});
+
+for (const scenario of ['same-target', 'assume-unchanged', 'unmerged'] as const) test(`comparison entries retain exact evidence: ${scenario}`, async t => {
+  const f = await fixture(t), client = await f.connect();
+  const env = { PATH: '/usr/bin:/bin', HOME: f.base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  const run = (args: string[]) => execFileSync(git, args, { cwd: f.root, encoding: 'utf8', env });
+  await mkdir(join(f.root, 'scope'));
+  await writeFile(join(f.root, 'scope/file.txt'), 'before\n');
+  await symlink('file.txt', join(f.root, 'scope/link'));
+  run(['add', 'scope']); run(['commit', '-qm', 'link']);
+  await writeFile(join(f.root, 'scope/file.txt'), 'after\n');
+  const workspace = { roots: [{ name: 'r', absolutePath: join(f.root, 'scope') }], outputRoot: f.out };
+  if (scenario === 'unmerged') {
+    const blob = run(['rev-parse', 'HEAD:scope/file.txt']).trim();
+    execFileSync(git, ['update-index', '--index-info'], { cwd: f.root, env, input: `100644 ${blob} 1\tscope/file.txt\n` });
+  } else {
+    if (scenario === 'assume-unchanged') run(['update-index', '--assume-unchanged', 'scope/link']);
+    await unlink(join(f.root, 'scope/link'));
+    await symlink(scenario === 'same-target' ? 'file.txt' : '../plan.md', join(f.root, 'scope/link'));
+  }
+  const result = await settle(client, await started(client, { workspace, purpose: 'review', task: 'Collect the change',
+    outputName: `run-${scenario}`, patches: [{ id: 'p', root: 'r', comparison: { kind: 'worktree', base: 'HEAD', includeUntracked: true } }] }));
+  if (scenario === 'same-target') {
+    const ready = readyReply.Parse(result);
+    const manifest = (await verifyBundle(ready.bundle.directory)).manifest;
+    const patch = manifest.materials.find(material => material.kind === 'patch'); assert(patch?.kind === 'patch');
+    assert.deepEqual(patch.receipt.coverage, ['file.txt']);
+  } else assert.deepEqual(unsupportedEntryReply.Parse(result).source, { root: 'r', path: scenario === 'unmerged' ? 'file.txt' : 'link' });
 });
 
 test('occupied output names fail before discovery', async t => {

@@ -170,6 +170,26 @@ final class ConfinedFiles {
         }
     }
 
+    func readSymlink(_ handle: NativeHandle, path: String) throws -> [String: Any] {
+        let root = try sourceRoot(handle)
+        var parts = try components(path)
+        let leaf = parts.removeLast()
+        let parent = try traverse(root.directory.value, components: parts)
+        var before = stat(), after = stat()
+        guard fstatat(parent.value, leaf, &before, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+        guard before.st_mode & mode_t(S_IFMT) == mode_t(S_IFLNK) else { throw BridgeFailure("nonRegularFile") }
+        // The extra byte distinguishes a complete read from a link that grew after the stat.
+        var bytes = [UInt8](repeating: 0, count: Int(before.st_size) + 1)
+        let count = readlinkat(parent.value, leaf, &bytes, bytes.count)
+        guard count >= 0 else { throw ioFailure() }
+        guard fstatat(parent.value, leaf, &after, AT_SYMLINK_NOFOLLOW) == 0 else { throw ioFailure() }
+        guard count == before.st_size, DescriptorFingerprint(before) == DescriptorFingerprint(after) else {
+            throw BridgeFailure("sourceChanged")
+        }
+        try validate(root)
+        return ["kind": "symlinkRead", "bytes": Data(bytes.prefix(count)).base64EncodedString()]
+    }
+
     func readSource(_ handle: NativeHandle, path: String, expected: SourceIdentity?, request: Request, extraction: Extraction) throws -> [String: Any] {
         let emit: (Data) throws -> Void = { try request.emit(["kind": "bytes", "bytes": $0.base64EncodedString()]) }
         let read = try readConfinedSource(handle, path: path, expected: expected, skip: { _ in false }, chunk: emit)
@@ -951,35 +971,6 @@ private func status(_ fd: Int32) throws -> stat {
     var result = stat()
     guard fstat(fd, &result) == 0 else { throw ioFailure() }
     return result
-}
-
-struct DescriptorFingerprint: Equatable {
-    let device: String
-    let inode: String
-    let size: Int64
-    let mode: UInt32
-    let modifiedSeconds: String
-    let modifiedNanoseconds: Int
-    let changedSeconds: String
-    let changedNanoseconds: Int
-
-    init(_ info: stat) {
-        #if canImport(Darwin)
-            let modified = info.st_mtimespec, changed = info.st_ctimespec
-        #else
-            let modified = info.st_mtim, changed = info.st_ctim
-        #endif
-        device = String(info.st_dev); inode = String(info.st_ino)
-        size = Int64(info.st_size); mode = UInt32(info.st_mode)
-        modifiedSeconds = String(modified.tv_sec); modifiedNanoseconds = Int(modified.tv_nsec)
-        changedSeconds = String(changed.tv_sec); changedNanoseconds = Int(changed.tv_nsec)
-    }
-
-    var json: [String: Any] {
-        ["device": device, "inode": inode, "size": size, "mode": mode,
-         "modifiedSeconds": modifiedSeconds, "modifiedNanoseconds": modifiedNanoseconds,
-         "changedSeconds": changedSeconds, "changedNanoseconds": changedNanoseconds]
-    }
 }
 
 private func fingerprint(_ fd: Int32) throws -> DescriptorFingerprint {

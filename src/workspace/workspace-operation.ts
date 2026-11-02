@@ -234,7 +234,26 @@ export class WorkspaceOperation {
       return access.read(source, null);
     });
   }
-  comparisonFiles(root: string, prefixes: readonly string[] | null) {
+  /** Reads the link itself, without following it; a removed or replaced link is an unsupported comparison entry. */
+  readComparisonSymlink(source: SourcePath) {
+    source = structuredClone(source);
+    return this.#track(async () => {
+      await this.authorizeComparisonPath(source);
+      const access = await (this.#access ??= this.#openAccess());
+      try {
+        const reply = await access.bridge.request({ kind: 'readSymlink', root: (await access.openRoot(source.root)).handle,
+          path: source.path }, this.signal);
+        return Buffer.from(reply.result.bytes, 'base64');
+      } catch (error) {
+        if (error instanceof NativeFailure && ['notFound', 'nonRegularFile', 'symlink'].includes(error.code)) {
+          throw new WorkspaceFailure('unsupportedComparisonEntry', source);
+        }
+        throw error;
+      }
+    });
+  }
+  /** The files under `root` a worktree comparison reads, limited to `prefixes`; `skipped` paths are neither listed nor entered. */
+  comparisonFiles(root: string, prefixes: readonly string[] | null, skipped: ReadonlySet<string>) {
     return this.#track(async () => {
       const access = await (this.#access ??= this.#openAccess());
       const policy = this.#policy(access), paths: string[] = [];
@@ -242,6 +261,7 @@ export class WorkspaceOperation {
         await policy.directory(root, path);
         for (const entry of await access.list(root, path ? { kind: 'descendant', path } : { kind: 'root' })) {
           const child = path ? path + '/' + entry.name : entry.name, source = { root, path: child };
+          if (skipped.has(child)) continue;
           if (prefixes && !prefixes.some(prefix=>child === prefix || child.startsWith(prefix+'/') || entry.entryKind === 'directory' && prefix.startsWith(child+'/'))) continue;
           if (!await policy.admitted(source, entry.entryKind === 'directory')) continue;
           if (entry.entryKind === 'directory') await walk(child);

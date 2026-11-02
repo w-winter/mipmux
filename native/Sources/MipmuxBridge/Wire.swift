@@ -186,6 +186,7 @@ enum Operation {
     case listDirectory(NativeHandle, String?)
     case readSource(NativeHandle, String, SourceIdentity?)
     case inspectSource(NativeHandle, String)
+    case readSymlink(NativeHandle, String)
     case fingerprintGitDiff(GitFingerprintInput)
     case extract(String, Data, SourceIdentity)
     case beginExport(NativeHandle, String)
@@ -234,6 +235,9 @@ enum Operation {
         case "inspectSource":
             let fields = try WireObject(value, keys: ["kind", "root", "path"])
             self = try .inspectSource(NativeHandle(fields.value("root")), fields.string("path"))
+        case "readSymlink":
+            let fields = try WireObject(value, keys: ["kind", "root", "path"])
+            self = try .readSymlink(NativeHandle(fields.value("root")), fields.string("path"))
         case "readSource":
             let fields = try WireObject(value, keys: ["kind", "root", "path", "expected"])
             self = try .readSource(

@@ -55,12 +55,17 @@ test('native exact-byte acquisition, extraction, confined reads and exclusive ex
     assert.equal(failedDecode.result.outcome.kind, 'decodeFailed');
     await assert.rejects(bridge.request({ kind: 'extract', extension: 'swift', bytes: invalid.toString('base64'), expected: identity(bytes) }, signal()), /sourceChanged/);
     await symlink('/etc/passwd', join(root, 'escape'));
+    const link = await bridge.request({ kind: 'readSymlink', root: source.handle, path: 'escape' }, signal());
+    assert.equal(Buffer.from(link.result.bytes, 'base64').toString(), '/etc/passwd');
+    await assert.rejects(bridge.request({ kind: 'readSymlink', root: source.handle, path: 'example.swift' }, signal()), /nonRegularFile/);
+    await assert.rejects(bridge.request({ kind: 'readSymlink', root: destination.handle, path: 'escape' }, signal()), /invalidSourceCapability/);
     await assert.rejects(bridge.request({ kind: 'readSource', root: source.handle, path: 'escape', expected: null }, signal()), /symlink/);
     execFileSync('mkfifo', [join(root, 'fifo')]);
     await assert.rejects(bridge.request({ kind: 'readSource', root: source.handle, path: 'fifo', expected: null }, signal()), /nonRegularFile/);
     await mkdir(join(root, 'parent'));
     await rename(join(root, 'parent'), join(root, 'original-parent'));
     await symlink('/etc', join(root, 'parent'));
+    await assert.rejects(bridge.request({ kind: 'readSymlink', root: source.handle, path: 'parent/passwd' }, signal()));
     await assert.rejects(bridge.request({ kind: 'readSource', root: source.handle, path: 'parent/passwd', expected: null }, signal()));
     const listing = await bridge.request({ kind: 'listDirectory', root: source.handle, directory: { kind: 'root' } }, signal());
     assert.equal(listing.result.kind, 'directoryComplete');

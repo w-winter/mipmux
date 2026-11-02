@@ -97,7 +97,7 @@ export async function acquireLocalPatch(
         ) throw new WorkspaceFailure('gitProtocolError');
         if (
           (index && match[3] !== '0') || /^0+$/.test(match[2]!)
-        ) throw new WorkspaceFailure('unsupportedComparisonEntry', { path: match[4] });
+        ) throw new WorkspaceFailure('unsupportedComparisonEntry', { root: input.root, path: match[4]!.slice(repositoryPrefix.length) });
         return { mode: match[1]!, oid: match[2]!, path: match[4] };
       })
       : [];
@@ -113,11 +113,28 @@ export async function acquireLocalPatch(
   const baseByPath = new Map(baseEntries.map((entry) => [entry.path, entry]));
   const targetByPath = new Map(targets.map((entry) => [entry.path, entry]));
   const evidenced = new Set<string>();
+  const supported = (entry: Entry): entry is Entry & { readonly mode: GitMode } =>
+    entry.mode === '100644' || entry.mode === '100755';
   const paths = new Set([...baseEntries, ...targets].map((entry) => entry.path));
   if (input.comparison.kind === 'worktree' && input.comparison.includeUntracked) {
+    // Tracked symlinks and submodules are checked separately, so the walk neither lists nor enters them.
+    const tracked = new Set(indexEntries.filter(entry => !supported(entry)).map(entry => entry.path));
     for (
-      const path of await operation.comparisonFiles(input.root, input.scope.kind === 'paths' ? input.scope.paths : null)
+      const path of await operation.comparisonFiles(input.root, input.scope.kind === 'paths' ? input.scope.paths : null, tracked)
     ) paths.add(path);
+  }
+  // A symlink or submodule that the comparison leaves unchanged contributes nothing, so only a changed one fails.
+  const unchanged = new Set([...paths].filter(path => {
+    const baseEntry = baseByPath.get(path), targetEntry = targetByPath.get(path);
+    return baseEntry && targetEntry && !supported(baseEntry) && baseEntry.mode === targetEntry.mode && baseEntry.oid === targetEntry.oid;
+  }));
+  if (input.comparison.kind === 'worktree' && [...unchanged].some(path => baseByPath.get(path)?.mode === '160000')) {
+    const listed = strict(await read(['diff-files', '-z', '--name-only', '--ignore-submodules=dirty', '--', '.']));
+    if (listed && !listed.endsWith('\0')) throw new WorkspaceFailure('gitProtocolError');
+    for (const path of listed ? listed.slice(0, -1).split('\0') : []) {
+      const local = path.slice(repositoryPrefix.length);
+      if (baseByPath.get(local)?.mode === '160000') unchanged.delete(local);
+    }
   }
   const receipt: PatchReceipt = {
     input,
@@ -135,11 +152,9 @@ export async function acquireLocalPatch(
       indexDigest: input.comparison.kind === 'staged' ? sha256(indexBytes!) : null,
     },
   };
-  const supported = (entry: Entry): entry is Entry & { readonly mode: GitMode } =>
-    entry.mode === '100644' || entry.mode === '100755';
   const blob = async (entry: Entry | undefined): Promise<FileSide> => {
     if (!entry) return { kind: 'absent' };
-    if (!supported(entry)) throw new WorkspaceFailure('unsupportedComparisonEntry', { path: entry.path });
+    if (!supported(entry)) throw new WorkspaceFailure('unsupportedComparisonEntry', { root: input.root, path: entry.path });
     return { kind: 'file', bytes: await read(['cat-file', 'blob', entry.oid]), mode: entry.mode };
   };
   const chunks: Buffer[] = [];
@@ -148,6 +163,8 @@ export async function acquireLocalPatch(
       input.scope.kind === 'paths' &&
       !input.scope.paths.some((prefix) => path === prefix || path.startsWith(prefix + '/'))
     ) continue;
+    const baseEntry = baseByPath.get(path);
+    if (unchanged.has(path) && (input.comparison.kind !== 'worktree' || baseEntry?.mode !== '120000')) continue;
     try {
       receipt.policies.push({ path, policy: await operation.authorizeComparisonPath({ root: input.root, path }) });
     } catch (error) {
@@ -157,8 +174,12 @@ export async function acquireLocalPatch(
       }
       throw error;
     }
+    if (unchanged.has(path) && baseEntry?.mode === '120000') {
+      const link = await operation.readComparisonSymlink({ root: input.root, path });
+      if (link.equals(await read(['cat-file', 'blob', baseEntry.oid]))) continue;
+    }
     for (const entry of [baseByPath.get(path), targetByPath.get(path)]) {
-      if (entry && !supported(entry)) throw new WorkspaceFailure('unsupportedComparisonEntry', { path });
+      if (entry && !supported(entry)) throw new WorkspaceFailure('unsupportedComparisonEntry', { root: input.root, path });
     }
     const before = await blob(baseByPath.get(path));
     let after: FileSide;

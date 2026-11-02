@@ -10,7 +10,7 @@ import type { DiscoverySettings } from '../discovery/selection.js';
 import type { DiscoverySelection } from '../contracts/discovery.js';
 import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { scopedCall } from '../discovery/scoped-tools.js';
-import { cacheRecoveryTarget, failureCode } from './tool-result.js';
+import { cacheRecoveryTarget, failureCode, failureSource } from './tool-result.js';
 import { defaultQuestionTimeoutSeconds, type AskUserRequest, type ClientQuestionResponse, type PendingQuestion } from '../contracts/interaction.js';
 import type { WorkspaceOperation } from '../workspace/workspace-operation.js';
 
@@ -157,10 +157,10 @@ export class JobRegistry {
         : { state: 'blocked', validation: result, draftId: draft.id, discovery: receipt };
     } catch (error) {
       terminal = { state: job.abort.signal.aborted ? 'cancelled' : 'failed', code: failureCode(error),
-        target: cacheRecoveryTarget(error), discovery: receipt };
+        target: cacheRecoveryTarget(error), source: error instanceof WorkspaceFailure ? failureSource(error) : null, discovery: receipt };
     }
     try { await job.draft?.close(); }
-    catch { terminal = { state: 'failed', code: 'settlementFailed', target: null, discovery: receipt }; }
+    catch { terminal = { state: 'failed', code: 'settlementFailed', target: null, source: null, discovery: receipt }; }
     this.#publish(job, terminal);
   }
   inspectDraft(id: string): DraftRuntime {

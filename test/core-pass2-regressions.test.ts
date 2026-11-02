@@ -60,7 +60,7 @@ test('an absent credential beneath an independently symlinked parent stays denie
     const operation = await handle.openOperation(signal());
     await assert.rejects(operation.readSource({ root: 'r', path: 'config/auth.json' }), /unavailableSource/);
     await assert.rejects(operation.readComparisonSource({ root: 'r', path: 'config/auth.json' }), /pathDenied/);
-    assert.deepEqual(await operation.comparisonFiles('r', null), ['config/public.txt', 'model.swift', 'other.txt']);
+    assert.deepEqual(await operation.comparisonFiles('r', null, new Set()), ['config/public.txt', 'model.swift', 'other.txt']);
     const search = await operation.fileSearch({ mode: 'both', query: { kind: 'literal', text: 'synthetic credential', caseSensitive: true, wholeWord: false },
       filters, before: 0, after: 0, countOnly: false, maxResults: 50, maxOutputBytes: 10000, continuation: null });
     if (search.kind !== 'search') assert.fail(JSON.stringify(search));

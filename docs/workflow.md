@@ -79,7 +79,7 @@ A finished job's `state` is one of:
 
 - `ready`: the packet is published. Go to step 4.
 - `blocked`: the packet failed a check, such as its budget, and `validation` gives the reasons. Report this to the user.
-- `failed` or `cancelled`: `code` gives the reason. Report it, and do not replace the build with context collected another way unless the user agrees.
+- `failed` or `cancelled`: `code` gives the reason, and `source`, when it is not null, the root and path of the file it concerns. Report it, and do not replace the build with context collected another way unless the user agrees.
 
 Jobs belong to the connection. If the server restarts, its jobs are gone, but published bundles remain and step 5 can prepare them.
 

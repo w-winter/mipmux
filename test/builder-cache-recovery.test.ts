@@ -14,7 +14,7 @@ import { toolJSON } from './fixtures/tool-json.js';
 
 const command = resolve('dist/cli/main.js');
 const signal = () => new AbortController().signal;
-const terminalKeys = ['jobId', 'sequence', 'requestDigest', 'progress', 'state', 'code', 'target', 'discovery', 'localSettled', 'sharedIndexInterest'];
+const terminalKeys = ['jobId', 'sequence', 'requestDigest', 'progress', 'state', 'code', 'target', 'source', 'discovery', 'localSettled', 'sharedIndexInterest'];
 
 test('builder terminal receipts retain the sanitized cache recovery target through library, MCP and CLI', async () => {
   const provider = await scriptedProvider(() => ({ kind: 'text', text: 'No committed handoff', stop: 'end_turn', tokens: 10 }));
