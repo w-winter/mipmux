@@ -36,6 +36,16 @@ enum AtomicFile {
         try writeBytes(bytes, descriptor: descriptor.value)
         guard fsync(descriptor.value) == 0 else { throw ioFailure() }
         try descriptor.finish()
+        #if DEBUG
+            // Holds the commit until the file named by MIPMUX_DEBUG_COMMIT_GATE exists, so a test can change the
+            // destination folder after the temporary write and before the commit without racing the helper.
+            if let gate = ProcessInfo.processInfo.environment["MIPMUX_DEBUG_COMMIT_GATE"] {
+                let gatePollMicroseconds: useconds_t = 1000
+                while access(gate, F_OK) != 0 {
+                    usleep(gatePollMicroseconds)
+                }
+            }
+        #endif
         try commit(name)
         guard fsync(parent) == 0 else { throw ioFailure() }
     }

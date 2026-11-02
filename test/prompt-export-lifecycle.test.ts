@@ -139,11 +139,14 @@ test('export refuses over-budget and required-material conflicts before writing'
 });
 
 for (const replaced of ['parent', 'root'] as const) test(`prompt export rejects ${replaced} replacement during native writing`, async () => {
-  const f = await fixture(async () => {}, async () => {}), bridge = f.runtime.makeBridge();
+  const f = await fixture(async () => {}, async () => {});
+  // The debug helper holds its commit until this file exists, so the replacement lands after the temporary write.
+  const gate = join(f.base, 'commit-gate');
+  const bridge = new BridgeClient({ executable: f.runtime.options.nativeExecutable, supervisor: f.runtime.supervisor,
+    env: { MIPMUX_DEBUG_COMMIT_GATE: gate } });
   const parent = join(f.output, 'sub'), moved = join(f.base, 'moved-output'), destination = join(parent, 'packet.md');
   await mkdir(parent);
-  // The payload makes the native temporary-file write observable without changing the operator budget.
-  const payloadBytes = 8 * 1024 * 1024, bytes = Buffer.alloc(payloadBytes, 0x41);
+  const bytes = Buffer.from('PACKET\n'), payloadBytes = bytes.length;
   let changed!: () => void, failed!: (reason: Error) => void;
   const mutation = new Promise<void>((resolve, reject) => { changed = resolve; failed = reject; });
   let observed: { temporaryBytes: number; destinationExisted: boolean } | null = null;
@@ -169,6 +172,7 @@ for (const replaced of ['parent', 'root'] as const) test(`prompt export rejects 
       const writing = bridge.request({ kind: 'writePromptExport', root: output.handle, path: 'sub/packet.md', bytes: bytes.toString('base64') }, signal());
       const completed = writing.then(() => false, () => false);
       assert.equal(await Promise.race([mutation.then(() => true), completed]), true, 'Replacement must precede native acknowledgement');
+      await writeFile(gate, '');
       await assert.rejects(writing, replaced === 'parent' ? /outputChanged/ : /rootChanged/);
       assert(observed);
       await assert.rejects(readFile(destination), { code: 'ENOENT' });
