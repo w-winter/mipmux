@@ -1,17 +1,28 @@
-prompt-exports/
-.pi/
+# Installed dependencies and native build state
 node_modules/
-dist/
-dist-test/
-.mipmux-cache/
-.mipmux-work/
 native/.build/
 native/.swiftpm/
 native/.dependencies/
-test-output/
-local-packages/
+
+# Compiled output and locally packaged releases
+dist/
+dist-test/
 libexec/
-.DS_Store
+local-packages/
+
+# Generated from native/pcre2-recipe.json by scripts/build-native.mjs
+native/Sources/MipmuxBridge/EngineRecipe.swift
+
+# Context exports, test artifacts, caches and scratch data
+prompt-exports/
+test-output/
+.mipmux-cache/
+.mipmux-work/
+
+# Local agent configuration
+.pi/
+
+# Local environment files and macOS metadata
 .env
 .env.*
-native/Sources/MipmuxBridge/EngineRecipe.swift
+.DS_Store
