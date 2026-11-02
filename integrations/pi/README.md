@@ -83,9 +83,13 @@ The discovery model and **Allowed models** lists show the models mipmux has cred
 
 A save changes only the values you changed and keeps the file's other settings, their order and its indentation. It replaces the file only after `mipmux config` accepts the result, and refuses to overwrite a file that someone edited while the panel was open. Other settings in the file, such as the cache path or discovery credentials, apply when mipmux starts again; reconnect it from `/mcp` after editing them by hand.
 
+## Footer
+
+While the extension is loaded, Pi's footer shows `mipmux:` and the selected workspace, or `mipmux: no workspace`. The panel's last row, **Show in footer** under **Display**, turns this item on or off for all your sessions. The session where you save applies it at once; other open sessions apply it before their next prompt.
+
 ## Storage
 
-Saved workspaces are stored in `mipmux.json` in Pi's agent directory (`~/.pi/agent`, or `$PI_CODING_AGENT_DIR`) and shared by all your sessions. A session keeps only the name it selected, so an edit reaches every session on its next call. Saving applies only the workspaces you added, changed or deleted, so changes another session saved while the panel was open remain. Two saved workspaces with the same root folders and output folder, in any order and under any names, are duplicates: saving keeps the earlier one, with its name and model, and the panel says which it removed.
+Saved workspaces and the footer setting are stored in `mipmux.json` in Pi's agent directory (`~/.pi/agent`, or `$PI_CODING_AGENT_DIR`) and shared by all your sessions. The footer setting is its `showInFooter` field; a file without it shows the footer item. A session keeps only the name it selected, so an edit reaches every session on its next call. Saving applies only the workspaces you added, changed or deleted, so changes another session saved while the panel was open remain. Two saved workspaces with the same root folders and output folder, in any order and under any names, are duplicates: saving keeps the earlier one, with its name and model, and the panel says which it removed.
 
 ## Limits
 

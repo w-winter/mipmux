@@ -6,24 +6,32 @@ import { Compile } from 'typebox/compile';
 import { mergeDuplicates, SavedWorkspace, type Merge } from './state.ts';
 
 /*
- * The saved workspaces in `<Pi agent dir>/mipmux.json`, shared by every Pi session of the user. The file is hand-editable,
- * so every read validates it; every write merges duplicates first. Two sessions writing at the same instant can lose one
- * update, which is acceptable for rare, user-initiated changes.
+ * The saved workspaces and display settings in `<Pi agent dir>/mipmux.json`, shared by every Pi session of the user. The
+ * file is hand-editable, so every read validates it; every write merges duplicates first. Two sessions writing at the
+ * same instant can lose one update, which is acceptable for rare, user-initiated changes.
  */
-const StoreFile = Type.Object({ workspaces: Type.Array(SavedWorkspace) }, { additionalProperties: false });
+const StoreFile = Type.Object({ workspaces: Type.Array(SavedWorkspace), showInFooter: Type.Optional(Type.Boolean()) },
+  { additionalProperties: false });
 const storeValidator = Compile(StoreFile);
+/** The file's contents; a file without `showInFooter` shows the footer item. */
+export interface Store {
+  readonly workspaces: SavedWorkspace[];
+  /** Whether every session shows `mipmux: <workspace>` in Pi's footer. */
+  readonly showInFooter: boolean;
+}
+const emptyStore: Store = { workspaces: [], showInFooter: true };
 
 /** The store cannot be read or holds an invalid file; the message names the file and its first problem. */
 export class StoreError extends Error {}
 
 function invalid(path: string, problem: string): StoreError { return new StoreError(`${path}: ${problem}`); }
 
-/** The saved workspaces; a missing file holds none. */
-export async function readStore(path: string): Promise<SavedWorkspace[]> {
+/** The file's contents; a missing file holds no workspaces and shows the footer item. */
+export async function readStore(path: string): Promise<Store> {
   let text: string;
   try { text = await readFile(path, 'utf8'); }
   catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return [];
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return emptyStore;
     throw invalid(path, error instanceof Error ? error.message : 'unreadable');
   }
   let value: unknown;
@@ -35,7 +43,7 @@ export async function readStore(path: string): Promise<SavedWorkspace[]> {
     throw invalid(path, `${error?.instancePath || '/'} ${error?.message ?? 'is invalid'}`);
   }
   checkNames(path, value.workspaces);
-  return value.workspaces;
+  return { workspaces: value.workspaces, showInFooter: value.showInFooter ?? true };
 }
 
 /** Workspace names are unique, and root names are unique within a workspace. */
@@ -48,13 +56,13 @@ function checkNames(path: string, workspaces: readonly SavedWorkspace[]): void {
   }
 }
 
-/** Applies `change` to the saved workspaces, merges duplicates and replaces the file with the result. */
-export async function updateStore(path: string, change: (workspaces: SavedWorkspace[]) => SavedWorkspace[]):
-  Promise<{ workspaces: SavedWorkspace[]; merges: Merge[] }> {
-  const merged = mergeDuplicates(change(await readStore(path)));
+/** Applies `change` to the file's contents, merges duplicate workspaces and replaces the file with the result. */
+export async function updateStore(path: string, change: (store: Store) => Store): Promise<Store & { merges: Merge[] }> {
+  const changed = change(await readStore(path)), merged = mergeDuplicates(changed.workspaces);
   checkNames(path, merged.workspaces);
+  const store: Store = { workspaces: merged.workspaces, showInFooter: changed.showInFooter };
   const temporary = join(dirname(path), `.mipmux.json.${randomUUID()}`);
-  await writeFile(temporary, JSON.stringify({ workspaces: merged.workspaces }, null, 2) + '\n', { mode: 0o600 });
+  await writeFile(temporary, JSON.stringify(store, null, 2) + '\n', { mode: 0o600 });
   await rename(temporary, path);
-  return merged;
+  return { ...store, merges: merged.merges };
 }

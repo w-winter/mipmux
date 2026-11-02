@@ -64,13 +64,13 @@ test('a call naming another workspace is blocked with the selected declaration',
 test('the selected declaration reaches the agent as a prompt section', async () => {
   const { mipmux, ctx } = await selected();
   const sections: Record<string, string> = {};
-  await mipmux.beforeAgentStart({ systemPromptOptions: { sections } });
+  await mipmux.beforeAgentStart({ systemPromptOptions: { sections } }, ctx);
   assert.match(sections.mipmux_workspace ?? '', /"app"/);
   assert(sections.mipmux_workspace?.includes(JSON.stringify(appDeclaration)));
   const unselected = await instance();
   const fresh = context();
   await unselected.mipmux.restore(fresh.ctx);
   const none: Record<string, string> = {};
-  await unselected.mipmux.beforeAgentStart({ systemPromptOptions: { sections: none } });
+  await unselected.mipmux.beforeAgentStart({ systemPromptOptions: { sections: none } }, fresh.ctx);
   assert.deepEqual(none, {});
 });

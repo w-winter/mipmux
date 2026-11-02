@@ -1,11 +1,11 @@
 import type { ExtensionContext, ExtensionUIContext, ToolResultEvent, ToolResultEventResult } from '@earendil-works/pi-coding-agent';
-import { readStore, StoreError } from './store.ts';
+import { readStore, StoreError, type Store } from './store.ts';
 import { recognize } from './routes.ts';
 import { openPanel, type PanelContext } from './panel.ts';
 import { report } from './report.ts';
 import type { MipmuxCommands } from './config.ts';
 import { conflictNote, decide, declaredWorkspace, emptyState, sameWorkspace, selectedInstruction, sessionStateValidator,
-  type CallArgs, type SavedWorkspace, type Selection, type SessionState } from './state.ts';
+  type CallArgs, type Selection, type SessionState } from './state.ts';
 
 /** The parts of Pi's extension context the extension uses. */
 export type MipmuxContext = Pick<ExtensionContext, 'hasUI' | 'cwd' | 'mode'> & {
@@ -41,20 +41,29 @@ export function createMipmux(dependencies: MipmuxDependencies) {
   // Calls whose arguments this extension changed, until their results arrive.
   const changed = new Set<string>();
 
-  /** The selected saved workspace as the store holds it now; read on every use, so edits reach every session. */
-  async function lookup(): Promise<Selection> {
-    const name = state.selected;
-    if (name === null) return { kind: 'none' };
-    let saved: SavedWorkspace[];
-    try { saved = await readStore(dependencies.storePath); }
+  /** The saved-workspace file as it is now, or why it cannot be read; read on every use, so edits reach every session. */
+  async function current(): Promise<Store | StoreError> {
+    try { return await readStore(dependencies.storePath); }
     catch (error) {
-      if (error instanceof StoreError) return { kind: 'unreadable', name, message: error.message };
+      if (error instanceof StoreError) return error;
       throw error;
     }
-    const workspace = saved.find(entry => entry.name === name);
-    return workspace ? { kind: 'found', workspace } : { kind: 'missing', name, saved: saved.map(entry => entry.name) };
   }
-  async function showStatus(ctx: MipmuxContext): Promise<void> { ctx.ui.setStatus(entryType, statusText(await lookup())); }
+  /** The selected saved workspace as `store` holds it. */
+  function selection(store: Store | StoreError): Selection {
+    const name = state.selected;
+    if (name === null) return { kind: 'none' };
+    if (store instanceof StoreError) return { kind: 'unreadable', name, message: store.message };
+    const workspace = store.workspaces.find(entry => entry.name === name);
+    return workspace ? { kind: 'found', workspace } : { kind: 'missing', name, saved: store.workspaces.map(entry => entry.name) };
+  }
+  async function lookup(): Promise<Selection> { return selection(await current()); }
+  /** Shows the selection in Pi's footer, or clears the item when the user turned it off; an unreadable file keeps it, to report the problem. */
+  function display(store: Store | StoreError, ctx: MipmuxContext): void {
+    const shown = store instanceof StoreError || store.showInFooter;
+    ctx.ui.setStatus(entryType, shown ? statusText(selection(store)) : undefined);
+  }
+  async function showStatus(ctx: MipmuxContext): Promise<void> { display(await current(), ctx); }
   async function record(next: SessionState, ctx: MipmuxContext): Promise<void> {
     state = next;
     dependencies.appendEntry(next);
@@ -74,9 +83,11 @@ export function createMipmux(dependencies: MipmuxDependencies) {
       state = restored;
       await showStatus(ctx);
     },
-    async beforeAgentStart(event: { readonly systemPromptOptions: { readonly sections: Record<string, string> } }): Promise<void> {
-      const selection = await lookup();
-      if (selection.kind === 'found') event.systemPromptOptions.sections.mipmux_workspace = selectedInstruction(selection.workspace);
+    /** Publishes the selected declaration, and refreshes the footer, which another session may have turned off or on. */
+    async beforeAgentStart(event: { readonly systemPromptOptions: { readonly sections: Record<string, string> } }, ctx: MipmuxContext): Promise<void> {
+      const store = await current(), found = selection(store);
+      display(store, ctx);
+      if (found.kind === 'found') event.systemPromptOptions.sections.mipmux_workspace = selectedInstruction(found.workspace);
     },
     async toolCall(event: { readonly toolName: string; readonly toolCallId: string; readonly input: CallArgs }, ctx: MipmuxContext) {
       const tool = recognize(event.toolName);
@@ -100,7 +111,7 @@ export function createMipmux(dependencies: MipmuxDependencies) {
     async command(args: string, ctx: MipmuxContext): Promise<void> {
       const name = args.trim();
       if (name) {
-        const saved = await readStore(dependencies.storePath);
+        const saved = (await readStore(dependencies.storePath)).workspaces;
         if (!saved.some(entry => entry.name === name)) {
           ctx.ui.notify(`No saved workspace named "${name}". Saved workspaces: ${saved.map(entry => entry.name).join(', ') || 'none'}.`, 'error');
           return;
@@ -114,7 +125,7 @@ export function createMipmux(dependencies: MipmuxDependencies) {
       } else ctx.ui.notify(report(state, await lookup()), 'info');
     },
     async completions(prefix: string) {
-      const saved = await readStore(dependencies.storePath);
+      const saved = (await readStore(dependencies.storePath)).workspaces;
       return saved.filter(entry => entry.name.startsWith(prefix)).map(entry => ({ value: entry.name, label: entry.name }));
     },
   };

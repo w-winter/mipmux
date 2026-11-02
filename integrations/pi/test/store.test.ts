@@ -10,7 +10,7 @@ const app: SavedWorkspace = { name: 'app', roots: [{ name: 'app', absolutePath: 
 
 test('a missing file is an empty list, and an invalid file fails with its path and first problem', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'pi-mipmux-store-')), path = join(directory, 'mipmux.json');
-  assert.deepEqual(await readStore(path), []);
+  assert.deepEqual(await readStore(path), { workspaces: [], showInFooter: true });
   for (const [content, problem] of [
     ['{"workspaces": [', /not valid JSON/],
     [JSON.stringify({ workspaces: [{ ...app, outputRoot: 'relative' }] }), /\/workspaces\/0\/outputRoot/],
@@ -24,10 +24,10 @@ test('a missing file is an empty list, and an invalid file fails with its path a
 
 test('updates merge duplicates and replace the file atomically', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'pi-mipmux-store-')), path = join(directory, 'mipmux.json');
-  const first = await updateStore(path, workspaces => [...workspaces, app]);
-  assert.deepEqual(first, { workspaces: [app], merges: [] });
-  const second = await updateStore(path, workspaces => [...workspaces, { ...app, name: 'app-again' }]);
-  assert.deepEqual(second, { workspaces: [app], merges: [{ survivor: 'app', removed: [{ name: 'app-again' }] }] });
-  assert.deepEqual(JSON.parse(await readFile(path, 'utf8')), { workspaces: [app] });
+  const first = await updateStore(path, store => ({ ...store, workspaces: [...store.workspaces, app] }));
+  assert.deepEqual(first, { workspaces: [app], showInFooter: true, merges: [] });
+  const second = await updateStore(path, store => ({ ...store, workspaces: [...store.workspaces, { ...app, name: 'app-again' }] }));
+  assert.deepEqual(second, { workspaces: [app], showInFooter: true, merges: [{ survivor: 'app', removed: [{ name: 'app-again' }] }] });
+  assert.deepEqual(JSON.parse(await readFile(path, 'utf8')), { workspaces: [app], showInFooter: true });
   assert.deepEqual(await readdir(directory), ['mipmux.json']);
 });

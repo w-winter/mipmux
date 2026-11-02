@@ -1,5 +1,6 @@
 import { basename } from 'node:path';
 import type { ServerDefaults } from './server-config.ts';
+import type { Store } from './store.ts';
 import { type Preferences, type SavedWorkspace, type SessionState, type Workspace } from './state.ts';
 
 /*
@@ -18,12 +19,14 @@ export interface Draft {
   readonly ignoreEdits: readonly IgnoreEdit[];
   /** mipmux's request defaults, or null when `mipmux config` could not report them. */
   readonly server: ServerDefaults | null;
+  /** Whether every session shows the footer item. */
+  readonly showInFooter: boolean;
 }
 const rootNamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
-export function openDraft(saved: readonly SavedWorkspace[], state: SessionState, server: ServerDefaults | null): Draft {
-  return { entries: saved.map(workspace => ({ origin: workspace.name, workspace })), selected: state.selected, preferences: state.preferences,
-    ignoreEdits: [], server };
+export function openDraft(store: Store, state: SessionState, server: ServerDefaults | null): Draft {
+  return { entries: store.workspaces.map(workspace => ({ origin: workspace.name, workspace })), selected: state.selected,
+    preferences: state.preferences, ignoreEdits: [], server, showInFooter: store.showInFooter };
 }
 
 export function selectedWorkspace(draft: Draft): SavedWorkspace | null {

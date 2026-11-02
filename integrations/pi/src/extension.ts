@@ -10,7 +10,7 @@ export default function mipmux(pi: ExtensionAPI): void {
     appendEntry: state => { pi.appendEntry(entryType, state); } });
   pi.on('session_start', (_event, ctx) => extension.restore(ctx));
   pi.on('session_tree', (_event, ctx) => extension.restore(ctx));
-  pi.on('before_agent_start', event => extension.beforeAgentStart(event));
+  pi.on('before_agent_start', (event, ctx) => extension.beforeAgentStart(event, ctx));
   pi.on('tool_call', (event, ctx) => extension.toolCall(event, ctx));
   pi.on('tool_result', event => extension.toolResult(event));
   pi.registerCommand('mipmux', { description: 'Select a saved mipmux workspace and set build preferences',

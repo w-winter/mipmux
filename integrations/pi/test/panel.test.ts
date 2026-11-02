@@ -46,13 +46,13 @@ async function setup(saved: SavedWorkspace[] = []) {
   const storePath = join(base, 'mipmux.json'), configPath = join(base, 'config.json');
   await writeFile(storePath, JSON.stringify({ workspaces: saved }));
   await writeFile(configPath, JSON.stringify(configFile, null, 4) + '\n');
-  const appended: SessionState[] = [], notices: string[] = [];
+  const appended: SessionState[] = [], notices: string[] = [], statuses: (string | undefined)[] = [];
   const mipmux = createMipmux({ storePath, home, appendEntry: state => { appended.push(state); }, mipmux: fakeMipmux(configPath) });
   const components: PanelComponent[] = [];
   const ctx: MipmuxContext = { hasUI: true, mode: 'tui', cwd, sessionManager: { getBranch: () => [] },
-    ui: { setStatus: () => {}, notify: message => { notices.push(message); },
+    ui: { setStatus: (_key, text) => { statuses.push(text); }, notify: message => { notices.push(message); },
       custom: factory => new Promise(resolve => { components.push(factory({ requestRender: () => {} }, plain, getKeybindings(), () => resolve())); }) } };
-  return { home, storePath, configPath, appended, notices, mipmux, ctx, components };
+  return { home, storePath, configPath, appended, notices, statuses, mipmux, ctx, components };
 }
 
 /** Opens /mipmux and returns a driver that presses keys in order, waiting for each to take effect. */
@@ -178,4 +178,35 @@ test('server defaults are written into the configuration file, keeping its other
   assert.equal(JSON.parse(await readFile(fixture.configPath, 'utf8')).contextBudgetUnits, 160000);
   await press(key.escape);
   await closed;
+});
+
+test('the last panel row hides the footer item in every session, and escape leaves it as it was', async () => {
+  const fixture = await setup([{ name: 'alpha', roots: [{ name: 'alpha', absolutePath: '/repos/alpha' }], outputRoot: '/repos/alpha/prompt-exports' }]);
+  await fixture.mipmux.command('alpha', fixture.ctx);
+  // Another Pi session of the same user, sharing the saved-workspace file.
+  const otherStatuses: (string | undefined)[] = [];
+  const other = createMipmux({ storePath: fixture.storePath, home: fixture.home, appendEntry: () => {}, mipmux: fakeMipmux(fixture.configPath) });
+  const otherCtx: MipmuxContext = { ...fixture.ctx, ui: { ...fixture.ctx.ui, setStatus: (_key, text) => { otherStatuses.push(text); } } };
+  await other.restore(otherCtx);
+  assert.deepEqual([fixture.statuses.at(-1), otherStatuses.at(-1)], ['mipmux: alpha', 'mipmux: no workspace']);
+  const showInFooter = async () => JSON.parse(await readFile(fixture.storePath, 'utf8')).showInFooter;
+
+  const first = await panel(fixture);
+  await first.press(key.up);
+  assert.match(first.screen(), /→ Show in footer\s+on/, 'the footer row is the last row');
+  await first.press(key.enter, key.escape);
+  await first.closed;
+  assert.equal(fixture.statuses.at(-1), 'mipmux: alpha');
+  assert.equal(await showInFooter(), undefined);
+
+  const second = await panel(fixture);
+  await second.press(key.up, key.enter, key.save);
+  assert.equal(fixture.statuses.at(-1), undefined);
+  assert.equal(await showInFooter(), false);
+  await other.beforeAgentStart({ systemPromptOptions: { sections: {} } }, otherCtx);
+  assert.equal(otherStatuses.at(-1), undefined, 'an open session hides it before its next prompt');
+  await second.press(key.enter, key.save, key.escape);
+  await second.closed;
+  assert.equal(fixture.statuses.at(-1), 'mipmux: alpha');
+  assert.equal(await showInFooter(), true);
 });

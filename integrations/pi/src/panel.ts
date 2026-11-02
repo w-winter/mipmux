@@ -10,7 +10,7 @@ import { entryRule, ignoreFileName, ignoreFilePath, isRule, readIgnoreFile, type
 import { abbreviate, expand, resolveExisting, type PathBase } from './paths.ts';
 import { FilterListScreen, ListScreen, PathScreen, PromptScreen, type ListRow, type PanelControl, type PanelTheme, type Screen } from './screens.ts';
 import { serverDefaults, writeServerDefaults, type DiscoveryDefaults, type ServerDefaults } from './server-config.ts';
-import { readStore, StoreError, updateStore } from './store.ts';
+import { readStore, StoreError, updateStore, type Store } from './store.ts';
 import { duplicateKey, type Clarification, type EnhancementMode, type Merge, type Preference, type Preferences, type SavedWorkspace,
   type SessionState, type ThinkingLevel, type Workspace } from './state.ts';
 
@@ -40,7 +40,7 @@ export interface PanelContext {
 interface PanelOptions {
   readonly ctx: PanelContext;
   readonly host: PanelHost;
-  readonly saved: SavedWorkspace[];
+  readonly saved: Store;
   readonly config: ServerConfig;
   /** Where a new workspace's folder picker starts. */
   readonly proposed: string;
@@ -111,7 +111,7 @@ export class PanelComponent implements Component, Focusable {
   private message: { readonly text: string; readonly kind: 'info' | 'error' } | null = null;
   private closed = false;
   private hasFocus = false;
-  private snapshot: SavedWorkspace[];
+  private snapshot: Store;
   private baseline: Draft;
   private draft: Draft;
   private readonly control: PanelControl;
@@ -205,14 +205,16 @@ export class PanelComponent implements Component, Focusable {
       await writeIgnoreFile(edit.root, read.lines, edit.lines);
       this.ignoreReads.set(edit.root, { kind: 'read', lines: edit.lines });
     }
-    const changed = draft.entries.filter(entry => !snapshot.some(saved => JSON.stringify(saved) === JSON.stringify(entry.workspace)));
+    const changed = draft.entries.filter(entry => !snapshot.workspaces.some(saved => JSON.stringify(saved) === JSON.stringify(entry.workspace)));
     for (const entry of changed) await mkdir(entry.workspace.outputRoot, { recursive: true });
-    const result = await updateStore(this.host.storePath, stored => applyDraft(stored, draft, snapshot));
+    // As with workspaces, the footer setting changes only when this panel changed it, so another session's change survives.
+    const result = await updateStore(this.host.storePath, stored => ({ workspaces: applyDraft(stored.workspaces, draft, snapshot.workspaces),
+      showInFooter: draft.showInFooter === snapshot.showInFooter ? stored.showInFooter : draft.showInFooter }));
     const merge = result.merges.find(item => item.removed.some(removed => removed.name === draft.selected));
     await this.host.record({ selected: merge?.survivor ?? draft.selected, preferences: draft.preferences, lastDeclared: this.host.state().lastDeclared });
-    this.snapshot = result.workspaces;
+    this.snapshot = result;
     this.config = await readServerConfig(this.host.mipmux);
-    this.baseline = this.draft = openDraft(result.workspaces, this.host.state(), this.config.kind === 'read' ? serverDefaults(this.config.report) : null);
+    this.baseline = this.draft = openDraft(result, this.host.state(), this.config.kind === 'read' ? serverDefaults(this.config.report) : null);
     this.control.say(['Saved. The agent\'s next mipmux call uses these settings.', ...mergeNotes(result.merges)].join(' '), 'info');
   }
 
@@ -229,7 +231,10 @@ export class PanelComponent implements Component, Focusable {
         : 'Enter chooses a folder and creates a saved workspace named after it.',
       activate: () => this.push(workspace ? this.folderList(workspace) : this.newWorkspacePicker()) }];
     if (workspace) rows.push(...this.workspaceRows(workspace));
-    return [...rows, ...this.sessionRows(workspace), ...this.serverRows()];
+    return [...rows, ...this.sessionRows(workspace), ...this.serverRows(), {
+      id: 'footer', section: 'Display', label: 'Show in footer', value: draft.showInFooter ? 'on' : 'off',
+      description: `Shows "mipmux: <workspace>" in the footer of every Pi session. Saved to ${this.show(this.host.storePath)}; enter turns it on or off.`,
+      activate: () => this.change({ ...this.draft, showInFooter: !this.draft.showInFooter }) }];
   }
 
   private workspaceRows(workspace: SavedWorkspace): ListRow[] {
@@ -535,7 +540,7 @@ async function proposedRoot(cwd: string): Promise<string> {
 
 /** Opens the panel until the user closes it. A saved-workspace file that cannot be read is reported instead, unchanged. */
 export async function openPanel(ctx: PanelContext, host: PanelHost): Promise<void> {
-  let saved: SavedWorkspace[];
+  let saved: Store;
   try { saved = await readStore(host.storePath); }
   catch (error) {
     if (!(error instanceof StoreError)) throw error;
