@@ -1,4 +1,3 @@
-import type { ThemeColor } from '@earendil-works/pi-coding-agent';
 import { fuzzyFilter, Input, Key, matchesKey, truncateToWidth, visibleWidth, wrapTextWithAnsi, type KeybindingsManager } from '@earendil-works/pi-tui';
 import { candidates, split, type PathBase, type PathEntry } from './paths.ts';
 
@@ -7,7 +6,9 @@ import { candidates, split, type PathBase, type PathEntry } from './paths.ts';
  * a path picker. Escape and ctrl+s belong to the panel; a screen receives every other key.
  */
 /** The parts of Pi's theme the panel uses. */
-export interface PanelTheme { fg(color: ThemeColor, text: string): string; bold(text: string): string }
+/** The theme colors the panel draws with; the host's theme must provide each of them. */
+export type PanelColor = 'accent' | 'border' | 'dim' | 'error' | 'muted' | 'success' | 'warning';
+export interface PanelTheme { fg(color: PanelColor, text: string): string; bold(text: string): string }
 /** What a screen may ask of the panel that shows it. */
 export interface PanelControl {
   readonly theme: PanelTheme;

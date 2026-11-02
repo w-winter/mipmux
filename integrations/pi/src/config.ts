@@ -23,7 +23,7 @@ const configValidator = Compile(MipmuxConfig);
  */
 export async function readMipmuxConfig(path?: string): Promise<MipmuxConfig> {
   const value: unknown = JSON.parse(await mipmux(['config', ...(path === undefined ? [] : ['--config', path])]));
-  if (!configValidator.Check(value)) throw new Error('mipmux config printed an unexpected result; update mipmux or pi-mipmux');
+  if (!configValidator.Check(value)) throw new Error('mipmux config printed an unexpected result; update mipmux or the mipmux extension');
   return value;
 }
 
@@ -42,6 +42,6 @@ const ModelList = Compile(Type.Object({ kind: Type.Literal('models'), models: Ty
 /** The discovery models mipmux can use with its configured credentials, from `mipmux models`. */
 export async function readMipmuxModels(path: string): Promise<string[]> {
   const value: unknown = JSON.parse(await mipmux(['models', '--config', path]));
-  if (!ModelList.Check(value)) throw new Error('mipmux models printed an unexpected result; update mipmux or pi-mipmux');
+  if (!ModelList.Check(value)) throw new Error('mipmux models printed an unexpected result; update mipmux or the mipmux extension');
   return value.models;
 }

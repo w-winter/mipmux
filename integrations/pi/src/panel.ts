@@ -233,7 +233,7 @@ export class PanelComponent implements Component, Focusable {
     if (workspace) rows.push(...this.workspaceRows(workspace));
     return [...rows, ...this.sessionRows(workspace), ...this.serverRows(), {
       id: 'footer', section: 'Display', label: 'Show in footer', value: draft.showInFooter ? 'on' : 'off',
-      description: `Shows "mipmux: <workspace>" in the footer of every Pi session. Saved to ${this.show(this.host.storePath)}; enter turns it on or off.`,
+      description: `Shows "mipmux: <workspace>" in the footer of every session. Saved to ${this.show(this.host.storePath)}; enter turns it on or off.`,
       activate: () => this.change({ ...this.draft, showInFooter: !this.draft.showInFooter }) }];
   }
 

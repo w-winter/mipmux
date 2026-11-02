@@ -1,11 +1,11 @@
-import type { ExtensionContext, ExtensionUIContext, ToolResultEvent, ToolResultEventResult } from '@earendil-works/pi-coding-agent';
-import { readStore, StoreError, type Store } from './store.ts';
+import type { ExtensionContext, ExtensionUIContext, ToolResultEvent } from '@earendil-works/pi-coding-agent';
+import { readStore, readStoreSync, StoreError, type Store } from './store.ts';
 import { recognize } from './routes.ts';
 import { openPanel, type PanelContext } from './panel.ts';
 import { report } from './report.ts';
 import type { MipmuxCommands } from './config.ts';
 import { conflictNote, decide, declaredWorkspace, emptyState, sameWorkspace, selectedInstruction, sessionStateValidator,
-  type CallArgs, type Selection, type SessionState } from './state.ts';
+  type CallArgs, type Decision, type Selection, type SessionState } from './state.ts';
 
 /** The parts of Pi's extension context the extension uses. */
 export type MipmuxContext = Pick<ExtensionContext, 'hasUI' | 'cwd' | 'mode'> & {
@@ -22,6 +22,9 @@ export interface MipmuxDependencies {
   readonly mipmux: MipmuxCommands;
 }
 export const entryType = 'mipmux';
+/** The name of the system prompt section that carries the selected workspace. */
+export const workspaceSection = 'mipmux_workspace';
+const untouched: Decision = { kind: 'allowed', changed: false };
 
 function statusText(selection: Selection): string {
   switch (selection.kind) {
@@ -83,29 +86,31 @@ export function createMipmux(dependencies: MipmuxDependencies) {
       state = restored;
       await showStatus(ctx);
     },
-    /** Publishes the selected declaration, and refreshes the footer, which another session may have turned off or on. */
-    async beforeAgentStart(event: { readonly systemPromptOptions: { readonly sections: Record<string, string> } }, ctx: MipmuxContext): Promise<void> {
+    /**
+     * Refreshes the footer, which another session may have turned off or on, and returns the text of the
+     * `workspaceSection` prompt section for the selected workspace, or null when none is selected.
+     */
+    async beforeAgentStart(ctx: MipmuxContext): Promise<string | null> {
       const store = await current(), found = selection(store);
       display(store, ctx);
-      if (found.kind === 'found') event.systemPromptOptions.sections.mipmux_workspace = selectedInstruction(found.workspace);
+      return found.kind === 'found' ? selectedInstruction(found.workspace) : null;
     },
-    async toolCall(event: { readonly toolName: string; readonly toolCallId: string; readonly input: CallArgs }, ctx: MipmuxContext) {
+    /** Applies the session's choices to a mipmux call by editing `event.input` in place; other tools are left alone. */
+    async toolCall(event: { readonly toolName: string; readonly toolCallId: string; readonly input: CallArgs }, ctx: MipmuxContext): Promise<Decision> {
       const tool = recognize(event.toolName);
-      if (!tool) return undefined;
+      if (!tool) return untouched;
       const decision = decide(tool, event.input, await lookup(), state.preferences, ctx.hasUI);
-      if (decision.kind === 'blocked') return { block: true, reason: decision.reason };
+      if (decision.kind === 'blocked') return decision;
       if (decision.changed) changed.add(event.toolCallId);
       const declared = declaredWorkspace(event.input);
       if (declared && !sameWorkspace(declared, state.lastDeclared)) await record({ ...state, lastDeclared: declared }, ctx);
-      return undefined;
+      return decision;
     },
-    /** Explains a conflict that this extension's changes caused, on the result of the call it changed. */
-    toolResult(event: Pick<ToolResultEvent, 'toolCallId' | 'content' | 'structuredContent'>): ToolResultEventResult | undefined {
+    /** The result content with a note added when this extension's changes caused a conflict, or undefined to keep it. */
+    toolResult(event: Pick<ToolResultEvent, 'toolCallId' | 'content'>): ToolResultEvent['content'] | undefined {
       if (!changed.delete(event.toolCallId)) return undefined;
       if (!event.content.some(block => block.type === 'text' && block.text.includes('"outputNameConflict"'))) return undefined;
-      const result: ToolResultEventResult = { content: [...event.content, { type: 'text', text: conflictNote }] };
-      if (event.structuredContent !== undefined) result.structuredContent = event.structuredContent;
-      return result;
+      return [...event.content, { type: 'text', text: conflictNote }];
     },
     /** `/mipmux <name>` selects a saved workspace; `/mipmux` opens the panel in Pi's terminal UI and reports the state elsewhere. */
     async command(args: string, ctx: MipmuxContext): Promise<void> {
@@ -124,8 +129,8 @@ export function createMipmux(dependencies: MipmuxDependencies) {
           record: next => record(next, ctx), mipmux: dependencies.mipmux });
       } else ctx.ui.notify(report(state, await lookup()), 'info');
     },
-    async completions(prefix: string) {
-      const saved = (await readStore(dependencies.storePath)).workspaces;
+    completions(prefix: string) {
+      const saved = readStoreSync(dependencies.storePath).workspaces;
       return saved.filter(entry => entry.name.startsWith(prefix)).map(entry => ({ value: entry.name, label: entry.name }));
     },
   };

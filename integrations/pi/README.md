@@ -106,6 +106,8 @@ npm test
 npm run typecheck
 ```
 
-Both run from this directory and use the TypeScript, TypeBox and Pi packages installed in the mipmux checkout.
+Both run from this directory and use the TypeScript, TypeBox and Pi packages installed in the mipmux checkout. One test runs Pi in RPC mode with a scripted model and a stand-in mipmux server.
+
+The oh-my-pi extension in [`../omp`](../omp/README.md) copies every module in `src` except `extension.ts` and `routes.ts`, so after changing one, run that package's checks too.
 
 To run the extension from a checkout instead of npm, install it by path: `pi install /absolute/path/to/mipmux/integrations/pi`.

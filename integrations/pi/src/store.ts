@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import Type from 'typebox';
@@ -34,6 +35,21 @@ export async function readStore(path: string): Promise<Store> {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return emptyStore;
     throw invalid(path, error instanceof Error ? error.message : 'unreadable');
   }
+  return parseStore(path, text);
+}
+
+/** `readStore` for callers that must answer at once, such as command completions. */
+export function readStoreSync(path: string): Store {
+  let text: string;
+  try { text = readFileSync(path, 'utf8'); }
+  catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return emptyStore;
+    throw invalid(path, error instanceof Error ? error.message : 'unreadable');
+  }
+  return parseStore(path, text);
+}
+
+function parseStore(path: string, text: string): Store {
   let value: unknown;
   try { value = JSON.parse(text); }
   catch { throw invalid(path, 'not valid JSON'); }

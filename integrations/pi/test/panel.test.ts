@@ -107,7 +107,8 @@ test('a folder typed with ~ and Tab completion becomes a saved workspace named a
 
   const args: CallArgs = { workspace: { roots: created.roots, outputRoot: created.outputRoot, exclusions: [] }, purpose: 'planning',
     task: 'Plan', outputName: 'run-1', budgetUnits: 90000 };
-  assert.equal(await fixture.mipmux.toolCall({ toolName: 'mcp__mipmux__context_builder', toolCallId: 'c1', input: args }, fixture.ctx), undefined);
+  assert.deepEqual(await fixture.mipmux.toolCall({ toolName: 'mcp__mipmux__context_builder', toolCallId: 'c1', input: args }, fixture.ctx),
+    { kind: 'allowed', changed: true });
   assert.equal(args.budgetUnits, 150000);
 });
 
@@ -203,7 +204,7 @@ test('the last panel row hides the footer item in every session, and escape leav
   await second.press(key.up, key.enter, key.save);
   assert.equal(fixture.statuses.at(-1), undefined);
   assert.equal(await showInFooter(), false);
-  await other.beforeAgentStart({ systemPromptOptions: { sections: {} } }, otherCtx);
+  await other.beforeAgentStart(otherCtx);
   assert.equal(otherStatuses.at(-1), undefined, 'an open session hides it before its next prompt');
   await second.press(key.enter, key.save, key.escape);
   await second.closed;

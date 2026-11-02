@@ -108,7 +108,7 @@ function blockReason(selection: Exclude<Selection, { kind: 'none' | 'found' }>):
   return selection.kind === 'missing'
     ? `The selected mipmux workspace "${selection.name}" is no longer saved; the saved workspaces are ${selection.saved.join(', ') || 'none'}. ` +
       'Select one with /mipmux.'
-    : `pi-mipmux cannot read its saved workspaces: ${selection.message}. Fix the file or change the selection with /mipmux.`;
+    : `The mipmux extension cannot read its saved workspaces: ${selection.message}. Fix the file or change the selection with /mipmux.`;
 }
 
 /** The system prompt section an agent receives while `workspace` is selected. */
@@ -203,5 +203,5 @@ export function mergeDuplicates(workspaces: readonly SavedWorkspace[]): MergeRes
 }
 
 /** The text a tool result receives when a start the extension changed conflicts with an earlier job. */
-export const conflictNote = 'pi-mipmux applied this session\'s preferences to the request. A start repeated with different preferences ' +
+export const conflictNote = 'The mipmux extension applied this session\'s preferences to the request. A start repeated with different preferences ' +
   'conflicts with the earlier job; use a new outputName or restore the earlier preferences.';
