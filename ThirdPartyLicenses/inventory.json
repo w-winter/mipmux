@@ -296,5 +296,23 @@
       "path": "Vendor/UniversalCharsetDetection/Sources/Cuchardet"
     },
     "sha256": "054b8ceb3076ba9b2860f027fea25a38e26b7388c82e5304b40774043664e796"
+  },
+  {
+    "path": "ThirdPartyLicenses/swift-runtime/LICENSE.txt",
+    "origin": {
+      "repository": "https://github.com/swiftlang/swift.git",
+      "revision": "ee343b46aef81c3ac7c5d7960cb35a41a88c5a9b",
+      "path": "LICENSE.txt"
+    },
+    "sha256": "770af8291f708538d8ff885a0bbc4e045cd700531741c4f99528d435c14d7f55"
+  },
+  {
+    "path": "ThirdPartyLicenses/icu/LICENSE",
+    "origin": {
+      "repository": "https://github.com/unicode-org/icu.git",
+      "revision": "9edac7b78327a1cb58db29e2714b15f9fa14e4d7",
+      "path": "LICENSE"
+    },
+    "sha256": "17510cf7a58b4879b887ec05a45d72cf1b73544dd9ec7e72f20110ed104229ee"
   }
 ]

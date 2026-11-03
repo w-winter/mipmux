@@ -2,7 +2,7 @@ import { copyContext } from './fixtures/copy-context.js';
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { constants, copyFileSync, mkdtempSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
+import { constants, copyFileSync, existsSync, lchmodSync, lstatSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
@@ -15,6 +15,11 @@ import { Compile } from 'typebox/compile';
 import { PiDiscoveryReceipt, TokenUsage } from '../src/contracts/discovery.js';
 import { Manifest } from '../src/contracts/context.js';
 import { toolJSON } from './fixtures/tool-json.js';
+
+const packageVersion = Compile(Type.Object({ version: Type.String() }));
+const dependencyLock = Compile(Type.Object({ packages: Type.Record(Type.String(), Type.Object({
+  version: Type.String(), dev: Type.Optional(Type.Boolean()),
+})) }));
 
 // MCP ready snapshots give the number of discovery completions, their summed token usage and their tool calls counted by
 // name instead of their records.
@@ -37,7 +42,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const paths: string[] = receipt.files.map((file: { path: string }) => file.path);
   for (const path of ['dist/index.js', 'dist/index.d.ts', 'dist/cli/main.js', 'dist/discovery/pi-worker.js',
     'dist/dependency-identity.json', 'dist/prompts/discovery.md', `libexec/${process.platform}-${process.arch}/MipmuxBridge`,
-    'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
+    'npm-shrinkwrap.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
   assert(!paths.some(path => /(?:\.DS_Store|\.env|test-output|prompt-exports|node_modules|\.build)/u.test(path)));
   const bytes = readFileSync(join(directory, receipt.filename));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), receipt.sha256);
@@ -45,16 +50,27 @@ test('local package audits resources and executes relocated library, native, CLI
   assert.deepEqual(archived.map(path => path.replace(/^package\//u, '')).sort(), paths.sort());
   const installed = join(directory, 'installed');
   mkdirSync(installed);
-  writeFileSync(join(installed, 'package.json'), JSON.stringify({ private: true, type: 'module' }));
-  execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', join(directory, receipt.filename)], { cwd: installed });
-  const installLockSHA256 = createHash('sha256').update(readFileSync(join(installed, 'package-lock.json'))).digest('hex');
-  writeFileSync(join(directory, 'installed-dependencies.json'), execFileSync('npm', ['ls', '--all', '--json'], { cwd: installed }));
-  writeFileSync(join(directory, 'installed-audit.json'), execFileSync('npm', ['audit', '--json'], { cwd: installed }));
-  const packageRoot = join(installed, 'node_modules/mipmux');
+  execFileSync('tar', ['-xzf', join(directory, receipt.filename), '-C', installed]);
+  const packageRoot = join(installed, 'package');
+  const lockBytes = readFileSync(resolve('package-lock.json'));
+  assert.deepEqual(readFileSync(join(packageRoot, 'npm-shrinkwrap.json')), lockBytes);
+  execFileSync('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: packageRoot });
+  const installLockSHA256 = createHash('sha256').update(readFileSync(join(packageRoot, 'npm-shrinkwrap.json'))).digest('hex');
+  assert.equal(installLockSHA256, receipt.buildLockSHA256);
+  const lock = dependencyLock.Parse(JSON.parse(lockBytes.toString()));
+  const installedLock = dependencyLock.Parse(JSON.parse(readFileSync(join(packageRoot, 'node_modules/.package-lock.json'), 'utf8')));
+  for (const path of Object.keys(installedLock.packages)) {
+    const expected = lock.packages[path];
+    assert(expected && !expected.dev, path);
+    const actual = packageVersion.Parse(JSON.parse(readFileSync(join(packageRoot, path, 'package.json'), 'utf8')));
+    assert.equal(actual.version, expected.version, path);
+  }
+  writeFileSync(join(directory, 'installed-dependencies.json'), execFileSync('npm', ['ls', '--omit=dev', '--all', '--json'], { cwd: packageRoot }));
+  writeFileSync(join(directory, 'installed-audit.json'), execFileSync('npm', ['audit', '--omit=dev', '--json'], { cwd: packageRoot }));
   const native = join(packageRoot, `libexec/${process.platform}-${process.arch}/MipmuxBridge`);
   const command = join(packageRoot, 'dist/cli/main.js');
-  writeFileSync(join(installed, 'import.mjs'), 'import {MipmuxRuntime, verifyBundle} from "mipmux"; if (typeof MipmuxRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
-  execFileSync(process.execPath, [join(installed, 'import.mjs')], { cwd: '/' });
+  writeFileSync(join(packageRoot, 'import.mjs'), 'import {MipmuxRuntime, verifyBundle} from "mipmux"; if (typeof MipmuxRuntime !== "function" || typeof verifyBundle !== "function") throw Error("Missing API");');
+  execFileSync(process.execPath, [join(packageRoot, 'import.mjs')], { cwd: '/' });
   const remote = await controlledHttpMcp(); t.after(() => remote.close());
   let phase: { kind: 'finish' } | { kind: 'question'; calls: number } |
     { kind: 'fetch'; calls: number; templatePath: string; updatedTemplate: Buffer } |
@@ -99,7 +115,7 @@ test('local package audits resources and executes relocated library, native, CLI
   writeFileSync(specPath, JSON.stringify(spec));
   writeFileSync(config, JSON.stringify({ copyContext: copyContext(), cachePath: join(directory, 'cache'), nativeExecutable: native, nativeEnvironment: {},
     terminationGraceMs: 100, contextBudgetUnits: 1000000, defaultEnhancementMode: 'augment', credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
-  const workspace = JSON.parse(execFileSync(join(installed, 'node_modules/.bin/mipmux'), ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
+  const workspace = JSON.parse(execFileSync(command, ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
   const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
   const client = new Client({ name: 'relocation-test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } },
@@ -223,4 +239,64 @@ test('local package audits resources and executes relocated library, native, CLI
     writeFileSync(resolve('test-output/group-e-relocation.json'), JSON.stringify({ directory, installed, receipt: join(directory, 'relocation-receipt.json') }));
   } finally { await client.close(); await provider.close(); }
 
+});
+
+test('release archive carries locked production dependencies and verifies offline after extraction', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mipmux-release-'));
+  const output = join(directory, 'release');
+  execFileSync(process.execPath, [resolve('scripts/package-release.mjs'), output], { stdio: 'pipe' });
+  const version = packageVersion.Parse(JSON.parse(readFileSync(resolve('package.json'), 'utf8'))).version;
+  const name = `mipmux-${version}-${process.platform}-${process.arch}`;
+  const inventory = Compile(Type.Object({ filename: Type.String(), sha256: Type.String(), buildLockSHA256: Type.String(),
+    nativeLinkage: Type.Object({ binarySHA256: Type.String() }) })).Parse(
+    JSON.parse(readFileSync(join(output, `${name}.inventory.json`), 'utf8')));
+  assert.equal(inventory.filename, `${name}.tar.gz`);
+  const archive = readFileSync(join(output, inventory.filename));
+  assert.equal(createHash('sha256').update(archive).digest('hex'), inventory.sha256);
+  const relocated = join(directory, 'relocated');
+  mkdirSync(relocated);
+  execFileSync('tar', ['-xzf', join(output, inventory.filename), '-C', relocated]);
+  const packageRoot = join(relocated, name);
+  assert.deepEqual(readFileSync(join(packageRoot, 'npm-shrinkwrap.json')), readFileSync(resolve('package-lock.json')));
+  for (const path of ['dist/cli/main.js', `libexec/${process.platform}-${process.arch}/MipmuxBridge`]) {
+    assert(lstatSync(join(packageRoot, path)).mode & 0o111, path);
+  }
+  const lock = dependencyLock.Parse(JSON.parse(readFileSync(resolve('package-lock.json'), 'utf8')));
+  const installed = dependencyLock.Parse(JSON.parse(readFileSync(join(packageRoot, 'node_modules/.package-lock.json'), 'utf8')));
+  for (const path of Object.keys(installed.packages)) {
+    const expected = lock.packages[path];
+    assert(expected && !expected.dev, path);
+    assert.equal(packageVersion.Parse(JSON.parse(readFileSync(join(packageRoot, path, 'package.json'), 'utf8'))).version,
+      expected.version, path);
+  }
+  assert(lstatSync(join(packageRoot, 'node_modules/.bin/pi')).isSymbolicLink());
+  assert.equal(readlinkSync(join(packageRoot, 'node_modules/.bin/pi')), readlinkSync(join(output, name, 'node_modules/.bin/pi')));
+  if (process.platform === 'darwin') lchmodSync(join(packageRoot, 'node_modules/.bin/pi'), 0o777);
+  for (const path of ['src', 'native', 'test', 'dist-test', '.env', '.npmrc', 'node_modules/typescript']) {
+    assert(!existsSync(join(packageRoot, path)), path);
+  }
+  const evidence = join(directory, 'evidence');
+  execFileSync(process.execPath, [join(packageRoot, 'verify-release.mjs'), packageRoot, evidence], {
+    cwd: '/', env: { PATH: '/usr/bin:/bin' }, stdio: 'pipe',
+  });
+  const receipt = Compile(Type.Object({ kind: Type.String(), buildLockSHA256: Type.String(), nativeSHA256: Type.String() }))
+    .Parse(JSON.parse(readFileSync(join(evidence, 'receipt.json'), 'utf8')));
+  assert.equal(receipt.kind, 'releaseVerified');
+  assert.equal(receipt.buildLockSHA256, inventory.buildLockSHA256);
+  assert.equal(receipt.nativeSHA256, inventory.nativeLinkage.binarySHA256);
+  for (const file of ['workspace.json', 'structure.json', 'search.json', 'render.json', 'integrity.json', 'current.json', 'library.json']) {
+    assert(existsSync(join(evidence, file)), file);
+  }
+  const search = Compile(Type.Object({ counts: Type.Object({ matchingLines: Type.Integer() }) }))
+    .Parse(JSON.parse(readFileSync(join(evidence, 'search.json'), 'utf8')));
+  assert.equal(search.counts.matchingLines, 1);
+  assert.throws(() => execFileSync(process.execPath, [join(packageRoot, 'verify-release.mjs'), packageRoot, evidence], { stdio: 'pipe' }));
+  const promptPath = join(packageRoot, 'dist/prompts/discovery.md'), promptBytes = readFileSync(promptPath);
+  writeFileSync(promptPath, 'modified archive resource');
+  assert.throws(() => execFileSync(process.execPath,
+    [join(packageRoot, 'verify-release.mjs'), packageRoot, join(directory, 'modified-evidence')], { stdio: 'pipe' }));
+  writeFileSync(promptPath, promptBytes);
+  mkdirSync(resolve('test-output'), { recursive: true });
+  writeFileSync(resolve('test-output/release-packaging.json'), JSON.stringify({ directory, archive: join(output, inventory.filename),
+    inventory: join(output, `${name}.inventory.json`), receipt: join(evidence, 'receipt.json') }) + '\n');
 });

@@ -11,6 +11,8 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { scriptedProvider } from './fixtures/scripted-provider.js';
 import { MipmuxRuntime } from '../src/runtime/mipmux-runtime.js';
 import { toolJSON } from './fixtures/tool-json.js';
+import Type from 'typebox';
+import { Compile } from 'typebox/compile';
 
 const command = resolve('dist/cli/main.js');
 const coreTools = ['context_builder', 'context_job', 'context_prepare'];
@@ -75,6 +77,8 @@ test('official MCP probes accept disabled provider deadlines and create no works
   try {
     await client.connect(transport);
     const instructions = client.getInstructions() ?? '';
+    const manifest = Compile(Type.Object({ version: Type.String() })).Parse(JSON.parse(await readFile('package.json', 'utf8')));
+    assert.equal(client.getServerVersion()?.version, manifest.version);
     assert.match(instructions, /^mipmux builds verified context packets/);
     // Claude Code releases before 2.1.296 discard server instructions past 2,048 characters.
     assert(instructions.length <= 2048, String(instructions.length));

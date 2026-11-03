@@ -12,7 +12,7 @@ mipmux is a headless port of the Context Builder in [RepoPrompt CE](https://gith
 
 ## Status
 
-mipmux is alpha software; its interfaces and configuration may change. The full test suite has been exercised on macOS arm64 and Linux arm64 in Docker. Linux x64 has passed native tests under emulation, but full-suite validation is incomplete. Live checks have covered the build, wait and prepare workflow from Claude Code and Codex clients, and discovery through Pi's `openai-codex` provider, Claude Code, and OpenRouter with Gemini 3.8 Flash. Installation currently requires a source build; prebuilt binaries and published npm packages are not yet available.
+mipmux is alpha software; its interfaces and configuration may change. The full test suite has passed on macOS arm64 and Linux arm64 and x64. Live checks have covered the build, wait and prepare workflow from Claude Code and Codex clients, and discovery through Pi's `openai-codex` provider, Claude Code, and OpenRouter with Gemini 3.8 Flash. Install a [release archive](https://github.com/w-winter/mipmux/blob/main/docs/releases.md#download-and-verify-a-published-archive) when available, or build from source below. Archives include the native helper and production dependencies.
 
 ## Compared with RepoPrompt CE
 
@@ -25,8 +25,8 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
 ## Requirements
 
 - Node.js 22.23.4 or a later 22 release, 24.22.1 or a later 24 release, or 26.12.1 or later.
-- Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config and tar, to build mipmux's native Swift helper. On macOS, use an Xcode or Command Line Tools installation that supplies Swift 6.2 or later; Homebrew provides CMake and pkg-config. Linux builds also need the Swift runtime libraries described in [Linux validation and runtime](docs/development.md#linux-validation-and-runtime).
-- Git, at `/usr/bin/git` unless the configuration names another path.
+- Swift 6.2 or later, a C/C++ compiler, CMake, pkg-config and tar, to build mipmux's native Swift helper from source. On macOS, use an Xcode or Command Line Tools installation that supplies Swift 6.2 or later; Homebrew provides CMake and pkg-config. The [Linux validation image](docs/development.md#linux-validation-and-runtime) supplies the toolchain for Linux release builds.
+- Git 2.36 or later, at `/usr/bin/git` unless the configuration names another path.
 - For discovery, one of: a login to a model provider, stored in Pi's `auth.json` (see the quickstart); a provider's API key (see [Discovery with an API key](docs/configuration.md#discovery-with-an-api-key)); or Claude Code signed in with your Claude account or an API key, with the Claude Agent SDK installed next to mipmux (see [Claude Code discovery](docs/configuration.md#claude-code-discovery)).
 
 ## Quickstart
@@ -122,6 +122,7 @@ The [agent workflow](docs/workflow.md) and the server's instructions cover build
 - [Context packets](docs/packets.md): the context request, selecting a packet's contents yourself, copy presets and settings, budgets, and checking and delivering saved packets.
 - [TypeScript library](docs/library.md): running mipmux inside a Node.js program.
 - [Building and testing](docs/development.md): the full build and test sequence, the native helper, local packages and Linux validation.
+- [Releases](https://github.com/w-winter/mipmux/blob/main/docs/releases.md): building and verifying server archives, creating a draft release, and downloading and checking published artifacts.
 
 Contributors also have the [native and workspace contracts](docs/contracts.md) and the [discovery prompt bindings](docs/discovery-prompt-bindings.md), which record how mipmux corresponds to RepoPrompt CE's source.
 

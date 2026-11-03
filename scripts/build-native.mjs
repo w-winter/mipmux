@@ -32,6 +32,10 @@ for (let index = 0; index < args.length; index += 2) {
   assert((flag === '--configuration' && ['build', 'test'].includes(operation) && ['debug', 'release'].includes(value)) ||
     (flag === '--filter' && operation === 'test'), `Unsupported native option: ${flag}`);
 }
+const configurationIndex = args.indexOf('--configuration');
+const configuration = configurationIndex === -1 ? 'debug' : args[configurationIndex + 1];
+const staticSwiftStdlib = process.platform === 'linux' && configuration === 'release';
+const swiftLinkageFlags = staticSwiftStdlib ? ['--static-swift-stdlib'] : [];
 const installedFiles = ['lib/libpcre2-8.a', 'include/pcre2.h', 'lib/pkgconfig/libpcre2-8.pc'];
 
 if (!existsSync(receiptPath)) {
@@ -86,12 +90,27 @@ function inspectBinary(binary, symbolPath) {
   const linkedImages = execFileSync(process.platform === 'darwin' ? 'otool' : 'ldd',
     process.platform === 'darwin' ? ['-L', binary] : [binary], { encoding: 'utf8' });
   assert(!/libpcre2.*(?:dylib|\.so)/u.test(linkedImages), 'PCRE2 must be statically linked.');
-  
+  let linuxLinkage = {};
+  if (process.platform === 'linux') {
+    const versions = execFileSync('readelf', ['--version-info', '--wide', '--debug-dump=no-follow-links', binary], { encoding: 'utf8' });
+    const glibcSymbolVersions = [...new Set([...versions.matchAll(/\bGLIBC_(\d+(?:\.\d+)+)\b/gu)].map(match => match[1]))]
+      .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+    const glibcSymbolFloor = glibcSymbolVersions.at(-1);
+    assert(glibcSymbolFloor, 'The Linux executable must record its required glibc symbol versions.');
+    linuxLinkage = { glibcSymbolVersions, glibcSymbolFloor };
+    if (staticSwiftStdlib) {
+      assert(!/\blib(?:swift|Foundation|_FoundationICU|dispatch|BlocksRuntime|icu)[^\s/]*\.so\b/u.test(linkedImages),
+        'Linux releases must statically link the Swift runtime, Foundation, Dispatch and ICU.');
+      const maximumGlibcVersion = '2.35';
+      assert(glibcSymbolFloor.localeCompare(maximumGlibcVersion, 'en', { numeric: true }) <= 0,
+        `Linux releases must require glibc ${maximumGlibcVersion} or earlier; found ${glibcSymbolFloor}.`);
+    }
+  }
   const symbolFile = openSync(symbolPath, 'w', 0o600);
-  try { execFileSync('nm', ['-g', binary], { stdio: ['ignore', symbolFile, 'inherit'] }); }
+  try { execFileSync('nm', [staticSwiftStdlib ? '--defined-only' : '-g', binary], { stdio: ['ignore', symbolFile, 'inherit'] }); }
   finally { closeSync(symbolFile); }
   const symbols = readFileSync(symbolPath, 'utf8');
-  assert(/\bT _?pcre2_config_8$/mu.test(symbols), 'The width-8 PCRE2 engine must be defined in the executable.');
+  assert(/\b[Tt] _?pcre2_config_8$/mu.test(symbols), 'The width-8 PCRE2 engine must be defined in the executable.');
   const description = JSON.parse(execFileSync(binary, ['build-verification'], {
     env: { REPOPROMPT_PCRE2_JIT: 'required' }, encoding: 'utf8',
     input: JSON.stringify({ wireVersion: 1, requestId: 'describe', generation: 'build-verification', operation: { kind: 'describe' } }) + '\n',
@@ -101,7 +120,7 @@ function inspectBinary(binary, symbolPath) {
   assert.equal(description.result.engine.unicode, recipe.unicodeVersion);
   assert.equal(description.result.engine.jitPolicy, 'required');
   assert.equal(description.result.engine.jitExecution, 'compiled');
-  return { linkedImages, description };
+  return { linkedImages, description, ...linuxLinkage };
 }
 
 if (operation !== 'dependency') {
@@ -114,19 +133,21 @@ if (operation !== 'dependency') {
   const env = { ...process.env, PKG_CONFIG_PATH: '', PKG_CONFIG_LIBDIR: pkgConfig, MIPMUX_PCRE2_PREFIX: prefix };
   const swiftArgs = operation === 'resolve' ? ['package', 'resolve'] : [operation];
   const sourcePathFlags = operation === 'resolve' ? [] : ['-Xcc', `-ffile-prefix-map=${join(root, 'native/.build')}=mipmux-native`];
-  run('swift', [...swiftArgs, '--package-path', join(root, 'native'),
-    '--scratch-path', join(root, 'native/.build', target), '--pkg-config-path', pkgConfig, ...sourcePathFlags, ...args], env);
+  const swiftOptions = ['--package-path', join(root, 'native'),
+    '--scratch-path', join(root, 'native/.build', target), '--pkg-config-path', pkgConfig, ...sourcePathFlags];
+  run('swift', [...swiftArgs, ...swiftOptions, ...(operation === 'build' ? swiftLinkageFlags : []), ...args], env);
+  if (operation === 'test' && staticSwiftStdlib) {
+    // SwiftPM's test command does not expose --static-swift-stdlib.
+    run('swift', ['build', ...swiftOptions, ...swiftLinkageFlags, '--configuration', configuration], env);
+  }
   assert.deepEqual(JSON.parse(readFileSync(join(root, 'native/Package.resolved'))).pins, expectedPins, 'Native dependency resolution changed the approved graph.');
   if (operation === 'build' || operation === 'test') {
-    const configurationIndex = args.indexOf('--configuration');
-    const configuration = configurationIndex === -1 ? 'debug' : args[configurationIndex + 1];
-    assert(['debug', 'release'].includes(configuration), 'Unsupported build configuration.');
     const directory = join(root, 'native/.build', target, configuration);
     const binary = join(directory, 'MipmuxBridge');
-    const { linkedImages, description } = inspectBinary(binary, join(directory, 'symbols.txt'));
+    const linkage = inspectBinary(binary, join(directory, 'symbols.txt'));
     writeFileSync(join(directory, 'linkage.json'), JSON.stringify({
       binarySHA256: digest(readFileSync(binary)), recipeSHA256, sourcePathFlags,
-      linkedImages, description, dependencyReceipt: receipt,
+      ...linkage, dependencyReceipt: receipt,
     }, null, 2) + '\n');
     if (configuration === 'release') {
       const destination = join(root, 'libexec', target);
@@ -134,11 +155,11 @@ if (operation !== 'dependency') {
       const packaged = join(destination, 'MipmuxBridge');
       copyFileSync(binary, packaged);
       run('strip', [process.platform === 'darwin' ? '-S' : '--strip-debug', packaged]);
-      const { linkedImages: packagedImages, description: packagedDescription } = inspectBinary(packaged, join(directory, 'packaged-symbols.txt'));
-      assert.deepEqual(packagedDescription, description, 'Stripping changed native preflight.');
+      const packagedLinkage = inspectBinary(packaged, join(directory, 'packaged-symbols.txt'));
+      assert.deepEqual(packagedLinkage.description, linkage.description, 'Stripping changed native preflight.');
       writeFileSync(join(destination, 'linkage.json'), JSON.stringify({
         originalBinarySHA256: digest(readFileSync(binary)), binarySHA256: digest(readFileSync(packaged)),
-        recipeSHA256, sourcePathFlags, linkedImages: packagedImages, description: packagedDescription,
+        recipeSHA256, sourcePathFlags, ...packagedLinkage,
       }, null, 2) + '\n');
     }
   }

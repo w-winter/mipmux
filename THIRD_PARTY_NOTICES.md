@@ -6,6 +6,8 @@ The native discovery prompt factory, discovery prompt, rendered references, ques
 
 PCRE2 10.49 is statically linked under BSD-3-Clause WITH PCRE2-exception. Its pinned SLJIT dependency uses BSD-2-Clause. Their complete texts are in `ThirdPartyLicenses/pcre2/LICENCE.md` and `ThirdPartyLicenses/sljit/LICENSE`.
 
+Linux release executables include the Swift 6.2.4 toolchain's runtime, Foundation, Dispatch, and ICU libraries. The toolchain's Apache-2.0 license with its Runtime Library Exception is copied to `ThirdPartyLicenses/swift-runtime/LICENSE.txt`; its bytes match the license in the pinned Swift 6.2.4 Ubuntu 22.04 image. That toolchain includes ICU 74.1, whose Unicode and third-party notices are in `ThirdPartyLicenses/icu/LICENSE`. The host supplies glibc, libstdc++, and libgcc.
+
 Copy-preset selection, catalog projection, resolution, planning for codemap presentation, global codemap admission and availability, and prompt export derive from RepoPrompt CE revision `43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3` under Apache-2.0. The native adapters bind captured settings and admitted file catalogs. Headless export confines writes to the declared output directory. `docs/vendor-provenance.json` records the source ranges and adaptations.
 
 Git read repository selection, ordered status results, warnings about the primary repository and projection of linked worktrees derive from the same RepoPrompt CE revision under Apache-2.0. The TypeScript adapter uses declared-root capabilities and supervised Git processes; the native modules retain repository identities, read projections and worktree warnings. `docs/vendor-provenance.json` records the corresponding source ranges and headless input bindings.
@@ -14,7 +16,7 @@ SwiftTreeSitter, the Tree-sitter runtime, and the twelve grammar packages have l
 
 Swift Crypto 4.5.1 and its resolved Swift ASN.1 dependency have Apache-2.0 licenses and notices in `ThirdPartyLicenses/swift-crypto/` and `ThirdPartyLicenses/swift-asn1/`. The Linux crypto build includes BoringSSL-derived source identified by Swift Crypto's `Sources/CCryptoBoringSSL/hash.txt`; its Apache-2.0 license at revision `0226f30467f540a3f62ef48d453f93927da199b6` is in `ThirdPartyLicenses/boringssl/LICENSE`.
 
-TypeBox 1.3.27 uses the MIT license, copied to `ThirdPartyLicenses/typebox/LICENSE`. `ThirdPartyLicenses/inventory.json` records the origin and SHA-256 of every copied license or notice. Operating-system and Swift runtime libraries remain separately installed runtime requirements.
+TypeBox 1.3.27 uses the MIT license, copied to `ThirdPartyLicenses/typebox/LICENSE`. `ThirdPartyLicenses/inventory.json` records the origin and SHA-256 of every copied license or notice.
 
 Pi depends on `ignore` 7.0.8 under the MIT license, copied to `ThirdPartyLicenses/ignore/LICENSE-MIT`. Workspace ignore evaluation uses the retained native RPCE implementation.
 

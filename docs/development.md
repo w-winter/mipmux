@@ -44,9 +44,19 @@ Create an unpublished package in an absolute output directory:
 npm run package:local -- /var/tmp/mipmux-local-package
 ```
 
-The command builds TypeScript and the native release executable, verifies source history, and packs the runtime files and notices through npm. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. That digest identifies the package-lock.json used to build mipmux; installed dependency graphs have their own lockfiles and audit results. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
+The command builds TypeScript and the native release executable, verifies source history, and packs the runtime files and notices through npm. It includes the build's `package-lock.json` as `npm-shrinkwrap.json`. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
 
-Install the resulting `.tgz` with `npm install --ignore-scripts /absolute/path/mipmux-0.1.0.tgz`. The installed CLI is available as `mipmux`. It runs the package's own `libexec/<platform>-<architecture>/MipmuxBridge` unless the configuration names another `nativeExecutable`. The package includes the discovery prompt and dependency identity beside its compiled modules.
+Extract the resulting `.tgz` and install its production dependencies from the shrinkwrap. Use a new installation directory:
+
+```sh
+mkdir -p /absolute/path/to/install
+tar -xzf /absolute/path/to/mipmux-0.1.0-alpha.1.tgz -C /absolute/path/to/install
+cd /absolute/path/to/install/package
+npm ci --omit=dev --ignore-scripts
+node dist/cli/main.js mcp
+```
+
+The CLI runs the package's own `libexec/<platform>-<architecture>/MipmuxBridge` unless the configuration names another `nativeExecutable`. The package includes the discovery prompt and dependency identity beside its compiled modules. For an archive with production dependencies already installed, use [release packaging](releases.md).
 
 ## Linux validation and runtime
 
@@ -55,7 +65,9 @@ docker build -f test/linux/Dockerfile -t mipmux-validation .
 docker run --rm mipmux-validation
 ```
 
-The image for validation fixes Swift 6.2.4 on Ubuntu Noble and Node 22.23.4 by image digest. It builds dependencies and executables inside Linux. The release executable dynamically requires the Swift runtime, Foundation, Dispatch, Foundation ICU, glibc, libstdc++, and libgcc supplied by that environment. The exact linked-library inventory is in `linkage.json`; PCRE2 is statically linked. A machine running the executable must supply those runtime libraries.
+The validation image pins Swift 6.2.4 on Ubuntu 22.04 and Node 22.23.4 by image digest. It builds dependencies and executables inside Linux, then runs the release helper in a separate Ubuntu 22.04 image with no Swift installation. Debug builds and native tests use the toolchain's dynamic Swift libraries. For the application tests, the image builds Git 2.56.0 from its checksum-pinned source archive; mipmux uses the NUL-delimited worktree listing introduced in Git 2.36.
+
+Linux release builds use `--static-swift-stdlib` to include the Swift runtime, Foundation, Dispatch, and ICU. PCRE2 is also statically linked. The host supplies glibc, libstdc++, and libgcc. Release checks reject dynamic Swift libraries and glibc symbol requirements above 2.35; use the pinned Docker image to build against this baseline. `linkage.json` records the linked libraries and required glibc symbol versions.
 
 ## Source history
 

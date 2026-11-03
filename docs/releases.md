@@ -1,0 +1,104 @@
+# Building and publishing releases
+
+The Release workflow builds a self-contained server archive for macOS arm64, Linux x64, and Linux arm64. Each archive includes compiled JavaScript, the native helper, production npm dependencies, license notices, an inventory, and a verification script. Users supply Node.js and Git 2.36 or later; they need neither a Swift toolchain nor an npm installation step.
+
+The macOS helper targets macOS 14 or later and uses an ad-hoc signature. Linux builds use Swift 6.2 on Ubuntu 22.04 and statically link the Swift runtime. Linux hosts need glibc 2.35 or later and the standard C++ and GCC runtime libraries. The helper's linked-library inventory is recorded during packaging.
+
+## Build and verify locally
+
+From a configured source checkout with its build prerequisites installed:
+
+```sh
+npm ci
+npm run package:release -- /absolute/path/to/new-release-output
+```
+
+Use a new output directory. The script builds the native helper and JavaScript, verifies source history, and installs production dependencies from the shipped shrinkwrap with install scripts disabled. It writes `mipmux-<version>-<platform>-<arch>.tar.gz`, a matching `.sha256` file, and a matching `.inventory.json` file. The archive contains a directory with that same version and target in its name.
+
+Extract the archive somewhere outside the checkout and run its verifier, replacing the example paths:
+
+```sh
+mkdir -p /absolute/path/to/install
+tar -xzf /absolute/path/to/mipmux-0.1.0-alpha.1-darwin-arm64.tar.gz -C /absolute/path/to/install
+package=/absolute/path/to/install/mipmux-0.1.0-alpha.1-darwin-arm64
+node "$package/verify-release.mjs" "$package" /absolute/path/to/new-verification-output
+```
+
+The verifier uses synthetic source files and an explicit configuration, with discovery disabled. It checks the relocated CLI and library, native structure extraction and search, packet rendering, and integrity/current-source verification. It writes a receipt and packet artifacts to the verification directory. It makes no model calls and needs no credentials.
+
+## Validate the workflow before tagging
+
+Commit the release changes and merge them into `main` before creating a tag. Run the `Release` workflow manually from GitHub Actions or, as the repository owner:
+
+```sh
+gh workflow run release.yml --repo w-winter/mipmux --ref main
+```
+
+A manual run builds and tests all three targets and uploads archives and verification evidence as Actions artifacts. It creates no GitHub release. Each Linux job also runs the extracted archive in a Node container with no Swift installation and networking disabled. The macOS job runs the relocated verifier and checks the helper's signature.
+
+Inspect all three jobs and their saved verification receipts before tagging. Hosted validation is required for the platforms your local machine cannot exercise natively.
+
+## Create the first prerelease
+
+The server's first prerelease is `0.1.0-alpha.1`. The Pi and omp extensions have independent versions.
+
+For each server version, update `package.json`, the root entries in `package-lock.json`, and the MCP software version in `src/mcp/server.ts`. The MCP initialization test checks that the advertised version matches the package.
+
+Before publication, enable **release immutability** under **Releases** in the GitHub repository settings. Check the setting:
+
+```sh
+gh api repos/w-winter/mipmux/immutable-releases --jq .enabled
+```
+
+It must print `true`. Immutable releases lock their assets and tags when published, so inspect the draft before publishing it.
+
+After the exact commit passes validation, the owner creates and pushes its version tag:
+
+```sh
+git tag v0.1.0-alpha.1
+git push origin v0.1.0-alpha.1
+```
+
+The workflow requires the tag to equal `v` followed by `package.json`'s version. It builds all targets, checks the complete archive set and checksums, creates GitHub build attestations, and opens a draft release with the archives and evidence files. Tags containing a prerelease suffix produce a prerelease draft. Building jobs have read-only repository permission; the final job alone can attest artifacts and create the draft.
+
+Review the draft, confirm immutability is enabled, and publish it:
+
+```sh
+gh release edit v0.1.0-alpha.1 --repo w-winter/mipmux --draft=false
+```
+
+The workflow stops at the draft. It does not publish the release on your behalf. A failed run should be diagnosed before retrying; an existing draft is not overwritten automatically.
+
+## Download and verify a published archive
+
+Choose a version and target from the [release list](https://github.com/w-winter/mipmux/releases). For example, after `v0.1.0-alpha.1` is published:
+
+```sh
+gh release download v0.1.0-alpha.1 --repo w-winter/mipmux \
+  --pattern 'mipmux-0.1.0-alpha.1-darwin-arm64.tar.gz'
+gh release verify v0.1.0-alpha.1 --repo w-winter/mipmux
+gh release verify-asset v0.1.0-alpha.1 ./mipmux-0.1.0-alpha.1-darwin-arm64.tar.gz \
+  --repo w-winter/mipmux
+gh attestation verify ./mipmux-0.1.0-alpha.1-darwin-arm64.tar.gz --repo w-winter/mipmux
+```
+
+Use a current GitHub CLI with release and artifact verification support. Release verification checks GitHub's immutable-release record; the build attestation identifies the workflow and source commit that produced the bytes. A checksum file alone does not authenticate its source.
+
+On macOS, use `gh release download` rather than a browser download. The first release uses ad-hoc signing, not Apple notarization; browser downloads can receive a quarantine attribute that prevents the helper from running.
+
+Extract the verified archive and configure your MCP client to run:
+
+```text
+node /absolute/path/to/mipmux-0.1.0-alpha.1-darwin-arm64/dist/cli/main.js mcp
+```
+
+Use the matching Linux directory name for a Linux archive. Configure discovery through the [configuration guide](https://github.com/w-winter/mipmux/blob/main/docs/configuration.md). To use Claude Code discovery, install the exact optional SDK version documented there into the extracted package; Pi-based discovery uses the dependencies already included.
+
+The Pi and omp extensions also need a `mipmux` command on `PATH`. Link the archive's executable into a directory on your path, for example:
+
+```sh
+mkdir -p "$HOME/.local/bin"
+ln -s /absolute/path/to/mipmux-0.1.0-alpha.1-darwin-arm64/dist/cli/main.js "$HOME/.local/bin/mipmux"
+```
+
+Ensure `$HOME/.local/bin` is on your shell's `PATH`. The link command refuses to replace an existing installation.
