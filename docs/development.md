@@ -20,6 +20,8 @@ node scripts/build-native.mjs build --configuration release
 npm test
 ```
 
+Application builds run TypeScript in single-threaded mode so generated type declarations have consistent union-member ordering across builds. Release packaging compares the complete application output across platforms. `npm run typecheck` uses the compiler's parallel mode.
+
 Run native commands through `scripts/build-native.mjs`. It supplies SwiftPM's explicit `--pkg-config-path`, verifies the private dependency files, checks the linked executable, and writes `linkage.json` beside the executable. A mismatched or interrupted dependency build fails with its directory path for inspection and explicit removal before rebuilding.
 
 Search uses the native executable's Foundation and statically linked PCRE2 matching implementations. The native dependency receipt and linkage checks identify the engine used by both extraction and search.

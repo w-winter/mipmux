@@ -1,6 +1,6 @@
 {
   "name": "mipmux",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Headless port of RepoPrompt CE's Context Builder: an MCP server that builds verified context packets for coding agents",
   "license": "Apache-2.0",
   "repository": {
@@ -32,7 +32,7 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
-    "build": "tsc && node scripts/build-resources.mjs dist",
+    "build": "tsc --singleThreaded && node scripts/build-resources.mjs dist",
     "test": "npm run build && tsc -p tsconfig.test.json && node scripts/build-resources.mjs dist-test/src && node --test dist-test/test/*.test.js",
     "test:integration": "npm test",
     "build:native": "node scripts/build-native.mjs build --configuration release",

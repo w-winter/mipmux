@@ -36,6 +36,24 @@ async function waitForSettlement(client: Client, jobId: string) {
   }
 }
 
+test('application build emits canonical declarations across compiler worker counts', () => {
+  const compilerWorkerCounts = [1, 8];
+  const directory = resolve('dist');
+  const paths = readdirSync(resolve('src'), { recursive: true, encoding: 'utf8' })
+    .filter(path => path.endsWith('.ts')).map(path => path.slice(0, -3) + '.d.ts').sort();
+  const declarations = () => paths.map(path => ({
+    path, sha256: createHash('sha256').update(readFileSync(join(directory, path))).digest('hex'),
+  }));
+  execFileSync('npm', ['exec', '--', 'tsc', '--singleThreaded', '--emitDeclarationOnly'], { stdio: 'pipe' });
+  const expected = declarations();
+  for (const workers of compilerWorkerCounts) {
+    execFileSync('npm', ['run', 'build'], { env: { ...process.env, GOMAXPROCS: String(workers) }, stdio: 'pipe' });
+    assert.deepEqual(declarations(), expected);
+  }
+  mkdirSync(resolve('test-output'), { recursive: true });
+  writeFileSync(resolve('test-output/build-determinism.json'), JSON.stringify({ compilerWorkerCounts, declarations: expected }) + '\n');
+});
+
 test('local package audits resources and executes relocated library, native, CLI, MCP and discovery prompt', async t => {
   const directory = mkdtempSync(join(tmpdir(), 'mipmux-package-'));
   execFileSync(process.execPath, [resolve('scripts/package-local.mjs'), directory], { stdio: 'pipe' });
