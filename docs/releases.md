@@ -38,9 +38,9 @@ A manual run with the default inputs builds and tests all three targets and uplo
 
 Inspect all three jobs and their saved verification receipts before tagging. Hosted validation is required for the platforms your local machine cannot exercise natively.
 
-## Create the first prerelease
+## Create a release
 
-The server's first prerelease is `0.1.0-alpha.2`. The Pi and omp extensions have independent versions.
+The Pi and omp extensions have versions independent of the server.
 
 For each server version, update `package.json`, the root entries in `package-lock.json`, and the MCP software version in `src/mcp/server.ts`. The MCP initialization test checks that the advertised version matches the package.
 
@@ -52,11 +52,11 @@ gh api repos/w-winter/mipmux/immutable-releases --jq .enabled
 
 It must print `true`. Immutable releases lock their assets and tags when published, so inspect the draft before publishing it.
 
-After the exact commit passes validation, the owner creates and pushes its version tag:
+After the exact commit passes validation, the owner creates and pushes its version tag. Replace the example version with the version being released:
 
 ```sh
-git tag v0.1.0-alpha.2
-git push origin v0.1.0-alpha.2
+git tag v0.1.0-alpha.3
+git push origin v0.1.0-alpha.3
 ```
 
 The workflow requires the tag to equal `v` followed by `package.json`'s version. It builds all targets, assembles the npm server package from the verified platform helpers, checks the release files, creates GitHub build attestations for the archives and npm tarballs, and opens a draft release with those artifacts and their inventories. Tags containing a prerelease suffix produce a prerelease draft. Building jobs have read-only repository permission; the final job alone can attest artifacts and create the draft.
@@ -64,14 +64,14 @@ The workflow requires the tag to equal `v` followed by `package.json`'s version.
 Review the draft, confirm immutability is enabled, and publish it:
 
 ```sh
-gh release edit v0.1.0-alpha.2 --repo w-winter/mipmux --draft=false
+gh release edit v0.1.0-alpha.3 --repo w-winter/mipmux --draft=false
 ```
 
 The workflow stops at the draft. It does not publish the release on your behalf. A failed run should be diagnosed before retrying; an existing draft is not overwritten automatically.
 
 ## Download and verify a published archive
 
-Choose a version and target from the [release list](https://github.com/w-winter/mipmux/releases). For example, after `v0.1.0-alpha.2` is published:
+Choose a version and target from the [release list](https://github.com/w-winter/mipmux/releases). For example, to download the macOS arm64 archive for `v0.1.0-alpha.2`:
 
 ```sh
 gh release download v0.1.0-alpha.2 --repo w-winter/mipmux \
@@ -105,14 +105,13 @@ Ensure `$HOME/.local/bin` is on your shell's `PATH`. The link command refuses to
 
 ## Install from npm
 
-Once a version is published, install the server with an exact version:
+Install the server with an exact version:
 
 ```sh
 npm install --global --ignore-scripts mipmux@0.1.0-alpha.2
-mipmux config
 ```
 
-Configure discovery using the [configuration guide](configuration.md), then configure your MCP client to run `mipmux mcp`. For a one-command invocation through npm:
+Configure discovery using the [quickstart](../README.md#quickstart) or the [configuration guide](configuration.md), then configure your MCP client to run `mipmux mcp`. For a one-command invocation through npm:
 
 ```sh
 npm_config_ignore_scripts=true npx --yes mipmux@0.1.0-alpha.2 mcp
@@ -128,7 +127,7 @@ For Pi-based discovery using a provider login, start the bundled Pi CLI after a 
 node "$(npm root -g)/mipmux/node_modules/.bin/pi"
 ```
 
-Run `/login`, choose the provider, and quit Pi. The [source quickstart](../README.md#quickstart) describes the discovery configuration; API-key and Claude Code discovery use their own configuration instructions.
+Run `/login`, choose the provider, and quit Pi. The [quickstart](../README.md#quickstart) describes the discovery configuration; API-key and Claude Code discovery use their own configuration instructions.
 
 ## Build npm tarballs
 
@@ -154,20 +153,23 @@ node scripts/package-npm.mjs main \
 
 The assembler checks the source inventory and smoke receipt, requires one helper for each target, and checks their versions and identities. The main tarball contains the JavaScript server and its locked production dependency tree, declared through `bundleDependencies`; the native helpers are exact-version optional dependencies. The adjacent inventories record the tarballs' SHA-512 integrity values. Source checkouts remain private npm packages; publish only the generated tarballs.
 
-## Publish the initial npm versions
+## Publish new npm packages
 
-The first version of each package must be published by the owner before npm allows a trusted publisher to be configured. Download the four `.tgz` files from the verified GitHub release. Check each with `gh release verify-asset` and `gh attestation verify`, as for the server archives, before publishing.
+The first version of each new package must be published by the owner before npm allows a trusted publisher to be configured. After configuring trusted staging below, use it for later versions of existing packages. Download the `.tgz` files from the verified GitHub release. Check each with `gh release verify-asset` and `gh attestation verify`, as for the server archives, before publishing.
 
-Publish the helpers first, then the main package. These commands require your npm login and 2FA:
+For a first release of the server and helpers, publish the helpers first, then the main package. These commands require your npm login and 2FA; replace the example version with the version being released:
 
 ```sh
-npm publish ./w-winter-mipmux-darwin-arm64-0.1.0-alpha.2.tgz --access public --tag next --ignore-scripts
-npm publish ./w-winter-mipmux-linux-x64-0.1.0-alpha.2.tgz --access public --tag next --ignore-scripts
-npm publish ./w-winter-mipmux-linux-arm64-0.1.0-alpha.2.tgz --access public --tag next --ignore-scripts
-npm publish ./mipmux-0.1.0-alpha.2.tgz --access public --tag next --ignore-scripts
+version=0.1.0-alpha.3
+npm publish "./w-winter-mipmux-darwin-arm64-$version.tgz" --access public --tag next --ignore-scripts
+npm publish "./w-winter-mipmux-linux-x64-$version.tgz" --access public --tag next --ignore-scripts
+npm publish "./w-winter-mipmux-linux-arm64-$version.tgz" --access public --tag next --ignore-scripts
+npm publish "./mipmux-$version.tgz" --access public --tag next --ignore-scripts
 ```
 
 If publication stops partway through, inspect which versions reached npm and publish only the remaining packages. npm versions are immutable; do not rebuild different bytes under a version already published.
+
+npm scans each package before making it available, so a successful publish can take several minutes to appear. Check each package's version and dist-tags before installing it. On an initial publication, npm may also assign `latest` to a prerelease published with `--tag next`.
 
 ## Configure trusted staging
 

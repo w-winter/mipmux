@@ -4,7 +4,7 @@ omp-mipmux is the [oh-my-pi](https://github.com/can1357/oh-my-pi) (omp) version 
 
 ## Install
 
-omp-mipmux needs mipmux connected to omp as an MCP server named `mipmux`, and the `mipmux` command on your PATH; the [mipmux quickstart](https://github.com/w-winter/mipmux#quickstart) covers building and configuring it. Add the server to `~/.omp/agent/mcp.json`:
+omp-mipmux needs mipmux connected to omp as an MCP server named `mipmux`, and the `mipmux` command on your PATH; the [mipmux quickstart](https://github.com/w-winter/mipmux#quickstart) covers installation and configuration. Add the server to `~/.omp/agent/mcp.json`:
 
 ```json
 {

@@ -127,13 +127,15 @@ Set `discovery.mcp` to `{ "agentDirectory": "/private/mipmux/discovery-mcp" }` t
 }
 ```
 
-For OAuth, sign in before starting discovery jobs using the Pi executable from mipmux's dependency installation. Run `mcp list` to check the connection and find exact tool names:
+For OAuth, sign in before starting discovery jobs using the Pi executable bundled with a global npm installation of mipmux. Run `mcp list` to check the connection and find exact tool names:
 
 ```sh
 cd /private/mipmux/discovery-mcp
-PI_CODING_AGENT_DIR="$PWD" /opt/mipmux/node_modules/.bin/pi mcp login tickets
-PI_CODING_AGENT_DIR="$PWD" /opt/mipmux/node_modules/.bin/pi mcp list
+PI_CODING_AGENT_DIR="$PWD" node "$(npm root -g)/mipmux/node_modules/.bin/pi" mcp login tickets
+PI_CODING_AGENT_DIR="$PWD" node "$(npm root -g)/mipmux/node_modules/.bin/pi" mcp list
 ```
+
+For a source build or extracted release archive, use `node /absolute/path/to/mipmux/node_modules/.bin/pi` instead.
 
 If discovery reports `mcpToolsUnavailable`, use `mcp list` in the private directory to diagnose connection or sign-in problems. See the [discovery contract](contracts.md#discovery-and-client-ownership) for configuration options and lifecycle details.
 

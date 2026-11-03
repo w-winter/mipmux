@@ -4,7 +4,7 @@ pi-mipmux is a [Pi](https://pi.dev) extension for mipmux. Its `/mipmux` command 
 
 ## Install
 
-pi-mipmux needs mipmux connected to Pi as an MCP server named `mipmux`, and the `mipmux` command on your PATH; the [mipmux quickstart](https://github.com/w-winter/mipmux#quickstart) covers building and configuring it. With Pi's built-in MCP support:
+pi-mipmux needs mipmux connected to Pi as an MCP server named `mipmux`, and the `mipmux` command on your PATH; the [mipmux quickstart](https://github.com/w-winter/mipmux#quickstart) covers installation and configuration. With Pi's built-in MCP support:
 
 ```sh
 pi mcp add mipmux -- mipmux mcp
