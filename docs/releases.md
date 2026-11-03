@@ -13,7 +13,7 @@ npm ci
 npm run package:release -- /absolute/path/to/new-release-output
 ```
 
-Use a new output directory. The script builds the native helper and JavaScript, verifies source history, and installs production dependencies from the shipped shrinkwrap with install scripts disabled. It writes `mipmux-<version>-<platform>-<arch>.tar.gz`, a matching `.sha256` file, and a matching `.inventory.json` file. The archive contains a directory with that same version and target in its name.
+Use a new output directory. The script builds the native helper and JavaScript, verifies source history, and installs production dependencies from the shipped `package-lock.json` with install scripts disabled. It writes `mipmux-<version>-<platform>-<arch>.tar.gz`, a matching `.sha256` file, and a matching `.inventory.json` file. The archive contains a directory with that same version and target in its name.
 
 Extract the archive somewhere outside the checkout and run its verifier, replacing the example paths:
 
@@ -34,7 +34,7 @@ Commit the release changes and merge them into `main` before creating a tag. Run
 gh workflow run release.yml --repo w-winter/mipmux --ref main
 ```
 
-A manual run builds and tests all three targets and uploads archives and verification evidence as Actions artifacts. It creates no GitHub release. Each Linux job also runs the extracted archive in a Node container with no Swift installation and networking disabled. The macOS job runs the relocated verifier and checks the helper's signature.
+A manual run with the default inputs builds and tests all three targets and uploads archives, npm tarballs, and verification evidence as Actions artifacts. It creates no GitHub release and performs no npm publication or staging. Each Linux job also runs the extracted archive in a Node container with no Swift installation and networking disabled. The macOS job runs the relocated verifier and checks the helper's signature. After assembly, another check installs the same main npm tarball on all three targets using npm 12, exercising the CLI, library, MCP, and scripted discovery without provider credentials.
 
 Inspect all three jobs and their saved verification receipts before tagging. Hosted validation is required for the platforms your local machine cannot exercise natively.
 
@@ -59,7 +59,7 @@ git tag v0.1.0-alpha.1
 git push origin v0.1.0-alpha.1
 ```
 
-The workflow requires the tag to equal `v` followed by `package.json`'s version. It builds all targets, checks the complete archive set and checksums, creates GitHub build attestations, and opens a draft release with the archives and evidence files. Tags containing a prerelease suffix produce a prerelease draft. Building jobs have read-only repository permission; the final job alone can attest artifacts and create the draft.
+The workflow requires the tag to equal `v` followed by `package.json`'s version. It builds all targets, assembles the npm server package from the verified platform helpers, checks the release files, creates GitHub build attestations for the archives and npm tarballs, and opens a draft release with those artifacts and their inventories. Tags containing a prerelease suffix produce a prerelease draft. Building jobs have read-only repository permission; the final job alone can attest artifacts and create the draft.
 
 Review the draft, confirm immutability is enabled, and publish it:
 
@@ -102,3 +102,101 @@ ln -s /absolute/path/to/mipmux-0.1.0-alpha.1-darwin-arm64/dist/cli/main.js "$HOM
 ```
 
 Ensure `$HOME/.local/bin` is on your shell's `PATH`. The link command refuses to replace an existing installation.
+
+## Install from npm
+
+Once a version is published, install the server with an exact version:
+
+```sh
+npm install --global --ignore-scripts mipmux@0.1.0-alpha.1
+mipmux config
+```
+
+Configure discovery using the [configuration guide](configuration.md), then configure your MCP client to run `mipmux mcp`. For a one-command invocation through npm:
+
+```sh
+npm_config_ignore_scripts=true npx --yes mipmux@0.1.0-alpha.1 mcp
+```
+
+The installation supports macOS arm64, Linux x64, and Linux arm64. Linux requires glibc 2.35 or later. The server resolves its matching `@w-winter/mipmux-<platform>-<arch>` helper automatically; users install `mipmux`, rather than choosing a helper manually. Keep optional dependencies enabled. A `nativeHelperUnavailable` error means the helper package cannot be resolved; reinstall with optional dependencies included, for example `npm install --global --ignore-scripts --include=optional mipmux@0.1.0-alpha.1`.
+
+The main npm tarball bundles the production JavaScript dependencies installed from the build's lockfile. Native helpers remain separate optional dependencies pinned to the server's exact version. The packages have no lifecycle scripts. The explicit `--ignore-scripts` also disables scripts declared by transitive dependencies.
+
+For Pi-based discovery using a provider login, start the bundled Pi CLI after a global installation:
+
+```sh
+node "$(npm root -g)/mipmux/node_modules/.bin/pi"
+```
+
+Run `/login`, choose the provider, and quit Pi. The [source quickstart](../README.md#quickstart) describes the discovery configuration; API-key and Claude Code discovery use their own configuration instructions.
+
+## Build npm tarballs
+
+Each platform job creates a helper from its extracted, verified archive:
+
+Use a new output directory whose parent already exists. The packager refuses an existing output directory before writing artifacts.
+
+```sh
+node scripts/package-npm.mjs helper /absolute/extracted-package /absolute/smoke/receipt.json /absolute/npm-output
+```
+
+The helper names are `@w-winter/mipmux-darwin-arm64`, `@w-winter/mipmux-linux-x64`, and `@w-winter/mipmux-linux-arm64`. Each helper contains its native executable and notices, and declares its supported operating system and CPU. It has the same version as the main package.
+
+After collecting all three helper tarballs and their adjacent inventories, assemble the main package:
+
+```sh
+node scripts/package-npm.mjs main \
+  /absolute/extracted-package /absolute/smoke/receipt.json /absolute/npm-output \
+  /absolute/helpers/w-winter-mipmux-darwin-arm64-0.1.0-alpha.1.tgz \
+  /absolute/helpers/w-winter-mipmux-linux-x64-0.1.0-alpha.1.tgz \
+  /absolute/helpers/w-winter-mipmux-linux-arm64-0.1.0-alpha.1.tgz
+```
+
+The assembler checks the source inventory and smoke receipt, requires one helper for each target, and checks their versions and identities. The main tarball contains the JavaScript server and its locked production dependency tree, declared through `bundleDependencies`; the native helpers are exact-version optional dependencies. The adjacent inventories record the tarballs' SHA-512 integrity values. Source checkouts remain private npm packages; publish only the generated tarballs.
+
+## Publish the initial npm versions
+
+The first version of each package must be published by the owner before npm allows a trusted publisher to be configured. Download the four `.tgz` files from the verified GitHub release. Check each with `gh release verify-asset` and `gh attestation verify`, as for the server archives, before publishing.
+
+Publish the helpers first, then the main package. These commands require your npm login and 2FA:
+
+```sh
+npm publish ./w-winter-mipmux-darwin-arm64-0.1.0-alpha.1.tgz --access public --tag next --ignore-scripts
+npm publish ./w-winter-mipmux-linux-x64-0.1.0-alpha.1.tgz --access public --tag next --ignore-scripts
+npm publish ./w-winter-mipmux-linux-arm64-0.1.0-alpha.1.tgz --access public --tag next --ignore-scripts
+npm publish ./mipmux-0.1.0-alpha.1.tgz --access public --tag next --ignore-scripts
+```
+
+If publication stops partway through, inspect which versions reached npm and publish only the remaining packages. npm versions are immutable; do not rebuild different bytes under a version already published.
+
+## Configure trusted staging
+
+After all four packages exist, configure each to trust this repository's `release.yml` workflow for staging only:
+
+```sh
+for package in mipmux @w-winter/mipmux-darwin-arm64 @w-winter/mipmux-linux-x64 @w-winter/mipmux-linux-arm64; do
+  npm trust github "$package" --repo w-winter/mipmux --file release.yml --allow-stage-publish
+done
+```
+
+In each package's npm publishing-access settings, require two-factor authentication and disallow tokens. Configure trust close to its first use: an unvalidated trusted-publisher configuration expires after two days. Do not grant direct publication or dist-tag management to the workflow.
+
+## Stage later npm versions
+
+After publishing and verifying a later immutable GitHub release, dispatch the workflow on that tag with `stage_npm=true`:
+
+```sh
+gh workflow run release.yml --repo w-winter/mipmux --ref v0.1.0-alpha.2 -f stage_npm=true
+```
+
+Replace the example tag with the published version. This operation checks the immutable release and each tarball's build attestation against the selected tag and commit, then calls `npm stage publish` using GitHub OIDC. It downloads the published bytes rather than rebuilding them. Prereleases use the `next` dist-tag; stable versions use `latest`. The staging job has no repository-write permission and needs no npm token. Node 24.22.1 supplies npm 11.19.1, which supports staged publishing.
+
+Inspect and approve each returned npm stage ID with your own 2FA:
+
+```sh
+npm stage view <stage-id>
+npm stage download <stage-id>
+npm stage approve <stage-id>
+```
+
+Approve the helper stages before the main package. The workflow creates pending stages; only the owner's approval publishes them.

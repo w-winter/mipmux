@@ -16,7 +16,7 @@ mkdirSync(destination, { recursive: true, mode: 0o700 });
 const staging = join(destination, name);
 const staged = stagePackage(staging);
 execFileSync('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: staging, stdio: ['ignore', 2, 2] });
-const lock = JSON.parse(readFileSync(join(staging, 'npm-shrinkwrap.json'), 'utf8'));
+const lock = JSON.parse(readFileSync(join(staging, 'package-lock.json'), 'utf8'));
 const installed = JSON.parse(readFileSync(join(staging, 'node_modules/.package-lock.json'), 'utf8'));
 for (const path of Object.keys(installed.packages)) {
   const expected = lock.packages[path];

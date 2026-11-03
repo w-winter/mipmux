@@ -11,6 +11,7 @@ import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 
 const host: ConfigHost = { platform: 'linux', arch: 'x64', home: '/home/fixture', packageRoot: '/opt/mipmux',
+  resolveNativeExecutable: target => `/opt/mipmux/libexec/${target}/MipmuxBridge`,
   env: { XDG_CACHE_HOME: '/var/cache/fixture' } };
 
 test('a partial configuration file resolves to explicit defaults and field-level policy overrides', () => {
@@ -38,6 +39,18 @@ test('a partial configuration file resolves to explicit defaults and field-level
   assert.equal(macOS.git, null);
   assert.equal(resolveHostConfig({ discovery: { provider: 'p', model: 'm', thinking: 'off', modelsPath: '/m.json' } },
     { ...host, env: { PI_CODING_AGENT_DIR: '/agent' } }).discovery?.pi?.authPath, '/agent/auth.json');
+});
+
+test('native defaults use the host resolver, and an explicit executable never resolves the default', () => {
+  const targets: string[] = [];
+  const resolverHost = { ...host, resolveNativeExecutable: (target: string) => {
+    targets.push(target); return '/hoisted/helper/MipmuxBridge';
+  } };
+  assert.equal(resolveHostConfig({}, resolverHost).nativeExecutable, '/hoisted/helper/MipmuxBridge');
+  assert.deepEqual(targets, ['linux-x64']);
+  const missingHost = { ...host, resolveNativeExecutable: () => { throw new Error('missing optional helper'); } };
+  assert.throws(() => resolveHostConfig({}, missingHost), /missing optional helper/u);
+  assert.equal(resolveHostConfig({ nativeExecutable: '/custom/MipmuxBridge' }, missingHost).nativeExecutable, '/custom/MipmuxBridge');
 });
 
 test('each configured or allowed model needs its runner, and a Claude-only configuration needs no Pi files', () => {

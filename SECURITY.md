@@ -53,5 +53,6 @@ A complete discovery job was observed on macOS on 2026-10-30, at commit `fe4560a
 
 - mipmux has no install scripts of its own. Two of its dependencies declare them: `@google/genai` and `protobufjs`. The repository's `.npmrc` turns install scripts off for `npm ci` in a clone, and mipmux does not need them.
 - Release archives include production npm dependencies installed from the lockfile with scripts disabled. Extracting an archive requires no package installation. The [release guide](docs/releases.md) describes how to verify its GitHub build and release attestations before use.
+- On npm, `mipmux` bundles the JavaScript dependencies installed from its build lockfile and requests the matching native helper through exact-version optional dependencies. The release workflow verifies the published artifacts before requesting npm staging; publication requires the owner's approval.
 - The Claude Agent SDK, needed only for Claude Code discovery, is not a dependency of mipmux; you install it yourself. It is licensed under Anthropic's own terms, and it installs Claude Code's executable for your platform through an optional dependency.
 - The source build pins every download: npm packages by the integrity hashes in `package-lock.json`, SwiftPM packages by commit in `native/Package.resolved`, and PCRE2 by the SHA-256 in `native/pcre2-recipe.json`.

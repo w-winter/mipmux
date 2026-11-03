@@ -12,7 +12,7 @@ mipmux is a headless port of the Context Builder in [RepoPrompt CE](https://gith
 
 ## Status
 
-mipmux is alpha software; its interfaces and configuration may change. The full test suite has passed on macOS arm64 and Linux arm64 and x64. Live checks have covered the build, wait and prepare workflow from Claude Code and Codex clients, and discovery through Pi's `openai-codex` provider, Claude Code, and OpenRouter with Gemini 3.8 Flash. Install a [release archive](https://github.com/w-winter/mipmux/blob/main/docs/releases.md#download-and-verify-a-published-archive) when available, or build from source below. Archives include the native helper and production dependencies.
+mipmux is alpha software; its interfaces and configuration may change. The full test suite has passed on macOS arm64 and Linux arm64 and x64. Live checks have covered the build, wait and prepare workflow from Claude Code and Codex clients, and discovery through Pi's `openai-codex` provider, Claude Code, and OpenRouter with Gemini 3.8 Flash. Install a [published npm version](https://github.com/w-winter/mipmux/blob/main/docs/releases.md#install-from-npm) or [release archive](https://github.com/w-winter/mipmux/blob/main/docs/releases.md#download-and-verify-a-published-archive) when available, or build from source below. These distributions include the native helper and production dependencies.
 
 ## Compared with RepoPrompt CE
 

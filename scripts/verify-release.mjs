@@ -33,7 +33,7 @@ function verifyRelease(packageRoot, evidence) {
   assert.equal(inventory.target, `${process.platform}-${process.arch}`);
   assert.deepEqual(inventoryFiles(packageRoot).filter(file => file.path !== 'release-inventory.json'), inventory.files,
     'Extracted package does not match its release inventory');
-  assert.equal(hash(readFileSync(join(packageRoot, 'npm-shrinkwrap.json'))), inventory.buildLockSHA256);
+  assert.equal(hash(readFileSync(join(packageRoot, 'package-lock.json'))), inventory.buildLockSHA256);
   assert.equal(json(join(packageRoot, 'dist/dependency-identity.json')).buildLockSHA256, inventory.buildLockSHA256);
   const native = join(packageRoot, 'libexec', inventory.target, 'MipmuxBridge');
   const nativeSHA256 = hash(readFileSync(native));

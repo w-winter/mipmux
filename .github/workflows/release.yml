@@ -4,6 +4,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      stage_npm:
+        description: Stage npm packages from the selected published release tag (requires trusted publishers)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -14,6 +19,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ !inputs.stage_npm }}
     name: Build and verify ${{ matrix.target }}
     strategy:
       fail-fast: false
@@ -56,17 +62,18 @@ jobs:
       - name: Verify relocated macOS archive
         if: runner.os == 'macOS'
         run: |
-          mkdir relocated
+          mkdir relocated release-evidence
           tar -xzf release-output/*.tar.gz -C relocated
           package="$PWD/relocated/mipmux-$(node -p 'require("./package.json").version')-darwin-arm64"
-          node "$package/verify-release.mjs" "$package" "$PWD/release-evidence"
+          node "$package/verify-release.mjs" "$package" "$PWD/release-evidence/smoke"
           codesign --verify --strict "$package/libexec/darwin-arm64/MipmuxBridge"
       - name: Build and test Linux
         if: runner.os == 'Linux'
         run: |
           docker build -f test/linux/Dockerfile -t mipmux-release .
           docker run --rm mipmux-release
-          docker run --rm -v "$PWD/release-output:/release" mipmux-release +            sh -ec 'node scripts/package-release.mjs /release; chmod -R a+rX /release'
+          docker run --rm -v "$PWD/release-output:/release" mipmux-release \
+            sh -ec 'node scripts/package-release.mjs /release; chmod -R a+rX /release'
       - name: Verify Linux archive without Swift or network access
         if: runner.os == 'Linux'
         env:
@@ -75,7 +82,25 @@ jobs:
           mkdir relocated release-evidence
           tar -xzf release-output/*.tar.gz -C relocated
           package="mipmux-$(node -p 'require("./package.json").version')-$TARGET"
-          docker run --rm --network none +            -v "$PWD/relocated/$package:/opt/mipmux:ro" +            -v "$PWD/release-evidence:/evidence" +            node:22.23.4-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da +            sh -ec '! command -v swift; node /opt/mipmux/verify-release.mjs /opt/mipmux /evidence/smoke; chmod -R a+rX /evidence'
+          docker run --rm --network none \
+            -v "$PWD/relocated/$package:/opt/mipmux:ro" \
+            -v "$PWD/release-evidence:/evidence" \
+            node:22.23.4-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da \
+            sh -ec '! command -v swift; node /opt/mipmux/verify-release.mjs /opt/mipmux /evidence/smoke; chmod -R a+rX /evidence'
+      - name: Pack native npm helper
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          package="$PWD/relocated/mipmux-$(node -p 'require("./package.json").version')-$TARGET"
+          node scripts/package-npm.mjs helper "$package" "$PWD/release-evidence/smoke/receipt.json" "$PWD/npm-output"
+      - name: Upload native npm helper
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mipmux-npm-helper-${{ matrix.target }}
+          path: |
+            npm-output/*.tgz
+            npm-output/*.inventory.json
+          if-no-files-found: error
       - name: Upload release files
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -92,10 +117,116 @@ jobs:
           path: release-evidence/
           if-no-files-found: error
 
+  npm-package:
+    name: Assemble npm server package
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mipmux-release-assets-linux-x64
+          path: archive
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mipmux-release-evidence-linux-x64
+          path: evidence
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: mipmux-npm-helper-*
+          path: helpers
+          merge-multiple: true
+      - name: Pack npm server
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          mkdir extracted
+          tar -xzf "archive/mipmux-$version-linux-x64.tar.gz" -C extracted
+          node scripts/package-npm.mjs main \
+            "$PWD/extracted/mipmux-$version-linux-x64" "$PWD/evidence/smoke/receipt.json" "$PWD/npm-output" \
+            "$PWD/helpers/w-winter-mipmux-darwin-arm64-$version.tgz" \
+            "$PWD/helpers/w-winter-mipmux-linux-x64-$version.tgz" \
+            "$PWD/helpers/w-winter-mipmux-linux-arm64-$version.tgz"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mipmux-npm-main
+          path: |
+            npm-output/*.tgz
+            npm-output/*.inventory.json
+          if-no-files-found: error
+
+  npm-verify:
+    name: Verify assembled npm package on ${{ matrix.target }}
+    needs: npm-package
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-26
+          - target: linux-x64
+            runner: ubuntu-24.04
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mipmux-release-assets-linux-x64
+          path: archive
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mipmux-release-evidence-linux-x64
+          path: evidence
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: mipmux-npm-*
+          path: npm-packages
+          merge-multiple: true
+      - name: Install and exercise the assembled package with npm 12
+        run: |
+          npm ci
+          npm exec -- tsc -p tsconfig.test.json
+          version=$(node -p 'require("./package.json").version')
+          mkdir extracted npm-evidence
+          tar -xzf "archive/mipmux-$version-linux-x64.tar.gz" -C extracted
+          cat > npm-smoke.mjs <<'JS'
+          import { readFileSync } from 'node:fs';
+          import { resolve } from 'node:path';
+          import { verifyNpmInstallation } from './dist-test/test/fixtures/npm-distribution.js';
+          const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          const artifact = name => {
+            const inventory = resolve(`npm-packages/${name}-${version}.inventory.json`);
+            return { filename: resolve(`npm-packages/${name}-${version}.tgz`), inventory,
+              integrity: JSON.parse(readFileSync(inventory, 'utf8')).integrity };
+          };
+          await verifyNpmInstallation(resolve(`extracted/mipmux-${version}-linux-x64`),
+            resolve('evidence/smoke/receipt.json'), resolve('npm-evidence'), artifact('mipmux'),
+            ['darwin-arm64', 'linux-x64', 'linux-arm64'].map(target => artifact(`w-winter-mipmux-${target}`)));
+          JS
+          npm exec --yes --ignore-scripts --package=npm@12.2.1 --call 'node npm-smoke.mjs'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mipmux-install-verification-${{ matrix.target }}
+          path: npm-evidence/receipt.json
+          if-no-files-found: error
+
   draft:
     name: Attest and create draft
-    if: github.ref_type == 'tag'
-    needs: build
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: [build, npm-package, npm-verify]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -118,10 +249,29 @@ jobs:
             test -f "$name.inventory.json"
             sha256sum --check "$name.sha256"
           done
-      - name: Attest archives
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: mipmux-npm-*
+          path: npm-packages
+          merge-multiple: true
+      - name: Check npm release set
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          cd npm-packages
+          test -f "mipmux-${TAG#v}.tgz"
+          test -f "mipmux-${TAG#v}.inventory.json"
+          for target in darwin-arm64 linux-x64 linux-arm64; do
+            name="w-winter-mipmux-$target-${TAG#v}"
+            test -f "$name.tgz"
+            test -f "$name.inventory.json"
+          done
+      - name: Attest release artifacts
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-path: release/*.tar.gz
+          subject-path: |
+            release/*.tar.gz
+            npm-packages/*.tgz
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -130,4 +280,47 @@ jobs:
         run: |
           args=(--draft --verify-tag --title "$TAG" --generate-notes)
           if [[ "$TAG" == *-* ]]; then args+=(--prerelease); fi
-          gh release create "$TAG" release/*.tar.gz release/*.sha256 release/*.inventory.json "${args[@]}"
+          gh release create "$TAG" release/*.tar.gz release/*.sha256 release/*.inventory.json npm-packages/*.tgz npm-packages/*.inventory.json "${args[@]}"
+
+  stage-npm:
+    name: Stage published npm artifacts
+    if: github.event_name == 'workflow_dispatch' && inputs.stage_npm
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+      - name: Verify and stage the published tarballs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" != tag ]; then
+            echo 'Select a published release tag when requesting npm staging.' >&2
+            exit 1
+          fi
+          gh release verify "$TAG"
+          gh release download "$TAG" --pattern '*.tgz' --dir npm-packages
+          cd npm-packages
+          packages=()
+          for target in darwin-arm64 linux-x64 linux-arm64; do
+            packages+=("w-winter-mipmux-$target-${TAG#v}.tgz")
+          done
+          packages+=("mipmux-${TAG#v}.tgz")
+          for package in "${packages[@]}"; do
+            gh release verify-asset "$TAG" "$package"
+            gh attestation verify "$package" --repo "$GH_REPO" \
+              --signer-workflow "$GH_REPO/.github/workflows/release.yml" \
+              --source-ref "refs/tags/$TAG" --source-digest "$GITHUB_SHA"
+          done
+          dist_tag=latest
+          if [[ "$TAG" == *-* ]]; then dist_tag=next; fi
+          for package in "${packages[@]}"; do
+            npm stage publish "./$package" --access public --provenance --ignore-scripts --tag "$dist_tag"
+          done

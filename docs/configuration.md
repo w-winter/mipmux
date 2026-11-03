@@ -39,7 +39,7 @@ Omitted fields take these values:
 | `copyContext` | RPCE's default copy state: Auto file tree, automatic codemaps, no Git inclusion, no customizations and no custom presets |
 | `ignoreSettings` | RPCE's default ignore behavior |
 | `cachePath` | `~/Library/Caches/mipmux` on macOS; elsewhere `$XDG_CACHE_HOME/mipmux` or `~/.cache/mipmux` |
-| `nativeExecutable` | the package's `libexec/<platform>-<architecture>/MipmuxBridge` |
+| `nativeExecutable` | the matching native helper supplied by this installation |
 | `nativeEnvironment` | none |
 | `terminationGraceMs` | `1000` |
 | `git` | `{ "executable": "/usr/bin/git" }`, with `userConfiguration` taken from `HOME` and `XDG_CONFIG_HOME` so that Git finds your excludes file. Set `null` to work without Git |

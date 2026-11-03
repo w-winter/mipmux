@@ -44,9 +44,9 @@ Create an unpublished package in an absolute output directory:
 npm run package:local -- /var/tmp/mipmux-local-package
 ```
 
-The command builds TypeScript and the native release executable, verifies source history, and packs the runtime files and notices through npm. It includes the build's `package-lock.json` as `npm-shrinkwrap.json`. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
+The command builds TypeScript and the native release executable, verifies source history, and creates a tar archive of runtime files, notices, and the build's `package-lock.json`. `inventory.json` records archive and file hashes, sizes, `buildLockSHA256`, and the packaged executable's linked libraries. Release copies omit debug metadata and use portable compiler source paths. The native build directory retains the unstripped executable and its linkage receipt.
 
-Extract the resulting `.tgz` and install its production dependencies from the shrinkwrap. Use a new installation directory:
+Extract the resulting `.tgz` and install its production dependencies from the lockfile. Use a new installation directory:
 
 ```sh
 mkdir -p /absolute/path/to/install

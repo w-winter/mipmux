@@ -75,12 +75,22 @@ export interface ConfigHost {
   readonly arch: string;
   readonly home: string;
   readonly env: Readonly<Record<string, string | undefined>>;
-  /** Directory containing the package's `dist` and `libexec` directories. */
+  /** Directory containing the package's `dist` directory. */
   readonly packageRoot: string;
+  /** Resolves a Node platform-architecture target only when nativeExecutable has no explicit override. */
+  readonly resolveNativeExecutable: (target: string) => string;
 }
 export function currentConfigHost(): ConfigHost {
   return { platform: process.platform, arch: process.arch, home: homedir(), env: process.env,
-    packageRoot: fileURLToPath(new URL('../..', import.meta.url)) };
+    packageRoot: fileURLToPath(new URL('../..', import.meta.url)), resolveNativeExecutable: target => {
+      try { return fileURLToPath(import.meta.resolve(`#mipmux-native/${target}`)); }
+      catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'ERR_MODULE_NOT_FOUND') {
+          throw new WorkspaceFailure('nativeHelperUnavailable');
+        }
+        throw error;
+      }
+    } };
 }
 export function defaultConfigPath(host: ConfigHost): string {
   return join(host.env.XDG_CONFIG_HOME ?? join(host.home, '.config'), 'mipmux', 'config.json');
@@ -115,7 +125,7 @@ export function resolveHostConfig(file: ConfigFile, host: ConfigHost): HostConfi
   const config: HostConfig = {
     copyContext: file.copyContext ?? defaultCopyContext,
     cachePath: file.cachePath ?? join(cacheRoot, 'mipmux'),
-    nativeExecutable: file.nativeExecutable ?? join(host.packageRoot, 'libexec', `${host.platform}-${host.arch}`, 'MipmuxBridge'),
+    nativeExecutable: file.nativeExecutable ?? host.resolveNativeExecutable(`${host.platform}-${host.arch}`),
     nativeEnvironment: file.nativeEnvironment ?? {},
     terminationGraceMs: file.terminationGraceMs ?? defaultTerminationGraceMs,
     credentialPaths: file.credentialPaths ?? [],

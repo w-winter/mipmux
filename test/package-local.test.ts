@@ -15,6 +15,7 @@ import { Compile } from 'typebox/compile';
 import { PiDiscoveryReceipt, TokenUsage } from '../src/contracts/discovery.js';
 import { Manifest } from '../src/contracts/context.js';
 import { toolJSON } from './fixtures/tool-json.js';
+import { verifyNpmDistribution } from './fixtures/npm-distribution.js';
 
 const packageVersion = Compile(Type.Object({ version: Type.String() }));
 const dependencyLock = Compile(Type.Object({ packages: Type.Record(Type.String(), Type.Object({
@@ -42,7 +43,7 @@ test('local package audits resources and executes relocated library, native, CLI
   const paths: string[] = receipt.files.map((file: { path: string }) => file.path);
   for (const path of ['dist/index.js', 'dist/index.d.ts', 'dist/cli/main.js', 'dist/discovery/pi-worker.js',
     'dist/dependency-identity.json', 'dist/prompts/discovery.md', `libexec/${process.platform}-${process.arch}/MipmuxBridge`,
-    'npm-shrinkwrap.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
+    'package-lock.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'ThirdPartyLicenses/pcre2/LICENCE.md']) assert(paths.includes(path), path);
   assert(!paths.some(path => /(?:\.DS_Store|\.env|test-output|prompt-exports|node_modules|\.build)/u.test(path)));
   const bytes = readFileSync(join(directory, receipt.filename));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), receipt.sha256);
@@ -53,9 +54,9 @@ test('local package audits resources and executes relocated library, native, CLI
   execFileSync('tar', ['-xzf', join(directory, receipt.filename), '-C', installed]);
   const packageRoot = join(installed, 'package');
   const lockBytes = readFileSync(resolve('package-lock.json'));
-  assert.deepEqual(readFileSync(join(packageRoot, 'npm-shrinkwrap.json')), lockBytes);
+  assert.deepEqual(readFileSync(join(packageRoot, 'package-lock.json')), lockBytes);
   execFileSync('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: packageRoot });
-  const installLockSHA256 = createHash('sha256').update(readFileSync(join(packageRoot, 'npm-shrinkwrap.json'))).digest('hex');
+  const installLockSHA256 = createHash('sha256').update(readFileSync(join(packageRoot, 'package-lock.json'))).digest('hex');
   assert.equal(installLockSHA256, receipt.buildLockSHA256);
   const lock = dependencyLock.Parse(JSON.parse(lockBytes.toString()));
   const installedLock = dependencyLock.Parse(JSON.parse(readFileSync(join(packageRoot, 'node_modules/.package-lock.json'), 'utf8')));
@@ -241,7 +242,7 @@ test('local package audits resources and executes relocated library, native, CLI
 
 });
 
-test('release archive carries locked production dependencies and verifies offline after extraction', () => {
+test('release archive carries locked production dependencies and verifies offline after extraction', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'mipmux-release-'));
   const output = join(directory, 'release');
   execFileSync(process.execPath, [resolve('scripts/package-release.mjs'), output], { stdio: 'pipe' });
@@ -257,7 +258,7 @@ test('release archive carries locked production dependencies and verifies offlin
   mkdirSync(relocated);
   execFileSync('tar', ['-xzf', join(output, inventory.filename), '-C', relocated]);
   const packageRoot = join(relocated, name);
-  assert.deepEqual(readFileSync(join(packageRoot, 'npm-shrinkwrap.json')), readFileSync(resolve('package-lock.json')));
+  assert.deepEqual(readFileSync(join(packageRoot, 'package-lock.json')), readFileSync(resolve('package-lock.json')));
   for (const path of ['dist/cli/main.js', `libexec/${process.platform}-${process.arch}/MipmuxBridge`]) {
     assert(lstatSync(join(packageRoot, path)).mode & 0o111, path);
   }
@@ -299,4 +300,5 @@ test('release archive carries locked production dependencies and verifies offlin
   mkdirSync(resolve('test-output'), { recursive: true });
   writeFileSync(resolve('test-output/release-packaging.json'), JSON.stringify({ directory, archive: join(output, inventory.filename),
     inventory: join(output, `${name}.inventory.json`), receipt: join(evidence, 'receipt.json') }) + '\n');
+  await verifyNpmDistribution(packageRoot, join(evidence, 'receipt.json'), directory);
 });
