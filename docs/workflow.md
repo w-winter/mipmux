@@ -121,7 +121,7 @@ Send the workspace that built the bundle. `bundle` is the ready bundle's folder 
 
 Give the recipient the prepared bundle's `context.md`: its path if the recipient can read files, otherwise its contents. The file's last section, `user_instructions`, holds the task. Do not also send `manifest.json` or `handoff.md`; they are records for you.
 
-Before sending, check that the packet fits the recipient's context window with room for its own instructions, tools and answer. Units are only an estimate: in one measurement, a packet of 181,000 units came to 303,000 Claude tokens. If the packet does not fit, ask the user whether to shrink it (step 5) or to split the task.
+The packet's size follows the user's budget: `contextBudgetUnits` in mipmux's configuration, or a request's `budgetUnits` when the user asks for one (see [Budget](packets.md#budget)). Fitting that budget to the recipient's context window is the user's choice, so hand off the packet as prepared. If the recipient reports that it could not read the whole packet, tell the user, who can lower the budget.
 
 ## Later runs and cleanup
 
