@@ -1,6 +1,6 @@
 {
   "name": "omp-mipmux",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "oh-my-pi extension that selects a saved mipmux workspace and applies build preferences to mipmux calls",
   "license": "Apache-2.0",
   "repository": { "type": "git", "url": "git+https://github.com/w-winter/mipmux.git", "directory": "integrations/omp" },

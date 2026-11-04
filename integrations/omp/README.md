@@ -2,6 +2,10 @@
 
 omp-mipmux is the [oh-my-pi](https://github.com/can1357/oh-my-pi) (omp) version of [pi-mipmux](https://github.com/w-winter/mipmux/tree/main/integrations/pi#readme). Its `/mipmux` command opens a panel where you choose the folders that the agent's context packets come from, and set build preferences such as the budget and the discovery model. The extension applies these choices to the agent's `context_builder` and `context_prepare` calls before omp sends them to mipmux.
 
+![The /mipmux panel in Pi: adding a root folder to the saved workspace, raising this session's budget to 245,000 units, and saving with Ctrl+S](https://github.com/user-attachments/assets/4c2b9b60-e184-4b83-99d1-6856f3b4925d)
+
+The recording shows pi-mipmux in Pi. omp-mipmux opens the same panel in omp.
+
 ## Install
 
 omp-mipmux needs mipmux connected to omp as an MCP server named `mipmux`, and the `mipmux` command on your PATH; the [mipmux quickstart](https://github.com/w-winter/mipmux#quickstart) covers installation and configuration. Add the server to `~/.omp/agent/mcp.json`:

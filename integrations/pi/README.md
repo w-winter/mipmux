@@ -2,6 +2,8 @@
 
 pi-mipmux is a [Pi](https://pi.dev) extension for mipmux. Its `/mipmux` command opens a panel where you choose the folders that the agent's context packets come from, and set build preferences such as the budget and the discovery model. The extension applies these choices to the agent's `context_builder` and `context_prepare` calls before Pi sends them to mipmux.
 
+![The /mipmux panel in Pi: adding a root folder to the saved workspace, raising this session's budget to 245,000 units, and saving with Ctrl+S](https://github.com/user-attachments/assets/4c2b9b60-e184-4b83-99d1-6856f3b4925d)
+
 ## Install
 
 pi-mipmux needs mipmux connected to Pi as an MCP server named `mipmux`, and the `mipmux` command on your PATH; the [mipmux quickstart](https://github.com/w-winter/mipmux#quickstart) covers installation and configuration. With Pi's built-in MCP support:
