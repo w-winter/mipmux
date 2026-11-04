@@ -19,7 +19,7 @@ const ready = Compile(Type.Object({ state: Type.Literal('ready'),
   bundle: Type.Object({ accounting: Type.Object({ allowance: Type.Number() }) }) }));
 const failure = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String() }));
 /** The discovery settings a test file sets besides the scripted provider's. */
-interface DiscoveryOverrides { readonly thinking?: 'low'; readonly allowedModels: readonly string[] }
+interface DiscoveryOverrides { readonly thinking?: 'medium'; readonly allowedModels: readonly string[] }
 const models = Compile(Type.Object({ kind: Type.Literal('models'), models: Type.Array(Type.String()) }, { additionalProperties: false }));
 
 test('a running server applies edited request defaults and allowed models at the next build, and mipmux models lists what discovery can reach', async t => {
@@ -37,7 +37,7 @@ test('a running server applies edited request defaults and allowed models at the
   // Discovery's worker sees only discovery.environment, so a key in this process's environment adds no models.
   const listed = models.Parse(JSON.parse((await promisify(execFile)(process.execPath, [resolve('dist/cli/main.js'), 'models', '--config', configPath],
     { env: { ...process.env, OPENAI_API_KEY: 'not-for-discovery' } })).stdout));
-  assert(listed.models.includes('anthropic/claude-sonnet-4-5') && listed.models.includes('anthropic/claude-haiku-4-5'), JSON.stringify(listed));
+  assert(listed.models.includes('anthropic/claude-sonnet-5-5') && listed.models.includes('anthropic/claude-haiku-4-5'), JSON.stringify(listed));
   assert(listed.models.every(model => model.startsWith('anthropic/')), JSON.stringify(listed));
   assert.deepEqual(listed.models, [...listed.models].sort());
 
@@ -62,10 +62,10 @@ test('a running server applies edited request defaults and allowed models at the
   const haiku = { model: 'anthropic/claude-haiku-4-5' };
   assert.equal(failure.Parse(toolJSON(await build({ ...request, outputName: 'run-1', discovery: haiku }))).code, 'modelNotAllowed');
 
-  await writeFile(configPath, file(150000, { thinking: 'low', allowedModels: ['anthropic/claude-haiku-4-5'] }));
+  await writeFile(configPath, file(150000, { thinking: 'medium', allowedModels: ['anthropic/claude-haiku-4-5'] }));
   assert.equal((await settled({ ...request, outputName: 'run-2', discovery: haiku })).discovery.requested.model, 'claude-haiku-4-5');
   const defaults = await settled({ ...request, outputName: 'run-3' });
-  assert.deepEqual(defaults.discovery.requested, { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'low' });
+  assert.deepEqual(defaults.discovery.requested, { provider: 'anthropic', model: 'claude-sonnet-5-5', thinking: 'medium' });
   assert.equal(defaults.bundle.accounting.allowance, 150000);
 
   // A file that is not valid configuration, as in the middle of an edit, fails the call instead of using stale defaults.

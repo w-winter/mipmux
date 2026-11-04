@@ -218,7 +218,7 @@ test('summary retry uses the same SDK stream observer, while incomplete output a
     if (!['summary', 'thresholdFailed', 'lengthRecovered', 'overflowExhausted', 'compactionCancel'].includes(scenario)) provider.config.policy.compaction.enabled = false;
     if (scenario === 'preflight') provider.config.model = 'absent-model';
     if (scenario === 'commandAuth') await writeFile(provider.config.authPath, JSON.stringify({ anthropic: { type: 'api_key', key: '!echo forbidden' } }));
-    if (scenario === 'clamping') provider.config.thinking = 'max';
+    if (scenario === 'clamping') provider.config.thinking = 'minimal';
     const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 }), abort = new AbortController();
     try {
       const work = new PiRunner(provider.config, supervisor, nativeDiscoveryRenderer(supervisor)).run({ tokenBudget: 10000, enhancementMode: 'fullRewrite' as const, task: 'Task '.repeat(1000), purpose: 'investigation', initialContext: 'Fixture context', fileTree: '', currentPrompt: 'Fixture message', restrictsReviewGitToExplicitReadOnly: true, constraints: '', hints: [], roots: ['r'] },

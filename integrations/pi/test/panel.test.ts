@@ -16,7 +16,7 @@ const configFile = { contextBudgetUnits: 200000, cachePath: '/cache',
 const ConfigFile = Compile(Type.Object({ contextBudgetUnits: Type.Optional(Type.Integer({ minimum: 1 })), defaultEnhancementMode: Type.Optional(EnhancementMode),
   discovery: Type.Optional(Type.Object({ provider: Type.String(), model: Type.String(), thinking: ThinkingLevel,
     allowedModels: Type.Optional(Type.Array(Type.String())) })) }));
-const credentialedModels = ['anthropic/claude-haiku-4-5', 'anthropic/claude-sonnet-4-5', 'openai-codex/gpt-6.1-sol'];
+const credentialedModels = ['anthropic/claude-haiku-4-5', 'anthropic/claude-sonnet-5-5', 'openai-codex/gpt-6.1-sol'];
 
 /** Stands in for mipmux: reports a configuration file as `mipmux config` resolves it, and rejects one mipmux would reject. */
 function fakeMipmux(defaultPath: string): MipmuxCommands {
@@ -163,13 +163,13 @@ test('server defaults are written into the configuration file, keeping its other
   await press(key.enter, key.clearLine, ...'150k', key.enter, key.save);
   const text = await readFile(fixture.configPath, 'utf8');
   assert.deepEqual(JSON.parse(text), { ...configFile, contextBudgetUnits: 150000, discovery: { ...configFile.discovery, thinking: 'low',
-    allowedModels: ['anthropic/claude-haiku-4-5', 'anthropic/claude-sonnet-4-5'] } });
+    allowedModels: ['anthropic/claude-haiku-4-5', 'anthropic/claude-sonnet-5-5'] } });
   assert.deepEqual(Object.keys(JSON.parse(text)), Object.keys(configFile));
   assert.match(text, /^\{\n {4}"contextBudgetUnits"/);
   // Sessions may now choose the newly allowed model.
   await focus('Discovery model');
   await press(key.enter);
-  assert.match(screen(), /anthropic\/claude-sonnet-4-5/);
+  assert.match(screen(), /anthropic\/claude-sonnet-5-5/);
   await press(key.escape);
 
   await writeFile(fixture.configPath, text.replace('150000', '160000'));

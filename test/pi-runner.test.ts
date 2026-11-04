@@ -42,6 +42,8 @@ test('real isolated SDK has only scoped tools, observes same-model recovery and 
     for (const recorded of provider.requests) {
       assert.equal(recorded.model, provider.config.model);
       assert.deepEqual(recorded.tools.sort(), ['codemode', 'draft_inspect', 'draft_update', 'draft_validate', 'file_search', 'git', 'get_code_structure', 'get_file_tree', 'manage_selection', 'prompt', 'read_file'].sort());
+      // Pi's cache-preserving placeholder for this model; nothing else may be declared, even as deferred.
+      assert.deepEqual(recorded.deferred, ['__pi_deferred_placeholder__']);
     }
     await writeFile(join(provider.directory, 'receipt.json'), JSON.stringify(result, null, 2));
   } finally { await supervisor.close(); await provider.close(); }
@@ -68,7 +70,7 @@ test('SDK consumes the validated model snapshot and guards each locked credentia
       ? { anthropic: { type: 'api_key', key: `!touch '${marker}'; printf synthetic` } }
       : { providers: { anthropic: { apiKey: `!touch '${marker}'; printf synthetic`,
         baseUrl: anthropic.baseUrl,
-        modelOverrides: { 'claude-sonnet-4-5': { contextWindow: 4096, maxTokens: 512 } } } } };
+        modelOverrides: { 'claude-sonnet-5-5': { contextWindow: 4096, maxTokens: 512 } } } } };
     const hook = t.mock.method(fsPromises, 'readFile', async (...args: Parameters<typeof originalRead>) => {
       const bytes = await originalRead(...args);
       if (args[0] === target && !substituted) {

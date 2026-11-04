@@ -21,7 +21,7 @@ A running MCP server rereads the file before each `context_builder` and `draft_c
     "thinking": "medium",
     "modelsPath": "/private/mipmux/models.json",
     "promptTemplatePath": "/private/mipmux/discovery.md",
-    "allowedModels": ["anthropic/claude-sonnet-4-6"],
+    "allowedModels": ["anthropic/claude-sonnet-5-5"],
     "policy": { "compaction": { "reserveTokens": 9000 } }
   }
 }

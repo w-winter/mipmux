@@ -8,7 +8,10 @@ import type { DiscoveryHostConfig } from '../../src/discovery/selection.js';
 import type { DiscoveryConfig } from '../../src/discovery/discovery-config.js';
 
 const requestValidator = Compile(Type.Object({ model: Type.String(), messages: Type.Array(Type.Unknown()),
-  tools: Type.Optional(Type.Array(Type.Object({ name: Type.String(), input_schema: Type.Unknown() }))), system: Type.Optional(Type.Unknown()) }));
+  tools: Type.Optional(Type.Array(Type.Object({ name: Type.String(), input_schema: Type.Unknown(), defer_loading: Type.Optional(Type.Boolean()) }))),
+  system: Type.Optional(Type.Unknown()) }));
+// For models that accept effort changes mid-conversation, Pi frames the conversation with these markers.
+const effortMarker = Compile(Type.Object({ role: Type.Literal('system'), output_config: Type.Object({ effort: Type.String() }) }));
 export type Reply = { kind: 'error' } | { kind: 'overflow' } | { kind: 'hold'; entered: () => void } |
   { kind: 'text'; text: string; stop: 'end_turn' | 'max_tokens'; tokens: number; reportedModel?: string } |
   { kind: 'tool'; name: string; input: unknown; stop: 'tool_use' | 'max_tokens'; tokens: number };
@@ -20,14 +23,19 @@ export function hostDiscovery(config: DiscoveryHostConfig): DiscoveryConfig {
 }
 
 export async function scriptedProvider(respond: (summary: boolean, index: number) => Reply) {
-  const requests: { model: string; tools: string[]; schemas: ReadonlyMap<string, unknown>; summary: boolean; messages: unknown[]; system: unknown }[] = [];
+  const requests: { model: string; tools: string[]; deferred: string[]; schemas: ReadonlyMap<string, unknown>; summary: boolean; messages: unknown[];
+    system: unknown }[] = [];
   const server = createServer(async (request, response) => {
     const bytes: Buffer[] = []; for await (const chunk of request) bytes.push(Buffer.from(chunk));
     const body: unknown = JSON.parse(Buffer.concat(bytes).toString());
     if (!requestValidator.Check(body)) { response.writeHead(400); response.end(); return; }
     const summary = !body.tools?.length;
-    requests.push({ model: body.model, tools: body.tools?.map(tool => tool.name) ?? [], schemas: new Map(body.tools?.map(tool => [tool.name, tool.input_schema])),
-      summary, messages: body.messages, system: body.system });
+    // For Anthropic models that support mid-conversation tool changes, Pi also declares a never-loaded placeholder with
+    // `defer_loading`; `deferred` keeps such declarations apart from the tools the model can call.
+    const declared = body.tools ?? [], active = declared.filter(tool => tool.defer_loading !== true);
+    requests.push({ model: body.model, tools: active.map(tool => tool.name), deferred: declared.filter(tool => tool.defer_loading === true).map(tool => tool.name),
+      schemas: new Map(active.map(tool => [tool.name, tool.input_schema])), summary, messages: body.messages.filter(message => !effortMarker.Check(message)),
+      system: body.system });
     const reply = respond(summary, requests.length);
     if (reply.kind === 'hold') { reply.entered(); return; }
     if (reply.kind === 'error' || reply.kind === 'overflow') {
@@ -51,7 +59,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   const address = server.address(); if (!address || typeof address === 'string') throw new Error('Missing port');
   await mkdir('test-output', { recursive: true });
   const directory = await mkdtemp(join(tmpdir(), 'mipmux-scripted-pi-'));
-  const config: DiscoveryHostConfig = { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off', allowedModels: [],
+  const config: DiscoveryHostConfig = { provider: 'anthropic', model: 'claude-sonnet-5-5', thinking: 'low', allowedModels: [],
     authPath: join(directory, 'auth.json'), modelsPath: join(directory, 'models.json'), promptTemplatePath: join(directory, 'discovery.md'), environment: {}, mcp: null, codemode: true,
     policy: { retry: { enabled: true, maxRetries: 1, baseDelayMs: 0, maxAgentDelayMs: 0,
       provider: { timeoutMs: 10000, maxRetries: 0, maxRetryDelayMs: 0 } },
@@ -60,7 +68,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
   await writeFile(config.promptTemplatePath, await readFile(resolve('test/fixtures/discovery-template.md'), 'utf8'));
   await writeFile(config.authPath, JSON.stringify({ anthropic: { type: 'api_key', key: 'synthetic' } }));
   await writeFile(config.modelsPath, JSON.stringify({ providers: { anthropic: { baseUrl: `http://127.0.0.1:${address.port}`,
-    modelOverrides: { 'claude-sonnet-4-5': { contextWindow: 8192, maxTokens: 1024 } } } } }));
+    modelOverrides: { 'claude-sonnet-5-5': { contextWindow: 8192, maxTokens: 1024 } } } } }));
   return { config, directory, requests, url: `http://127.0.0.1:${address.port}`, close: async () => {
     server.closeAllConnections(); await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   } };

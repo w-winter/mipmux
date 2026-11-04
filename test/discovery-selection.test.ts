@@ -16,8 +16,8 @@ const requestedReply = Compile(Type.Object({ jobId: Type.String(), state: Type.S
   discovery: Type.Object({ requested: Type.Object({ provider: Type.String(), model: Type.String(), thinking: Type.String() }),
     thinkingLevels: Type.Union([Type.Array(Type.String()), Type.Null()]) }) }));
 const errorReply = Compile(Type.Object({ kind: Type.Literal('error'), code: Type.String(), message: Type.Optional(Type.String()) }));
-// The scripted provider's default model, claude-sonnet-4-5, supports these levels and no others.
-const sonnetLevels = ['off', 'minimal', 'low', 'medium', 'high'];
+// The scripted provider's default model, claude-sonnet-5-5, supports these levels and no others.
+const sonnetLevels = ['low', 'medium', 'high', 'xhigh', 'max'];
 
 test('a build selects an allowed discovery model and level, fixed for its job and recorded in the receipt', async t => {
   const provider = await scriptedProvider(() => ({ kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 }));
@@ -55,7 +55,7 @@ test('a build selects an allowed discovery model and level, fixed for its job an
   assert.equal(refused.isError, true);
   const refusal = errorReply.Parse(toolJSON(refused));
   assert.equal(refusal.code, 'modelNotAllowed');
-  for (const reference of ['openai/gpt-unlisted', 'anthropic/claude-sonnet-4-5', 'anthropic/claude-haiku-4-5']) assert.match(refusal.message ?? '', new RegExp(reference));
+  for (const reference of ['openai/gpt-unlisted', 'anthropic/claude-sonnet-5-5', 'anthropic/claude-haiku-4-5']) assert.match(refusal.message ?? '', new RegExp(reference));
   assert.equal(provider.requests.length, 0);
 
   const selection = { model: 'anthropic/claude-haiku-4-5', thinking: 'low' } as const;
@@ -71,15 +71,15 @@ test('a build selects an allowed discovery model and level, fixed for its job an
 
   // Omitting the selection and naming the configured defaults resolve to the same settings, so they are the same job.
   const defaults = await started({ ...request, outputName: 'run-default' });
-  assert.equal(await started({ ...request, outputName: 'run-default', discovery: { model: 'anthropic/claude-sonnet-4-5', thinking: 'off' } }), defaults);
-  assert.deepEqual((await settle(defaults)).discovery.requested, { provider: 'anthropic', model: 'claude-sonnet-4-5', thinking: 'off' });
+  assert.equal(await started({ ...request, outputName: 'run-default', discovery: { model: 'anthropic/claude-sonnet-5-5', thinking: 'low' } }), defaults);
+  assert.deepEqual((await settle(defaults)).discovery.requested, { provider: 'anthropic', model: 'claude-sonnet-5-5', thinking: 'low' });
 
   const prepared = await client.callTool({ name: 'context_prepare', arguments: { workspace: request.workspace, bundle: 'run-selected',
     prompt: 'Final task', outputName: 'run-selected-final', discovery: selection } });
   assert.equal(prepared.isError, true);
 
   const requests = provider.requests.length;
-  const unsupported = await settle(await started({ ...request, outputName: 'run-xhigh', discovery: { thinking: 'xhigh' } }));
+  const unsupported = await settle(await started({ ...request, outputName: 'run-minimal', discovery: { thinking: 'minimal' } }));
   assert.equal(unsupported.state, 'failed'); assert.equal(unsupported.code, 'unsupportedThinkingLevel');
   assert.deepEqual(unsupported.discovery.thinkingLevels, sonnetLevels);
   assert.equal(provider.requests.length, requests);
