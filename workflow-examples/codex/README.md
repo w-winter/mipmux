@@ -37,6 +37,6 @@ $mipmux-example-plan how to add request cancellation in /absolute/project, draft
 
 The roles set no model, so a subagent uses the session's model and reasoning effort, or the defaults in the `[agents]` table of Codex's configuration. To choose another for a role, set `model` and `model_reasoning_effort` together in its TOML file. Codex subagents use models from the session's provider. When your request names a model for a subagent, the skills pass it, with any effort you name, as `spawn_agent`'s `model` and `reasoning_effort` for that dispatch. [Advisors](../README.md#advisors) explains why the choice matters.
 
-## References
+## Compatibility
 
-Checked on 2026-11-04 against Codex's [custom-agent documentation](https://developers.openai.com/codex/subagents) and [skill documentation](https://developers.openai.com/codex/skills), and Codex 0.166.0's [agent-file parser](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/agent-roles/src/agent_role_config.rs) and [subagent tool schemas](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core/src/tools/handlers/multi_agents_spec.rs).
+Both skills ran end to end through `codex exec` in Codex 0.166.0 on 2026-11-04. Checked on the same day against Codex's [custom-agent documentation](https://developers.openai.com/codex/subagents) and [skill documentation](https://developers.openai.com/codex/skills), and Codex 0.166.0's [agent-file parser](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/agent-roles/src/agent_role_config.rs) and [subagent tool schemas](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core/src/tools/handlers/multi_agents_spec.rs).

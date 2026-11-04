@@ -46,6 +46,6 @@ If you selected a workspace with `/mipmux`, it must include the task's source ro
 
 The roles set no model, so each child uses its own Pi startup model, which may differ from the model you are using. To choose one in a role, set `model` to `provider/model-id` and `thinking` to an effort level such as `high`. Pi can give each role a model from any provider you are signed in to. When your request names a model for a subagent, the skills pass it, with any effort you name, as the `subagent` tool's `model` and `thinking` for that dispatch. [Advisors](../README.md#advisors) explains why the choice matters.
 
-## References
+## Compatibility
 
-Checked against the fork's [definition parser](https://github.com/w-winter/pi-interactive-subagents/blob/cae3d7b9277851fbcf64cd3b6fe53e8dba14154f/pi-extension/subagents/agent-definitions.ts) and [dispatch and result handling](https://github.com/w-winter/pi-interactive-subagents/blob/cae3d7b9277851fbcf64cd3b6fe53e8dba14154f/pi-extension/subagents/index.ts), package version 3.7.2, on 2026-11-04.
+Both skills ran end to end in Pi 1.5.0 with the fork at `cae3d7b` and pi-mipmux installed, on 2026-11-04. Checked against the fork's [definition parser](https://github.com/w-winter/pi-interactive-subagents/blob/cae3d7b9277851fbcf64cd3b6fe53e8dba14154f/pi-extension/subagents/agent-definitions.ts) and [dispatch and result handling](https://github.com/w-winter/pi-interactive-subagents/blob/cae3d7b9277851fbcf64cd3b6fe53e8dba14154f/pi-extension/subagents/index.ts), package version 3.7.2, on 2026-11-04.
