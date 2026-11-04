@@ -4,7 +4,9 @@
 
 mipmux prepares context packets for language models: single Markdown files that give a model what it needs to reason about a task effectively, and as little else as possible, within a specified token budget. A packet holds the task description and the source it concerns, as whole files, slices (line ranges), or code maps (outlines of a file's declarations, such as its classes, methods and functions, with their signatures), along with any Git patches and documents the task depends on.
 
-A discovery agent assembles each packet as it explores the folders you declare, follows referenced types and helpers into other files, and fits its selection to the budget, preferring complete files and falling back to slices and code maps. By default, it appends what it learned to the task description: the architecture of the relevant code, how the selected files relate, and ambiguities the description leaves open. It can instead rewrite the task description into a fuller and more precise problem statement. The agent runs through either [Pi](https://pi.dev) or the Claude Agent SDK.
+> The [multi-agent workflow examples](workflow-examples/README.md) demonstrate how this is useful. A coding agent asks mipmux for a packet and hands it to an "advisor": a reviewer, planner, or plan critic that runs as a separate subagent and can use a different model and thinking level. The advisor reads the packet and returns its review or plan, while the coding agent reads only that answer and not the packet, so its context window stays lean for coordinating the work and implementing it.
+
+mipmux's discovery agent assembles each packet as it explores the folders you declare, follows referenced types and helpers into other files, and fits its selection to the budget, preferring complete files and falling back to slices and code maps. By default, it appends what it learned to the task description: the architecture of the relevant code, how the selected files relate, and ambiguities the description leaves open. It can instead rewrite the task description into a fuller and more precise problem statement. The discovery agent runs through either [Pi](https://pi.dev) or the Claude Agent SDK.
 
 mipmux records each packet's contents and the exact sources they came from. The coding agent that called mipmux then gives a saved packet its final instructions with `context_prepare`, which makes no model call. It refuses a packet whose sources changed since discovery or, on request, rebuilds the same selection from the current files.
 
@@ -121,6 +123,8 @@ The default MCP interface has three tools: `context_builder` starts discovery, `
 For a first run, give your agent a task such as "Build a context packet for reviewing the uncommitted changes in `/absolute/path/to/repo`, including the patch and relevant tests." The agent must create an output folder, such as that repository's `prompt-exports`, before starting the build. Each packet is saved in a distinct bundle directory there, alongside `manifest.json` and `handoff.md`, which record its contents and verification information.
 
 Your agent should check the receipt's selected material and omissions against the task before preparing the packet, then hand the prepared `context.md` to the recipient as a file attachment or a path it can read.
+
+The [multi-agent workflow examples](workflow-examples/README.md) provide installable review and planning skills, with customizable reviewer, planner and plan-critic subagents, for pi-interactive-subagents, pi-subagents, oh-my-pi, Claude Code, and Codex.
 
 In Pi, the [pi-mipmux extension](integrations/pi/README.md) adds a `/mipmux` command for choosing a saved workspace and setting build preferences, such as the budget or discovery model, that apply to the agent's calls. [omp-mipmux](integrations/omp/README.md) adds the same command to oh-my-pi.
 

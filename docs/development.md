@@ -38,6 +38,8 @@ printf '%s\n' '{"wireVersion":1,"requestId":"describe","generation":"example","o
 
 `describe` reports supported extensions, extraction limits, decoder policy, regex-engine checks, and Swift's canonical pipeline identities. [The native contract](contracts.md) describes acquisition, extraction, export, and cancellation.
 
+Each client folder under `workflow-examples/` is a complete copy that users install on its own. The role instructions, and each skill outside its **Host mechanics** section, must read the same in every folder, so change all five copies together; `test/workflow-examples.test.ts` fails when one differs.
+
 ## Local package
 
 Create an unpublished package in an absolute output directory:

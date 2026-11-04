@@ -17,6 +17,7 @@ COPY src src
 COPY test test
 COPY scripts scripts
 COPY prompts prompts
+COPY workflow-examples workflow-examples
 COPY ThirdPartyLicenses ThirdPartyLicenses
 COPY LICENSE README.md THIRD_PARTY_NOTICES.md ./
 RUN npm run build
