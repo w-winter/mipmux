@@ -22,7 +22,7 @@ Principles:
 
 **Asking the user.** Ask in the conversation and end your turn until they answer.
 
-**Explorers.** Use pi-subagents' built-in `scout` agent with `"options": { "context": "fresh" }`, one narrow question each, and an `output` path in the run's report folder for its findings. Start several with `async: true` to run them in parallel.
+**Explorers.** Use pi-subagents' built-in `scout` agent with `"options": { "context": "fresh" }`, one narrow question each, and an `output` path in the run's report folder for its findings. To run several in parallel, make one `subagent` call for each in the same turn, with `async: true`. The `parallel` workflow takes no `output` for each child, so do not use it here.
 
 **Dispatching a subagent.** Use pi-subagents' `subagent` tool, whose arguments differ from pi-interactive-subagents'. If the session shows `subagents_enable` instead, call it; `subagent` appears on your next request. This user-invoked workflow authorizes delegation. For the first planner:
 
@@ -36,11 +36,11 @@ Principles:
 }
 ```
 
-`options.context: "fresh"` keeps your conversation out of the subagent. pi-subagents has no `inputFiles`: the path in the task tells the subagent what to read, and you should not read the packet yourself to paste it in. Use the path the workflow names for each answer as `output`, a new path for each dispatch. To run several planners in parallel, start each with `async: true`, its own `output` and its `model`, before waiting.
+`options.context: "fresh"` keeps your conversation out of the subagent. pi-subagents has no `inputFiles`: the path in the task tells the subagent what to read, and you should not read the packet yourself to paste it in. Use the path the workflow names for each answer as `output`, a new path for each dispatch. To run several planners in parallel, make one `subagent` call for each in the same turn, with `async: true`, its own `output` and its `model`.
 
 **Choosing a model.** For one dispatch, the `subagent` tool takes `model`: `provider/model-id`, with an optional suffix such as `:high` that sets the thinking level. Set it only for a model or effort the user named.
 
-**Receiving the answer.** The roles have no writing tools, so pi-subagents saves the subagent's complete final answer at `output`. Wait with `bg_wait({ "id": "<run ID>" })`, check the finished state with `subagent({ "action": "status", "id": "<run ID>" })`, and read the saved file in full. Inline previews and transcript tails can be cut short. A missing or partial file is not a deliverable.
+**Receiving the answer.** The roles have no writing tools, so pi-subagents saves the subagent's complete final answer at `output`. An `async` call returns at once. End your turn or do independent work until pi-subagents' completion notice arrives; do not sleep, poll, or call `bg_wait` for these runs. Then check the finished state with `subagent({ "action": "status", "id": "<run ID>" })` and read the saved file in full. Inline previews and transcript tails can be cut short. A missing or partial file is not a deliverable.
 
 ## 1. Choose the user's involvement
 

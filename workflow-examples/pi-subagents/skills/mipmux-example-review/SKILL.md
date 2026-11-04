@@ -30,7 +30,7 @@ You coordinate a review of the change the user names. mipmux's discovery agent c
 
 **Choosing a model.** For one dispatch, the `subagent` tool takes `model`: `provider/model-id`, with an optional suffix such as `:high` that sets the thinking level. Set it only for a model or effort the user named.
 
-**Receiving the answer.** The roles have no writing tools, so pi-subagents saves the subagent's complete final answer at `output`. Wait with `bg_wait({ "id": "<run ID>" })`, check the finished state with `subagent({ "action": "status", "id": "<run ID>" })`, and read the saved file in full. Inline previews and transcript tails can be cut short. A missing or partial file is not a deliverable.
+**Receiving the answer.** The roles have no writing tools, so pi-subagents saves the subagent's complete final answer at `output`. An `async` call returns at once. End your turn or do independent work until pi-subagents' completion notice arrives; do not sleep, poll, or call `bg_wait` for these runs. Then check the finished state with `subagent({ "action": "status", "id": "<run ID>" })` and read the saved file in full. Inline previews and transcript tails can be cut short. A missing or partial file is not a deliverable.
 
 ## 1. Survey the change
 
