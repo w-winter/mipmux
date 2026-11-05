@@ -139,6 +139,8 @@ export function rebuildRequest(saved: VerifiedBundle, request: ContextPrepareReq
   const manifest = saved.verified.manifest;
   const { copyContext: _context, copyPreset: _preset, copyPresetSelector, clarification: _clarification, ...captured } = manifest.request;
   const requiredSources = [...captured.requiredSources, ...request.requiredSources ?? []];
+  // Discovery can add documents after the build request is captured.
+  const documents = manifest.materials.flatMap(record => record.kind === 'document' ? [record.input] : []);
   const required = new Set(requiredSources.map(selection => sourceId(selection.source)));
   const sources = (manifest.manualPresentation?.canonicalSources ??
     capturedSourceSelections(saved.materials, manifest.unavailableRoots, manifest.unavailableFiles))
@@ -148,6 +150,6 @@ export function rebuildRequest(saved: VerifiedBundle, request: ContextPrepareReq
   // file alone referenced.
   return { ...captured, copyPreset: copyPresetSelector, outputName: request.outputName, requiredSources,
     budgetUnits: request.budgetUnits ?? captured.budgetUnits,
-    documents: [...captured.documents, ...request.documents ?? []], patches: [...captured.patches, ...request.patches ?? []],
+    documents: [...documents, ...request.documents ?? []], patches: [...captured.patches, ...request.patches ?? []],
     initialSelection: { codemapMode: manifest.codemapMode, sources } };
 }

@@ -17,6 +17,7 @@ import { gitValidator } from '../src/contracts/git.js';
 import { selectionValidator } from '../src/contracts/selection.js';
 import { loadVerifiedBundle, type VerifiedBundle } from '../src/context/verify.js';
 import { sha256 } from '../src/workspace/values.js';
+import { scriptedProvider } from './fixtures/scripted-provider.js';
 import { toolJSON } from './fixtures/tool-json.js';
 
 const signal = () => new AbortController().signal;
@@ -107,6 +108,41 @@ function evidence(bundle: VerifiedBundle) {
     request: { ...bundle.verified.manifest.request, outputName: null }, automaticCodemaps: bundle.verified.manifest.automaticCodemaps,
     clipboardPreset: bundle.verified.manifest.clipboardPreset, unavailableFiles: bundle.verified.manifest.unavailableFiles };
 }
+
+test('MCP context_prepare retains documents added during discovery when adding another document', async t => {
+  const discovered = { id: 'sdk-contract', role: 'evidence', origin: 'discovery', text: 'COMPLETE SDK CONTRACT\n' } satisfies CallerDocument;
+  const original = { id: 'ticket', role: 'evidence', origin: 'caller', text: 'ORIGINAL TICKET\n' } satisfies CallerDocument;
+  const validation = { id: 'validation', role: 'report', origin: 'coordinator', text: 'VALIDATION RESULTS\n' } satisfies CallerDocument;
+  const provider = await scriptedProvider((_summary, index) => index === 1
+    ? { kind: 'tool', name: 'draft_update', input: { expectedRevision: 0, maxOutputBytes: 10000,
+      mutation: { kind: 'addDocument', document: { kind: 'suppliedDocument', ...discovered } } }, stop: 'tool_use', tokens: 10 }
+    : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
+  t.after(() => provider.close());
+  const f = await fixture(), config = join(f.base, 'host.json');
+  await writeFile(config, JSON.stringify({ ...f.options, discovery: provider.config, defaultMaxOutputBytes: 100000 }));
+  const transport = new StdioClientTransport({ command: process.execPath,
+    args: [resolve('dist/cli/main.js'), 'mcp', '--config', config], cwd: '/', stderr: 'pipe' });
+  transport.stderr?.on('data', () => {});
+  const client = new Client({ name: 'context-prepare-documents', version: '1' });
+  try {
+    await client.connect(transport);
+    const job = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
+      arguments: { workspace: f.spec, purpose: 'investigation', task: discoveryTask, outputName: 'discovery',
+        required: [{ root: 'r', path: 'Full.swift' }], documents: [original] } })));
+    const built = Compile(Type.Object({ state: Type.Literal('ready'), bundle: Type.Object({ directory: Type.String() }) }))
+      .Parse(toolJSON(await client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId: job.jobId, durationMs: 10000 } })));
+    const before = await readFile(join(built.bundle.directory, 'context.md'), 'utf8');
+    assert(before.includes(discovered.text));
+    const receipt = readyReply.Parse(toolJSON(await client.callTool({ name: 'context_prepare', arguments: {
+      workspace: f.spec, bundle: 'discovery', prompt: finalTask, outputName: 'prepared', documents: [validation],
+    } })));
+    assert.deepEqual(changes(receipt), [['document:validation'], []]);
+    const packet = await readFile(receipt.context.path, 'utf8');
+    for (const document of [original, discovered, validation]) assert(packet.includes(document.text), document.id);
+    await verifyBundle(receipt.directory);
+    await writeFile('test-output/context-prepare-documents.json', JSON.stringify(receipt, null, 2) + '\n');
+  } finally { await client.close(); }
+});
 
 test('MCP context_prepare reuses or rebuilds saved evidence with a replacement prompt and refuses changed or foreign bundles', async () => {
   const f = await fixture();
