@@ -65,7 +65,7 @@ export function createMcpServer(input: HostConfig, configurationPath: string | n
   if (!hostValidator.Check(input)) throw new WorkspaceFailure('invalidConfiguration');
   const config = freeze(structuredClone(input));
   const state: { application: ReturnType<typeof compose> | null; closing: Promise<void> | null } = { application: null, closing: null };
-  const server = new McpServer({ name: 'mipmux', version: '0.1.0-alpha.3' }, { instructions });
+  const server = new McpServer({ name: 'mipmux', version: '0.1.0-alpha.4' }, { instructions });
   let settled!: () => void, rejected!: (error: unknown) => void;
   const closed = new Promise<void>((resolve, reject) => { settled = resolve; rejected = reject; });
   void closed.catch(() => {});
