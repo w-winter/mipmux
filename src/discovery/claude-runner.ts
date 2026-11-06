@@ -33,11 +33,12 @@ const effortLevels = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 type EffortLevel = typeof effortLevels[number];
 /**
  * Set in every Claude Code child: no claude.ai connectors, which strict MCP configuration does not exclude; no moving a
- * long tool call to the background, which would end the turn without its result; no telemetry or update traffic; and
- * no tool search, whose placeholder tool newer models would otherwise receive although mipmux defers no tool.
+ * long tool call to the background, which would end the turn without its result; no telemetry or update traffic; no
+ * tool search, whose placeholder tool newer models would otherwise receive although mipmux defers no tool; and mipmux
+ * as the client Claude Code reports to Anthropic, in place of the SDK's default `sdk-ts`.
  */
 const childSettings = { ENABLE_CLAUDEAI_MCP_SERVERS: '0', CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS: '0', CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
-  ENABLE_TOOL_SEARCH: 'false' };
+  ENABLE_TOOL_SEARCH: 'false', CLAUDE_CODE_ENTRYPOINT: 'mipmux' };
 const telemetryLimit = 'Claude Code reports each response, its usage and a list-price cost. Requests Claude Code makes for its own ' +
   'purposes may be unobserved. Local closure does not prove remote cancellation or billing cessation.';
 const moduleNotFound = Compile(Type.Object({ code: Type.Literal('ERR_MODULE_NOT_FOUND') }));

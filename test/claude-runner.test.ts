@@ -94,6 +94,7 @@ test('Claude Code discovery sees exactly mipmux tools under the names its prompt
   assert.equal(first.model, model);
   assert.deepEqual([...first.tools].sort(), toolNames.map(name => 'mcp__mipmux__' + name).sort());
   const system = JSON.stringify(first.system);
+  assert.match(system, /cc_entrypoint=mipmux;/);
   assert(system.includes('mcp__mipmux__read_file') && system.includes('mcp__mipmux__manage_selection'));
   assert.doesNotMatch(system, bareToolMention);
   const receipt = claudeReceipt(result);
