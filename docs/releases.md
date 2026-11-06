@@ -19,8 +19,8 @@ Extract the archive somewhere outside the checkout and run its verifier, replaci
 
 ```sh
 mkdir -p /absolute/path/to/install
-tar -xzf /absolute/path/to/mipmux-0.1.0-alpha.4-darwin-arm64.tar.gz -C /absolute/path/to/install
-package=/absolute/path/to/install/mipmux-0.1.0-alpha.4-darwin-arm64
+tar -xzf /absolute/path/to/mipmux-0.1.0-alpha.5-darwin-arm64.tar.gz -C /absolute/path/to/install
+package=/absolute/path/to/install/mipmux-0.1.0-alpha.5-darwin-arm64
 node "$package/verify-release.mjs" "$package" /absolute/path/to/new-verification-output
 ```
 
@@ -71,15 +71,15 @@ The workflow stops at the draft. It does not publish the release on your behalf.
 
 ## Download and verify a published archive
 
-Choose a version and target from the [release list](https://github.com/w-winter/mipmux/releases). For example, to download the macOS arm64 archive for `v0.1.0-alpha.4`:
+Choose a version and target from the [release list](https://github.com/w-winter/mipmux/releases). For example, to download the macOS arm64 archive for `v0.1.0-alpha.5`:
 
 ```sh
-gh release download v0.1.0-alpha.4 --repo w-winter/mipmux \
-  --pattern 'mipmux-0.1.0-alpha.4-darwin-arm64.tar.gz'
-gh release verify v0.1.0-alpha.4 --repo w-winter/mipmux
-gh release verify-asset v0.1.0-alpha.4 ./mipmux-0.1.0-alpha.4-darwin-arm64.tar.gz \
+gh release download v0.1.0-alpha.5 --repo w-winter/mipmux \
+  --pattern 'mipmux-0.1.0-alpha.5-darwin-arm64.tar.gz'
+gh release verify v0.1.0-alpha.5 --repo w-winter/mipmux
+gh release verify-asset v0.1.0-alpha.5 ./mipmux-0.1.0-alpha.5-darwin-arm64.tar.gz \
   --repo w-winter/mipmux
-gh attestation verify ./mipmux-0.1.0-alpha.4-darwin-arm64.tar.gz --repo w-winter/mipmux
+gh attestation verify ./mipmux-0.1.0-alpha.5-darwin-arm64.tar.gz --repo w-winter/mipmux
 ```
 
 Use a current GitHub CLI with release and artifact verification support. Release verification checks GitHub's immutable-release record; the build attestation identifies the workflow and source commit that produced the bytes. A checksum file alone does not authenticate its source.
@@ -89,7 +89,7 @@ On macOS, use `gh release download` rather than a browser download. The first re
 Extract the verified archive and configure your MCP client to run:
 
 ```text
-node /absolute/path/to/mipmux-0.1.0-alpha.4-darwin-arm64/dist/cli/main.js mcp
+node /absolute/path/to/mipmux-0.1.0-alpha.5-darwin-arm64/dist/cli/main.js mcp
 ```
 
 Use the matching Linux directory name for a Linux archive. Configure discovery through the [configuration guide](https://github.com/w-winter/mipmux/blob/main/docs/configuration.md). To use Claude Code discovery, install the exact optional SDK version documented there into the extracted package; Pi-based discovery uses the dependencies already included.
@@ -98,7 +98,7 @@ The Pi and omp extensions also need a `mipmux` command on `PATH`. Link the archi
 
 ```sh
 mkdir -p "$HOME/.local/bin"
-ln -s /absolute/path/to/mipmux-0.1.0-alpha.4-darwin-arm64/dist/cli/main.js "$HOME/.local/bin/mipmux"
+ln -s /absolute/path/to/mipmux-0.1.0-alpha.5-darwin-arm64/dist/cli/main.js "$HOME/.local/bin/mipmux"
 ```
 
 Ensure `$HOME/.local/bin` is on your shell's `PATH`. The link command refuses to replace an existing installation.
@@ -108,16 +108,16 @@ Ensure `$HOME/.local/bin` is on your shell's `PATH`. The link command refuses to
 Install the server with an exact version:
 
 ```sh
-npm install --global --ignore-scripts mipmux@0.1.0-alpha.4
+npm install --global --ignore-scripts mipmux@0.1.0-alpha.5
 ```
 
 Configure discovery using the [quickstart](../README.md#quickstart) or the [configuration guide](configuration.md), then configure your MCP client to run `mipmux mcp`. For a one-command invocation through npm:
 
 ```sh
-npm_config_ignore_scripts=true npx --yes mipmux@0.1.0-alpha.4 mcp
+npm_config_ignore_scripts=true npx --yes mipmux@0.1.0-alpha.5 mcp
 ```
 
-The installation supports macOS arm64, Linux x64, and Linux arm64. Linux requires glibc 2.35 or later. The server resolves its matching `@w-winter/mipmux-<platform>-<arch>` helper automatically; users install `mipmux`, rather than choosing a helper manually. Keep optional dependencies enabled. A `nativeHelperUnavailable` error means the helper package cannot be resolved; reinstall with optional dependencies included, for example `npm install --global --ignore-scripts --include=optional mipmux@0.1.0-alpha.4`.
+The installation supports macOS arm64, Linux x64, and Linux arm64. Linux requires glibc 2.35 or later. The server resolves its matching `@w-winter/mipmux-<platform>-<arch>` helper automatically; users install `mipmux`, rather than choosing a helper manually. Keep optional dependencies enabled. A `nativeHelperUnavailable` error means the helper package cannot be resolved; reinstall with optional dependencies included, for example `npm install --global --ignore-scripts --include=optional mipmux@0.1.0-alpha.5`.
 
 The main npm tarball bundles the production JavaScript dependencies installed from the build's lockfile. Native helpers remain separate optional dependencies pinned to the server's exact version. The packages have no lifecycle scripts. The explicit `--ignore-scripts` also disables scripts declared by transitive dependencies.
 
@@ -146,9 +146,9 @@ After collecting all three helper tarballs and their adjacent inventories, assem
 ```sh
 node scripts/package-npm.mjs main \
   /absolute/extracted-package /absolute/smoke/receipt.json /absolute/npm-output \
-  /absolute/helpers/w-winter-mipmux-darwin-arm64-0.1.0-alpha.4.tgz \
-  /absolute/helpers/w-winter-mipmux-linux-x64-0.1.0-alpha.4.tgz \
-  /absolute/helpers/w-winter-mipmux-linux-arm64-0.1.0-alpha.4.tgz
+  /absolute/helpers/w-winter-mipmux-darwin-arm64-0.1.0-alpha.5.tgz \
+  /absolute/helpers/w-winter-mipmux-linux-x64-0.1.0-alpha.5.tgz \
+  /absolute/helpers/w-winter-mipmux-linux-arm64-0.1.0-alpha.5.tgz
 ```
 
 The assembler checks the source inventory and smoke receipt, requires one helper for each target, and checks their versions and identities. The main tarball contains the JavaScript server and its locked production dependency tree, declared through `bundleDependencies`; the native helpers are exact-version optional dependencies. The adjacent inventories record the tarballs' SHA-512 integrity values. Source checkouts remain private npm packages; publish only the generated tarballs.

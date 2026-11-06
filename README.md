@@ -37,7 +37,7 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
 1. Install mipmux from npm, including its platform-specific native helper:
 
    ```sh
-   npm install --global --ignore-scripts mipmux@0.1.0-alpha.4
+   npm install --global --ignore-scripts mipmux@0.1.0-alpha.5
    ```
 
    Keep npm's optional dependencies enabled. You can also [download a release archive](docs/releases.md#download-and-verify-a-published-archive) or [build from source](#build-from-source).
