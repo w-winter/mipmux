@@ -12,6 +12,8 @@ You coordinate a review of the change the user names. mipmux's discovery agent c
 
 **mipmux.** Use Pi's built-in MCP server named `mipmux`. Its tools are `mcp__mipmux__context_builder`, `mcp__mipmux__context_job` and `mcp__mipmux__context_prepare`. Under Pi's default `codemode` exposure, call them from a `codemode` script, for example `const result = await tools.mcp__mipmux__context_builder({ ... })`; check `result.isError`, then parse mipmux's JSON from `result.content[0].text`. If the server's exposure is `direct`, call them as ordinary tools. Wait with `context_job` and `{ "op": "wait", "jobId": "...", "durationMs": 50000 }`, below Pi's default 60-second MCP request timeout, and make each wait its own call rather than a loop inside one script, so a message from the user reaches you between waits.
 
+**Reading a file for `documents`.** Pi's `read` tool returns a long file in pages of up to 2,000 lines or 50 KB, and `tools.read` in a `codemode` script returns one such page. To pass a file's text as a document, read the file in a `codemode` script with `tools.bash`, for example `const file = await tools.bash({ command: "cat -- '/absolute/path'" })`. `file.output` holds up to 1 MiB. Use it only when `file.truncated` is false, and report a longer file to the user.
+
 **Asking the user.** Ask in the conversation and end your turn until they answer.
 
 **Dispatching a subagent.** Use the `subagent` tool from pi-interactive-subagents, whose arguments differ from nicobailon/pi-subagents'. For the review:
@@ -109,6 +111,8 @@ A ready snapshot's `bundle` describes the packet without its contents: `director
 ```
 
 Send the workspace that built the bundle and the bundle's directory name from the receipt. The prompt replaces discovery's, so make it complete: the user's request, the roots, the comparison, the changed and deleted files, the project rules, whatever discovery found that the reviewer needs, and the deliverable, a full review returned as the reviewer's final answer. To add material, send `required`, `patches` or `documents` in the forms the build takes; to shrink the packet, `remove` optional materials or `demote` files to code maps, naming them as the receipt does. Preparation checks every delivered material against the current files. On `sourceChanged` or any other failure, report it and stop rather than sending an unchecked packet.
+
+Preparation's check covers the files under the roots. mipmux delivers each document's `text` as given and treats its `origin` as a label, so before you dispatch, compare every document whose `origin` names a file with that file. List the packet's documents from the `manifest.json` beside its `context.md`, for example with `jq -r '.materials[] | select(.kind == "document") | [.input.id, .input.origin, .identity.sha256] | @tsv' manifest.json`, and compare each hash with the file's SHA-256 from `shasum -a 256` or `sha256sum`. A mismatch means the packet holds other text, cut short or older than the file. Preparing a bundle again keeps its documents, so a wrong one needs a bundle without it: prepare the discovery bundle again with the complete text under a new `outputName`, or start a new build when the build itself received the document.
 
 ## 7. Dispatch the reviewer
 
