@@ -27,6 +27,8 @@ export const claudeAgentSdkVersion = '0.3.310';
 const installHint = `Install it next to mipmux with npm install -g @anthropic-ai/claude-agent-sdk@${claudeAgentSdkVersion}, ` +
   'or without -g into the project that installs mipmux.';
 const claudeAgentSdkApi = 'claude-agent-sdk';
+/** The model Claude Code names in assistant messages it writes itself, such as an API error report, rather than receives. */
+const syntheticModel = '<synthetic>';
 /** Claude Code's largest timer delay; a tool call, such as an `ask_user` waiting for its answer, is never cut short. */
 const maximumToolCallMs = 2_147_483_647;
 const effortLevels = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
@@ -150,7 +152,7 @@ function completion(response: Response, requestedModel: string): Completion {
   // Names as the model called them, so a call to a name Claude Code does not offer stays distinguishable.
   const toolCalls = response.blocks.flatMap(block => block.type === 'tool_use' ? [block.name] : []);
   return { dispatched: { provider: claudeCodeProvider, model: requestedModel, api: claudeAgentSdkApi },
-    reported: { provider: claudeCodeProvider, model: response.model, api: claudeAgentSdkApi }, serverModel: response.model,
+    reported: { provider: claudeCodeProvider, model: response.model, api: claudeAgentSdkApi }, serverModel: response.model, reportedServerModels: null,
     stopReason: stopReason(response.stopReason), channel: 'ordinary', textBytes: Buffer.byteLength(text), textSHA256: sha256(text),
     textOnly: response.blocks.every(block => block.type === 'text' || block.type === 'thinking' || block.type === 'redacted_thinking'),
     nonempty: text.trim().length > 0, diagnostics: [], usage: response.usage, toolCalls };
@@ -261,6 +263,7 @@ class ClaudeCodeRun {
     response.usage = { input: usage.input_tokens, output: usage.output_tokens, cacheRead: usage.cache_read_input_tokens ?? 0,
       cacheWrite: usage.cache_creation_input_tokens ?? 0 };
     this.#responses.set(id, response);
+    if (model !== syntheticModel && model !== this.#servedModel) this.#stop('modelIdentityMismatch');
   }
 
   #result(message: SDKResultMessage): void {

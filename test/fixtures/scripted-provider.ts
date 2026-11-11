@@ -14,7 +14,7 @@ const requestValidator = Compile(Type.Object({ model: Type.String(), messages: T
 const effortMarker = Compile(Type.Object({ role: Type.Literal('system'), output_config: Type.Object({ effort: Type.String() }) }));
 export type Reply = { kind: 'error' } | { kind: 'overflow' } | { kind: 'hold'; entered: () => void } |
   { kind: 'text'; text: string; stop: 'end_turn' | 'max_tokens'; tokens: number; reportedModel?: string } |
-  { kind: 'tool'; name: string; input: unknown; stop: 'tool_use' | 'max_tokens'; tokens: number };
+  { kind: 'tool'; name: string; input: unknown; stop: 'tool_use' | 'max_tokens'; tokens: number; reportedModel?: string };
 
 /** A host configuration's discovery settings for a Pi runner configuration such as `scriptedProvider` returns. */
 export function hostDiscovery(config: DiscoveryHostConfig): DiscoveryConfig {
@@ -45,7 +45,7 @@ export async function scriptedProvider(respond: (summary: boolean, index: number
     }
     response.writeHead(200, { 'content-type': 'text/event-stream' });
     const emit = (event: string, data: unknown) => response.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-    emit('message_start', { type: 'message_start', message: { id: 'synthetic-' + requests.length, type: 'message', role: 'assistant', model: reply.kind === 'text' ? reply.reportedModel ?? body.model : body.model,
+    emit('message_start', { type: 'message_start', message: { id: 'synthetic-' + requests.length, type: 'message', role: 'assistant', model: reply.reportedModel ?? body.model,
       content: [], stop_reason: null, usage: { input_tokens: reply.tokens, output_tokens: 0 } } });
     emit('content_block_start', { type: 'content_block_start', index: 0, content_block: reply.kind === 'text'
       ? { type: 'text', text: '' } : { type: 'tool_use', id: 'tool-' + requests.length, name: reply.name, input: {} } });

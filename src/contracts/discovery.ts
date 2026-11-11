@@ -74,6 +74,11 @@ export const TokenUsage = Type.Object({ input: SafeCount, output: SafeCount, cac
 export type TokenUsage = Static<typeof TokenUsage>;
 export const Completion = Type.Object({ dispatched: ModelIdentity, reported: ModelIdentity,
   serverModel: Type.Union([Type.String(), Type.Null()]),
+  /**
+   * For a Pi model with a declared served model, every distinct model ID the response's stream chunks named, in order of
+   * first appearance; null for a model without one and for Claude Code.
+   */
+  reportedServerModels: Type.Union([Type.Array(Type.String()), Type.Null()]),
   stopReason: Type.Enum(['pending', 'stop', 'length', 'toolUse', 'error', 'aborted', 'deferred']),
   channel: Type.Enum(['ordinary', 'summary']), textBytes: SafeCount, textSHA256: SHA256,
   textOnly: Type.Boolean(), nonempty: Type.Boolean(), diagnostics: Type.Array(Type.String()), usage: TokenUsage,
@@ -110,7 +115,9 @@ export const PiDiscoveryReceipt = Type.Object({
   effective: Type.Union([Type.Null(), Type.Object({ identity: ModelIdentity, thinking: Type.String(),
     contextWindow: Positive, maxTokens: Positive, recordSHA256: SHA256,
     modelRecord: Type.Record(Type.String(), Type.Unknown()), endpointSHA256: SHA256,
-    headersSHA256: Type.Union([SHA256, Type.Null()]) }, closed)]),
+    headersSHA256: Type.Union([SHA256, Type.Null()]),
+    /** The model ID the models file declares the server reports for this model, or null when it declares none. */
+    expectedServerModel: Type.Union([Type.String(), Type.Null()]) }, closed)]),
   policy: RecoveryPolicy, completions: Type.Array(Completion), events: Type.Array(DiscoveryEvent),
   finalAssistant: Type.Union([Completion, Type.Null()]),
   prompt: Type.Enum(['notStarted', 'resolved', 'rejected']), acceptedRuns: SafeCount, settled: Type.Boolean(),

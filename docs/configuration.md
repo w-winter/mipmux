@@ -61,7 +61,22 @@ Discovery never warms prompt caches, because warming is billed; `policy.cacheWar
 
 ## Discovery with a Pi login
 
-Discovery through Pi takes credentials from Pi's `auth.json` (`discovery.authPath`), where Pi's `/login` stores them, as the [quickstart](../README.md#quickstart) shows. It takes models from the providers built into mipmux's Pi SDK, adjusted by the model file (`discovery.modelsPath`). Pi's discovery worker reads the authorized authentication and model files; these paths and the host's configuration file are excluded from source discovery. The model file accepts a `providers` object with optional `baseUrl` and per-model `modelOverrides` containing `contextWindow` and `maxTokens`. Use `{ "providers": {} }` to select the bundled catalog explicitly. Other fields in model configuration and command-valued credentials are rejected. Supply the exact physical provider/model and supported thinking level; configuration errors require correction before another request.
+Discovery through Pi takes credentials from Pi's `auth.json` (`discovery.authPath`), where Pi's `/login` stores them, as the [quickstart](../README.md#quickstart) shows. It takes models from the providers built into mipmux's Pi SDK, adjusted by the model file (`discovery.modelsPath`). Pi's discovery worker reads the authorized authentication and model files; these paths and the host's configuration file are excluded from source discovery. The model file accepts a `providers` object with optional `baseUrl` and per-model `modelOverrides` containing `contextWindow`, `maxTokens` and `expectedServerModel`. Use `{ "providers": {} }` to select the bundled catalog explicitly. Other fields in model configuration and command-valued credentials are rejected. Supply the exact physical provider/model and supported thinking level; configuration errors require correction before another request.
+
+For models on the Anthropic Messages and OpenAI chat-completions APIs, discovery checks the model name each response reports. Pi records no name for other APIs, so no check runs for them. By default a server may report the catalog name, such as `deepseek-flash`, or no name, and the first response that reports any other name stops discovery with `modelIdentityMismatch`. A self-hosted endpoint often reports its own name, such as `DeepSeek-V4.1-Flash-1017`. To use one, point the provider's `baseUrl` at the endpoint and set the model's `expectedServerModel` to that name:
+
+```json
+{
+  "providers": {
+    "deepseek": {
+      "baseUrl": "http://127.0.0.1:8000/v1",
+      "modelOverrides": { "deepseek-flash": { "expectedServerModel": "DeepSeek-V4.1-Flash-1017" } }
+    }
+  }
+}
+```
+
+With `expectedServerModel` set, every response must report that name. Any other name in a response, the catalog name included, stops discovery with `modelIdentityMismatch`. A response that completes without a name stops it with `modelIdentityUnavailable`. Failed responses, which Pi may retry, can omit the name. The failed job's `discovery` receipt lists the names each response reported. `expectedServerModel` works only for models that use the OpenAI chat-completions API, such as `deepseek/deepseek-flash`, and a model file that sets it for another model is rejected. The name is the server's own report about itself, so confirming which weights a server runs requires checks outside mipmux.
 
 ## Discovery with an API key
 

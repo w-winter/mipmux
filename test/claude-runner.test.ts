@@ -175,6 +175,19 @@ test('cancelling during a model request stops Claude Code without another reques
   assert.equal(host.provider.requests.length, 1);
 });
 
+test('a response that reports another model than the one Claude Code serves stops discovery before another request', async t => {
+  const host = await claudeHost(t, (_summary, index) => index === 1
+    ? { kind: 'tool', name: 'mcp__mipmux__draft_validate', input: { maxOutputBytes: 8000 }, stop: 'tool_use', tokens: 10, reportedModel: 'another-model' }
+    : { kind: 'text', text: 'Complete', stop: 'end_turn', tokens: 10 });
+  const result = await host.wait(host.build());
+  assert.equal(result.state, 'failed', JSON.stringify(result)); assert(result.state === 'failed');
+  assert.equal(result.code, 'modelIdentityMismatch');
+  const receipt = claudeReceipt(result);
+  assert.equal(receipt.childClosed, true);
+  assert.deepEqual(receipt.completions.map(completion => completion.reported.model), ['another-model']);
+  assert.equal(host.provider.requests.length, 1);
+});
+
 test('a clarification question waits inside the Claude Code conversation, which continues with the answer', async t => {
   const host = await claudeHost(t, (_summary, index) => index === 1
     ? { kind: 'tool', name: 'mcp__mipmux__ask_user', input: { questions: [{ id: 'focus', question: 'Which area?', options: ['API', 'UI'] }] }, stop: 'tool_use', tokens: 10 }
