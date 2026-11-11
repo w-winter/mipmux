@@ -88,6 +88,7 @@ func serve() async throws {
     let files = ConfinedFiles(generation: generation)
     let walks = IgnoreWalks()
     let vcs = SelectedPathVCSResolver()
+    // The request frame not yet ended by 0x0A. Scanning only newly read bytes keeps a frame's cost linear in its size.
     var pending = Data()
     let inputChunkBytes = 64 * 1024
     var buffer = [UInt8](repeating: 0, count: inputChunkBytes)
@@ -96,11 +97,12 @@ func serve() async throws {
         if count < 0, errno == EINTR { continue }
         guard count >= 0 else { throw BridgeFailure("nativeInputFailed", errno) }
         if count == 0 { break }
-        pending.append(contentsOf: buffer.prefix(count))
-        while let newline = pending.firstIndex(of: 0x0A) {
-            let bytes = Data(pending[..<newline])
-            pending.removeSubrange(...newline)
-            let request = try Request(bytes, generation: generation)
+        var unscanned = buffer[..<count]
+        while let newline = unscanned.firstIndex(of: 0x0A) {
+            pending.append(contentsOf: unscanned[..<newline])
+            unscanned = unscanned[unscanned.index(after: newline)...]
+            let request = try Request(pending, generation: generation)
+            pending = Data()
             do {
                 let result = try await execute(request, files: files, walks: walks, extraction: extraction, vcs: vcs)
                 try request.terminal(result)
@@ -114,6 +116,7 @@ func serve() async throws {
                 try request.terminal(["kind": "failure", "code": "nativeOperationFailed", "errno": NSNull()])
             }
         }
+        pending.append(contentsOf: unscanned)
     }
     guard pending.isEmpty else { throw BridgeFailure("truncatedFrame") }
 }

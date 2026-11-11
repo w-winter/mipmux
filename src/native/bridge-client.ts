@@ -113,7 +113,8 @@ export class BridgeClient {
   readonly #generation = randomUUID();
   readonly #process: OwnedProcess;
   #pending: Pending | null = null;
-  #buffer = Buffer.alloc(0);
+  /** The received bytes of the reply frame not yet ended by 0x0A, in arrival order; none contains 0x0A. */
+  #unfinishedFrame: Buffer[] = [];
   #tail: Promise<void> = Promise.resolve();
   #retired: Promise<Error> | null = null;
   #stopping: Promise<ProcessReceipt> | null = null;
@@ -193,12 +194,13 @@ export class BridgeClient {
       this.#retire(new NativeFailure('nativeProtocolError', null));
       return;
     }
-    this.#buffer = Buffer.concat([this.#buffer, bytes]);
     try {
-      let newline: number;
-      while ((newline = this.#buffer.indexOf(0x0a)) !== -1) {
-        const line = this.#buffer.subarray(0, newline);
-        this.#buffer = this.#buffer.subarray(newline + 1);
+      // Only the new chunk is scanned and each frame is joined once, so a frame costs time linear in its size.
+      let start = 0, newline: number;
+      while ((newline = bytes.indexOf(0x0a, start)) !== -1) {
+        const line = Buffer.concat([...this.#unfinishedFrame, bytes.subarray(start, newline)]);
+        this.#unfinishedFrame = [];
+        start = newline + 1;
         const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(line));
         const pending = this.#pending;
         if (!nativeFrameValidator.Check(value) || !pending || pending.terminal ||
@@ -220,9 +222,10 @@ export class BridgeClient {
           pending.terminal = value.result;
         }
       }
+      if (start < bytes.length) this.#unfinishedFrame.push(bytes.subarray(start));
       const pending = this.#pending;
       if (pending?.terminal) {
-        if (this.#buffer.length) throw new NativeFailure('nativeProtocolError', null);
+        if (this.#unfinishedFrame.length) throw new NativeFailure('nativeProtocolError', null);
         const result = pending.terminal;
         if (result.kind === 'failure') {
           this.#pending = null;
@@ -285,7 +288,7 @@ export class BridgeClient {
     const pending = this.#pending;
     void this.#retired.then(failure => pending?.reject(failure));
     this.#pending = null;
-    this.#buffer = Buffer.alloc(0);
+    this.#unfinishedFrame = [];
     this.#stopping = this.#process.stop();
     void this.#stopping.catch(() => {});
   }
