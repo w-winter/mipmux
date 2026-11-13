@@ -1,6 +1,6 @@
 {
   "name": "mipmux",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "Headless port of RepoPrompt CE's Context Builder: an MCP server that builds verified context packets for coding agents",
   "license": "Apache-2.0",
   "repository": {
