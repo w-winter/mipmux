@@ -28,23 +28,33 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
 
 - Node.js 22.23.4 or a later 22 release, 24.22.1 or a later 24 release, or 26.12.1 or later.
 - The prebuilt packages support macOS 14 or later on arm64, and Linux on arm64 or x64 with glibc 2.35 or later and the standard C++ and GCC runtime libraries.
-- npm, for the installation below.
+- npm, to run mipmux through `npx` or install it.
 - Git 2.36 or later, at `/usr/bin/git` unless the configuration names another path.
 - For discovery, one of: a login to a model provider, stored in Pi's `auth.json` (see the quickstart); a provider's API key (see [Discovery with an API key](docs/configuration.md#discovery-with-an-api-key)); or Claude Code signed in with your Claude account or an API key, with the Claude Agent SDK installed next to mipmux (see [Claude Code discovery](docs/configuration.md#claude-code-discovery)).
 
 ## Quickstart
 
-1. Install mipmux from npm, including its platform-specific native helper:
+1. Get mipmux from npm. Either way below also fetches its platform-specific native helper, so keep npm's optional dependencies enabled.
+
+   To run mipmux without installing it, use `npx`, which downloads mipmux on first use and keeps it in npm's cache for later runs. Wherever the steps below write the `mipmux` command, write `npx --yes --ignore-scripts mipmux@0.1.0-alpha.6` instead.
+
+   To put a `mipmux` command on your PATH, install it globally. The [Pi](integrations/pi/README.md) and [omp](integrations/omp/README.md) extensions and [Claude Code discovery](docs/configuration.md#claude-code-discovery) need this installation:
 
    ```sh
    npm install --global --ignore-scripts mipmux@0.1.0-alpha.6
    ```
 
-   Keep npm's optional dependencies enabled. You can also [download a release archive](docs/releases.md#download-and-verify-a-published-archive) or [build from source](#build-from-source).
+   You can also [download a release archive](docs/releases.md#download-and-verify-a-published-archive) or [build from source](#build-from-source).
 
 2. Choose how discovery authenticates. Steps 2 and 3 below use a provider login stored by Pi. For an API key or a Claude Code login, use [API-key discovery](docs/configuration.md#discovery-with-an-api-key) or [Claude Code discovery](docs/configuration.md#claude-code-discovery) instead, then continue at step 4.
 
-   For the Pi-login route, start the Pi CLI installed with mipmux, run `/login`, choose your provider and quit Pi. Skip sign-in if the credentials already exist in Pi's agent directory, normally `~/.pi/agent/auth.json` (`$PI_CODING_AGENT_DIR/auth.json` when set):
+   For the Pi-login route, start the Pi CLI, run `/login`, choose your provider and quit Pi. Skip sign-in if the credentials already exist in Pi's agent directory, normally `~/.pi/agent/auth.json` (`$PI_CODING_AGENT_DIR/auth.json` when set). With npx, start the Pi version mipmux uses:
+
+   ```sh
+   npx --yes --ignore-scripts @earendil-works/pi-coding-agent@1.5.0
+   ```
+
+   With a global installation, start the Pi CLI installed with mipmux:
 
    ```sh
    node "$(npm root -g)/mipmux/node_modules/.bin/pi"
@@ -71,20 +81,20 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
 
    Run `mipmux config` to check the configuration, and `mipmux models` to list models available through the configured credentials. Neither command sends a prompt to a model. [Configuration](docs/configuration.md) describes every setting. For model-free packet assembly, use the [manual-packet tools](docs/mcp-tools.md#manual-packet-tools) with `"tools": "full"` instead of configuring discovery.
 
-4. Connect your MCP client to `mipmux mcp`. The client needs both `mipmux` and `node` on its PATH. If it does not inherit your terminal's PATH, use the absolute path printed by `command -v node` as the command. Use `<npm-root>/mipmux/dist/cli/main.js` and `mcp` as the arguments, replacing `<npm-root>` with the path printed by `npm root -g`.
+4. Connect your MCP client to `mipmux mcp`. The examples below start it through npx. With a global installation, use `mipmux` as the command and `mcp` as its only argument.
 
    Claude Code:
 
    ```sh
-   claude mcp add --scope user mipmux -- mipmux mcp
+   claude mcp add --scope user mipmux -- npx --yes --ignore-scripts mipmux@0.1.0-alpha.6 mcp
    ```
 
    Codex, in `~/.codex/config.toml`:
 
    ```toml
    [mcp_servers.mipmux]
-   command = "mipmux"
-   args = ["mcp"]
+   command = "npx"
+   args = ["--yes", "--ignore-scripts", "mipmux@0.1.0-alpha.6", "mcp"]
    ```
 
    Pi, in `~/.pi/agent/mcp.json`, and other clients that read an `mcpServers` object:
@@ -93,14 +103,16 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
    {
      "mcpServers": {
        "mipmux": {
-         "command": "mipmux",
-         "args": ["mcp"]
+         "command": "npx",
+         "args": ["--yes", "--ignore-scripts", "mipmux@0.1.0-alpha.6", "mcp"]
        }
      }
    }
    ```
 
    To use a configuration file other than `~/.config/mipmux/config.json`, add `--config /absolute/path/config.json` after `mcp`.
+
+   The client needs `node` on its PATH, and also `npx` or `mipmux`, whichever it starts. If the client does not inherit your terminal's PATH, install mipmux globally and use the absolute path printed by `command -v node` as the command. Use `<npm-root>/mipmux/dist/cli/main.js` and `mcp` as the arguments, replacing `<npm-root>` with the path printed by `npm root -g`.
 
 ## Build from source
 
