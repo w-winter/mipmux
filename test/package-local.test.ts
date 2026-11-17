@@ -16,6 +16,7 @@ import { PiDiscoveryReceipt, TokenUsage } from '../src/contracts/discovery.js';
 import { Manifest } from '../src/contracts/context.js';
 import { toolJSON } from './fixtures/tool-json.js';
 import { verifyNpmDistribution } from './fixtures/npm-distribution.js';
+import { packageOperationTimeoutMs, waitForSettlement } from './fixtures/wait-for-settlement.js';
 
 const packageVersion = Compile(Type.Object({ version: Type.String() }));
 const dependencyLock = Compile(Type.Object({ packages: Type.Record(Type.String(), Type.Object({
@@ -26,15 +27,6 @@ const dependencyLock = Compile(Type.Object({ packages: Type.Record(Type.String()
 // name instead of their records.
 const readyDiscovery = Type.Object({ ...PiDiscoveryReceipt.properties, completions: Type.Integer({ minimum: 1 }), usage: TokenUsage,
   toolCalls: Type.Record(Type.String(), Type.Integer({ minimum: 1 })) }, { additionalProperties: false });
-
-async function waitForSettlement(client: Client, jobId: string) {
-  const observation = Compile(Type.Object({ localSettled: Type.Boolean() }));
-  for (;;) {
-    const reply = await client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId, durationMs: 10000 } });
-    const snapshot = observation.Parse(toolJSON(reply));
-    if (snapshot.localSettled) return reply;
-  }
-}
 
 test('application build emits canonical declarations across compiler worker counts', () => {
   const compilerWorkerCounts = [1, 8];
@@ -136,7 +128,7 @@ test('local package audits resources and executes relocated library, native, CLI
     terminationGraceMs: 100, contextBudgetUnits: 1000000, defaultEnhancementMode: 'augment', credentialPaths: [], git: null, discovery: provider.config, defaultMaxOutputBytes: 10000 }));
   const workspace = JSON.parse(execFileSync(command, ['workspace', '--spec', specPath, '--config', config], { cwd: '/', encoding: 'utf8' }));
   assert(workspace.entries.some((entry: { structural?: { record: { outcome: { kind: string } } } }) => entry.structural?.record.outcome.kind === 'ready'));
-  const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [command, 'mcp', '--tools', 'full', '--config', config], cwd: '/', stderr: 'inherit' });
   const client = new Client({ name: 'relocation-test', version: '1' }, { versionNegotiation: { mode: { pin: '2026-07-28' } },
     capabilities: { elicitation: { form: {} } } });
   let questions = 0;
@@ -155,7 +147,8 @@ test('local package audits resources and executes relocated library, native, CLI
       discoveryHints: [], outputName: 'packet' } }));
     const result = await new Promise<string>((resolveResult, reject) => {
       execFile(process.execPath,
-        [command, 'build', '--request', requestPath, '--config', config], { cwd: '/' }, (error, stdout) => {
+        [command, 'build', '--request', requestPath, '--config', config], { cwd: '/', timeout: packageOperationTimeoutMs }, (error, stdout, stderr) => {
+          if (error) process.stderr.write(stderr);
           if (error && error.code !== 2) reject(error); else resolveResult(stdout);
         });
     });
@@ -175,7 +168,8 @@ test('local package audits resources and executes relocated library, native, CLI
       copyPreset: 'standard', constraints: '', enhancementMode: 'preserve', purpose: 'investigation',
       requiredSources: [], documents: [], patches: [], discoveryHints: [], outputName: 'native-packet', budgetUnits: 10000 } }));
     const nativeResult = await new Promise<string>((resolveResult, reject) => {
-      execFile(process.execPath, [command, 'build', '--request', requestPath, '--config', config], { cwd: '/' }, (error, stdout) => {
+      execFile(process.execPath, [command, 'build', '--request', requestPath, '--config', config], { cwd: '/', timeout: packageOperationTimeoutMs }, (error, stdout, stderr) => {
+        if (error) process.stderr.write(stderr);
         if (error) reject(error); else resolveResult(stdout);
       });
     });
@@ -256,7 +250,9 @@ test('local package audits resources and executes relocated library, native, CLI
       installLockSHA256, terminal, nativeTerminal, verification, read, search, interactive, fetched, observed, cancelled }));
     mkdirSync(resolve('test-output'), { recursive: true });
     writeFileSync(resolve('test-output/group-e-relocation.json'), JSON.stringify({ directory, installed, receipt: join(directory, 'relocation-receipt.json') }));
-  } finally { await client.close(); await provider.close(); }
+  } finally {
+    try { await client.close(); } finally { await provider.close(); }
+  }
 
 });
 

@@ -23,6 +23,7 @@ jobs:
       - name: Build the validation image
         run: docker build -f test/linux/Dockerfile -t mipmux-validation .
       - name: Validate
+        timeout-minutes: 40
         run: docker run --rm mipmux-validation
 
   macos:
@@ -57,6 +58,7 @@ jobs:
       - name: Release native build
         run: npm run build:native
       - name: Test suite
+        timeout-minutes: 40
         run: npm test
       - name: Pi extension
         working-directory: integrations/pi

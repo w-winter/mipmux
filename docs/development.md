@@ -22,6 +22,10 @@ npm test
 
 Application builds run TypeScript in single-threaded mode so generated type declarations have consistent union-member ordering across builds. Release packaging compares the complete application output across platforms. `npm run typecheck` uses the compiler's parallel mode.
 
+`npm test` sets a 20-minute timeout for tests. Node can enforce this timeout only while the test's event loop is running. CI also limits the macOS test step and Linux validation step to 40 minutes. Package verification gives each discovery job wait and CLI build two minutes, and uses the same limit when installing from its local test registry. MCP server diagnostics go to stderr. Failed job waits report the job ID, last reply and underlying error.
+
+After `npm test` has compiled the tests, rerun the package checks with `node --test --test-timeout=1200000 dist-test/test/package-local.test.js dist-test/test/package-wait.test.js`. The tests in `test/package-wait.test.ts` save their failure diagnostics in `test-output/package-wait-*.json`.
+
 Run native commands through `scripts/build-native.mjs`. It supplies SwiftPM's explicit `--pkg-config-path`, verifies the private dependency files, checks the linked executable, and writes `linkage.json` beside the executable. A mismatched or interrupted dependency build fails with its directory path for inspection and explicit removal before rebuilding.
 
 Search uses the native executable's Foundation and statically linked PCRE2 matching implementations. The native dependency receipt and linkage checks identify the engine used by both extraction and search.

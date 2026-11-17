@@ -12,6 +12,7 @@ import { Compile } from 'typebox/compile';
 import { npmRegistry } from './npm-registry.js';
 import { toolJSON, type JsonValue } from './tool-json.js';
 import { scriptedProvider } from './scripted-provider.js';
+import { packageOperationTimeoutMs, waitForSettlement } from './wait-for-settlement.js';
 
 const json = (path: string): JsonValue => JSON.parse(readFileSync(path, 'utf8'));
 const digest = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -122,7 +123,7 @@ export async function verifyNpmInstallation(packageRoot: string, verificationRec
   try {
     const npmVersion = (await promisify(execFile)('npm', ['--version'], { cwd: project, env })).stdout.trim();
     await promisify(execFile)('npm', ['install', `mipmux@${manifest.version}`, '--registry', registry.origin,
-      '--ignore-scripts', '--omit=dev', '--no-audit', '--no-fund'], { cwd: project, env });
+      '--ignore-scripts', '--omit=dev', '--no-audit', '--no-fund'], { cwd: project, env, timeout: packageOperationTimeoutMs });
     assert.deepEqual(registry.failures, []);
     const installedRoot = join(project, 'node_modules/mipmux'), installedLock = lockValidator.Parse(json(join(project, 'package-lock.json')));
     const production = [];
@@ -187,7 +188,7 @@ try {
     writeJSON(config, { cachePath: join(output, 'cache'), git: null, discovery: provider.config });
     const client = new Client({ name: 'npm-distribution', version: '1' });
     const transport = new StdioClientTransport({ command: process.execPath,
-      args: [join(installedRoot, 'dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', env, stderr: 'pipe' });
+      args: [join(installedRoot, 'dist/cli/main.js'), 'mcp', '--tools', 'full', '--config', config], cwd: '/', env, stderr: 'inherit' });
     let discoveryProof: NpmDiscoveryProof;
     try {
       await client.connect(transport);
@@ -198,11 +199,7 @@ try {
       const jobId = Compile(Type.Object({ jobId: Type.String() })).Parse(toolJSON(await client.callTool({ name: 'context_builder',
         arguments: { workspace: spec, task: 'Inspect the NpmRelocated model.', purpose: 'investigation', outputName: 'npm-ready',
           budgetUnits: 10000, enhancementMode: 'preserve', required: [{ root: 'r', path: 'model.swift' }] } }))).jobId;
-      let snapshot: unknown;
-      do {
-        snapshot = toolJSON(await client.callTool({ name: 'context_job', arguments: { op: 'wait', jobId, durationMs: 10000 } }));
-      } while (!Compile(Type.Object({ localSettled: Type.Boolean() })).Parse(snapshot).localSettled);
-      const ready = readyJob.Parse(snapshot);
+      const ready = readyJob.Parse(toolJSON(await waitForSettlement(client, jobId)));
       assert.equal(ready.discovery.buildLockSHA256, digest(readFileSync(join(packageRoot, 'package-lock.json'))));
       assert.equal(ready.discovery.toolCalls.codemode, 1);
       assert(JSON.stringify(provider.requests[1]?.messages.at(-1)).includes('npm-codemode-reached'));
@@ -213,7 +210,9 @@ try {
       assert(context.includes('struct NpmRelocated')); assert(context.includes(finalPrompt));
       assert.equal(provider.requests.length, 2);
       discoveryProof = { job: ready, prepared, requests: provider.requests.length };
-    } finally { await client.close(); await provider.close(); }
+    } finally {
+      try { await client.close(); } finally { await provider.close(); }
+    }
     writeJSON(config, { cachePath: join(output, 'cache'), git: null, discovery: null });
     const nestedHelper = join(installedRoot, 'node_modules', helperName);
     mkdirSync(dirname(nestedHelper), { recursive: true }); renameSync(helper, nestedHelper);
