@@ -7,7 +7,7 @@ import { selectedGitSourcePaths } from './git-target.js';
 import { resolveDiffRepository, gitText } from '../exploration/git-repository.js';
 import { prepareGitDiffComparison, capturePreparedGitDiff } from '../exploration/git-diff.js';
 import { resolveGitCommit } from '../patches/local-git.js';
-import { canonicalJSON, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
+import { canonicalJSON, compareBytes, freeze, sha256, WorkspaceFailure } from '../workspace/values.js';
 import { contains } from '../workspace/root-policy.js';
 
 export interface AutomaticReviewGitCapture {
@@ -118,7 +118,9 @@ export async function acquireSelectedReviewGit(operation: WorkspaceOperation, re
       plans.push({ kind: 'baseResolutionFailed', checkout });
     }
   }
-  return capturePlans(operation, plans, ownership.pathIssues, sourceRoots, scope, complete.rootBinding);
+  // Keep diagnostics independent of the selection order reconstructed from saved packets.
+  const pathIssues = [...ownership.pathIssues].sort((a, b) => compareBytes(canonicalJSON(a), canonicalJSON(b)));
+  return capturePlans(operation, plans, pathIssues, sourceRoots, scope, complete.rootBinding);
 }
 
 async function capturePlans(operation: WorkspaceOperation, plans: readonly Plan[],

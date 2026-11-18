@@ -209,6 +209,34 @@ test('automatic Git retains valid checkout diffs beside non-repository selection
   }
 });
 
+test('automatic Git prepares unchanged review bundles with non-repository files selected out of order', async () => {
+  const f = await fixture();
+  try {
+    f.run(['add', 'file.txt']); f.run(['commit', '-qm', 'clean checkout']);
+    const other = join(f.root, '../other'); await mkdir(other);
+    await writeFile(join(other, 'z.txt'), 'last file\n');
+    await writeFile(join(other, 'a.txt'), 'first file\n');
+    const workspace = await f.runtime.declare({ roots: [{ name: 'r', absolutePath: f.root }, { name: 'other', absolutePath: other }],
+      exclusions: [], outputRoot: f.out }, signal());
+    const draft = await workspace.createDraft({ ...buildRequest(f.draft.request), initialSelection: { codemapMode: 'manual', sources: [
+      { kind: 'full', source: { root: 'r', path: 'file.txt' } },
+      { kind: 'full', source: { root: 'other', path: 'z.txt' } },
+      { kind: 'full', source: { root: 'other', path: 'a.txt' } },
+    ] } }, signal());
+    const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
+    await verifyBundle(ready.directory);
+    const prepared = await workspace.preparePacket({ bundle: 'packet', prompt: 'Review the unchanged sources.',
+      outputName: 'prepared' }, signal());
+    assert(prepared.kind === 'ready');
+    await verifyCurrentBundle(prepared.directory, f.runtime, signal());
+    const context = await readFile(join(prepared.directory, 'context.md'), 'utf8');
+    assert(context.includes('- No owning repository: other/a.txt\n'));
+    assert(context.includes('- No owning repository: other/z.txt\n'));
+    await writeFile('test-output/git-automatic-path-order.json', JSON.stringify({ directory: ready.directory,
+      preparedDirectory: prepared.directory, automaticGit: prepared.manifest.automaticGit }, null, 2) + '\n');
+  } finally { await f.runtime.close(); }
+});
+
 test('automatic Git freezes every checkout before diff capture and publishes against those boundaries', async () => {
   const prepared: string[] = []; let armed = false, firstCapture = true;
   let advance: () => void = () => {};
