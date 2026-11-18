@@ -15,7 +15,7 @@ if (operation === 'record') {
   const corpus = JSON.parse(manifest);
   assert(Array.isArray(corpus));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 1000 });
-  const bridge = new BridgeClient({ executable, supervisor, env: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+  const bridge = new BridgeClient({ executable, supervisor, env: { MIPMUX_PCRE2_JIT: 'disabled' } });
   const signal = new AbortController().signal;
   const records = [];
   try {

@@ -1,14 +1,14 @@
 # Workspaces and ignore rules
 
-A workspace is the set of root folders and the output folder that a call declares. This page explains which files in those folders mipmux indexes and offers to discovery, and which it never reads. mipmux follows the ignore rules of RepoPrompt CE (RPCE), with its own `.mipmux_ignore` files and Git's exclude files added.
+A workspace is the set of root folders and the output folder that a call declares. This page explains which files in those folders mipmux indexes and offers to discovery, and which it never reads.
 
 ## Ignore files
 
-Workspace visibility follows RPCE's ignore rules. Git repositories apply a mandatory `.gitignore` filter, including ancestor controls when a loaded root is below the repository root. Global patterns, `.repo_ignore`, `.cursorignore` and mipmux's own `.mipmux_ignore` supply additional ordered rules. Optional `ignoreSettings` in the host configuration or runtime options sets `global` pattern text and the booleans `respectRepoIgnore`, `respectCursorignore` and `enableHierarchicalIgnores`. Omission uses RPCE's global defaults, including dependency and cache directories, with all three switches enabled.
+Git repositories apply a mandatory `.gitignore` filter, including ancestor controls when a loaded root is below the repository root. Global patterns, `.repo_ignore`, `.cursorignore` and mipmux's own `.mipmux_ignore` supply additional ordered rules. Optional `ignoreSettings` in the host configuration or runtime options sets `global` pattern text and the booleans `respectRepoIgnore`, `respectCursorignore` and `enableHierarchicalIgnores`. Omission uses mipmux's built-in global patterns, which leave out dependency, cache, editor and virtual-environment directories and common temporary files, with all three switches enabled.
 
 ## `.mipmux_ignore`
 
-`.mipmux_ignore` uses gitignore syntax and works in any folder, as `.repo_ignore` does. It changes what mipmux indexes without changing what RepoPrompt CE sees: a plain line leaves paths out, and a `!` line brings back a path that `.repo_ignore`, `.cursorignore`, the global patterns or Git's exclude files hide, even inside a folder they hide. Within one folder its rules take precedence over `.repo_ignore` and `.cursorignore`; as in Git, a file in a deeper folder takes precedence over one in a folder above it. Nothing brings back a path that `.gitignore` ignores. Edits apply at the next call, without restarting mipmux.
+`.mipmux_ignore` uses gitignore syntax and works in any folder, as `.repo_ignore` does. It changes what mipmux indexes: a plain line leaves paths out, and a `!` line brings back a path that `.repo_ignore`, `.cursorignore`, the global patterns or Git's exclude files hide, even inside a folder they hide. Within one folder its rules take precedence over `.repo_ignore` and `.cursorignore`; as in Git, a file in a deeper folder takes precedence over one in a folder above it. Nothing brings back a path that `.gitignore` ignores. Edits apply at the next call, without restarting mipmux.
 
 ## Git's exclude files
 

@@ -31,7 +31,7 @@ test('.mipmux_ignore files leave paths out and bring back paths that other ignor
     await writeFile(join(repo, path), text);
   }
   const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100,
-    contextBudgetUnits: 1000000, credentialPaths: [], nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
+    contextBudgetUnits: 1000000, credentialPaths: [], nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' },
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), git: { executable: git } });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: repo }], exclusions: [], outputRoot: out }, signal());

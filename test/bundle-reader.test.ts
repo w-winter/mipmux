@@ -34,7 +34,7 @@ test('saved bundle reader rejects writerless FIFOs and settles cancellation with
   const base = await mkdtemp(join(tmpdir(), 'mipmux-bundle-reader-')), root = join(base, 'root'), out = join(base, 'out');
   await mkdir(root); await mkdir(out); await writeFile(join(root, 'source.txt'), 'exact source\r\n');
   const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100 });
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' }, contextBudgetUnits: 1000000, credentialPaths: [], terminationGraceMs: 100 });
   const signal = new AbortController().signal;
   const proofs: unknown[] = [];
   try {

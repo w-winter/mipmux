@@ -690,9 +690,10 @@
       "sourceSHA256": "ad927a68ecc0d849269d0b0d65080b7c706a12f1525d0c0455070a0b8225675e",
       "destination": "native/Sources/RepoPromptRegexCore/PCRE2RegexAdapter.swift",
       "changes": [
-        "Add one required synchronous compiler dependency to compileSearchRegexWithRepairsResult. The candidate order, normalization, option construction, repair flag and error conversion are unchanged. Its original convenience wrapper passes the existing compiler;the per-file native bridge passes the retained cache. This avoids a second repair implementation and preserves cached compilation despite the headless call granularity."
+        "Add one required synchronous compiler dependency to compileSearchRegexWithRepairsResult. The candidate order, normalization, option construction, repair flag and error conversion are unchanged. Its original convenience wrapper passes the existing compiler;the per-file native bridge passes the retained cache. This avoids a second repair implementation and preserves cached compilation despite the headless call granularity.",
+        "Read the match-limit switch from MIPMUX_PCRE2_MATCH_LIMITS."
       ],
-      "sha256": "b8c2d576de31d644b1cd914be900a3dd9ad05c75e7aa5336f63942f85ecf0a34",
+      "sha256": "345487868585f3d0401bf5c311b3f36996a05b69cfe320294b63b6fa0efac38e",
       "classification": "handwritten",
       "ranges": [
         [
@@ -733,8 +734,10 @@
       "source": "Sources/RepoPromptRegexCore/RepoPromptRegexRuntime.swift",
       "sourceSHA256": "31f62e7629c082ed4b5fc02eb68dbf13cbed7c0ce87fe1ea26c089efccfe4aaf",
       "destination": "native/Sources/RepoPromptRegexCore/RepoPromptRegexRuntime.swift",
-      "changes": [],
-      "sha256": "31f62e7629c082ed4b5fc02eb68dbf13cbed7c0ce87fe1ea26c089efccfe4aaf",
+      "changes": [
+        "Read the JIT mode from MIPMUX_PCRE2_JIT."
+      ],
+      "sha256": "c09a6b38b3c79be5d7b1696a7e39002854e3d2957f1bb7808fa3dda4f86491b0",
       "classification": "handwritten",
       "ranges": [
         [
@@ -1634,13 +1637,14 @@
         ]
       ],
       "destination": "native/Sources/RepoPromptCodeMapCore/Extraction/CodeMapGenerator.swift",
-      "sha256": "0526672f5713909571834a9e0856e868057b71804f4f0e47bf3ab143ec55118b",
+      "sha256": "c8ae152dba9cd769afefb084bc4a9bebf49c754195801134bce004a37fe75bc8",
       "changes": [
         "declaration relocation",
         "CoreFoundation timing import",
         "module-internal access for the listed declarations",
         "extractCodeMap delegates to the per-invocation runtime",
-        "qualification of CodeMapGenerator helpers"
+        "qualification of CodeMapGenerator helpers",
+        "Log performance signposts under the mipmux OSLog subsystem."
       ],
       "classification": "handwritten",
       "internalMembers": [
@@ -6490,7 +6494,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "native/Sources/MipmuxBridge/RPCEAutomaticReviewGitRendering.swift",
-      "sha256": "5440b4be8a2518f83b7fd9f0d5e1a033c9f20f156fa7da2cfb0607bdd46b86a2",
+      "sha256": "90050e185d3039d712f49323e8ba21298024088603e4ccabd31f36f7ce7ba0a1",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6514,7 +6518,8 @@
         "Retain checkout/outcome values, successful-outcome predicate and exact renderText/incompleteDiagnostics bodies. Omit unused outcome checkout projection and cancelled enum case because cancellation rejects the owning operation before rendering.",
         "Move renderer into a standalone native value; add relative UTF-8 body spans to the existing assembly for saved integrity without duplicating patch bodies.",
         "Compute body offsets from the complete header prefix UTF-8 length, including source-valid multiline/Unicode checkout labels.",
-        "Apply local brace formatting; comparison and emitted bytes are unchanged."
+        "Apply local brace formatting; comparison and emitted bytes are unchanged.",
+        "Name the checkout-diff and incomplete-diff banners MIPMUX instead of REPOPROMPT. Framing, ordering and body spans are otherwise unchanged; the reference test maps the original banner names in test/fixtures/rpce-automatic-review-git.json."
       ]
     },
     {
@@ -6580,7 +6585,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git-integrity.ts",
-      "sha256": "a6e794fa42c24033bb057c21f1cf6310234f101ffb8c61d205f708e74a090a42",
+      "sha256": "0cc74cc01c613b892d4b729263b0afbfbab8abecad27434c854437fc4ad76e9b",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6597,7 +6602,8 @@
         "Keep completeness checks, checkout sections and diagnostic grammar in distinct parser phases sharing one byte cursor. This is verification only, not a text renderer.",
         "Verify checkout path membership against captured full/slice selection using native-normalized sourceRoots, canonical Unicode equality and existing root containment. Path diagnostics account for unresolved members. This closes the reproduced full-to-codemap archive forgery without consulting native or current files. The ownership producer is Sources/RepoPrompt/Features/Prompt/Services/ReviewGitSelectedPathOwnershipResolver.swift:54-150, SHA256 4243ff0af1a4e7f080e0dba25ceb1257dd4cad15ed73e23f7d4351f4f999b3f5.",
         "Parse selected versus complete scope. Complete evidence has zero selected paths and binds its one checkout to the explicit active root, or no checkout when the active root is null. Preserve existing framing/body/completeness checks.",
-        "Check captured worktree-or-Git-directory containment for complete scope; selected scope and no-active-root complete evidence carry null rootBinding. Schema 23 is the sole integrated format."
+        "Check captured worktree-or-Git-directory containment for complete scope; selected scope and no-active-root complete evidence carry null rootBinding. Schema 23 is the sole integrated format.",
+        "Parse the MIPMUX checkout-diff and incomplete-diff banner names that the native renderer emits."
       ]
     },
     {
@@ -7004,9 +7010,10 @@
         "The native scanner owns literal flexible-space and whole-word matching. The preparation result identifies the strategy; matching receives original decoded text, the raw pattern and query flags.",
         "Run all matching through the existing native worker and its pinned Foundation/PCRE2 implementation. The host configuration has one nativeExecutable owner; it contains no separate search executable or optional search gate. Preserve one current decoded file, query limits and parent-owned settlement.",
         "Extract the existing merged-context rendering into a private function after removal of the old matching transport exposed a staging cognitive-complexity error. Its ranges, order and original source line text remain unchanged.",
-        "Expose filtered candidate count as searchedFiles. MCPFileToolProvider.swift790-807,867-902,1005-1024 returns recognized pattern errors as zero-count SearchResultDTO values with source issue/suggestion; MCPConnectionManager.swift14970-14978 and15058-15132 wraps successful domain values with isError=false. Preserve that envelope at the search producer, while empty queries, complexity admission, cancellation, authorization and unexpected protocol/native failures keep the existing failure path. MCPServerViewModel.swift7489-7497 supplies the exact suggestion only when filters.paths admitted zero scope records before extension/exclusion filtering. Public grouped-file replies retain phase and per-file diagnostics from SearchResults as typed fields."
+        "Expose filtered candidate count as searchedFiles. MCPFileToolProvider.swift790-807,867-902,1005-1024 returns recognized pattern errors as zero-count SearchResultDTO values with source issue/suggestion; MCPConnectionManager.swift14970-14978 and15058-15132 wraps successful domain values with isError=false. Preserve that envelope at the search producer, while empty queries, complexity admission, cancellation, authorization and unexpected protocol/native failures keep the existing failure path. MCPServerViewModel.swift7489-7497 supplies the exact suggestion only when filters.paths admitted zero scope records before extension/exclusion filtering. Public grouped-file replies retain phase and per-file diagnostics from SearchResults as typed fields.",
+        "Report path-only queries with the engine label \"mipmux path\"."
       ],
-      "sha256": "1ad09d40e55b38caa876ab30aa5fb4546874851a07c565c02d62ec26946910e3"
+      "sha256": "a426bd34948427e253ae630a8d6b7de19025af84f1b6c6bbf2c67f2731afe174"
     },
     {
       "source": "Sources/RepoPrompt/Features/Search/SearchMatch.swift",
@@ -8373,7 +8380,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
       "destination": "prompts/discovery.md",
-      "sha256": "d718623c635cd25514d43fd8005f9557ac4bfa3fd91c57c7c98b635513c57da6",
+      "sha256": "169f3b0983c89341037768d6337188f996a8dc16574a54a2036c3a8fc3d8860b",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8400,7 +8407,8 @@
         "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases.",
         "List codemode among the available tools through the codemode.tool section when discovery offers it, and state in the mipmux runtime bindings that draft changes are made one at a time.",
         "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on.",
-        "Name each tool through a {{mipmux:tool:NAME}} placeholder, filled with the bare name for Pi discovery and the mcp__mipmux__ name for Claude Code discovery; with bare names the template renders exactly as before."
+        "Name each tool through a {{mipmux:tool:NAME}} placeholder, filled with the bare name for Pi discovery and the mcp__mipmux__ name for Claude Code discovery; with bare names the template renders exactly as before.",
+        "Name mipmux in the provenance sentence, and describe <current_prompt_content> as the draft prompt at the start of discovery, present only when nonempty, instead of the RPCE instructions field."
       ]
     },
     {

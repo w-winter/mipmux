@@ -12,7 +12,7 @@ test('artifact publication agrees across owners; corruption is diagnosed and exp
   const cache = await mkdtemp(resolve('test-output/cache-'));
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
   const native = new BridgeClient({ executable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), supervisor,
-    env: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+    env: { MIPMUX_PCRE2_JIT: 'disabled' } });
   try {
     const bytes = Buffer.from('struct CacheRecord {\n let value: String\n}');
     const reply = await native.request({ kind: 'extract', extension: 'swift', bytes: bytes.toString('base64'),

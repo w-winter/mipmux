@@ -20,7 +20,7 @@ const runtime = new MipmuxRuntime({
   defaultEnhancementMode: 'augment',
   cachePath: '/var/tmp/private-mipmux-cache',
   nativeExecutable: '/opt/mipmux/libexec/darwin-arm64/MipmuxBridge',
-  nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'auto' },
+  nativeEnvironment: { MIPMUX_PCRE2_JIT: 'auto' },
   credentialPaths: [],
   terminationGraceMs: 1000,
 });

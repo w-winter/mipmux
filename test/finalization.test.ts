@@ -24,7 +24,7 @@ test('required full source, complete report and patch reach verified output; sta
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' },
   });
   const signal = new AbortController().signal;
   try {

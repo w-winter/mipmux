@@ -78,7 +78,7 @@ async function preparedSearch(operation: WorkspaceOperation, request: SearchRequ
       kind: 'search' as const, inventoryDigest: operation.snapshot.inventoryDigest,
       scopedFileCount: scope.scopedFileCount, enumeration: operation.snapshot.enumeration, unavailableRoots: scope.unavailableRoots,
       searchedFiles: candidates.length,
-      engine: pattern.mode === 'path' ? 'RPCE path' : pattern.raw.isRegex || contentPattern?.isRegex === true ? 'PCRE2' : 'Foundation',
+      engine: pattern.mode === 'path' ? 'mipmux path' : pattern.raw.isRegex || contentPattern?.isRegex === true ? 'PCRE2' : 'Foundation',
       newlineView: 'Original decoded text; CRLF, CR and LF define lines', counts,
       ...display,
       returnedMatchingLines: files.reduce((sum, file) => sum + file.matchingLines, 0), files,

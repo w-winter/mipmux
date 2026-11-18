@@ -63,7 +63,7 @@ While a name is partly typed, the best match is highlighted, so typing a few let
 
 In the rule field, type a path inside the root, relative to it, or a pattern such as `*.log`, and put `!` in front to bring the path back. Tab completes the path after the `!`. A chosen path becomes a rule anchored to the root, such as `/node_modules/` or `!docs/investigations/`. Delete removes a highlighted rule. Ctrl+S writes the files you changed, keeping their comments, and refuses to overwrite a file that someone edited while the panel was open.
 
-The rules belong to the folder, not to the saved workspace: every workspace and every client that uses the folder applies them, and RepoPrompt CE does not read them. Commit the file to share the rules, or add `.mipmux_ignore` to your global gitignore to keep it out of Git.
+The rules belong to the folder, not to the saved workspace: every workspace and every client that uses the folder applies them. Commit the file to share the rules, or add `.mipmux_ignore` to your global gitignore to keep it out of Git.
 
 ## Set preferences
 

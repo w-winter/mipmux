@@ -36,7 +36,7 @@ struct CodeMapGenerator {
 
     enum Signpost {
         #if CODEMAP_PERF_SIGNPOSTS
-            static let log = OSLog(subsystem: "com.repoprompt", category: "codemap")
+            static let log = OSLog(subsystem: "mipmux", category: "codemap")
         #endif
 
         @inline(__always)

@@ -42,7 +42,7 @@ async function fixture(extra: Readonly<Record<string, string>> = {}) {
   const state: Recording = { recording: false, beforeRequest: async () => {} };
   const options = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
     credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } };
   class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {

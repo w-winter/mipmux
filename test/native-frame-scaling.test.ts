@@ -34,7 +34,7 @@ interface Scaling {
 async function assertLinear(name: string, sizes: { readonly smallMiB: number; readonly largeMiB: number },
   prepare: (bridge: BridgeClient, root: NativeHandle, directory: string) => Promise<Scaling>): Promise<void> {
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ executable, supervisor, env: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+  const bridge = new BridgeClient({ executable, supervisor, env: { MIPMUX_PCRE2_JIT: 'disabled' } });
   const directory = await mkdtemp(join(tmpdir(), 'mipmux-frame-scaling-'));
   try {
     const [output] = (await bridge.request({ kind: 'openRoots',

@@ -31,7 +31,7 @@ async function fixture() {
     env: { PATH: '/usr/bin:/bin', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' } });
   const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(directory, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' }, git: { executable: git } });
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' }, git: { executable: git } });
   const spec = { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: output };
   return { directory, root, output, runtime, spec, run };
 }

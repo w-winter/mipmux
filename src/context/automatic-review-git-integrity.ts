@@ -13,7 +13,7 @@ function verifyCompleteness({ outcomes, pathIssues, completeness }: AutomaticRev
 }
 
 function consumeDiagnostics({ outcomes, pathIssues }: AutomaticReviewGitEvidence, consume: (text: string) => void): void {
-  consume('===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n');
+  consume('===== MIPMUX REVIEW DIFF INCOMPLETE =====\n');
   for (const issue of pathIssues) {
     switch (issue.kind) {
       case 'unresolvedSelection': consume('- Selected path could not be resolved: ' + issue.displayPath + '\n'); break;
@@ -26,7 +26,7 @@ function consumeDiagnostics({ outcomes, pathIssues }: AutomaticReviewGitEvidence
     if (outcome.kind === 'baseResolutionFailed') consume('- Comparison base could not be resolved for checkout: ' + outcome.checkout.displayLabel + '\n');
     if (outcome.kind === 'commandFailed') consume('- Git diff command failed for checkout: ' + outcome.checkout.displayLabel + '\n');
   }
-  consume('===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====');
+  consume('===== END MIPMUX REVIEW DIFF INCOMPLETE =====');
 }
 
 function consumeSections(evidence: AutomaticReviewGitEvidence, consume: (text: string) => void, body: (span: Span) => void): void {
@@ -36,9 +36,9 @@ function consumeSections(evidence: AutomaticReviewGitEvidence, consume: (text: s
   else {
     for (const [index, diff] of diffs.entries()) {
       if (index) consume('\n\n');
-      consume('===== BEGIN REPOPROMPT CHECKOUT DIFF: ' + diff.checkout.displayLabel + ' =====\n');
+      consume('===== BEGIN MIPMUX CHECKOUT DIFF: ' + diff.checkout.displayLabel + ' =====\n');
       body(diff.body);
-      consume('\n===== END REPOPROMPT CHECKOUT DIFF: ' + diff.checkout.displayLabel + ' =====');
+      consume('\n===== END MIPMUX CHECKOUT DIFF: ' + diff.checkout.displayLabel + ' =====');
     }
     if (completeness !== 'complete') {
       if (diffs.length) consume('\n\n');

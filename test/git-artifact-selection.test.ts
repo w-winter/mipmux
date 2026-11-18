@@ -196,10 +196,10 @@ test('automatic Git retains valid checkout diffs beside non-repository selection
       const ready = await draft.finalize(signal()); assert(ready.kind === 'ready');
       assert.equal(ready.manifest.automaticGit?.evidence.completeness, 'partial');
       const patch = f.run(['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=3', '--color=never', 'HEAD', '--', 'file.txt']);
-      const expected = '===== BEGIN REPOPROMPT CHECKOUT DIFF: r =====\n' + patch.trimEnd() +
-        '\n===== END REPOPROMPT CHECKOUT DIFF: r =====\n\n===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n' +
+      const expected = '===== BEGIN MIPMUX CHECKOUT DIFF: r =====\n' + patch.trimEnd() +
+        '\n===== END MIPMUX CHECKOUT DIFF: r =====\n\n===== MIPMUX REVIEW DIFF INCOMPLETE =====\n' +
         (baseFailure ? '- Comparison base could not be resolved for checkout: other' : '- No owning repository: other/file.txt') +
-        '\n===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====';
+        '\n===== END MIPMUX REVIEW DIFF INCOMPLETE =====';
       const context = await readFile(join(ready.directory, 'context.md'), 'utf8');
       assert(context.includes('<git_diff>\n' + expected + '\n</git_diff>'));
       await verifyBundle(ready.directory); await verifyCurrentBundle(ready.directory, f.runtime, signal());

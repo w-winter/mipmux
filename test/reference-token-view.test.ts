@@ -105,10 +105,10 @@ test('reference Git accounting follows artifact-path diagnostics even when expor
     const stats = tokens.Parse(selected);
     const bodies = await Promise.all(aliases.map(alias => readFile(join(f.out, alias), 'utf8')));
     assert.equal(stats.token_stats.files_content, bodies.reduce((sum, body) => sum + units(body), 0));
-    const diagnostic = '===== REPOPROMPT REVIEW DIFF INCOMPLETE =====\n' +
+    const diagnostic = '===== MIPMUX REVIEW DIFF INCOMPLETE =====\n' +
       '- Selected path could not be resolved: Selected path 1\n' +
       '- Selected path could not be resolved: Selected path 2\n' +
-      '===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====';
+      '===== END MIPMUX REVIEW DIFF INCOMPLETE =====';
     assert.equal(stats.token_stats.git, units(diagnostic));
     const result = await f.draft.finalize(signal()); assert(result.kind === 'ready');
     assert.equal(result.manifest.automaticGit, null);

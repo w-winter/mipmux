@@ -21,7 +21,7 @@ test('ordered ignore negation, excluded parents, nested aliases and new control 
   await writeFile(join(root, 'data.swift'), 'struct Record {\n let value: String\n}');
   await mkdir(join(root, 'fresh')); await writeFile(join(root, 'fresh/model.swift'), 'struct Model {\n let value: String\n}');
   const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(root, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } });
   const spec = { roots: [{ name: 'outer', absolutePath: root }, { name: 'inner', absolutePath: join(root, 'denied') }], exclusions: [], outputRoot: join(root, 'out') };
   try {
     const handle = await runtime.declare(spec, new AbortController().signal);
@@ -62,7 +62,7 @@ test('credential denies through a containing root alias apply to ordinary declar
   const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [join(base, 'credential-link')],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } });
   const signal = new AbortController().signal;
   await symlink(join(root, 'nested/private.txt'), join(base, 'credential-link'));
   try {

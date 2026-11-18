@@ -41,7 +41,7 @@ async function fixture(globalConfig: string) {
   for (const [path, text] of Object.entries(files)) await writeFile(join(repo, path), text);
   run(['add', '-f', 'AGENTS.md', 'src/kept.swift', '.claude/cmds/tracked.md']); run(['commit', '-q', '-m', 'base']);
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100,
-    contextBudgetUnits: 1000000, credentialPaths: [], nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
+    contextBudgetUnits: 1000000, credentialPaths: [], nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' },
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
     git: { executable: git, userConfiguration: { home, xdgConfigHome: null } } };
   return { home, repo, out, options, run };

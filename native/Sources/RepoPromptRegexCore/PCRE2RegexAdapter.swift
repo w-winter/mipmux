@@ -2,7 +2,7 @@ import Foundation
 
 package enum RepoPromptSearchRegexRuntime {
     package static var pcre2SearchMatchLimitsEnabled: Bool {
-        let rawValue = ProcessInfo.processInfo.environment["REPOPROMPT_PCRE2_MATCH_LIMITS"]?
+        let rawValue = ProcessInfo.processInfo.environment["MIPMUX_PCRE2_MATCH_LIMITS"]?
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
 

@@ -32,7 +32,7 @@ test('current verification admits only recorded material, applies current denies
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' },
   };
   const request: ContextBuildRequest = {
     task: 'Review',
@@ -123,7 +123,7 @@ test('current verification admits only recorded material, applies current denies
         await denied.close();
       }
     }
-    const pipeline = new MipmuxRuntime({ ...options, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'required' } });
+    const pipeline = new MipmuxRuntime({ ...options, nativeEnvironment: { MIPMUX_PCRE2_JIT: 'required' } });
     try {
       await assert.rejects(verifyCurrentBundle(result.directory, pipeline, signal()), /pipelineChanged/);
     } finally {
@@ -153,7 +153,7 @@ test('current verification cancellation and runtime shutdown join native work an
     terminationGraceMs: 100,
     contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' },
   };
   const writer = new MipmuxRuntime(options);
   const request: ContextBuildRequest = {

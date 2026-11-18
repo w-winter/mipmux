@@ -12,7 +12,7 @@ import type { RootIdentity } from '../src/contracts/workspace.js';
 const signal = () => new AbortController().signal;
 const native = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const limited = resolve('test/fixtures/limited-native.sh');
-const environment = (limit: number) => ({ MIPMUX_NATIVE: native, MIPMUX_FD_LIMIT: String(limit), REPOPROMPT_PCRE2_JIT: 'disabled' });
+const environment = (limit: number) => ({ MIPMUX_NATIVE: native, MIPMUX_FD_LIMIT: String(limit), MIPMUX_PCRE2_JIT: 'disabled' });
 
 test('repeated root revalidation keeps descriptor use bounded and preserves identity, access and generation authority', async () => {
   await mkdir('test-output', { recursive: true });

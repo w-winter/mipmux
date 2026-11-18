@@ -23,8 +23,10 @@ test('native automatic Review rendering matches original RPCE coordinator observ
     for (const fixture of raw.cases) {
       assert(fixture.operation.kind === 'renderAutomaticReviewGit');
       const { result } = await bridge.request(fixture.operation, new AbortController().signal);
+      // The fixture keeps RPCE's original banner names; mipmux renders the same framing under its own name.
+      const expected = { ...fixture.expected, text: fixture.expected.text?.replace(/^(===== (?:BEGIN |END )?)REPOPROMPT /gm, '$1MIPMUX ') ?? null };
       assert.deepEqual({ text: result.text, completeness: result.completeness, outcomeKinds: result.outcomes.map(outcome => outcome.kind) },
-        fixture.expected, fixture.name);
+        expected, fixture.name);
     }
     const checkout = { identity: { root: 'r', checkoutRootPath: '/r/子\n目录', repoKey: 'fixture', repositoryID: 'fixture',
       worktreeID: 'fixture', kind: 'canonical' as const }, displayLabel: 'Workspace/子\n目录', selectedPaths: ['/r/子\n目录/file'] };
@@ -32,8 +34,8 @@ test('native automatic Review rendering matches original RPCE coordinator observ
     const { result } = await bridge.request({ kind: 'renderAutomaticReviewGit', outcomes: [
       { kind: 'diff', checkout, text: '\nPATCH 🙂\n\n' }, { kind: 'noChanges', checkout: { ...checkout, displayLabel: 'Other' } },
     ], pathIssues: [] }, new AbortController().signal);
-    assert.equal(result.text, '===== BEGIN REPOPROMPT CHECKOUT DIFF: Workspace/子\n目录 =====\nPATCH 🙂\n' +
-      '===== END REPOPROMPT CHECKOUT DIFF: Workspace/子\n目录 =====');
+    assert.equal(result.text, '===== BEGIN MIPMUX CHECKOUT DIFF: Workspace/子\n目录 =====\nPATCH 🙂\n' +
+      '===== END MIPMUX CHECKOUT DIFF: Workspace/子\n目录 =====');
     const span = result.bodySpans[0]; assert(span); assert(result.text);
     const body = Buffer.from(result.text).subarray(span.offset, span.offset + span.length);
     assert.equal(body.toString(), 'PATCH 🙂');

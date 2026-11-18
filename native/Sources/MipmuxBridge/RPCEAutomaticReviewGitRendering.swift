@@ -43,10 +43,10 @@ struct RPCEAutomaticReviewGitRendering {
         var offset = 0
         var sections = diffs.map { checkout, text in
             let body = text.trimmingCharacters(in: .newlines)
-            let header = "===== BEGIN REPOPROMPT CHECKOUT DIFF: \(checkout.displayLabel) =====\n"
+            let header = "===== BEGIN MIPMUX CHECKOUT DIFF: \(checkout.displayLabel) =====\n"
             let section = """
             \(header)\(body)
-            ===== END REPOPROMPT CHECKOUT DIFF: \(checkout.displayLabel) =====
+            ===== END MIPMUX CHECKOUT DIFF: \(checkout.displayLabel) =====
             """
             bodySpans.append(["offset": offset + header.utf8.count, "length": body.utf8.count])
             offset += section.utf8.count + "\n\n".utf8.count
@@ -64,7 +64,7 @@ struct RPCEAutomaticReviewGitRendering {
         outcomes: [ReviewGitCheckoutOutcome],
         pathIssues: [ReviewGitPathIssue]
     ) -> String {
-        var lines = ["===== REPOPROMPT REVIEW DIFF INCOMPLETE ====="]
+        var lines = ["===== MIPMUX REVIEW DIFF INCOMPLETE ====="]
 
         for issue in pathIssues {
             switch issue {
@@ -90,7 +90,7 @@ struct RPCEAutomaticReviewGitRendering {
             }
         }
 
-        lines.append("===== END REPOPROMPT REVIEW DIFF INCOMPLETE =====")
+        lines.append("===== END MIPMUX REVIEW DIFF INCOMPLETE =====")
         return lines.joined(separator: "\n")
     }
 }

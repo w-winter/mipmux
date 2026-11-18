@@ -17,7 +17,7 @@ test('real exploration preserves queries, Unicode paths, counts, context and dig
   await writeFile(join(base, 'root/C.swift'), 'struct PeerRecord {\n let label: String\n}\n');
   const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }], exclusions: [], outputRoot: join(base, 'out') }, new AbortController().signal);
     const op = await handle.openOperation(new AbortController().signal);
@@ -65,7 +65,7 @@ test('a top-level directory with a one-character name is walked and mapped', asy
   await writeFile(join(base, 'root/u/A.swift'), 'struct OwnerRecord {\n let value: Int\n}\n');
   const runtime = new MipmuxRuntime({ copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000,
     credentialPaths: [], nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } });
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } });
   try {
     const handle = await runtime.declare({ roots: [{ name: 'r', absolutePath: join(base, 'root') }], exclusions: [], outputRoot: join(base, 'out') },
       new AbortController().signal);

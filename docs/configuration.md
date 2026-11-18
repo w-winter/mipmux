@@ -1,6 +1,6 @@
 # Configuration
 
-This page lists every setting in mipmux's configuration file and explains how to set up discovery: with a provider login stored by Pi, with a provider's API key, or with Claude Code; with MCP servers that discovery may use; and with your own copy of the discovery prompt. RPCE stands for RepoPrompt CE, whose Context Builder mipmux ports.
+This page lists every setting in mipmux's configuration file and explains how to set up discovery: with a provider login stored by Pi, with a provider's API key, or with Claude Code; with MCP servers that discovery may use; and with your own copy of the discovery prompt.
 
 ## The configuration file
 
@@ -36,8 +36,8 @@ Omitted fields take these values:
 | `contextBudgetUnits` | `200000` estimated units for a complete packet |
 | `defaultEnhancementMode` | `augment` |
 | `credentialPaths` | none. Listed files and directories are excluded from context collection, in addition to the configuration, authentication and model files |
-| `copyContext` | RPCE's default copy state: Auto file tree, automatic codemaps, no Git inclusion, no customizations and no custom presets |
-| `ignoreSettings` | RPCE's default ignore behavior |
+| `copyContext` | Auto file tree, automatic codemaps, no Git inclusion, no customizations and no custom presets |
+| `ignoreSettings` | mipmux's built-in global patterns, with all three switches enabled. See [Workspaces and ignore rules](workspaces.md#ignore-files) |
 | `cachePath` | `~/Library/Caches/mipmux` on macOS; elsewhere `$XDG_CACHE_HOME/mipmux` or `~/.cache/mipmux` |
 | `nativeExecutable` | the matching native helper supplied by this installation |
 | `nativeEnvironment` | none |
@@ -57,7 +57,7 @@ Omitted fields take these values:
 | `discovery.codemode` | `true`, which also offers the agent Pi's `codemode` tool; its scripts call the same discovery tools |
 | `discovery.policy` | Pi's defaults, merged field by field with the file's overrides: retries `enabled`, `maxRetries: 3`, `baseDelayMs: 2000`, `maxAgentDelayMs: 60000`; provider requests `timeoutMs` equal to `httpIdleTimeoutMs`, `maxRetries: 0`, `maxRetryDelayMs: 60000`; compaction `enabled`, `reserveTokens: 16384`, `keepRecentTokens: 20000`; `transport: "auto"`, `httpIdleTimeoutMs: 300000`, `websocketConnectTimeoutMs: 15000` |
 
-Discovery never warms prompt caches, because warming is billed; `policy.cacheWarming` accepts only `"off"`. `copyContext` accepts RPCE's copy-state record, with `current`, `customizations`, `codeMapsGloballyDisabled`, `activeGitRoot` and `presets`, when you need custom presets or customizations. Library hosts pass the resolved form, with every field explicit, to `createMcpServer` (see [TypeScript library](library.md)).
+Discovery never warms prompt caches, because warming is billed; `policy.cacheWarming` accepts only `"off"`. `copyContext` accepts a copy-state record, with `current`, `customizations`, `codeMapsGloballyDisabled`, `activeGitRoot` and `presets`, when you need custom presets or customizations. Library hosts pass the resolved form, with every field explicit, to `createMcpServer` (see [TypeScript library](library.md)).
 
 ## Discovery with a Pi login
 

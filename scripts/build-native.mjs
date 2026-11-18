@@ -112,7 +112,7 @@ function inspectBinary(binary, symbolPath) {
   const symbols = readFileSync(symbolPath, 'utf8');
   assert(/\b[Tt] _?pcre2_config_8$/mu.test(symbols), 'The width-8 PCRE2 engine must be defined in the executable.');
   const description = JSON.parse(execFileSync(binary, ['build-verification'], {
-    env: { REPOPROMPT_PCRE2_JIT: 'required' }, encoding: 'utf8',
+    env: { MIPMUX_PCRE2_JIT: 'required' }, encoding: 'utf8',
     input: JSON.stringify({ wireVersion: 1, requestId: 'describe', generation: 'build-verification', operation: { kind: 'describe' } }) + '\n',
   }));
   assert.equal(description.result.kind, 'description');

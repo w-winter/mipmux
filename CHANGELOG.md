@@ -4,6 +4,9 @@
 
 ### Changed
 - The README quickstart runs mipmux through `npx`, with no global installation. Install mipmux globally when you use the Pi or omp extensions or Claude Code discovery, which need a `mipmux` command on your PATH.
+- The automatic Git diff in a Review packet labels its sections `MIPMUX CHECKOUT DIFF` and `MIPMUX REVIEW DIFF INCOMPLETE`, and file search reports `mipmux path` as the engine for path-only queries. Review packets saved by earlier versions with these sections fail `mipmux verify` and `context_prepare`; build them again.
+- The PCRE2 settings for the native helper are `MIPMUX_PCRE2_JIT` and `MIPMUX_PCRE2_MATCH_LIMITS`. Rename `REPOPROMPT_PCRE2_JIT` and `REPOPROMPT_PCRE2_MATCH_LIMITS` in `nativeEnvironment`.
+- The shipped discovery prompt describes `<current_prompt_content>` as the draft's prompt when discovery starts. A copy at `discovery.promptTemplatePath` keeps its earlier wording until you replace it.
 
 ### Fixed
 - Preparing a Review or Diff Follow-Up packet with `context_prepare`, or checking it with `mipmux verify --mode current`, no longer fails with `automaticGitChanged` when nothing has changed. This happened when the packet's automatic Git diff listed more than one path diagnostic, such as `No owning repository` for selected files outside any Git repository, because mipmux recorded those diagnostics in selection order and the order it reconstructed from the saved packet could differ. Diagnostics now follow a fixed order. A packet saved by an earlier version can still fail this way until it is built again.

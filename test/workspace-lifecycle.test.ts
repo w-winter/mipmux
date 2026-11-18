@@ -30,7 +30,7 @@ test('closed workspaces release their inventories and their output roots\' snaps
   await writeFile(join(root, 'model.swift'), 'struct Model {}\n');
   const open = new Set<BridgeClient>();
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } };
   class CountingRuntime extends MipmuxRuntime {
     override makeBridge() {
       const bridge = super.makeBridge();
@@ -133,7 +133,7 @@ test('warming satisfies a later barrier, cancelled observers release only their 
   const entered = barrier(), resume = barrier();
   let blocked = false, extractions = 0;
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends MipmuxRuntime {
     override makeBridge() {
       class ObservedBridge extends BridgeClient {
@@ -193,7 +193,7 @@ test('different declarations share pending extraction while public and operation
   const extractionEntered = barrier(), releaseExtraction = barrier(), secondRead = barrier();
   let extractions = 0, reads = 0;
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends MipmuxRuntime {
     override makeBridge() {
       class ObservedBridge extends BridgeClient {
@@ -235,7 +235,7 @@ test('settled inventory distinguishes unavailable acquisition, decoding, unsuppo
   await writeFile(join(base, 'root/cases/empty.swift'), '');
   await writeFile(join(base, 'root/cases/note.txt'), 'unsupported');
   const options: RuntimeOptions = { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+    nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`), nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } };
   class ObservedRuntime extends MipmuxRuntime {
     override makeBridge() {
       class ObservedBridge extends BridgeClient {

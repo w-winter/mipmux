@@ -20,6 +20,7 @@ export function bindReferenceDiscoveryPolicy(source, input) {
     [toolList, 2],
     ["This prompt comes directly from RepoPrompt. The MCP server's workspace state already matches what you see here—codemaps for selected files, the selected-mode file tree, and the `<current_prompt_content>` (user's prompt) are embedded.", 1],
     ['RepoPrompt MCP tools', 2],
+    ["contains the user's original prompt text—this is what they typed in the instructions field.", 1],
     ["These tools provide complete access to the user's project—attempting to use any other approach will fail.", 1],
     ['any non-MCP tools', 1], ['prefix all paths correctly', 1],
     ['`repo_root` (or `repo_key`)', restrictedReview ? 1 : 0],
@@ -40,8 +41,10 @@ export function bindReferenceDiscoveryPolicy(source, input) {
     .replace(manualCodemapMode, narrowManualCodemapMode)
     .replaceAll(toolList, '`manage_selection`, `prompt`, `draft_inspect`, `get_file_tree`, `get_code_structure`, `file_search`, `read_file`, `git`, `draft_update`, `draft_validate`, `codemode`')
     .replace("This prompt comes directly from RepoPrompt. The MCP server's workspace state already matches what you see here—codemaps for selected files, the selected-mode file tree, and the `<current_prompt_content>` (user's prompt) are embedded.",
-      "This prompt uses RepoPrompt CE's discovery policy. The captured mipmux observation identifies the admitted roots, selection, costs and evidence; the file tree and `<current_prompt_content>` are embedded. Use the context tools for complete material bodies.")
+      "This prompt uses mipmux's discovery policy. The captured mipmux observation identifies the admitted roots, selection, costs and evidence; the file tree and `<current_prompt_content>` are embedded. Use the context tools for complete material bodies.")
     .replaceAll('RepoPrompt MCP tools', 'mipmux context tools and configured HTTP MCP tools')
+    .replace("contains the user's original prompt text—this is what they typed in the instructions field.",
+      "contains the draft's prompt text from the start of discovery and appears only when that text is not empty.")
     .replace("These tools provide complete access to the user's project—attempting to use any other approach will fail.",
       'Context tools enforce declared roots and protected-path policy. Configured HTTP MCP tools have their separately authorized capabilities.')
     .replaceAll('any non-MCP tools', 'any unexposed tools')

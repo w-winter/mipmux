@@ -24,7 +24,7 @@ async function fixture() {
   return { base, root, spec: { roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot },
     options: { copyContext: copyContext(), cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
       nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-      nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } } };
+      nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } } };
 }
 
 test('refresh observers settle on their publication while a later scan remains held', async () => {

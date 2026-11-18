@@ -54,7 +54,7 @@ test('local exact-byte patches apply forward/reverse, remain read-only and enfor
     contextBudgetUnits: 1000000, credentialPaths: [],
     git: { executable: git },
     nativeExecutable: resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`),
-    nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' },
+    nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' },
   };
   const runtime = new MipmuxRuntime(options);
   try {

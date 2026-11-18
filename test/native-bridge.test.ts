@@ -13,7 +13,7 @@ const identity = (bytes: Buffer) => ({ sha256: createHash('sha256').update(bytes
 
 test('native exact-byte acquisition, extraction, confined reads and exclusive export', async () => {
   const supervisor = new ProcessSupervisor({ terminationGraceMs: 100 });
-  const bridge = new BridgeClient({ executable, supervisor, env: { REPOPROMPT_PCRE2_JIT: 'required' } });
+  const bridge = new BridgeClient({ executable, supervisor, env: { MIPMUX_PCRE2_JIT: 'required' } });
   const artifacts = resolve('test-output');
   await mkdir(artifacts, { recursive: true });
   const root = await mkdtemp(join(artifacts, 'native-'));

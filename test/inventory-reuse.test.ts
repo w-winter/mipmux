@@ -25,7 +25,7 @@ async function start(base: string, settings: Settings = {}) {
   let slow = settings.slowRead;
   const options = { copyContext: { ...copyContext(), codeMapsGloballyDisabled: settings.codeMapsGloballyDisabled ?? false },
     cachePath: join(base, 'cache'), terminationGraceMs: 100, contextBudgetUnits: 1000000, credentialPaths: [],
-    nativeExecutable: settings.nativeExecutable ?? nativeExecutable, nativeEnvironment: { REPOPROMPT_PCRE2_JIT: 'disabled' } };
+    nativeExecutable: settings.nativeExecutable ?? nativeExecutable, nativeEnvironment: { MIPMUX_PCRE2_JIT: 'disabled' } };
   class Runtime extends MipmuxRuntime {
     override makeBridge() {
       class Bridge extends BridgeClient {

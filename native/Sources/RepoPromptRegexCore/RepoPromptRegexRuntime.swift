@@ -3,7 +3,7 @@ import Foundation
 package enum RepoPromptRegexRuntime {
     package static var pcre2JITMode: PCRE2JITMode {
         pcre2JITMode(
-            from: ProcessInfo.processInfo.environment["REPOPROMPT_PCRE2_JIT"]
+            from: ProcessInfo.processInfo.environment["MIPMUX_PCRE2_JIT"]
         )
     }
 
