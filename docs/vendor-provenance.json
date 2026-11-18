@@ -6551,7 +6551,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "288a996f48277cc71fb18f0d21859a77dd26aab2a34392410d3fb2519e2733ae",
       "destination": "src/context/automatic-review-git.ts",
-      "sha256": "a599a2bb10161eb83ec81e65a052c7200308589732abe56e036816aa0c23ffac",
+      "sha256": "75c1e000dce29cf49a756a8eb75a3a5b116c478c926703e86acf93140824714a",
       "classification": "handwritten",
       "ranges": [
         [
@@ -6577,7 +6577,8 @@
         "Accept captured source selections independently of delivered material. Capture sourceRoots through the existing selectionPathBindings native boundary so saved integrity can relate root-qualified membership to Foundation-normalized checkout paths, including macOS /private/var versus /var. Revalidation reuses the same captured projection before publication and recomputes it for current verification.",
         "Reuse confined acquisition and frozen comparison plans for complete scope from an explicit captured active root. PromptViewModel.swift:7124-7126, GitViewModel.swift:908-931 and GitStatusActor.swift:706-747 provide complete-provider behavior. Approved exception prompt-exports/cb-high-fidelity-port-2026-10-11/remaining-authority-review-decisions.json: use local refs only, never fetch/prune; missing refs fail, not substitute HEAD. Complete passes all-path scope to the existing capture and records scope distinctly from selected evidence.",
         "Read complete-Git active-root authority from the one captured runtime copy context. Extract the unchanged complete-target and comparison preparation phases to satisfy staging complexity checks; preserve elected identity construction and all comparison/error boundaries. The markerless metadata-root repair remains separate.",
-        "Integrate the independently reproduced complete-target repair: discover through resolveDiffRepository explicit-root command ownership before native checkout identity construction. Capture a worktree-or-Git-directory rootBinding, retain the declared metadata anchor for capture and publication, and compare native checkout realpath with the command-resolved worktree. No authority, process framework, fetch or prune is added."
+        "Integrate the independently reproduced complete-target repair: discover through resolveDiffRepository explicit-root command ownership before native checkout identity construction. Capture a worktree-or-Git-directory rootBinding, retain the declared metadata anchor for capture and publication, and compare native checkout realpath with the command-resolved worktree. No authority, process framework, fetch or prune is added.",
+        "Sort path issues by canonical JSON bytes before rendering, so evidence reacquired from a saved packet matches the original capture whatever order its selections are reconstructed in."
       ]
     },
     {
