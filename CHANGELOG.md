@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.7] - 2026-11-18
+
 ### Changed
 - The README quickstart runs mipmux through `npx`, with no global installation. Install mipmux globally when you use the Pi or omp extensions or Claude Code discovery, which need a `mipmux` command on your PATH.
 - The automatic Git diff in a Review packet labels its sections `MIPMUX CHECKOUT DIFF` and `MIPMUX REVIEW DIFF INCOMPLETE`, and file search reports `mipmux path` as the engine for path-only queries. Review packets saved by earlier versions with these sections fail `mipmux verify` and `context_prepare`; build them again.
