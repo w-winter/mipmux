@@ -6097,11 +6097,12 @@
         "Read, decode and scan search candidates in one native request, passing each file's outcome on as it arrives.",
         "Give each operation's policies one Git query, which asks for a root's tracked paths only when an exclusion depends on them.",
         "The worktree comparison walk skips paths the index records as symlinks or submodules, which the patch compares through Git.",
-        "Read comparison symlinks through a source capability, retaining no-follow traversal and named failures for replaced links."
+        "Read comparison symlinks through a source capability, retaining no-follow traversal and named failures for replaced links.",
+        "Return null when the confined symlink reader reports a missing path so worktree comparisons can record deletions."
       ],
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "0c7f382c4f8973cdbb1d0cdf9cd3be2c0f2a4420dd85eee113656cc33deda6e9",
-      "sha256": "e045393136e6682b53db343d7c8f3781a72871f1f5b30b6991b962a68e03f4aa",
+      "sha256": "fcb9065093fe5ec7ce84ddcac6937182e435138e11cb3799c47deb04fec1c75a",
       "classification": "handwritten"
     },
     {
