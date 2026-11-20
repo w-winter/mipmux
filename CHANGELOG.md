@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.0-alpha.8] - 2026-11-20
+
+### Fixed
+- `mipmux models` and Pi-based discovery now read Pi's saved model catalogs. After refreshing the catalogs with `/scoped-models` in Pi, newly available models show up in mipmux.
+- Local Git patches now include deleted symlinks in commit, staged and worktree comparisons. The patch shows each link's stored target without following it. These deletions previously stopped context builds with `unsupportedComparisonEntry`.
+
 ## [0.1.0-alpha.7] - 2026-11-18
 
 ### Changed
