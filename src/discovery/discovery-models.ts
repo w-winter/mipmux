@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import Type from 'typebox';
 import { Compile } from 'typebox/compile';
 import { ModelRuntime } from '@earendil-works/pi-coding-agent';
-import { InMemoryModelsStore } from '@earendil-works/pi-ai';
+import type { ModelsStore } from '@earendil-works/pi-ai';
 import { WorkspaceFailure } from '../workspace/values.js';
 import { createCredentials, rejectCommands } from './pi-credentials.js';
 import type { PiConfig } from './pi-protocol.js';
@@ -19,6 +20,13 @@ const modelsValidator = Compile(Type.Object({ providers: Type.Record(Type.String
 /** The Pi API whose stream chunks name the model the server ran, and so the only one a served model can be declared for. */
 const declarableApi = 'openai-completions';
 
+interface ModelsStoreModule { FileModelsStore: new (path: string) => ModelsStore }
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- Parses a private SDK module with no exported import type.
+function isModelsStoreModule(value: unknown): value is ModelsStoreModule {
+  // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Checks the constructor export at the SDK import boundary.
+  return value !== null && typeof value === 'object' && 'FileModelsStore' in value && typeof value.FileModelsStore === 'function';
+}
+
 /** Pi's model runtime as discovery sees it, and the served models the models file declares. */
 export interface DiscoveryModels {
   readonly runtime: ModelRuntime;
@@ -27,9 +35,8 @@ export interface DiscoveryModels {
 }
 
 /**
- * Pi's model runtime as discovery sees it: the built-in providers of mipmux's Pi SDK, the models file's overrides and the
- * credentials in the auth file. It reads no models catalog from the network and loads no Pi extensions. A declared served
- * model stays out of Pi's model record; declaring one for a model of another API than `openai-completions` is rejected.
+ * Loads Pi's cached catalogs beside the auth file before applying model overrides. Catalog restoration is offline.
+ * Read failures reject the operation. A served model can be declared only for the `openai-completions` API.
  */
 export async function createDiscoveryModels(config: Pick<PiConfig, 'authPath' | 'modelsPath'>, signal: AbortSignal): Promise<DiscoveryModels> {
   const models: unknown = JSON.parse(await readFile(config.modelsPath, 'utf8'));
@@ -37,8 +44,17 @@ export async function createDiscoveryModels(config: Pick<PiConfig, 'authPath' | 
   rejectCommands(models); rejectCommands(auth);
   if (!modelsValidator.Check(models)) throw new WorkspaceFailure('unsupportedModelConfiguration');
   const credentials = await createCredentials(config.authPath, signal);
+  // Pi's file-backed catalog store is not exported by its package entry point.
+  const sdk: unknown = await import(new URL('./core/models-store.js', import.meta.resolve('@earendil-works/pi-coding-agent')).href);
+  if (!isModelsStoreModule(sdk)) throw new WorkspaceFailure('unsupportedModelSDK');
   const runtime = await ModelRuntime.create({ credentials, modelsPath: null,
-    modelsStore: new InMemoryModelsStore(), allowModelNetwork: false, refreshOnCreate: false, signal });
+    modelsStore: new sdk.FileModelsStore(join(dirname(config.authPath), 'models-store.json')),
+    allowModelNetwork: false, refreshOnCreate: false, signal });
+  const refreshed = await runtime.refresh({ allowNetwork: false, signal });
+  signal.throwIfAborted();
+  const failure = refreshed.errors.values().next().value;
+  if (failure) throw failure instanceof WorkspaceFailure ? failure : new WorkspaceFailure('modelCatalogReadFailed');
+  rejectCommands(runtime.getAllModels());
   // Keyed by `provider/model`; provider IDs contain no slash.
   const declared = new Map<string, string>();
   for (const [provider, data] of Object.entries(models.providers)) {

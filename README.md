@@ -66,7 +66,7 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
    { "providers": {} }
    ```
 
-   This selects the model catalog bundled with mipmux's Pi SDK. In the same directory, create `config.json`. The following example uses an OpenAI Codex login; replace the provider, model and thinking level with values supported by your account, and replace `modelsPath` with the absolute path to the file you just created:
+   This uses Pi's model catalogs with no overrides, including updates saved by Pi's `/scoped-models` command. In the same directory, create `config.json`. The following example uses an OpenAI Codex login; replace the provider, model and thinking level with values supported by your account, and replace `modelsPath` with the absolute path to the file you just created:
 
    ```json
    {

@@ -4,7 +4,7 @@ import { PromptEnhancementMode } from '../contracts/context.js';
 import { ModelReference, RecoveryPolicy } from '../contracts/discovery.js';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { isAbsolute, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Type, { type Static, type TSchema } from 'typebox';
 import { Compile } from 'typebox/compile';
@@ -205,7 +205,8 @@ export async function loadJSON<S extends TSchema>(path: string, schema: S): Prom
 }
 /** The files discovery reads credentials or settings from, which context collection never reads. */
 function discoveryCredentialPaths(discovery: DiscoveryConfig): string[] {
-  return [...(discovery.pi ? [discovery.pi.authPath, discovery.pi.modelsPath] : []), ...(discovery.claudeCode?.configPaths ?? []),
+  return [...(discovery.pi ? [discovery.pi.authPath, discovery.pi.modelsPath, join(dirname(discovery.pi.authPath), 'models-store.json')] : []),
+    ...(discovery.claudeCode?.configPaths ?? []),
     ...(discovery.mcp ? mcpProtectedPaths(discovery.mcp) : [])];
 }
 
