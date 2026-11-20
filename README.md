@@ -36,12 +36,12 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
 
 1. Get mipmux from npm. Either way below also fetches its platform-specific native helper, so keep npm's optional dependencies enabled.
 
-   To run mipmux without installing it, use `npx`, which downloads mipmux on first use and keeps it in npm's cache for later runs. Wherever the steps below write the `mipmux` command, write `npx --yes --ignore-scripts mipmux@0.1.0-alpha.7` instead.
+   To run mipmux without installing it, use `npx`, which downloads mipmux on first use and keeps it in npm's cache for later runs. Wherever the steps below write the `mipmux` command, write `npx --yes --ignore-scripts mipmux@0.1.0-alpha.8` instead.
 
    To put a `mipmux` command on your PATH, install it globally. The [Pi](integrations/pi/README.md) and [omp](integrations/omp/README.md) extensions and [Claude Code discovery](docs/configuration.md#claude-code-discovery) need this installation:
 
    ```sh
-   npm install --global --ignore-scripts mipmux@0.1.0-alpha.7
+   npm install --global --ignore-scripts mipmux@0.1.0-alpha.8
    ```
 
    You can also [download a release archive](docs/releases.md#download-and-verify-a-published-archive) or [build from source](#build-from-source).
@@ -86,7 +86,7 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
    Claude Code:
 
    ```sh
-   claude mcp add --scope user mipmux -- npx --yes --ignore-scripts mipmux@0.1.0-alpha.7 mcp
+   claude mcp add --scope user mipmux -- npx --yes --ignore-scripts mipmux@0.1.0-alpha.8 mcp
    ```
 
    Codex, in `~/.codex/config.toml`:
@@ -94,7 +94,7 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
    ```toml
    [mcp_servers.mipmux]
    command = "npx"
-   args = ["--yes", "--ignore-scripts", "mipmux@0.1.0-alpha.7", "mcp"]
+   args = ["--yes", "--ignore-scripts", "mipmux@0.1.0-alpha.8", "mcp"]
    ```
 
    Pi, in `~/.pi/agent/mcp.json`, and other clients that read an `mcpServers` object:
@@ -104,7 +104,7 @@ RepoPrompt CE manages workspaces in a macOS app. mipmux accepts workspace declar
      "mcpServers": {
        "mipmux": {
          "command": "npx",
-         "args": ["--yes", "--ignore-scripts", "mipmux@0.1.0-alpha.7", "mcp"]
+         "args": ["--yes", "--ignore-scripts", "mipmux@0.1.0-alpha.8", "mcp"]
        }
      }
    }
