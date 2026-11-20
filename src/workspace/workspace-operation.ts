@@ -234,7 +234,7 @@ export class WorkspaceOperation {
       return access.read(source, null);
     });
   }
-  /** Reads the link itself, without following it; a removed or replaced link is an unsupported comparison entry. */
+  /** Reads link bytes without following the target. Returns null for absence and rejects non-symlink replacements. */
   readComparisonSymlink(source: SourcePath) {
     source = structuredClone(source);
     return this.#track(async () => {
@@ -245,7 +245,8 @@ export class WorkspaceOperation {
           path: source.path }, this.signal);
         return Buffer.from(reply.result.bytes, 'base64');
       } catch (error) {
-        if (error instanceof NativeFailure && ['notFound', 'nonRegularFile', 'symlink'].includes(error.code)) {
+        if (error instanceof NativeFailure && error.code === 'notFound') return null;
+        if (error instanceof NativeFailure && ['nonRegularFile', 'symlink'].includes(error.code)) {
           throw new WorkspaceFailure('unsupportedComparisonEntry', source);
         }
         throw error;

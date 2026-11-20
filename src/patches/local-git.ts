@@ -123,7 +123,7 @@ export async function acquireLocalPatch(
       const path of await operation.comparisonFiles(input.root, input.scope.kind === 'paths' ? input.scope.paths : null, tracked)
     ) paths.add(path);
   }
-  // A symlink or submodule that the comparison leaves unchanged contributes nothing, so only a changed one fails.
+  // Unchanged symlinks and submodules contribute nothing. Worktree equality also requires a live check.
   const unchanged = new Set([...paths].filter(path => {
     const baseEntry = baseByPath.get(path), targetEntry = targetByPath.get(path);
     return baseEntry && targetEntry && !supported(baseEntry) && baseEntry.mode === targetEntry.mode && baseEntry.oid === targetEntry.oid;
@@ -174,16 +174,22 @@ export async function acquireLocalPatch(
       }
       throw error;
     }
-    if (unchanged.has(path) && baseEntry?.mode === '120000') {
-      const link = await operation.readComparisonSymlink({ root: input.root, path });
-      if (link.equals(await read(['cat-file', 'blob', baseEntry.oid]))) continue;
+    const targetEntry = targetByPath.get(path);
+    if (targetEntry && !supported(targetEntry) && !(baseEntry?.mode === '120000' && targetEntry.mode === '120000')) {
+      throw new WorkspaceFailure('unsupportedComparisonEntry', { root: input.root, path });
     }
-    for (const entry of [baseByPath.get(path), targetByPath.get(path)]) {
-      if (entry && !supported(entry)) throw new WorkspaceFailure('unsupportedComparisonEntry', { root: input.root, path });
-    }
-    const before = await blob(baseByPath.get(path));
+    const before: FileSide = baseEntry?.mode === '120000'
+      ? { kind: 'symlink', bytes: await read(['cat-file', 'blob', baseEntry.oid]) }
+      : await blob(baseEntry);
     let after: FileSide;
-    if (input.comparison.kind === 'worktree') {
+    if (input.comparison.kind === 'worktree' && before.kind === 'symlink') {
+      const link = await operation.readComparisonSymlink({ root: input.root, path });
+      if (link !== null) {
+        if (unchanged.has(path) && link.equals(before.bytes)) continue;
+        throw new WorkspaceFailure('unsupportedComparisonEntry', { root: input.root, path });
+      }
+      after = { kind: 'absent' };
+    } else if (input.comparison.kind === 'worktree') {
       try {
         const source = await operation.readComparisonSource({ root: input.root, path });
         after = { kind: 'file', bytes: source.bytes, mode: descriptorGitMode(source.fingerprint.mode) };
@@ -191,7 +197,10 @@ export async function acquireLocalPatch(
         if (!(error instanceof NativeFailure) || error.code !== 'notFound') throw error;
         after = { kind: 'absent' };
       }
-    } else after = await blob(targetByPath.get(path));
+    } else after = await blob(targetEntry);
+    if (before.kind === 'symlink' && after.kind !== 'absent') {
+      throw new WorkspaceFailure('unsupportedComparisonEntry', { root: input.root, path });
+    }
     if (after.kind === 'file') {
       receipt.targets.push({
         path,

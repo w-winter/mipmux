@@ -233,6 +233,54 @@ test('unchanged symlinks and submodules leave patches buildable, and a changed o
   assert.deepEqual(commitFailure.source, { root: 'r', path: 'link.md' });
 });
 
+for (const scenario of ['worktree', 'staged', 'staged-worktree', 'commits'] as const) test(`deleted symlinks produce complete applicable patches: ${scenario}`, async t => {
+  const f = await fixture(t), client = await f.connect();
+  const env = { PATH: '/usr/bin:/bin', HOME: f.base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  const run = (args: string[], cwd = f.root) => execFileSync(git, args, { cwd, encoding: 'utf8', env });
+  const outside = join(f.base, 'outside.txt');
+  await writeFile(outside, 'OUTSIDE CONTENT MUST NOT BE READ\n');
+  const links = { 'codex/broken': 'pi/missing', 'codex/outside': outside };
+  await mkdir(join(f.root, 'codex'));
+  for (const [path, target] of Object.entries(links)) await symlink(target, join(f.root, path));
+  run(['add', '.']); run(['commit', '-qm', 'links']);
+  const base = run(['rev-parse', 'HEAD']).trim();
+  for (const path of Object.keys(links)) await unlink(join(f.root, path));
+  if (scenario !== 'worktree') run(['add', '--', 'codex']);
+  if (scenario === 'commits') run(['commit', '-qm', 'delete links']);
+  const index = await readFile(join(f.root, '.git/index')), head = run(['rev-parse', 'HEAD']);
+  const comparison: CallerPatch['comparison'] = scenario === 'commits' ? { kind: 'commits', base, target: 'HEAD' }
+    : scenario === 'staged' ? { kind: 'staged', base } : { kind: 'worktree', base, includeUntracked: true };
+  const result = await settle(client, await started(client, { workspace: f.workspace, purpose: 'review', task: 'Review the link deletions',
+    outputName: 'deleted-links', patches: [{ id: 'p', root: 'r', comparison }] }));
+  assert.equal(snapshotReply.Parse(result).state, 'ready', JSON.stringify(result));
+  const ready = readyReply.Parse(result), directory = ready.bundle.directory;
+  const verified = await verifyBundle(directory);
+  const record = verified.manifest.materials.find(material => material.kind === 'patch'); assert(record?.kind === 'patch');
+  assert.deepEqual(record.receipt.coverage, Object.keys(links));
+  assert(!record.receipt.targets.some(target => target.path in links));
+  const context = await readFile(join(directory, 'context.md'));
+  const patch = Buffer.concat(record.spans.map(span => context.subarray(span.offset, span.offset + span.length)));
+  assert(!patch.includes('OUTSIDE CONTENT MUST NOT BE READ'));
+  const patchPath = join(f.base, 'deletions.patch'); await writeFile(patchPath, patch);
+  const applyRoot = join(f.base, 'apply'); await mkdir(join(applyRoot, 'codex'), { recursive: true });
+  run(['init', '-q'], applyRoot);
+  for (const [path, target] of Object.entries(links)) await symlink(target, join(applyRoot, path));
+  run(['apply', '--check', patchPath], applyRoot); run(['apply', patchPath], applyRoot);
+  for (const path of Object.keys(links)) await assert.rejects(lstat(join(applyRoot, path)), { code: 'ENOENT' });
+  run(['apply', '--reverse', '--check', patchPath], applyRoot); run(['apply', '--reverse', patchPath], applyRoot);
+  for (const [path, target] of Object.entries(links)) assert.equal(await readlink(join(applyRoot, path)), target);
+  assert.deepEqual(await readFile(join(f.root, '.git/index')), index); assert.equal(run(['rev-parse', 'HEAD']), head);
+  assert.equal(await readFile(outside, 'utf8'), 'OUTSIDE CONTENT MUST NOT BE READ\n');
+  const runtime = new MipmuxRuntime({ ...f.options, cachePath: join(f.base, 'verification-cache') });
+  t.after(() => runtime.close());
+  await verifyCurrentBundle(directory, runtime, new AbortController().signal);
+  if (comparison.kind === 'worktree') {
+    await symlink(links['codex/broken'], join(f.root, 'codex/broken'));
+    await assert.rejects(verifyCurrentBundle(directory, runtime, new AbortController().signal));
+  }
+  await writeFile(resolve(`test-output/symlink-deletion-${scenario}.json`), JSON.stringify({ directory, patchPath, coverage: record.receipt.coverage }) + '\n');
+});
+
 for (const scenario of ['same-target', 'assume-unchanged', 'unmerged'] as const) test(`comparison entries retain exact evidence: ${scenario}`, async t => {
   const f = await fixture(t), client = await f.connect();
   const env = { PATH: '/usr/bin:/bin', HOME: f.base, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
