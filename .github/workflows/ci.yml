@@ -2,18 +2,105 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
+# Each pull request keeps only its newest run. Every push to main runs to completion, so later runs can rely on its result.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  route:
+    name: Route changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      full: ${{ steps.lanes.outputs.full }}
+      examples: ${{ steps.lanes.outputs.examples }}
+      extensions: ${{ steps.lanes.outputs.extensions }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+      # A pull request runs on GitHub's merge commit, whose first parent is the base-branch commit it was merged into.
+      - name: Select jobs
+        id: lanes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = pull_request ]; then base="$GITHUB_SHA^1"; else base="$PUSH_BEFORE"; fi
+          node scripts/ci-lanes.mjs "$base" "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+      - name: Source history
+        run: npm run verify:vendor
+
+  examples:
+    name: Workflow examples
+    needs: route
+    if: needs.route.outputs.examples == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+      - name: Install dependencies
+        run: npm ci
+      # The test finds workflow-examples/ from its compiled location, so it runs from dist-test.
+      - name: Workflow example consistency
+        run: |
+          npm exec -- tsc -p tsconfig.test.json
+          node --test dist-test/test/workflow-examples.test.js
+
+  extensions:
+    name: Pi and oh-my-pi extensions (macOS arm64)
+    needs: route
+    if: needs.route.outputs.extensions == 'true'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+      # The oh-my-pi extension's tests run oh-my-pi itself, which needs Bun.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      # The Pi extension resolves Pi, pi-tui, TypeBox and the compiler from the root installation.
+      - name: Install dependencies
+        run: npm ci
+      - name: Pi extension
+        working-directory: integrations/pi
+        run: |
+          npm run typecheck
+          npm test
+      - name: oh-my-pi extension
+        working-directory: integrations/omp
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+
   linux:
     name: Linux x64 (Node 22.23.4)
+    needs: route
+    if: needs.route.outputs.full == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,6 +115,8 @@ jobs:
 
   macos:
     name: macOS arm64 (Node 24.22.1)
+    needs: route
+    if: needs.route.outputs.full == 'true'
     runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,23 +125,16 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.1
-      # The oh-my-pi extension's tests run oh-my-pi itself, which needs Bun.
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.4.4
       - name: Show the toolchain
         run: |
           xcodebuild -version
           swift --version
           cmake --version
           git --version
-          bun --version
       - name: Install dependencies
         run: npm ci
       - name: Native tests
         run: npm run test:native
-      - name: Source history
-        run: npm run verify:vendor
       - name: Type check
         run: npm run typecheck
       - name: Release native build
@@ -60,14 +142,45 @@ jobs:
       - name: Test suite
         timeout-minutes: 40
         run: npm test
-      - name: Pi extension
-        working-directory: integrations/pi
+
+  # The one check that summarizes a run: every job this change requires succeeded, and every other job was skipped.
+  ci:
+    name: CI
+    needs: [route, examples, extensions, linux, macos]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check the required jobs
+        env:
+          ROUTE_RESULT: ${{ needs.route.result }}
+          FULL: ${{ needs.route.outputs.full }}
+          EXAMPLES: ${{ needs.route.outputs.examples }}
+          EXTENSIONS: ${{ needs.route.outputs.extensions }}
+          EXAMPLES_RESULT: ${{ needs.examples.result }}
+          EXTENSIONS_RESULT: ${{ needs.extensions.result }}
+          LINUX_RESULT: ${{ needs.linux.result }}
+          MACOS_RESULT: ${{ needs.macos.result }}
         run: |
-          npm run typecheck
-          npm test
-      - name: oh-my-pi extension
-        working-directory: integrations/omp
-        run: |
-          npm ci
-          npm run typecheck
-          npm test
+          if [ "$ROUTE_RESULT" != success ]; then
+            echo "::error::Route changes finished with $ROUTE_RESULT, so no job selection is available"
+            exit 1
+          fi
+          for selection in "full=$FULL" "examples=$EXAMPLES" "extensions=$EXTENSIONS"; do
+            case "${selection#*=}" in
+              true | false) ;;
+              *) echo "::error::Route changes produced ${selection%%=*}='${selection#*=}'; expected true or false"; exit 1 ;;
+            esac
+          done
+          status=0
+          check() {
+            if [ "$2" = true ]; then
+              if [ "$3" = success ]; then echo "$1: required, succeeded"
+              else echo "::error::$1 is required for this change but was $3"; status=1; fi
+            elif [ "$3" = skipped ]; then echo "$1: not required for this change"
+            else echo "::error::$1 ran although this change does not require it ($3)"; status=1; fi
+          }
+          check examples "$EXAMPLES" "$EXAMPLES_RESULT"
+          check extensions "$EXTENSIONS" "$EXTENSIONS_RESULT"
+          check linux "$FULL" "$LINUX_RESULT"
+          check macos "$FULL" "$MACOS_RESULT"
+          exit "$status"

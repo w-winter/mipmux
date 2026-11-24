@@ -26,9 +26,9 @@ node "$package/verify-release.mjs" "$package" /absolute/path/to/new-verification
 
 The verifier uses synthetic source files and an explicit configuration, with discovery disabled. It checks the relocated CLI and library, native structure extraction and search, packet rendering, and integrity/current-source verification. It writes a receipt and packet artifacts to the verification directory. It makes no model calls and needs no credentials.
 
-## Validate the workflow before tagging
+## Rehearse the workflow before tagging
 
-Commit the release changes and merge them into `main` before creating a tag. Run the `Release` workflow manually from GitHub Actions or, as the repository owner:
+A rehearsal is optional. The tag-triggered run builds and tests all three targets before it opens the draft release, and the owner inspects the draft before publishing it. A rehearsal finds failures before the tag exists, which helps most when a change affects `release.yml` or the packaging scripts. Run the `Release` workflow manually from GitHub Actions or, as the repository owner:
 
 ```sh
 gh workflow run release.yml --repo w-winter/mipmux --ref main
@@ -36,11 +36,13 @@ gh workflow run release.yml --repo w-winter/mipmux --ref main
 
 A manual run with the default inputs builds and tests all three targets and uploads archives, npm tarballs, and verification evidence as Actions artifacts. It creates no GitHub release and performs no npm publication or staging. Each Linux job also runs the extracted archive in a Node container with no Swift installation and networking disabled. The macOS job runs the relocated verifier and checks the helper's signature. After assembly, another check installs the same main npm tarball on all three targets using npm 12, exercising the CLI, library, MCP, and scripted discovery without provider credentials.
 
-Inspect all three jobs and their saved verification receipts before tagging. Hosted validation is required for the platforms your local machine cannot exercise natively.
+After a rehearsal, inspect all three jobs and their saved verification receipts. Hosted runs, rehearsed or tag-triggered, validate the platforms your local machine cannot exercise natively.
 
 ## Create a release
 
 The Pi and omp extensions have versions independent of the server.
+
+Commit the release changes and merge them into `main` before creating a tag.
 
 For each server version, update `package.json`, the root entries in `package-lock.json`, and the MCP software version in `src/mcp/server.ts`. The MCP initialization test checks that the advertised version matches the package.
 
@@ -54,7 +56,7 @@ gh api repos/w-winter/mipmux/immutable-releases --jq .enabled
 
 It must print `true`. Immutable releases lock their assets and tags when published, so inspect the draft before publishing it.
 
-After the exact commit passes validation, the owner creates and pushes its version tag. Replace the example version with the version being released:
+After the release commit's CI run on `main` succeeds, the owner creates and pushes its version tag. Replace the example version with the version being released:
 
 ```sh
 git tag v0.1.0-alpha.8
@@ -69,7 +71,32 @@ Review the draft, confirm immutability is enabled, and publish it:
 gh release edit v0.1.0-alpha.8 --repo w-winter/mipmux --draft=false
 ```
 
-The workflow stops at the draft. It does not publish the release on your behalf. A failed run should be diagnosed before retrying; an existing draft is not overwritten automatically.
+The workflow stops at the draft. It does not publish the release on your behalf. When the run fails, follow [Recover from a failed release run](#recover-from-a-failed-release-run).
+
+## Recover from a failed release run
+
+Read the failing job's log first. When the runner or the network caused the failure, rerun the failed jobs, which keeps the tag's commit:
+
+```sh
+gh run rerun <run-id> --failed --repo w-winter/mipmux
+```
+
+If the failed attempt had already created a draft release, delete that draft before rerunning and keep its tag, because the workflow does not overwrite an existing draft. Replace the example version:
+
+```sh
+gh release delete v0.1.0-alpha.8 --repo w-winter/mipmux --yes
+```
+
+Dispatching the `Release` workflow manually on the tag does not replace a rerun, because only a tag push creates the draft release.
+
+When the commit needs a fix and the release is unpublished, delete the draft release, its tag and your local tag, replacing the example version. Then fix `main` and release the fix under the next version:
+
+```sh
+gh release delete v0.1.0-alpha.8 --repo w-winter/mipmux --cleanup-tag --yes
+git tag -d v0.1.0-alpha.8
+```
+
+If the failed run created no draft, delete the remote tag with `git push origin --delete <tag>` instead. A published release's tag and version are final, so release any fix under a new version.
 
 ## Download and verify a published archive
 

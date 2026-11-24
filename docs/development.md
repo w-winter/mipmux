@@ -77,6 +77,27 @@ The validation image pins Swift 6.2.4 on Ubuntu 22.04 and Node 22.23.4 by image 
 
 Linux release builds use `--static-swift-stdlib` to include the Swift runtime, Foundation, Dispatch, and ICU. PCRE2 is also statically linked. The host supplies glibc, libstdc++, and libgcc. Release checks reject dynamic Swift libraries and glibc symbol requirements above 2.35; use the pinned Docker image to build against this baseline. `linkage.json` records the linked libraries and required glibc symbol versions.
 
+## Continuous integration
+
+The CI workflow runs for pull requests and for pushes to `main`. Version tags run the Release workflow instead, which builds and tests all three release targets.
+
+Each run starts with **Route changes**. It runs `npm run verify:vendor`, so a stale hash in `docs/vendor-provenance.json` fails the run within a minute, and it runs `scripts/ci-lanes.mjs` to choose the other jobs from the paths that changed since a base commit. For a push, the base is the previous tip of `main`. For a pull request, CI tests GitHub's merge commit, and the base is that commit's first parent, the `main` commit the pull request was merged into. The script lists added, modified, deleted and type-changed paths, and counts a rename as a deletion plus an addition.
+
+| Changed paths | Jobs |
+| --- | --- |
+| Markdown under `docs/`, `CHANGELOG.md`, `SECURITY.md`, `docs/vendor-provenance.json`, and edits to an integration's `README.md` or `CHANGELOG.md` | None beyond Route changes |
+| `workflow-examples/` | Workflow examples: compiles the tests and runs `test/workflow-examples.test.ts`, without the native helper |
+| Other files under `integrations/pi/` or `integrations/omp/` | Pi and oh-my-pi extensions on macOS arm64; both run, because oh-my-pi copies the Pi sources and uses a Pi test fixture |
+| Anything else, including the root `README.md`, whose content package staging checks, and any type change, such as a file replaced by a symlink | The full pipeline: the Linux and macOS jobs and both extensions |
+
+A run uses fewer jobs only when the base commit already has a successful CI run for a push to `main`. When that run is missing, still running, failed or was cancelled, when the base commit is not in the checkout, or when GitHub cannot be queried, the run uses the full pipeline. The Route changes log lists every changed path with its rule and each reason for a full run.
+
+The final **CI** job passes when every job the change requires succeeded and every other job was skipped. Each pull request keeps only its newest run. Runs for pushes to `main` are never cancelled, so each commit on `main` gets a result that later runs can use as their base.
+
+To preview a selection, run `node scripts/ci-lanes.mjs <base> <head>` in a checkout that contains both commits. The script prints the job flags on stdout and its reasoning on stderr. The base check calls an authenticated `gh`, which finds the repository from the `origin` remote or from `GH_REPO=w-winter/mipmux`. For a branch, use `node scripts/ci-lanes.mjs "$(git merge-base origin/main HEAD)" HEAD`.
+
+Paths that no rule covers use the full pipeline. When a build step, test or packaging script starts reading a file that a narrower rule covers, change the rule in `scripts/ci-lanes.mjs` and its cases in `test/ci-lanes.test.ts`.
+
 ## Source history
 
 The extractor derives from RepoPrompt CE revision `64b9352eec13e0252500d429f64ca9d1dd5e49fd`. `docs/vendor-provenance.json` records original hashes, retained destinations, moved declaration ranges, and adaptations. `npm run verify:vendor` checks the hashes of retained files, dependency pins, generated metadata, notices, and the 1,000-line ceiling for handwritten code. After editing a file listed there, update its `sha256` and add a note to its `changes`.
