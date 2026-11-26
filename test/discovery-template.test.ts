@@ -57,6 +57,36 @@ test('invalid templates return correlated domain rejections, including inactive 
   writeFileSync('test-output/discovery-template-rejections.json', JSON.stringify(proof, null, 2) + '\n');
 });
 
+test('composition selects handoff, capability and review sections from the request', () => {
+  // Each section renders its own name, so the policy lists exactly the sections the composer chose.
+  const slots = ['handoff', 'handoff_success', 'handoff_anti_patterns', 'handoff_checklist', 'codemode_tool', 'clarification_tool',
+    'clarification_guidance', 'approval_step', 'halt_step', 'review_guidance'];
+  const bodies = new Map([['system', slots.map(slot => `{{mipmux:${slot}}}`).join('|')],
+    ['review.readOnly', 'review.readOnly {{mipmux:review_root_guidance}}'],
+    ['review.roots.named', '{{mipmux:root_names}} {{mipmux:example_root_json}}']]);
+  const labelled = template.replace(/(<!-- mipmux:section (\S+) -->\n)[\s\S]*?(<!-- mipmux:end -->)/g,
+    (_match, open: string, name: string, end: string) => open + (bodies.get(name) ?? name) + '\n' + end);
+  const sections = (overrides: Partial<typeof operation>) => policy.Parse(callNative({ ...operation, ...overrides, template: labelled },
+    'template-sections', 'sections').result).text.split('|');
+  for (const enhancementMode of ['fullRewrite', 'augment', 'preserve'] as const) {
+    assert.deepEqual(sections({ enhancementMode }).slice(0, 4),
+      ['handoff', 'success', 'antiPatterns', 'checklist'].map(part => `mode.${enhancementMode}.${part}`));
+  }
+  assert.deepEqual(sections({}).slice(4), ['', '', '', '', '5', '']);
+  assert.deepEqual(sections({ codemode: true, allowClarifyingQuestions: true }).slice(4, 9),
+    ['codemode.tool', 'clarification.tool', 'clarification.guidance', 'clarification.approval', '6']);
+  const review = (overrides: Partial<typeof operation>) => sections(overrides)[9];
+  assert.equal(review({ purpose: 'review' }), 'review.artifacts');
+  assert.equal(review({ purpose: 'review', restrictsReviewGitToExplicitReadOnly: true, reviewRootNames: ['app', 'lib'] }),
+    'review.readOnly `app`, `lib` "app"');
+  assert.equal(review({ purpose: 'review', restrictsReviewGitToExplicitReadOnly: true }), 'review.readOnly review.roots.lookup');
+  // Without the review purpose, a review phrase or both "git" and "diff" in the task select review guidance.
+  for (const task of ['Prepare a code review', 'Inspect git metadata and diffs']) {
+    assert.equal(review({ purpose: 'planning', task }), 'review.artifacts', task);
+  }
+  for (const task of ['Please review architecture', 'Inspect git history']) assert.equal(review({ purpose: 'investigation', task }), '', task);
+});
+
 test('tool placeholders render the tool names the model sees, and a misspelled tool name is rejected at its line', () => {
   const named = bindToolNames(template.replace('L|{{mipmux:handoff}}|{{mipmux:handoff}}|R', '`{{mipmux:tool:read_file}}`'), 'mcp__mipmux__');
   assert.equal(policy.Parse(callNative({ ...operation, template: named }, 'template-tools', 'prefixed').result).text, '`mcp__mipmux__read_file`');

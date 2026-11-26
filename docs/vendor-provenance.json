@@ -8405,8 +8405,8 @@
       ],
       "changes": [
         "Extract applicable restricted hard-budget policy, all three task modes, optional clarification, elected/read-only review variants and startup metadata into finite named sections. Empty Gemini/run-ID fragments, generic/nil-budget branches and the unused timeout formatter contribute no default text.",
-        "Apply the explicit mipmux tool/runtime bindings independently captured by scripts/reference-discovery-bindings.mjs, including tool examples, state wording, task-name removal and parent publication. Keep all remaining source wording, literal whitespace and emphasis.",
-        "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction. Complete native output is checked against 24 independently generated bound policies and applicable original startup cases.",
+        "Apply the explicit mipmux tool/runtime bindings, including tool examples, state wording, task-name removal and parent publication. Keep all remaining source wording, literal whitespace and emphasis.",
+        "Replace runtime values with the documented namespaced placeholders. Retain the approved full/slice/codemap startup representation sentence correction.",
         "List codemode among the available tools through the codemode.tool section when discovery offers it, and state in the mipmux runtime bindings that draft changes are made one at a time.",
         "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on.",
         "Name each tool through a {{mipmux:tool:NAME}} placeholder, filled with the bare name for Pi discovery and the mcp__mipmux__ name for Claude Code discovery; with bare names the template renders exactly as before.",

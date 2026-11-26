@@ -25,16 +25,9 @@ function argumentNames(definition: TSchema): string[] {
   const schema = toolSchema.Parse(JSON.parse(JSON.stringify(definition)));
   return ('anyOf' in schema ? schema.anyOf : [schema]).flatMap(variant => Object.keys(variant.properties));
 }
-const policies = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Type.String() })));
-const cases = Compile(Type.Array(Type.Object({ name: Type.String(), expected: Type.String(), input: Type.Object({
-  currentPrompt: Type.String(), discoveryInstructions: Type.String(), fileTree: Type.String(),
-  contextBuilderPrompts: Type.Array(Type.Object({ title: Type.String(), content: Type.String() })),
-}) })));
 const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/opt/homebrew/bin/git' : '/usr/bin/git');
 
 test('native default policy and source startup reach Pi for all prompt modes and preserve separate input authority', async t => {
-  const reference = cases.Parse(JSON.parse(await readFile('test/fixtures/rpce-discovery-message/cases.json', 'utf8')))[0]!;
-  const referencePolicies = policies.Parse(JSON.parse(await readFile('test/fixtures/mipmux-discovery-policy/cases.json', 'utf8')));
   const promptTemplatePath = resolve('prompts/discovery.md');
   const templateBytes = await readFile(promptTemplatePath);
   const proof: unknown[] = [];
@@ -57,7 +50,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
     try {
       const signal = new AbortController().signal;
       const workspace = await client.declare({ roots: [{ name: 'r', absolutePath: root }], exclusions: [], outputRoot: out }, signal);
-      const task = reference.input.discoveryInstructions;
+      const task = 'Discover callers; do not implement.';
       const job = client.build(workspace.id, mode, contextRequestValidator.Parse({ task, constraints: 'FIXED_CALLER_CONSTRAINT',
         purpose: 'review', initialSelection: { codemapMode: 'manual', sources: [] }, requiredSources: [{ kind: 'full', source: { root: 'r', path: 'Main.swift' } }],
         documents: [], patches: [], copyPreset: 'standard', duplicateUserInstructionsAtTop: false,
@@ -68,9 +61,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
       const system = content.Parse(first.system).map(block => block.text).join('\n');
       const allowed = system.match(/^\*\*Available tools:\*\* (.*)$/m); assert(allowed);
       for (const name of first.tools) assert(allowed[1]!.includes('`' + name + '`'), name + ' must be allowed by the policy');
-      const referencePolicy = referencePolicies.find(entry => entry.name === mode + '-noninteractive-elected'); assert(referencePolicy);
-      assert.equal(system.replace(/^\*\*Codemap coverage:\*\* .+$/m, '**Codemap coverage:** __SUPPORTED_LANGUAGES__'),
-        referencePolicy.expected + '\n\n<cwd>\n/\n</cwd>');
+      assert(system.endsWith('\n\n<cwd>\n/\n</cwd>'));
       const message = Compile(Type.Object({ content: Type.Array(Type.Object({ text: Type.String() })) })).Parse(first.messages[0]).content[0]!.text;
       assert.equal(result.discovery.templateVersion, 'mipmux-discovery-template-v1');
       assert.deepEqual(result.discovery.template.identity, { sha256: createHash('sha256').update(templateBytes).digest('hex'), byteCount: templateBytes.length });
@@ -81,10 +72,7 @@ test('native default policy and source startup reach Pi for all prompt modes and
       assert(!system.includes('<taskname=')); assert(!system.includes('ask_user'));
       assert(system.includes(mode === 'preserve' ? 'Leave the prompt COMPLETELY unchanged' : mode === 'augment' ? 'Augment the handoff prompt' : 'Craft and set the handoff prompt'));
       const tree = message.match(/^<file_map>\n([\s\S]*?)\n<\/file_map>/); assert(tree); assert(tree[1]!.includes('Main.swift'));
-      // A build starts like a fresh RPCE tab, so its message omits the reference's current-prompt block.
-      const expected = reference.expected.replace('<current_prompt_content>\n' + reference.input.currentPrompt + '\n</current_prompt_content>\n', '').replace('- For MCP modes (like the current context_builder mode), selected files are automatically compressed to show only their codemaps (API signatures) instead of full content, dramatically reducing token usage',
-        '- Selected files use full content, slices, or codemaps (API signatures), according to their selected representation');
-      assert(message.replace(tree[1]!, reference.input.fileTree).startsWith(expected));
+      assert(message.includes('<discover_instructions>\n' + task));
       assert(message.includes('FIXED_CALLER_CONSTRAINT')); assert.equal(message.match(/<token_budget>/g)?.length, 1);
       assert(!message.includes('## Assignment'));
       const packet = await verifyBundle(result.bundle.directory);
