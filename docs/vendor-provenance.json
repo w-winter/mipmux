@@ -8382,7 +8382,7 @@
       "sourceRevision": "43a9c29d3894e4841d8cca4c75b45f7a68b3ecb3",
       "sourceSHA256": "db5ceec16a8966284fc1ebe160c00bcfa3c9b79c38e675868dde310a74083762",
       "destination": "prompts/discovery.md",
-      "sha256": "169f3b0983c89341037768d6337188f996a8dc16574a54a2036c3a8fc3d8860b",
+      "sha256": "3654d6420fda78fc60244a5da5bc6e950f1db3f0a64da7740962f9659ee73427",
       "classification": "handwritten",
       "ranges": [
         [
@@ -8410,7 +8410,8 @@
         "List codemode among the available tools through the codemode.tool section when discovery offers it, and state in the mipmux runtime bindings that draft changes are made one at a time.",
         "Replace the manual-mode sentence: clearing codemaps disables auto-management, while adding codemaps, promote and demote keep it on.",
         "Name each tool through a {{mipmux:tool:NAME}} placeholder, filled with the bare name for Pi discovery and the mcp__mipmux__ name for Claude Code discovery; with bare names the template renders exactly as before.",
-        "Name mipmux in the provenance sentence, and describe <current_prompt_content> as the draft prompt at the start of discovery, present only when nonempty, instead of the RPCE instructions field."
+        "Name mipmux in the provenance sentence, and describe <current_prompt_content> as the draft prompt at the start of discovery, present only when nonempty, instead of the RPCE instructions field.",
+        "Restate the policy in plain wording: sentence-case headings, plain lists instead of emoji markers, normal capitalisation instead of all-caps emphasis, and the token budget's consequence (a packet over budget is blocked) instead of emphatic labels. The opening names mipmux's discovery agent and its two deliverables, including the preserve-mode exception, in place of the Discover-agent persona and scout metaphor. The final accounting step no longer claims to be the last step, which the runtime bindings give to draft_validate; preserve mode's two anti-patterns, joined by a literal \\n, become separate lines; and preserve mode no longer mentions task names, which mipmux does not have."
       ]
     },
     {

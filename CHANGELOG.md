@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- The shipped discovery prompt's wording and style are updated for current models, and its selection rules are unchanged. The final token check no longer calls itself the last step, which conflicted with the final `draft_validate` call, and two preserve-mode rules that shared a line now have a line each. A copy at `discovery.promptTemplatePath` keeps its earlier wording until you replace it with the shipped `prompts/discovery.md`.
+
 ## [0.1.0-alpha.8] - 2026-11-20
 
 ### Fixed

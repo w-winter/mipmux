@@ -44,7 +44,7 @@ A `context_job` wait returns these forms to clients that support them, and the q
 
 ## Native bindings
 
-Every substantive difference belongs to one of these interface bindings. Discovery principles, selection priority, refinement order, slice guidance, emphasis, repetitions and anti-patterns otherwise retain the reference wording.
+Every substantive difference belongs to one of these interface bindings. Discovery principles, selection priority, refinement order, slice guidance, repetitions and anti-patterns otherwise keep the reference's meaning, with wording and style updated for current models.
 
 | Binding | Native representation | Reason |
 | --- | --- | --- |
@@ -119,7 +119,7 @@ The native `matchSelectionPath` operation executes RPCE's ordinary `PathMatcher.
 
 `test/discovery-template.test.ts` renders a synthetic template. It checks which sections the composer selects for each task mode, clarification setting, codemode setting and review intent. It also checks that malformed templates, including errors in inactive sections, return correlated rejections, and that bodies keep their exact bytes through CRLF, decomposed Unicode, reordered definitions and repeated insertions.
 
-`test/discovery-native-prompt.test.ts` runs the shipped template through Pi in all three task modes. It checks the dispatched policy's identity and SDK working-directory suffix, the startup message's file map, task and constraints, and that failures and cancellation settle before dispatch. It reads the shipped wording only to find each mode's handoff step and the review heading. `test/prompt-file.test.ts` checks per-job immutable snapshots, separate identities, regular-file admission and descriptor cancellation. `test/package-local.test.ts` exercises the installed resource, external edits during a job and observation by subsequent jobs.
+`test/discovery-native-prompt.test.ts` runs the shipped template through Pi in all three task modes. It checks the dispatched policy's identity and SDK working-directory suffix, the startup message's file map, task and constraints, and that failures and cancellation settle before dispatch. It finds each mode's handoff step and the review heading by reading the first line of those sections from the template, so it does not depend on their wording. `test/prompt-file.test.ts` checks per-job immutable snapshots, separate identities, regular-file admission and descriptor cancellation. `test/package-local.test.ts` exercises the installed resource, external edits during a job and observation by subsequent jobs.
 
 An edit to `prompts/discovery.md` changes its SHA-256. Record the new hash and describe the edit in the file's entry in `docs/vendor-provenance.json`; `npm run verify:vendor` fails until the hash matches.
 

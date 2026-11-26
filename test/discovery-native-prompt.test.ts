@@ -16,6 +16,7 @@ import { PiRunner } from '../src/discovery/pi-runner.js';
 import { BridgeClient, NativeFailure } from '../src/native/bridge-client.js';
 import type { NativeOperation } from '../src/contracts/native.js';
 import { hostDiscovery, scriptedProvider } from './fixtures/scripted-provider.js';
+import { templateSectionLine } from './fixtures/template-section.js';
 
 const content = Compile(Type.Array(Type.Object({ type: Type.Literal('text'), text: Type.String() })));
 const Properties = Type.Object({ properties: Type.Record(Type.String(), Type.Unknown()) });
@@ -29,7 +30,7 @@ const git = process.env.MIPMUX_TEST_GIT ?? (process.platform === 'darwin' ? '/op
 
 test('native default policy and source startup reach Pi for all prompt modes and preserve separate input authority', async t => {
   const promptTemplatePath = resolve('prompts/discovery.md');
-  const templateBytes = await readFile(promptTemplatePath);
+  const templateBytes = await readFile(promptTemplatePath), template = templateBytes.toString();
   const proof: unknown[] = [];
   for (const mode of ['fullRewrite', 'augment', 'preserve'] as const) {
     const provider = await scriptedProvider((_summary, index) => index === 1 && mode !== 'preserve'
@@ -67,10 +68,10 @@ test('native default policy and source startup reach Pi for all prompt modes and
       assert.deepEqual(result.discovery.template.identity, { sha256: createHash('sha256').update(templateBytes).digest('hex'), byteCount: templateBytes.length });
       const dispatchedPolicy = system.slice(0, -'\n\n<cwd>\n/\n</cwd>'.length);
       assert.deepEqual(result.discovery.policyIdentity, { sha256: createHash('sha256').update(dispatchedPolicy).digest('hex'), byteCount: Buffer.byteLength(dispatchedPolicy) });
-      assert(system.includes('198500')); assert(system.includes('## Review Mode')); assert(!system.includes('Assignment.'));
+      assert(system.includes('198500')); assert(system.includes(templateSectionLine(template, 'review.artifacts'))); assert(!system.includes('Assignment.'));
       assert(!system.includes('workspace_context')); assert(system.includes('draft_inspect'));
       assert(!system.includes('<taskname=')); assert(!system.includes('ask_user'));
-      assert(system.includes(mode === 'preserve' ? 'Leave the prompt COMPLETELY unchanged' : mode === 'augment' ? 'Augment the handoff prompt' : 'Craft and set the handoff prompt'));
+      assert(system.includes(templateSectionLine(template, `mode.${mode}.handoff`)));
       const tree = message.match(/^<file_map>\n([\s\S]*?)\n<\/file_map>/); assert(tree); assert(tree[1]!.includes('Main.swift'));
       assert(message.includes('<discover_instructions>\n' + task));
       assert(message.includes('FIXED_CALLER_CONSTRAINT')); assert.equal(message.match(/<token_budget>/g)?.length, 1);
