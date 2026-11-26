@@ -12,9 +12,10 @@ import { ProcessSupervisor } from '../src/runtime/process-supervisor.js';
 const executable = resolve(`native/.build/${process.platform}-${process.arch}/debug/MipmuxBridge`);
 const mebibyte = 1024 * 1024;
 // One large frame is timed against `parts` frames of 1/parts its size, sent back to back in the same process, so machine
-// speed cancels. Linear framing keeps the ratio near 1; the quadratic framing this guards against measured 7 to 35.
+// speed cancels. Linear framing keeps the ratio near 1 locally but has reached 3 on shared CI runners; the quadratic
+// framing this guards against measured 7 to 35.
 const parts = 32;
-const maximumRatio = 3;
+const maximumRatio = 5;
 const signal = () => new AbortController().signal;
 const identity = (bytes: Buffer): SourceIdentity => ({ sha256: createHash('sha256').update(bytes).digest('hex'), byteCount: bytes.length });
 
